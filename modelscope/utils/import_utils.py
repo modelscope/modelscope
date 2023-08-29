@@ -246,6 +246,10 @@ def is_wenetruntime_available():
     return importlib.util.find_spec('wenetruntime') is not None
 
 
+def is_swift_available():
+    return importlib.util.find_spec('swift') is not None
+
+
 def is_tf_available():
     return _tf_available
 
@@ -292,7 +296,6 @@ REQUIREMENTS_MAAPING = OrderedDict([
                  GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('espnet', (is_espnet_available,
                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
-    ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
     ('funasr', (is_package_available('funasr'), AUDIO_IMPORT_ERROR)),
     ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR)),
     ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),

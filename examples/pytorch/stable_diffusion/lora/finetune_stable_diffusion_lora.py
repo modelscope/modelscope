@@ -2,11 +2,14 @@ import os
 from dataclasses import dataclass, field
 
 import cv2
+import torch
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Trainers
+from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
-from modelscope.trainers import EpochBasedTrainer, build_trainer
+from modelscope.trainers import build_trainer
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.constant import DownloadMode, Tasks
 
@@ -23,6 +26,12 @@ class StableDiffusionLoraArguments(TrainingArgs):
         default=4,
         metadata={
             'help': 'The rank size of lora intermediate linear.',
+        })
+
+    torch_type: str = field(
+        default='float32',
+        metadata={
+            'help': ' The torch type, default is float32.',
         })
 
 
@@ -59,16 +68,26 @@ def cfg_modify_fn(cfg):
     return cfg
 
 
+# build model
+model_dir = snapshot_download(training_args.model)
+model = Model.from_pretrained(
+    training_args.model,
+    revision=args.model_revision,
+    torch_type=torch.float16
+    if args.torch_type == 'float16' else torch.float32)
+
+# build trainer and training
 kwargs = dict(
-    model=training_args.model,
-    model_revision=args.model_revision,
+    model=model,
+    cfg_file=os.path.join(model_dir, 'configuration.json'),
     work_dir=training_args.work_dir,
     train_dataset=train_dataset,
     eval_dataset=validation_dataset,
     lora_rank=args.lora_rank,
+    torch_type=torch.float16
+    if args.torch_type == 'float16' else torch.float32,
     cfg_modify_fn=cfg_modify_fn)
 
-# build trainer and training
 trainer = build_trainer(name=Trainers.lora_diffusion, default_args=kwargs)
 trainer.train()
 

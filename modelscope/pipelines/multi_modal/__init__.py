@@ -23,12 +23,17 @@ if TYPE_CHECKING:
     from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_multi_modal_embedding_pipeline import \
         VideoMultiModalEmbeddingPipeline
-    from .video_question_answering_pipeline import \
-        VideoQuestionAnsweringPipeline
-    from .visual_entailment_pipeline import VisualEntailmentPipeline
-    from .visual_grounding_pipeline import VisualGroundingPipeline
-    from .visual_question_answering_pipeline import \
-        VisualQuestionAnsweringPipeline
+    from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
+    from .asr_pipeline import AutomaticSpeechRecognitionPipeline
+    from .mgeo_ranking_pipeline import MGeoRankingPipeline
+    from .document_vl_embedding_pipeline import DocumentVLEmbeddingPipeline
+    from .video_captioning_pipeline import VideoCaptioningPipeline
+    from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
+    from .diffusers_wrapped import StableDiffusionPipeline, ChineseStableDiffusionPipeline
+    from .soonet_video_temporal_grounding_pipeline import SOONetVideoTemporalGroundingPipeline
+    from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
+    from .multimodal_dialogue_pipeline import MultimodalDialoguePipeline
+    from .videocomposer_pipeline import VideoComposerPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -55,7 +60,8 @@ else:
         'soonet_video_temporal_grounding_pipeline':
         ['SOONetVideoTemporalGroundingPipeline'],
         'text_to_video_synthesis_pipeline': ['TextToVideoSynthesisPipeline'],
-        'multimodal_dialogue_pipeline': ['MultimodalDialoguePipeline']
+        'multimodal_dialogue_pipeline': ['MultimodalDialoguePipeline'],
+        'videocomposer_pipeline': ['VideoComposerPipeline']
     }
 
     import sys

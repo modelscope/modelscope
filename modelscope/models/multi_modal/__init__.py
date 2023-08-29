@@ -23,6 +23,10 @@ if TYPE_CHECKING:
     from .team import TEAMForMultiModalSimilarity
     from .video_synthesis import TextToVideoSynthesis
     from .vldoc import VLDocForDocVLEmbedding
+    from .efficient_diffusion_tuning import EfficientStableDiffusion
+    from .mplug_owl import MplugOwlForConditionalGeneration
+    from .clip_interrogator import CLIP_Interrogator
+    from .videocomposer import VideoComposer
 
 else:
     _import_structure = {
@@ -44,6 +48,7 @@ else:
         'efficient_diffusion_tuning': ['EfficientStableDiffusion'],
         'mplug_owl': ['MplugOwlForConditionalGeneration'],
         'clip_interrogator': ['CLIP_Interrogator'],
+        'videocomposer': ['VideoComposer'],
     }
 
     import sys

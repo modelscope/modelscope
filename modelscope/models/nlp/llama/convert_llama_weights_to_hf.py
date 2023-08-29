@@ -20,8 +20,8 @@ import shutil
 
 import json
 import torch
+from transformers.models.llama import LlamaConfig
 
-from .configuration import LlamaConfig
 from .text_generation import LlamaForTextGeneration
 
 # This file is mainly copied from the llama code of transformers

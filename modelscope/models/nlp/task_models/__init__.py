@@ -13,6 +13,7 @@ if TYPE_CHECKING:
                                        ModelForTokenClassificationWithCRF)
     from .text_generation import ModelForTextGeneration
     from .text_ranking import ModelForTextRanking
+    from .machine_reading_comprehension import ModelForMachineReadingComprehension
 
 else:
     _import_structure = {
@@ -25,6 +26,8 @@ else:
         ['ModelForTokenClassification', 'ModelForTokenClassificationWithCRF'],
         'text_generation': ['ModelForTextGeneration'],
         'text_ranking': ['ModelForTextRanking'],
+        'machine_reading_comprehension':
+        ['ModelForMachineReadingComprehension'],
     }
 
     import sys

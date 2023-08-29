@@ -45,8 +45,8 @@ class QWenForTextGeneration(QWenPreTrainedModel):
         super().__init__(config)
         self.transformer = QWenModel(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-        assert not (config.bf16 and config.fp16), (
-            'In config, bf16 and fp16 cannot both be true')
+        assert not (config.bf16 and config.fp16
+                    ), 'In config, bf16 and fp16 cannot both be true'
         if config.bf16:
             self.transformer.bfloat16()
             self.lm_head.bfloat16()
@@ -250,4 +250,5 @@ class QWenForTextGeneration(QWenPreTrainedModel):
             prefix_allowed_tokens_fn,
             synced_gpus,
             streamer=streamer,
-            **kwargs)
+            **kwargs,
+        )

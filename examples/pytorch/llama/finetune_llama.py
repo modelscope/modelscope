@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 
 import json
 import torch
+from swift import LoRAConfig, Swift
 
 from modelscope import TrainingArgs, build_dataset_from_file
 from modelscope.hub.snapshot_download import snapshot_download
@@ -16,8 +17,6 @@ from modelscope.models.nlp.llama import LlamaForTextGeneration, LlamaTokenizer
 from modelscope.msdatasets import MsDataset
 from modelscope.msdatasets.dataset_cls.custom_datasets.torch_custom_dataset import \
     TorchCustomDataset
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers import build_trainer
 
 IGNORE_INDEX = -100
@@ -335,12 +334,12 @@ if __name__ == '__main__':
 
     if args.use_lora != 0:
         lora_config = LoRAConfig(
-            replace_modules=['q_proj', 'k_proj', 'v_proj'],
-            rank=args.lora_rank,
+            target_modules=['q_proj', 'k_proj', 'v_proj'],
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout)
         model = model.bfloat16()
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     tokenizer = LlamaTokenizer.from_pretrained(
         model_path,

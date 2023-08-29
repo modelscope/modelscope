@@ -5,47 +5,33 @@ import os
 import random
 import re
 import sys
-from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 #
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from numpy import ndarray
+from swift import LoRAConfig, Swift
 from tensorboard.backend.event_processing.event_accumulator import \
     EventAccumulator
 from torch import Tensor
 from torch import device as Device
-from torch import dtype as Dtype
 from torch.nn import Module
-from torch.nn.parameter import Parameter
 from torch.nn.utils.rnn import pad_sequence
-from torch.optim import Optimizer
-from torch.optim import lr_scheduler as lrs
-from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
-from torch.utils.data import Dataset
 #
 from torchmetrics import Accuracy, MeanMetric
 #
 from tqdm import tqdm
 
 #
-from modelscope import (Model, MsDataset, get_logger, read_config,
-                        snapshot_download)
+from modelscope import Model, MsDataset, get_logger, read_config
 from modelscope.metrics.base import Metric
 from modelscope.metrics.builder import METRICS
 from modelscope.models.nlp.chatglm2 import ChatGLM2Tokenizer
 from modelscope.msdatasets.dataset_cls.custom_datasets import \
     TorchCustomDataset
-from modelscope.swift import LoRAConfig, Swift
-from modelscope.trainers import EpochBasedTrainer
-from modelscope.utils.config import Config, ConfigDict
+from modelscope.utils.config import ConfigDict
 from modelscope.utils.registry import default_group
 
 #

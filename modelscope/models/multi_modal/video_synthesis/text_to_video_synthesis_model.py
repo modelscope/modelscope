@@ -19,6 +19,9 @@ from modelscope.models.multi_modal.video_synthesis.diffusion import (
 from modelscope.models.multi_modal.video_synthesis.unet_sd import UNetSD
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 __all__ = ['TextToVideoSynthesis']
 

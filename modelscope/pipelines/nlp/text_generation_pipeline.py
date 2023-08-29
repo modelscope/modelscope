@@ -2,6 +2,7 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
+import re
 from typing import Any, Dict, Optional, Union
 
 import torch
@@ -19,14 +20,12 @@ from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
+from modelscope.utils.torch_utils import is_on_same_device
 
 __all__ = [
-    'TextGenerationPipeline',
-    'TextGenerationT5Pipeline',
-    'ChatGLM6bTextGenerationPipeline',
-    'ChatGLM6bV2TextGenerationPipeline',
-    'QWenChatPipeline',
-    'QWenTextGenerationPipeline',
+    'TextGenerationPipeline', 'TextGenerationT5Pipeline',
+    'ChatGLM6bTextGenerationPipeline', 'ChatGLM6bV2TextGenerationPipeline',
+    'QWenChatPipeline', 'QWenTextGenerationPipeline', 'SeqGPTPipeline'
 ]
 
 
@@ -242,23 +241,39 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import (ChatGLM2Config,
-                                           ChatGLM2ForConditionalGeneration,
-                                           ChatGLM2Tokenizer)
+        from modelscope import AutoTokenizer
+        device: str = kwargs.get('device', 'gpu')
         if isinstance(model, str):
+            revision = kwargs.get('revision', None)
             model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
-            if torch.cuda.is_available():
-                model = model.cuda()
+                model,
+                revision=revision) if not os.path.exists(model) else model
+            default_device_map = None
+            if device.startswith('gpu') or device.startswith('cuda'):
+                default_device_map = {'': 0}
+            device_map = kwargs.get('device_map', default_device_map)
+            default_torch_dtype = None
+            if use_bf16:
+                default_torch_dtype = torch.bfloat16
+            torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
+            model = Model.from_pretrained(
+                model_dir,
+                trust_remote_code=True,
+                device_map=device_map,
+                torch_dtype=torch_dtype)
+        else:
+            if ((device.startswith('gpu') or device.startswith('cuda'))
+                    and is_on_same_device(model)):
+                model.cuda()
+            if use_bf16:
+                model.bfloat16()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
-        if use_bf16:
-            model = model.bfloat16()
+
         self.model = model
         self.model.eval()
-        self.tokenizer = ChatGLM2Tokenizer.from_pretrained(
-            self.model.model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model.model_dir, trust_remote_code=True)
 
         super().__init__(model=model, **kwargs)
 
@@ -401,6 +416,54 @@ class QWenTextGenerationPipeline(Pipeline):
             self.model.chat(self.tokenizer, inputs,
                             history=None)[OutputKeys.RESPONSE]
         }
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    group_key=Tasks.text_generation, module_name='seqgpt')
+class SeqGPTPipeline(Pipeline):
+
+    def __init__(self, model: Union[Model, str], **kwargs):
+        from modelscope.models.nlp import BloomForTextGeneration
+        from modelscope.utils.hf_util import AutoTokenizer
+
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+            model = Model.from_pretrained(model_dir)
+        self.model = model
+        self.model.eval()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+
+        super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    # define the forward pass
+    def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
+        # gen & decode
+        prompt += '[GEN]'
+        input_ids = self.tokenizer(
+            prompt,
+            return_tensors='pt',
+            padding=True,
+            truncation=True,
+            max_length=1024)
+        input_ids = input_ids.input_ids.cuda()
+        outputs = self.model.generate(
+            input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
+        decoded_sentences = self.tokenizer.batch_decode(
+            outputs, skip_special_tokens=True)
+        decoded_sentence = decoded_sentences[0]
+        decoded_sentence = decoded_sentence[len(prompt):]
+        return {OutputKeys.TEXT: decoded_sentence}
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

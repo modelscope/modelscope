@@ -65,7 +65,7 @@ class Llama2TaskPipeline(TextGenerationPipeline):
 
     def forward(self,
                 inputs,
-                max_length=50,
+                max_length=2048,
                 do_sample=True,
                 top_p=0.85,
                 temperature=1.0,

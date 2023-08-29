@@ -1,23 +1,25 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import TYPE_CHECKING
 
+from modelscope.models.nlp.llama import LlamaConfig as Llama2Config
+from modelscope.models.nlp.llama import LlamaTokenizer as Llama2Tokenizer
+from modelscope.models.nlp.llama import \
+    LlamaTokenizerFast as Llama2TokenizerFast
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import Llama2Config
-    from .text_generation import Llama2ForTextGeneration
     from .backbone import Llama2Model
-    from .tokenization import Llama2Tokenizer
-    from .tokenization_fast import Llama2TokenizerFast
+    from .text_generation import Llama2ForTextGeneration
 else:
     _import_structure = {
-        'configuration': ['Llama2Config'],
-        'text_generation': ['Llama2ForTextGeneration'],
         'backbone': ['Llama2Model'],
-        'tokenization': ['Llama2Tokenizer'],
-        'tokenization_fast': ['Llama2TokenizerFast'],
+        'text_generation': ['Llama2ForTextGeneration'],
     }
-
+    _extra_objects = {
+        'Llama2Config': Llama2Config,
+        'Llama2Tokenizer': Llama2Tokenizer,
+        'Llama2TokenizerFast': Llama2TokenizerFast,
+    }
     import sys
 
     sys.modules[__name__] = LazyImportModule(
@@ -25,5 +27,5 @@ else:
         globals()['__file__'],
         _import_structure,
         module_spec=__spec__,
-        extra_objects={},
+        extra_objects=_extra_objects,
     )

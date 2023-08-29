@@ -19,6 +19,7 @@ from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
+from modelscope.utils.torch_utils import is_on_same_device
 
 __all__ = [
     'TextGenerationPipeline',
@@ -242,23 +243,39 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import (ChatGLM2Config,
-                                           ChatGLM2ForConditionalGeneration,
-                                           ChatGLM2Tokenizer)
+        from modelscope import AutoTokenizer
+        device: str = kwargs.get('device', 'gpu')
         if isinstance(model, str):
+            revision = kwargs.get('revision', None)
             model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
-            if torch.cuda.is_available():
-                model = model.cuda()
+                model,
+                revision=revision) if not os.path.exists(model) else model
+            default_device_map = None
+            if device.startswith('gpu') or device.startswith('cuda'):
+                default_device_map = {'': 0}
+            device_map = kwargs.get('device_map', default_device_map)
+            default_torch_dtype = None
+            if use_bf16:
+                default_torch_dtype = torch.bfloat16
+            torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
+            model = Model.from_pretrained(
+                model_dir,
+                trust_remote_code=True,
+                device_map=device_map,
+                torch_dtype=torch_dtype)
+        else:
+            if ((device.startswith('gpu') or device.startswith('cuda'))
+                    and is_on_same_device(model)):
+                model.cuda()
+            if use_bf16:
+                model.bfloat16()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
-        if use_bf16:
-            model = model.bfloat16()
+
         self.model = model
         self.model.eval()
-        self.tokenizer = ChatGLM2Tokenizer.from_pretrained(
-            self.model.model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model.model_dir, trust_remote_code=True)
 
         super().__init__(model=model, **kwargs)
 

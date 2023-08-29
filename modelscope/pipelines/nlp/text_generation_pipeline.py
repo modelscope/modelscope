@@ -2,9 +2,9 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
+import re
 from typing import Any, Dict, Optional, Union
 
-import re
 import torch
 from transformers import GenerationConfig
 
@@ -23,13 +23,9 @@ from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
 from modelscope.utils.torch_utils import is_on_same_device
 
 __all__ = [
-    'TextGenerationPipeline',
-    'TextGenerationT5Pipeline',
-    'ChatGLM6bTextGenerationPipeline',
-    'ChatGLM6bV2TextGenerationPipeline',
-    'QWenChatPipeline',
-    'QWenTextGenerationPipeline',
-    'SeqGPTPipeline'
+    'TextGenerationPipeline', 'TextGenerationT5Pipeline',
+    'ChatGLM6bTextGenerationPipeline', 'ChatGLM6bV2TextGenerationPipeline',
+    'QWenChatPipeline', 'QWenTextGenerationPipeline', 'SeqGPTPipeline'
 ]
 
 
@@ -450,15 +446,20 @@ class SeqGPTPipeline(Pipeline):
     def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
         # gen & decode
         prompt += '[GEN]'
-        input_ids = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True, max_length=1024)
+        input_ids = self.tokenizer(
+            prompt,
+            return_tensors='pt',
+            padding=True,
+            truncation=True,
+            max_length=1024)
         input_ids = input_ids.input_ids.cuda()
-        outputs = self.model.generate(input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
-        decoded_sentences = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        outputs = self.model.generate(
+            input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
+        decoded_sentences = self.tokenizer.batch_decode(
+            outputs, skip_special_tokens=True)
         decoded_sentence = decoded_sentences[0]
         decoded_sentence = decoded_sentence[len(prompt):]
-        return {
-            OutputKeys.TEXT: decoded_sentence
-        }
+        return {OutputKeys.TEXT: decoded_sentence}
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

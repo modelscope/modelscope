@@ -78,8 +78,10 @@ else:
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'word_alignment_pipeline': ['WordAlignmentPipeline'],
-        'text_generation_pipeline':
-        ['TextGenerationPipeline', 'TextGenerationT5Pipeline', 'SeqGPTPipeline'],
+        'text_generation_pipeline': [
+            'TextGenerationPipeline', 'TextGenerationT5Pipeline',
+            'SeqGPTPipeline'
+        ],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
@@ -100,9 +102,8 @@ else:
         'user_satisfaction_estimation_pipeline':
         ['UserSatisfactionEstimationPipeline'],
         'siamese_uie_pipeline': ['SiameseUiePipeline'],
-        'document_grounded_dialog_generate_pipeline': [
-            'DocumentGroundedDialogGeneratePipeline'
-        ],
+        'document_grounded_dialog_generate_pipeline':
+        ['DocumentGroundedDialogGeneratePipeline'],
         'document_grounded_dialog_rerank_pipeline': [
             'DocumentGroundedDialogRerankPipeline'
         ],

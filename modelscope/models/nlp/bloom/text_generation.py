@@ -9,6 +9,7 @@ from .backbone import MsModelMixin, TorchModel
 
 @MODELS.register_module(
     group_key=Tasks.text_generation, module_name=Models.bloom)
-class BloomForTextGeneration(MsModelMixin, BloomForCausalLMTransform, TorchModel):
+class BloomForTextGeneration(MsModelMixin, BloomForCausalLMTransform,
+                             TorchModel):
 
     pass

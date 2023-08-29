@@ -114,6 +114,7 @@ class Models(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
@@ -420,6 +421,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     fast_instance_segmentation = 'fast-instance-segmentation'
@@ -879,6 +881,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.nerf_recon_vq_compression: (
         Pipelines.nerf_recon_vq_compression,
         'damo/cv_nerf-3d-reconstruction-vq-compression_damo'),
+    Tasks.surface_recon_common: (Pipelines.surface_recon_common,
+                                 'damo/cv_surface-reconstruction-common'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (

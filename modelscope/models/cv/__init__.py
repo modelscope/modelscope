@@ -22,10 +22,11 @@ from . import (action_recognition, animal_recognition, bad_image_detecting,
                referring_video_object_segmentation,
                robust_image_classification, salient_detection,
                shop_segmentation, stream_yolo, super_resolution,
-               table_recognition, video_deinterlace, video_frame_interpolation,
-               video_object_segmentation, video_panoptic_segmentation,
-               video_single_object_tracking, video_stabilization,
-               video_summarization, video_super_resolution, vidt, virual_tryon,
-               vision_middleware, vop_retrieval)
+               surface_recon_common, table_recognition, video_deinterlace,
+               video_frame_interpolation, video_object_segmentation,
+               video_panoptic_segmentation, video_single_object_tracking,
+               video_stabilization, video_summarization,
+               video_super_resolution, vidt, virual_tryon, vision_middleware,
+               vop_retrieval)
 
 # yapf: enable

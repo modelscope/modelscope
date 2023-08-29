@@ -433,10 +433,10 @@ class SeqGPTPipeline(Pipeline):
     def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
         # gen & decode
         input_ids = self.tokenizer(prompt + '[GEN]',
-                                  return_tensors="pt",
-                                  padding=True,
-                                  truncation=True,
-                                  max_length=1024).input_ids
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=1024).input_ids
         input_ids = input_ids.cuda()
         outputs = self.model.generate(input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
         decoded_sentences = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)

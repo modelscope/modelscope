@@ -331,10 +331,14 @@ class TextGenerationTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_ecomgpt_with_model_name(self):
-        PROMPT_TEMPLATE = "Below is an instruction that describes a task. " + \
-                          "Write a response that appropriately completes the request.\n\n" + \
-                          "### Instruction:\n{text}\n{instruction}\n\n### Response:"
-        inputs = {'instruction': 'Classify the sentence, candidate labels: product, brand', 'text': '照相机'}
+        PROMPT_TEMPLATE = 'Below is an instruction that describes a task. ' + \
+                          'Write a response that appropriately completes the request.\n\n' + \
+                          '### Instruction:\n{text}\n{instruction}\n\n### Response:'
+        inputs = {
+            'instruction':
+            'Classify the sentence, candidate labels: product, brand',
+            'text': '照相机'
+        }
         prompt = PROMPT_TEMPLATE.format(**inputs)
         self.run_pipeline_with_model_id(self.ecomgpt_model_id, prompt)
 

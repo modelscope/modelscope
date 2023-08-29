@@ -21,6 +21,7 @@ class MsModelMixin:
         """
 
         model_dir = kwargs.pop('model_dir', None)
+        kwargs.pop('device', None)
         if model_dir is None:
             config = BloomConfig(**kwargs)
             model = cls(config)

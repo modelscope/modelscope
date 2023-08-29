@@ -204,12 +204,12 @@ preprocessor = TextGenerationTransformersPreprocessor(
 
 if args.use_lora != 0:
     lora_config = LoRAConfig(
-        replace_modules=['pack'],
-        rank=args.lora_rank,
+        target_modules=['pack'],
+        r=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
     model = model.bfloat16()
-    Swift.prepare_model(model, lora_config)
+    model = Swift.prepare_model(model, lora_config)
 
 kwargs = dict(
     model=model,

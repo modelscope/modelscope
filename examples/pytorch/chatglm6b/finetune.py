@@ -242,15 +242,15 @@ elif not args.use_lora:
 
 if args.use_lora != 0:
     lora_config = LoRAConfig(
-        replace_modules=['attention.query_key_value'],
-        rank=args.lora_rank,
+        target_modules=['attention.query_key_value'],
+        r=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
     if args.use_amp:
         model = model.float()
     else:
         model = model.bfloat16()
-    Swift.prepare_model(model, lora_config)
+    model = Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
 

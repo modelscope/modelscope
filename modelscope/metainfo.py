@@ -220,7 +220,9 @@ class Models(object):
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    cones2_inference = 'cones2-inference'
     mplug_owl = 'mplug-owl'
+
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
     text_to_360panorama_image = 'text-to-360panorama-image'
@@ -545,6 +547,7 @@ class Pipelines(object):
     disco_guided_diffusion = 'disco_guided_diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
+    cones2_inference = 'cones2-inference'
     text_to_video_synthesis = 'latent-text-to-video-synthesis'  # latent-text-to-video-synthesis
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
@@ -951,6 +954,7 @@ class MultiModalTrainers(object):
     lora_diffusion = 'lora-diffusion'
     dreambooth_diffusion = 'dreambooth-diffusion'
     custom_diffusion = 'custom-diffusion'
+    cones2_inference = 'cones2-inference'
 
 
 class AudioTrainers(object):

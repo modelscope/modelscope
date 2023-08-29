@@ -29,30 +29,8 @@ def _processing_alpaca(
     return dataset
 
 
-def _processing_multi_alpaca(datasets: [HfDataset, List]) -> HfDataset:
-    output = []
-    res = []
-
-    if not isinstance(datasets, List):
-        datasets = [datasets]
-    for dataset in datasets:
-        instruction = dataset['instruction']
-        input_ = dataset['input']
-        output_ = dataset['output']
-        for inst, inp, opt in zip(instruction, input_, output_):
-            if inp is not None and inp != '':
-                if inp.startswith('输入：'):
-                    inp = inp[3:]
-                inst = f'{inst}\n{inp}'
-            if opt is not None and opt != '':
-                res.append(inst)
-                output.append(opt)
-    dataset = HfDataset.from_dict({'instruction': res, 'output': output})
-    return dataset
-
-
-def get_alpaca_en_dataset() -> HfDataset:
-    dataset_en: HfDataset = MsDataset.load(
+def get_alpaca_gpt4_en_dataset() -> HfDataset:
+    dataset: HfDataset = MsDataset.load(
         'AI-ModelScope/alpaca-gpt4-data-en', split='train').to_hf_dataset()
     return _processing_alpaca(dataset)
 
@@ -111,26 +89,6 @@ def get_multi_alpaca_all() -> HfDataset:
     dataset = concatenate_datasets(dataset_list)
     return dataset
 
-<<<<<<< HEAD
-def get_multi_alpaca_dataset() -> HfDataset:
-    dataset_multi = []
-    for subset_name in [
-            'ar', 'de', 'es', 'fr', 'id', 'ja', 'ko', 'pt', 'ru', 'th', 'vi'
-    ]:
-        dataset_sub: HfDataset = MsDataset.load(
-            'damo/nlp_polylm_multialpaca_sft',
-            subset_name=subset_name,
-            split='train').to_hf_dataset()
-        dataset_multi.append(dataset_sub)
-    return _processing_multi_alpaca(dataset_multi)
-
-
-def get_seed(random_state: RandomState) -> int:
-    seed_max = np.iinfo(np.int32).max
-    seed = random_state.randint(0, seed_max)
-    return seed
-=======
->>>>>>> master-github
 
 def get_code_alpaca_en_dataset() -> HfDataset:
     dataset: HfDataset = MsDataset.load(
@@ -145,12 +103,6 @@ def get_instinwild_zh_dataset():
     return _processing_alpaca(dataset)
 
 
-<<<<<<< HEAD
-DATASET_MAPPER = {
-    'alpaca-en': get_alpaca_en_dataset,
-    'alpaca-zh': get_alpaca_zh_dataset,
-    'alpaca-multi': get_multi_alpaca_dataset,
-=======
 def get_instinwild_en_dataset():
     dataset: HfDataset = MsDataset.load(
         'wyj123456/instinwild', subset_name='subset',
@@ -170,7 +122,6 @@ DATASET_MAPPING = {
     'code-en': get_code_alpaca_en_dataset,
     'instinwild-zh': get_instinwild_zh_dataset,
     'instinwild-en': get_instinwild_en_dataset,
->>>>>>> master-github
 }
 
 

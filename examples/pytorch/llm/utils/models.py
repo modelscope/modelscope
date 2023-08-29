@@ -47,27 +47,9 @@ def get_model_tokenizer_from_repo(model_dir: str,
     return model, tokenizer
 
 
-def get_model_tokenizer_polylm(model_dir: str,
-                               torch_dtype: Dtype,
-                               load_model: bool = True):
-    """load from an independent repository"""
-    model_config = AutoConfig.from_pretrained(
-        model_dir, trust_remote_code=True)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=False)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            device_map='auto',
-            torch_dtype=torch_dtype,
-            trust_remote_code=True)
-    return model, tokenizer
-
-
-def get_model_tokenizer_chatglm2(model_dir: str,
+def get_model_tokenizer_from_sdk(config_class: type,
+                                 tokenizer_class: type,
+                                 model_dir: str,
                                  torch_dtype: Dtype,
                                  load_model: bool = True,
                                  model_config=None,
@@ -214,19 +196,9 @@ MODEL_MAPPING = {
         'revision': 'v.1.0.4',
         'get_function': get_model_tokenizer_qwen,
         'lora_TM': LoRATM.qwen,
-<<<<<<< HEAD
-    },
-    'polylm-13b': {
-        'model_id': 'damo/nlp_polylm_13b_text_generation',
-        'revision': 'v1.0.3',
-        'get_function': get_model_tokenizer_polylm,
-        'torch_dtype': torch.bfloat16,
-        'lora_TM': LoRATM.polylm
-=======
         'special_token_mapper': {
             'eos_token': '<|endoftext|>'
         }
->>>>>>> master-github
     }
 }
 

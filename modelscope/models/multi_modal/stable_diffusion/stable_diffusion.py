@@ -20,7 +20,7 @@ from modelscope.utils.constant import Tasks
 @MODELS.register_module(
     Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
 class StableDiffusion(TorchModel):
-    """ The implementation of efficient diffusion tuning model based on TorchModel.
+    """ The implementation of stable diffusion model based on TorchModel.
 
     This model is constructed with the implementation of stable diffusion model. If you want to
     finetune lightweight parameters on your own dataset, you can define you own tuner module
@@ -28,7 +28,7 @@ class StableDiffusion(TorchModel):
     """
 
     def __init__(self, model_dir, *args, **kwargs):
-        """ Initialize a vision efficient diffusion tuning model.
+        """ Initialize a vision stable diffusion model.
 
         Args:
           model_dir: model id or path

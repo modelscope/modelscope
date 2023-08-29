@@ -56,7 +56,8 @@ class OssUtilities:
             self.endpoint = f"https://{oss_config['Region']}.aliyuncs.com"
         self.bucket_name = oss_config[BUCKET]
         auth = oss2.StsAuth(self.key, self.secret, self.token)
-        self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
+        self.bucket = oss2.Bucket(
+            auth, self.endpoint, self.bucket_name, connect_timeout=120)
         self.oss_dir = oss_config[DIR]
         self.oss_backup_dir = oss_config[BACK_DIR]
 

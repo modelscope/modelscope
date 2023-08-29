@@ -6,9 +6,7 @@ from torch import nn
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
 from modelscope.trainers.builder import TRAINERS
-from modelscope.trainers.default_config import merge_hooks
 from modelscope.trainers.trainer import EpochBasedTrainer
-from modelscope.utils.constant import ModeKeys
 
 
 @TRAINERS.register_module(module_name=Trainers.vision_efficient_tuning)

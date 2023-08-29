@@ -28,7 +28,6 @@ from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
 from modelscope.msdatasets.ms_dataset import MsDataset
 from modelscope.outputs import ModelOutputBase
 from modelscope.preprocessors.base import Preprocessor
-from modelscope.swift import Swift
 from modelscope.trainers.hooks.builder import HOOKS
 from modelscope.trainers.hooks.priority import Priority, get_priority
 from modelscope.trainers.lrscheduler.builder import build_lr_scheduler
@@ -41,6 +40,7 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, ConfigFields,
 from modelscope.utils.data_utils import to_device
 from modelscope.utils.device import create_device
 from modelscope.utils.file_utils import func_receive_dict_inputs
+from modelscope.utils.import_utils import is_swift_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import build_from_cfg
 from modelscope.utils.torch_utils import (compile_model, get_dist_info,
@@ -53,6 +53,8 @@ from .default_config import merge_cfg, merge_hooks, update_cfg
 from .hooks.hook import Hook
 from .parallel.builder import build_parallel
 from .parallel.utils import is_parallel
+
+TunerConfig = Union['swift.SwiftConfig', 'swift.PeftConfig']
 
 
 @TRAINERS.register_module(module_name=Trainers.default)
@@ -118,7 +120,8 @@ class EpochBasedTrainer(BaseTrainer):
             seed: int = 42,
             callbacks: Optional[List[Hook]] = None,
             samplers: Optional[Union[Sampler, Dict[str, Sampler]]] = None,
-            efficient_tuners: List[Dict] = None,
+            efficient_tuners: Union[Dict[str, TunerConfig],
+                                    TunerConfig] = None,
             **kwargs):
 
         self._seed = seed
@@ -270,8 +273,12 @@ class EpochBasedTrainer(BaseTrainer):
 
     def tune_module(self, efficient_tuners):
         if efficient_tuners is not None:
-            for tuner in efficient_tuners:
-                self.model = Swift.prepare_model(self.model, tuner)
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+                )
+            from swift import Swift
+            self.model = Swift.prepare_model(self.model, efficient_tuners)
 
     def place_model(self):
         """Place model to device, or to DDP

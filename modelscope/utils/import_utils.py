@@ -246,6 +246,10 @@ def is_wenetruntime_available():
     return importlib.util.find_spec('wenetruntime') is not None
 
 
+def is_swift_available():
+    return importlib.util.find_spec('swift') is not None
+
+
 def is_tf_available():
     return _tf_available
 

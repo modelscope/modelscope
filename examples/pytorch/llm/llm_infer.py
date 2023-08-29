@@ -7,13 +7,13 @@ from functools import partial
 from typing import List, Optional
 
 import torch
+from swift import LoRAConfig, Swift
 from transformers import GenerationConfig, TextStreamer
 from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING, get_dataset,
                    get_model_tokenizer, inference, parse_args, process_dataset,
                    tokenize_function)
 
 from modelscope import get_logger
-from modelscope.swift import LoRAConfig, Swift
 
 warnings.warn(
     'This directory has been migrated to '
@@ -76,13 +76,15 @@ def llm_infer(args: InferArguments) -> None:
     # ### Preparing lora
     if args.sft_type == 'lora':
         lora_config = LoRAConfig(
-            replace_modules=args.lora_target_modules,
-            rank=args.lora_rank,
+            target_modules=args.lora_target_modules,
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p,
             pretrained_weights=args.ckpt_path)
         logger.info(f'lora_config: {lora_config}')
         model = Swift.prepare_model(model, lora_config)
+        state_dict = torch.load(args.ckpt_path, map_location='cpu')
+        model.load_state_dict(state_dict)
     elif args.sft_type == 'full':
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
         model.load_state_dict(state_dict)

@@ -2,16 +2,10 @@
 
 from typing import Dict
 
-import numpy as np
-from sklearn.metrics import accuracy_score, f1_score
-
 from modelscope.metainfo import Metrics
-from modelscope.outputs import OutputKeys
 from modelscope.utils.registry import default_group
-from modelscope.utils.tensor_utils import (torch_nested_detach,
-                                           torch_nested_numpify)
 from .base import Metric
-from .builder import METRICS, MetricKeys
+from .builder import METRICS
 
 
 @METRICS.register_module(

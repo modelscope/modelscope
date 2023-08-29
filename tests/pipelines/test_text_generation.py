@@ -45,8 +45,8 @@ class TextGenerationTest(unittest.TestCase):
 
         self.llama_model_id = 'skyline2006/llama-7b'
         self.llama_input = 'My name is Merve and my favorite'
-        self.seqgpt_model_id = '/nas-alinlp/xuanjie.wxb/MaaS_models/nlp_seqgpt-560m/'
-        self.ecomgpt_model_id = '/nas-alinlp/xuanjie.wxb/MaaS_models/nlp_seqgpt-560m/'
+        self.seqgpt_model_id = 'damo/nlp_seqgpt-560m'
+        self.ecomgpt_model_id = 'damo/nlp_seqgpt-560m'
 
     def run_pipeline_with_model_instance(self, model_id, input):
         model = Model.from_pretrained(model_id)

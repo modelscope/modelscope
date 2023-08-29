@@ -79,7 +79,7 @@ else:
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'word_alignment_pipeline': ['WordAlignmentPipeline'],
         'text_generation_pipeline':
-        ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
+        ['TextGenerationPipeline', 'TextGenerationT5Pipeline', 'SeqGPTPipeline'],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],

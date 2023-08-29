@@ -28,8 +28,7 @@ __all__ = [
     'ChatGLM6bV2TextGenerationPipeline',
     'QWenChatPipeline',
     'QWenTextGenerationPipeline',
-    'SeqGPTPipeline',
-    'EcomGPTPipeline'
+    'SeqGPTPipeline'
 ]
 
 
@@ -405,6 +404,7 @@ class QWenTextGenerationPipeline(Pipeline):
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:
         return input
 
+
 @PIPELINES.register_module(
     group_key=Tasks.text_generation, module_name='seqgpt')
 class SeqGPTPipeline(Pipeline):
@@ -432,12 +432,16 @@ class SeqGPTPipeline(Pipeline):
     # define the forward pass
     def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
         # gen & decode
-        input_ids = self.tokenizer(prompt + '[GEN]', return_tensors="pt", padding=True, truncation=True, max_length=1024).input_ids
+        input_ids = self.tokenizer(prompt + '[GEN]',
+                                  return_tensors="pt",
+                                  padding=True,
+                                  truncation=True,
+                                  max_length=1024).input_ids
         input_ids = input_ids.cuda()
         outputs = self.model.generate(input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
         decoded_sentences = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         decoded_sentence = decoded_sentences[0]
-        decoded_sentence = decoded_sentence[len(prompt) :]
+        decoded_sentence = decoded_sentence[len(prompt):]
         return {
             OutputKeys.TEXT: decoded_sentence
         }

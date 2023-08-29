@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .word_alignment_pipeline import WordAlignmentPipeline
-    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
+    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline, SeqGPTPipeline
     from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline

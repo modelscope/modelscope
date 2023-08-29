@@ -4,6 +4,7 @@
 import os
 from typing import Any, Dict, Optional, Union
 
+import re
 import torch
 from transformers import GenerationConfig
 
@@ -27,6 +28,8 @@ __all__ = [
     'ChatGLM6bV2TextGenerationPipeline',
     'QWenChatPipeline',
     'QWenTextGenerationPipeline',
+    'SeqGPTPipeline',
+    'EcomGPTPipeline'
 ]
 
 
@@ -396,6 +399,47 @@ class QWenTextGenerationPipeline(Pipeline):
             OutputKeys.TEXT:
             self.model.chat(self.tokenizer, inputs,
                             history=None)[OutputKeys.RESPONSE]
+        }
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+@PIPELINES.register_module(
+    group_key=Tasks.text_generation, module_name='seqgpt')
+class SeqGPTPipeline(Pipeline):
+
+    def __init__(self, model: Union[Model, str], **kwargs):
+        from modelscope.models.nlp import BloomForTextGeneration
+        from modelscope.utils.hf_util import AutoTokenizer
+
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+            model = Model.from_pretrained(model_dir)
+        self.model = model
+        self.model.eval()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+
+        super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    # define the forward pass
+    def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
+        # gen & decode
+        input_ids = self.tokenizer(prompt + '[GEN]', return_tensors="pt", padding=True, truncation=True, max_length=1024).input_ids
+        input_ids = input_ids.cuda()
+        outputs = self.model.generate(input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
+        decoded_sentences = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        decoded_sentence = decoded_sentences[0]
+        decoded_sentence = decoded_sentence[len(prompt) :]
+        return {
+            OutputKeys.TEXT: decoded_sentence
         }
 
     # format the outputs from pipeline

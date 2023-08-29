@@ -17,14 +17,16 @@ from modelscope.utils.config import ConfigDict
 
 class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
 
-    def __init__(self, torch_type=torch.float32):
+    def __init__(self, torch_type=torch.float32, safe_serialization=False):
         """Checkpoint processor for lora diffusion.
 
         Args:
             torch_type: The torch type, default is float32.
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
 
         """
         self.torch_type = torch_type
+        self.safe_serialization = safe_serialization
 
     def save_checkpoints(self,
                          trainer,
@@ -35,7 +37,8 @@ class LoraDiffusionCheckpointProcessor(CheckpointProcessor):
         """Save the state dict for lora tune model.
         """
         trainer.model.unet = trainer.model.unet.to(self.torch_type)
-        trainer.model.unet.save_attn_procs(output_dir)
+        trainer.model.unet.save_attn_procs(
+            output_dir, safe_serialization=self.safe_serialization)
 
 
 @TRAINERS.register_module(module_name=Trainers.lora_diffusion)
@@ -48,17 +51,20 @@ class LoraDiffusionTrainer(EpochBasedTrainer):
         Args:
             lora_rank: The rank size of lora intermediate linear.
             torch_type: The torch type, default is float32.
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
 
         """
         lora_rank = kwargs.pop('lora_rank', 4)
         torch_type = kwargs.pop('torch_type', torch.float32)
+        safe_serialization = kwargs.pop('safe_serialization', False)
 
         # set lora save checkpoint processor
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
         ckpt_hook.set_processor(
-            LoraDiffusionCheckpointProcessor(torch_type=torch_type))
+            LoraDiffusionCheckpointProcessor(
+                torch_type=torch_type, safe_serialization=safe_serialization))
         # Set correct lora layers
         lora_attn_procs = {}
         for name in self.model.unet.attn_processors.keys():

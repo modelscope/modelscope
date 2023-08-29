@@ -37,6 +37,15 @@ def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
 
 class LoraDiffusionXLCheckpointProcessor(CheckpointProcessor):
 
+    def __init__(self, safe_serialization=False):
+        """Checkpoint processor for lora diffusion.
+
+        Args:
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
+
+        """
+        self.safe_serialization = safe_serialization
+
     def save_checkpoints(self,
                          trainer,
                          checkpoint_path_prefix,
@@ -55,7 +64,9 @@ class LoraDiffusionXLCheckpointProcessor(CheckpointProcessor):
                     f'{attn_processor_key}.{parameter_key}'] = parameter
 
         StableDiffusionXLPipeline.save_lora_weights(
-            output_dir, unet_lora_layers=unet_lora_layers_to_save)
+            output_dir,
+            unet_lora_layers=unet_lora_layers_to_save,
+            safe_serialization=self.safe_serialization)
 
 
 @TRAINERS.register_module(module_name=Trainers.lora_diffusion_xl)
@@ -67,15 +78,19 @@ class LoraDiffusionXLTrainer(EpochBasedTrainer):
 
         Args:
             lora_rank: The rank size of lora intermediate linear.
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
 
         """
         lora_rank = kwargs.pop('lora_rank', 16)
+        safe_serialization = kwargs.pop('safe_serialization', False)
 
         # set lora save checkpoint processor
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]
-        ckpt_hook.set_processor(LoraDiffusionXLCheckpointProcessor())
+        ckpt_hook.set_processor(
+            LoraDiffusionXLCheckpointProcessor(
+                safe_serialization=safe_serialization))
 
         # Add lora weights to attention layers and set correct lora layers
         unet_lora_attn_procs = {}

@@ -112,7 +112,7 @@ class VideoToVideo(TorchModel):
         generator.eval()
         load_dict = torch.load(cfg.model_path, map_location='cpu')
         ret = generator.load_state_dict(load_dict['state_dict'], strict=True)
-        self.generator = generator
+        self.generator = generator.half()
         logger.info('Load model {} path {}, with local status {}'.format(
             cfg.UNet.type, cfg.model_path, ret))
 
@@ -175,7 +175,7 @@ class VideoToVideo(TorchModel):
         video_data = rearrange(video_data, 'b f c h w -> (b f) c h w')
 
         video_data_list = torch.chunk(
-            video_data, video_data.shape[0] // 2, dim=0)
+            video_data, video_data.shape[0] // 1, dim=0)
         with torch.no_grad():
             decode_data = []
             for vd_data in video_data_list:
@@ -185,6 +185,7 @@ class VideoToVideo(TorchModel):
             video_data_feature = torch.cat(decode_data, dim=0)
             video_data_feature = rearrange(
                 video_data_feature, '(b f) c h w -> b c f h w', b=batch_size)
+        torch.cuda.empty_cache()
 
         with amp.autocast(enabled=True):
             total_noise_levels = 600
@@ -209,6 +210,7 @@ class VideoToVideo(TorchModel):
                 t_min=0,
                 discretization='trailing')
 
+            torch.cuda.empty_cache()
             scale_factor = 0.18215
             vid_tensor_feature = 1. / scale_factor * gen_vid
 

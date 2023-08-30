@@ -204,7 +204,14 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.video_embedding:
     InputType.VIDEO,
-    Tasks.virtual_try_on: (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+    Tasks.virtual_try_on: [
+        (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+        {
+            'masked_model': InputType.IMAGE,
+            'pose': InputType.IMAGE,
+            'cloth': InputType.IMAGE,
+        }
+    ],
     Tasks.text_driven_segmentation: {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.TEXT: InputType.TEXT

@@ -21,48 +21,41 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-TIKTOKEN_NAME = 'qwen.tiktoken'
+VOCAB_FILES_NAMES = {'vocab_file': 'qwen.tiktoken'}
 
 
 class QWenTokenizer(PreTrainedTokenizer):
     """QWen tokenizer."""
     """NOTE: This tokenizer will not handle special tokens to avoid injection attacks"""
 
-    @classmethod
-    def from_pretrained(cls,
-                        pretrained_model_name_or_path,
-                        cache_dir=None,
-                        *inputs,
-                        **kwargs):
-        merges_file = os.path.join(pretrained_model_name_or_path,
-                                   TIKTOKEN_NAME)
-        tokenizer = cls(merges_file, *inputs, **kwargs)
-        return tokenizer
+    vocab_files_names = VOCAB_FILES_NAMES
 
-    def __init__(self,
-                 merges_file,
-                 errors='replace',
-                 max_len=None,
-                 unk_token='<|endoftext|>',
-                 bos_token='<|endoftext|>',
-                 eos_token='<|endoftext|>',
-                 pad_token=None,
-                 add_prefix_space=False,
-                 add_bos_token=False,
-                 add_more_sp_tokens=True,
-                 **kwargs):
-        bos_token = AddedToken(
-            bos_token, lstrip=False, rstrip=False) if isinstance(
-                bos_token, str) else bos_token
-        eos_token = AddedToken(
-            eos_token, lstrip=False, rstrip=False) if isinstance(
-                eos_token, str) else eos_token
-        unk_token = AddedToken(
-            unk_token, lstrip=False, rstrip=False) if isinstance(
-                unk_token, str) else unk_token
-        pad_token = AddedToken(
-            pad_token, lstrip=False, rstrip=False) if isinstance(
-                pad_token, str) else pad_token
+    def __init__(
+        self,
+        vocab_file,
+        errors='replace',
+        max_len=None,
+        unk_token='<|endoftext|>',
+        bos_token='<|endoftext|>',
+        eos_token='<|endoftext|>',
+        pad_token=None,
+        add_prefix_space=False,
+        add_bos_token=False,
+        add_more_sp_tokens=True,
+        **kwargs,
+    ):
+        bos_token = (
+            AddedToken(bos_token, lstrip=False, rstrip=False) if isinstance(
+                bos_token, str) else bos_token)
+        eos_token = (
+            AddedToken(eos_token, lstrip=False, rstrip=False) if isinstance(
+                eos_token, str) else eos_token)
+        unk_token = (
+            AddedToken(unk_token, lstrip=False, rstrip=False) if isinstance(
+                unk_token, str) else unk_token)
+        pad_token = (
+            AddedToken(pad_token, lstrip=False, rstrip=False) if isinstance(
+                pad_token, str) else pad_token)
         super().__init__(
             errors=errors,
             unk_token=unk_token,
@@ -77,14 +70,21 @@ class QWenTokenizer(PreTrainedTokenizer):
 
         self.errors = errors  # how to handle errors in decoding
 
-        name = 'QWen'
+        name = 'Qwen'
         ENDOFTEXT = '<|endoftext|>'
         IMSTART = '<|im_start|>'
         IMEND = '<|im_end|>'
         if add_more_sp_tokens:
-            special_tokens = (ENDOFTEXT, IMSTART, IMEND, '<R>', '<S>', '<X>',
-                              '<mask>', '<sep>') + tuple(
-                                  [f'<extra_{i}>' for i in range(200)])
+            special_tokens = (
+                ENDOFTEXT,
+                IMSTART,
+                IMEND,
+                '<R>',
+                '<S>',
+                '<X>',
+                '<mask>',
+                '<sep>',
+            ) + tuple([f'<extra_{i}>' for i in range(200)])
         else:
             special_tokens = (ENDOFTEXT, IMSTART, IMEND)
 
@@ -100,7 +100,7 @@ class QWenTokenizer(PreTrainedTokenizer):
                                     for line in contents.splitlines() if line)
             }
 
-        mergeable_ranks = load_tiktoken_bpe(merges_file)
+        mergeable_ranks = load_tiktoken_bpe(vocab_file)
         special_tokens = {
             token: index
             for index, token in enumerate(
@@ -113,9 +113,9 @@ class QWenTokenizer(PreTrainedTokenizer):
             mergeable_ranks=mergeable_ranks,
             special_tokens=special_tokens,
         )
-        assert len(mergeable_ranks) + len(
-            special_tokens
-        ) == enc.n_vocab, f'{len(mergeable_ranks) + len(special_tokens)} != {enc.n_vocab} in encoding'
+        assert (
+            len(mergeable_ranks) + len(special_tokens) == enc.n_vocab
+        ), f'{len(mergeable_ranks) + len(special_tokens)} != {enc.n_vocab} in encoding'
 
         self.mergeable_ranks = mergeable_ranks
         self.encoder = self.mergeable_ranks
@@ -147,7 +147,7 @@ class QWenTokenizer(PreTrainedTokenizer):
         if len(ids) > self.max_len:
             logger.warning(
                 'Token indices sequence length is longer than the specified maximum '
-                ' sequence length for this OpenAI GPT model ({} > {}). Running this'
+                ' sequence length for this model ({} > {}). Running this'
                 ' sequence through the model will result in indexing errors'.
                 format(len(ids), self.max_len))
         return ids
@@ -173,10 +173,6 @@ class QWenTokenizer(PreTrainedTokenizer):
         Args:
             text (`str`):
                 The sequence to be encoded.
-            pair (`str`, *optional*):
-                A second sequence to be encoded with the first.
-            add_special_tokens (`bool`, *optional*, defaults to `False`):
-                Whether or not to add the special tokens associated with the corresponding model.
             kwargs (additional keyword arguments, *optional*):
                 Will be passed to the underlying model specific encode method. See details in
                 [`~PreTrainedTokenizerBase.__call__`]
@@ -205,7 +201,34 @@ class QWenTokenizer(PreTrainedTokenizer):
         return self.tokenizer.n_vocab
 
     def _convert_id_to_token(self, index: int) -> str:
-        raise NotImplementedError
+        if index >= self.tokenizer.n_vocab:
+            return self.unk_token
+        return self.tokenizer.decode([index])
+
+    def _convert_token_to_id(self, token: str) -> int:
+        """Converts a token to an id using the vocab."""
+        return self.encoder.get(
+            token.encode('UTF-8'),
+            self.tokenizer.encode(self.unk_token, allowed_special='all')[0],
+        )
+
+    @property
+    def all_special_tokens(self) -> List[str]:
+        """
+        `List[str]`: All the special tokens (`'<unk>'`, `'<cls>'`, etc.) mapped to class attributes.
+
+        Convert tokens of `tokenizers.AddedToken` type to string.
+        """
+        all_toks = [str(s) for s in self.special_tokens.keys()]
+        return all_toks
+
+    @property
+    def all_special_ids(self) -> List[int]:
+        """
+        `List[int]`: List the ids of the special tokens(`'<unk>'`, `'<cls>'`, etc.) mapped to class attributes.
+        """
+        all_ids = [v for v in self.special_tokens.values()]
+        return all_ids
 
     def _tokenize(self, text, **kwargs):
         """
@@ -220,9 +243,10 @@ class QWenTokenizer(PreTrainedTokenizer):
         self,
         token_ids: Union[int, List[int]],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool = None,
         **kwargs,
     ) -> str:
         if isinstance(token_ids, int):
             token_ids = [token_ids]
+        if skip_special_tokens:
+            token_ids = [i for i in token_ids if i not in self.all_special_ids]
         return self.tokenizer.decode(token_ids)

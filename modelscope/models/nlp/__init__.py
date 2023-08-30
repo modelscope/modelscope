@@ -16,7 +16,7 @@ if TYPE_CHECKING:
         BertConfig,
         SiameseUieModel,
     )
-    from .bloom import BloomModel
+    from .bloom import BloomModel, BloomForTextGeneration
     from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
     from .glm_130b import GLM130bForTextGeneration
     from .csanmt import CsanmtForTranslation
@@ -65,6 +65,7 @@ if TYPE_CHECKING:
         ModelForTextRanking,
         ModelForTokenClassification,
         ModelForTokenClassificationWithCRF,
+        ModelForMachineReadingComprehension,
     )
     from .unite import UniTEForTranslationEvaluation
     from .use import UserSatisfactionEstimation
@@ -78,7 +79,6 @@ if TYPE_CHECKING:
     from .llama import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
     from .llama2 import Llama2ForTextGeneration, Llama2Config, Llama2Model, Llama2Tokenizer, Llama2TokenizerFast
     from .qwen import QWenForTextGeneration, QWenConfig, QWenModel, QWenTokenizer
-
 else:
     _import_structure = {
         'bart': ['BartForTextErrorCorrection'],
@@ -93,7 +93,7 @@ else:
             'BertConfig',
             'SiameseUieModel',
         ],
-        'bloom': ['BloomModel'],
+        'bloom': ['BloomModel', 'BloomForTextGeneration'],
         'csanmt': ['CsanmtForTranslation'],
         'canmt': ['CanmtForTranslation'],
         'polylm': ['PolyLMForTextGeneration'],
@@ -159,6 +159,7 @@ else:
             'ModelForTextRanking',
             'ModelForTokenClassification',
             'ModelForTokenClassificationWithCRF',
+            'ModelForMachineReadingComprehension',
         ],
         'sentence_embedding': ['SentenceEmbedding'],
         'T5': ['T5ForConditionalGeneration'],

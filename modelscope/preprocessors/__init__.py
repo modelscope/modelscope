@@ -46,7 +46,8 @@ if TYPE_CHECKING:
         CanmtTranslationPreprocessor, DialogueClassificationUsePreprocessor,
         SiameseUiePreprocessor, DocumentGroundedDialogGeneratePreprocessor,
         DocumentGroundedDialogRetrievalPreprocessor,
-        DocumentGroundedDialogRerankPreprocessor)
+        DocumentGroundedDialogRerankPreprocessor,
+        MachineReadingComprehensionForNERPreprocessor)
     from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
 
 else:
@@ -77,7 +78,8 @@ else:
         'nlp': [
             'DocumentSegmentationTransformersPreprocessor',
             'FaqQuestionAnsweringTransformersPreprocessor',
-            'FillMaskPoNetPreprocessor', 'FillMaskTransformersPreprocessor',
+            'FillMaskPoNetPreprocessor',
+            'FillMaskTransformersPreprocessor',
             'NLPTokenizerPreprocessorBase',
             'TextRankingTransformersPreprocessor',
             'RelationExtractionTransformersPreprocessor',
@@ -85,26 +87,34 @@ else:
             'TextGenerationSentencePiecePreprocessor',
             'TextClassificationTransformersPreprocessor',
             'TokenClassificationTransformersPreprocessor',
-            'TextErrorCorrectionPreprocessor', 'WordAlignmentPreprocessor',
-            'TextGenerationTransformersPreprocessor', 'Tokenize',
+            'TextErrorCorrectionPreprocessor',
+            'WordAlignmentPreprocessor',
+            'TextGenerationTransformersPreprocessor',
+            'Tokenize',
             'TextGenerationT5Preprocessor',
             'WordSegmentationBlankSetToLabelPreprocessor',
-            'MGLMSummarizationPreprocessor', 'CodeGeeXPreprocessor',
+            'MGLMSummarizationPreprocessor',
+            'CodeGeeXPreprocessor',
             'ZeroShotClassificationTransformersPreprocessor',
-            'TextGenerationJiebaPreprocessor', 'SentencePiecePreprocessor',
-            'NERPreprocessorViet', 'NERPreprocessorThai',
+            'TextGenerationJiebaPreprocessor',
+            'SentencePiecePreprocessor',
+            'NERPreprocessorViet',
+            'NERPreprocessorThai',
             'WordSegmentationPreprocessorThai',
-            'DialogIntentPredictionPreprocessor', 'DialogModelingPreprocessor',
+            'DialogIntentPredictionPreprocessor',
+            'DialogModelingPreprocessor',
             'DialogStateTrackingPreprocessor',
             'ConversationalTextToSqlPreprocessor',
             'TableQuestionAnsweringPreprocessor',
             'TranslationEvaluationTransformersPreprocessor',
             'CanmtTranslationPreprocessor',
-            'DialogueClassificationUsePreprocessor', 'SiameseUiePreprocessor',
+            'DialogueClassificationUsePreprocessor',
+            'SiameseUiePreprocessor',
             'DialogueClassificationUsePreprocessor',
             'DocumentGroundedDialogGeneratePreprocessor',
             'DocumentGroundedDialogRetrievalPreprocessor',
-            'DocumentGroundedDialogRerankPreprocessor'
+            'DocumentGroundedDialogRerankPreprocessor',
+            'MachineReadingComprehensionForNERPreprocessor',
         ],
     }
 

@@ -13,21 +13,20 @@ from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        utils)
 from diffusers.models import cross_attention
 from diffusers.utils import deprecation_utils
+from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.multi_modal.efficient_diffusion_tuning.sd_lora import \
+    LoRATuner
 from modelscope.outputs import OutputKeys
-from modelscope.swift import Swift
-from modelscope.swift.adapter import AdapterConfig
-from modelscope.swift.control_sd_lora import ControlLoRATuner
-from modelscope.swift.lora import LoRAConfig
-from modelscope.swift.prompt import PromptConfig
-from modelscope.swift.sd_lora import LoRATuner
 from modelscope.utils.checkpoint import save_checkpoint, save_configuration
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from .control_sd_lora import ControlLoRATuner
 
 utils.deprecate = lambda *arg, **kwargs: None
 deprecation_utils.deprecate = lambda *arg, **kwargs: None
@@ -56,7 +55,10 @@ class EfficientStableDiffusion(TorchModel):
         super().__init__(model_dir, *args, **kwargs)
         tuner_name = kwargs.pop('tuner_name', 'lora')
         pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
+            'pretrained_model_name_or_path',
+            'AI-ModelScope/stable-diffusion-v1-5')
+        pretrained_model_name_or_path = snapshot_download(
+            pretrained_model_name_or_path)
         tuner_config = kwargs.pop('tuner_config', None)
         pretrained_tuner = kwargs.pop('pretrained_tuner', None)
         revision = kwargs.pop('revision', None)

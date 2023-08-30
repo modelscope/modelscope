@@ -6,7 +6,7 @@ chumpy
 clip>=1.0
 control_ldm
 ddpm_guided_diffusion
-diffusers==0.18.0
+diffusers>=0.19.0
 easydict
 easyrobust
 edit_distance

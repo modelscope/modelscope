@@ -140,8 +140,7 @@ class EfficientStableDiffusion(TorchModel):
                 r'.*[down_blocks|up_blocks|mid_block]\.\d+\.attentions\.\d+\.transformer_blocks\.\d+$',
                 embedding_pos=0,
                 prompt_length=prompt_length,
-                attach_front=False,
-                extract_embedding=True)
+                attach_front=False)
             self.unet = Swift.prepare_model(self.unet, prompt_config)
         elif tuner_name in ('lora', 'control_lora'):
             # if not set the config of control-tuner, we add the lora tuner directly to the original framework,

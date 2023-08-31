@@ -141,7 +141,6 @@ class EfficientStableDiffusion(TorchModel):
                 embedding_pos=0,
                 prompt_length=prompt_length,
                 attach_front=False,
-                pretrained_weights=pretrained_tuner,
                 extract_embedding=True)
             self.unet = Swift.prepare_model(self.unet, prompt_config)
         elif tuner_name in ('lora', 'control_lora'):

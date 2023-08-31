@@ -63,6 +63,7 @@ class LanguageRecognitionERes2Net(TorchModel):
         self.embed_dim = self.model_config['embed_dim']
         self.m_channels = self.model_config['channels']
         self.feature_dim = self.model_config['fbank_dim']
+        self.sample_rate = self.model_config['sample_rate']
         self.device = create_device(kwargs['device'])
 
         self.encoder = ERes2Net(
@@ -99,7 +100,9 @@ class LanguageRecognitionERes2Net(TorchModel):
         features = []
         for au in audio:
             feature = Kaldi.fbank(
-                au.unsqueeze(0), num_mel_bins=self.feature_dim)
+                au.unsqueeze(0),
+                num_mel_bins=self.feature_dim,
+                sample_frequency=self.sample_rate)
             feature = feature - feature.mean(dim=0, keepdim=True)
             features.append(feature.unsqueeze(0))
         features = torch.cat(features)

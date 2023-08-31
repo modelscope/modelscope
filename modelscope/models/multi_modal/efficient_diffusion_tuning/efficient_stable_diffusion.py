@@ -116,7 +116,6 @@ class EfficientStableDiffusion(TorchModel):
                 r=rank,
                 target_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
                 merge_weights=False,
-                only_lora_trainable=False,
                 use_merged_linear=False)
             self.unet = Swift.prepare_model(self.unet, lora_config)
         elif tuner_name == 'swift-adapter':

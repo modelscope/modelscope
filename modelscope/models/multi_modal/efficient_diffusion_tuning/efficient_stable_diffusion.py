@@ -139,7 +139,7 @@ class EfficientStableDiffusion(TorchModel):
                     320, 320, 640, 640, 1280, 1280, 1280, 1280, 1280, 640, 640,
                     640, 320, 320, 320
                 ],
-                module_layer_name=
+                target_modules=
                 r'.*[down_blocks|up_blocks|mid_block]\.\d+\.attentions\.\d+\.transformer_blocks\.\d+$',
                 embedding_pos=0,
                 prompt_length=prompt_length,

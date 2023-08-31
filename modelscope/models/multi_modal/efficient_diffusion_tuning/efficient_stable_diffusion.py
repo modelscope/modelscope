@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        DPMSolverMultistepScheduler, UNet2DConditionModel,
                        utils)
-from diffusers.models import cross_attention
+from diffusers.models import attention
 from diffusers.utils import deprecation_utils
 from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -30,7 +30,7 @@ from .control_sd_lora import ControlLoRATuner
 
 utils.deprecate = lambda *arg, **kwargs: None
 deprecation_utils.deprecate = lambda *arg, **kwargs: None
-cross_attention.deprecate = lambda *arg, **kwargs: None
+attention.deprecate = lambda *arg, **kwargs: None
 
 __tuner_MAP__ = {'lora': LoRATuner, 'control_lora': ControlLoRATuner}
 

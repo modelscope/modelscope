@@ -33,10 +33,12 @@ from .backbone import MsModelMixin
 def get_chat_prompt(system: str, text: str, history: List[Tuple[str, str]],
                     max_length: int, tokenizer):
     system_prompt = f'<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n'
-    system_ids = tokenizer(system_prompt, return_tensors='pt').input_ids
+    system_ids = tokenizer(
+        system_prompt, add_special_tokens=False, return_tensors='pt').input_ids
 
     text_prompt = f'{text.strip()} [/INST]'
-    text_ids = tokenizer(text_prompt, return_tensors='pt').input_ids
+    text_ids = tokenizer(
+        text_prompt, add_special_tokens=False, return_tensors='pt').input_ids
 
     prompt_length = system_ids.shape[-1] + text_ids.shape[-1]
     if prompt_length > max_length:
@@ -51,7 +53,9 @@ def get_chat_prompt(system: str, text: str, history: List[Tuple[str, str]],
         assert isinstance(user, str)
         assert isinstance(bot, str)
         round_prompt = f'{user.strip()} [/INST] {bot.strip()} </s><s>[INST] '
-        round_ids = tokenizer(round_prompt, return_tensors='pt').input_ids
+        round_ids = tokenizer(
+            round_prompt, add_special_tokens=False,
+            return_tensors='pt').input_ids
         if prompt_length + round_ids.shape[-1] > max_length:
             # excess history should not be appended to the prompt
             break

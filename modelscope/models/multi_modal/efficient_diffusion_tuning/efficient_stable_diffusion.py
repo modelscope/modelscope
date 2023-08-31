@@ -113,7 +113,7 @@ class EfficientStableDiffusion(TorchModel):
             rank = tuner_config[
                 'rank'] if tuner_config and 'rank' in tuner_config else 4
             lora_config = LoRAConfig(
-                rank=rank,
+                r=rank,
                 replace_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
                 merge_weights=False,
                 only_lora_trainable=False,
@@ -126,7 +126,7 @@ class EfficientStableDiffusion(TorchModel):
             adapter_config = AdapterConfig(
                 dim=-1,
                 hidden_pos=0,
-                module_name=r'.*ff\.net\.2$',
+                target_modules=r'.*ff\.net\.2$',
                 adapter_length=adapter_length,
                 only_adapter_trainable=False,
                 pretrained_weights=pretrained_tuner)
@@ -143,7 +143,6 @@ class EfficientStableDiffusion(TorchModel):
                 r'.*[down_blocks|up_blocks|mid_block]\.\d+\.attentions\.\d+\.transformer_blocks\.\d+$',
                 embedding_pos=0,
                 prompt_length=prompt_length,
-                only_prompt_trainable=False,
                 attach_front=False,
                 pretrained_weights=pretrained_tuner,
                 extract_embedding=True)

@@ -32,7 +32,7 @@ class NanoDettForFaceHumanHandDetectionPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        img = LoadImage.convert_to_ndarray(input['input_path'])
+        img = LoadImage.convert_to_ndarray(input)
         return img
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:

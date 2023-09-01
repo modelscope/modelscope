@@ -16,7 +16,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
     def setUp(self) -> None:
         self.task = Tasks.efficient_diffusion_tuning
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_lora_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-lora'
         model_revision = 'v1.0.2'
@@ -33,7 +33,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-lora output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_lora_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-lora'
@@ -41,7 +41,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
         model = Model.from_pretrained(model_id, model_revision=model_revision)
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_adapter_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-adapter'
         model_revision = 'v1.0.2'
@@ -58,7 +58,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-adapter output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_adapter_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-adapter'
@@ -66,7 +66,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
         model = Model.from_pretrained(model_id, model_revision=model_revision)
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_prompt_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-prompt'
         model_revision = 'v1.0.2'
@@ -83,7 +83,7 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-prompt output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_prompt_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-prompt'

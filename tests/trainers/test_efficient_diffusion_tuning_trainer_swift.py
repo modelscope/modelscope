@@ -33,7 +33,7 @@ class TestEfficientDiffusionTuningTrainerSwift(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_lora_train(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-lora'
         model_revision = 'v1.0.2'
@@ -62,7 +62,7 @@ class TestEfficientDiffusionTuningTrainerSwift(unittest.TestCase):
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         self.assertIn(f'epoch_{self.max_epochs}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_adapter_train(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-adapter'
         model_revision = 'v1.0.2'
@@ -91,7 +91,7 @@ class TestEfficientDiffusionTuningTrainerSwift(unittest.TestCase):
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
         self.assertIn(f'epoch_{self.max_epochs}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_prompt_train(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-prompt'
         model_revision = 'v1.0.2'

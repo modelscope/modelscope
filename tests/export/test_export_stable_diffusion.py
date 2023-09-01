@@ -21,7 +21,7 @@ class TestExportStableDiffusion(unittest.TestCase):
             os.makedirs(self.tmp_dir)
         self.model_id = 'AI-ModelScope/stable-diffusion-v1-5'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_export_stable_diffusion(self):
         model = Model.from_pretrained(self.model_id)
         Exporter.from_model(model).export_onnx(

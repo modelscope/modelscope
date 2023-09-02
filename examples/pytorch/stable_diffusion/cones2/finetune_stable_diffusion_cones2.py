@@ -77,7 +77,7 @@ def cfg_modify_fn(cfg):
 
 
 kwargs = dict(
-    model=training_args.model_id,
+    model=training_args.model,
     model_revision=args.model_revision,
     work_dir=training_args.work_dir,
     train_dataset=train_dataset,

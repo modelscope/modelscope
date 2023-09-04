@@ -39,7 +39,6 @@ class NanoDettForFaceHumanHandDetectionPipeline(Pipeline):
 
         cls_list, bbox_list, score_list = det_infer.inference(
             self.model, self.device, input)
-        logger.info(cls_list, bbox_list, score_list)
         return {
             OutputKeys.LABELS: cls_list,
             OutputKeys.BOXES: bbox_list,

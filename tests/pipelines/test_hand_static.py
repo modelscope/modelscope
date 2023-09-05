@@ -11,7 +11,7 @@ class HandStaticTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model = 'damo/cv_mobileface_hand-static'
-        self.input = {'img_path': 'data/test/images/hand_static.jpg'}
+        self.input = 'data/test/images/hand_static.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input: str):
         result = pipeline(input)

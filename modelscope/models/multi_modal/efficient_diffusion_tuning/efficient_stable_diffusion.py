@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        DPMSolverMultistepScheduler, UNet2DConditionModel,
                        utils)
-from diffusers.models import cross_attention
+from diffusers.models import attention
 from diffusers.utils import deprecation_utils
 from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -30,7 +30,7 @@ from .control_sd_lora import ControlLoRATuner
 
 utils.deprecate = lambda *arg, **kwargs: None
 deprecation_utils.deprecate = lambda *arg, **kwargs: None
-cross_attention.deprecate = lambda *arg, **kwargs: None
+attention.deprecate = lambda *arg, **kwargs: None
 
 __tuner_MAP__ = {'lora': LoRATuner, 'control_lora': ControlLoRATuner}
 
@@ -113,12 +113,10 @@ class EfficientStableDiffusion(TorchModel):
             rank = tuner_config[
                 'rank'] if tuner_config and 'rank' in tuner_config else 4
             lora_config = LoRAConfig(
-                rank=rank,
-                replace_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
+                r=rank,
+                target_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
                 merge_weights=False,
-                only_lora_trainable=False,
-                use_merged_linear=False,
-                pretrained_weights=pretrained_tuner)
+                use_merged_linear=False)
             self.unet = Swift.prepare_model(self.unet, lora_config)
         elif tuner_name == 'swift-adapter':
             adapter_length = tuner_config[
@@ -126,10 +124,8 @@ class EfficientStableDiffusion(TorchModel):
             adapter_config = AdapterConfig(
                 dim=-1,
                 hidden_pos=0,
-                module_name=r'.*ff\.net\.2$',
-                adapter_length=adapter_length,
-                only_adapter_trainable=False,
-                pretrained_weights=pretrained_tuner)
+                target_modules=r'.*ff\.net\.2$',
+                adapter_length=adapter_length)
             self.unet = Swift.prepare_model(self.unet, adapter_config)
         elif tuner_name == 'swift-prompt':
             prompt_length = tuner_config[
@@ -139,14 +135,11 @@ class EfficientStableDiffusion(TorchModel):
                     320, 320, 640, 640, 1280, 1280, 1280, 1280, 1280, 640, 640,
                     640, 320, 320, 320
                 ],
-                module_layer_name=
+                target_modules=
                 r'.*[down_blocks|up_blocks|mid_block]\.\d+\.attentions\.\d+\.transformer_blocks\.\d+$',
                 embedding_pos=0,
                 prompt_length=prompt_length,
-                only_prompt_trainable=False,
-                attach_front=False,
-                pretrained_weights=pretrained_tuner,
-                extract_embedding=True)
+                attach_front=False)
             self.unet = Swift.prepare_model(self.unet, prompt_config)
         elif tuner_name in ('lora', 'control_lora'):
             # if not set the config of control-tuner, we add the lora tuner directly to the original framework,

@@ -8,7 +8,8 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn as nn
 from diffusers.configuration_utils import ConfigMixin, register_to_config
-from diffusers.models.cross_attention import CrossAttention, LoRALinearLayer
+from diffusers.models.attention_processor import Attention
+from diffusers.models.lora import LoRALinearLayer
 from diffusers.models.modeling_utils import ModelMixin
 from diffusers.utils.outputs import BaseOutput
 
@@ -84,7 +85,7 @@ class LoRACrossAttnProcessor(nn.Module):
         self.output_states_skipped = is_skipped
 
     def __call__(self,
-                 attn: CrossAttention,
+                 attn: Attention,
                  hidden_states,
                  encoder_hidden_states=None,
                  attention_mask=None,

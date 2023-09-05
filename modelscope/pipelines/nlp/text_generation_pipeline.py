@@ -448,9 +448,9 @@ class SeqGPTPipeline(Pipeline):
     # define the forward pass
     def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
         # gen & decode
-        prompt += '[GEN]'
+        # prompt += '[GEN]'
         input_ids = self.tokenizer(
-            prompt,
+            prompt + '[GEN]',
             return_tensors='pt',
             padding=True,
             truncation=True,

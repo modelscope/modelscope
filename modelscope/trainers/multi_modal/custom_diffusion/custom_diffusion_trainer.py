@@ -40,7 +40,8 @@ class CustomCheckpointProcessor(CheckpointProcessor):
     def __init__(self,
                  modifier_token,
                  modifier_token_id,
-                 torch_type=torch.float32):
+                 torch_type=torch.float32,
+                 safe_serialization=False):
         """Checkpoint processor for custom diffusion.
 
         Args:

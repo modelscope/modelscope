@@ -11,7 +11,7 @@ class FaceEmotionTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model = 'damo/cv_face-emotion'
-        self.img = {'img_path': 'data/test/images/face_emotion.jpg'}
+        self.img = 'data/test/images/face_emotion.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input: str):
         result = pipeline(input)

@@ -45,6 +45,7 @@ isolated:  # test cases that may require excessive anmount of GPU memory or run 
   - test_table_recognition.py
   - test_conversational_text_to_sql.py
   - test_video_multi_modal_embedding.py
+  - test_prost_text_video_retrieval.py
   - test_image_skychange.py
   - test_video_stabilization.py
   - test_video_super_resolution.py

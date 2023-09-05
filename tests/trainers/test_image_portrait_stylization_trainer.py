@@ -5,16 +5,15 @@ import unittest
 
 import cv2
 
-from modelscope.exporters.cv import CartoonTranslationExporter
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
-from modelscope.trainers.cv import CartoonTranslationTrainer
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('For tensorflow 2.x compatible')
 class TestImagePortraitStylizationTrainer(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -27,6 +26,7 @@ class TestImagePortraitStylizationTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):
+        from modelscope.trainers.cv import CartoonTranslationTrainer
         model_id = 'damo/cv_unet_person-image-cartoon_compound-models'
 
         data_dir = MsDataset.load(
@@ -46,6 +46,7 @@ class TestImagePortraitStylizationTrainer(unittest.TestCase):
             max_steps=max_steps)
         trainer.train()
 
+        from modelscope.exporters.cv import CartoonTranslationExporter
         ckpt_path = os.path.join(work_dir, 'saved_models', 'model-' + str(0))
         pb_path = os.path.join(trainer.model_dir, 'cartoon_h.pb')
         exporter = CartoonTranslationExporter()

@@ -13,6 +13,7 @@ from modelscope.utils.test_utils import test_level
 sys.path.append('.')
 
 
+@unittest.skip('For numpy compatible trimesh numpy bool')
 class HumanReconstructionTest(unittest.TestCase):
 
     def setUp(self) -> None:

@@ -27,7 +27,9 @@ if TYPE_CHECKING:
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .word_alignment_pipeline import WordAlignmentPipeline
-    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline, SeqGPTPipeline
+    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline, \
+        SeqGPTPipeline, ChatGLM6bTextGenerationPipeline, ChatGLM6bV2TextGenerationPipeline, \
+        QWenChatPipeline, QWenTextGenerationPipeline, Llama2TaskPipeline
     from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
@@ -80,7 +82,10 @@ else:
         'word_alignment_pipeline': ['WordAlignmentPipeline'],
         'text_generation_pipeline': [
             'TextGenerationPipeline', 'TextGenerationT5Pipeline',
-            'SeqGPTPipeline'
+            'ChatGLM6bTextGenerationPipeline',
+            'ChatGLM6bV2TextGenerationPipeline', 'QWenChatPipeline',
+            'QWenTextGenerationPipeline', 'SeqGPTPipeline',
+            'Llama2TaskPipeline'
         ],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],

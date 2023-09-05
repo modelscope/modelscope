@@ -113,7 +113,7 @@ class ReferringVideoObjectSegmentationDataset(TorchCustomDataset):
             instance_masks = instance_masks[np.newaxis, ...]
         instance_masks = torch.tensor(instance_masks).transpose(1, 2)
         mask_rles = [encode(mask) for mask in instance_masks.numpy()]
-        mask_areas = area(mask_rles).astype(np.float)
+        mask_areas = area(mask_rles).astype(float)
         f.close()
 
         # create the target dict for the center frame:

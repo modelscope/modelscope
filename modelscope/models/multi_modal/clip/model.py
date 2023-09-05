@@ -578,7 +578,7 @@ class CLIPForMultiModalEmbedding(TorchModel):
 
             with torch.autograd.set_grad_enabled(mode == ModeKeys.TRAIN):
                 image_features = self.clip_model.encode_image(image_tensor)
-                image_features /= image_features.norm(
+                image_features = image_features / image_features.norm(
                     dim=-1, keepdim=True)  # l2-normalize
 
             output[OutputKeys.IMG_EMBEDDING] = image_features
@@ -590,7 +590,7 @@ class CLIPForMultiModalEmbedding(TorchModel):
 
             with torch.autograd.set_grad_enabled(mode == ModeKeys.TRAIN):
                 text_features = self.clip_model.encode_text(text_tensor)
-                text_features /= text_features.norm(
+                text_features = text_features / text_features.norm(
                     dim=-1, keepdim=True)  # l2-normalize
             output[OutputKeys.TEXT_EMBEDDING] = text_features
 

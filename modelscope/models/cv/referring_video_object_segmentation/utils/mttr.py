@@ -65,6 +65,7 @@ class MTTR(nn.Module):
         # keep only the valid frames (frames which are annotated):
         # (for example, in a2d-sentences only the center frame in each window is annotated).
         for layer_out in backbone_out:
+            valid_indices = valid_indices.to(layer_out.tensors.device)
             layer_out.tensors = layer_out.tensors.index_select(
                 0, valid_indices)
             layer_out.mask = layer_out.mask.index_select(0, valid_indices)

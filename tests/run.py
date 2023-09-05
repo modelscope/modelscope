@@ -264,6 +264,26 @@ def wait_for_workers(workers):
         time.sleep(0.001)
 
 
+def parallel_run_case(isolated_cases, result_dir, parallel):
+    # case worker processes
+    worker_processes = [None] * parallel
+    for test_suite_file in isolated_cases:  # run case in subprocess
+        cmd = [
+            'python',
+            'tests/run.py',
+            '--pattern',
+            test_suite_file,
+            '--result_dir',
+            result_dir,
+        ]
+        worker_idx = wait_for_free_worker(worker_processes)
+        worker_process = async_run_command_with_popen(cmd, worker_idx)
+        os.set_blocking(worker_process.stdout.fileno(), False)
+        worker_processes[worker_idx] = worker_process
+
+    wait_for_workers(worker_processes)
+
+
 def parallel_run_case_in_env(env_name, env, test_suite_env_map, isolated_cases,
                              result_dir, parallel):
     logger.info('Running case in env: %s' % env_name)
@@ -423,26 +443,7 @@ def run_in_subprocess(args):
         x for x in test_suite_files if x not in non_parallelizable_suites
     ]
 
-    run_config = None
     isolated_cases = []
-    test_suite_env_map = {}
-    # put all the case in default env.
-    for test_suite_file in test_suite_files:
-        test_suite_env_map[test_suite_file] = 'default'
-
-    if args.run_config is not None and Path(args.run_config).exists():
-        with open(args.run_config, encoding='utf-8') as f:
-            run_config = yaml.load(f, Loader=yaml.FullLoader)
-        if 'isolated' in run_config:
-            isolated_cases = run_config['isolated']
-
-        if 'envs' in run_config:
-            for env in run_config['envs']:
-                if env != 'default':
-                    for test_suite in run_config['envs'][env]['tests']:
-                        if test_suite in test_suite_env_map:
-                            test_suite_env_map[test_suite] = env
-
     if args.subprocess:  # run all case in subprocess
         isolated_cases = test_suite_files
 
@@ -451,12 +452,10 @@ def run_in_subprocess(args):
         run_non_parallelizable_test_suites(non_parallelizable_suites,
                                            temp_result_dir)
 
-        # run case parallel in envs
-        for env in set(test_suite_env_map.values()):
-            parallel_run_case_in_env(env, run_config['envs'][env],
-                                     test_suite_env_map, isolated_cases,
-                                     temp_result_dir, args.parallel)
+        # run case parallel
+        parallel_run_case(isolated_cases, temp_result_dir, args.parallel)
 
+        # collect test results
         result_dfs = []
         result_path = Path(temp_result_dir)
         for result in result_path.iterdir():

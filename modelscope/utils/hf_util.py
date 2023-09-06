@@ -116,7 +116,7 @@ def check_hf_code(model_dir: str, auto_class: type,
 
     trust_remote_code_info = ''
     if not trust_remote_code:
-        trust_remote_code_info = ', You can try to pass `trust_remote_code=True`.'
+        trust_remote_code_info = ', You can try passing `trust_remote_code=True`.'
     if auto_class is AutoConfigHF:
         if model_type not in CONFIG_MAPPING:
             raise ValueError(f'{model_type} not found in HF `CONFIG_MAPPING`'

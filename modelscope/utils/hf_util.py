@@ -114,20 +114,26 @@ def check_hf_code(model_dir: str, auto_class: type,
     if model_type is None:
         raise ValueError(f'`model_type` key is not found in {config_path}')
 
+    trust_remote_code_info = ''
+    if not trust_remote_code:
+        trust_remote_code_info = ', You can try to pass `trust_remote_code=True`.'
     if auto_class is AutoConfigHF:
         if model_type not in CONFIG_MAPPING:
-            raise ValueError(f'{model_type} not found in HF CONFIG_MAPPING')
+            raise ValueError(f'{model_type} not found in HF `CONFIG_MAPPING`'
+                             + trust_remote_code_info)
     elif auto_class is AutoTokenizerHF:
         if model_type not in TOKENIZER_MAPPING_NAMES:
             raise ValueError(
-                f'{model_type} not found in HF TOKENIZER_MAPPING_NAMES')
+                f'{model_type} not found in HF `TOKENIZER_MAPPING_NAMES`'
+                + trust_remote_code_info)
     else:
         mapping_names = [
             m.model_type for m in auto_class._model_mapping.keys()
         ]
         if model_type not in mapping_names:
             raise ValueError(
-                f'{model_type} not found in HF auto_class._model_mapping')
+                f'{model_type} not found in HF `auto_class._model_mapping`'
+                + trust_remote_code_info)
 
 
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):

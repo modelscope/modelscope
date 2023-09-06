@@ -66,7 +66,7 @@ def try_to_load_hf_model(model_dir: str, task_name: str,
 
     if use_hf and automodel_class is None:
         raise ValueError(f'Model import failed. You used `use_hf={use_hf}`, '
-                         'but the model is not a model of hf')
+                         'but the model is not a model of hf.')
 
     model = None
     if automodel_class is not None:

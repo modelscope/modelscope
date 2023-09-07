@@ -569,7 +569,7 @@ def collate_fn(data, device):
         if data.dtype.type is np.str_:
             return data
         else:
-            return collate_fn(torch.from_numpy(data), device)
+            return collate_fn(torch.from_numpy(data.copy()), device)
     elif isinstance(data, torch.Tensor):
         return data.to(device)
     elif isinstance(data, (bytes, str, int, float, bool, type(None))):

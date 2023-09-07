@@ -186,6 +186,7 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
         file_path=file_path,
     )
 
+
 def download_part_with_retry(params):
     # unpack parameters
     progress, start, end, url, file_name, cookies, headers = params
@@ -205,14 +206,16 @@ def download_part_with_retry(params):
                     headers=get_headers,
                     cookies=cookies,
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
-                for chunk in r.iter_content(chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
+                for chunk in r.iter_content(
+                        chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
                     if chunk:  # filter out keep-alive new chunks
                         f.write(chunk)
-            progress.update(end-start)
+            progress.update(end - start)
             break
-        except (Exception) as e: # no matter what exception, we will retry.
+        except (Exception) as e:  # no matter what exception, we will retry.
             retry = retry.increment('GET', url, error=e)
-            logger.warning('Download file from: %s to: %s failed, will retry'%(start, end))
+            logger.warning('Download file from: %s to: %s failed, will retry' %
+                           (start, end))
             retry.sleep()
 
 

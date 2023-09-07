@@ -186,24 +186,34 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
         file_path=file_path,
     )
 
-
-def download_part(params):
+def download_part_with_retry(params):
     # unpack parameters
     progress, start, end, url, file_name, cookies, headers = params
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['Range'] = 'bytes=%s-%s' % (start, end)
-    with open(file_name, 'rb+') as f:
-        f.seek(start)
-        r = requests.get(
-            url,
-            stream=True,
-            headers=get_headers,
-            cookies=cookies,
-            timeout=API_FILE_DOWNLOAD_TIMEOUT)
-        for chunk in r.iter_content(chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
-            if chunk:  # filter out keep-alive new chunks
-                f.write(chunk)
-                progress.update(len(chunk))
+    retry = Retry(
+        total=API_FILE_DOWNLOAD_RETRY_TIMES,
+        backoff_factor=1,
+        allowed_methods=['GET'])
+    while True:
+        try:
+            with open(file_name, 'rb+') as f:
+                f.seek(start)
+                r = requests.get(
+                    url,
+                    stream=True,
+                    headers=get_headers,
+                    cookies=cookies,
+                    timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                for chunk in r.iter_content(chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+            progress.update(end-start)
+            break
+        except (Exception) as e: # no matter what exception, we will retry.
+            retry = retry.increment('GET', url, error=e)
+            logger.warning('Download file from: %s to: %s failed, will retry'%(start, end))
+            retry.sleep()
 
 
 def parallel_download(
@@ -226,7 +236,7 @@ def parallel_download(
             initial=0,
             desc='Downloading',
         )
-        PART_SIZE = 160 * 1024 * 1012  # every part is 160M
+        PART_SIZE = 160 * 1024 * 1024  # every part is 160M
         tasks = []
         for idx in range(int(file_size / PART_SIZE)):
             start = idx * PART_SIZE
@@ -240,7 +250,7 @@ def parallel_download(
         with ThreadPoolExecutor(
                 max_workers=parallels,
                 thread_name_prefix='download') as executor:
-            list(executor.map(download_part, tasks))
+            list(executor.map(download_part_with_retry, tasks))
 
         progress.close()
 

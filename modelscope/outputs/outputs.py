@@ -727,6 +727,7 @@ TASK_OUTPUTS = {
     # {"output_img": np.array with shape (h, w, 3)}
     Tasks.skin_retouching: [OutputKeys.OUTPUT_IMG],
     Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_super_resolution_pasd: [OutputKeys.OUTPUT_IMG],
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],

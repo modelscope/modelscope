@@ -448,7 +448,8 @@ class FilesAstScanning(object):
     def _traversal_files(self, path):
         dir_list = os.scandir(path)
         for item in dir_list:
-            if item.name.startswith('__'):
+            if item.name.startswith('__') or item.name.endswith(
+                    '.json') or item.name.endswith('.md'):
                 continue
             if item.is_dir():
                 self._traversal_files(item.path)

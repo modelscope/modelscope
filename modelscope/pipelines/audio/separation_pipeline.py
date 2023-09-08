@@ -8,7 +8,7 @@ import soundfile as sf
 import torch
 
 from modelscope.fileio import File
-from modelscope.metainfo import Pipelines
+from modelscope.metainfo import Models, Pipelines
 from modelscope.models.base import Input
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import Pipeline
@@ -20,7 +20,11 @@ logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.speech_separation, module_name=Pipelines.speech_separation)
+    Tasks.speech_separation,
+    module_name=Models.speech_mossformer_separation_temporal_8k)
+@PIPELINES.register_module(
+    Tasks.speech_separation,
+    module_name=Models.speech_mossformer2_separation_temporal_8k)
 class SeparationPipeline(Pipeline):
 
     def __init__(self, model, **kwargs):

@@ -98,9 +98,9 @@ class LanguageIdentificationPipeline(Pipeline):
         tf_config = tf.ConfigProto(allow_soft_placement=True)
         tf_config.gpu_options.allow_growth = True
         self._session = tf.Session(config=tf_config)
-        tf.saved_model.loader.load(
-            self._session, [tf.python.saved_model.tag_constants.SERVING],
-            export_dir)
+        tf.saved_model.loader.load(self._session,
+                                   [tf.saved_model.tag_constants.SERVING],
+                                   export_dir)
         default_graph = tf.get_default_graph()
         # [debug] print graph ops
         if self.debug:
@@ -118,9 +118,9 @@ class LanguageIdentificationPipeline(Pipeline):
         init = tf.global_variables_initializer()
         local_init = tf.local_variables_initializer()
         self._session.run([init, local_init])
-        tf.saved_model.loader.load(
-            self._session, [tf.python.saved_model.tag_constants.SERVING],
-            export_dir)
+        tf.saved_model.loader.load(self._session,
+                                   [tf.saved_model.tag_constants.SERVING],
+                                   export_dir)
 
     def _lid_preprocess(self, input: str) -> list:
         sentence = input.lower()

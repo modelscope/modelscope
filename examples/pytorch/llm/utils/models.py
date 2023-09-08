@@ -141,6 +141,7 @@ class LoRATM(NamedTuple):
     chatglm2 = ['query_key_value']
     llama2 = ['q_proj', 'k_proj', 'v_proj']
     qwen = ['c_attn']
+    polylm = ['c_attn']
 
 
 # Reference: 'https://modelscope.cn/models/{model_id}/summary'

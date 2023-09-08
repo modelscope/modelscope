@@ -119,8 +119,8 @@ class ConvNeXt(nn.Module):
         self.head_cls = nn.Linear(dims[-1], 4)
 
         self.apply(self._init_weights)
-        self.head_cls.weight.data.mul_(head_init_scale)
-        self.head_cls.bias.data.mul_(head_init_scale)
+        # self.head_cls.weight.data.mul_(head_init_scale)
+        # self.head_cls.bias.data.mul_(head_init_scale)
 
     def _init_weights(self, m):
         if isinstance(m, (nn.Conv2d, nn.Linear)):

@@ -8,7 +8,6 @@ import requests
 
 from modelscope.outputs import TASK_OUTPUTS, OutputKeys
 from modelscope.pipeline_inputs import TASK_INPUTS, InputType
-from modelscope.utils.url_utils import valid_url
 
 
 # service data decoder func decodes data from network and convert it to pipeline's input
@@ -83,16 +82,12 @@ def get_mimetype(filename):
 
 
 def decode_base64_to_binary(encoding):
-    if valid_url(encoding):
-        return encoding, ''
     extension = get_extension(encoding)
     data = encoding.split(',')[1]
     return base64.b64decode(data), extension
 
 
 def decode_base64_to_image(encoding):
-    if valid_url(encoding):
-        return encoding
     from PIL import Image
     content = encoding.split(';')[1]
     image_encoded = content.split(',')[1]
@@ -146,8 +141,10 @@ def encode_url_or_file_to_base64(path):
 def service_data_decoder(task, data):
     if CustomDecoder.get(task) is not None:
         return CustomDecoder[task](data)
-    input_type = TASK_INPUTS[task]
     input_data = data.decode('utf-8')
+    input_type = TASK_INPUTS[task]
+    if isinstance(input_type, list):
+        input_type = input_type[0]
     if input_type == InputType.IMAGE:
         return decode_base64_to_image(input_data)
     elif input_type == InputType.AUDIO:

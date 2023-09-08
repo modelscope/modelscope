@@ -102,6 +102,18 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_2d_keypoints:
     InputType.IMAGE,
+    Tasks.face_liveness:
+    InputType.IMAGE,
+    Tasks.face_quality_assessment:
+    InputType.IMAGE,
+    Tasks.card_detection:
+    InputType.IMAGE,
+    Tasks.license_plate_detection:
+    InputType.IMAGE,
+    Tasks.lineless_table_recognition:
+    InputType.IMAGE,
+    Tasks.table_recognition:
+    InputType.IMAGE,
     Tasks.face_detection:
     InputType.IMAGE,
     Tasks.facial_expression_recognition:
@@ -118,13 +130,29 @@ TASK_INPUTS = {
     InputType.NUMBER,
     Tasks.image_classification:
     InputType.IMAGE,
+    Tasks.image_quality_assessment_mos:
+    InputType.IMAGE,
+    Tasks.image_quality_assessment_degradation:
+    InputType.IMAGE,
     Tasks.image_object_detection:
     InputType.IMAGE,
     Tasks.domain_specific_object_detection:
     InputType.IMAGE,
+    Tasks.human_wholebody_keypoint:
+    InputType.IMAGE,
     Tasks.image_segmentation:
     InputType.IMAGE,
     Tasks.portrait_matting:
+    InputType.IMAGE,
+    Tasks.universal_matting:
+    InputType.IMAGE,
+    Tasks.product_segmentation:
+    InputType.IMAGE,
+    Tasks.semantic_segmentation:
+    InputType.IMAGE,
+    Tasks.face_human_hand_detection:
+    InputType.IMAGE,
+    Tasks.hand_static:
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
     InputType.IMAGE,
@@ -148,6 +176,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_denoising:
     InputType.IMAGE,
+    Tasks.image_body_reshaping:
+    InputType.IMAGE,
     Tasks.image_portrait_enhancement:
     InputType.IMAGE,
     Tasks.crowd_counting:
@@ -169,6 +199,12 @@ TASK_INPUTS = {
         'image': InputType.IMAGE,
         'prompt': InputType.TEXT,
     },
+    Tasks.image_face_fusion: {
+        'template': InputType.IMAGE,
+        'user': InputType.IMAGE,
+    },
+    Tasks.image_deblurring:
+    InputType.IMAGE,
     Tasks.video_colorization:
     InputType.VIDEO,
 
@@ -204,7 +240,14 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.video_embedding:
     InputType.VIDEO,
-    Tasks.virtual_try_on: (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+    Tasks.virtual_try_on: [
+        (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+        {
+            'masked_model': InputType.IMAGE,
+            'pose': InputType.IMAGE,
+            'cloth': InputType.IMAGE,
+        }
+    ],
     Tasks.text_driven_segmentation: {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.TEXT: InputType.TEXT
@@ -219,6 +262,10 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.IMAGE: InputType.IMAGE
+    },
+    Tasks.human_image_generation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_pose_path': InputType.TEXT
     },
 
     # ============ nlp tasks ===================
@@ -247,11 +294,15 @@ TASK_INPUTS = {
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
-    Tasks.zero_shot_classification: InputType.TEXT,
+    Tasks.zero_shot_classification:
+    InputType.TEXT,
     Tasks.relation_extraction:
     InputType.TEXT,
     Tasks.translation:
     InputType.TEXT,
+    Tasks.text_summarization: [InputType.TEXT, {
+        'text': InputType.TEXT,
+    }],
     Tasks.competency_aware_translation:
     InputType.TEXT,
     Tasks.word_segmentation: [InputType.TEXT, {
@@ -341,12 +392,17 @@ TASK_INPUTS = {
     InputType.AUDIO,
     Tasks.speaker_diarization_dialogue_detection:
     InputType.TEXT,
+    Tasks.language_score_prediction:
+    InputType.TEXT,
+    Tasks.punctuation:
+    InputType.TEXT,
     Tasks.speech_language_recognition:
     InputType.AUDIO,
     Tasks.speaker_diarization_semantic_speaker_turn_detection:
     InputType.TEXT,
     Tasks.inverse_text_processing:
     InputType.TEXT,
+    Tasks.speaker_verification: [InputType.AUDIO, InputType.AUDIO],
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {
@@ -375,6 +431,10 @@ TASK_INPUTS = {
     },
     Tasks.multi_modal_similarity: {
         'img': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
+    Tasks.text_video_retrieval: {
+        'video': InputType.VIDEO,
         'text': InputType.TEXT
     },
     Tasks.visual_question_answering: {
@@ -408,4 +468,8 @@ TASK_INPUTS = {
     Tasks.text_to_360panorama_image: {
         'prompt': InputType.TEXT,
     },
+    Tasks.image_editing: {
+        'img': InputType.IMAGE,
+        'prompts': InputType.LIST
+    }
 }

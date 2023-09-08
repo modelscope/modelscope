@@ -14,6 +14,8 @@ from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip(
+    "For detection2 compatible  module 'PIL.Image' has no attribute 'LINEAR'")
 class TestImageDefrcnFewShotTrainer(unittest.TestCase):
 
     def setUp(self):

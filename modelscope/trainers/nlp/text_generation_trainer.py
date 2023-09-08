@@ -23,7 +23,8 @@ class TextGenerationTrainer(NlpEpochBasedTrainer):
         output = dict()
 
         with torch.no_grad():
-            output.update(self._eval_genarate(model, data))
+            if Metrics.text_gen_metric in self.metrics:
+                output.update(self._eval_genarate(model, data))
             if Metrics.PPL in self.metrics or Metrics.loss_metric in self.metrics:
                 output.update(model.forward(**data))
         return output

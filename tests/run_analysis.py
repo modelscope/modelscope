@@ -126,11 +126,12 @@ def get_current_branch():
 
 def get_modified_files():
     if 'PR_CHANGED_FILES' in os.environ and os.environ[
-            'PR_CHANGED_FILES'] != '':
+            'PR_CHANGED_FILES'].strip() != '':
         logger.info('Getting PR modified files.')
         # get modify file from environment
         diff_files = os.environ['PR_CHANGED_FILES'].replace('#', '\n')
     else:
+        logger.info('Getting diff of branch.')
         cmd = ['git', 'diff', '--name-only', 'origin/master...']
         diff_files = run_command_get_output(cmd)
     logger.info('Diff files: ')

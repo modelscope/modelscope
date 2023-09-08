@@ -11,6 +11,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('For torch bug: https://github.com/pytorch/pytorch/pull/99658')
 class TestExportStableDiffusion(unittest.TestCase):
 
     def setUp(self):

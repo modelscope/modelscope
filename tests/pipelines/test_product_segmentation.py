@@ -17,9 +17,7 @@ class ProductSegmentationTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_F3Net_product-segmentation'
-        self.input = {
-            'input_path': 'data/test/images/product_segmentation.jpg'
-        }
+        self.input = 'data/test/images/product_segmentation.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input: str):
         result = pipeline(input)

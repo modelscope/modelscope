@@ -26,9 +26,9 @@ class PolyLMForTextGeneration(TorchModel, StreamingOutputMixin):
         """
         super().__init__(model_dir, *args, **kwargs)
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_dir, use_fast=False)
+            model_dir, legacy=False, use_fast=False)
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_dir, device_map='auto')
+            model_dir, device_map='auto', trust_remote_code=True)
         self.model.eval()
 
     def forward(self, input: Dict[str, Tensor], **kwargs) -> Dict[str, Tensor]:

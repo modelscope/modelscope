@@ -85,6 +85,7 @@ class CVTasks(object):
     image_paintbyexample = 'image-paintbyexample'
     image_skychange = 'image-skychange'
     image_demoireing = 'image-demoireing'
+    image_editing = 'image-editing'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
@@ -98,6 +99,7 @@ class CVTasks(object):
     controllable_image_generation = 'controllable-image-generation'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
 
     # video recognition
     live_category = 'live-category'
@@ -156,6 +158,7 @@ class CVTasks(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
@@ -243,6 +246,7 @@ class MultiModalTasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    text_video_retrieval = 'text-video-retrieval'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'

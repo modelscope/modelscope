@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
+    from .image_editing_pipeline import ImageEditingPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
@@ -104,6 +105,7 @@ if TYPE_CHECKING:
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
+    from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
@@ -136,6 +138,7 @@ else:
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_deblur_pipeline': ['ImageDeblurPipeline'],
+        'image_editing_pipeline': ['ImageEditingPipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
         'image_colorization_pipeline': ['ImageColorizationPipeline'],
         'image_instance_segmentation_pipeline':
@@ -256,6 +259,7 @@ else:
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
         'nerf_recon_4k_pipeline': ['NeRFRecon4KPipeline'],
+        'surface_recon_common_pipeline': ['SurfaceReconCommonPipeline'],
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],

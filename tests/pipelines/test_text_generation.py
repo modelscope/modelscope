@@ -46,7 +46,7 @@ class TextGenerationTest(unittest.TestCase):
         self.llama_model_id = 'skyline2006/llama-7b'
         self.llama_input = 'My name is Merve and my favorite'
         self.seqgpt_model_id = 'damo/nlp_seqgpt-560m'
-        self.ecomgpt_model_id = 'damo/nlp_seqgpt-560m'
+        self.ecomgpt_model_id = 'damo/nlp_ecomgpt_multilingual-7B-ecom'
 
     def run_pipeline_with_model_instance(self, model_id, input):
         model = Model.from_pretrained(model_id)
@@ -327,7 +327,7 @@ class TextGenerationTest(unittest.TestCase):
         inputs = {'task': '抽取', 'text': '杭州欢迎你。', 'labels': '地名'}
         PROMPT_TEMPLATE = '输入: {text}\n{task}: {labels}\n输出: '
         prompt = PROMPT_TEMPLATE.format(**inputs)
-        self.run_pipeline_with_model_id(self.seqgpt_model_id, prompt)
+        self.run_pipeline_with_model_id(self.seqgpt_model_id, prompt, run_kwargs={'gen_token': '[GEN]'})
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_ecomgpt_with_model_name(self):
@@ -336,7 +336,7 @@ class TextGenerationTest(unittest.TestCase):
                           '### Instruction:\n{text}\n{instruction}\n\n### Response:'
         inputs = {
             'instruction':
-            'Classify the sentence, candidate labels: product, brand',
+            'Classify the sentence, select from the candidate labels: product, brand',
             'text': '照相机'
         }
         prompt = PROMPT_TEMPLATE.format(**inputs)

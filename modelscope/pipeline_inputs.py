@@ -182,6 +182,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.crowd_counting:
     InputType.IMAGE,
+    Tasks.image_super_resolution_pasd: {
+        'image': InputType.IMAGE,
+        'prompt': InputType.TEXT,
+    },
     Tasks.image_inpainting: {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,

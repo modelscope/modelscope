@@ -48,7 +48,7 @@ ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 RUN CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6" pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
 
 # torchmetrics==0.11.4 for ofa
-RUN pip install --no-cache-dir tiktoken torchmetrics==0.11.4 'transformers<4.31.0' transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
+RUN pip install --no-cache-dir tiktoken torchmetrics==0.11.4 transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
 COPY docker/scripts/install_flash_attension.sh /tmp/install_flash_attension.sh
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_flash_attension.sh; \

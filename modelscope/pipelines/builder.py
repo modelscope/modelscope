@@ -19,7 +19,10 @@ from .util import is_official_hub_path
 PIPELINES = Registry('pipelines')
 
 
-def normalize_model_input(model, model_revision, third_party=None):
+def normalize_model_input(model,
+                          model_revision,
+                          third_party=None,
+                          ignore_file_pattern=None):
     """ normalize the input model, to ensure that a model str is a valid local path: in other words,
     for model represented by a model id, the model shall be downloaded locally
     """
@@ -31,7 +34,10 @@ def normalize_model_input(model, model_revision, third_party=None):
             if third_party is not None:
                 user_agent[ThirdParty.KEY] = third_party
             model = snapshot_download(
-                model, revision=model_revision, user_agent=user_agent)
+                model,
+                revision=model_revision,
+                user_agent=user_agent,
+                ignore_file_pattern=ignore_file_pattern)
     elif isinstance(model, list) and isinstance(model[0], str):
         for idx in range(len(model)):
             if is_official_hub_path(
@@ -68,6 +74,7 @@ def pipeline(task: str = None,
              framework: str = None,
              device: str = 'gpu',
              model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
+             ignore_file_pattern: List[str] = None,
              **kwargs) -> Pipeline:
     """ Factory method to build an obj:`Pipeline`.
 
@@ -82,6 +89,8 @@ def pipeline(task: str = None,
         model_revision: revision of model(s) if getting from model hub, for multiple models, expecting
         all models to have the same revision
         device (str, optional): whether to use gpu or cpu is used to do inference.
+        ignore_file_pattern(`str` or `List`, *optional*, default to `None`):
+            Any file pattern to be ignored in downloading, like exact file names or file extensions.
 
     Return:
         pipeline (obj:`Pipeline`): pipeline object for certain task.
@@ -104,7 +113,10 @@ def pipeline(task: str = None,
     if third_party is not None:
         kwargs.pop(ThirdParty.KEY)
     model = normalize_model_input(
-        model, model_revision, third_party=third_party)
+        model,
+        model_revision,
+        third_party=third_party,
+        ignore_file_pattern=ignore_file_pattern)
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task

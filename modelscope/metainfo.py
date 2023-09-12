@@ -562,6 +562,7 @@ class Pipelines(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
     llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
+    llama2_text_generation_chat_pipeline = 'llama2-text-generation-chat-pipeline'
     image_to_video_task_pipeline = 'image-to-video-task-pipeline'
     video_to_video_pipeline = 'video-to-video-pipeline'
 

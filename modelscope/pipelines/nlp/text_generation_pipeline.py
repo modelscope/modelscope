@@ -573,7 +573,7 @@ class Llama2chatTaskPipeline(Pipeline):
             >>> from modelscope.pipelines import pipeline
             >>> from modelscope import Model
             >>> pipe = pipeline(task=Tasks.chat, model="modelscope/Llama-2-7b-chat-ms", device_map='auto',
-            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'], model_revision='v1.0.4')
+            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'], model_revision='v1.0.5')
             >>> inputs = 'Where is the capital of Zhejiang?'
             >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
             >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)

@@ -72,6 +72,7 @@ def get_chat_prompt(system: str, text: str, history: List[Tuple[str, str]],
 
 # This file is mainly copied from the llama code of transformers
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama2)
+@MODELS.register_module(Tasks.chat, module_name=Models.llama2)
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
 class LlamaForTextGeneration(MsModelMixin, LlamaForCausalLM, TorchModel):
 

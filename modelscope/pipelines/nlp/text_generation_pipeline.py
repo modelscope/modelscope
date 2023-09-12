@@ -2,7 +2,7 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from transformers import GenerationConfig
@@ -450,7 +450,7 @@ class SeqGPTPipeline(Pipeline):
         # gen & decode
         # prompt += '[GEN]'
         input_ids = self.tokenizer(
-            prompt + '[GEN]',
+            prompt + forward_params.get('gen_token', ''),
             return_tensors='pt',
             padding=True,
             truncation=True,
@@ -519,15 +519,15 @@ class Llama2TaskPipeline(TextGenerationPipeline):
         return {}, pipeline_parameters, {}
 
     def forward(self,
-                inputs,
-                max_length=2048,
-                do_sample=True,
-                top_p=0.85,
-                temperature=1.0,
-                repetition_penalty=1.,
-                eos_token_id=2,
-                bos_token_id=1,
-                pad_token_id=0,
+                inputs: str,
+                max_length: int = 2048,
+                do_sample: bool = False,
+                top_p: float = 0.9,
+                temperature: float = 0.6,
+                repetition_penalty: float = 1.,
+                eos_token_id: int = 2,
+                bos_token_id: int = 1,
+                pad_token_id: int = 0,
                 **forward_params) -> Dict[str, Any]:
         output = {}
         inputs = self.tokenizer(
@@ -548,6 +548,99 @@ class Llama2TaskPipeline(TextGenerationPipeline):
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False)[0]
         output['text'] = out
+        return output
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    Tasks.chat, module_name=Pipelines.llama2_text_generation_chat_pipeline)
+class Llama2chatTaskPipeline(Pipeline):
+    """Use `model` and `preprocessor` to create a generation pipeline for prediction.
+
+        Args:
+            model (str or Model): Supply either a local model dir which supported the text generation task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        Examples:
+            >>> from modelscope.utils.constant import Tasks
+            >>> import torch
+            >>> from modelscope.pipelines import pipeline
+            >>> from modelscope import Model
+            >>> pipe = pipeline(task=Tasks.chat, model="modelscope/Llama-2-7b-chat-ms", device_map='auto',
+            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'], model_revision='v1.0.5')
+            >>> inputs = 'Where is the capital of Zhejiang?'
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
+            >>> print(result['response'])
+            >>> inputs = 'What are the interesting places there?'
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> pad_token_id=0, history=result['history'])
+            >>> print(result['response'])
+            >>> inputs = 'What are the company there?'
+            >>> history_demo = [('Where is the capital of Zhejiang?',
+            >>> 'Thank you for asking! The capital of Zhejiang Province is Hangzhou.')]
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> pad_token_id=0, history=history_demo)
+            >>> print(result['response'])
+
+            To view other examples plese check tests/pipelines/test_llama2_text_generation_pipeline.py.
+        """
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Preprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate: bool = True,
+                 **kwargs) -> Dict[str, Any]:
+        device_map = kwargs.get('device_map', None)
+        torch_dtype = kwargs.get('torch_dtype', None)
+        self.model = Model.from_pretrained(
+            model, device_map=device_map, torch_dtype=torch_dtype)
+        from modelscope.models.nlp.llama2 import Llama2Tokenizer
+        self.tokenizer = Llama2Tokenizer.from_pretrained(model)
+        super().__init__(model=self.model, **kwargs)
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def forward(self,
+                inputs: str,
+                max_length: int = 2048,
+                do_sample: bool = False,
+                top_p: float = 0.9,
+                temperature: float = 0.6,
+                repetition_penalty: float = 1.,
+                eos_token_id: int = 2,
+                bos_token_id: int = 1,
+                pad_token_id: int = 0,
+                system: str = 'you are a helpful assistant!',
+                history: List = [],
+                **forward_params) -> Dict[str, Any]:
+        inputs_dict = forward_params
+        inputs_dict['text'] = inputs
+        inputs_dict['max_length'] = max_length
+        inputs_dict['do_sample'] = do_sample
+        inputs_dict['top_p'] = top_p
+        inputs_dict['temperature'] = temperature
+        inputs_dict['repetition_penalty'] = repetition_penalty
+        inputs_dict['eos_token_id'] = eos_token_id
+        inputs_dict['bos_token_id'] = bos_token_id
+        inputs_dict['pad_token_id'] = pad_token_id
+        inputs_dict['system'] = system
+        inputs_dict['history'] = history
+        output = self.model.chat(inputs_dict, self.tokenizer)
         return output
 
     # format the outputs from pipeline

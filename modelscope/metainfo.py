@@ -339,6 +339,7 @@ class Pipelines(object):
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'
+    image_super_resolution_pasd = 'image-super-resolution-pasd'
     image_debanding = 'rrdb-image-debanding'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
@@ -562,6 +563,7 @@ class Pipelines(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
     llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
+    llama2_text_generation_chat_pipeline = 'llama2-text-generation-chat-pipeline'
     image_to_video_task_pipeline = 'image-to-video-task-pipeline'
     video_to_video_pipeline = 'video-to-video-pipeline'
 

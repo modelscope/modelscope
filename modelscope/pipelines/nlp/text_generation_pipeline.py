@@ -519,15 +519,15 @@ class Llama2TaskPipeline(TextGenerationPipeline):
         return {}, pipeline_parameters, {}
 
     def forward(self,
-                inputs,
-                max_length=2048,
-                do_sample=True,
-                top_p=0.85,
-                temperature=1.0,
-                repetition_penalty=1.,
-                eos_token_id=2,
-                bos_token_id=1,
-                pad_token_id=0,
+                inputs: str,
+                max_length: int = 2048,
+                do_sample: bool = False,
+                top_p: float = 0.9,
+                temperature: float = 0.6,
+                repetition_penalty: float = 1.,
+                eos_token_id: int = 2,
+                bos_token_id: int = 1,
+                pad_token_id: int = 0,
                 **forward_params) -> Dict[str, Any]:
         output = {}
         inputs = self.tokenizer(
@@ -556,7 +556,7 @@ class Llama2TaskPipeline(TextGenerationPipeline):
 
 
 @PIPELINES.register_module(
-    Tasks.chat, module_name=Pipelines.llama2_text_generation_pipeline)
+    Tasks.chat, module_name=Pipelines.llama2_text_generation_chat_pipeline)
 class Llama2chatTaskPipeline(Pipeline):
     """Use `model` and `preprocessor` to create a generation pipeline for prediction.
 
@@ -573,21 +573,21 @@ class Llama2chatTaskPipeline(Pipeline):
             >>> from modelscope.pipelines import pipeline
             >>> from modelscope import Model
             >>> pipe = pipeline(task=Tasks.chat, model="modelscope/Llama-2-7b-chat-ms", device_map='auto',
-            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'])
+            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'], model_revision='v1.0.4')
             >>> inputs = 'Where is the capital of Zhejiang?'
-            >>> result = pipe(inputs,max_length=512, do_sample=True, top_p=0.85,
-            >>> temperature=1.0, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
             >>> print(result['response'])
             >>> inputs = 'What are the interesting places there?'
-            >>> result = pipe(inputs,max_length=512, do_sample=True, top_p=0.85,
-            >>> temperature=1.0, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
             >>> pad_token_id=0, history=result['history'])
             >>> print(result['response'])
             >>> inputs = 'What are the company there?'
             >>> history_demo = [('Where is the capital of Zhejiang?',
             >>> 'Thank you for asking! The capital of Zhejiang Province is Hangzhou.')]
-            >>> result = pipe(inputs,max_length=512, do_sample=True, top_p=0.85,
-            >>> temperature=1.0, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
             >>> pad_token_id=0, history=history_demo)
             >>> print(result['response'])
 
@@ -624,7 +624,7 @@ class Llama2chatTaskPipeline(Pipeline):
                 repetition_penalty: float = 1.,
                 eos_token_id: int = 2,
                 bos_token_id: int = 1,
-                pad_token_id: int = 32000,
+                pad_token_id: int = 0,
                 system: str = 'you are a helpful assistant!',
                 history: List = [],
                 **forward_params) -> Dict[str, Any]:

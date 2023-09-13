@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, List, Optional, Union
+import math
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -8,7 +9,7 @@ import torch
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Pipeline
+from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import Preprocessor
 from modelscope.utils.constant import ModelFile, Tasks
@@ -64,6 +65,7 @@ class TokenClassificationPipeline(Pipeline):
                 sequence_length=sequence_length,
                 **kwargs)
         self.model.eval()
+        self.sequence_length = sequence_length
 
         assert hasattr(self.preprocessor, 'id2label')
         self.id2label = self.preprocessor.id2label
@@ -172,3 +174,64 @@ class TokenClassificationPipeline(Pipeline):
             chunks.append(chunk)
 
         return chunks
+
+    def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
+        split_max_length = kwargs.pop(
+            'split_max_length',
+            self.sequence_length // 2)  # divide by 2 to avoid length overflow
+        if split_max_length <= 0:
+            return super()._process_single(input, *args, **kwargs)
+        else:
+            split_texts, index_mapping = self._auto_split([input],
+                                                          split_max_length)
+            outputs = []
+            for text in split_texts:
+                outputs.append(super()._process_single(text, *args, **kwargs))
+            return self._auto_join(outputs, index_mapping)[0]
+
+    def _process_batch(self, input: List[Input], batch_size: int, *args,
+                       **kwargs) -> List[Dict[str, Any]]:
+        split_max_length = kwargs.pop(
+            'split_max_length',
+            self.sequence_length // 2)  # divide by 2 to avoid length overflow
+        if split_max_length <= 0:
+            return super()._process_batch(input, *args, **kwargs)
+        else:
+            split_texts, index_mapping = self._auto_split(
+                input, split_max_length)
+            outputs = super()._process_batch(
+                split_texts, batch_size=batch_size, *args, **kwargs)
+            return self._auto_join(outputs, index_mapping)
+
+    def _auto_split(self, input_texts: List[str], split_max_length: int):
+        split_texts = []
+        index_mapping = {}
+        new_idx = 0
+        for raw_idx, text in enumerate(input_texts):
+            if len(text) < split_max_length:
+                split_texts.append(text)
+                index_mapping[new_idx] = (raw_idx, 0)
+                new_idx += 1
+            else:
+                n_split = math.ceil(len(text) / split_max_length)
+                for i in range(n_split):
+                    offset = i * split_max_length
+                    split_texts.append(text[offset:offset + split_max_length])
+                    index_mapping[new_idx] = (raw_idx, offset)
+                    new_idx += 1
+        return split_texts, index_mapping
+
+    def _auto_join(
+            self, outputs: List[Dict[str, Any]],
+            index_mapping: Dict[int, Tuple[int, int]]) -> List[Dict[str, Any]]:
+        joined_outputs = []
+        for idx, output in enumerate(outputs):
+            raw_idx, offset = index_mapping[idx]
+            if raw_idx >= len(joined_outputs):
+                joined_outputs.append(output)
+            else:
+                for chunk in output[OutputKeys.OUTPUT]:
+                    chunk['start'] += offset
+                    chunk['end'] += offset
+                    joined_outputs[raw_idx][OutputKeys.OUTPUT].append(chunk)
+        return joined_outputs

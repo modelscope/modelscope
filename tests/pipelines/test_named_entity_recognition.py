@@ -459,6 +459,22 @@ class NamedEntityRecognitionTest(unittest.TestCase):
         pipeline_ins = pipeline(task=Tasks.named_entity_recognition)
         print(pipeline_ins(input=self.sentence))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_long_chinese_with_model_name(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.chinese_model_id)
+        print(pipeline_ins(input=self.sentence
+                           + '. ' * 1000))  # longer than 512
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_long_chinese_with_model_name_batch(self):
+        pipeline_ins = pipeline(
+            task=Tasks.named_entity_recognition, model=self.chinese_model_id)
+        print(
+            pipeline_ins(
+                input=[self.sentence + '. ' * 1000] * 2,
+                batch_size=2))  # longer than 512
+
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_all_modelcards(self):
         for item in self.all_modelcards_info:

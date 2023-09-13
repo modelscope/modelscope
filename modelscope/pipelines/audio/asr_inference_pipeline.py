@@ -160,6 +160,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             token_num_relax=self.cmd['token_num_relax'],
             decoding_ind=self.cmd['decoding_ind'],
             decoding_mode=self.cmd['decoding_mode'],
+            simu_streaming=self.cmd['simu_streaming'],
             **kwargs,
         )
 
@@ -310,7 +311,8 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'fs': {
                 'model_fs': None,
                 'audio_fs': None
-            }
+            },
+            'simu_streaming': False,
         }
 
         frontend_conf = None
@@ -333,7 +335,9 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 decoding_ind = root['decoding_ind']
             if 'decoding_mode' in root:
                 decoding_mode = root['decoding_mode']
-
+            if 'simu_streaming' in root:
+                simu_streaming = root['simu_streaming']
+              
             cmd['beam_size'] = root['beam_size']
             cmd['penalty'] = root['penalty']
             cmd['maxlenratio'] = root['maxlenratio']
@@ -389,6 +393,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'punc_model_file',
             'punc_infer_config',
             'param_dict',
+            'simu_streaming',
         ]
 
         for user_args in user_args_dict:

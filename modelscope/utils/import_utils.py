@@ -310,6 +310,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('open_clip', (is_package_available('open_clip'), OPENCLIP_IMPORT_ERROR)),
     ('taming', (is_package_available('taming'), TAMING_IMPORT_ERROR)),
     ('xformers', (is_package_available('xformers'), XFORMERS_IMPORT_ERROR)),
+    ('swift', (is_package_available('swift'), SWIFT_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

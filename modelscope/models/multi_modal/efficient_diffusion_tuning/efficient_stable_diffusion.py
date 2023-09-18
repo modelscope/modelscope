@@ -13,7 +13,6 @@ from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        utils)
 from diffusers.models import attention
 from diffusers.utils import deprecation_utils
-from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from modelscope import snapshot_download
@@ -26,6 +25,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.utils.checkpoint import save_checkpoint, save_configuration
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.import_utils import is_swift_available
 from .control_sd_lora import ControlLoRATuner
 
 utils.deprecate = lambda *arg, **kwargs: None
@@ -33,6 +33,9 @@ deprecation_utils.deprecate = lambda *arg, **kwargs: None
 attention.deprecate = lambda *arg, **kwargs: None
 
 __tuner_MAP__ = {'lora': LoRATuner, 'control_lora': ControlLoRATuner}
+
+if is_swift_available():
+    from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 
 
 @MODELS.register_module(
@@ -110,6 +113,10 @@ class EfficientStableDiffusion(TorchModel):
         self.tuner_name = tuner_name
 
         if tuner_name == 'swift-lora':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             rank = tuner_config[
                 'rank'] if tuner_config and 'rank' in tuner_config else 4
             lora_config = LoRAConfig(
@@ -119,6 +126,10 @@ class EfficientStableDiffusion(TorchModel):
                 use_merged_linear=False)
             self.unet = Swift.prepare_model(self.unet, lora_config)
         elif tuner_name == 'swift-adapter':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             adapter_length = tuner_config[
                 'adapter_length'] if tuner_config and 'adapter_length' in tuner_config else 10
             adapter_config = AdapterConfig(
@@ -128,6 +139,10 @@ class EfficientStableDiffusion(TorchModel):
                 adapter_length=adapter_length)
             self.unet = Swift.prepare_model(self.unet, adapter_config)
         elif tuner_name == 'swift-prompt':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             prompt_length = tuner_config[
                 'prompt_length'] if tuner_config and 'prompt_length' in tuner_config else 10
             prompt_config = PromptConfig(

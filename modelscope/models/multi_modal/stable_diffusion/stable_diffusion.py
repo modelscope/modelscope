@@ -66,9 +66,8 @@ class StableDiffusion(TorchModel):
             self.text_encoder = self.text_encoder.to(
                 self.device, dtype=self.weight_dtype)
         if self.unet is not None:
-            # if self.lora_tune:
-            #     self.unet.requires_grad_(False)
-            self.unet.requires_grad_(False)
+            if self.lora_tune:
+                self.unet.requires_grad_(False)
             self.unet = self.unet.to(self.device, dtype=self.weight_dtype)
 
         # xformers accelerate memory efficient attention
@@ -162,7 +161,7 @@ class StableDiffusion(TorchModel):
                         **kwargs):
         # Skip copying the original weights for lora and dreambooth method
         if self.lora_tune or self.dreambooth_tune:
-            # config['pipeline']['type'] = 'diffusers-stable-diffusion'
+            config['pipeline']['type'] = 'diffusers-stable-diffusion'
             pass
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,

@@ -319,6 +319,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         token_num_relax = None
         decoding_ind = None
         decoding_mode = None
+        fake_streaming = False
         if os.path.exists(outputs['am_model_config']):
             config_file = open(outputs['am_model_config'], encoding='utf-8')
             root = yaml.full_load(config_file)
@@ -335,9 +336,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 decoding_ind = root['decoding_ind']
             if 'decoding_mode' in root:
                 decoding_mode = root['decoding_mode']
-            if 'fake_streaming' in root:
-                fake_streaming = root['fake_streaming']
-              
+
             cmd['beam_size'] = root['beam_size']
             cmd['penalty'] = root['penalty']
             cmd['maxlenratio'] = root['maxlenratio']
@@ -354,6 +353,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         cmd['token_num_relax'] = token_num_relax
         cmd['decoding_ind'] = decoding_ind
         cmd['decoding_mode'] = decoding_mode
+        cmd['fake_streaming'] = fake_streaming
         if outputs.__contains__('mvn_file'):
             cmd['cmvn_file'] = outputs['mvn_file']
         model_config = self.model_cfg['model_config']

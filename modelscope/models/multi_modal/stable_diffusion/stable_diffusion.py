@@ -38,7 +38,6 @@ class StableDiffusion(TorchModel):
         xformers_enable = kwargs.pop('xformers_enable', False)
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
-        self.dreambooth_tune = False
 
         self.weight_dtype = kwargs.pop('torch_type', torch.float32)
         self.device = torch.device(

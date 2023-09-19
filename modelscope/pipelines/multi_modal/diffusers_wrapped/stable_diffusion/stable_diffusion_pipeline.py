@@ -63,8 +63,10 @@ class StableDiffusionPipeline(DiffusersPipeline):
             assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
             self.pipeline.unet.load_attn_procs(lora_dir)
         elif swift_lora_dir is not None:
-            assert os.path.exists(swift_lora_dir), f"{swift_lora_dir} isn't exist"
-            self.pipeline.unet = Swift.from_pretrained(self.pipeline.unet, swift_lora_dir)
+            assert os.path.exists(
+                swift_lora_dir), f"{swift_lora_dir} isn't exist"
+            self.pipeline.unet = Swift.from_pretrained(self.pipeline.unet,
+                                                       swift_lora_dir)
         # load custom diffusion to unet
         if custom_dir is not None:
             assert os.path.exists(custom_dir), f"{custom_dir} isn't exist"

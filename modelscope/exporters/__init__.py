@@ -7,13 +7,13 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .base import Exporter
     from .builder import build_exporter
-    from .cv import CartoonTranslationExporter
-    from .nlp import CsanmtForTranslationExporter
-    from .tf_model_exporter import TfModelExporter
-    from .nlp import SbertForSequenceClassificationExporter, SbertForZeroShotClassificationExporter
-    from .torch_model_exporter import TorchModelExporter
-    from .cv import FaceDetectionSCRFDExporter
+    from .cv import CartoonTranslationExporter, FaceDetectionSCRFDExporter
     from .multi_modal import StableDiffuisonExporter
+    from .nlp import (CsanmtForTranslationExporter,
+                      SbertForSequenceClassificationExporter,
+                      SbertForZeroShotClassificationExporter)
+    from .tf_model_exporter import TfModelExporter
+    from .torch_model_exporter import TorchModelExporter
 else:
     _import_structure = {
         'base': ['Exporter'],

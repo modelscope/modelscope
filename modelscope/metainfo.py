@@ -293,6 +293,7 @@ class Pipelines(object):
     table_recognition = 'dla34-table-recognition'
     lineless_table_recognition = 'lore-lineless-table-recognition'
     license_plate_detection = 'resnet18-license-plate-detection'
+    card_detection_correction = 'resnet18-card-detection-correction'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
@@ -677,6 +678,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.license_plate_detection:
     (Pipelines.license_plate_detection,
      'damo/cv_resnet18_license-plate-detection_damo'),
+    Tasks.card_detection_correction: (Pipelines.card_detection_correction,
+                                      'damo/cv_resnet18_card_correction'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),

@@ -110,6 +110,8 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.license_plate_detection:
     InputType.IMAGE,
+    Tasks.card_detection_correction:
+    InputType.IMAGE,
     Tasks.lineless_table_recognition:
     InputType.IMAGE,
     Tasks.table_recognition:

@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
+    from .card_detection_correction_pipeline import CardDetectionCorrectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
     from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
@@ -165,6 +166,8 @@ else:
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
         'license_plate_detection_pipeline': ['LicensePlateDetectionPipeline'],
+        'card_detection_correction_pipeline':
+        ['CardDetectionCorrectionPipeline'],
         'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'face_reconstruction_pipeline': ['FaceReconstructionPipeline'],
@@ -184,8 +187,9 @@ else:
         'facial_landmark_confidence_pipeline':
         ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
-        'face_attribute_recognition_pipeline':
-        ['FaceAttributeRecognitionPipeline'],
+        'face_attribute_recognition_pipeline': [
+            'FaceAttributeRecognitionPipeline'
+        ],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
         'referring_video_object_segmentation_pipeline': [

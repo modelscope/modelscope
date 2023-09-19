@@ -19,6 +19,7 @@ class CVTasks(object):
     table_recognition = 'table-recognition'
     lineless_table_recognition = 'lineless-table-recognition'
     license_plate_detection = 'license-plate-detection'
+    card_detection_correction = 'card-detection-correction'
 
     # human face body related
     animal_recognition = 'animal-recognition'

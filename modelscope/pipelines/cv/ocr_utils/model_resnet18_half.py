@@ -91,10 +91,10 @@ class Bottleneck(nn.Module):
 
 class PoseResNet(nn.Module):
 
-    def __init__(self, block, layers, head_conv=64, **kwargs):
+    def __init__(self, block, layers, heads, head_conv=64, **kwargs):
         self.inplanes = 64
         self.deconv_with_bias = False
-        self.heads = {'hm': 1, 'cls': 4, 'ftype': 11, 'wh': 8, 'reg': 2}
+        self.heads = heads
 
         super(PoseResNet, self).__init__()
         self.conv1 = nn.Conv2d(
@@ -270,6 +270,14 @@ resnet_spec = {
 
 
 def LicensePlateDet(num_layers=18):
+    heads = {'hm': 1, 'cls': 4, 'ftype': 11, 'wh': 8, 'reg': 2}
     block_class, layers = resnet_spec[num_layers]
-    model = PoseResNet(block_class, layers)
+    model = PoseResNet(block_class, layers, heads)
+    return model
+
+
+def CardDetectionCorrectionModel(num_layers=18):
+    heads = {'hm': 1, 'cls': 4, 'ftype': 2, 'wh': 8, 'reg': 2}
+    block_class, layers = resnet_spec[num_layers]
+    model = PoseResNet(block_class, layers, heads)
     return model

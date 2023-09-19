@@ -16,6 +16,8 @@ Before asking a question, make sure you have:
 * Searched related issues but cannot get the expected help.
 * The bug has not been fixed in the latest version.
 
+Please @ corresponding people according to your problem:
+
 Model related: @wenmengzhou @tastelikefeet
 
 Model hub related: @liuyhwangyh

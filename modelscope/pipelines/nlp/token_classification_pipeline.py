@@ -176,9 +176,8 @@ class TokenClassificationPipeline(Pipeline):
         return chunks
 
     def _process_single(self, input: Input, *args, **kwargs) -> Dict[str, Any]:
-        split_max_length = kwargs.pop(
-            'split_max_length',
-            self.sequence_length // 2)  # divide by 2 to avoid length overflow
+        split_max_length = kwargs.pop('split_max_length',
+                                      0)  # default: no split
         if split_max_length <= 0:
             return super()._process_single(input, *args, **kwargs)
         else:
@@ -191,11 +190,11 @@ class TokenClassificationPipeline(Pipeline):
 
     def _process_batch(self, input: List[Input], batch_size: int, *args,
                        **kwargs) -> List[Dict[str, Any]]:
-        split_max_length = kwargs.pop(
-            'split_max_length',
-            self.sequence_length // 2)  # divide by 2 to avoid length overflow
+        split_max_length = kwargs.pop('split_max_length',
+                                      0)  # default: no split
         if split_max_length <= 0:
-            return super()._process_batch(input, *args, **kwargs)
+            return super()._process_batch(
+                input, batch_size=batch_size, *args, **kwargs)
         else:
             split_texts, index_mapping = self._auto_split(
                 input, split_max_length)

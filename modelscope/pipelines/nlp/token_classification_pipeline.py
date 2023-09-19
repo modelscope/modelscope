@@ -133,9 +133,20 @@ class TokenClassificationPipeline(Pipeline):
         predictions = torch_nested_numpify(torch_nested_detach(predictions))
         labels = [self.id2label[x] for x in predictions]
 
+        return_prob = postprocess_params.pop('return_prob', True)
+        if return_prob:
+            if OutputKeys.LOGITS in inputs:
+                logits = inputs[OutputKeys.LOGITS]
+                if len(logits.shape) == 3:
+                    logits = logits[0]
+                probs = torch_nested_numpify(
+                    torch_nested_detach(logits.softmax(-1)))
+            else:
+                return_prob = False
+
         chunks = []
         chunk = {}
-        for label, offsets in zip(labels, offset_mapping):
+        for i, (label, offsets) in enumerate(zip(labels, offset_mapping)):
             if label[0] in 'BS':
                 if chunk:
                     chunk['span'] = text[chunk['start']:chunk['end']]
@@ -145,6 +156,8 @@ class TokenClassificationPipeline(Pipeline):
                     'start': offsets[0],
                     'end': offsets[1]
                 }
+                if return_prob:
+                    chunk['prob'] = probs[i][predictions[i]]
             if label[0] in 'I':
                 if not chunk:
                     chunk = {
@@ -152,6 +165,8 @@ class TokenClassificationPipeline(Pipeline):
                         'start': offsets[0],
                         'end': offsets[1]
                     }
+                    if return_prob:
+                        chunk['prob'] = probs[i][predictions[i]]
             if label[0] in 'E':
                 if not chunk:
                     chunk = {
@@ -159,6 +174,8 @@ class TokenClassificationPipeline(Pipeline):
                         'start': offsets[0],
                         'end': offsets[1]
                     }
+                    if return_prob:
+                        chunk['prob'] = probs[i][predictions[i]]
             if label[0] in 'IES':
                 if chunk:
                     chunk['end'] = offsets[1]

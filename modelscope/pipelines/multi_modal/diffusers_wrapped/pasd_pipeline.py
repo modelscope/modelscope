@@ -21,8 +21,9 @@ from diffusers.pipelines.stable_diffusion.safety_checker import \
     StableDiffusionSafetyChecker
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import (PIL_INTERPOLATION, is_accelerate_available,
-                             is_accelerate_version, is_compiled_module,
-                             logging, randn_tensor, replace_example_docstring)
+                             is_accelerate_version, logging,
+                             replace_example_docstring)
+from diffusers.utils.torch_utils import is_compiled_module, randn_tensor
 from torchvision.utils import save_image
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 

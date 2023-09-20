@@ -246,7 +246,7 @@ class StableDiffusionXL(TorchModel):
                         **kwargs):
         config['pipeline']['type'] = 'diffusers-stable-diffusion-xl'
         # Skip copying the original weights for lora and dreambooth method
-        if self.lora_tune or self.dreambooth_tune:
+        if self.lora_tune:
             pass
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,

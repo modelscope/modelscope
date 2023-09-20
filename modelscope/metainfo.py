@@ -1233,6 +1233,7 @@ class Hooks(object):
     DeepspeedHook = 'DeepspeedHook'
     MegatronHook = 'MegatronHook'
     DDPHook = 'DDPHook'
+    SwiftHook = 'SwiftHook'
 
 
 class LR_Schedulers(object):

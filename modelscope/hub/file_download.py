@@ -4,6 +4,7 @@ import copy
 import os
 import tempfile
 import threading
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from http.cookiejar import CookieJar
@@ -192,6 +193,7 @@ def download_part_with_retry(params):
     progress, start, end, url, file_name, cookies, headers = params
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['Range'] = 'bytes=%s-%s' % (start, end)
+    get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     retry = Retry(
         total=API_FILE_DOWNLOAD_RETRY_TIMES,
         backoff_factor=1,
@@ -289,6 +291,7 @@ def http_get_file(
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
     get_headers = {} if headers is None else copy.deepcopy(headers)
+    get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     with temp_file_manager() as temp_file:
         logger.debug('downloading %s to %s', url, temp_file.name)
         # retry sleep 0.5s, 1s, 2s, 4s

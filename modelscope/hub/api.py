@@ -30,7 +30,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       DEFAULT_CREDENTIALS_PATH,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
-                                      ONE_YEAR_SECONDS,
+                                      MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD, Licenses,
                                       ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
@@ -105,7 +105,9 @@ class HubApi:
         """
         path = f'{self.endpoint}/api/v1/login'
         r = self.session.post(
-            path, json={'AccessToken': access_token}, headers=self.headers)
+            path,
+            json={'AccessToken': access_token},
+            headers=self.builder_headers(self.headers))
         raise_for_http_status(r)
         d = r.json()
         raise_on_error(d)
@@ -166,7 +168,10 @@ class HubApi:
             'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
         }
         r = self.session.post(
-            path, json=body, cookies=cookies, headers=self.headers)
+            path,
+            json=body,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers))
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
         model_repo_url = f'{get_endpoint()}/{model_id}'
@@ -189,7 +194,9 @@ class HubApi:
             raise ValueError('Token does not exist, please login first.')
         path = f'{self.endpoint}/api/v1/models/{model_id}'
 
-        r = self.session.delete(path, cookies=cookies, headers=self.headers)
+        r = self.session.delete(path,
+                                cookies=cookies,
+                                headers=self.builder_headers(self.headers))
         raise_for_http_status(r)
         raise_on_error(r.json())
 
@@ -223,7 +230,8 @@ class HubApi:
         else:
             path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
 
-        r = self.session.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, model_id)
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -384,7 +392,7 @@ class HubApi:
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
             (owner_or_group, page_number, page_size),
             cookies=cookies,
-            headers=self.headers)
+            headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, 'list_model')
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
@@ -429,7 +437,8 @@ class HubApi:
         if cutoff_timestamp is None:
             cutoff_timestamp = get_release_datetime()
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions?EndTime=%s' % cutoff_timestamp
-        r = self.session.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
@@ -466,13 +475,15 @@ class HubApi:
                     cutoff_timestamp=release_timestamp,
                     use_cookies=False if cookies is None else cookies)
                 if len(revisions) == 0:
-                    raise NoValidRevisionError(
-                        'The model: %s has no valid revision!' % model_id)
-                # tags (revisions) returned from backend are guaranteed to be ordered by create-time
-                # we shall obtain the latest revision created earlier than release version of this branch
-                revision = revisions[0]
+                    logger.warning(('There is no version specified and there is no version in the model repository,'
+                                    'use the master branch, which is fragile, please use it with caution!'))
+                    revision = MASTER_MODEL_BRANCH
+                else:
+                    # tags (revisions) returned from backend are guaranteed to be ordered by create-time
+                    # we shall obtain the latest revision created earlier than release version of this branch
+                    revision = revisions[0]
                 logger.info(
-                    'Model revision not specified, use the latest revision: %s'
+                    'Model revision not specified, use revision: %s'
                     % revision)
             else:
                 # use user-specified revision
@@ -481,8 +492,11 @@ class HubApi:
                     cutoff_timestamp=current_timestamp,
                     use_cookies=False if cookies is None else cookies)
                 if revision not in revisions:
-                    raise NotExistError('The model: %s has no revision: %s !' %
-                                        (model_id, revision))
+                    if revision == MASTER_MODEL_BRANCH:
+                        logger.warning('Using the master branch is fragile, please use it with caution!')
+                    else:
+                        raise NotExistError('The model: %s has no revision: %s !' %
+                                            (model_id, revision))
                 logger.info('Use user-specified model revision: %s' % revision)
         return revision
 
@@ -504,7 +518,8 @@ class HubApi:
         cookies = self._check_cookie(use_cookies)
 
         path = f'{self.endpoint}/api/v1/models/{model_id}/revisions'
-        r = self.session.get(path, cookies=cookies, headers=self.headers)
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, model_id)
         d = r.json()
         raise_on_error(d)
@@ -546,6 +561,7 @@ class HubApi:
         if root is not None:
             path = path + f'&Root={root}'
         headers = self.headers if headers is None else headers
+        headers['X-Request-ID'] = str(uuid.uuid4().hex)
         r = self.session.get(
             path, cookies=cookies, headers=headers)
 
@@ -564,7 +580,8 @@ class HubApi:
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
         params = {}
-        r = self.session.get(path, params=params, headers=self.headers)
+        r = self.session.get(path, params=params,
+                             headers=self.builder_headers(self.headers))
         raise_for_http_status(r)
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
@@ -584,7 +601,9 @@ class HubApi:
         """ Get the meta file-list of the dataset. """
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
         cookies = ModelScopeConfig.get_cookies()
-        r = self.session.get(datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(datahub_url,
+                             cookies=cookies,
+                             headers=self.builder_headers(self.headers))
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp)
         file_list = resp['Data']
@@ -730,7 +749,9 @@ class HubApi:
             cookies = ModelScopeConfig.get_cookies()
 
         r = self.session.get(
-            url=datahub_url, cookies=cookies, headers=self.headers)
+            url=datahub_url,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers))
         resp = r.json()
         raise_on_error(resp)
         return resp['Data']
@@ -753,7 +774,11 @@ class HubApi:
         data = dict(
             data=dataset_info,
         )
-        r = self.session.post(url=virgo_dataset_url, json=data, cookies=cookies, headers=self.headers, timeout=900)
+        r = self.session.post(url=virgo_dataset_url,
+                              json=data,
+                              cookies=cookies,
+                              headers=self.builder_headers(self.headers),
+                              timeout=900)
         resp = r.json()
         if resp['code'] != 0:
             raise RuntimeError(f'Failed to get virgo dataset: {resp}')
@@ -767,7 +792,8 @@ class HubApi:
                                                zip_file_name: str):
         datahub_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         cookies = ModelScopeConfig.get_cookies()
-        r = self.session.get(url=datahub_url, cookies=cookies, headers=self.headers)
+        r = self.session.get(url=datahub_url, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
         resp = r.json()
         # get visibility of the dataset
         raise_on_error(resp)
@@ -775,7 +801,8 @@ class HubApi:
         visibility = DatasetVisibilityMap.get(data['Visibility'])
 
         datahub_sts_url = f'{datahub_url}/ststoken?Revision={revision}'
-        r_sts = self.session.get(url=datahub_sts_url, cookies=cookies, headers=self.headers)
+        r_sts = self.session.get(url=datahub_sts_url, cookies=cookies,
+                                 headers=self.builder_headers(self.headers))
         resp_sts = r_sts.json()
         raise_on_error(resp_sts)
         data_sts = resp_sts['Data']
@@ -842,7 +869,8 @@ class HubApi:
 
                 # Download count
                 download_count_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
-                download_count_resp = self.session.post(download_count_url, cookies=cookies, headers=self.headers)
+                download_count_resp = self.session.post(download_count_url, cookies=cookies,
+                                                        headers=self.builder_headers(self.headers))
                 raise_for_http_status(download_count_resp)
 
                 # Download uv
@@ -854,12 +882,17 @@ class HubApi:
                     user_name = os.environ[MODELSCOPE_CLOUD_USERNAME]
                 download_uv_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/uv/' \
                                   f'{channel}?user={user_name}'
-                download_uv_resp = self.session.post(download_uv_url, cookies=cookies, headers=self.headers)
+                download_uv_resp = self.session.post(download_uv_url, cookies=cookies,
+                                                     headers=self.builder_headers(self.headers))
                 download_uv_resp = download_uv_resp.json()
                 raise_on_error(download_uv_resp)
 
             except Exception as e:
                 logger.error(e)
+
+    def builder_headers(self, headers):
+        return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
+                **headers}
 
 
 class ModelScopeConfig:

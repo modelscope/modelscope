@@ -67,6 +67,7 @@ class StableDiffusion(TorchModel):
         if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
+                print('-------self.unet.requires_grad_(False)')
             self.unet = self.unet.to(self.device, dtype=self.weight_dtype)
 
         # xformers accelerate memory efficient attention

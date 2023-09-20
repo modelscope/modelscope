@@ -8,7 +8,6 @@ import torch
 import torchvision.transforms as transforms
 from diffusers import DiffusionPipeline
 from PIL import Image
-from swift import Swift
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -18,6 +17,7 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
     DiffusersPipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import is_swift_available
 
 
 @PIPELINES.register_module(
@@ -65,8 +65,14 @@ class StableDiffusionPipeline(DiffusersPipeline):
         elif swift_lora_dir is not None:
             assert os.path.exists(
                 swift_lora_dir), f"{swift_lora_dir} isn't exist"
-            self.pipeline.unet = Swift.from_pretrained(self.pipeline.unet,
-                                                       swift_lora_dir)
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+                )
+                from swift import Swift
+                self.pipeline.unet = Swift.from_pretrained(
+                    self.pipeline.unet, swift_lora_dir)
+
         # load custom diffusion to unet
         if custom_dir is not None:
             assert os.path.exists(custom_dir), f"{custom_dir} isn't exist"

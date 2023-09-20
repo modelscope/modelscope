@@ -69,6 +69,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
                 raise ValueError(
                     'Please install swift by `pip install ms-swift` to use efficient_tuners.'
                 )
+            else:
                 from swift import Swift
                 self.pipeline.unet = Swift.from_pretrained(
                     self.pipeline.unet, swift_lora_dir)

@@ -961,6 +961,7 @@ class MultiModalTrainers(object):
     mgeo_ranking_trainer = 'mgeo-ranking-trainer'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     stable_diffusion = 'stable-diffusion'
+    stable_diffusion_xl = 'stable-diffusion-xl'
     lora_diffusion = 'lora-diffusion'
     lora_diffusion_xl = 'lora-diffusion-xl'
     dreambooth_diffusion = 'dreambooth-diffusion'

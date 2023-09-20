@@ -7,6 +7,7 @@ from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
 
+import cv2
 import numpy as np
 
 from modelscope.hub.api import HubApi
@@ -437,7 +438,17 @@ class PipelineInfomation():
     def _analyze(self):
         input, parameters = get_pipeline_input_parameters(
             self._source_path, self._class_name)
-        if input is not None:  # custom pipeline __call__ asr_inferrnce_pipeline
+        # use base pipeline __call__ if inputs and outputs are defined in modelscope lib
+        if self._task_name in TASK_INPUTS and self._task_name in TASK_OUTPUTS:
+            # delete the first default input which is defined by task.
+            if parameters is None:
+                self._parameters_schema = {}
+            else:
+                self._parameters_schema = generate_pipeline_parameters_schema(
+                    parameters)
+            self._input_schema = get_input_schema(self._task_name, None)
+            self._output_schema = get_output_schema(self._task_name)
+        elif input is not None:  # custom pipeline implemented it's own __call__ method
             self._is_custom_call_method = True
             self._input_schema = generate_pipeline_parameters_schema(input)
             self._input_schema[
@@ -449,27 +460,18 @@ class PipelineInfomation():
             if self._task_name in TASK_OUTPUTS:
                 self._output_schema = get_output_schema(self._task_name)
         else:
-            # use base pipeline __call__
-            if self._task_name in TASK_INPUTS and self._task_name in TASK_OUTPUTS:
-                # delete the first default input which is defined by task.
-                self._parameters_schema = generate_pipeline_parameters_schema(
-                    parameters)
+            logger.warning(
+                'Task: %s input is defined: %s, output is defined: %s which is not completed'
+                % (self._task_name, self._task_name
+                   in TASK_INPUTS, self._task_name in TASK_OUTPUTS))
+            self._input_schema = None
+            self._output_schema = None
+            if self._task_name in TASK_INPUTS:
                 self._input_schema = get_input_schema(self._task_name, None)
+            if self._task_name in TASK_OUTPUTS:
                 self._output_schema = get_output_schema(self._task_name)
-            else:
-                logger.warning(
-                    'Task: %s input is defined: %s, output is defined: %s which is not completed'
-                    % (self._task_name, self._task_name
-                       in TASK_INPUTS, self._task_name in TASK_OUTPUTS))
-                self._input_schema = None
-                self._output_schema = None
-                if self._task_name in TASK_INPUTS:
-                    self._input_schema = get_input_schema(
-                        self._task_name, None)
-                if self._task_name in TASK_OUTPUTS:
-                    self._output_schema = get_output_schema(self._task_name)
-                self._parameters_schema = generate_pipeline_parameters_schema(
-                    parameters)
+            self._parameters_schema = generate_pipeline_parameters_schema(
+                parameters)
 
     @property
     def task_name(self):
@@ -663,11 +665,8 @@ def service_base64_input_to_pipeline_input(task_name, body):
 
 
 def encode_numpy_image_to_base64(image):
-    from PIL import Image
-    with BytesIO() as output_bytes:
-        pil_image = Image.fromarray(image.astype(np.uint8))
-        pil_image.save(output_bytes, 'PNG')
-        bytes_data = output_bytes.getvalue()
+    _, img_encode = cv2.imencode('.png', image)
+    bytes_data = img_encode.tobytes()
     base64_str = str(base64.b64encode(bytes_data), 'utf-8')
     return base64_str
 
@@ -718,6 +717,10 @@ def _convert_to_python_type(inputs):
         return res
     elif isinstance(inputs, np.ndarray):
         return inputs.tolist()
+    elif isinstance(inputs, np.floating):
+        return float(inputs)
+    elif isinstance(inputs, np.integer):
+        return int(inputs)
     else:
         return inputs
 

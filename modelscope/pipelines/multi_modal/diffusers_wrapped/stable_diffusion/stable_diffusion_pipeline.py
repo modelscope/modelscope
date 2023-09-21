@@ -39,11 +39,11 @@ class StableDiffusionPipeline(DiffusersPipeline):
             custom_dir: custom diffusion weight dir for unet.
             modifier_token: token to use as a modifier for the concept of custom diffusion.
             use_safetensors: load safetensors weights.
-            swift_lora_dir: load swift lora dir for unet.
+            use_swift: Whether to use swift lora dir for unet.
         """
         use_safetensors = kwargs.pop('use_safetensors', False)
         torch_type = kwargs.pop('torch_type', torch.float32)
-        swift_lora_dir = kwargs.pop('swift_lora_dir', None)
+        use_swift = kwargs.pop('use_swift', False)
         # check custom diffusion input value
         if custom_dir is None and modifier_token is not None:
             raise ValueError(
@@ -61,18 +61,16 @@ class StableDiffusionPipeline(DiffusersPipeline):
         # load lora moudle to unet
         if lora_dir is not None:
             assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
-            self.pipeline.unet.load_attn_procs(lora_dir)
-        elif swift_lora_dir is not None:
-            assert os.path.exists(
-                swift_lora_dir), f"{swift_lora_dir} isn't exist"
-            if not is_swift_available():
-                raise ValueError(
-                    'Please install swift by `pip install ms-swift` to use efficient_tuners.'
-                )
-            else:
+            if use_swift:
+                if not is_swift_available():
+                    raise ValueError(
+                        'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+                    )
                 from swift import Swift
                 self.pipeline.unet = Swift.from_pretrained(
-                    self.pipeline.unet, swift_lora_dir)
+                    self.pipeline.unet, lora_dir)
+            else:
+                self.pipeline.unet.load_attn_procs(lora_dir)
 
         # load custom diffusion to unet
         if custom_dir is not None:

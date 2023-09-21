@@ -53,10 +53,13 @@ class DiffusionImageGenerationPreprocessor(Preprocessor):
         self.preprocessor_mean = kwargs.pop('mean', [0.5])
         self.preprocessor_std = kwargs.pop('std', [0.5])
         self.preprocessor_image_keys = set(kwargs.pop('image_keys', []))
+        self.center_crop = kwargs.pop('center_crop', True)
+        
         self.transform_input = transforms.Compose([
             transforms.Resize(
                 self.preprocessor_resolution,
                 interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(self.preprocessor_resolution) if self.center_crop else transforms.RandomCrop(self.preprocessor_resolution),
             transforms.ToTensor(),
             transforms.Normalize(self.preprocessor_mean,
                                  self.preprocessor_std),

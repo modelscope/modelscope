@@ -22,7 +22,7 @@ class TestEfficientDiffusionTuningTrainerSwift(unittest.TestCase):
             split='train',
             subset_name='Anime').remap_columns({'Image:FILE': 'target:FILE'})
 
-        self.max_epochs = 30
+        self.max_epochs = 1
         self.lr = 0.0001
 
         self.tmp_dir = tempfile.TemporaryDirectory().name

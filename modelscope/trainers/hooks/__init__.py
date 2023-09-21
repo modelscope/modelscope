@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from .distributed.ddp_hook import DDPHook
     from .distributed.deepspeed_hook import DeepspeedHook
     from .distributed.megatron_hook import MegatronHook
+    from .swift.swift_hook import SwiftHook
 
 else:
     _import_structure = {
@@ -40,6 +41,7 @@ else:
         'distributed.ddp_hook': ['DDPHook'],
         'distributed.deepspeed_hook': ['DeepspeedHook'],
         'distributed.megatron_hook': ['MegatronHook'],
+        'swift.swift_hook': ['SwiftHook'],
         'priority': ['Priority', 'get_priority']
     }
 

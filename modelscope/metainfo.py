@@ -366,6 +366,8 @@ class Pipelines(object):
     hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
     face_reconstruction = 'resnet50-face-reconstruction'
+    head_reconstruction = 'HRN-head-reconstruction'
+    text_to_head = 'HRN-text-to-head'
     tinynas_classification = 'tinynas-classification'
     easyrobust_classification = 'easyrobust-classification'
     tinynas_detection = 'tinynas-detection'

@@ -148,6 +148,8 @@ class CVTasks(object):
 
     # 3d face reconstruction
     face_reconstruction = 'face-reconstruction'
+    head_reconstruction = 'head-reconstruction'
+    text_to_head = 'text-to-head'
 
     # 3d human reconstruction
     human_reconstruction = 'human-reconstruction'

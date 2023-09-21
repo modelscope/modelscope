@@ -861,6 +861,41 @@ TASK_OUTPUTS = {
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],
 
+    # 3D head reconstruction result for single sample
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     }
+    # }
+    Tasks.head_reconstruction: [OutputKeys.OUTPUT],
+
+    # text to head result for text input
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     },
+    #     "image": np.array with shape(h, w, 3),
+    # }
+    Tasks.text_to_head: [OutputKeys.OUTPUT],
+
     # 3D human reconstruction result for single sample
     # {
     #     "output": {

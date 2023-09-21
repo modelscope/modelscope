@@ -15,6 +15,9 @@ import torch.utils.checkpoint as checkpoint
 from torch import nn
 from transformers import BertConfig, BertForMaskedLM
 
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
+
 
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
@@ -290,6 +293,8 @@ class TEAM(nn.Module):
         self.text_tensor_fc = nn.Linear(1024, 768)
 
         params = torch.load(pretrained, 'cpu')
+        compatible_position_ids(params,
+                                'text_model.bert.embeddings.position_ids')
         self.load_state_dict(params, strict=True)
 
     def get_feature(self, text_data=None, text_mask=None, img_tensor=None):

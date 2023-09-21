@@ -15,6 +15,8 @@ from modelscope.models import TorchModel
 from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.outputs import DialogueUserSatisfactionEstimationModelOutput
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.constant import ModelFile, Tasks
 from .transformer import TransformerEncoder
 
@@ -45,8 +47,10 @@ class UserSatisfactionEstimation(TorchModel):
             self.device = device
         self.model = self.init_model()
         model_ckpt = os.path.join(model_dir, ModelFile.TORCH_MODEL_FILE)
-        self.model.load_state_dict(
-            torch.load(model_ckpt, map_location=torch.device('cpu')))
+        stats_dict = torch.load(model_ckpt, map_location=torch.device('cpu'))
+        compatible_position_ids(stats_dict,
+                                'private.bert.embeddings.position_ids')
+        self.model.load_state_dict(stats_dict)
 
     def init_model(self):
         configs = {

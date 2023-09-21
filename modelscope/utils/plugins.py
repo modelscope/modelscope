@@ -372,7 +372,7 @@ def import_module_from_model_dir(model_dir):
     """
     from pathlib import Path
     file_scanner = FilesAstScanning()
-    file_scanner.traversal_files(model_dir)
+    file_scanner.traversal_files(model_dir, include_init=True)
     file_dirs = file_scanner.file_dirs
     requirements = file_scanner.requirement_dirs
 

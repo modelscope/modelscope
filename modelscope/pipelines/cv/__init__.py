@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
+    from .image_super_resolution_pasd_pipeline import ImageSuperResolutionPASDPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .image_inpainting_pipeline import ImageInpaintingPipeline
@@ -151,6 +152,8 @@ else:
         ['ImageSemanticSegmentationPipeline'],
         'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
+        'image_super_resolution_pasd_pipeline':
+        ['ImageSuperResolutionPASDPipeline'],
         'image_to_image_translation_pipeline':
         ['Image2ImageTranslationPipeline'],
         'product_retrieval_embedding_pipeline':
@@ -185,8 +188,9 @@ else:
         ['FaceAttributeRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
-        'referring_video_object_segmentation_pipeline':
-        ['ReferringVideoObjectSegmentationPipeline'],
+        'referring_video_object_segmentation_pipeline': [
+            'ReferringVideoObjectSegmentationPipeline'
+        ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
         ],

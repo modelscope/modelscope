@@ -339,6 +339,7 @@ class Pipelines(object):
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'
+    image_super_resolution_pasd = 'image-super-resolution-pasd'
     image_debanding = 'rrdb-image-debanding'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'

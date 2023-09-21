@@ -357,16 +357,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if outputs.__contains__('mvn_file'):
             cmd['cmvn_file'] = outputs['mvn_file']
         model_config = self.model_cfg['model_config']
-        if model_config.__contains__('vad_model') and self.vad_model != '':
+        if model_config.__contains__('vad_model') and self.vad_model == None:
             self.vad_model = model_config['vad_model']
         if model_config.__contains__('vad_model_revision'):
             self.vad_model_revision = model_config['vad_model_revision']
-        if model_config.__contains__('punc_model') and self.punc_model != '':
+        if model_config.__contains__('punc_model') and self.punc_model == None:
             self.punc_model = model_config['punc_model']
         if model_config.__contains__('punc_model_revision'):
             self.punc_model_revision = model_config['punc_model_revision']
         if model_config.__contains__(
-                'timestamp_model') and self.timestamp_model != '':
+                'timestamp_model') and self.timestamp_model == None:
             self.timestamp_model = model_config['timestamp_model']
         if model_config.__contains__('timestamp_model_revision'):
             self.timestamp_model_revision = model_config[

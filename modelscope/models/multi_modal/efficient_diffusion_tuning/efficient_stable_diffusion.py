@@ -128,6 +128,10 @@ class EfficientStableDiffusion(TorchModel):
                 use_merged_linear=False)
             self.unet = Swift.prepare_model(self.unet, lora_config)
         elif tuner_name == 'swift-adapter':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             adapter_length = tuner_config[
                 'adapter_length'] if tuner_config and 'adapter_length' in tuner_config else 10
             adapter_config_dict = {}

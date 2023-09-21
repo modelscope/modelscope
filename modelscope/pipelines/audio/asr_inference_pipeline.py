@@ -161,6 +161,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             decoding_ind=self.cmd['decoding_ind'],
             decoding_mode=self.cmd['decoding_mode'],
             fake_streaming=self.cmd['fake_streaming'],
+            model_lang=self.cmd['model_lang'],
             **kwargs,
         )
 
@@ -305,7 +306,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'idx_text': '',
             'sampled_ids': 'seq2seq/sampled_ids',
             'sampled_lengths': 'seq2seq/sampled_lengths',
-            'lang': 'zh-cn',
+            'model_lang': outputs['model_lang'],
             'code_base': outputs['code_base'],
             'mode': outputs['mode'],
             'fs': {
@@ -357,16 +358,16 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         if outputs.__contains__('mvn_file'):
             cmd['cmvn_file'] = outputs['mvn_file']
         model_config = self.model_cfg['model_config']
-        if model_config.__contains__('vad_model') and self.vad_model == None:
+        if model_config.__contains__('vad_model') and self.vad_model is None:
             self.vad_model = model_config['vad_model']
         if model_config.__contains__('vad_model_revision'):
             self.vad_model_revision = model_config['vad_model_revision']
-        if model_config.__contains__('punc_model') and self.punc_model == None:
+        if model_config.__contains__('punc_model') and self.punc_model is None:
             self.punc_model = model_config['punc_model']
         if model_config.__contains__('punc_model_revision'):
             self.punc_model_revision = model_config['punc_model_revision']
         if model_config.__contains__(
-                'timestamp_model') and self.timestamp_model == None:
+                'timestamp_model') and self.timestamp_model is None:
             self.timestamp_model = model_config['timestamp_model']
         if model_config.__contains__('timestamp_model_revision'):
             self.timestamp_model_revision = model_config[

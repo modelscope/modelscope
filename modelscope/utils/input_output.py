@@ -3,11 +3,13 @@ import ast
 import base64
 import importlib
 import inspect
+import os
 from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
 
 import cv2
+import json
 import numpy as np
 
 from modelscope.hub.api import HubApi
@@ -243,6 +245,33 @@ def process_arg_type_annotation(arg, default_value):
         return arg.arg, 'object'
 
 
+def convert_to_value(item):
+    if isinstance(item, ast.Str):
+        return item.s
+    elif hasattr(ast, 'Bytes') and isinstance(item, ast.Bytes):
+        return item.s
+    elif isinstance(item, ast.Tuple):
+        return tuple(convert_to_value(i) for i in item.elts)
+    elif isinstance(item, ast.Num):
+        return item.n
+    elif isinstance(item, ast.Name):
+        result = VariableKey(item=item)
+        constants_lookup = {
+            'True': True,
+            'False': False,
+            'None': None,
+        }
+        return constants_lookup.get(
+            result.name,
+            result,
+        )
+    elif isinstance(item, ast.NameConstant):
+        # None, True, False are nameconstants in python3, but names in 2
+        return item.value
+    else:
+        return UnhandledKeyType()
+
+
 def process_args(args):
     arguments = []
     # name, type, has_default, default
@@ -259,7 +288,7 @@ def process_args(args):
     # process defaults arg.
     for arg, dft in zip(args.args[n_args - n_args_default:], args.defaults):
         # compatible with python3.7 ast.Num no value.
-        value = dft.value if hasattr(dft, 'value') else dft.n
+        value = convert_to_value(dft)
         arg_name, arg_type = process_arg_type_annotation(arg, value)
         arguments.append((arg_name, arg_type, True, value))
 
@@ -398,7 +427,7 @@ meta_type_schema_map = {
 
 def generate_pipeline_parameters_schema(parameters):
     parameters_schema = {'type': 'object', 'properties': {}}
-    if len(parameters) == 0:
+    if parameters is None or len(parameters) == 0:
         return {}
     for param in parameters:
         name, param_type, has_default, default_value = param
@@ -523,16 +552,18 @@ def is_url(url: str):
 
 
 def decode_base64_to_image(content):
-    if content.startswith('http') or content.startswith('oss'):
+    if content.startswith('http') or content.startswith(
+            'oss') or os.path.exists(content):
         return content
 
     from PIL import Image
-    image_file_content = base64.b64decode(content)
+    image_file_content = base64.b64decode(content, '-_')
     return Image.open(BytesIO(image_file_content))
 
 
 def decode_base64_to_audio(content):
-    if content.startswith('http') or content.startswith('oss'):
+    if content.startswith('http') or content.startswith(
+            'oss') or os.path.exists(content):
         return content
 
     file_content = base64.b64decode(content)
@@ -540,7 +571,8 @@ def decode_base64_to_audio(content):
 
 
 def decode_base64_to_video(content):
-    if content.startswith('http') or content.startswith('oss'):
+    if content.startswith('http') or content.startswith(
+            'oss') or os.path.exists(content):
         return content
 
     file_content = base64.b64decode(content)
@@ -594,13 +626,14 @@ def call_pipeline_with_json(pipeline_info: PipelineInfomation,
         pipeline (Pipeline): The pipeline object.
         body (Dict): The input object, include input and parameters
     """
-    if pipeline_info.is_custom_call:
-        pipeline_inputs = body['input']
-        result = pipeline(**pipeline_inputs)
-    else:
-        pipeline_inputs, parameters = service_base64_input_to_pipeline_input(
-            pipeline_info.task_name, body)
-        result = pipeline(pipeline_inputs, **parameters)
+    # TODO: is_custom_call misjudgment
+    # if pipeline_info.is_custom_call:
+    #     pipeline_inputs = body['input']
+    #     result = pipeline(**pipeline_inputs)
+    # else:
+    pipeline_inputs, parameters = service_base64_input_to_pipeline_input(
+        pipeline_info.task_name, body)
+    result = pipeline(pipeline_inputs, **parameters)
 
     return result
 
@@ -737,6 +770,9 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
     task_outputs = []
     if task_name in TASK_OUTPUTS:
         task_outputs = TASK_OUTPUTS[task_name]
+    # TODO: for batch
+    if isinstance(pipeline_output, list):
+        pipeline_output = pipeline_output[0]
     for key, value in pipeline_output.items():
         if key not in task_outputs:
             continue  # skip the output not defined.
@@ -768,3 +804,77 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
             json_serializable_output[key] = value
 
     return _convert_to_python_type(json_serializable_output)
+
+
+def get_task_input_examples(task):
+    current_work_dir = os.path.dirname(__file__)
+    with open(current_work_dir + '/pipeline_inputs.json', 'r') as f:
+        input_examples = json.load(f)
+    if task in input_examples:
+        return input_examples[task]
+    return None
+
+
+def get_task_schemas(task):
+    current_work_dir = os.path.dirname(__file__)
+    with open(current_work_dir + '/pipeline_schema.json', 'r') as f:
+        schema = json.load(f)
+    if task in schema:
+        return schema[task]
+    return None
+
+
+if __name__ == '__main__':
+    from modelscope.utils.ast_utils import load_index
+    index = load_index()
+    task_schemas = {}
+    for key, value in index['index'].items():
+        reg, task_name, class_name = key
+        if reg == 'PIPELINES' and task_name != 'default':
+            print(
+                f"value['filepath']: {value['filepath']}, class_name: {class_name}"
+            )
+            input, parameters = get_pipeline_input_parameters(
+                value['filepath'], class_name)
+            try:
+                if task_name in TASK_INPUTS and task_name in TASK_OUTPUTS:
+                    # delete the first default input which is defined by task.
+                    # parameters.pop(0)
+                    parameters_schema = generate_pipeline_parameters_schema(
+                        parameters)
+                    input_schema = get_input_schema(task_name, None)
+                    output_schema = get_output_schema(task_name)
+                    schema = {
+                        'input': input_schema,
+                        'parameters': parameters_schema,
+                        'output': output_schema
+                    }
+                else:
+                    logger.warning(
+                        'Task: %s input is defined: %s, output is defined: %s which is not completed'
+                        % (task_name, task_name in TASK_INPUTS, task_name
+                           in TASK_OUTPUTS))
+                    input_schema = None
+                    output_schema = None
+                    if task_name in TASK_INPUTS:
+                        input_schema = get_input_schema(task_name, None)
+                    if task_name in TASK_OUTPUTS:
+                        output_schema = get_output_schema(task_name)
+                    parameters_schema = generate_pipeline_parameters_schema(
+                        parameters)
+                    schema = {
+                        'input': input_schema if input_schema else
+                        parameters_schema,  # all parameter is input
+                        'parameters':
+                        parameters_schema if input_schema else {},
+                        'output': output_schema if output_schema else {
+                            'type': 'object',
+                        },
+                    }
+            except BaseException:
+                continue
+            task_schemas[task_name] = schema
+
+    s = json.dumps(task_schemas)
+    with open('./task_schema.json', 'w') as f:
+        f.write(s)

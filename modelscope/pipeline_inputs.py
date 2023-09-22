@@ -82,6 +82,34 @@ def check_input_type(input_type, input):
 
 
 TASK_INPUTS = {
+    Tasks.image_text_retrieval: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.general_recognition: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.video_depth_estimation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.indoor_layout_estimation:
+    InputType.IMAGE,
+    Tasks.image_demoireing:
+    InputType.IMAGE,
+    Tasks.panorama_depth_estimation:
+    InputType.IMAGE,
+    Tasks.video_depth_estimation:
+    InputType.VIDEO,
+    Tasks.animal_recognition:
+    InputType.IMAGE,
+    Tasks.motion_generation:
+    InputType.TEXT,
+    Tasks.video_panoptic_segmentation:
+    InputType.VIDEO,
+
+
 
     Tasks.task_template: {
         'image': InputType.IMAGE,

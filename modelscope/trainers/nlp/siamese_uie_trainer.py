@@ -328,7 +328,8 @@ class SiameseUIETrainer(EpochBasedTrainer):
             Example:
             {"accuracy": 0.5091743119266054, "f1": 0.673780487804878}
         """
-        pipeline_uie = pipeline(Tasks.siamese_uie, self.model)
+        pipeline_uie = pipeline(
+            Tasks.siamese_uie, self.model, device=self.device)
         if checkpoint_path is not None and os.path.isfile(checkpoint_path):
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(checkpoint_path, self)

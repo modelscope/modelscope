@@ -19,6 +19,7 @@ WAV_FILE = 'data/test/audios/asr_example.wav'
 URL_FILE = 'https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/test_audio/asr_example.wav'
 
 
+@unittest.skip('For wenetruntime compatible')
 class WeNetAutomaticSpeechRecognitionTest(unittest.TestCase):
     action_info = {
         'test_run_with_pcm': {

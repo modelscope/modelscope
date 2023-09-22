@@ -32,3 +32,18 @@ A clear and concise description of what the bug is.
 * You may add addition that may be helpful for locating the problem, such as
     * How you installed PyTorch [e.g., pip, conda, source]
     * Other environment variables that may be related (such as $PATH, $LD_LIBRARY_PATH, $PYTHONPATH, etc.)
+
+
+Please @ corresponding people according to your problem:
+
+Model related: @wenmengzhou @tastelikefeet
+
+Model hub related: @liuyhwangyh
+
+Dataset releated: @wangxingjun778
+
+Finetune related: @tastelikefeet  @Jintao-Huang
+
+Pipeline related: @Firmament-cyou @wenmengzhou
+
+Contribute your model: @zzclynn

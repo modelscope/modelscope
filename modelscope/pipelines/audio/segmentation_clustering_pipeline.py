@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ast
 import io
 from typing import Any, Dict, List, Union
 
@@ -180,7 +181,14 @@ class SegmentationClusteringPipeline(Pipeline):
                 model=self.config['vad_model'])
         vad_time = self.vad_pipeline(audio, audio_fs=self.fs)
         vad_segments = []
-        for t in vad_time['text']:
+        if isinstance(vad_time['text'], str):
+            vad_time_list = ast.literal_eval(vad_time['text'])
+        elif isinstance(vad_time['text'], list):
+            vad_time_list = vad_time['text']
+        else:
+            raise ValueError('Incorrect vad result. Get %s' %
+                             (type(vad_time['text'])))
+        for t in vad_time_list:
             st = int(t[0]) / 1000
             ed = int(t[1]) / 1000
             vad_segments.append(

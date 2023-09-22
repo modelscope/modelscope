@@ -3,6 +3,7 @@
 BASE_CPU_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04
 BASE_GPU_CUDA113_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
 BASE_GPU_CUDA117_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.7.1-cudnn8-devel
+BASE_GPU_CUDA118_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.8.0-cudnn8-devel
 MODELSCOPE_REPO_ADDRESS=reg.docker.alibaba-inc.com/modelscope/modelscope
 python_version=3.7.13
 torch_version=1.11.0
@@ -73,6 +74,10 @@ elif [ "$cuda_version" == 11.7.1 ]; then
     echo "Building base image cuda11.7.1"
     cudatoolkit_version=cu117
     BASE_GPU_IMAGE=$BASE_GPU_CUDA117_IMAGE
+elif [ "$cuda_version" == 11.8.0 ]; then
+    echo "Building base image cuda11.8.0"
+    cudatoolkit_version=cu118
+    BASE_GPU_IMAGE=$BASE_GPU_CUDA118_IMAGE
 else
     echo "Unsupport cuda version: $cuda_version"
     exit 1

@@ -160,6 +160,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             token_num_relax=self.cmd['token_num_relax'],
             decoding_ind=self.cmd['decoding_ind'],
             decoding_mode=self.cmd['decoding_mode'],
+            fake_streaming=self.cmd['fake_streaming'],
             **kwargs,
         )
 
@@ -310,13 +311,15 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'fs': {
                 'model_fs': None,
                 'audio_fs': None
-            }
+            },
+            'fake_streaming': False,
         }
 
         frontend_conf = None
         token_num_relax = None
         decoding_ind = None
         decoding_mode = None
+        fake_streaming = False
         if os.path.exists(outputs['am_model_config']):
             config_file = open(outputs['am_model_config'], encoding='utf-8')
             root = yaml.full_load(config_file)
@@ -350,6 +353,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
         cmd['token_num_relax'] = token_num_relax
         cmd['decoding_ind'] = decoding_ind
         cmd['decoding_mode'] = decoding_mode
+        cmd['fake_streaming'] = fake_streaming
         if outputs.__contains__('mvn_file'):
             cmd['cmvn_file'] = outputs['mvn_file']
         model_config = self.model_cfg['model_config']
@@ -389,6 +393,7 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
             'punc_model_file',
             'punc_infer_config',
             'param_dict',
+            'fake_streaming',
         ]
 
         for user_args in user_args_dict:

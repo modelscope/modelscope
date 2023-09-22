@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
+    from .image_editing_pipeline import ImageEditingPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
+    from .image_super_resolution_pasd_pipeline import ImageSuperResolutionPASDPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
     from .image_inpainting_pipeline import ImageInpaintingPipeline
@@ -104,6 +106,7 @@ if TYPE_CHECKING:
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
+    from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
@@ -136,6 +139,7 @@ else:
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_deblur_pipeline': ['ImageDeblurPipeline'],
+        'image_editing_pipeline': ['ImageEditingPipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
         'image_colorization_pipeline': ['ImageColorizationPipeline'],
         'image_instance_segmentation_pipeline':
@@ -148,6 +152,8 @@ else:
         ['ImageSemanticSegmentationPipeline'],
         'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
+        'image_super_resolution_pasd_pipeline':
+        ['ImageSuperResolutionPASDPipeline'],
         'image_to_image_translation_pipeline':
         ['Image2ImageTranslationPipeline'],
         'product_retrieval_embedding_pipeline':
@@ -182,8 +188,9 @@ else:
         ['FaceAttributeRecognitionPipeline'],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
-        'referring_video_object_segmentation_pipeline':
-        ['ReferringVideoObjectSegmentationPipeline'],
+        'referring_video_object_segmentation_pipeline': [
+            'ReferringVideoObjectSegmentationPipeline'
+        ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
         ],
@@ -256,6 +263,7 @@ else:
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
         'nerf_recon_4k_pipeline': ['NeRFRecon4KPipeline'],
+        'surface_recon_common_pipeline': ['SurfaceReconCommonPipeline'],
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],

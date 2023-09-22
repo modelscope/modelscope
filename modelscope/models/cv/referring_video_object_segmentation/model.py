@@ -9,6 +9,8 @@ import torch
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -40,6 +42,8 @@ class ReferringVideoObjectSegmentation(TorchModel):
         params_dict = torch.load(model_path, map_location='cpu')
         if 'model_state_dict' in params_dict.keys():
             params_dict = params_dict['model_state_dict']
+        compatible_position_ids(
+            params_dict, 'transformer.text_encoder.embeddings.position_ids')
         self.model.load_state_dict(params_dict, strict=True)
 
         self.set_postprocessor(self.cfg.pipeline.dataset_name)

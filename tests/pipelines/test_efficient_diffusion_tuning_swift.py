@@ -1,11 +1,11 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import os
 import tempfile
 import unittest
 
 import cv2
 
 from modelscope.models import Model
-from modelscope.models.multi_modal import EfficientStableDiffusion
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -14,9 +14,10 @@ from modelscope.utils.test_utils import test_level
 class EfficientDiffusionTuningTestSwift(unittest.TestCase):
 
     def setUp(self) -> None:
+        os.system('pip install ms-swift -U')
         self.task = Tasks.efficient_diffusion_tuning
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_lora_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-lora'
         model_revision = 'v1.0.2'
@@ -33,15 +34,16 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-lora output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_lora_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-lora'
         model_revision = 'v1.0.2'
         model = Model.from_pretrained(model_id, model_revision=model_revision)
+        from modelscope.models.multi_modal import EfficientStableDiffusion
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_adapter_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-adapter'
         model_revision = 'v1.0.2'
@@ -58,15 +60,16 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-adapter output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_adapter_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-adapter'
         model_revision = 'v1.0.2'
         model = Model.from_pretrained(model_id, model_revision=model_revision)
+        from modelscope.models.multi_modal import EfficientStableDiffusion
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_prompt_run_pipeline(self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-prompt'
         model_revision = 'v1.0.2'
@@ -83,12 +86,13 @@ class EfficientDiffusionTuningTestSwift(unittest.TestCase):
             f'Efficient-diffusion-tuning-swift-prompt output: {output_image_path}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_efficient_diffusion_tuning_swift_prompt_load_model_from_pretrained(
             self):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-swift-prompt'
         model_revision = 'v1.0.2'
         model = Model.from_pretrained(model_id, model_revision=model_revision)
+        from modelscope.models.multi_modal import EfficientStableDiffusion
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
 

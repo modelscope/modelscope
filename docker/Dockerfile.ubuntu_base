@@ -69,14 +69,20 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 # install tensorflow
 ARG TENSORFLOW_VERSION=1.15.5
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        if [ "$TENSORFLOW_VERSION" = "1.15.5" ] ; then \
+            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        else \
+            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
+         fi \
     else \
         # only python 3.7 has tensorflow 1.15.5
         if [ "$PYTHON_VERSION" = "3.7.13" ] ; then \
             pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-        else \
+        elif [ "$TENSORFLOW_VERSION" = "1.15.5" ] ; then \
             pip install --no-cache-dir numpy==1.18.5 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/tensorflow-1.15.5-cp38-cp38-linux_x86_64.whl; \
-         fi \
+        else \
+            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
+        fi \
     fi
 
 # mmcv-full<=1.7.0 for mmdet3d compatible

@@ -22,6 +22,8 @@ from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.unite.configuration import InputFormat
 from modelscope.outputs.nlp_outputs import TranslationEvaluationOutput
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -305,6 +307,8 @@ class UniTEForTranslationEvaluation(TorchModel):
             self.encoder.pooler = None
         else:
             state_dict = torch.load(path, map_location=device)
+            compatible_position_ids(state_dict,
+                                    'encoder.embeddings.position_ids')
             self.load_state_dict(state_dict)
         logger.info('Loading checkpoint parameters from %s' % path)
         return

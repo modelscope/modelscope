@@ -12,6 +12,8 @@ from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -47,6 +49,9 @@ class StarForTextToSql(TorchModel):
             open(
                 os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE), 'rb'),
             map_location=self.device)
+        compatible_position_ids(
+            check_point['model'],
+            'encoder.input_layer.plm_model.embeddings.position_ids')
         self.model.load_state_dict(check_point['model'])
 
     def forward(self, input: Dict[str, Tensor]) -> Dict[str, Tensor]:

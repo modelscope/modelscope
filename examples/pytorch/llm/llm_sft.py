@@ -20,6 +20,7 @@ from functools import partial
 from typing import List, Optional
 
 import torch
+from swift import LoRAConfig, Swift
 from torch import Tensor
 from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING,
                    data_collate_fn, get_dataset, get_model_tokenizer,
@@ -29,7 +30,6 @@ from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING,
                    tokenize_function)
 
 from modelscope import get_logger
-from modelscope.swift import LoRAConfig, Swift
 from modelscope.trainers import EpochBasedTrainer
 from modelscope.utils.config import Config
 
@@ -141,8 +141,8 @@ def llm_sft(args: SftArguments) -> None:
     # ### Preparing lora
     if args.sft_type == 'lora':
         lora_config = LoRAConfig(
-            replace_modules=args.lora_target_modules,
-            rank=args.lora_rank,
+            target_modules=args.lora_target_modules,
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout_p)
         logger.info(f'lora_config: {lora_config}')

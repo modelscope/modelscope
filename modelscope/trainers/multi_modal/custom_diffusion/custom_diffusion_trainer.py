@@ -40,18 +40,20 @@ class CustomCheckpointProcessor(CheckpointProcessor):
     def __init__(self,
                  modifier_token,
                  modifier_token_id,
-                 torch_type=torch.float32):
+                 torch_type=torch.float32,
+                 safe_serialization=False):
         """Checkpoint processor for custom diffusion.
 
         Args:
             modifier_token: The token to use as a modifier for the concept.
             modifier_token_id: The modifier token id for the concept.
             torch_type: The torch type, default is float32.
-
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
         """
         self.modifier_token = modifier_token
         self.modifier_token_id = modifier_token_id
         self.torch_type = torch_type
+        self.safe_serialization = safe_serialization
 
     def save_checkpoints(self,
                          trainer,
@@ -62,7 +64,8 @@ class CustomCheckpointProcessor(CheckpointProcessor):
         """Save the state dict for custom diffusion model.
         """
         trainer.model.unet = trainer.model.unet.to(self.torch_type)
-        trainer.model.unet.save_attn_procs(output_dir)
+        trainer.model.unet.save_attn_procs(
+            output_dir, safe_serialization=self.safe_serialization)
 
         learned_embeds = trainer.model.text_encoder.get_input_embeddings(
         ).weight
@@ -281,6 +284,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
             center_crop: execute center crop or not.
             concepts_list: Path to json containing multiple concepts, will overwrite parameters.
             instance_data_name: The instance data local dir or online ID.
+            safe_serialization: Whether to save the model using safetensors or the traditional PyTorch way with pickle.
 
         """
         self.with_prior_preservation = kwargs.pop('with_prior_preservation',
@@ -302,6 +306,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         self.concepts_list = kwargs.pop('concepts_list', None)
         instance_data_name = kwargs.pop(
             'instance_data_name', 'buptwq/lora-stable-diffusion-finetune-dog')
+        safe_serialization = kwargs.pop('safe_serialization', False)
 
         # Extract downloaded image folder
         if self.concepts_list is None:
@@ -395,7 +400,8 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
                    self.hooks))[0]
         ckpt_hook.set_processor(
             CustomCheckpointProcessor(self.modifier_token,
-                                      self.modifier_token_id, self.torch_type))
+                                      self.modifier_token_id, self.torch_type,
+                                      safe_serialization))
 
         # Add new Custom Diffusion weights to the attention layers
         attention_class = CustomDiffusionAttnProcessor

@@ -1,6 +1,6 @@
 CUDA_VISIBLE_DEVICES=0,1 \
 python llm_sft.py \
-    --model_type qwen-7b \
+    --model_type polylm-13b \
     --output_dir runs \
-    --dataset alpaca-en,alpaca-zh \
+    --dataset alpaca-en,alpaca-zh,alpaca-multi \
     --dataset_sample 20000

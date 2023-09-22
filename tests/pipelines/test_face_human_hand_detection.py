@@ -14,9 +14,7 @@ class FaceHumanHandTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_nanodet_face-human-hand-detection'
-        self.input = {
-            'input_path': 'data/test/images/face_human_hand_detection.jpg',
-        }
+        self.input = 'data/test/images/face_human_hand_detection.jpg'
 
     def pipeline_inference(self, pipeline: Pipeline, input: str):
         result = pipeline(input)

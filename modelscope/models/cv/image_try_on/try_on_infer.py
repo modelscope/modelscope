@@ -91,7 +91,7 @@ def infer(ourgen_model, model_path, person_img, garment_img, mask_img, device):
         cm_array = (cm_array >= 128).astype(np.float32)
         cm = torch.from_numpy(cm_array)
         cm = cm.unsqueeze(0).unsqueeze(0)
-        cm = torch.FloatTensor((cm.numpy() > 0.5).astype(np.float)).to(device)
+        cm = torch.FloatTensor((cm.numpy() > 0.5).astype(float)).to(device)
 
         im = person_img
         h_ori, w_ori = im.shape[0:2]

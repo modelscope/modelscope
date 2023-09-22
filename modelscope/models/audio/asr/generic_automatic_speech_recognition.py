@@ -16,6 +16,8 @@ __all__ = ['GenericAutomaticSpeechRecognition']
 @MODELS.register_module(
     Tasks.voice_activity_detection, module_name=Models.generic_asr)
 @MODELS.register_module(
+    Tasks.speech_separation, module_name=Models.generic_asr)
+@MODELS.register_module(
     Tasks.language_score_prediction, module_name=Models.generic_asr)
 @MODELS.register_module(Tasks.speech_timestamp, module_name=Models.generic_asr)
 class GenericAutomaticSpeechRecognition(Model):

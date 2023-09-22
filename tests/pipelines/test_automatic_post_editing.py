@@ -6,6 +6,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('For not support tensorflow2.x')
 class AutomaticPostEditingTest(unittest.TestCase):
 
     def setUp(self) -> None:

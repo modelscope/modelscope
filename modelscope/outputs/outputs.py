@@ -48,6 +48,11 @@ class OutputKeys(object):
     PROBABILITIES = 'probabilities'
     DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
+    PHRASE_PROTOTYPE = 'phrase_prototype'
+    OBJECT_PROTOTYPE = 'object_prototype'
+    SENTENCE_PROTOTYPE = 'sentence_prototype'
+    EVENT_PROTOTYPE = 'event_prototype'
+    TEXTVIDEO_SIM = 'textvideo_sim'
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
@@ -90,9 +95,9 @@ OutputTypes = {
     OutputKeys.OUTPUT_IMG: 'image',  # checked
     OutputKeys.OUTPUT_IMGS: List[np.ndarray],  # checked
     OutputKeys.OUTPUT_VIDEO: 'bytes',
-    OutputKeys.OUTPUT_PCM: np.ndarray,
+    OutputKeys.OUTPUT_PCM: 'pcm',
     OutputKeys.OUTPUT_PCM_LIST: List[np.ndarray],
-    OutputKeys.OUTPUT_WAV: np.ndarray,
+    OutputKeys.OUTPUT_WAV: 'pcm',
     OutputKeys.OUTPUT_OBJ: Dict,
     OutputKeys.OUTPUT_MESH: np.ndarray,
     OutputKeys.IMG_EMBEDDING: np.ndarray,
@@ -106,6 +111,11 @@ OutputTypes = {
     OutputKeys.PROBABILITIES: np.ndarray,
     OutputKeys.DIALOG_STATES: object,
     OutputKeys.VIDEO_EMBEDDING: np.ndarray,
+    OutputKeys.PHRASE_PROTOTYPE: np.ndarray,
+    OutputKeys.OBJECT_PROTOTYPE: np.ndarray,
+    OutputKeys.SENTENCE_PROTOTYPE: np.ndarray,
+    OutputKeys.EVENT_PROTOTYPE: np.ndarray,
+    OutputKeys.TEXTVIDEO_SIM: np.ndarray,
     OutputKeys.UUID: str,
     OutputKeys.WORD: str,
     OutputKeys.KWS_LIST: List[str],
@@ -324,6 +334,24 @@ OutputTypeSchema = {
         'type': 'object'
     },
     OutputKeys.VIDEO_EMBEDDING: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.PHRASE_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.OBJECT_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.TEXTVIDEO_SIM: {
         'type': 'array',
         'items': {
             'type': 'number'
@@ -688,6 +716,8 @@ TASK_OUTPUTS = {
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_deblurring: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_face_fusion: [OutputKeys.OUTPUT_IMG],
 
     # image_quality_assessment_mos result for a single image is a score in range [0, 1]
     # {0.5}
@@ -697,9 +727,11 @@ TASK_OUTPUTS = {
     # {"output_img": np.array with shape (h, w, 3)}
     Tasks.skin_retouching: [OutputKeys.OUTPUT_IMG],
     Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_super_resolution_pasd: [OutputKeys.OUTPUT_IMG],
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_editing: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
     Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],
@@ -721,6 +753,7 @@ TASK_OUTPUTS = {
     Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
     Tasks.nerf_recon_acc: [OutputKeys.OUTPUT],
     Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
+    Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
 
     # image quality assessment degradation result for single image
@@ -913,6 +946,32 @@ TASK_OUTPUTS = {
     #   "video_embedding": np.array with shape [D],
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
+
+    # phrase prototype result for single sentence
+    # {
+    #   "phrase_prototype": np.array with shape [K*D],
+    # }
+    # sentence prototype result for single sentence
+    # {
+    #   "sentence_prototype": np.array with shape [1*D],
+    # }
+    # object prototype result for single video
+    # {
+    #   "object_prototype": np.array with shape [N*K*D],
+    # }
+    # event prototype result for single video
+    # {
+    #   "event_prototype": np.array with shape [N*M*D],
+    # }
+    # text search video result for single sentence
+    # {
+    #   "textvideo_sim": np.array with shape [N*N],
+    # }
+    Tasks.text_video_retrieval: [
+        OutputKeys.PHRASE_PROTOTYPE, OutputKeys.SENTENCE_PROTOTYPE,
+        OutputKeys.OBJECT_PROTOTYPE, OutputKeys.EVENT_PROTOTYPE,
+        OutputKeys.TEXTVIDEO_SIM
+    ],
 
     # video stabilization task result for a single video
     # {"output_video": "path_to_rendered_video"}
@@ -1512,6 +1571,11 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.image_try_on: [OutputKeys.OUTPUT_IMG],
+    # Tasks.human_image_generation result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.human_image_generation: [OutputKeys.OUTPUT_IMG],
 }
 
 

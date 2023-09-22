@@ -2,7 +2,7 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from transformers import GenerationConfig
@@ -19,14 +19,13 @@ from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
+from modelscope.utils.torch_utils import is_on_same_device
 
 __all__ = [
-    'TextGenerationPipeline',
-    'TextGenerationT5Pipeline',
-    'ChatGLM6bTextGenerationPipeline',
-    'ChatGLM6bV2TextGenerationPipeline',
-    'QWenChatPipeline',
-    'QWenTextGenerationPipeline',
+    'TextGenerationPipeline', 'TextGenerationT5Pipeline',
+    'ChatGLM6bTextGenerationPipeline', 'ChatGLM6bV2TextGenerationPipeline',
+    'QWenChatPipeline', 'QWenTextGenerationPipeline', 'SeqGPTPipeline',
+    'Llama2TaskPipeline'
 ]
 
 
@@ -200,7 +199,7 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  use_bf16=False,
                  **kwargs):
         from modelscope.models.nlp.chatglm.text_generation import (
-            ChatGLMConfig, ChatGLMForConditionalGeneration)
+            ChatGLMForConditionalGeneration)
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model
@@ -242,23 +241,39 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp import (ChatGLM2Config,
-                                           ChatGLM2ForConditionalGeneration,
-                                           ChatGLM2Tokenizer)
+        from modelscope import AutoTokenizer
+        device: str = kwargs.get('device', 'gpu')
         if isinstance(model, str):
+            revision = kwargs.get('revision', None)
             model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-            model = ChatGLM2ForConditionalGeneration.from_pretrained(model_dir)
-            if torch.cuda.is_available():
-                model = model.cuda()
+                model,
+                revision=revision) if not os.path.exists(model) else model
+            default_device_map = None
+            if device.startswith('gpu') or device.startswith('cuda'):
+                default_device_map = {'': 0}
+            device_map = kwargs.get('device_map', default_device_map)
+            default_torch_dtype = None
+            if use_bf16:
+                default_torch_dtype = torch.bfloat16
+            torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
+            model = Model.from_pretrained(
+                model_dir,
+                trust_remote_code=True,
+                device_map=device_map,
+                torch_dtype=torch_dtype)
+        else:
+            if ((device.startswith('gpu') or device.startswith('cuda'))
+                    and is_on_same_device(model)):
+                model.cuda()
+            if use_bf16:
+                model.bfloat16()
         if quantization_bit is not None:
             model = model.quantize(quantization_bit)
-        if use_bf16:
-            model = model.bfloat16()
+
         self.model = model
         self.model.eval()
-        self.tokenizer = ChatGLM2Tokenizer.from_pretrained(
-            self.model.model_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model.model_dir, trust_remote_code=True)
 
         super().__init__(model=model, **kwargs)
 
@@ -320,6 +335,8 @@ class QWenChatPipeline(Pipeline):
         self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
 
         super().__init__(model=model, **kwargs)
+        # skip pipeline model placement
+        self._model_prepare = True
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}
@@ -383,6 +400,8 @@ class QWenTextGenerationPipeline(Pipeline):
         self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
 
         super().__init__(model=model, **kwargs)
+        # skip pipeline model placement
+        self._model_prepare = True
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}
@@ -397,6 +416,232 @@ class QWenTextGenerationPipeline(Pipeline):
             self.model.chat(self.tokenizer, inputs,
                             history=None)[OutputKeys.RESPONSE]
         }
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    group_key=Tasks.text_generation, module_name='seqgpt')
+class SeqGPTPipeline(Pipeline):
+
+    def __init__(self, model: Union[Model, str], **kwargs):
+        from modelscope.utils.hf_util import AutoTokenizer
+
+        if isinstance(model, str):
+            model_dir = snapshot_download(
+                model) if not os.path.exists(model) else model
+            model = Model.from_pretrained(model_dir)
+        self.model = model
+        self.model.eval()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+
+        super().__init__(model=model, **kwargs)
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    # define the forward pass
+    def forward(self, prompt: str, **forward_params) -> Dict[str, Any]:
+        # gen & decode
+        # prompt += '[GEN]'
+        input_ids = self.tokenizer(
+            prompt + forward_params.get('gen_token', ''),
+            return_tensors='pt',
+            padding=True,
+            truncation=True,
+            max_length=1024)
+        input_ids = input_ids.input_ids.cuda()
+        outputs = self.model.generate(
+            input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
+        decoded_sentences = self.tokenizer.batch_decode(
+            outputs, skip_special_tokens=True)
+        decoded_sentence = decoded_sentences[0]
+        decoded_sentence = decoded_sentence[len(prompt):]
+        return {OutputKeys.TEXT: decoded_sentence}
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    Tasks.text_generation,
+    module_name=Pipelines.llama2_text_generation_pipeline)
+class Llama2TaskPipeline(TextGenerationPipeline):
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Preprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate=True,
+                 **kwargs):
+        """Use `model` and `preprocessor` to create a generation pipeline for prediction.
+
+        Args:
+            model (str or Model): Supply either a local model dir which supported the text generation task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        Examples:
+            >>> from modelscope.utils.constant import Tasks
+            >>> import torch
+            >>> from modelscope.pipelines import pipeline
+            >>> from modelscope import snapshot_download, Model
+            >>> model_dir = snapshot_download("modelscope/Llama-2-13b-chat-ms",
+            >>>     ignore_file_pattern = [r'\\w+\\.safetensors'])
+            >>> pipe = pipeline(task=Tasks.text_generation, model=model_dir, device_map='auto',
+            >>>     torch_dtype=torch.float16)
+            >>> inputs="咖啡的作用是什么？"
+            >>> result = pipe(inputs,max_length=200, do_sample=True, top_p=0.85,
+            >>>     temperature=1.0, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
+            >>> print(result['text'])
+
+            To view other examples plese check tests/pipelines/test_llama2_text_generation_pipeline.py.
+        """
+        self.model = Model.from_pretrained(
+            model, device_map='auto', torch_dtype=torch.float16)
+        from modelscope.models.nlp.llama2 import Llama2Tokenizer
+        self.tokenizer = Llama2Tokenizer.from_pretrained(model)
+        super().__init__(model=self.model, **kwargs)
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def forward(self,
+                inputs: str,
+                max_length: int = 2048,
+                do_sample: bool = False,
+                top_p: float = 0.9,
+                temperature: float = 0.6,
+                repetition_penalty: float = 1.,
+                eos_token_id: int = 2,
+                bos_token_id: int = 1,
+                pad_token_id: int = 0,
+                **forward_params) -> Dict[str, Any]:
+        output = {}
+        inputs = self.tokenizer(
+            inputs, add_special_tokens=False, return_tensors='pt')
+        generate_ids = self.model.generate(
+            inputs.input_ids.to('cuda'),
+            max_length=max_length,
+            do_sample=do_sample,
+            top_p=top_p,
+            temperature=temperature,
+            repetition_penalty=repetition_penalty,
+            eos_token_id=eos_token_id,
+            bos_token_id=bos_token_id,
+            pad_token_id=pad_token_id,
+            **forward_params)
+        out = self.tokenizer.batch_decode(
+            generate_ids,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False)[0]
+        output['text'] = out
+        return output
+
+    # format the outputs from pipeline
+    def postprocess(self, input, **kwargs) -> Dict[str, Any]:
+        return input
+
+
+@PIPELINES.register_module(
+    Tasks.chat, module_name=Pipelines.llama2_text_generation_chat_pipeline)
+class Llama2chatTaskPipeline(Pipeline):
+    """Use `model` and `preprocessor` to create a generation pipeline for prediction.
+
+        Args:
+            model (str or Model): Supply either a local model dir which supported the text generation task,
+            or a model id from the model hub, or a torch model instance.
+            preprocessor (Preprocessor): An optional preprocessor instance, please make sure the preprocessor fits for
+            the model if supplied.
+            kwargs (dict, `optional`):
+                Extra kwargs passed into the preprocessor's constructor.
+        Examples:
+            >>> from modelscope.utils.constant import Tasks
+            >>> import torch
+            >>> from modelscope.pipelines import pipeline
+            >>> from modelscope import Model
+            >>> pipe = pipeline(task=Tasks.chat, model="modelscope/Llama-2-7b-chat-ms", device_map='auto',
+            >>> torch_dtype=torch.float16, ignore_file_pattern = [r'.+\\.bin$'], model_revision='v1.0.5')
+            >>> inputs = 'Where is the capital of Zhejiang?'
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
+            >>> print(result['response'])
+            >>> inputs = 'What are the interesting places there?'
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> pad_token_id=0, history=result['history'])
+            >>> print(result['response'])
+            >>> inputs = 'What are the company there?'
+            >>> history_demo = [('Where is the capital of Zhejiang?',
+            >>> 'Thank you for asking! The capital of Zhejiang Province is Hangzhou.')]
+            >>> result = pipe(inputs,max_length=512, do_sample=False, top_p=0.9,
+            >>> temperature=0.6, repetition_penalty=1., eos_token_id=2, bos_token_id=1,
+            >>> pad_token_id=0, history=history_demo)
+            >>> print(result['response'])
+
+            To view other examples plese check tests/pipelines/test_llama2_text_generation_pipeline.py.
+        """
+
+    def __init__(self,
+                 model: Union[Model, str],
+                 preprocessor: Preprocessor = None,
+                 config_file: str = None,
+                 device: str = 'gpu',
+                 auto_collate: bool = True,
+                 **kwargs) -> Dict[str, Any]:
+        device_map = kwargs.get('device_map', None)
+        torch_dtype = kwargs.get('torch_dtype', None)
+        self.model = Model.from_pretrained(
+            model, device_map=device_map, torch_dtype=torch_dtype)
+        from modelscope.models.nlp.llama2 import Llama2Tokenizer
+        self.tokenizer = Llama2Tokenizer.from_pretrained(model)
+        super().__init__(model=self.model, **kwargs)
+
+    def preprocess(self, inputs, **preprocess_params) -> Dict[str, Any]:
+        return inputs
+
+    def _sanitize_parameters(self, **pipeline_parameters):
+        return {}, pipeline_parameters, {}
+
+    def forward(self,
+                inputs: str,
+                max_length: int = 2048,
+                do_sample: bool = False,
+                top_p: float = 0.9,
+                temperature: float = 0.6,
+                repetition_penalty: float = 1.,
+                eos_token_id: int = 2,
+                bos_token_id: int = 1,
+                pad_token_id: int = 0,
+                system: str = 'you are a helpful assistant!',
+                history: List = [],
+                **forward_params) -> Dict[str, Any]:
+        inputs_dict = forward_params
+        inputs_dict['text'] = inputs
+        inputs_dict['max_length'] = max_length
+        inputs_dict['do_sample'] = do_sample
+        inputs_dict['top_p'] = top_p
+        inputs_dict['temperature'] = temperature
+        inputs_dict['repetition_penalty'] = repetition_penalty
+        inputs_dict['eos_token_id'] = eos_token_id
+        inputs_dict['bos_token_id'] = bos_token_id
+        inputs_dict['pad_token_id'] = pad_token_id
+        inputs_dict['system'] = system
+        inputs_dict['history'] = history
+        output = self.model.chat(inputs_dict, self.tokenizer)
+        return output
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:

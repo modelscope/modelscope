@@ -1614,6 +1614,11 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.human_image_generation: [OutputKeys.OUTPUT_IMG],
+    # Tasks.image_view_transform result for a single sample
+    # {
+    #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
+    # }
+    Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
 }
 
 

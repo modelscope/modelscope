@@ -305,6 +305,10 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_pose_path': InputType.TEXT
     },
+    Tasks.image_view_transform: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_view': InputType.LIST
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: [

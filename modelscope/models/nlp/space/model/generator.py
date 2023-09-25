@@ -67,6 +67,8 @@ class SpaceGenerator(object):
         self.min_gen_len = config.Generator.min_gen_len
         self.max_gen_len = config.Generator.max_gen_len
         self.use_gpu = config.use_gpu
+        if torch.cuda.is_available():
+            self.use_gpu = True
         assert 1 <= self.min_gen_len <= self.max_gen_len
         return
 
@@ -184,7 +186,6 @@ class BeamSearch(SpaceGenerator):
             unk_penalty = unk_penalty.cuda()
             eos_penalty = eos_penalty.cuda()
             scores_after_end = scores_after_end.cuda()
-
         if self.ignore_unk:
             scores = scores + unk_penalty
         scores = scores + eos_penalty

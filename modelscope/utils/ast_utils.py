@@ -435,24 +435,27 @@ class FilesAstScanning(object):
                     ignored.add(item)
         return list(set(output) - set(ignored))
 
-    def traversal_files(self, path, check_sub_dir=None):
+    def traversal_files(self, path, check_sub_dir=None, include_init=False):
         self.file_dirs = []
         if check_sub_dir is None or len(check_sub_dir) == 0:
-            self._traversal_files(path)
+            self._traversal_files(path, include_init=include_init)
         else:
             for item in check_sub_dir:
                 sub_dir = os.path.join(path, item)
                 if os.path.isdir(sub_dir):
-                    self._traversal_files(sub_dir)
+                    self._traversal_files(sub_dir, include_init=include_init)
 
-    def _traversal_files(self, path):
+    def _traversal_files(self, path, include_init=False):
         dir_list = os.scandir(path)
         for item in dir_list:
-            if item.name.startswith('__') or item.name.endswith(
-                    '.json') or item.name.endswith('.md'):
+            if item.name == '__init__.py' and not include_init:
+                continue
+            elif (item.name.startswith('__')
+                  and item.name != '__init__.py') or item.name.endswith(
+                      '.json') or item.name.endswith('.md'):
                 continue
             if item.is_dir():
-                self._traversal_files(item.path)
+                self._traversal_files(item.path, include_init=include_init)
             elif item.is_file() and item.name.endswith('.py'):
                 self.file_dirs.append(item.path)
             elif item.is_file() and 'requirement' in item.name:

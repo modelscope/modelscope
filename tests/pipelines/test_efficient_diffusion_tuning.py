@@ -1,8 +1,8 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import os
 import unittest
 
 from modelscope.models import Model
-from modelscope.models.multi_modal import EfficientStableDiffusion
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -11,6 +11,7 @@ from modelscope.utils.test_utils import test_level
 class EfficientDiffusionTuningTest(unittest.TestCase):
 
     def setUp(self) -> None:
+        os.system('pip install ms-swift -U')
         self.task = Tasks.efficient_diffusion_tuning
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -28,6 +29,7 @@ class EfficientDiffusionTuningTest(unittest.TestCase):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-lora'
         model_revision = 'v1.0.2'
         model = Model.from_pretrained(model_id, model_revision=model_revision)
+        from modelscope.models.multi_modal import EfficientStableDiffusion
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -52,6 +54,7 @@ class EfficientDiffusionTuningTest(unittest.TestCase):
         model_id = 'damo/multi-modal_efficient-diffusion-tuning-control-lora'
         model_revision = 'v1.0.2'
         model = Model.from_pretrained(model_id, model_revision=model_revision)
+        from modelscope.models.multi_modal import EfficientStableDiffusion
         self.assertTrue(model.__class__ == EfficientStableDiffusion)
 
 

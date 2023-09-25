@@ -12,7 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from diffusers import LMSDiscreteScheduler, StableDiffusionPipeline
-from diffusers.models.cross_attention import CrossAttention
+from diffusers.models.attention_processor import Attention
 from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import \
     StableDiffusionPipelineOutput
 from PIL import Image
@@ -245,7 +245,7 @@ class Cones2AttnProcessor:
         super().__init__()
 
     def __call__(self,
-                 attn: CrossAttention,
+                 attn: Attention,
                  hidden_states,
                  encoder_hidden_states=None,
                  attention_mask=None):

@@ -24,13 +24,31 @@ class AstScaningTest(unittest.TestCase):
     def setUp(self):
         print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
         self.tmp_dir = tempfile.TemporaryDirectory().name
+        self.tmp_dir2 = tempfile.TemporaryDirectory().name
         self.test_file = os.path.join(self.tmp_dir, 'test.py')
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
+        fnames = ['1.py', '2.py', '3.py', '__init__.py']
+        self.folders = ['.', 'a', 'b', 'c']
+        dir_path = self.tmp_dir2
+        folder_dirs = [
+            os.path.join(dir_path, folder) for folder in self.folders
+        ]
+        for folder in folder_dirs:
+            os.makedirs(folder, exist_ok=True)
+            for fname in fnames:
+                fpath = os.path.join(folder, fname)
+                with open(fpath, 'w') as f:
+                    f.write('hello world')
+
+        for folder in folder_dirs:
+            print(f'folder: {os.listdir(folder)}')
+
     def tearDown(self):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
+        shutil.rmtree(self.tmp_dir2)
 
     def test_ast_scaning_class(self):
         astScaner = AstScanning()
@@ -74,6 +92,15 @@ class AstScaningTest(unittest.TestCase):
         self.assertIsInstance(index[index_0]['module'], str)
         index_0 = list(requirements.keys())[0]
         self.assertIsInstance(requirements[index_0], list)
+
+        fileScaner.traversal_files(self.tmp_dir2, include_init=False)
+        self.assertTrue(
+            os.path.join(self.tmp_dir2, '__init__.py') not in
+            fileScaner.file_dirs)
+
+        fileScaner.traversal_files(self.tmp_dir2, include_init=True)
+        self.assertTrue(
+            os.path.join(self.tmp_dir2, '__init__.py') in fileScaner.file_dirs)
 
     def test_file_mtime_md5_method(self):
         fileScaner = FilesAstScanning()

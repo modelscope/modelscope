@@ -28,7 +28,8 @@ class CsanmtForTranslationExporter(TfModelExporter):
         tf.disable_eager_execution()
         super().__init__(model)
 
-        from modelscope.pipelines.nlp.translation_pipeline import TranslationPipeline
+        from modelscope.pipelines.nlp.translation_pipeline import \
+            TranslationPipeline
         self.pipeline = TranslationPipeline(self.model)
 
     def generate_dummy_inputs(self, **kwargs) -> Dict[str, Any]:

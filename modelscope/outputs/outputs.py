@@ -442,6 +442,8 @@ TASK_OUTPUTS = {
     Tasks.table_recognition: [OutputKeys.POLYGONS],
     Tasks.lineless_table_recognition: [OutputKeys.POLYGONS, OutputKeys.BOXES],
     Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
+    Tasks.card_detection_correction:
+    [OutputKeys.POLYGONS, OutputKeys.OUTPUT_IMGS],
 
     # ocr recognition result for single sample
     # {
@@ -669,8 +671,9 @@ TASK_OUTPUTS = {
     #           np.array # 2D array containing only 0, 1
     #       ]
     #   }
-    Tasks.image_segmentation:
-    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
+    Tasks.image_segmentation: [
+        OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS
+    ],
 
     # video panoptic segmentation result for single sample
     #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]
@@ -755,6 +758,7 @@ TASK_OUTPUTS = {
     Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
     Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.image_control_3d_portrait: [OutputKeys.OUTPUT],
 
     # image quality assessment degradation result for single image
     # {
@@ -858,6 +862,41 @@ TASK_OUTPUTS = {
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],
 
+    # 3D head reconstruction result for single sample
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     }
+    # }
+    Tasks.head_reconstruction: [OutputKeys.OUTPUT],
+
+    # text to head result for text input
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     },
+    #     "image": np.array with shape(h, w, 3),
+    # }
+    Tasks.text_to_head: [OutputKeys.OUTPUT],
+
     # 3D human reconstruction result for single sample
     # {
     #     "output": {
@@ -867,6 +906,14 @@ TASK_OUTPUTS = {
     #     }
     # }
     Tasks.human_reconstruction: [OutputKeys.OUTPUT],
+
+    # 3D text 2 texture generation result
+    # {
+    #     "output": {
+    #         "Done"
+    #     }
+    # }
+    Tasks.text_texture_generation: [OutputKeys.OUTPUT],
 
     # 2D hand keypoints result for single sample
     # {
@@ -1576,6 +1623,11 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.human_image_generation: [OutputKeys.OUTPUT_IMG],
+    # Tasks.image_view_transform result for a single sample
+    # {
+    #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
+    # }
+    Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
 }
 
 

@@ -19,6 +19,7 @@ class CVTasks(object):
     table_recognition = 'table-recognition'
     lineless_table_recognition = 'lineless-table-recognition'
     license_plate_detection = 'license-plate-detection'
+    card_detection_correction = 'card-detection-correction'
 
     # human face body related
     animal_recognition = 'animal-recognition'
@@ -101,6 +102,7 @@ class CVTasks(object):
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
+    image_view_transform = 'image-view-transform'
 
     # video recognition
     live_category = 'live-category'
@@ -147,9 +149,12 @@ class CVTasks(object):
 
     # 3d face reconstruction
     face_reconstruction = 'face-reconstruction'
+    head_reconstruction = 'head-reconstruction'
+    text_to_head = 'text-to-head'
 
     # 3d human reconstruction
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
 
     # image quality assessment mos
     image_quality_assessment_mos = 'image-quality-assessment-mos'
@@ -160,6 +165,7 @@ class CVTasks(object):
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     surface_recon_common = 'surface-recon-common'
+    image_control_3d_portrait = 'image-control-3d-portrait'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'

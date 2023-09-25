@@ -82,6 +82,7 @@ class Models(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
@@ -124,6 +125,8 @@ class Models(object):
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
+    image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
 
     # nlp models
     bert = 'bert'
@@ -293,6 +296,7 @@ class Pipelines(object):
     table_recognition = 'dla34-table-recognition'
     lineless_table_recognition = 'lore-lineless-table-recognition'
     license_plate_detection = 'resnet18-license-plate-detection'
+    card_detection_correction = 'resnet18-card-detection-correction'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
@@ -365,6 +369,8 @@ class Pipelines(object):
     hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
     face_reconstruction = 'resnet50-face-reconstruction'
+    head_reconstruction = 'HRN-head-reconstruction'
+    text_to_head = 'HRN-text-to-head'
     tinynas_classification = 'tinynas-classification'
     easyrobust_classification = 'easyrobust-classification'
     tinynas_detection = 'tinynas-detection'
@@ -401,6 +407,7 @@ class Pipelines(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     vidt = 'vidt'
     video_frame_interpolation = 'video-frame-interpolation'
@@ -442,6 +449,8 @@ class Pipelines(object):
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
+    image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -677,6 +686,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.license_plate_detection:
     (Pipelines.license_plate_detection,
      'damo/cv_resnet18_license-plate-detection_damo'),
+    Tasks.card_detection_correction: (Pipelines.card_detection_correction,
+                                      'damo/cv_resnet18_card_correction'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),
@@ -830,6 +841,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_effnetv2_video-human-matting'),
     Tasks.human_reconstruction: (Pipelines.human_reconstruction,
                                  'damo/cv_hrnet_image-human-reconstruction'),
+    Tasks.text_texture_generation: (
+        Pipelines.text_texture_generation,
+        'damo/cv_diffuser_text-texture-generation'),
     Tasks.video_frame_interpolation: (
         Pipelines.video_frame_interpolation,
         'damo/cv_raft_video-frame-interpolation'),
@@ -908,7 +922,12 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_try_on: (Pipelines.image_try_on,
                          'damo/cv_SAL-VTON_virtual-try-on'),
     Tasks.human_image_generation: (Pipelines.human_image_generation,
-                                   'damo/cv_FreqHPT_human-image-generation')
+                                   'damo/cv_FreqHPT_human-image-generation'),
+    Tasks.image_view_transform: (Pipelines.image_view_transform,
+                                 'damo/cv_image-view-transform'),
+    Tasks.image_control_3d_portrait: (
+        Pipelines.image_control_3d_portrait,
+        'damo/cv_vit_image-control-3d-portrait-synthesis')
 }
 
 

@@ -136,16 +136,18 @@ class EfficientStableDiffusion(TorchModel):
                 'adapter_length'] if tuner_config and 'adapter_length' in tuner_config else 10
             adapter_config_dict = {}
             dim_list = [320, 640, 1280]
-            target_modules_list = [r"(down_blocks.0.*ff\.net\.2$)|(up_blocks.3.*ff\.net\.2$)", 
-                                   r"(down_blocks.1.*ff\.net\.2$)|(up_blocks.2.*ff\.net\.2$)",
-                                   r"(down_blocks.2.*ff\.net\.2$)|(up_blocks.1.*ff\.net\.2$)|(mid_block.*ff\.net\.2$)"]
+            target_modules_list = [
+                r'(down_blocks.0.*ff\.net\.2$)|(up_blocks.3.*ff\.net\.2$)',
+                r'(down_blocks.1.*ff\.net\.2$)|(up_blocks.2.*ff\.net\.2$)',
+                r'(down_blocks.2.*ff\.net\.2$)|(up_blocks.1.*ff\.net\.2$)|(mid_block.*ff\.net\.2$)'
+            ]
             for dim, target_modules in zip(dim_list, target_modules_list):
                 adapter_config = AdapterConfig(
                     dim=dim,
                     hidden_pos=0,
                     target_modules=target_modules,
                     adapter_length=adapter_length)
-                adapter_config_dict[f"adapter_{dim}"] = adapter_config
+                adapter_config_dict[f'adapter_{dim}'] = adapter_config
             self.unet = Swift.prepare_model(self.unet, adapter_config_dict)
         elif tuner_name == 'swift-prompt':
             if not is_swift_available():

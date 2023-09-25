@@ -1,4 +1,5 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import os
 from typing import Union
 
 import torch

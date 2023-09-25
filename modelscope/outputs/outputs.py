@@ -861,6 +861,8 @@ TASK_OUTPUTS = {
     #     }
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],
+    Tasks.human3d_render: [OutputKeys.OUTPUT],
+    Tasks.human3d_animation: [OutputKeys.OUTPUT],
 
     # 3D head reconstruction result for single sample
     # {

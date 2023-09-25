@@ -449,6 +449,8 @@ class Pipelines(object):
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
+    human3d_render = 'human3d-render'
+    human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
 
@@ -923,6 +925,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                          'damo/cv_SAL-VTON_virtual-try-on'),
     Tasks.human_image_generation: (Pipelines.human_image_generation,
                                    'damo/cv_FreqHPT_human-image-generation'),
+    Tasks.human3d_render: (Pipelines.human3d_render,
+                           'damo/cv_3d-human-synthesis-library'),
+    Tasks.human3d_animation: (Pipelines.human3d_animation,
+                              'damo/cv_3d-human-animation'),
     Tasks.image_view_transform: (Pipelines.image_view_transform,
                                  'damo/cv_image-view-transform'),
     Tasks.image_control_3d_portrait: (

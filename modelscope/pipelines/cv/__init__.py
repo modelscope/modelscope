@@ -113,6 +113,8 @@ if TYPE_CHECKING:
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
+    from .human3d_render_pipeline import Human3DRenderPipeline
+    from .human3d_animation_pipeline import Human3DAnimationPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -283,6 +285,8 @@ else:
         'text_to_360panorama_image_pipeline': [
             'Text2360PanoramaImagePipeline'
         ],
+        'human3d_render_pipeline': ['Human3DRenderPipeline'],
+        'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
     }
 
     import sys

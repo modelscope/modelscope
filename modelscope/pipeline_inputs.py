@@ -305,6 +305,16 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_pose_path': InputType.TEXT
     },
+    Tasks.human3d_render: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+    },
+    Tasks.human3d_animation: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+        'action_dataset': InputType.TEXT,
+        'action': InputType.TEXT
+    },
     Tasks.image_view_transform: {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_view': InputType.LIST

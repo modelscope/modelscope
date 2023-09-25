@@ -165,6 +165,8 @@ class CVTasks(object):
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     surface_recon_common = 'surface-recon-common'
+    human3d_render = 'human3d-render'
+    human3d_animation = 'human3d-animation'
     image_control_3d_portrait = 'image-control-3d-portrait'
 
     # vision efficient tuning

@@ -9,12 +9,12 @@ from modelscope.trainers.hooks.checkpoint.checkpoint_hook import (
 from modelscope.trainers.hooks.checkpoint.load_checkpoint_hook import \
     LoadCheckpointHook
 from modelscope.trainers.hooks.hook import Hook
-from modelscope.utils.import_utils import is_swift_available
 from modelscope.utils.checkpoint import save_configuration
+from modelscope.utils.import_utils import is_swift_available
 
 
 class SwiftCheckpointProcessor(CheckpointProcessor):
-    
+
     _BIN_FILE_DIR = 'model'
     SWIFT_SAVE_SUFFIX = '_swift'
 
@@ -37,7 +37,7 @@ class SwiftCheckpointProcessor(CheckpointProcessor):
                 save_configuration(self.output_dir, self.config)
 
         for pop_key in [
-            'push_to_hub', 'hub_repo_id', 'hub_token', 'private_hub'
+                'push_to_hub', 'hub_repo_id', 'hub_token', 'private_hub'
         ]:
             if config.safe_get('train.checkpoint.period.'
                                + pop_key) is not None:
@@ -57,9 +57,10 @@ class SwiftCheckpointProcessor(CheckpointProcessor):
                 _swift_output_dir = output_dir + SwiftCheckpointProcessor.SWIFT_SAVE_SUFFIX
                 model.save_pretrained(
                     save_directory=_swift_output_dir,
-                    safe_serialization=config.safe_get('train.checkpoint.safe_serialization', False),
-                    adapter_name=config.safe_get('train.checkpoint.adapter_name', 'default')
-                )
+                    safe_serialization=config.safe_get(
+                        'train.checkpoint.safe_serialization', False),
+                    adapter_name=config.safe_get(
+                        'train.checkpoint.adapter_name', 'default'))
             else:
                 model.save_pretrained(
                     output_dir,
@@ -109,7 +110,7 @@ class SwiftCheckpointProcessor(CheckpointProcessor):
 
 @HOOKS.register_module(module_name=Hooks.SwiftHook)
 class SwiftHook(Hook):
-    
+
     _BIN_FILE_DIR = 'model'
 
     def __init__(self):

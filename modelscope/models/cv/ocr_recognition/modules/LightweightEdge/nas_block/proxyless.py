@@ -126,7 +126,7 @@ def plnas_linear_mix_se(input_channel, output_channel):
 
     stride_stages = [(2, 2), (2, 1), (2, 1), (2, 1)]
     n_cell_stages = [5, 5, 5, 5]
-    width_stages = [32, 64, 96, 123]
+    width_stages = [32, 64, 96, 128]
     conv_op_ids = [
         2, 23, 24, 26, 2, 2, 11, 27, 27, 27, 27, 2, 0, 2, 16, 10, 27, 2, 2, 2,
         22, 10, 27, 3

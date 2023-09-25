@@ -109,8 +109,8 @@ class OCRRecognition(TorchModel):
         with open(dict_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             cnt = 1
-            # ConvNextViT model start from index=2
-            if self.do_chunking:
+            # ConvNextViT and LightweightEdge model start from index=2
+            if cfgs.model.recognizer == 'ConvNextViT' or cfgs.model.recognizer == 'LightweightEdge':
                 cnt += 1
             for line in lines:
                 line = line.strip('\n')

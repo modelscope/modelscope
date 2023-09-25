@@ -758,6 +758,7 @@ TASK_OUTPUTS = {
     Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
     Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.image_control_3d_portrait: [OutputKeys.OUTPUT],
 
     # image quality assessment degradation result for single image
     # {

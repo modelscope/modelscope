@@ -309,6 +309,10 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_view': InputType.LIST
     },
+    Tasks.image_control_3d_portrait: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'save_dir': InputType.TEXT
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: [

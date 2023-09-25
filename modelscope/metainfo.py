@@ -125,6 +125,7 @@ class Models(object):
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
 
     # nlp models
     bert = 'bert'
@@ -447,6 +448,7 @@ class Pipelines(object):
     image_try_on = 'image-try-on'
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -917,7 +919,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.human_image_generation: (Pipelines.human_image_generation,
                                    'damo/cv_FreqHPT_human-image-generation'),
     Tasks.image_view_transform: (Pipelines.image_view_transform,
-                                 'damo/cv_image-view-transform')
+                                 'damo/cv_image-view-transform'),
+    Tasks.image_control_3d_portrait: (
+        Pipelines.image_control_3d_portrait,
+        'damo/cv_vit_image-control-3d-portrait-synthesis')
 }
 
 

@@ -154,6 +154,7 @@ class CVTasks(object):
 
     # 3d human reconstruction
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
 
     # image quality assessment mos
     image_quality_assessment_mos = 'image-quality-assessment-mos'

@@ -82,6 +82,7 @@ class Models(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
@@ -406,6 +407,7 @@ class Pipelines(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     vidt = 'vidt'
     video_frame_interpolation = 'video-frame-interpolation'
@@ -839,6 +841,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_effnetv2_video-human-matting'),
     Tasks.human_reconstruction: (Pipelines.human_reconstruction,
                                  'damo/cv_hrnet_image-human-reconstruction'),
+    Tasks.text_texture_generation: (
+        Pipelines.text_texture_generation,
+        'damo/cv_diffuser_text-texture-generation'),
     Tasks.video_frame_interpolation: (
         Pipelines.video_frame_interpolation,
         'damo/cv_raft_video-frame-interpolation'),

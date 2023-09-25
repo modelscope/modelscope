@@ -907,6 +907,14 @@ TASK_OUTPUTS = {
     # }
     Tasks.human_reconstruction: [OutputKeys.OUTPUT],
 
+    # 3D text 2 texture generation result
+    # {
+    #     "output": {
+    #         "Done"
+    #     }
+    # }
+    Tasks.text_texture_generation: [OutputKeys.OUTPUT],
+
     # 2D hand keypoints result for single sample
     # {
     #     "keypoints": [

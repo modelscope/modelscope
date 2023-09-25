@@ -500,6 +500,14 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.human_reconstruction:
     InputType.IMAGE,
+    Tasks.text_texture_generation: {
+        'mesh_path': InputType.TEXT,
+        'texture_path': InputType.TEXT,
+        'prompt': InputType.TEXT,
+        'uvsize': InputType.NUMBER,
+        'image_size': InputType.NUMBER,
+        'output_dir': InputType.NUMBER,
+    },
     Tasks.image_reid_person:
     InputType.IMAGE,
     Tasks.video_inpainting: {

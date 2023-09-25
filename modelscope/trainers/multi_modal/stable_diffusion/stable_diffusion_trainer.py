@@ -7,6 +7,7 @@ from torch import nn
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
 from modelscope.trainers.builder import TRAINERS
+from modelscope.trainers.hooks.checkpoint.checkpoint_hook import CheckpointHook
 from modelscope.trainers.hooks.checkpoint.checkpoint_processor import \
     CheckpointProcessor
 from modelscope.trainers.optimizer.builder import build_optimizer
@@ -39,6 +40,7 @@ class StableDiffusionTrainer(EpochBasedTrainer):
         """
         super().__init__(*args, **kwargs)
         use_swift = kwargs.pop('use_swift', False)
+
         # set swift lora save checkpoint processor
         if use_swift:
             ckpt_hook = list(

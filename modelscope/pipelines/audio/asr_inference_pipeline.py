@@ -336,8 +336,6 @@ class AutomaticSpeechRecognitionPipeline(Pipeline):
                 decoding_ind = root['decoding_ind']
             if 'decoding_mode' in root:
                 decoding_mode = root['decoding_mode']
-            if 'fake_streaming' in root:
-                fake_streaming = root['fake_streaming']
 
             cmd['beam_size'] = root['beam_size']
             cmd['penalty'] = root['penalty']

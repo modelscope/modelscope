@@ -173,8 +173,8 @@ class TensorVMSplitVQ(TensorVMSplit):
                 torch.from_numpy(unpack1).reshape(vq_count, bits).long(),
                 bits=bits)
             vq_data = codebook[0, unpack2, :]  # N*len
-            vq_data = vq_data.T.reshape(*(
-                self.app_plane[idx_plane][:, :, vq_mask].shape))
+            vq_data = vq_data.T.reshape(
+                *(self.app_plane[idx_plane][:, :, vq_mask].shape))
             self.app_plane[idx_plane].data[:, :, vq_mask] = vq_data
 
         for idx_plane in range(3):
@@ -197,8 +197,8 @@ class TensorVMSplitVQ(TensorVMSplit):
                 torch.from_numpy(unpack1).reshape(vq_count, bits).long(),
                 bits=bits)
             vq_data = codebook[0, unpack2, :]  # N*len
-            vq_data = vq_data.T.reshape(*(
-                self.density_plane[idx_plane][:, :, vq_mask].shape))
+            vq_data = vq_data.T.reshape(
+                *(self.density_plane[idx_plane][:, :, vq_mask].shape))
             self.density_plane[idx_plane].data[:, :, vq_mask] = vq_data
 
     def forward(self,

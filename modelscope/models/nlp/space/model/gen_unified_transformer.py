@@ -273,7 +273,7 @@ class GenUnifiedTransformer(UnifiedTransformer):
                 src_pos=inputs['src_pos'],
                 src_type=inputs['src_type'],
                 src_turn=inputs['src_turn'])
-        
+
         # Generation process.
         gen_results = self.generator(
             step_fn=self._decode,

@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
+    from .card_detection_correction_pipeline import CardDetectionCorrectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
     from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
@@ -112,6 +113,8 @@ if TYPE_CHECKING:
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
+    from .human3d_render_pipeline import Human3DRenderPipeline
+    from .human3d_animation_pipeline import Human3DAnimationPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -165,6 +168,8 @@ else:
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
         'license_plate_detection_pipeline': ['LicensePlateDetectionPipeline'],
+        'card_detection_correction_pipeline':
+        ['CardDetectionCorrectionPipeline'],
         'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'face_reconstruction_pipeline': ['FaceReconstructionPipeline'],
@@ -184,8 +189,9 @@ else:
         'facial_landmark_confidence_pipeline':
         ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
-        'face_attribute_recognition_pipeline':
-        ['FaceAttributeRecognitionPipeline'],
+        'face_attribute_recognition_pipeline': [
+            'FaceAttributeRecognitionPipeline'
+        ],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
         'referring_video_object_segmentation_pipeline': [
@@ -279,6 +285,8 @@ else:
         'text_to_360panorama_image_pipeline': [
             'Text2360PanoramaImagePipeline'
         ],
+        'human3d_render_pipeline': ['Human3DRenderPipeline'],
+        'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
     }
 
     import sys

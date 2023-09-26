@@ -36,6 +36,7 @@ class OCRDetection(TorchModel):
         self.return_polygon = cfgs.model.inference_kwargs.return_polygon
         self.backbone = cfgs.model.backbone
         self.detector = None
+        self.onnx_export = False
         if self.backbone == 'resnet50':
             self.detector = VLPTModel()
         elif self.backbone == 'resnet18':
@@ -62,11 +63,20 @@ class OCRDetection(TorchModel):
             org_shape (`List`): image original shape,
                 value is [height, width].
         """
-        pred = self.detector(input['img'])
+        if type(input) is dict:
+            pred = self.detector(input['img'])
+        else:
+            # for onnx convert
+            input = {'img': input, 'org_shape': [800, 800]}
+            pred = self.detector(input['img'])
         return {'results': pred, 'org_shape': input['org_shape']}
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         pred = inputs['results'][0]
+
+        if self.onnx_export:
+            return pred
+
         height, width = inputs['org_shape']
         segmentation = pred > self.thresh
         if self.return_polygon:

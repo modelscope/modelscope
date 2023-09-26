@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from diffusers.models.attention_processor import Attention
 from diffusers.models.embeddings import CombinedTimestepLabelEmbeddings
-from diffusers.utils import maybe_allow_in_graph
+from diffusers.utils.torch_utils import maybe_allow_in_graph
 from torch import nn
 
 

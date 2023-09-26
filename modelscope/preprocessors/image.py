@@ -10,6 +10,7 @@ from PIL import Image, ImageOps
 
 from modelscope.fileio import File
 from modelscope.metainfo import Preprocessors
+from modelscope.pipeline_inputs import InputKeys
 from modelscope.utils.constant import Fields
 from modelscope.utils.type_assert import type_assert
 from .base import Preprocessor
@@ -92,6 +93,10 @@ class LoadImage:
             if len(input.shape) == 2:
                 input = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
             img = input[:, :, ::-1]
+        elif isinstance(input, Dict):
+            img = input.get(InputKeys.IMAGE, None)
+            if img:
+                img = np.array(load_image(img))
         else:
             raise TypeError(f'input should be either str, PIL.Image,'
                             f' np.array, but got {type(input)}')
@@ -108,6 +113,10 @@ class LoadImage:
                 img = cv2.cvtColor(input, cv2.COLOR_GRAY2BGR)
             img = input[:, :, ::-1]
             img = Image.fromarray(img.astype('uint8')).convert('RGB')
+        elif isinstance(input, Dict):
+            img = input.get(InputKeys.IMAGE, None)
+            if img:
+                img = load_image(img)
         else:
             raise TypeError(f'input should be either str, PIL.Image,'
                             f' np.array, but got {type(input)}')

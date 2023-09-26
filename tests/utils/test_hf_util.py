@@ -25,6 +25,10 @@ class HFUtilTest(unittest.TestCase):
         self.assertEqual(tokenizer.model_max_length, 4096)
         self.assertFalse(tokenizer.is_fast)
 
+    def test_quantization_import(self):
+        from modelscope import GPTQConfig, BitsAndBytesConfig
+        self.assertTrue(BitsAndBytesConfig is not None)
+
     def test_auto_model(self):
         model = AutoModelForCausalLM.from_pretrained(
             'baichuan-inc/baichuan-7B', trust_remote_code=True)

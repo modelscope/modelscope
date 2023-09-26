@@ -16,6 +16,7 @@ from modelscope.models.cv.s2net_panorama_depth_estimation.networks.util_helper i
     compute_hp_info, render_depth_map)
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.device import create_device
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -35,8 +36,7 @@ class PanoramaDepthEstimation(TorchModel):
         """
         super().__init__(model_dir, **kwargs)
         if 'device' in kwargs:
-            self.device = torch.device('cuda' if 'gpu' in
-                                       kwargs['device'] else 'cpu')
+            self.device = create_device(kwargs['device'])
         else:
             self.device = torch.device(
                 'cuda' if torch.cuda.is_available() else 'cpu')

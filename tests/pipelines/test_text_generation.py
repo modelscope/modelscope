@@ -330,7 +330,7 @@ class TextGenerationTest(unittest.TestCase):
         self.run_pipeline_with_model_id(
             self.seqgpt_model_id, prompt, run_kwargs={'gen_token': '[GEN]'})
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test for oom in ci')
     def test_ecomgpt_with_model_name(self):
         PROMPT_TEMPLATE = 'Below is an instruction that describes a task. ' + \
                           'Write a response that appropriately completes the request.\n\n' + \

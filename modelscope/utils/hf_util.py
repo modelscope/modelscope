@@ -124,7 +124,7 @@ def check_hf_code(model_dir: str, auto_class: type,
                 f'{model_type} not found in HF `CONFIG_MAPPING`{trust_remote_code_info}'
             )
     elif auto_class is AutoTokenizerHF:
-        tokenizer_class = tokenizer_config.get("tokenizer_class")
+        tokenizer_class = tokenizer_config.get('tokenizer_class')
         if tokenizer_class is not None:
             return
         if model_type in TOKENIZER_MAPPING_NAMES:

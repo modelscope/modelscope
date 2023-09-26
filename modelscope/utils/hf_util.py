@@ -13,6 +13,7 @@ from transformers import \
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoTokenizer as AutoTokenizerHF
+from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
@@ -21,6 +22,11 @@ from transformers.models.auto.tokenization_auto import (
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import Invoke
+
+try:
+    from transformers import GPTQConfig as GPTQConfigHF
+except ImportError:
+    GPTQConfigHF = None
 
 
 def user_agent(invoked_by=None):
@@ -199,3 +205,5 @@ AutoConfig = get_wrapped_class(
     AutoConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
 GenerationConfig = get_wrapped_class(
     GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+GPTQConfig = GPTQConfigHF
+BitsAndBytesConfig = BitsAndBytesConfigHF

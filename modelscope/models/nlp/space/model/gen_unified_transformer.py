@@ -14,7 +14,8 @@ class GenUnifiedTransformer(UnifiedTransformer):
         super(GenUnifiedTransformer, self).__init__(model_dir, config, reader,
                                                     generator)
         self.understand = config.BPETextField.understand
-
+        if torch.cuda.is_available():
+            self.use_gpu = True
         if self.use_gpu:
             self.cuda()
         return
@@ -201,15 +202,21 @@ class GenUnifiedTransformer(UnifiedTransformer):
         mask = state['mask']
 
         # shape: [batch_size, 1, 1]
-        pred_token = state['pred_token']
-        pred_mask = state['pred_mask']
-        pred_pos = state['pred_pos']
-        pred_type = state['pred_type']
-        pred_turn = state['pred_turn']
+        if self.use_gpu:
+            pred_token = state['pred_token'].cuda()
+            pred_mask = state['pred_mask'].cuda()
+            pred_pos = state['pred_pos'].cuda()
+            pred_type = state['pred_type'].cuda()
+            pred_turn = state['pred_turn'].cuda()
+        else:
+            pred_token = state['pred_token']
+            pred_mask = state['pred_mask']
+            pred_pos = state['pred_pos']
+            pred_type = state['pred_type']
+            pred_turn = state['pred_turn']
 
         # list of shape(len: num_layers): [batch_size, seq_len, hidden_dim]
         cache = state['cache']
-
         pred_embed = self.embedder(pred_token, pred_pos, pred_type,
                                    pred_turn).squeeze(-2)
         pred_embed = self.embed_layer_norm(pred_embed)

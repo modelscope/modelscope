@@ -656,7 +656,7 @@ def service_base64_input_to_pipeline_input(task_name, body):
 
     if isinstance(service_input, (str, int, float)):
         return service_input, parameters
-    task_input_info = TASK_INPUTS[task_name]
+    task_input_info = TASK_INPUTS.get(task_name, None)
     if isinstance(task_input_info, str):  # no input key default
         if isinstance(service_input, dict):
             return base64_decoder_map[task_input_info](list(
@@ -767,9 +767,7 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
         pipeline_output (object): The pipeline output.
     """
     json_serializable_output = {}
-    task_outputs = []
-    if task_name in TASK_OUTPUTS:
-        task_outputs = TASK_OUTPUTS[task_name]
+    task_outputs = TASK_OUTPUTS.get(task_name, [])
     # TODO: for batch
     if isinstance(pipeline_output, list):
         pipeline_output = pipeline_output[0]

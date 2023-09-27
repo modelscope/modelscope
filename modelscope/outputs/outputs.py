@@ -562,6 +562,7 @@ TASK_OUTPUTS = {
     #   }
     Tasks.facial_expression_recognition:
     [OutputKeys.SCORES, OutputKeys.LABELS],
+    Tasks.general_recognition: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # face processing base result for single img
     #   {

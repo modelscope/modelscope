@@ -32,6 +32,7 @@ RUN pip install --no-cache-dir mpi4py paint_ldm \
          mmcls>=0.21.0 mmdet>=2.25.0 decord>=0.6.0 pai-easycv ms_swift \
          ipykernel fasttext fairseq deepspeed -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
+ARG USE_GPU
 # for cpu install cpu version faiss, faiss depends on blas lib, we install libopenblas TODO rename gpu or cpu version faiss
 RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir funtextprocessing kwsbp==0.0.6 faiss==1.7.2 safetensors typeguard==2.13.3 scikit-learn librosa==0.9.2 funasr -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \

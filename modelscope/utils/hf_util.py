@@ -133,7 +133,7 @@ def check_hf_code(model_dir: str, auto_class: type,
         tokenizer_class = tokenizer_config.get('tokenizer_class')
         if tokenizer_class is not None:
             return
-        if model_type in TOKENIZER_MAPPING_NAMES:
+        if model_type not in TOKENIZER_MAPPING_NAMES:
             raise ValueError(
                 f'{model_type} not found in HF `TOKENIZER_MAPPING_NAMES`{trust_remote_code_info}'
             )

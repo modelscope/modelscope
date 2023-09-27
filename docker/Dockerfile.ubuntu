@@ -45,7 +45,11 @@ COPY examples /modelscope/examples
 # for pai-easycv setup compatiblity issue
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 
-RUN CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6" pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6" pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'; \
+    else \
+        echo 'cpu unsupport detectron2'; \
+    fi
 
 # torchmetrics==0.11.4 for ofa
 RUN pip install --no-cache-dir tiktoken torchmetrics==0.11.4 transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr

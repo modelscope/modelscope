@@ -53,7 +53,8 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 # torchmetrics==0.11.4 for ofa
-RUN pip install --no-cache-dir torchmetrics==0.11.4 tiktoken transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
+# onnxruntime<1.16.0 for Since ORT 1.9, you are required to explicitly set the providers parameter when instantiating InferenceSession. For example, onnxruntime.InferenceSession(..., providers=['AzureExecutionProvider', 'CPUExecutionProvider'], ...)
+RUN pip install --no-cache-dir 'onnxruntime<1.16.0' torchmetrics==0.11.4 tiktoken transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
 COPY docker/scripts/install_flash_attension.sh /tmp/install_flash_attension.sh
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_flash_attension.sh; \

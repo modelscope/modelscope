@@ -53,7 +53,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 # torchmetrics==0.11.4 for ofa
-RUN pip install --no-cache-dir torchmetrics==0.11.4 tiktoken transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
+RUN pip install --no-cache-dir jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator 'protobuf<=3.20.0' bitsandbytes basicsr
 COPY docker/scripts/install_flash_attension.sh /tmp/install_flash_attension.sh
 RUN if [ "$USE_GPU" = "True" ] ; then \
         bash /tmp/install_flash_attension.sh; \

@@ -183,6 +183,9 @@ class EpochBasedTrainer(BaseTrainer):
 
         if 'work_dir' in kwargs:
             self.work_dir = kwargs['work_dir']
+            if 'train' not in self.cfg:
+                self.cfg['train'] = ConfigDict()
+            self.cfg['train']['work_dir'] = self.work_dir
         else:
             self.work_dir = self.cfg.train.get('work_dir', './work_dir')
 

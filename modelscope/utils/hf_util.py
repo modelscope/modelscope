@@ -190,18 +190,13 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
     return ClassWrapper
 
 
-AutoModel = get_wrapped_class(
-    AutoModelHF, ignore_file_pattern=[r'\w+\.safetensors'])
-AutoModelForCausalLM = get_wrapped_class(
-    AutoModelForCausalLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
-AutoModelForSeq2SeqLM = get_wrapped_class(
-    AutoModelForSeq2SeqLMHF, ignore_file_pattern=[r'\w+\.safetensors'])
+AutoModel = get_wrapped_class(AutoModelHF)
+AutoModelForCausalLM = get_wrapped_class(AutoModelForCausalLMHF)
+AutoModelForSeq2SeqLM = get_wrapped_class(AutoModelForSeq2SeqLMHF)
 AutoModelForSequenceClassification = get_wrapped_class(
-    AutoModelForSequenceClassificationHF,
-    ignore_file_pattern=[r'\w+\.safetensors'])
+    AutoModelForSequenceClassificationHF)
 AutoModelForTokenClassification = get_wrapped_class(
-    AutoModelForTokenClassificationHF,
-    ignore_file_pattern=[r'\w+\.safetensors'])
+    AutoModelForTokenClassificationHF)
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])

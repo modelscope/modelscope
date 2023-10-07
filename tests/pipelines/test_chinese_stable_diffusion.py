@@ -9,6 +9,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('skip for diffusers<0.21.0 compatible')
 class ChineseStableDiffusionTest(unittest.TestCase):
 
     def setUp(self) -> None:

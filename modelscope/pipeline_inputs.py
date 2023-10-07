@@ -83,10 +83,6 @@ def check_input_type(input_type, input):
 
 TASK_INPUTS = {
 
-    Tasks.task_template: {
-        'image': InputType.IMAGE,
-        'text': InputType.TEXT
-    },
     # if task input is single var, value is  InputType
     # if task input is a tuple,  value is tuple of InputType
     # if task input is a dict, value is a dict of InputType, where key
@@ -95,7 +91,39 @@ TASK_INPUTS = {
     # each element corresponds to one input format as described above and
     # must include a dict format.
 
+
+    Tasks.task_template: {
+        'image': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
     # ============ vision tasks ===================
+
+    Tasks.image_text_retrieval: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.general_recognition:
+    InputType.IMAGE,
+    Tasks.video_depth_estimation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.indoor_layout_estimation:
+    InputType.IMAGE,
+    Tasks.image_demoireing:
+    InputType.IMAGE,
+    Tasks.panorama_depth_estimation:
+    InputType.IMAGE,
+    Tasks.video_depth_estimation:
+    InputType.VIDEO,
+    Tasks.animal_recognition:
+    InputType.IMAGE,
+    Tasks.motion_generation:
+    InputType.TEXT,
+    Tasks.video_panoptic_segmentation:
+    InputType.VIDEO,
+
+
     Tasks.ocr_detection:
     InputType.IMAGE,
     Tasks.ocr_recognition:
@@ -109,6 +137,8 @@ TASK_INPUTS = {
     Tasks.card_detection:
     InputType.IMAGE,
     Tasks.license_plate_detection:
+    InputType.IMAGE,
+    Tasks.card_detection_correction:
     InputType.IMAGE,
     Tasks.lineless_table_recognition:
     InputType.IMAGE,
@@ -124,6 +154,10 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_reconstruction:
     InputType.IMAGE,
+    Tasks.head_reconstruction:
+    InputType.IMAGE,
+    Tasks.text_to_head:
+    InputType.TEXT,
     Tasks.human_detection:
     InputType.IMAGE,
     Tasks.face_image_generation:
@@ -270,6 +304,24 @@ TASK_INPUTS = {
     Tasks.human_image_generation: {
         InputKeys.IMAGE: InputType.IMAGE,
         'target_pose_path': InputType.TEXT
+    },
+    Tasks.human3d_render: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+    },
+    Tasks.human3d_animation: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+        'action_dataset': InputType.TEXT,
+        'action': InputType.TEXT
+    },
+    Tasks.image_view_transform: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_view': InputType.LIST
+    },
+    Tasks.image_control_3d_portrait: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'save_dir': InputType.TEXT
     },
 
     # ============ nlp tasks ===================
@@ -458,6 +510,14 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.human_reconstruction:
     InputType.IMAGE,
+    Tasks.text_texture_generation: {
+        'mesh_path': InputType.TEXT,
+        'texture_path': InputType.TEXT,
+        'prompt': InputType.TEXT,
+        'uvsize': InputType.NUMBER,
+        'image_size': InputType.NUMBER,
+        'output_dir': InputType.NUMBER,
+    },
     Tasks.image_reid_person:
     InputType.IMAGE,
     Tasks.video_inpainting: {

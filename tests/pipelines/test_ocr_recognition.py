@@ -88,7 +88,7 @@ class OCRRecognitionTest(unittest.TestCase):
         ocr_recognition = pipeline(
             Tasks.ocr_recognition,
             model='damo/cv_LightweightEdge_ocr-recognitoin-general_damo',
-            model_revision='v1.0.0')
+            model_revision='v2.4.1')
         self.pipeline_inference(ocr_recognition, self.test_image)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -165,7 +165,7 @@ class OCRRecognitionTest(unittest.TestCase):
         ocr_recognition = pipeline(
             Tasks.ocr_recognition,
             model='damo/cv_LightweightEdge_ocr-recognitoin-general_damo',
-            model_revision='v1.0.0',
+            model_revision='v2.4.1',
             device='cpu')
         self.pipeline_inference(ocr_recognition, self.test_image)
 

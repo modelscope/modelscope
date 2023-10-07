@@ -164,15 +164,17 @@ def polygons_from_bitmap(pred, _bitmap, dest_width, dest_height):
     return boxes, scores
 
 
-def boxes_from_bitmap(pred, _bitmap, dest_width, dest_height):
+def boxes_from_bitmap(pred, _bitmap, dest_width, dest_height, is_numpy=False):
     """
     _bitmap: single map with shape (1, H, W),
         whose values are binarized as {0, 1}
     """
-
-    assert _bitmap.size(0) == 1
-    bitmap = _bitmap.cpu().numpy()[0]
-    pred = pred.cpu().detach().numpy()[0]
+    if is_numpy:
+        bitmap = _bitmap[0]
+        pred = pred[0]
+    else:
+        bitmap = _bitmap.cpu().numpy()[0]
+        pred = pred.cpu().detach().numpy()[0]
     height, width = bitmap.shape
     boxes = []
     scores = []

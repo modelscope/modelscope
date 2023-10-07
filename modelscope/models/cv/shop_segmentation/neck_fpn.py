@@ -8,7 +8,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
-from timm.models.layers import drop, drop_path, trunc_normal_
+from timm.layers.drop import drop_path
+from timm.layers.weight_init import trunc_normal_
 
 from .common import resize
 

@@ -1143,7 +1143,6 @@ class EnvsManager(object):
         cfg = read_config(model_dir)
         self.plugins = cfg.get('plugins', [])
         self.allow_remote = cfg.get('allow_remote', False)
-        
         import venv
         self.env_builder = venv.EnvBuilder(
             system_site_packages=True,

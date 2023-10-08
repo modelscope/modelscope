@@ -66,9 +66,7 @@ class ExportSpeechSignalProcessTest(unittest.TestCase):
         with torch.no_grad():
             model.eval()
             outputs_origin = model.forward(dummy_inputs)
-        outputs_origin = numpify_tensor_nested(
-            outputs_origin,
-            providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        outputs_origin = numpify_tensor_nested(outputs_origin)
 
         input_feed = {INPUT_NAME: dummy_inputs.numpy()}
         outputs = ort_session.run(

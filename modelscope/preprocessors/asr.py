@@ -96,6 +96,10 @@ class WavToScp(Preprocessor):
         else:
             mode = None
         inputs['mode'] = mode
+        if 'lang' in inputs['model_config']:
+            inputs['model_lang'] = inputs['model_config']['lang']
+        else:
+            inputs['model_lang'] = 'zh-cn'
 
         if inputs['model_type'] == Frameworks.torch:
             assert inputs['model_config'].__contains__(

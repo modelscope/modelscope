@@ -181,8 +181,20 @@ class EpochBasedTrainer(BaseTrainer):
                 compile_options = {}
             self.model = compile_model(self.model, **compile_options)
 
-        if 'work_dir' in kwargs:
+        if kwargs.get('work_dir', None) is not None:
             self.work_dir = kwargs['work_dir']
+            if 'train' not in self.cfg:
+                self.cfg['train'] = ConfigDict()
+            self.cfg['train']['work_dir'] = self.work_dir
+            if 'checkpoint' in self.cfg['train']:
+                if 'period' in self.cfg['train']['checkpoint']:
+                    self.cfg['train']['checkpoint']['period'][
+                        'save_dir'] = self.work_dir
+                if 'best' in self.cfg['train']['checkpoint']:
+                    self.cfg['train']['checkpoint']['best'][
+                        'save_dir'] = self.work_dir
+            if 'logging' in self.cfg['train']:
+                self.cfg['train']['logging']['out_dir'] = self.work_dir
         else:
             self.work_dir = self.cfg.train.get('work_dir', './work_dir')
 

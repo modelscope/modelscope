@@ -6,8 +6,12 @@ from modelscope.utils.ast_utils import INDEX_KEY
 from modelscope.utils.import_utils import LazyImportModule
 
 
-def can_load_by_ms(model_dir: str, tast_name: str, model_type: str) -> bool:
-    if ('MODELS', tast_name,
+def can_load_by_ms(model_dir: str,
+                   task_name: Optional[str],
+                   model_type: Optional[str] = None) -> bool:
+    if model_type is None or task_name is None:
+        return False
+    if ('MODELS', task_name,
             model_type) in LazyImportModule.AST_INDEX[INDEX_KEY]:
         return True
     ms_wrapper_path = os.path.join(model_dir, 'ms_wrapper.py')
@@ -25,11 +29,27 @@ def _can_load_by_hf_automodel(automodel_class: type, config) -> bool:
     return False
 
 
-def get_hf_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
-    from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
-                            AutoModelForSeq2SeqLM,
-                            AutoModelForTokenClassification,
-                            AutoModelForSequenceClassification)
+def get_default_automodel(config) -> Optional[type]:
+    import modelscope.utils.hf_util as hf_util
+    if not hasattr(config, 'auto_map'):
+        return None
+    auto_map = config.auto_map
+    automodel_list = [k for k in auto_map.keys() if k.startswith('AutoModel')]
+    if len(automodel_list) == 1:
+        return getattr(hf_util, automodel_list[0])
+    if len(automodel_list) > 1 and len(
+            set([auto_map[k] for k in automodel_list])) == 1:
+        return getattr(hf_util, automodel_list[0])
+    return None
+
+
+def get_hf_automodel_class(model_dir: str,
+                           task_name: Optional[str]) -> Optional[type]:
+    from modelscope.utils.hf_util import (AutoConfig, AutoModel,
+                                          AutoModelForCausalLM,
+                                          AutoModelForSeq2SeqLM,
+                                          AutoModelForTokenClassification,
+                                          AutoModelForSequenceClassification)
     automodel_mapping = {
         Tasks.backbone: AutoModel,
         Tasks.chat: AutoModelForCausalLM,
@@ -37,19 +57,18 @@ def get_hf_automodel_class(model_dir: str, task_name: str) -> Optional[type]:
         Tasks.text_classification: AutoModelForSequenceClassification,
         Tasks.token_classification: AutoModelForTokenClassification,
     }
-    automodel_class = automodel_mapping.get(task_name, None)
-    if automodel_class is None:
-        return None
     config_path = os.path.join(model_dir, 'config.json')
     if not os.path.exists(config_path):
         return None
     try:
-        try:
-            config = AutoConfig.from_pretrained(
-                model_dir, trust_remote_code=True)
-        except (FileNotFoundError, ValueError):
-            return None
+        config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+        if task_name is None:
+            automodel_class = get_default_automodel(config)
+        else:
+            automodel_class = automodel_mapping.get(task_name, None)
 
+        if automodel_class is None:
+            return None
         if _can_load_by_hf_automodel(automodel_class, config):
             return automodel_class
         if (automodel_class is AutoModelForCausalLM

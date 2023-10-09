@@ -90,14 +90,5 @@ def try_to_load_hf_model(model_dir: str, task_name: str,
     model = None
     if automodel_class is not None:
         # use hf
-        device_map = kwargs.get('device_map', None)
-        torch_dtype = kwargs.get('torch_dtype', None)
-        config = kwargs.get('config', None)
-
-        model = automodel_class.from_pretrained(
-            model_dir,
-            device_map=device_map,
-            torch_dtype=torch_dtype,
-            config=config,
-            trust_remote_code=True)
+        model = automodel_class.from_pretrained(model_dir, **kwargs)
     return model

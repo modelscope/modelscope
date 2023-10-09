@@ -6,9 +6,8 @@ from modelscope.utils.ast_utils import INDEX_KEY
 from modelscope.utils.import_utils import LazyImportModule
 
 
-def can_load_by_ms(model_dir: str,
-                   task_name: Optional[str],
-                   model_type: Optional[str] = None) -> bool:
+def can_load_by_ms(model_dir: str, task_name: Optional[str],
+                   model_type: Optional[str]) -> bool:
     if model_type is None or task_name is None:
         return False
     if ('MODELS', task_name,

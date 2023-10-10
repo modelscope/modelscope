@@ -126,7 +126,7 @@ class Model(ABC):
                 )
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            ignore_file_pattern = kwargs.get('ignore_file_pattern', None)
+            ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
             local_model_dir = snapshot_download(
                 model_name_or_path,
                 revision,
@@ -134,18 +134,19 @@ class Model(ABC):
                 ignore_file_pattern=ignore_file_pattern)
         logger.info(f'initialize model from {local_model_dir}')
 
+        configuration_path = osp.join(local_model_dir, ModelFile.CONFIGURATION)
+        cfg = None
         if cfg_dict is not None:
             cfg = cfg_dict
-        else:
-            cfg = Config.from_file(
-                osp.join(local_model_dir, ModelFile.CONFIGURATION))
-        task_name = cfg.task
+        elif os.path.exists(configuration_path):
+            cfg = Config.from_file(configuration_path)
+        task_name = getattr(cfg, 'task', None)
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
-        model_cfg = cfg.model
+        model_cfg = getattr(cfg, 'model', None)
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
-        model_type = model_cfg.type
+        model_type = getattr(model_cfg, 'type', None)
         if isinstance(device, str) and device.startswith('gpu'):
             device = 'cuda' + device[3:]
         use_hf = kwargs.pop('use_hf', None)
@@ -162,6 +163,9 @@ class Model(ABC):
                 model = model.to(device)
             return model
         # use ms
+        if cfg is None:
+            raise FileNotFoundError(
+                f'`{ModelFile.CONFIGURATION}` file not found.')
         model_cfg.model_dir = local_model_dir
 
         # install and import remote repos before build

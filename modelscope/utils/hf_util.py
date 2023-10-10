@@ -13,6 +13,7 @@ from transformers import \
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoTokenizer as AutoTokenizerHF
+from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
@@ -20,7 +21,12 @@ from transformers.models.auto.tokenization_auto import (
     TOKENIZER_MAPPING_NAMES, get_tokenizer_config)
 
 from modelscope import snapshot_download
-from modelscope.utils.constant import Invoke
+from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
+
+try:
+    from transformers import GPTQConfig as GPTQConfigHF
+except ImportError:
+    GPTQConfigHF = None
 
 
 def user_agent(invoked_by=None):
@@ -78,65 +84,6 @@ patch_tokenizer_base()
 patch_model_base()
 
 
-def check_hf_code(model_dir: str, auto_class: type,
-                  trust_remote_code: bool) -> None:
-    config_path = os.path.join(model_dir, 'config.json')
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f'{config_path} is not found')
-    config_dict = PretrainedConfig.get_config_dict(config_path)[0]
-    auto_class_name = auto_class.__name__
-    # load from repo
-    if trust_remote_code:
-        has_remote_code = False
-        if auto_class is AutoTokenizerHF:
-            tokenizer_config_dict = get_tokenizer_config(model_dir)
-            auto_map = tokenizer_config_dict.get('auto_map', None)
-            if auto_map is not None:
-                module_name = auto_map.get(auto_class_name, None)
-                if module_name is not None:
-                    module_name = module_name[0]
-                    has_remote_code = True
-        else:
-            auto_map = config_dict.get('auto_map', None)
-            if auto_map is not None:
-                module_name = auto_map.get(auto_class_name, None)
-                has_remote_code = module_name is not None
-
-        if has_remote_code:
-            module_path = os.path.join(model_dir,
-                                       module_name.split('.')[0] + '.py')
-            if not os.path.exists(module_path):
-                raise FileNotFoundError(f'{module_path} is not found')
-            return
-
-    # trust_remote_code is False or has_remote_code is False
-    model_type = config_dict.get('model_type', None)
-    if model_type is None:
-        raise ValueError(f'`model_type` key is not found in {config_path}.')
-
-    trust_remote_code_info = '.'
-    if not trust_remote_code:
-        trust_remote_code_info = ', You can try passing `trust_remote_code=True`.'
-    if auto_class is AutoConfigHF:
-        if model_type not in CONFIG_MAPPING:
-            raise ValueError(
-                f'{model_type} not found in HF `CONFIG_MAPPING`{trust_remote_code_info}'
-            )
-    elif auto_class is AutoTokenizerHF:
-        if model_type not in TOKENIZER_MAPPING_NAMES:
-            raise ValueError(
-                f'{model_type} not found in HF `TOKENIZER_MAPPING_NAMES`{trust_remote_code_info}'
-            )
-    else:
-        mapping_names = [
-            m.model_type for m in auto_class._model_mapping.keys()
-        ]
-        if model_type not in mapping_names:
-            raise ValueError(
-                f'{model_type} not found in HF `auto_class._model_mapping`{trust_remote_code_info}'
-            )
-
-
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
     """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
     Args:
@@ -156,7 +103,7 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
             ignore_file_pattern = kwargs.pop('ignore_file_pattern',
                                              default_ignore_file_pattern)
             if not os.path.exists(pretrained_model_name_or_path):
-                revision = kwargs.pop('revision', None)
+                revision = kwargs.pop('revision', DEFAULT_MODEL_REVISION)
                 model_dir = snapshot_download(
                     pretrained_model_name_or_path,
                     revision=revision,
@@ -165,9 +112,6 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
             else:
                 model_dir = pretrained_model_name_or_path
 
-            if module_class is not GenerationConfigHF:
-                trust_remote_code = kwargs.get('trust_remote_code', False)
-                check_hf_code(model_dir, module_class, trust_remote_code)
             module_obj = module_class.from_pretrained(model_dir, *model_args,
                                                       **kwargs)
 
@@ -199,3 +143,5 @@ AutoConfig = get_wrapped_class(
     AutoConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
 GenerationConfig = get_wrapped_class(
     GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+GPTQConfig = GPTQConfigHF
+BitsAndBytesConfig = BitsAndBytesConfigHF

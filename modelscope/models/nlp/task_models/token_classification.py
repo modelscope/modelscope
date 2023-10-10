@@ -102,6 +102,7 @@ class ModelForTokenClassificationWithCRF(ModelForTokenClassification):
     base_model_prefix = 'encoder'
 
     def postprocess(self, inputs, **kwargs):
+        logits = inputs['logits']
         predicts = self.head.decode(inputs['logits'], inputs['label_mask'])
         offset_mapping = inputs['offset_mapping']
         mask = inputs['label_mask']
@@ -119,7 +120,7 @@ class ModelForTokenClassificationWithCRF(ModelForTokenClassification):
 
         return AttentionTokenClassificationModelOutput(
             loss=None,
-            logits=None,
+            logits=logits,
             hidden_states=None,
             attentions=None,
             label_mask=mask,

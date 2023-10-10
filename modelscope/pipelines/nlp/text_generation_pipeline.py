@@ -450,7 +450,7 @@ class SeqGPTPipeline(Pipeline):
         # gen & decode
         # prompt += '[GEN]'
         input_ids = self.tokenizer(
-            prompt + '[GEN]',
+            prompt + forward_params.get('gen_token', ''),
             return_tensors='pt',
             padding=True,
             truncation=True,

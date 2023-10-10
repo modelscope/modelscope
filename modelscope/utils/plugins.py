@@ -9,7 +9,6 @@ import os
 import pkgutil
 import shutil
 import sys
-import venv
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from pathlib import Path
@@ -372,7 +371,7 @@ def import_module_from_model_dir(model_dir):
     """
     from pathlib import Path
     file_scanner = FilesAstScanning()
-    file_scanner.traversal_files(model_dir)
+    file_scanner.traversal_files(model_dir, include_init=True)
     file_dirs = file_scanner.file_dirs
     requirements = file_scanner.requirement_dirs
 
@@ -1144,6 +1143,7 @@ class EnvsManager(object):
         cfg = read_config(model_dir)
         self.plugins = cfg.get('plugins', [])
         self.allow_remote = cfg.get('allow_remote', False)
+        import venv
         self.env_builder = venv.EnvBuilder(
             system_site_packages=True,
             clear=False,

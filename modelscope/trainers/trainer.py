@@ -142,12 +142,8 @@ class EpochBasedTrainer(BaseTrainer):
         self._samplers = samplers
 
         if isinstance(model, str):
-            third_party = kwargs.get(ThirdParty.KEY)
-            if third_party is not None:
-                kwargs.pop(ThirdParty.KEY)
-
             self.model_dir = self.get_or_download_model_dir(
-                model, model_revision, third_party)
+                model, model_revision, kwargs.pop(ThirdParty.KEY, None))
             if cfg_file is None:
                 cfg_file = os.path.join(self.model_dir,
                                         ModelFile.CONFIGURATION)
@@ -159,7 +155,10 @@ class EpochBasedTrainer(BaseTrainer):
             if hasattr(model, 'model_dir'):
                 check_local_model_is_latest(
                     model.model_dir,
-                    user_agent={Invoke.KEY: Invoke.LOCAL_TRAINER})
+                    user_agent={
+                        Invoke.KEY: Invoke.LOCAL_TRAINER,
+                        ThirdParty.KEY: kwargs.pop(ThirdParty.KEY, None)
+                    })
 
         super().__init__(cfg_file, arg_parse_fn)
         self.cfg_modify_fn = cfg_modify_fn
@@ -182,8 +181,20 @@ class EpochBasedTrainer(BaseTrainer):
                 compile_options = {}
             self.model = compile_model(self.model, **compile_options)
 
-        if 'work_dir' in kwargs:
+        if kwargs.get('work_dir', None) is not None:
             self.work_dir = kwargs['work_dir']
+            if 'train' not in self.cfg:
+                self.cfg['train'] = ConfigDict()
+            self.cfg['train']['work_dir'] = self.work_dir
+            if 'checkpoint' in self.cfg['train']:
+                if 'period' in self.cfg['train']['checkpoint']:
+                    self.cfg['train']['checkpoint']['period'][
+                        'save_dir'] = self.work_dir
+                if 'best' in self.cfg['train']['checkpoint']:
+                    self.cfg['train']['checkpoint']['best'][
+                        'save_dir'] = self.work_dir
+            if 'logging' in self.cfg['train']:
+                self.cfg['train']['logging']['out_dir'] = self.work_dir
         else:
             self.work_dir = self.cfg.train.get('work_dir', './work_dir')
 

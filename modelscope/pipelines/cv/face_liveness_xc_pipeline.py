@@ -51,7 +51,9 @@ class FaceLivenessXcPipeline(FaceProcessingBasePipeline):
         logger.info('load model done')
 
     def load_onnx_model(self, onnx_path):
-        sess = onnxruntime.InferenceSession(onnx_path)
+        sess = onnxruntime.InferenceSession(
+            onnx_path,
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         out_node_name = []
         input_node_name = []
         for node in sess.get_outputs():

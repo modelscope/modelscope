@@ -15,7 +15,8 @@ class ConesStableDiffusionTest(unittest.TestCase):
         self.task = Tasks.text_to_image_synthesis
         self.model_id = 'damo/Cones2'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2,
+                         'skip test for diffusers compatible')
     def test_run(self):
 
         pipe = pipeline(

@@ -421,8 +421,10 @@ class Frame_Layer(nn.Module):
         tgt = self.norm1(tgt)
         memory = self.norm2(memory)
         mask_new = adaptive_mask(tgt.shape[0], memory.shape[0], ada_para=0.2)
+        if torch.cuda.is_available():
+            mask_new = mask_new.cuda()
         tgt2, atten_weights = self.multihead_attn(
-            tgt, memory, memory, attn_mask=mask_new.cuda())
+            tgt, memory, memory, attn_mask=mask_new)
         tgt = tgt + self.dropout1(tgt2)
 
         tgt = self.norm3(tgt)

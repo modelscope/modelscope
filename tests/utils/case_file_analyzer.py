@@ -62,7 +62,10 @@ class AnalysisTestFile(ast.NodeVisitor):
 
 class AnalysisTestClass(ast.NodeVisitor):
 
-    def __init__(self, test_class_node, builder_function_name) -> None:
+    def __init__(self,
+                 test_class_node,
+                 builder_function_name,
+                 file_analyzer=None) -> None:
         super().__init__()
         self.test_class_node = test_class_node
         self.builder_function_name = builder_function_name
@@ -72,6 +75,44 @@ class AnalysisTestClass(ast.NodeVisitor):
         ]  # class method trainer builder(call build_trainer)
         self.custom_class_method_builder_calls = [
         ]  # the builder call statement
+        self.variables = {}
+
+    def get_variables(self, key: str):
+        if key in self.variables:
+            return self.variables[key]
+        return key
+
+    def get_ast_value(self, statements):
+        if not isinstance(statements, list):
+            statements = [statements]
+        res = []
+        for item in statements:
+            if isinstance(item, ast.Name):
+                res.append(self.get_variables(item.id))
+            elif isinstance(item, ast.Attribute):
+                res.append(self.get_variables(item.value.id))
+            elif isinstance(item, ast.Str):
+                res.append(self.get_variables(item.s))
+            elif isinstance(item, ast.Dict):
+                keys = [i.s for i in item.keys]
+                values = self.get_ast_value(item.values)
+                res.append(dict(zip(keys, values)))
+        return res
+
+    def get_final_variables(self, statement: ast.Assign):
+        if len(statement.targets) == 1 and \
+           isinstance(statement.targets[0], ast.Name):
+            if isinstance(statement.value, ast.Call):
+                if isinstance(statement.value.func, ast.Attribute) and \
+                   isinstance(statement.value.func.value, ast.Name) and \
+                   statement.value.func.value.id == 'Image':
+                    self.variables[str(
+                        statement.targets[0].id)] = self.get_ast_value(
+                            statement.value.args[0])
+            else:
+                self.variables[str(
+                    statement.targets[0].id)] = self.get_ast_value(
+                        statement.value)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         if node.name.startswith('setUp'):
@@ -83,6 +124,7 @@ class AnalysisTestClass(ast.NodeVisitor):
                         self.setup_variables[str(
                             statement.targets[0].attr)] = str(
                                 statement.value.attr)
+                    self.get_final_variables(statement)
         elif node.name.startswith('test_'):
             self.test_methods.append(node)
         else:
@@ -312,6 +354,48 @@ def analysis_trainer_test_suite(test_file, modified_register_modules):
     return tested_trainers
 
 
+def get_test_parameters(test_method, analyzer):
+    for node in ast.walk(test_method):
+        func = None
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for statement in node.body:
+            if isinstance(statement, ast.Assign):
+                analyzer.get_final_variables(statement)
+            if not func and isinstance(statement, ast.Assign):
+                if isinstance(statement.value, ast.Call) and isinstance(
+                        statement.value.func, ast.Name) and (  # noqa W504
+                            'pipeline' in statement.value.func.id
+                            or 'Pipeline' in statement.value.func.id):
+                    func = statement.targets[0].id
+            if func and isinstance(statement, ast.Assign) and isinstance(
+                    statement.value, ast.Call) and isinstance(
+                        statement.value.func, ast.Name):
+                if statement.value.func.id == func:
+                    inputs = statement.value.args
+                    return analyzer.get_ast_value(inputs)
+
+
+def analysis_pipeline_test_examples(test_file):
+    examples = []
+    with open(test_file, 'rb') as tsf:
+        src = tsf.read()
+    test_root = ast.parse(src, test_file)
+    test_file_analyzer = AnalysisTestFile(
+        test_file, SYSTEM_PIPELINE_BUILDER_FUNCTION_NAME)
+    test_file_analyzer.visit(test_root)
+
+    for test_class in test_file_analyzer.test_classes:
+        test_class_analyzer = AnalysisTestClass(
+            test_class, SYSTEM_PIPELINE_BUILDER_FUNCTION_NAME,
+            test_file_analyzer)
+        test_class_analyzer.visit(test_class)
+        for test_method in test_class_analyzer.test_methods:
+            parameters = get_test_parameters(test_method, test_class_analyzer)
+            examples.append(parameters)
+    return examples
+
+
 def analysis_pipeline_test_suite(test_file, modified_register_modules):
     tested_tasks = []
     with open(test_file, 'rb') as tsf:
@@ -413,7 +497,18 @@ def get_pipelines_trainers_test_info(register_modules):
 
 
 if __name__ == '__main__':
-    test_file = 'tests/pipelines/test_action_detection.py'
-    tasks = analysis_pipeline_test_suite(test_file, None)
+    all_pipeline_cases = [
+        os.path.join(dp, f) for dp, dn, filenames in os.walk(
+            os.path.join(os.getcwd(), 'tests', 'pipelines')) for f in filenames
+        if os.path.splitext(f)[1] == '.py'
+    ]
+    for test_file in all_pipeline_cases:
+        print('\n', test_file)
+        tasks = analysis_pipeline_test_suite(test_file, None)
+        examples = analysis_pipeline_test_examples(test_file)
 
-    print(tasks)
+        from modelsope.metainfo import Tasks
+        for task, example in zip(tasks, examples):
+            task_convert = f't = Tasks.{task}'
+            exec(task_convert)
+            print(t, example)

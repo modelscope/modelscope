@@ -102,7 +102,9 @@ class TfModelExporter(Exporter):
 
         onnx_model = onnx.load(output)
         onnx.checker.check_model(onnx_model, full_check=True)
-        ort_session = ort.InferenceSession(output)
+        ort_session = ort.InferenceSession(
+            output,
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         outputs_origin = call_func(
             dummy_inputs) if call_func is not None else model(dummy_inputs)
         if isinstance(outputs_origin, (Mapping, ModelOutputBase)):

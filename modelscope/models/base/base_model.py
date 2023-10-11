@@ -143,10 +143,15 @@ class Model(ABC):
         task_name = getattr(cfg, 'task', None)
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
-        model_cfg = getattr(cfg, 'model', None)
-        if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
-            model_cfg.type = model_cfg.model_type
-        model_type = getattr(model_cfg, 'type', None)
+        try:
+            model_cfg = cfg.model
+            if hasattr(model_cfg,
+                       'model_type') and not hasattr(model_cfg, 'type'):
+                model_cfg.type = model_cfg.model_type
+            model_type = model_cfg.type
+        except Exception:
+            model_cfg = {}
+            model_type = ''
         if isinstance(device, str) and device.startswith('gpu'):
             device = 'cuda' + device[3:]
         use_hf = kwargs.pop('use_hf', None)

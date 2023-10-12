@@ -60,7 +60,9 @@ class ExportSpeechSignalProcessTest(unittest.TestCase):
             return
         onnx_model = onnx.load(output)
         onnx.checker.check_model(onnx_model)
-        ort_session = ort.InferenceSession(output)
+        ort_session = ort.InferenceSession(
+            output,
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         with torch.no_grad():
             model.eval()
             outputs_origin = model.forward(dummy_inputs)

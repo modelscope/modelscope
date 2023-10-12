@@ -4,36 +4,39 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .version import __release_datetime__, __version__
-    from .trainers import EpochBasedTrainer, TrainingArgs, build_dataset_from_file
-    from .trainers import Hook, Priority
-    from .exporters import Exporter
-    from .exporters import TfModelExporter
-    from .exporters import TorchModelExporter
+    from .exporters import Exporter, TfModelExporter, TorchModelExporter
     from .hub.api import HubApi
-    from .hub.snapshot_download import snapshot_download
+    from .hub.check_model import check_local_model_is_latest, check_model_is_id
     from .hub.push_to_hub import push_to_hub, push_to_hub_async
-    from .hub.check_model import check_model_is_id, check_local_model_is_latest
-    from .metrics import AudioNoiseMetric, Metric, task_default_metrics, ImageColorEnhanceMetric, ImageDenoiseMetric, \
-        ImageInstanceSegmentationCOCOMetric, ImagePortraitEnhancementMetric, SequenceClassificationMetric, \
-        TextGenerationMetric, TokenClassificationMetric, VideoSummarizationMetric, MovieSceneSegmentationMetric, \
-        AccuracyMetric, BleuMetric, ImageInpaintingMetric, ReferringVideoObjectSegmentationMetric, \
-        VideoFrameInterpolationMetric, VideoStabilizationMetric, VideoSuperResolutionMetric, PplMetric, \
-        ImageQualityAssessmentDegradationMetric, ImageQualityAssessmentMosMetric, TextRankingMetric, \
-        LossMetric, ImageColorizationMetric, OCRRecognitionMetric
+    from .hub.snapshot_download import snapshot_download
+    from .metrics import (
+        AccuracyMetric, AudioNoiseMetric, BleuMetric, ImageColorEnhanceMetric,
+        ImageColorizationMetric, ImageDenoiseMetric, ImageInpaintingMetric,
+        ImageInstanceSegmentationCOCOMetric, ImagePortraitEnhancementMetric,
+        ImageQualityAssessmentDegradationMetric,
+        ImageQualityAssessmentMosMetric, LossMetric, Metric,
+        MovieSceneSegmentationMetric, OCRRecognitionMetric, PplMetric,
+        ReferringVideoObjectSegmentationMetric, SequenceClassificationMetric,
+        TextGenerationMetric, TextRankingMetric, TokenClassificationMetric,
+        VideoFrameInterpolationMetric, VideoStabilizationMetric,
+        VideoSummarizationMetric, VideoSuperResolutionMetric,
+        task_default_metrics)
     from .models import Model, TorchModel
-    from .preprocessors import Preprocessor
+    from .msdatasets import MsDataset
     from .pipelines import Pipeline, pipeline
-    from .utils.hub import read_config, create_model_if_not_exist
-    from .utils.logger import get_logger
+    from .preprocessors import Preprocessor
+    from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
+                           build_dataset_from_file)
     from .utils.constant import Tasks
-    from .utils.hf_util import AutoConfig, GenerationConfig, GPTQConfig, BitsAndBytesConfig
+    from .utils.hf_util import AutoConfig, GPTQConfig, BitsAndBytesConfig
     from .utils.hf_util import (AutoModel, AutoModelForCausalLM,
                                 AutoModelForSeq2SeqLM,
                                 AutoModelForSequenceClassification,
-                                AutoModelForTokenClassification)
-    from .utils.hf_util import AutoTokenizer
-    from .msdatasets import MsDataset
+                                AutoModelForTokenClassification, AutoTokenizer,
+                                GenerationConfig)
+    from .utils.hub import create_model_if_not_exist, read_config
+    from .utils.logger import get_logger
+    from .version import __release_datetime__, __version__
 
 else:
     _import_structure = {

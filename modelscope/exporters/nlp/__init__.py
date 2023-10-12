@@ -6,7 +6,8 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .csanmt_for_translation_exporter import CsanmtForTranslationExporter
-    from .model_for_token_classification_exporter import ModelForSequenceClassificationExporter
+    from .model_for_token_classification_exporter import \
+        ModelForSequenceClassificationExporter
     from .sbert_for_sequence_classification_exporter import \
         SbertForSequenceClassificationExporter
     from .sbert_for_zero_shot_classification_exporter import \

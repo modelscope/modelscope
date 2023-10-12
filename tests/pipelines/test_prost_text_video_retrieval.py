@@ -19,7 +19,6 @@ class ProSTTextVideoRetrievalTest(unittest.TestCase):
 
     video_path = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/multi_modal_test_video_9770.mp4'
     caption = 'a person is connecting something to system'
-    # caption = 'a dog and a cat are friends'
     _input = {'video': video_path, 'text': caption}
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

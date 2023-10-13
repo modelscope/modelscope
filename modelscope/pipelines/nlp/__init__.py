@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
     from .language_identification_pipline import LanguageIdentificationPipeline
     from .machine_reading_comprehension_pipeline import MachineReadingComprehensionForNERPipeline
+    from .llm_pipeline import LLMPipeline
 
 else:
     _import_structure = {
@@ -119,6 +120,7 @@ else:
         'machine_reading_comprehension_pipeline': [
             'MachineReadingComprehensionForNERPipeline'
         ],
+        'llm_pipeline': ['LLMPipeline'],
     }
 
     import sys

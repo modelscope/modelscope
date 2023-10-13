@@ -37,12 +37,15 @@ class ModelJsonTest:
 
         # init pipeline
         ppl = pipeline(
-            task=task, model=model_id, model_revision=model_revision)
+            task=task,
+            model=model_id,
+            model_revision=model_revision,
+            llm_first=True)
         pipeline_info = get_pipeline_information_by_pipeline(ppl)
 
         # call pipeline
         data = get_task_input_examples(task)
-        print(task, data)
+
         infer_result = call_pipeline_with_json(pipeline_info, ppl, data)
         result = pipeline_output_to_service_base64_output(task, infer_result)
         return result
@@ -50,27 +53,20 @@ class ModelJsonTest:
 
 if __name__ == '__main__':
     model_list = [
-        'damo/nlp_structbert_nli_chinese-base',
-        'damo/nlp_structbert_word-segmentation_chinese-base',
-        'damo/nlp_structbert_zero-shot-classification_chinese-base',
-        'damo/cv_unet_person-image-cartoon_compound-models',
-        'damo/nlp_structbert_sentiment-classification_chinese-tiny',
-        'damo/nlp_csanmt_translation_zh2en',
-        'damo/nlp_rom_passage-ranking_chinese-base',
-        'damo/ofa_image-caption_muge_base_zh',
-        'damo/nlp_raner_named-entity-recognition_chinese-base-ecom-50cls',
-        'damo/nlp_structbert_sentiment-classification_chinese-ecommerce-base',
-        'damo/text-to-video-synthesis',
-        'qwen/Qwen-7B',
-        'qwen/Qwen-7B-Chat',
-        'ZhipuAI/ChatGLM-6B',
+        'qwen/Qwen-7B-Chat-Int4',
+        'qwen/Qwen-14B-Chat-Int4',
+        'baichuan-inc/Baichuan2-7B-Chat-4bits',
+        'baichuan-inc/Baichuan2-13B-Chat-4bits',
+        'ZhipuAI/chatglm2-6b-int4',
     ]
     tester = ModelJsonTest()
     for model in model_list:
         try:
             res = tester.test_single(model)
-            print(f'\nmodel_id {model} call_pipeline_with_json run ok.\n')
+            print(
+                f'\nmodel_id {model} call_pipeline_with_json run ok. {res}\n\n\n\n'
+            )
         except BaseException as e:
             print(
-                f'\nmodel_id {model} call_pipeline_with_json run failed: {e}.\n'
+                f'\nmodel_id {model} call_pipeline_with_json run failed: {e}.\n\n\n\n'
             )

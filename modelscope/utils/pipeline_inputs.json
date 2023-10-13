@@ -16,13 +16,20 @@
     },
     "chat":{
         "input":{
-            "text":"你有什么推荐吗？",
-            "history":[
-                [
-                    "今天天气真好，",
-                    "今天天气真好，出去走走怎么样？"
-                ]
-            ]
+            "messages": [{
+                "role": "user",
+                "content": "Hello! 你是谁？"
+            }, {
+                "role": "assistant",
+                "content": "我是你的助手。"
+            }, {
+                "role": "user",
+                "content": "你叫什么名字？"
+            }]
+        },
+        "parameters": {
+            "do_sample": true,
+            "max_length": 512
         }
     },
     "domain-specific-object-detection":{

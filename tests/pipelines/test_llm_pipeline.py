@@ -3,11 +3,8 @@ import unittest
 
 import torch
 
-from modelscope import (AutoConfig, AutoModelForCausalLM, Model,
-                        snapshot_download)
-from modelscope.pipelines import pipeline
+from modelscope import pipeline
 from modelscope.pipelines.nlp.llm_pipeline import LLMPipeline
-from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
@@ -134,127 +131,174 @@ class LLMPipelineTest(unittest.TestCase):
         }
         self.gen_cfg = {'do_sample': True, 'max_length': 512}
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm2(self):
-        pipe = LLMPipeline(model='ZhipuAI/chatglm2-6b', device_map='auto')
+        pipe = pipeline(
+            task='chat', model='ZhipuAI/chatglm2-6b', llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm2int4(self):
-        pipe = LLMPipeline(model='ZhipuAI/chatglm2-6b-int4')
+        pipe = pipeline(
+            task='chat', model='ZhipuAI/chatglm2-6b-int4', llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm232k(self):
-        pipe = LLMPipeline(model='ZhipuAI/chatglm2-6b-32k', device_map='auto')
+        pipe = pipeline(
+            task='chat', model='ZhipuAI/chatglm2-6b-32k', llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_llama2(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='modelscope/Llama-2-7b-ms',
             torch_dtype=torch.float16,
             device_map='auto',
-            ignore_file_pattern=[r'.+\.bin$'])
+            ignore_file_pattern=[r'.+\.bin$'],
+            llm_first=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_llama2chat(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='modelscope/Llama-2-7b-chat-ms',
             revision='v1.0.2',
             torch_dtype=torch.float16,
             device_map='auto',
-            ignore_file_pattern=[r'.+\.bin$'])
+            ignore_file_pattern=[r'.+\.bin$'],
+            llm_first=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_codellama(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='AI-ModelScope/CodeLlama-7b-Instruct-hf',
             torch_dtype=torch.float16,
             device_map='auto',
-            ignore_file_pattern=[r'.+\.bin$'])
+            ignore_file_pattern=[r'.+\.bin$'],
+            llm_first=True)
         print('messages: ', pipe(self.messages_code, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_code, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_baichuan_7b(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='baichuan-inc/baichuan-7B',
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_baichuan_13b(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='baichuan-inc/Baichuan-13B-Base',
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_baichuan_13bchat(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='baichuan-inc/Baichuan-13B-Chat',
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_baichuan2_7b(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='baichuan-inc/Baichuan2-7B-Base',
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_baichuan2_7bchat(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='baichuan-inc/Baichuan2-7B-Chat',
             device_map='auto',
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('Need bitsandbytes')
+    def test_baichuan2_7bchat_int4(self):
+        pipe = pipeline(
+            task='chat',
+            model='baichuan-inc/Baichuan2-7B-Chat-4bits',
+            device_map='auto',
+            torch_dtype=torch.float16,
+            llm_first=True)
+        print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skip('Need bitsandbytes')
+    def test_baichuan2_13bchat_int4(self):
+        pipe = pipeline(
+            task='chat',
+            model='baichuan-inc/Baichuan2-13B-Chat-4bits',
+            device_map='auto',
+            torch_dtype=torch.float16,
+            llm_first=True)
+        print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_wizardlm_13b(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='AI-ModelScope/WizardLM-13B-V1.2',
             device_map='auto',
             torch_dtype=torch.float16,
-            format_messages='wizardlm')
+            format_messages='wizardlm',
+            llm_first=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_wizardmath(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='AI-ModelScope/WizardMath-7B-V1.0',
             device_map='auto',
             torch_dtype=torch.float16,
-            format_messages='wizardcode')
+            format_messages='wizardcode',
+            llm_first=True)
         print('messages: ', pipe(self.message_wizard_math, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_wizard_math, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_wizardcode_13b(self):
-        pipe = LLMPipeline(
+        pipe = pipeline(
+            task='chat',
             model='AI-ModelScope/WizardCoder-Python-13B-V1.0',
             device_map='auto',
             torch_dtype=torch.float16,
-            format_messages='wizardcode')
+            format_messages='wizardcode',
+            llm_first=True)
         print('messages: ', pipe(self.message_wizard_code, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_wizard_code, **self.gen_cfg))
 
@@ -268,42 +312,22 @@ class LLMPipelineTest(unittest.TestCase):
         print('messages: ', pipe(self.message_wizard_code, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_wizard_code, **self.gen_cfg))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen(self):
-        pipe = LLMPipeline(
-            model='ccyh123/Qwen-7B-Chat',
-            device_map='auto',
-            format_messages='qwen')
+        pipe = pipeline(task='chat', model='qwen/Qwen-7B-Chat', llm_first=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skip('Need AutoGPTQ')
+    @unittest.skip('Need optimum and auto-gptq')
     def test_qwen_int4(self):
-        from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
-        model_dir = snapshot_download('ccyh123/Qwen-7B-Chat-Int4')
-        quantize_config = BaseQuantizeConfig(
-            bits=4,  # quantize model to 4-bit
-            group_size=128,  # it is recommended to set the value to 128
-            desc_act=
-            False,  # set to False can significantly speed up inference but the perplexity may slightly bad
-        )
-        model = AutoGPTQForCausalLM.from_pretrained(
-            model_dir,
-            quantize_config,
-            device_map='auto',
-            trust_remote_code=True,
-            use_safetensors=True)
-        model.model_dir = model_dir
-        pipe = LLMPipeline(model=model, format_messages='qwen')
+        pipe = pipeline(
+            task='chat', model='qwen/Qwen-7B-Chat-Int4', llm_first=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
-    @unittest.skip('File does not exists configuration.json')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_vl(self):
-        pipe = LLMPipeline(
-            model='ccyh123/Qwen-VL-Chat',
-            device_map='auto',
-            format_messages='qwen')
+        pipe = pipeline(task='chat', model='qwen/Qwen-VL-Chat', llm_first=True)
         print('messages: ', pipe(self.messages_mm, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 

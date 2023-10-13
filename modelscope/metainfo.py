@@ -514,6 +514,7 @@ class Pipelines(object):
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
     language_identification = 'language_identification'
     machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
+    llm = 'llm'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'

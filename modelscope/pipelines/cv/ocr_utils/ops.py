@@ -16,6 +16,8 @@ from . import utils
 if tf.__version__ >= '2.0':
     tf = tf.compat.v1
 
+# test
+
 # skip parse sys.argv in tf, so fix bug:
 # absl.flags._exceptions.UnrecognizedFlagError:
 # Unknown command line flag 'OCRDetectionPipeline: Unknown command line flag

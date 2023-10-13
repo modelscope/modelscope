@@ -1031,46 +1031,213 @@ class PixelAwareStableDiffusionPipeline(DiffusionPipeline,
                     controlnet_latent_model_input = latent_model_input
                     controlnet_prompt_embeds = prompt_embeds
 
-                if image is not None:
-                    rgbs, down_block_res_samples, mid_block_res_sample = self.controlnet(
-                        controlnet_latent_model_input,
+                _, _, h, w = latent_model_input.size()
+                tile_size, tile_overlap = 120, 32
+                if h < tile_size and w < tile_size:
+                    if image is not None:
+                        rgbs, down_block_res_samples, mid_block_res_sample = self.controlnet(
+                            controlnet_latent_model_input,
+                            t,
+                            encoder_hidden_states=controlnet_prompt_embeds,
+                            controlnet_cond=image,
+                            fg_mask=fg_mask,
+                            conditioning_scale_fg=conditioning_scale_fg,
+                            conditioning_scale_bg=conditioning_scale_bg,
+                            guess_mode=guess_mode,
+                            return_dict=False,
+                        )
+                    else:
+                        down_block_res_samples, mid_block_res_sample = [
+                            None
+                        ] * 10, [None] * 10
+
+                    if guess_mode and do_classifier_free_guidance:
+                        # Infered ControlNet only for the conditional batch.
+                        # To apply the output of ControlNet to both the unconditional and conditional batches,
+                        # add 0 to the unconditional batch to keep it unchanged.
+                        down_block_res_samples = [
+                            torch.cat([torch.zeros_like(d), d])
+                            for d in down_block_res_samples
+                        ]
+                        mid_block_res_sample = torch.cat([
+                            torch.zeros_like(mid_block_res_sample),
+                            mid_block_res_sample
+                        ])
+
+                    # predict the noise residual
+                    noise_pred = self.unet(
+                        latent_model_input,
                         t,
-                        encoder_hidden_states=controlnet_prompt_embeds,
-                        controlnet_cond=image,
-                        fg_mask=fg_mask,
-                        conditioning_scale_fg=conditioning_scale_fg,
-                        conditioning_scale_bg=conditioning_scale_bg,
-                        guess_mode=guess_mode,
+                        encoder_hidden_states=prompt_embeds,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                        down_block_additional_residuals=down_block_res_samples,
+                        mid_block_additional_residual=mid_block_res_sample,
                         return_dict=False,
-                    )
+                    )[0]
                 else:
-                    down_block_res_samples, mid_block_res_sample = [
-                        None
-                    ] * 10, [None] * 10
+                    tile_size = min(tile_size, min(h, w))
+                    tile_weights = self._gaussian_weights(
+                        tile_size, tile_size, 1).to(latent_model_input.device)
 
-                if guess_mode and do_classifier_free_guidance:
-                    # Infered ControlNet only for the conditional batch.
-                    # To apply the output of ControlNet to both the unconditional and conditional batches,
-                    # add 0 to the unconditional batch to keep it unchanged.
-                    down_block_res_samples = [
-                        torch.cat([torch.zeros_like(d), d])
-                        for d in down_block_res_samples
-                    ]
-                    mid_block_res_sample = torch.cat([
-                        torch.zeros_like(mid_block_res_sample),
-                        mid_block_res_sample
-                    ])
+                    grid_rows = 0
+                    cur_x = 0
+                    while cur_x < latent_model_input.size(-1):
+                        cur_x = max(
+                            grid_rows * tile_size - tile_overlap * grid_rows,
+                            0) + tile_size
+                        grid_rows += 1
 
-                # predict the noise residual
-                noise_pred = self.unet(
-                    latent_model_input,
-                    t,
-                    encoder_hidden_states=prompt_embeds,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                    down_block_additional_residuals=down_block_res_samples,
-                    mid_block_additional_residual=mid_block_res_sample,
-                    return_dict=False,
-                )[0]
+                    grid_cols = 0
+                    cur_y = 0
+                    while cur_y < latent_model_input.size(-2):
+                        cur_y = max(
+                            grid_cols * tile_size - tile_overlap * grid_cols,
+                            0) + tile_size
+                        grid_cols += 1
+
+                    input_list = []
+                    cond_list = []
+                    img_list = []
+                    fg_mask_list = []
+                    noise_preds = []
+                    for row in range(grid_rows):
+                        for col in range(grid_cols):
+                            if col < grid_cols - 1 or row < grid_rows - 1:
+                                # extract tile from input image
+                                ofs_x = max(
+                                    row * tile_size - tile_overlap * row, 0)
+                                ofs_y = max(
+                                    col * tile_size - tile_overlap * col, 0)
+                                # input tile area on total image
+                            if row == grid_rows - 1:
+                                ofs_x = w - tile_size
+                            if col == grid_cols - 1:
+                                ofs_y = h - tile_size
+
+                            input_start_x = ofs_x
+                            input_end_x = ofs_x + tile_size
+                            input_start_y = ofs_y
+                            input_end_y = ofs_y + tile_size
+
+                            # input tile dimensions
+                            input_tile = latent_model_input[:, :,
+                                                            input_start_y:
+                                                            input_end_y,
+                                                            input_start_x:
+                                                            input_end_x]
+                            input_list.append(input_tile)
+                            cond_tile = controlnet_latent_model_input[:, :,
+                                                                      input_start_y:
+                                                                      input_end_y,
+                                                                      input_start_x:
+                                                                      input_end_x]
+                            cond_list.append(cond_tile)
+                            img_tile = image[:, :,
+                                             input_start_y * 8:input_end_y * 8,
+                                             input_start_x * 8:input_end_x * 8]
+                            img_list.append(img_tile)
+                            if fg_mask is not None:
+                                fg_mask_tile = fg_mask[:, :, input_start_y
+                                                       * 8:input_end_y * 8,
+                                                       input_start_x
+                                                       * 8:input_end_x * 8]
+                                fg_mask_list.append(fg_mask_tile)
+
+                            if len(input_list
+                                   ) == batch_size or col == grid_cols - 1:
+                                input_list_t = torch.cat(input_list, dim=0)
+                                cond_list_t = torch.cat(cond_list, dim=0)
+                                img_list_t = torch.cat(img_list, dim=0)
+                                if fg_mask is not None:
+                                    fg_mask_list_t = torch.cat(
+                                        fg_mask_list, dim=0)
+                                else:
+                                    fg_mask_list_t = None
+
+                                _, down_block_res_samples, mid_block_res_sample = self.controlnet(
+                                    cond_list_t,
+                                    t,
+                                    encoder_hidden_states=
+                                    controlnet_prompt_embeds,
+                                    controlnet_cond=img_list_t,
+                                    fg_mask=fg_mask_list_t,
+                                    conditioning_scale_fg=conditioning_scale_fg,
+                                    conditioning_scale_bg=conditioning_scale_bg,
+                                    guess_mode=guess_mode,
+                                    return_dict=False,
+                                )
+
+                                if guess_mode and do_classifier_free_guidance:
+                                    # Infered ControlNet only for the conditional batch.
+                                    # To apply the output of ControlNet to the unconditional/conditional batches,
+                                    # add 0 to the unconditional batch to keep it unchanged.
+                                    down_block_res_samples = [
+                                        torch.cat([torch.zeros_like(d), d])
+                                        for d in down_block_res_samples
+                                    ]
+                                    mid_block_res_sample = torch.cat([
+                                        torch.zeros_like(mid_block_res_sample),
+                                        mid_block_res_sample
+                                    ])
+
+                                # predict the noise residual
+                                model_out = self.unet(
+                                    input_list_t,
+                                    t,
+                                    encoder_hidden_states=prompt_embeds,
+                                    cross_attention_kwargs=
+                                    cross_attention_kwargs,
+                                    down_block_additional_residuals=
+                                    down_block_res_samples,
+                                    mid_block_additional_residual=
+                                    mid_block_res_sample,
+                                    return_dict=False,
+                                )[0]
+
+                                input_list = []
+                                cond_list = []
+                                img_list = []
+                                fg_mask_list = []
+
+                            noise_preds.append(model_out)
+
+                    # Stitch noise predictions for all tiles
+                    noise_pred = torch.zeros(
+                        latent_model_input.shape,
+                        device=latent_model_input.device)
+                    contributors = torch.zeros(
+                        latent_model_input.shape,
+                        device=latent_model_input.device)
+                    # Add each tile contribution to overall latents
+                    for row in range(grid_rows):
+                        for col in range(grid_cols):
+                            if col < grid_cols - 1 or row < grid_rows - 1:
+                                # extract tile from input image
+                                ofs_x = max(
+                                    row * tile_size - tile_overlap * row, 0)
+                                ofs_y = max(
+                                    col * tile_size - tile_overlap * col, 0)
+                                # input tile area on total image
+                            if row == grid_rows - 1:
+                                ofs_x = w - tile_size
+                            if col == grid_cols - 1:
+                                ofs_y = h - tile_size
+
+                            input_start_x = ofs_x
+                            input_end_x = ofs_x + tile_size
+                            input_start_y = ofs_y
+                            input_end_y = ofs_y + tile_size
+
+                            noise_pred[:, :, input_start_y:input_end_y,
+                                       input_start_x:
+                                       input_end_x] += noise_preds[
+                                           row * grid_cols
+                                           + col] * tile_weights
+                            contributors[:, :, input_start_y:input_end_y,
+                                         input_start_x:
+                                         input_end_x] += tile_weights
+                    # Average overlapping areas with more than 1 contributor
+                    noise_pred /= contributors
 
                 # perform guidance
                 if do_classifier_free_guidance:

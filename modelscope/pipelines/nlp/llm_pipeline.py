@@ -1,21 +1,27 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
+from contextlib import contextmanager
 from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
 
+import json
 import torch
 from transformers import PreTrainedTokenizer
 
-from modelscope import AutoTokenizer, Pipeline
+from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
+                        snapshot_download)
 from modelscope.models.base import Model
 from modelscope.models.nlp import ChatGLM2Tokenizer, Llama2Tokenizer
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
-from modelscope.utils.constant import Invoke, Tasks
+from modelscope.utils.constant import Invoke, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 
-@PIPELINES.register_module(Tasks.chat, module_name='llm-pipeline')
+@PIPELINES.register_module(Tasks.chat, module_name='llm')
+@PIPELINES.register_module(Tasks.text_generation, module_name='llm')
 class LLMPipeline(Pipeline):
 
     def initiate_single_model(self, model):
@@ -23,13 +29,24 @@ class LLMPipeline(Pipeline):
             logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
-            return Model.from_pretrained(
-                model,
-                invoked_by=Invoke.PIPELINE,
-                device_map=self.device_map,
-                torch_dtype=self.torch_dtype,
-                ignore_file_pattern=self.ignore_file_pattern) if is_model(
-                    model) else model
+            if is_model(model):
+                return Model.from_pretrained(
+                    model,
+                    invoked_by=Invoke.PIPELINE,
+                    device_map=self.device_map,
+                    torch_dtype=self.torch_dtype,
+                    ignore_file_pattern=self.ignore_file_pattern)
+            else:
+                model_dir = model if os.path.exists(
+                    model) else snapshot_download(model)
+                # TODO: Temporary use of AutoModelForCausalLM
+                # Need to be updated into a universal solution
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_dir,
+                    device_map=self.device_map,
+                    trust_remote_code=True)
+                model.model_dir = model_dir
+                return model
         else:
             return model
 
@@ -39,9 +56,14 @@ class LLMPipeline(Pipeline):
                  tokenizer: PreTrainedTokenizer = None,
                  *args,
                  **kwargs):
+        self.device_map = kwargs.pop('device_map', None)
+        # TODO: qwen-int4 need 'cuda'/'auto' device_map.
+        if not self.device_map and 'qwen' in kwargs['model'].lower():
+            self.device_map = 'cuda'
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
-        super().__init__(*args, **kwargs)
+        with self._temp_configuration_file(kwargs):
+            super().__init__(*args, **kwargs)
 
         tokenizer_class = None
         if isinstance(format_messages, str):
@@ -53,14 +75,9 @@ class LLMPipeline(Pipeline):
         if format_messages is None:
             model_type = self.cfg.safe_get('model.type',
                                            '').lower().split('-')[0]
-
             if model_type in LLM_FORMAT_MAP:
                 format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
                     model_type]
-            else:
-                raise KeyError(
-                    f'model type `{model_type}` is not supported for LLM pipeline!'
-                )
 
         if format_messages is not None:
             self.format_messages = format_messages
@@ -68,6 +85,19 @@ class LLMPipeline(Pipeline):
             self.format_output = format_output
         self.tokenizer = self._get_tokenizer(
             tokenizer_class) if tokenizer is None else tokenizer
+
+    @contextmanager
+    def _temp_configuration_file(self, kwargs: Dict[str, Any]):
+        kwargs['model'] = model = self.initiate_single_model(kwargs['model'])
+        model_dir = model if isinstance(model, str) else model.model_dir
+        configuration_path = os.path.join(model_dir, ModelFile.CONFIGURATION)
+        if os.path.exists(configuration_path):
+            yield
+        else:
+            with open(configuration_path, 'w') as f:
+                json.dump({'framework': 'pytorch', 'task': 'chat'}, f)
+            yield
+            os.remove(configuration_path)
 
     def _process_single(self, inputs, *args, **kwargs) -> Dict[str, Any]:
         preprocess_params = kwargs.get('preprocess_params', {})
@@ -113,6 +143,8 @@ class LLMPipeline(Pipeline):
             outputs, skip_special_tokens=True, **kwargs)
         if is_messages:
             response = self.format_output(response, **kwargs)
+        else:
+            response = {OutputKeys.TEXT: response}
 
         return response
 
@@ -227,7 +259,7 @@ def chatglm2_format_messages(messages, tokenizer, **kwargs):
         return prompt
 
     prompt = build_chatglm2_prompt(messages, **kwargs)
-    return tokenizer(prompt, return_tensors='pt')
+    return tokenizer(prompt, return_token_type_ids=False, return_tensors='pt')
 
 
 def chatglm2_format_output(response, **kwargs):
@@ -235,7 +267,7 @@ def chatglm2_format_output(response, **kwargs):
     response = response.replace('[[训练时间]]', '2023年')
     messages = {'role': 'assistant', 'content': response}
     outputs = {
-        'messages': messages,
+        'message': messages,
     }
     return outputs
 
@@ -371,7 +403,7 @@ def wizardlm_format_messages(messages, tokenizer, **kwargs):
         return prompts
 
     prompts = build_wizardlm_prompt(messages, tokenizer, **kwargs)
-    return tokenizer(prompts, return_tensors='pt')
+    return tokenizer(prompts, return_token_type_ids=False, return_tensors='pt')
 
 
 def wizardcode_format_messages(messages, tokenizer, **kwargs):
@@ -388,7 +420,11 @@ def wizardcode_format_messages(messages, tokenizer, **kwargs):
 
     prompt = system + '\n\n### Instruction:\n' + user + '\n\n### Response:'
     inputs = tokenizer(
-        prompt, padding=False, add_special_tokens=False, return_tensors='pt')
+        prompt,
+        return_token_type_ids=False,
+        padding=False,
+        add_special_tokens=False,
+        return_tensors='pt')
     return inputs
 
 

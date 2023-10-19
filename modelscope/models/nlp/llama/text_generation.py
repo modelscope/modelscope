@@ -74,7 +74,6 @@ def get_chat_prompt(system: str, text: str, history: List[Tuple[str, str]],
 @MODELS.register_module(Tasks.chat, module_name=Models.llama2)
 @MODELS.register_module(Tasks.chat, module_name=Models.llama)
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama2)
-@MODELS.register_module(Tasks.chat, module_name=Models.llama2)
 @MODELS.register_module(Tasks.text_generation, module_name=Models.llama)
 class LlamaForTextGeneration(MsModelMixin, LlamaForCausalLM, TorchModel):
 

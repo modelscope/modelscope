@@ -150,7 +150,7 @@ echo -e "Building image with:\npython$python_version\npytorch$torch_version\nten
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/releases/build/modelscope-$modelscope_version-py3-none-any.whl && pip install --no-cache-dir -U transformers"
+    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir numpy https://modelscope.oss-cn-beijing.aliyuncs.com/releases/build/modelscope-$modelscope_version-py3-none-any.whl && pip install --no-cache-dir -U transformers"
 fi
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then

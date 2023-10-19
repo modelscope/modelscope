@@ -314,7 +314,7 @@ class CLIP4Clip(CLIP4ClipPreTrainedModel):
             if key in clip_state_dict:
                 del clip_state_dict[key]
 
-        convert_weights(self.clip)
+        # convert_weights(self.clip)
         # <=== End of CLIP Encoders
 
         self.sim_header = 'seqTransf'

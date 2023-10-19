@@ -297,12 +297,11 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 class QWenChatPipeline(Pipeline):
 
     def __init__(self, model: Union[Model, str], **kwargs):
-        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
-                                           QWenTokenizer)
+        from modelscope import AutoModelForCausalLM, AutoTokenizer
         torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
         device_map = kwargs.get('device_map', 'auto')
         use_max_memory = kwargs.get('use_max_memory', False)
-        quantization_config = kwargs.get('quantization_config', None)
+        revision = kwargs.get('model_revision', 'v.1.0.5')
 
         if use_max_memory:
             max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
@@ -310,31 +309,24 @@ class QWenChatPipeline(Pipeline):
             max_memory = {i: max_memory for i in range(n_gpus)}
         else:
             max_memory = None
+        if torch_dtype == 'bf16' or torch_dtype == torch.bfloat16:
+            bf16 = True
+        else:
+            bf16 = False
 
         if isinstance(model, str):
-            model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-
-            config = read_config(model_dir)
-            model_config = QWenConfig.from_pretrained(model_dir)
-            model_config.torch_dtype = torch_dtype
-
-            model = QWenForTextGeneration.from_pretrained(
-                model_dir,
-                cfg_dict=config,
-                config=model_config,
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model, revision=revision, trust_remote_code=True)
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model,
                 device_map=device_map,
-                torch_dtype=torch_dtype,
-                quantization_config=quantization_config,
-                max_memory=max_memory)
-            model.generation_config = GenerationConfig.from_pretrained(
-                model_dir)
+                revision=revision,
+                trust_remote_code=True,
+                fp16=bf16).eval()
+            self.model.generation_config = GenerationConfig.from_pretrained(
+                model, trust_remote_code=True)  # 可指定不同的生成长度、top_p等相关超参
 
-        self.model = model
-        self.model.eval()
-        self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
-
-        super().__init__(model=model, **kwargs)
+        super().__init__(model=self.model, **kwargs)
         # skip pipeline model placement
         self._model_prepare = True
 
@@ -345,12 +337,19 @@ class QWenChatPipeline(Pipeline):
         return inputs
 
     # define the forward pass
-    def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
-        history = forward_params.get('history', None)
+    def forward(self, inputs: Union[Dict, str],
+                **forward_params) -> Dict[str, Any]:
+        if isinstance(inputs, Dict):
+            text = inputs.get('text', None)
+            history = inputs.get('history', None)
+        else:
+            text = inputs
+            history = forward_params.get('history', None)
         system = forward_params.get('system', 'You are a helpful assistant.')
         append_history = forward_params.get('append_history', True)
-        return self.model.chat(self.tokenizer, inputs, history, system,
-                               append_history)
+        res = self.model.chat(self.tokenizer, text, history, system,
+                              append_history)
+        return {'response': res[0], 'history': res[1]}
 
     # format the outputs from pipeline
     def postprocess(self, input, **kwargs) -> Dict[str, Any]:
@@ -362,12 +361,11 @@ class QWenChatPipeline(Pipeline):
 class QWenTextGenerationPipeline(Pipeline):
 
     def __init__(self, model: Union[Model, str], **kwargs):
-        from modelscope.models.nlp import (QWenConfig, QWenForTextGeneration,
-                                           QWenTokenizer)
+        from modelscope import AutoModelForCausalLM, AutoTokenizer
         torch_dtype = kwargs.get('torch_dtype', torch.bfloat16)
         device_map = kwargs.get('device_map', 'auto')
         use_max_memory = kwargs.get('use_max_memory', False)
-        quantization_config = kwargs.get('quantization_config', None)
+        revision = kwargs.get('model_revision', 'v.1.0.4')
 
         if use_max_memory:
             max_memory = f'{int(torch.cuda.mem_get_info()[0] / 1024 ** 3) - 2}GB'
@@ -375,31 +373,27 @@ class QWenTextGenerationPipeline(Pipeline):
             max_memory = {i: max_memory for i in range(n_gpus)}
         else:
             max_memory = None
+        if torch_dtype == 'bf16' or torch_dtype == torch.bfloat16:
+            bf16 = True
+        else:
+            bf16 = False
 
         if isinstance(model, str):
-            model_dir = snapshot_download(
-                model) if not os.path.exists(model) else model
-
-            config = read_config(model_dir)
-            model_config = QWenConfig.from_pretrained(model_dir)
-            model_config.torch_dtype = torch_dtype
-
-            model = QWenForTextGeneration.from_pretrained(
-                model_dir,
-                cfg_dict=config,
-                config=model_config,
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model,
                 device_map=device_map,
-                torch_dtype=torch_dtype,
-                quantization_config=quantization_config,
-                max_memory=max_memory)
-            model.generation_config = GenerationConfig.from_pretrained(
-                model_dir)
+                revision=revision,
+                trust_remote_code=True,
+                bf16=bf16).eval()
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model, revision=revision, trust_remote_code=True)
+            self.model.generation_config = GenerationConfig.from_pretrained(
+                model)
+        else:
+            self.model = model
+            self.tokenizer = kwargs.get('tokenizer', None)
 
-        self.model = model
-        self.model.eval()
-        self.tokenizer = QWenTokenizer.from_pretrained(self.model.model_dir)
-
-        super().__init__(model=model, **kwargs)
+        super().__init__(model=self.model, **kwargs)
         # skip pipeline model placement
         self._model_prepare = True
 
@@ -411,10 +405,12 @@ class QWenTextGenerationPipeline(Pipeline):
 
     # define the forward pass
     def forward(self, inputs: str, **forward_params) -> Dict[str, Any]:
+        inputs = self.tokenizer(inputs, return_tensors='pt').to('cuda:0')
         return {
             OutputKeys.TEXT:
-            self.model.chat(self.tokenizer, inputs,
-                            history=None)[OutputKeys.RESPONSE]
+            self.tokenizer.decode(
+                self.model.generate(**inputs).cpu()[0],
+                skip_special_tokens=True)
         }
 
     # format the outputs from pipeline

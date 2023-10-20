@@ -824,3 +824,11 @@ class MsDataset:
             self._hf_ds.reset_format()
             self._hf_ds.set_format(type='torch')
         return
+
+
+if __name__ == '__main__':
+
+    ds = MsDataset.load(
+        'modelscope/ai2_arc', subset_name='ARC-Easy', split='train')
+    print(next(iter(ds)))
+    print(ds[0:5])

@@ -106,6 +106,14 @@ class LLMPipeline(Pipeline):
 
         is_messages = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, is_messages, **preprocess_params)
+        print(f'\n>> info in _process_single: '
+              f'\n>tokens: {tokens}, '
+              f'\n>is_messages: {is_messages}, '
+              f'\n>forward_params: {forward_params}, '
+              f'\n>preprocess_params: {preprocess_params}, '
+              f'\n>postprocess_params: {postprocess_params}, '
+              f'\n>model has generate: {hasattr(self.model, "generate")}, '
+              f'\n>model has model: {hasattr(self.model, "model")}')
 
         if hasattr(self.model, 'generate'):
             outputs = self.model.generate(**tokens, **forward_params)
@@ -115,8 +123,20 @@ class LLMPipeline(Pipeline):
         else:
             raise ValueError('model does not support `generate`!')
 
+        print(f'>>outputs in _process_single for llm_pipe: {outputs}')
+
         outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
+
+        print(
+            f'>>outputs after tokens in _process_single for llm_pipe: {outputs}'
+        )
+
         response = self.postprocess(outputs, is_messages, **postprocess_params)
+
+        print(f'>>response in _process_single for llm_pipe: {response}')
+
+        print(f'\n>>self.model: {self.model}')
+
         return response
 
     def preprocess(self, inputs: Union[str, Dict], is_messages: bool,

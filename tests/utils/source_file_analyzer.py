@@ -8,22 +8,60 @@ import pkgutil
 import site
 import sys
 
+import json
+
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 
+class AnalysisSourceFileDefines(ast.NodeVisitor):
+    """Analysis source file function, class, global variable defines.
+    """
+
+    def __init__(self, source_file_path) -> None:
+        super().__init__()
+        self.global_variables = []
+        self.functions = []
+        self.classes = []
+        self.async_functions = []
+        self.symbols = []
+
+        self.source_file_path = source_file_path
+        rel_file_path = source_file_path
+        if os.path.isabs(source_file_path):
+            rel_file_path = os.path.relpath(source_file_path, os.getcwd())
+
+        if rel_file_path.endswith('__init__.py'):  # processing package
+            self.base_module_name = os.path.dirname(rel_file_path).replace(
+                '/', '.')
+        else:  # import x.y.z  z is the filename
+            self.base_module_name = rel_file_path.replace('/', '.').replace(
+                '.py', '')
+        self.symbols.append(self.base_module_name)
+
+    def visit_ClassDef(self, node: ast.ClassDef):
+        self.symbols.append(self.base_module_name + '.' + node.name)
+        self.classes.append(node.name)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        self.symbols.append(self.base_module_name + '.' + node.name)
+        self.functions.append(node.name)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        self.symbols.append(self.base_module_name + '.' + node.name)
+        self.async_functions.append(node.name)
+
+    def visit_Assign(self, node: ast.Assign):
+        for tg in node.targets:
+            if isinstance(tg, ast.Name):
+                self.symbols.append(self.base_module_name + '.' + tg.id)
+                self.global_variables.append(tg.id)
+
+
 def is_relative_import(path):
     # from .x import y or from ..x import y
     return path.startswith('.')
-
-
-def resolve_import(module_name):
-    try:
-        spec = importlib.util.find_spec(module_name)
-        return spec and spec.origin
-    except Exception:
-        return None
 
 
 def convert_to_path(name):
@@ -39,58 +77,93 @@ def convert_to_path(name):
     return filename
 
 
-def resolve_relative_import(source_file_path, module_name):
+def resolve_relative_import(source_file_path, module_name, all_symbols):
     current_package = os.path.dirname(source_file_path).replace('/', '.')
     absolute_name = importlib.util.resolve_name(module_name,
                                                 current_package)  # get
-    return resolve_absolute_import(absolute_name)
+    return resolve_absolute_import(absolute_name, all_symbols)
 
 
-def onerror(name):
-    logger.error('Importing module %s error!' % name)
+def resolve_absolute_import(module_name, all_symbols):
+    # direct imports
+    if module_name in all_symbols:
+        return all_symbols[module_name]
+
+    # some symble import by package __init__.py, we need find the real file which define the symbel.
+    parent, sub = module_name.rsplit('.', 1)
+
+    # case module_name is a python Definition
+    for symbol, symbol_path in all_symbols.items():
+        if symbol.startswith(parent) and symbol.endswith(sub):
+            return all_symbols[symbol]
+
+    return None
 
 
-def resolve_absolute_import(module_name):
-    module_file_path = resolve_import(module_name)
-    if module_file_path is None:
-        # find from base module.
-        parent_module, sub_module = module_name.rsplit('.', 1)
-        if parent_module in sys.modules:
-            if hasattr(sys.modules[parent_module], '_import_structure'):
-                import_structure = sys.modules[parent_module]._import_structure
-                for k, v in import_structure.items():
-                    if sub_module in v:
-                        parent_module = parent_module + '.' + k
-                        break
-            module_file_path = resolve_absolute_import(parent_module)
-            # the parent_module is a package, we need find the module_name's file
-            if os.path.basename(module_file_path) == '__init__.py' and \
-                (os.path.relpath(module_file_path, site.getsitepackages()[0]) != 'modelscope/__init__.py'
-                 or os.path.relpath(module_file_path, os.getcwd()) != 'modelscope/__init__.py'):
-                for _, sub_module_name, _ in pkgutil.walk_packages(
-                    [os.path.dirname(module_file_path)],
-                        parent_module + '.',
-                        onerror=onerror):
-                    try:
-                        module_ = importlib.import_module(sub_module_name)
-                        for k, v in module_.__dict__.items():
-                            if k == sub_module and v.__module__ == module_.__name__:
-                                module_file_path = module_.__file__
-                                break
-                    except ModuleNotFoundError as e:
-                        logger.warn(
-                            'Import error in %s, ModuleNotFoundError: %s' %
-                            (sub_module_name, e))
-                        continue
-                    except Exception as e:
-                        logger.warn('Import error in %s, Exception: %s' %
-                                    (sub_module_name, e))
-                        continue
+class IndirectDefines(ast.NodeVisitor):
+    """Analysis source file function, class, global variable defines.
+    """
+
+    def __init__(self, source_file_path, all_symbols,
+                 file_symbols_map) -> None:
+        super().__init__()
+        self.symbols_map = {
+        }  # key symbol name in current file, value the real file path.
+        self.all_symbols = all_symbols
+        self.file_symbols_map = file_symbols_map
+        self.source_file_path = source_file_path
+
+        rel_file_path = source_file_path
+        if os.path.isabs(source_file_path):
+            rel_file_path = os.path.relpath(source_file_path, os.getcwd())
+
+        if rel_file_path.endswith('__init__.py'):  # processing package
+            self.base_module_name = os.path.dirname(rel_file_path).replace(
+                '/', '.')
+        else:  # import x.y.z  z is the filename
+            self.base_module_name = rel_file_path.replace('/', '.').replace(
+                '.py', '')
+
+    # import from will get the symbol in current file.
+    # from a import b, will get b in current file.
+    def visit_ImportFrom(self, node):
+        # level 0 absolute import such as from os.path import join
+        # level 1 from .x import y
+        # level 2 from ..x import y
+        module_name = '.' * node.level + (node.module or '')
+        for alias in node.names:
+            file_path = None
+            if alias.name == '*':  # from x import *
+                if is_relative_import(module_name):
+                    # resolve model path.
+                    file_path = resolve_relative_import(
+                        self.source_file_path, module_name, self.all_symbols)
+                elif module_name.startswith('modelscope'):
+                    file_path = resolve_absolute_import(
+                        module_name, self.all_symbols)
+                else:
+                    file_path = None  # ignore other package.
+                if file_path is not None:
+                    for symbol in self.file_symbols_map[file_path][1:]:
+                        symbol_name = symbol.split('.')[-1]
+                        self.symbols_map[self.base_module_name
+                                         + symbol_name] = file_path
             else:
-                return module_file_path
-        else:
-            module_file_path = resolve_absolute_import(parent_module)
-    return module_file_path
+                if not module_name.endswith('.'):
+                    module_name = module_name + '.'
+                name = module_name + alias.name
+                if alias.asname is not None:
+                    current_module_name = self.base_module_name + '.' + alias.asname
+                else:
+                    current_module_name = self.base_module_name + '.' + alias.name
+                if is_relative_import(name):
+                    # resolve model path.
+                    file_path = resolve_relative_import(
+                        self.source_file_path, name, self.all_symbols)
+                elif name.startswith('modelscope'):
+                    file_path = resolve_absolute_import(name, self.all_symbols)
+                if file_path is not None:
+                    self.symbols_map[current_module_name] = file_path
 
 
 class AnalysisSourceFileImports(ast.NodeVisitor):
@@ -98,23 +171,19 @@ class AnalysisSourceFileImports(ast.NodeVisitor):
         List imports of the modelscope.
     """
 
-    def __init__(self, source_file_path) -> None:
+    def __init__(self, source_file_path, all_symbols) -> None:
         super().__init__()
         self.imports = []
         self.source_file_path = source_file_path
+        self.all_symbols = all_symbols
 
     def visit_Import(self, node):
         """Processing import x,y,z or import os.path as osp"""
         for alias in node.names:
             if alias.name.startswith('modelscope'):
-                file_path = resolve_absolute_import(alias.name)
-                if file_path.startswith(site.getsitepackages()[0]):
-                    self.imports.append(
-                        os.path.relpath(file_path,
-                                        site.getsitepackages()[0]))
-                else:
-                    self.imports.append(
-                        os.path.relpath(file_path, os.getcwd()))
+                file_path = resolve_absolute_import(alias.name,
+                                                    self.all_symbols)
+                self.imports.append(os.path.relpath(file_path, os.getcwd()))
 
     def visit_ImportFrom(self, node):
         # level 0 absolute import such as from os.path import join
@@ -126,9 +195,10 @@ class AnalysisSourceFileImports(ast.NodeVisitor):
                 if is_relative_import(module_name):
                     # resolve model path.
                     file_path = resolve_relative_import(
-                        self.source_file_path, module_name)
+                        self.source_file_path, module_name, self.all_symbols)
                 elif module_name.startswith('modelscope'):
-                    file_path = resolve_absolute_import(module_name)
+                    file_path = resolve_absolute_import(
+                        module_name, self.all_symbols)
                 else:
                     file_path = None  # ignore other package.
             else:
@@ -138,9 +208,17 @@ class AnalysisSourceFileImports(ast.NodeVisitor):
                 if is_relative_import(name):
                     # resolve model path.
                     file_path = resolve_relative_import(
-                        self.source_file_path, name)
+                        self.source_file_path, name, self.all_symbols)
+                    if file_path is None:
+                        logger.warning(
+                            'File: %s, import %s%s not exist!' %
+                            (self.source_file_path, module_name, alias.name))
                 elif name.startswith('modelscope'):
-                    file_path = resolve_absolute_import(name)
+                    file_path = resolve_absolute_import(name, self.all_symbols)
+                    if file_path is None:
+                        logger.warning(
+                            'File: %s, import %s%s not exist!' %
+                            (self.source_file_path, module_name, alias.name))
                 else:
                     file_path = None  # ignore other package.
 
@@ -152,6 +230,10 @@ class AnalysisSourceFileImports(ast.NodeVisitor):
                 else:
                     self.imports.append(
                         os.path.relpath(file_path, os.getcwd()))
+            elif module_name.startswith('modelscope'):
+                logger.warning(
+                    'File: %s, import %s%s not exist!' %
+                    (self.source_file_path, module_name, alias.name))
 
 
 class AnalysisSourceFileRegisterModules(ast.NodeVisitor):
@@ -216,14 +298,14 @@ class AnalysisSourceFileRegisterModules(ast.NodeVisitor):
                              node.name))  # PIPELINES, task, module, class_name
 
 
-def get_imported_files(file_path):
+def get_imported_files(file_path, all_symbols):
     """Get file dependencies.
     """
     if os.path.isabs(file_path):
         file_path = os.path.relpath(file_path, os.getcwd())
     with open(file_path, 'rb') as f:
         src = f.read()
-    analyzer = AnalysisSourceFileImports(file_path)
+    analyzer = AnalysisSourceFileImports(file_path, all_symbols)
     analyzer.visit(ast.parse(src, filename=file_path))
     return list(set(analyzer.imports))
 
@@ -236,12 +318,31 @@ def path_to_module_name(file_path):
 
 
 def get_file_register_modules(file_path):
-    logger.info('Get file: %s register_module' % file_path)
     with open(file_path, 'rb') as f:
         src = f.read()
     analyzer = AnalysisSourceFileRegisterModules(file_path)
     analyzer.visit(ast.parse(src, filename=file_path))
     return analyzer.register_modules
+
+
+def get_file_defined_symbols(file_path):
+    if os.path.isabs(file_path):
+        file_path = os.path.relpath(file_path, os.getcwd())
+    with open(file_path, 'rb') as f:
+        src = f.read()
+    analyzer = AnalysisSourceFileDefines(file_path)
+    analyzer.visit(ast.parse(src, filename=file_path))
+    return analyzer.symbols
+
+
+def get_indirect_symbols(file_path, symbols, file_symbols_map):
+    if os.path.isabs(file_path):
+        file_path = os.path.relpath(file_path, os.getcwd())
+    with open(file_path, 'rb') as f:
+        src = f.read()
+    analyzer = IndirectDefines(file_path, symbols, file_symbols_map)
+    analyzer.visit(ast.parse(src, filename=file_path))
+    return analyzer.symbols_map
 
 
 def get_import_map():
@@ -250,9 +351,25 @@ def get_import_map():
             os.path.join(os.getcwd(), 'modelscope')) for f in filenames
         if os.path.splitext(f)[1] == '.py'
     ]
+    all_symbols = {}
+    file_symbols_map = {}
+    for f in all_files:
+        file_path = os.path.relpath(f, os.getcwd())
+        file_symbols_map[file_path] = get_file_defined_symbols(f)
+        for s in file_symbols_map[file_path]:
+            all_symbols[s] = file_path
+
+    # get indirect(imported) symbols, refer to origin define.
+    for f in all_files:
+        for name, real_path in get_indirect_symbols(f, all_symbols,
+                                                    file_symbols_map).items():
+            all_symbols[name] = os.path.relpath(real_path, os.getcwd())
+
+    with open('symbols.json', 'w') as f:
+        json.dump(all_symbols, f)
     import_map = {}
     for f in all_files:
-        files = get_imported_files(f)
+        files = get_imported_files(f, all_symbols)
         import_map[os.path.relpath(f, os.getcwd())] = files
 
     return import_map

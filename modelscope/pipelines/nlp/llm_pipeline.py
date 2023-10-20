@@ -11,6 +11,7 @@ from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
 from modelscope.models.base import Model
 from modelscope.models.nlp import ChatGLM2Tokenizer, Llama2Tokenizer
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
 from modelscope.utils.constant import Invoke, ModelFile, Tasks
@@ -19,7 +20,8 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
-@PIPELINES.register_module(Tasks.chat, module_name='llm-pipeline')
+@PIPELINES.register_module(Tasks.chat, module_name='llm')
+@PIPELINES.register_module(Tasks.text_generation, module_name='llm')
 class LLMPipeline(Pipeline):
 
     def initiate_single_model(self, model):
@@ -55,6 +57,9 @@ class LLMPipeline(Pipeline):
                  *args,
                  **kwargs):
         self.device_map = kwargs.pop('device_map', None)
+        # TODO: qwen-int4 need 'cuda'/'auto' device_map.
+        if not self.device_map and 'qwen' in kwargs['model'].lower():
+            self.device_map = 'cuda'
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         with self._temp_configuration_file(kwargs):
@@ -138,6 +143,8 @@ class LLMPipeline(Pipeline):
             outputs, skip_special_tokens=True, **kwargs)
         if is_messages:
             response = self.format_output(response, **kwargs)
+        else:
+            response = {OutputKeys.TEXT: response}
 
         return response
 
@@ -260,7 +267,7 @@ def chatglm2_format_output(response, **kwargs):
     response = response.replace('[[训练时间]]', '2023年')
     messages = {'role': 'assistant', 'content': response}
     outputs = {
-        'messages': messages,
+        'message': messages,
     }
     return outputs
 

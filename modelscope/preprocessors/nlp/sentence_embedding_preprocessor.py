@@ -1,13 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+import torch
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields, ModeKeys
 from modelscope.utils.hub import get_model_type
+from modelscope.utils.logger import get_logger
 from .transformers_tokenizer import NLPTokenizer
+
+logger = get_logger()
 
 
 @PREPROCESSORS.register_module(
@@ -46,9 +51,32 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
         self.max_length = max_length
         if model_dir is not None:
             model_type = get_model_type(model_dir)
+        # we could add `boq/bod` token/prompt and `eoq/eod` token if they exist when tokenizing.
+        for k in ('boq', 'eoq', 'bod', 'eod'):
+            setattr(self, k, kwargs.pop(k, None))
         self.nlp_tokenizer = NLPTokenizer(
             model_dir, model_type, use_fast=use_fast, tokenize_kwargs=kwargs)
         super().__init__(mode=mode)
+        tokenizer = self.nlp_tokenizer.tokenizer
+        # For tokenizers like bloom
+        if tokenizer.padding_side != 'right':
+            # weighted mean pooling need pad right
+            logger.warning(
+                f'Change tokenizer.padding_side from {tokenizer.padding_side} to right'
+            )
+            tokenizer.padding_side = 'right'
+        # For decoder-only tokenizers
+        if tokenizer.pad_token is None:
+            logger.warning(
+                f'Set tokenizer.pad_token as eos_token {tokenizer.eos_token}')
+            tokenizer.pad_token = tokenizer.eos_token
+        # Currently eos is single token, we can extend to prompt later.
+        for k in ('eoq', 'eod'):
+            v = getattr(self, k, None)
+            if v is not None:
+                v = tokenizer.convert_tokens_to_ids(v)
+            setattr(self, k + '_id', v)
+        self.pad_id = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
 
     def __call__(self,
                  data: Dict,
@@ -81,13 +109,80 @@ class SentenceEmbeddingTransformersPreprocessor(Preprocessor):
         if 'return_tensors' not in kwargs:
             kwargs[
                 'return_tensors'] = 'pt' if self.mode == ModeKeys.INFERENCE else None
-        query_inputs = self.nlp_tokenizer(
-            source_sentences, padding=padding, truncation=truncation, **kwargs)
+        query_inputs = self.tokenize(
+            source_sentences,
+            is_query=True,
+            padding=padding,
+            truncation=truncation,
+            **kwargs)
         tokenized_inputs = {'query': query_inputs, 'docs': None}
         if compare_sentences is not None and len(compare_sentences) > 0:
-            tokenized_inputs['docs'] = self.nlp_tokenizer(
+            tokenized_inputs['docs'] = self.tokenize(
                 compare_sentences,
+                is_query=kwargs.get('symmetric', False),
                 padding=padding,
                 truncation=truncation,
                 **kwargs)
         return tokenized_inputs
+
+    def tokenize(self, texts, is_query=True, return_tensors=None, **kwargs):
+        """Tokenize raw texts, add `boq/bod` token/prompt and `eoq/eod` token if they exist.
+
+        Args:
+            `texts` List[str]: texts to tokenize,
+                Example:
+                    ["how long it take to get a master's degree"]
+            `is_query` bool: whether the input text(s) is query.
+            `return_tensors` str: the `return_tensors` argument to tokenizer.
+        Returns:
+            Dict[str, Any]: the preprocessed data
+        """
+        if is_query:
+            bos, eos_id = self.boq, self.eoq_id
+        else:
+            bos, eos_id = self.bod, self.eod_id
+        if bos is not None:
+            # bos can be prompt
+            texts = [bos + t for t in texts]
+        encoding = self.nlp_tokenizer(
+            texts, return_tensors=return_tensors, **kwargs)
+        if eos_id is not None:
+            if return_tensors == 'pt':
+                self.add_eos_pt(encoding, eos_id)
+            else:
+                self.add_eos(encoding, eos_id)
+        return encoding
+
+    def add_eos_pt(self, encoding: Dict[str, torch.Tensor], eos: int):
+        """Add `eos` token id to the end of each sequence."""
+        input_ids, attn_mask = encoding['input_ids'], encoding[
+            'attention_mask']
+        batch = torch.arange(input_ids.size(0))
+        length = attn_mask.sum(-1)
+
+        if input_ids.size(1) < self.max_length:
+            ones = input_ids.new_ones(input_ids.size(0), 1)
+            attn_mask = torch.cat((ones, attn_mask), dim=1)
+            padding = ones * self.pad_id
+            input_ids = torch.cat((input_ids, padding), dim=1)
+            eos_index = length
+        else:
+            eos_index = torch.clamp(length, max=self.max_length - 1)
+            attn_mask[batch, eos_index] = 1
+        input_ids[batch, eos_index] = eos
+        encoding['input_ids'], encoding[
+            'attention_mask'] = input_ids, attn_mask
+        return
+
+    def add_eos(self, encoding: Dict[str, list], eos: int):
+        """Add `eos` token id to the end of each sequence."""
+        for ids, mask in zip(encoding['input_ids'],
+                             encoding['attention_mask']):
+            if len(mask) < self.max_length:
+                ids.append(eos)
+                mask.append(1)
+            else:
+                last = min(sum(mask), self.max_length - 1)
+                ids[last] = eos
+                mask[last] = 1
+        return

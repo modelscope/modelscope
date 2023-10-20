@@ -194,6 +194,8 @@ class Pipeline(ABC):
             if not self._model_prepare:
                 self.prepare_model()
 
+        print(f'>>>Call pipe in pipeline-base, input: {input}')
+
         # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)
 
@@ -394,6 +396,11 @@ class Pipeline(ABC):
         """
         assert self.model is not None, 'forward method should be implemented'
         assert not self.has_multiple_models, 'default implementation does not support multiple models in a pipeline.'
+
+        print(
+            f'>>>Forward in pipeline-base, inputs: {inputs}, forward_params: {forward_params}'
+        )
+
         return self.model(inputs, **forward_params)
 
     @abstractmethod

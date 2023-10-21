@@ -86,6 +86,10 @@ class LLMPipeline(Pipeline):
         self.tokenizer = self._get_tokenizer(
             tokenizer_class) if tokenizer is None else tokenizer
 
+        print(
+            f'\n>>self.tokenizer: tokenizer: {self.tokenizer}, >tokenizer_class: {tokenizer_class}\n'
+        )
+
     @contextmanager
     def _temp_configuration_file(self, kwargs: Dict[str, Any]):
         kwargs['model'] = model = self.initiate_single_model(kwargs['model'])
@@ -123,15 +127,16 @@ class LLMPipeline(Pipeline):
         else:
             raise ValueError('model does not support `generate`!')
 
-        print(f'>>outputs in _process_single for llm_pipe: '
+        print(f'\n\n>>outputs in _process_single for llm_pipe: '
               f'\n>data: {outputs}'
               f'\n>shape: {outputs.shape}'
-              f'\n>type: {type(outputs)}')
+              f'\n>type: {type(outputs)}\n\n')
 
+        # Get tokens of the generated continuation
         outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
 
         print(
-            f'>>outputs after tokens in _process_single for llm_pipe: {outputs}'
+            f'>>tokens of continuation in _process_single for llm_pipe: {outputs}'
         )
 
         response = self.postprocess(outputs, is_messages, **postprocess_params)

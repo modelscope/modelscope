@@ -123,7 +123,10 @@ class LLMPipeline(Pipeline):
         else:
             raise ValueError('model does not support `generate`!')
 
-        print(f'>>outputs in _process_single for llm_pipe: {outputs}')
+        print(f'>>outputs in _process_single for llm_pipe: '
+              f'\n>data: {outputs}'
+              f'\n>shape: {outputs.shape}'
+              f'\n>type: {type(outputs)}')
 
         outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
 

@@ -827,8 +827,21 @@ class MsDataset:
 
 
 if __name__ == '__main__':
+    pass
 
-    ds = MsDataset.load(
-        'modelscope/ai2_arc', subset_name='ARC-Easy', split='train')
-    print(next(iter(ds)))
-    print(ds[0:5])
+    # ds = MsDataset.load(
+    #     'modelscope/ai2_arc', subset_name='ARC-Easy', split='train')
+    # print(next(iter(ds)))
+    # print(ds[0:5])
+
+    # token = '637baa67-2ab3-4432-a925-ba1b616939ca'
+    # from modelscope.hub.api import HubApi
+    # api = HubApi()
+    # api.login(token)
+    #
+    # from modelscope.msdatasets import MsDataset
+    # MsDataset.upload(
+    #     object_name='datasets',
+    #     local_file_path='',
+    #     dataset_name='Video_Description_Editing',
+    #     namespace='modelscope')

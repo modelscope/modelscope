@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
 import json
 import torch
 from transformers import PreTrainedTokenizer
+from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
@@ -125,11 +126,12 @@ class LLMPipeline(Pipeline):
             outputs = self.model.generate(**tokens, **forward_params)
             print(f'>>>self.model.generate: {self.model.generate}')
 
-            outputs_new = self.model(tokens['inputs'])
+            outputs_new: CausalLMOutputWithPast = self.model(tokens['inputs'])
             print(
                 f'\n\n>>outputs_new in _process_single for llm_pipe model call: '
                 f'\n>data: {outputs_new}'
-                f'\n>shape: {outputs_new.shape}'
+                f'\n>logits: {outputs_new.logits}'
+                f'\n>logits shape: {outputs_new.logits.shape}'
                 f'\n>type: {type(outputs_new)}\n\n')
 
         elif hasattr(self.model, 'model') and hasattr(self.model.model,

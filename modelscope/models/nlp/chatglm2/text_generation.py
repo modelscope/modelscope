@@ -1115,9 +1115,9 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
             output = (lm_logits, ) + transformer_outputs[1:]
             return ((loss, ) + output) if loss is not None else output
 
-        print(f'\n>>lm_logits in ChatGLM2ForConditionalGeneration forward:'
-              f'\n  >data:\n{lm_logits} '
-              f'\n  >shape:\n{lm_logits.shape}\n')
+        # print(f'\n>>lm_logits in ChatGLM2ForConditionalGeneration forward:'
+        #       f'\n  >data:\n{lm_logits} '
+        #       f'\n  >shape:\n{lm_logits.shape}\n')
 
         return CausalLMOutputWithPast(
             loss=loss,

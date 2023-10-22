@@ -103,20 +103,41 @@ class LLMPipeline(Pipeline):
         preprocess_params = kwargs.get('preprocess_params', {})
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
+        output_logits = kwargs.get('output_logits', False)
 
         is_messages = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, is_messages, **preprocess_params)
 
-        if hasattr(self.model, 'generate'):
-            outputs = self.model.generate(**tokens, **forward_params)
-        elif hasattr(self.model, 'model') and hasattr(self.model.model,
-                                                      'generate'):
-            outputs = self.model.model.generate(**tokens, **forward_params)
-        else:
-            raise ValueError('model does not support `generate`!')
+        response = dict()
 
-        outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
-        response = self.postprocess(outputs, is_messages, **postprocess_params)
+        if output_logits:
+            if hasattr(self.model, 'model'):
+                outputs = self.model.model(tokens['inputs'])
+            else:
+                outputs = self.model(tokens['inputs'])  # [batch, seq, vocab]
+        else:
+            if hasattr(self.model, 'generate'):
+                outputs = self.model.generate(**tokens, **forward_params)
+            elif hasattr(self.model, 'model') and hasattr(
+                    self.model.model, 'generate'):
+                outputs = self.model.model.generate(**tokens, **forward_params)
+            else:
+                raise ValueError('model does not support `generate`!')
+
+            outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
+            response = self.postprocess(outputs, is_messages,
+                                        **postprocess_params)
+
+        if output_logits:
+
+            logits_d: dict = {
+                'logits':
+                outputs,
+                'continuation_logits':
+                outputs.tolist()[0][len(tokens['inputs'][0]):]
+            }
+            response.update(logits_d)
+
         return response
 
     def preprocess(self, inputs: Union[str, Dict], is_messages: bool,

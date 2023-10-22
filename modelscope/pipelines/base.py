@@ -218,6 +218,7 @@ class Pipeline(ABC):
             return self._process_iterator(input, *args, **kwargs)
 
         else:
+            print('>>>call _process_single in pipeline-base ...')
             output = self._process_single(input, *args, **kwargs)
         return output
 

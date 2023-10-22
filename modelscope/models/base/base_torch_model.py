@@ -31,7 +31,7 @@ class TorchModel(Model, torch.nn.Module):
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         # Adapting a model with only one dict arg, and the arg name must be input or inputs
 
-        print(f'\n>>>TorchModel.__call__ args: {args}, kwargs: {kwargs}')
+        # print(f'\n>>>TorchModel.__call__ args: {args}, kwargs: {kwargs}')
 
         if func_receive_dict_inputs(self.forward):
             # return self.postprocess(self.forward(args[0], **kwargs))

@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
 
 import json
 import torch
+import torch.nn.functional as F
 from transformers import PreTrainedTokenizer
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
@@ -129,10 +130,16 @@ class LLMPipeline(Pipeline):
             outputs_new: CausalLMOutputWithPast = self.model(tokens['inputs'])
             print(
                 f'\n\n>>outputs_new in _process_single for llm_pipe model call: '
-                f'\n>data: {outputs_new}'
+                # f'\n>data: {outputs_new}'
                 f'\n>logits: {outputs_new.logits}'
                 f'\n>logits shape: {outputs_new.logits.shape}'
                 f'\n>type: {type(outputs_new)}\n\n')
+
+            outputs_logits = outputs_new[0]
+            print('>>outputs_logits shape: ', outputs_logits.shape)
+            multi_logits = F.log_softmax(outputs_logits, dim=-1).cpu()
+            print('>>multi_logits shape: ', multi_logits.shape)
+            print(multi_logits[0])
 
         elif hasattr(self.model, 'model') and hasattr(self.model.model,
                                                       'generate'):

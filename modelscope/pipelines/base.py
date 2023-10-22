@@ -248,8 +248,6 @@ class Pipeline(ABC):
         postprocess_params = kwargs.get('postprocess_params', {})
         self._check_input(input)
         out = self.preprocess(input, **preprocess_params)
-        print(f'>>out in _process_single in base: {out}')
-        print(f'>>framework in _process_single in base: {self.framework}')
 
         with device_placement(self.framework, self.device_name):
             if self.framework == Frameworks.torch:
@@ -261,7 +259,6 @@ class Pipeline(ABC):
                 out = self.forward(out, **forward_params)
 
         out = self.postprocess(out, **postprocess_params)
-        print(f'>>out after postprocess in base: {out}')
         self._check_output(out)
         return out
 

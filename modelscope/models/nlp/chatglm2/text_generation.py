@@ -1205,17 +1205,7 @@ class ChatGLM2ForConditionalGeneration(ChatGLMPreTrainedModel):
             **kwargs
         }
         inputs = self.build_inputs(tokenizer, query, history=history)
-
-        print(
-            f'\n>>inputs in ChatGLM2ForConditionalGeneration._chat:\n {inputs}, \n>shape: {inputs.shape}'
-        )
-
         outputs = self.generate(**inputs, **gen_kwargs)
-
-        print(
-            f'\n>>outputs in ChatGLM2ForConditionalGeneration._chat:\n {outputs}, \n>shape: {outputs.shape}'
-        )
-
         outputs = outputs.tolist()[0][len(inputs['input_ids'][0]):]
         response = tokenizer.decode(outputs)
         response = self.process_response(response)

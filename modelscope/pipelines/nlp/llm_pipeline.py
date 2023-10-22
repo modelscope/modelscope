@@ -120,8 +120,18 @@ class LLMPipeline(Pipeline):
               f'\n>model has model: {hasattr(self.model, "model")}')
 
         if hasattr(self.model, 'generate'):
+            # self.generate: <bound method GenerationMixin.generate of ChatGLM2ForConditionalGeneration>
+            # Func ref: transformers.generation.utils.GenerationMixin.generate
             outputs = self.model.generate(**tokens, **forward_params)
             print(f'>>>self.model.generate: {self.model.generate}')
+
+            outputs_new = self.model(tokens['inputs'])
+            print(
+                f'\n\n>>outputs_new in _process_single for llm_pipe model call: '
+                f'\n>data: {outputs_new}'
+                f'\n>shape: {outputs_new.shape}'
+                f'\n>type: {type(outputs_new)}\n\n')
+
         elif hasattr(self.model, 'model') and hasattr(self.model.model,
                                                       'generate'):
             outputs = self.model.model.generate(**tokens, **forward_params)

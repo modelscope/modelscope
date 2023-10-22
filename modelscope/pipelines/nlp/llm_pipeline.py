@@ -129,12 +129,9 @@ class LLMPipeline(Pipeline):
                                         **postprocess_params)
 
         if output_logits:
-
             logits_d: dict = {
-                'logits':
-                outputs,
-                'continuation_logits':
-                outputs.tolist()[0][len(tokens['inputs'][0]):]
+                'logits': outputs,
+                'inputs_len': len(tokens['inputs'][0])
             }
             response.update(logits_d)
 

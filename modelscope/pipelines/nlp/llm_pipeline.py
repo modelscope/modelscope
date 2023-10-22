@@ -64,6 +64,7 @@ class LLMPipeline(Pipeline):
             self.device_map = 'cuda'
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
+
         with self._temp_configuration_file(kwargs):
             super().__init__(*args, **kwargs)
 

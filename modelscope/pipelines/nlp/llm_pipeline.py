@@ -121,6 +121,7 @@ class LLMPipeline(Pipeline):
 
         if hasattr(self.model, 'generate'):
             outputs = self.model.generate(**tokens, **forward_params)
+            print(f'>>>self.model.generate: {self.model.generate}')
         elif hasattr(self.model, 'model') and hasattr(self.model.model,
                                                       'generate'):
             outputs = self.model.model.generate(**tokens, **forward_params)

@@ -30,10 +30,22 @@ class TorchModel(Model, torch.nn.Module):
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         # Adapting a model with only one dict arg, and the arg name must be input or inputs
+
+        print(f'\n>>>TorchModel.__call__ args: {args}, kwargs: {kwargs}')
+
         if func_receive_dict_inputs(self.forward):
-            return self.postprocess(self.forward(args[0], **kwargs))
+            # return self.postprocess(self.forward(args[0], **kwargs))
+            res = self.forward(args[0], **kwargs)
+            print(
+                f'>>res in TorchModel.__call__ with func_receive_dict_inputs: {res}'
+            )
+            return self.postprocess(res)
+
         else:
-            return self.postprocess(self.forward(*args, **kwargs))
+            # return self.postprocess(self.forward(*args, **kwargs))
+            res = self.forward(*args, **kwargs)
+            print(f'>>res in TorchModel.__call__: {res}')
+            return self.postprocess(res)
 
     def _load_pretrained(self,
                          net,

@@ -143,7 +143,7 @@ class LLMPipeline(Pipeline):
 
         print(f'>>response in _process_single for llm_pipe: {response}')
 
-        print(f'\n>>self.model: {self.model}')
+        print(f'\n>>self.model:\n {self.model}')
 
         return response
 

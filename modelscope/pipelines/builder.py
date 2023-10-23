@@ -121,6 +121,7 @@ def pipeline(task: str = None,
         ignore_file_pattern=ignore_file_pattern)
     if pipeline_name is None and kwargs.get('llm_first'):
         pipeline_name = llm_first_checker(model, model_revision)
+        kwargs.pop('llm_first')
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task

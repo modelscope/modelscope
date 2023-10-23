@@ -130,8 +130,8 @@ class LLMPipeline(Pipeline):
 
         if output_logits:
             logits_d: dict = {
-                'logits': outputs,
-                'tokens': tokens['inputs'],
+                'logits': outputs[0].cpu(),
+                'tokens': tokens['inputs'].cpu(),
                 'inputs_len': len(tokens['inputs'][0]),
                 'decode_func': self.tokenizer.decode
             }

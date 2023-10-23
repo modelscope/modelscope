@@ -111,10 +111,12 @@ class LLMPipeline(Pipeline):
         response = dict()
 
         if output_logits:
-            if hasattr(self.model, 'model'):
-                outputs = self.model.model(tokens['inputs'])
-            else:
-                outputs = self.model(tokens['inputs'])  # [batch, seq, vocab]
+            with torch.no_grad():
+                if hasattr(self.model, 'model'):
+                    outputs = self.model.model(tokens['inputs'])
+                else:
+                    outputs = self.model(
+                        tokens['inputs'])  # [batch, seq, vocab]
         else:
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)

@@ -131,7 +131,7 @@ class LLMPipeline(Pipeline):
         if output_logits:
             logits_d: dict = {
                 'logits': outputs,
-                'tokens': tokens,
+                'tokens': tokens['inputs'],
                 'inputs_len': len(tokens['inputs'][0])
             }
             response.update(logits_d)

@@ -130,15 +130,10 @@ class LLMPipeline(Pipeline):
 
         if output_logits:
             logits_d: dict = {
-                'logits':
-                outputs,
-                'tokens':
-                tokens['inputs'],
-                'inputs_len':
-                len(tokens['inputs'][0]),
-                'decode_res':
-                self.tokenizer.decode(
-                    outputs, skip_special_tokens=False, **kwargs)
+                'logits': outputs,
+                'tokens': tokens['inputs'],
+                'inputs_len': len(tokens['inputs'][0]),
+                'decode_func': self.tokenizer.decode
             }
             response.update(logits_d)
 

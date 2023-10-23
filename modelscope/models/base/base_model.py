@@ -117,6 +117,7 @@ class Model(ABC):
         else:
             invoked_by = Invoke.PRETRAINED
 
+        ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
@@ -126,7 +127,6 @@ class Model(ABC):
                 )
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
             local_model_dir = snapshot_download(
                 model_name_or_path,
                 revision,

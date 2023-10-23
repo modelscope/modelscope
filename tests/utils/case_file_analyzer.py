@@ -90,7 +90,8 @@ class AnalysisTestClass(ast.NodeVisitor):
             if isinstance(item, ast.Name):
                 res.append(self.get_variables(item.id))
             elif isinstance(item, ast.Attribute):
-                res.append(self.get_variables(item.value.id))
+                if hasattr(item.value, 'id'):
+                    res.append(self.get_variables(item.value.id))
             elif isinstance(item, ast.Str):
                 res.append(self.get_variables(item.s))
             elif isinstance(item, ast.Dict):

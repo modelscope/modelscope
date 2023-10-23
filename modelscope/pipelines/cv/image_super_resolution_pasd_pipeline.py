@@ -8,14 +8,13 @@ import numpy as np
 import PIL
 import torch
 from diffusers import AutoencoderKL, UniPCMultistepScheduler
+from torchvision import transforms
 from torchvision.models import ResNet50_Weights, resnet50
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_portrait_enhancement.retinaface import \
     detection
-from modelscope.models.cv.image_super_resolution_pasd import (
-    ControlNetModel, UNet2DConditionModel)
 from modelscope.models.cv.image_super_resolution_pasd.misc import (
     load_dreambooth_lora, wavelet_color_fix)
 from modelscope.outputs import OutputKeys
@@ -48,8 +47,8 @@ class ImageSuperResolutionPASDPipeline(Pipeline):
     >>>     'image': input_location,
     >>>     'upscale': 2,
     >>>     'prompt': prompt,
-    >>>     'fidelity_scale_fg': 1.5,
-    >>>     'fidelity_scale_bg': 0.7
+    >>>     'fidelity_scale_fg': 1.0,
+    >>>     'fidelity_scale_bg': 1.0
     >>> }
     >>> pasd = pipeline(Tasks.image_super_resolution_pasd, model='damo/PASD_image_super_resolutions')
     >>> output = pasd(input)[OutputKeys.OUTPUT_IMG]
@@ -69,6 +68,13 @@ class ImageSuperResolutionPASDPipeline(Pipeline):
         self.device = create_device(device_name)
         self.config = Config.from_file(
             os.path.join(model, ModelFile.CONFIGURATION))
+        version = self.config.pipeline.get('version', 'pasd_v2')
+        if version == 'pasd':
+            from modelscope.models.cv.image_super_resolution_pasd import (
+                ControlNetModel, UNet2DConditionModel)
+        else:
+            from modelscope.models.cv.image_super_resolution_pasd_v2 import (
+                ControlNetModel, UNet2DConditionModel)
         cfg = self.config.model_cfg
         dreambooth_lora_ckpt = cfg['dreambooth_lora_ckpt']
         tiled_size = cfg['tiled_size']
@@ -123,6 +129,12 @@ class ImageSuperResolutionPASDPipeline(Pipeline):
         self.face_detector = detection.RetinaFaceDetection(
             detector_model_path, self.device)
 
+        self.resize_preproc = transforms.Compose([
+            transforms.Resize(
+                self.process_size,
+                interpolation=transforms.InterpolationMode.BILINEAR),
+        ])
+
     def preprocess(self, input: Input):
         return input
 
@@ -145,8 +157,8 @@ class ImageSuperResolutionPASDPipeline(Pipeline):
         eta = inputs.get('eta', 0.0)
         prompt = inputs.get('prompt', '')
         upscale = inputs.get('upscale', 2)
-        fidelity_scale_fg = inputs.get('fidelity_scale_fg', 1.5)
-        fidelity_scale_bg = inputs.get('fidelity_scale_bg', 0.7)
+        fidelity_scale_fg = inputs.get('fidelity_scale_fg', 1.0)
+        fidelity_scale_bg = inputs.get('fidelity_scale_bg', 1.0)
 
         input_image = load_image(inputs['image']).convert('RGB')
 
@@ -164,19 +176,15 @@ class ImageSuperResolutionPASDPipeline(Pipeline):
             prompt = added_prompt if prompt == '' else f'{prompt}, {added_prompt}'
 
             ori_width, ori_height = input_image.size
-            resize_flag = False
+            resize_flag = True
             rscale = upscale
-            if ori_width < self.process_size // rscale or ori_height < self.process_size // rscale:
-                scale = (self.process_size // rscale) / min(
-                    ori_width, ori_height)
-                tmp_image = input_image.resize(
-                    (int(scale * ori_width), int(scale * ori_height)))
-
-                input_image = tmp_image
-                resize_flag = True
 
             input_image = input_image.resize(
                 (input_image.size[0] * rscale, input_image.size[1] * rscale))
+
+            if min(input_image.size) < self.process_size:
+                input_image = self.resize_preproc(input_image)
+
             input_image = input_image.resize(
                 (input_image.size[0] // 8 * 8, input_image.size[1] // 8 * 8))
             width, height = input_image.size

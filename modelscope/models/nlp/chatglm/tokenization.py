@@ -199,6 +199,10 @@ class ChatGLMTokenizer(PreTrainedTokenizer):
                  padding_side='left',
                  num_image_tokens=20000,
                  **kwargs) -> None:
+
+        self.sp_tokenizer = SPTokenizer(
+            vocab_file, num_image_tokens=num_image_tokens)
+
         super().__init__(
             do_lower_case=do_lower_case,
             remove_space=remove_space,
@@ -220,9 +224,6 @@ class ChatGLMTokenizer(PreTrainedTokenizer):
         self.end_token = end_token
         self.mask_token = mask_token
         self.gmask_token = gmask_token
-
-        self.sp_tokenizer = SPTokenizer(
-            vocab_file, num_image_tokens=num_image_tokens)
         """ Initialisation """
 
     @property

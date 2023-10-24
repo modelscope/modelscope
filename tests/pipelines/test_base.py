@@ -166,12 +166,24 @@ class CustomPipelineTest(unittest.TestCase):
                 return inputs
 
             def postprocess(self, out, **kwargs):
-                return {'response': 'xxx', 'history': []}
+                return {'message': {'role': 'assistant', 'content': 'xxx'}}
 
         pipe = pipeline(
             task=Tasks.chat, pipeline_name=dummy_module, model=self.model_dir)
         pipe('text')
         inputs = {'text': 'aaa', 'history': [('dfd', 'fds')]}
+        inputs = {
+            'messages': [{
+                'role': 'user',
+                'content': 'dfd'
+            }, {
+                'role': 'assistant',
+                'content': 'fds'
+            }, {
+                'role': 'user',
+                'content': 'aaa'
+            }]
+        }
         pipe(inputs)
 
     def test_custom(self):

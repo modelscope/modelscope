@@ -134,12 +134,13 @@ class Model(ABC):
                 ignore_file_pattern=ignore_file_pattern)
         logger.info(f'initialize model from {local_model_dir}')
 
+        configuration_path = osp.join(local_model_dir, ModelFile.CONFIGURATION)
+        cfg = None
         if cfg_dict is not None:
             cfg = cfg_dict
-        else:
-            cfg = Config.from_file(
-                osp.join(local_model_dir, ModelFile.CONFIGURATION))
-        task_name = cfg.task
+        elif os.path.exists(configuration_path):
+            cfg = Config.from_file(configuration_path)
+        task_name = getattr(cfg, 'task', None)
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
         model_cfg = getattr(cfg, 'model', ConfigDict())
@@ -162,6 +163,9 @@ class Model(ABC):
                 model = model.to(device)
             return model
         # use ms
+        if cfg is None:
+            raise FileNotFoundError(
+                f'`{ModelFile.CONFIGURATION}` file not found.')
         model_cfg.model_dir = local_model_dir
 
         # install and import remote repos before build

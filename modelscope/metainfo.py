@@ -291,6 +291,7 @@ class Pipelines(object):
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
     image_editing = 'masactrl-image-editing'
+    freeu_stable_diffusion_text2image = 'freeu-stable-diffusion-text2image'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'

@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 from modelscope.metainfo import Models
@@ -61,8 +62,9 @@ class BertForSentenceEmbedding(BertPreTrainedModel):
     def __init__(self, config, **kwargs):
         super().__init__(config)
         self.config = config
-        self.pooler_type = kwargs.get('pooler_type', 'cls')
+        self.pooler_type = kwargs.get('emb_pooler_type', 'cls')
         self.pooler = Pooler(self.pooler_type)
+        self.normalize = kwargs.get('normalize', False)
         setattr(self, self.base_model_prefix,
                 BertModel(config, add_pooling_layer=False))
 
@@ -128,6 +130,8 @@ class BertForSentenceEmbedding(BertPreTrainedModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict)
         outputs = self.pooler(outputs, attention_mask)
+        if self.normalize:
+            outputs = F.normalize(outputs, p=2, dim=-1)
         return outputs
 
     @classmethod
@@ -142,8 +146,11 @@ class BertForSentenceEmbedding(BertPreTrainedModel):
             The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
         """
         model_dir = kwargs.get('model_dir')
-        model = super(
-            Model,
-            cls).from_pretrained(pretrained_model_name_or_path=model_dir)
+        model_kwargs = {
+            'emb_pooler_type': kwargs.get('emb_pooler_type', 'cls'),
+            'normalize': kwargs.get('normalize', False)
+        }
+        model = super(Model, cls).from_pretrained(
+            pretrained_model_name_or_path=model_dir, **model_kwargs)
         model.model_dir = model_dir
         return model

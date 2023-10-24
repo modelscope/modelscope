@@ -326,6 +326,20 @@ TASK_INPUTS = {
 
     # ============ nlp tasks ===================
     Tasks.chat: {
+        # An input example for `messages` format (Dict[str, List[Dict[str, str]]]):
+        # {'messages': [{
+        #     'role': 'system',
+        #     'content': 'You are a helpful assistant.'
+        # }, {
+        #     'role': 'user',
+        #     'content': 'Hello! Where is the capital of Zhejiang?'
+        # }, {
+        #     'role': 'assistant',
+        #     'content': 'Hangzhou is the capital of Zhejiang.'
+        # }, {
+        #     'role': 'user',
+        #     'content': 'Tell me something about HangZhou?'
+        # }]}
         'messages': InputType.LIST
     },
     Tasks.text_classification: [

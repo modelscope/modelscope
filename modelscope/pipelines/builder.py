@@ -121,6 +121,7 @@ def pipeline(task: str = None,
         ignore_file_pattern=ignore_file_pattern)
     if pipeline_name is None and kwargs.get('llm_first'):
         pipeline_name = llm_first_checker(model, model_revision)
+        kwargs.pop('llm_first')
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
@@ -215,7 +216,7 @@ def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
         except Exception:
             return None
 
-    def parse_model_type(file: Optional[str], pattern: str) -> Optional[str]:
+    def parse_and_get(file: Optional[str], pattern: str) -> Optional[str]:
         if file is None or not osp.exists(file):
             return None
         return Config.from_file(file).safe_get(pattern)
@@ -223,15 +224,22 @@ def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
     def get_model_type(model: str, revision: Optional[str]) -> Optional[str]:
         cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
         hf_cfg_file = get_file_name(model, ModelFile.CONFIG, revision)
-        cfg_model_type = parse_model_type(cfg_file, 'model.type')
-        hf_cfg_model_type = parse_model_type(hf_cfg_file, 'model_type')
+        cfg_model_type = parse_and_get(cfg_file, 'model.type')
+        hf_cfg_model_type = parse_and_get(hf_cfg_file, 'model_type')
         return cfg_model_type or hf_cfg_model_type
+
+    def get_adapter_type(model: str, revision: Optional[str]) -> Optional[str]:
+        cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
+        model = parse_and_get(cfg_file, 'adapter_cfg.model_id_or_path')
+        revision = parse_and_get(cfg_file, 'adapter_cfg.model_revision')
+        return None if model is None else get_model_type(model, revision)
 
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
-    model_type = get_model_type(model, revision)
+    model_type = get_model_type(model, revision) \
+        or get_adapter_type(model, revision)
     if model_type is not None:
         model_type = model_type.lower().split('-')[0]
         if model_type in LLM_FORMAT_MAP:

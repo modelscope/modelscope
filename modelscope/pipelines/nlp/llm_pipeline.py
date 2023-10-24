@@ -9,11 +9,13 @@ from transformers import PreTrainedTokenizer
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
+from modelscope.hub.file_download import model_file_download
 from modelscope.models.base import Model
 from modelscope.models.nlp import ChatGLM2Tokenizer, Llama2Tokenizer
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
+from modelscope.utils.config import Config
 from modelscope.utils.constant import Invoke, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -27,6 +29,22 @@ class LLMPipeline(Pipeline):
     def initiate_single_model(self, model):
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
+        if self._is_swift_model(model):
+            from swift import Swift
+
+            base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
+            assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
+            revision = self.cfg.safe_get('adapter_cfg.model_revision',
+                                         'master')
+            base_model = Model.from_pretrained(
+                base_model,
+                revision,
+                invoked_by=Invoke.PIPELINE,
+                device_map=self.device_map,
+                torch_dtype=self.torch_dtype,
+                trust_remote_code=True)
+            swift_model = Swift.from_pretrained(base_model, model_id=model)
+            return swift_model
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
             if is_model(model):
@@ -49,6 +67,20 @@ class LLMPipeline(Pipeline):
                 return model
         else:
             return model
+
+    def _is_swift_model(self, model: Union[str, Any]) -> bool:
+        if not isinstance(model, str):
+            return False
+        if os.path.exists(model):
+            cfg_file = os.path.join(model, ModelFile.CONFIGURATION)
+        else:
+            try:
+                cfg_file = model_file_download(model, ModelFile.CONFIGURATION)
+            except Exception:
+                return False
+
+        self.cfg = Config.from_file(cfg_file)
+        return self.cfg.safe_get('adapter_cfg.tuner_backend') == 'swift'
 
     def __init__(self,
                  format_messages: Union[Callable, str] = None,

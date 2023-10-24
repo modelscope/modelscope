@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
     from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
     from .videocomposer_pipeline import VideoComposerPipeline
+    from .text_to_image_freeu_pipeline import FreeUTextToImagePipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],
@@ -53,7 +54,8 @@ else:
         ['SOONetVideoTemporalGroundingPipeline'],
         'text_to_video_synthesis_pipeline': ['TextToVideoSynthesisPipeline'],
         'multimodal_dialogue_pipeline': ['MultimodalDialoguePipeline'],
-        'videocomposer_pipeline': ['VideoComposerPipeline']
+        'videocomposer_pipeline': ['VideoComposerPipeline'],
+        'text_to_image_freeu_pipeline': ['FreeUTextToImagePipeline']
     }
 
     import sys

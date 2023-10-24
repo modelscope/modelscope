@@ -16,6 +16,8 @@ from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.models.nlp.task_models.task_model import EncoderModel
 from modelscope.outputs import MachineReadingComprehensionOutput, OutputKeys
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import parse_label_mapping
 
@@ -45,9 +47,10 @@ class ModelForMachineReadingComprehension(TorchModel):
             self.config.hidden_dropout_prob,
             intermediate_hidden_size=self.config.
             projection_intermediate_hidden_size)
-        self.load_state_dict(
-            torch.load(
-                os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)))
+        state_dict = torch.load(
+            os.path.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE))
+        compatible_position_ids(state_dict, 'roberta.embeddings.position_ids')
+        self.load_state_dict(state_dict)
 
     def forward(
         self,

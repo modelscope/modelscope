@@ -475,35 +475,37 @@ class HubApi:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
             logger.info('Development mode use revision: %s' % revision)
         else:
-            if revision is None:  # user not specified revision, use latest revision before release time
-                revisions = self.list_model_revisions(
-                    model_id,
-                    cutoff_timestamp=release_timestamp,
-                    use_cookies=False if cookies is None else cookies)
-                if len(revisions) == 0:
-                    logger.warning(('There is no version specified and there is no version in the model repository,'
-                                    'use the master branch, which is fragile, please use it with caution!'))
+            all_revisions = self.list_model_revisions(
+                model_id,
+                cutoff_timestamp=current_timestamp,
+                use_cookies=False if cookies is None else cookies)
+            if len(all_revisions) == 0:
+                if revision is None or revision == MASTER_MODEL_BRANCH:
                     revision = MASTER_MODEL_BRANCH
                 else:
-                    # tags (revisions) returned from backend are guaranteed to be ordered by create-time
-                    # we shall obtain the latest revision created earlier than release version of this branch
-                    revision = revisions[0]
-                logger.info(
-                    'Model revision not specified, use revision: %s'
-                    % revision)
+                    raise NotExistError('The model: %s has no revision: %s !' % (model_id, revision))
             else:
-                # use user-specified revision
-                revisions = self.list_model_revisions(
-                    model_id,
-                    cutoff_timestamp=current_timestamp,
-                    use_cookies=False if cookies is None else cookies)
-                if revision not in revisions:
-                    if revision == MASTER_MODEL_BRANCH:
-                        logger.warning('Using the master branch is fragile, please use it with caution!')
+                if revision is None:  # user not specified revision, use latest revision before release time
+                    revisions = self.list_model_revisions(
+                        model_id,
+                        cutoff_timestamp=release_timestamp,
+                        use_cookies=False if cookies is None else cookies)
+                    if len(revisions) > 0:
+                        revision = revisions[0]  # use latest revision before release time.
                     else:
-                        raise NotExistError('The model: %s has no revision: %s !' %
-                                            (model_id, revision))
-                logger.info('Use user-specified model revision: %s' % revision)
+                        vl = '[%s]' % ','.join(all_revisions)
+                        raise NoValidRevisionError('Model revision should be specified from revisions: %s' % (vl))
+                    logger.warning('Model revision not specified, use revision: %s' % revision)
+                else:
+                    # use user-specified revision
+                    if revision not in all_revisions:
+                        if revision == MASTER_MODEL_BRANCH:
+                            logger.warning('Using the master branch is fragile, please use it with caution!')
+                        else:
+                            vl = '[%s]' % ','.join(all_revisions)
+                            raise NotExistError('The model: %s has no revision: %s valid are: %s!' %
+                                                (model_id, revision, vl))
+                    logger.info('Use user-specified model revision: %s' % revision)
         return revision
 
     def get_model_branches_and_tags(

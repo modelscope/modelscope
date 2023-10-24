@@ -18,10 +18,10 @@ class HFUtilTest(unittest.TestCase):
 
     def test_auto_tokenizer(self):
         tokenizer = AutoTokenizer.from_pretrained(
-            'baichuan-inc/Baichuan-13B-Chat',
+            'baichuan-inc/Baichuan2-7B-Chat',
             trust_remote_code=True,
             revision='v1.0.3')
-        self.assertEqual(tokenizer.vocab_size, 64000)
+        self.assertEqual(tokenizer.vocab_size, 125696)
         self.assertEqual(tokenizer.model_max_length, 4096)
         self.assertFalse(tokenizer.is_fast)
 

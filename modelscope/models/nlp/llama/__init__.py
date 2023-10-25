@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import TYPE_CHECKING
+
 from transformers import LlamaTokenizer
 from transformers.models.llama import (LlamaConfig, 
                                        LlamaTokenizerFast)

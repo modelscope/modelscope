@@ -200,6 +200,7 @@ class Models(object):
     eres2net_sv = 'eres2net-sv'
     eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
+    scl_sd_xvector = 'scl-sd-xvector'
     campplus_lre = 'cam++-lre'
     eres2net_lre = 'eres2net-lre'
     cluster_backend = 'cluster-backend'

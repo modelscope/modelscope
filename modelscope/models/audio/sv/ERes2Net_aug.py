@@ -8,6 +8,7 @@ import math
 import os
 from typing import Any, Dict, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -316,13 +317,18 @@ class SpeakerVerificationERes2Net(TorchModel):
         self.embedding_model.eval()
 
     def forward(self, audio):
-        assert len(audio.shape) == 2 and audio.shape[
-            0] == 1, 'modelscope error: the shape of input audio to model needs to be [1, T]'
-        # audio shape: [1, T]
+        if isinstance(audio, np.ndarray):
+            audio = torch.from_numpy(audio)
+        if len(audio.shape) == 1:
+            audio = audio.unsqueeze(0)
+        assert len(
+            audio.shape
+        ) == 2, 'modelscope error: the shape of input audio to model needs to be [N, T]'
+        # audio shape: [N, T]
         feature = self.__extract_feature(audio)
         embedding = self.embedding_model(feature)
 
-        return embedding
+        return embedding.detach().cpu()
 
     def __extract_feature(self, audio):
         feature = Kaldi.fbank(audio, num_mel_bins=self.feature_dim)

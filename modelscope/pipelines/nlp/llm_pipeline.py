@@ -82,6 +82,11 @@ class LLMPipeline(Pipeline):
         self.cfg = Config.from_file(cfg_file)
         return self.cfg.safe_get('adapter_cfg.tuner_backend') == 'swift'
 
+    def _wrap_infer_framework(self, model_dir, framework='vllm'):
+        if framework == 'vllm':
+            engine_args = AsyncEngineArgs.from_cli_args(args)
+            engine = AsyncLLMEngine.from_engine_args(engine_args)
+
     def __init__(self,
                  format_messages: Union[Callable, str] = None,
                  format_output: Callable = None,

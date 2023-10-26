@@ -1,5 +1,5 @@
 # Make sure to modify __release_datetime__ to release time when making official release.
-__version__ = '1.9.4rc0'
+__version__ = '1.9.4rc1'
 # default release datetime for branches under active development is set
 # to be a time far-far-away-into-the-future
-__release_datetime__ = '2023-10-27 00:00:00'
+__release_datetime__ = '2023-10-28 00:00:00'

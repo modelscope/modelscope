@@ -824,3 +824,13 @@ class MsDataset:
             self._hf_ds.reset_format()
             self._hf_ds.set_format(type='torch')
         return
+
+
+if __name__ == '__main__':
+
+    # TODO: 尝试断网环境加载本地缓存
+    ds = MsDataset.load(
+        'damo/ICDAR13_HCTR_Dataset',
+        subset_name='ICDAR13_HCTR_Dataset',
+        split='validation')
+    print(next(iter(ds)))

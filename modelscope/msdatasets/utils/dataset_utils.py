@@ -4,6 +4,7 @@ import os
 from collections import defaultdict
 from typing import Optional, Union
 
+import json
 import pandas as pd
 
 from modelscope.hub.api import HubApi
@@ -79,9 +80,25 @@ def get_target_dataset_structure(dataset_structure: dict,
     return target_subset_name, target_dataset_structure
 
 
-def list_dataset_objects(hub_api: HubApi, max_limit: int, is_recursive: bool,
-                         dataset_name: str, namespace: str,
-                         version: str) -> list:
+def get_local_meta_objects(meta_file_path: str) -> list:
+    objects_list = []
+    with open(meta_file_path, 'r') as f:
+        meta_dict = json.load(f)
+
+    for sub_name, splits_d in meta_dict.items():
+        for split_name, split_d in splits_d.items():
+            objects_list.append(split_d['file'])
+
+    return [{'Key': obj} for obj in objects_list if obj]
+
+
+def list_dataset_objects(hub_api: HubApi,
+                         max_limit: int,
+                         is_recursive: bool,
+                         dataset_name: str,
+                         namespace: str,
+                         version: str,
+                         meta_cache_dir: str = '') -> list:
     """
     List all objects for specific dataset.
 
@@ -92,18 +109,27 @@ def list_dataset_objects(hub_api: HubApi, max_limit: int, is_recursive: bool,
         dataset_name (str): Dataset name.
         namespace (str): Namespace.
         version (str): Dataset version.
+        meta_cache_dir(str): meta cache local dir
     Returns:
         res (list): List of objects, i.e., ['train/images/001.png', 'train/images/002.png', 'val/images/001.png', ...]
     """
-    res = []
-    objects = hub_api.list_oss_dataset_objects(
-        dataset_name=dataset_name,
-        namespace=namespace,
-        max_limit=max_limit,
-        is_recursive=is_recursive,
-        is_filter_dir=True,
-        revision=version)
+    objects = []
+    try:
+        meta_json_path = os.path.join(meta_cache_dir, dataset_name + '.json')
+        objects = get_local_meta_objects(meta_json_path)
+    except Exception as e:
+        logger.error(e)
 
+    if len(objects) == 0:
+        objects = hub_api.list_oss_dataset_objects(
+            dataset_name=dataset_name,
+            namespace=namespace,
+            max_limit=max_limit,
+            is_recursive=is_recursive,
+            is_filter_dir=True,
+            revision=version)
+
+    res = []
     for item in objects:
         object_key = item.get('Key')
         if not object_key:
@@ -225,6 +251,16 @@ def get_dataset_files(subset_split_into: dict,
 
             file_map[split] = objects
     # More general but low-efficiency.
+
+    # Try to get objects info from local cache.
+    # if not objects:
+    #     try:
+    #         meta_json_path = os.path.join(meta_cache_dir, dataset_name + '.json')
+    #         objects = get_local_meta_objects(meta_json_path)
+    #     except Exception as e:
+    #         logger.info('>>>Get local meta objects failed !\n')
+    #         logger.error(e)
+
     if not objects:
         objects = list_dataset_objects(
             hub_api=modelscope_api,
@@ -232,7 +268,8 @@ def get_dataset_files(subset_split_into: dict,
             is_recursive=True,
             dataset_name=dataset_name,
             namespace=namespace,
-            version=revision)
+            version=revision,
+            meta_cache_dir=meta_cache_dir)
         if contains_dir(file_map):
             file_map = get_split_objects_map(file_map, objects)
 

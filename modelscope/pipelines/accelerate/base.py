@@ -10,7 +10,7 @@ from modelscope.utils.config import Config
 
 class InferFramework:
 
-    def __init__(self, model_id_or_dir, **kwargs):
+    def __init__(self, model_id_or_dir: str, **kwargs):
         """
         Args:
             model_id_or_dir(`str`): The model id of the modelhub or a local dir containing model files.
@@ -39,26 +39,40 @@ class InferFramework:
                 f'Model accelerating not supported: {model_id_or_dir}')
 
     @abstractmethod
-    def __call__(self, prompts: Union[List[str], List[List[int]]], **kwargs) -> List[str]:
+    def __call__(self, prompts: Union[List[str], List[List[int]]],
+                 **kwargs) -> List[str]:
         """
         Args:
-            prompts (`List[str]`): The prompts in batch to generate answers.
+            prompts(`Union[List[str], List[List[int]]]`):
+                The string batch or the token list batch to input to the model.
         Returns:
             The answers in list according to the input prompt batch.
         """
         pass
 
-    def model_type_supported(self, model_type):
+    def model_type_supported(self, model_type: str):
         return False
 
     @staticmethod
     def check_gpu_compatibility(major_version: int):
+        """Check the GPU compatibility.
+        """
         major, _ = torch.cuda.get_device_capability()
         return major >= major_version
 
     @classmethod
     def from_pretrained(cls, model_id_or_dir, framework='vllm', **kwargs):
-        from .vllm import Vllm
-        vllm = Vllm(model_id_or_dir, **kwargs)
-        vllm.llm_framework = framework
-        return vllm
+        """Instantiate the model wrapped by an accelerate framework.
+        Args:
+            model_id_or_dir(`str`): The model id of the modelhub or a local dir containing model files.
+            framework(`str`): The framework to use.
+        Returns:
+            The wrapped model.
+        """
+        if framework == 'vllm':
+            from .vllm import Vllm
+            vllm = Vllm(model_id_or_dir, **kwargs)
+            vllm.llm_framework = framework
+            return vllm
+        else:
+            raise ValueError(f'Framework not supported: {framework}')

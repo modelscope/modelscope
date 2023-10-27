@@ -11,6 +11,12 @@ class Vllm(InferFramework):
                  dtype: str = 'auto',
                  quantization: str = None,
                  tensor_parallel_size: int = 1):
+        """
+        Args:
+            dtype: The dtype to use, support `auto`, `float16`, `bfloat16`, `float32`
+            quantization: The quantization bit, default None means do not do any quantization.
+            tensor_parallel_size: The tensor parallel size.
+        """
         super().__init__(model_id_or_dir)
         if not is_vllm_available():
             raise ImportError(
@@ -28,18 +34,25 @@ class Vllm(InferFramework):
             trust_remote_code=True,
             tensor_parallel_size=tensor_parallel_size)
 
-    def __call__(self, prompts: Union[List[str], List[List[int]]], **kwargs) -> List[str]:
+    def __call__(self, prompts: Union[List[str], List[List[int]]],
+                 **kwargs) -> List[str]:
+        """Generate tokens.
+        Args:
+            prompts(`Union[List[str], List[List[int]]]`):
+                The string batch or the token list batch to input to the model.
+            kwargs: Sampling parameters.
+        """
         from vllm import SamplingParams
         sampling_params = SamplingParams(**kwargs)
         if isinstance(prompts[0], str):
             return [
-                output.outputs[0].text
-                for output in self.model.generate(prompts, sampling_params=sampling_params)
+                output.outputs[0].text for output in self.model.generate(
+                    prompts, sampling_params=sampling_params)
             ]
         else:
             return [
-                output.outputs[0].text
-                for output in self.model.generate(prompt_token_ids=prompts, sampling_params=sampling_params)
+                output.outputs[0].text for output in self.model.generate(
+                    prompt_token_ids=prompts, sampling_params=sampling_params)
             ]
 
     def model_type_supported(self, model_type: str):

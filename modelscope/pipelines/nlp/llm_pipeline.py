@@ -158,8 +158,8 @@ class LLMPipeline(Pipeline):
         if self.llm_framework is None:
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)
-            elif hasattr(self.model, 'model') and hasattr(self.model.model,
-                                                          'generate'):
+            elif hasattr(self.model, 'model') and hasattr(
+                    self.model.model, 'generate'):
                 outputs = self.model.model.generate(**tokens, **forward_params)
             else:
                 raise ValueError('model does not support `generate`!')

@@ -442,8 +442,10 @@ TASK_OUTPUTS = {
     Tasks.table_recognition: [OutputKeys.POLYGONS],
     Tasks.lineless_table_recognition: [OutputKeys.POLYGONS, OutputKeys.BOXES],
     Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
-    Tasks.card_detection_correction:
-    [OutputKeys.POLYGONS, OutputKeys.OUTPUT_IMGS],
+    Tasks.card_detection_correction: [
+        OutputKeys.POLYGONS, OutputKeys.SCORES, OutputKeys.OUTPUT_IMGS,
+        OutputKeys.LABELS, OutputKeys.LAYOUT
+    ],
 
     # ocr recognition result for single sample
     # {
@@ -672,9 +674,8 @@ TASK_OUTPUTS = {
     #           np.array # 2D array containing only 0, 1
     #       ]
     #   }
-    Tasks.image_segmentation: [
-        OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS
-    ],
+    Tasks.image_segmentation:
+    [OutputKeys.SCORES, OutputKeys.LABELS, OutputKeys.MASKS],
 
     # video panoptic segmentation result for single sample
     #         "scores": [[0.8, 0.25, 0.05, 0.05], [0.9, 0.1, 0.05, 0.05]]

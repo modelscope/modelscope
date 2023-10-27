@@ -8,9 +8,9 @@ class Vllm(InferFramework):
 
     def __init__(self,
                  model_id_or_dir: str,
-                 dtype: str = None,
+                 dtype: str = 'auto',
                  quantization: str = None,
-                 tensor_parallel_size: int = None):
+                 tensor_parallel_size: int = 1):
         super().__init__(model_id_or_dir)
         if not is_vllm_available():
             raise ImportError(
@@ -18,8 +18,8 @@ class Vllm(InferFramework):
             )
 
         from vllm import LLM
-        if Vllm.check_gpu_compatibility(8) and (dtype is None
-                                                or dtype == 'bfloat16'):
+        if not Vllm.check_gpu_compatibility(8) and (dtype
+                                                    in ('bfloat16', 'auto')):
             dtype = 'float16'
         self.model = LLM(
             self.model_dir,

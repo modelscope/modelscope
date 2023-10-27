@@ -186,7 +186,7 @@ class LLMPipeline(Pipeline):
                                                       'device'):
             device = self.model.model.device
         elif hasattr(self.model, 'llm_framework'):
-            device = 'cuda:0'
+            device = 'cpu'
         else:
             raise ValueError('model does not have `device` attribute!')
         return {k: v.to(device) for k, v in tokens.items()}

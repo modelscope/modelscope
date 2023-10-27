@@ -155,15 +155,19 @@ class LLMPipeline(Pipeline):
         is_messages = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, is_messages, **preprocess_params)
 
-        if hasattr(self.model, 'generate'):
-            outputs = self.model.generate(**tokens, **forward_params)
-        elif hasattr(self.model, 'model') and hasattr(self.model.model,
-                                                      'generate'):
-            outputs = self.model.model.generate(**tokens, **forward_params)
+        if self.llm_framework is None:
+            if hasattr(self.model, 'generate'):
+                outputs = self.model.generate(**tokens, **forward_params)
+            elif hasattr(self.model, 'model') and hasattr(self.model.model,
+                                                          'generate'):
+                outputs = self.model.model.generate(**tokens, **forward_params)
+            else:
+                raise ValueError('model does not support `generate`!')
         else:
-            raise ValueError('model does not support `generate`!')
+            outputs = self.model(tokens, **forward_params)
 
-        outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
+        if not isinstance(outputs, str):
+            outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
         response = self.postprocess(outputs, is_messages, **postprocess_params)
         return response
 
@@ -187,8 +191,11 @@ class LLMPipeline(Pipeline):
 
     def postprocess(self, outputs, is_messages: bool, **kwargs):
 
-        response = self.tokenizer.decode(
-            outputs, skip_special_tokens=True, **kwargs)
+        if not isinstance(outputs, str):
+            response = self.tokenizer.decode(
+                outputs, skip_special_tokens=True, **kwargs)
+        else:
+            response = outputs
         if is_messages:
             response = self.format_output(response, **kwargs)
         else:

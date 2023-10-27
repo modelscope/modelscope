@@ -1,6 +1,6 @@
 import os.path
 from abc import abstractmethod
-from typing import List
+from typing import List, Union
 
 import torch.cuda
 
@@ -39,7 +39,7 @@ class InferFramework:
                 f'Model accelerating not supported: {model_id_or_dir}')
 
     @abstractmethod
-    def __call__(self, prompts: List[str], **kwargs) -> List[str]:
+    def __call__(self, prompts: Union[List[str], List[List[int]]], **kwargs) -> List[str]:
         """
         Args:
             prompts (`List[str]`): The prompts in batch to generate answers.

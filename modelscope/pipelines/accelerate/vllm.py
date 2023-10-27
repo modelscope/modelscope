@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from modelscope.pipelines.accelerate.base import InferFramework
 from modelscope.utils.import_utils import is_vllm_available
@@ -25,15 +25,22 @@ class Vllm(InferFramework):
             self.model_dir,
             dtype=dtype,
             quantization=quantization,
+            trust_remote_code=True,
             tensor_parallel_size=tensor_parallel_size)
 
-    def __call__(self, prompts: List[str], **kwargs) -> List[str]:
+    def __call__(self, prompts: Union[List[str], List[List[int]]], **kwargs) -> List[str]:
         from vllm import SamplingParams
         sampling_params = SamplingParams(**kwargs)
-        return [
-            output.outputs[0].text
-            for output in self.model.generate(prompts, sampling_params)
-        ]
+        if isinstance(prompts[0], str):
+            return [
+                output.outputs[0].text
+                for output in self.model.generate(prompts, sampling_params=sampling_params)
+            ]
+        else:
+            return [
+                output.outputs[0].text
+                for output in self.model.generate(prompt_token_ids=prompts, sampling_params=sampling_params)
+            ]
 
     def model_type_supported(self, model_type: str):
         return any([

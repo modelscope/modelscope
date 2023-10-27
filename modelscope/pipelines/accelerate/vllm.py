@@ -27,8 +27,6 @@ class Vllm(InferFramework):
             quantization=quantization,
             trust_remote_code=True,
             tensor_parallel_size=tensor_parallel_size)
-        self.model.model_dir = self.model_dir
-        self.model.llm_framework = 'vllm'
 
     def __call__(self, prompts: Union[List[str], List[List[int]]], **kwargs) -> List[str]:
         from vllm import SamplingParams

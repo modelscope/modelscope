@@ -59,4 +59,6 @@ class InferFramework:
     @classmethod
     def from_pretrained(cls, model_id_or_dir, framework='vllm', **kwargs):
         from .vllm import Vllm
-        return Vllm(model_id_or_dir, **kwargs)
+        vllm = Vllm(model_id_or_dir, **kwargs)
+        vllm.llm_framework = framework
+        return vllm

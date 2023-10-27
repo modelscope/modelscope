@@ -164,7 +164,8 @@ class LLMPipeline(Pipeline):
             else:
                 raise ValueError('model does not support `generate`!')
         else:
-            outputs = self.model(tokens, **forward_params)
+            tokens = [list(tokens['inputs'].flatten().numpy())]
+            outputs = self.model(tokens, **forward_params)[0]
 
         if not isinstance(outputs, str):
             outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]

@@ -30,6 +30,10 @@ class LLMPipeline(Pipeline):
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
         if self._is_swift_model(model):
+            if self.llm_framework is not None:
+                logger.warning(
+                    f'Cannot using swift with llm_framework, ignoring {self.llm_framework}.'
+                )
             from swift import Swift
 
             base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
@@ -45,9 +49,15 @@ class LLMPipeline(Pipeline):
                 trust_remote_code=True)
             swift_model = Swift.from_pretrained(base_model, model_id=model)
             return swift_model
+
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
-            if is_model(model):
+            if self.llm_framework is not None:
+                model_dir = model if os.path.exists(
+                    model) else snapshot_download(model)
+                return self._wrap_infer_framework(model_dir,
+                                                  self.llm_framework)
+            elif is_model(model):
                 return Model.from_pretrained(
                     model,
                     invoked_by=Invoke.PIPELINE,
@@ -83,17 +93,18 @@ class LLMPipeline(Pipeline):
         return self.cfg.safe_get('adapter_cfg.tuner_backend') == 'swift'
 
     def _wrap_infer_framework(self, model_dir, framework='vllm'):
-        if framework == 'vllm':
-            engine_args = AsyncEngineArgs.from_cli_args(args)
-            engine = AsyncLLMEngine.from_engine_args(engine_args)
+        from modelscope.pipelines.accelerate.base import InferFramework
+        return InferFramework.from_pretrained(model_dir, framework)
 
     def __init__(self,
                  format_messages: Union[Callable, str] = None,
                  format_output: Callable = None,
                  tokenizer: PreTrainedTokenizer = None,
+                 llm_framework: str = None,
                  *args,
                  **kwargs):
         self.device_map = kwargs.pop('device_map', None)
+        self.llm_framework = llm_framework
         # TODO: qwen-int4 need 'cuda'/'auto' device_map.
         if not self.device_map and 'qwen' in kwargs['model'].lower():
             self.device_map = 'cuda'

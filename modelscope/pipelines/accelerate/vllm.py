@@ -27,21 +27,6 @@ class Vllm(InferFramework):
             quantization=quantization,
             tensor_parallel_size=tensor_parallel_size)
 
-        self.supported_models = [
-            'llama',
-            'baichuan',
-            'internlm',
-            'mistral',
-            'aquila',
-            'bloom',
-            'falcon',
-            'gpt',
-            'mpt',
-            'opt',
-            'qwen',
-            'aquila',
-        ]
-
     def __call__(self, prompts: List[str], **kwargs) -> List[str]:
         from vllm import SamplingParams
         sampling_params = SamplingParams(**kwargs)
@@ -51,5 +36,19 @@ class Vllm(InferFramework):
         ]
 
     def model_type_supported(self, model_type: str):
-        return any(
-            [model in model_type.lower() for model in self.supported_models])
+        return any([
+            model in model_type.lower() for model in [
+                'llama',
+                'baichuan',
+                'internlm',
+                'mistral',
+                'aquila',
+                'bloom',
+                'falcon',
+                'gpt',
+                'mpt',
+                'opt',
+                'qwen',
+                'aquila',
+            ]
+        ])

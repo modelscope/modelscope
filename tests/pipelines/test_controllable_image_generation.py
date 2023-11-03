@@ -25,7 +25,8 @@ class ControllableImageGenerationTest(unittest.TestCase):
             'prompt': 'flower'
         }
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2,
+                         'skip test for huggingface model download issue.')
     def test_run_with_model_from_modelhub(self):
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         control_types = [

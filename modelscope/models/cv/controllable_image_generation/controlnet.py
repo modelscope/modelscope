@@ -22,6 +22,8 @@ from modelscope.metainfo import Models
 from modelscope.models.base import Tensor
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -88,7 +90,11 @@ class ControlNet(TorchModel):
         if device == 'gpu':
             device = 'cuda'
         model = create_model(yaml_path).cpu()
-        model.load_state_dict(load_state_dict(ckpt_path, location=device))
+        state_dict = load_state_dict(ckpt_path, location=device)
+        compatible_position_ids(
+            state_dict,
+            'cond_stage_model.transformer.text_model.embeddings.position_ids')
+        model.load_state_dict(state_dict)
         self.model = model.to(device)
         self.ddim_sampler = DDIMSampler(self.model)
 

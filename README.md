@@ -53,70 +53,64 @@ Some representative examples include:
 
 NLP:
 
-* [nlp_gpt3_text-generation_2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
+* [ChatGLM3-6B](https://modelscope.cn/models/ZhipuAI/chatglm3-6b/summary)
 
-* [ChatYuan-large](https://modelscope.cn/models/ClueAI/ChatYuan-large)
+* [Qwen-14B-Chat](https://modelscope.cn/models/qwen/Qwen-14B-Chat/summary)
 
-* [mengzi-t5-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
+* [Baichuan2-13B-Chat](https://modelscope.cn/models/baichuan-inc/Baichuan2-13B-Chat/summary)
 
-* [nlp_csanmt_translation_en2zh](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
+* [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
 
-* [nlp_raner_named-entity-recognition_chinese-base-news](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
+* [Internlm-chat-20b](https://modelscope.cn/models/Shanghai_AI_Laboratory/internlm-chat-20b/summary)
 
-* [nlp_structbert_word-segmentation_chinese-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
+* [Udever Multilingual Universal Text Representation Model 1b1](https://modelscope.cn/models/damo/udever-bloom-1b1/summary)
 
-* [Erlangshen-RoBERTa-330M-Sentiment](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
+* [CoROM Text Vector - Chinese - E-commerce Domain - Base](https://modelscope.cn/models/damo/nlp_corom_sentence-embedding_chinese-base-ecom/summary)
 
-* [nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
+* [MGeo Address Similarity Matching Entity Alignment - Chinese - Address Field - Base](https://modelscope.cn/models/damo/mgeo_geographic_entity_alignment_chinese_base/summary)
 
 Multi-Modal:
 
-* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [Qwen-VL-Chat](https://modelscope.cn/models/qwen/Qwen-VL-Chat/summary)
 
-* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [CogVLM](https://modelscope.cn/models/ZhipuAI/CogVLM/summary)
 
-* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [Text-to-Video Synthesis Large Model - English - General Domain](https://modelscope.cn/models/damo/text-to-video-synthesis/summary)
 
-* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [I2VGen-XL High Definition Image to Video Large Model](https://modelscope.cn/models/damo/Image-to-Video/summary)
+
+* [I2VGen-XL High Definition Video to Video Large Model](https://modelscope.cn/models/damo/Video-to-Video/summary)
 
 CV:
 
-* [cv_controlnet_controllable-image-generation_nine-annotators](https://modelscope.cn/models/dienstag/cv_controlnet_controllable-image-generation_nine-annotators/summary)
+* [DamoFD Face Detection Key Point Model - 0.5G](https://modelscope.cn/models/damo/cv_ddsar_face-detection_iclr23-damofd/summary)
 
-* [cv_tinynas_object-detection_damoyolo](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
+* [BSHM Portrait Matting](https://modelscope.cn/models/damo/cv_unet_image-matting/summary)
 
-* [cv_unet_person-image-cartoon_compound-models](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
+* [DCT-Net Portrait Cartoonization - 3D](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon-3d_compound-models/summary)
 
-* [cv_convnextTiny_ocr-recognition-general_damo](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
+* [DCT-Net Portrait Cartoonization Model - 3D](https://modelscope.cn/models/damo/face_chain_control_model/summary)
 
-* [cv_resnet18_human-detection](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
+* [DuGuang - Text Recognition - Line Recognition Model - Chinese and English - General Domain](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo/summary)
 
-* [cv_resnet50_face-detection_retinaface](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
+* [DuGuang - Text Recognition - Line Recognition Model - Chinese and English - General Domain](https://modelscope.cn/models/damo/cv_resnet18_ocr-detection-line-level_damo/summary)
 
-* [cv_unet_image-matting](https://modelscope.cn/models/damo/cv_unet_image-matting)
-
-* [cv_F3Net_product-segmentation](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
-
-* [cv_resnest101_general_recognition](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
+* [LaMa Image Inpainting](https://modelscope.cn/models/damo/cv_fft_inpainting_lama/summary)
 
 
 Audio:
 
-* [speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [Paraformer Speech Recognition - Chinese - General - 16k - Offline - Large - Long Audio Version](https://modelscope.cn/models/damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch/summary)
 
-* [speech_sambert-hifigan_tts_zh-cn_16k](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [FSMN Voice Endpoint Detection - Chinese - General - 16k - onnx](https://modelscope.cn/models/damo/speech_fsmn_vad_zh-cn-16k-common-onnx/summary)
 
-* [speech_charctc_kws_phone-xiaoyun](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [Monotonic-Aligner Speech Timestamp Prediction - 16k - Offline](https://modelscope.cn/models/damo/speech_timestamp_prediction-v1-16k-offline/summary)
 
-* [u2pp_conformer-asr-cn-16k-online](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+* [CT-Transformer Punctuation - Chinese - General - onnx](https://modelscope.cn/models/damo/punc_ct-transformer_zh-cn-common-vocab272727-onnx/summary)
 
-* [speech_fsmn_vad_zh-cn-16k-common-pytorch](https://modelscope.cn/models/damo/speech_fsmn_vad_zh-cn-16k-common-pytorch/summary)
+* [Speech Synthesis - Chinese - Multiple Emotions Domain - 16k - Multiple Speakers](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k/summary)
 
-* [punc_ct-transformer_zh-cn-common-vocab272727-pytorch](https://modelscope.cn/models/damo/punc_ct-transformer_zh-cn-common-vocab272727-pytorch/summary)
-
-* [speech_frcrn_ans_cirm_16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
-
-* [speech_dfsmn_aec_psm_16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
+* [CAM++ Speaker Verification - Chinese - General - 200k-Spkrs](https://modelscope.cn/models/damo/speech_campplus_sv_zh-cn_16k-common/summary)
 
 
 

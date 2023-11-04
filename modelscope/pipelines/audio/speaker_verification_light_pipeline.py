@@ -50,6 +50,7 @@ class SpeakerVerificationPipeline(Pipeline):
         self.model_config = self.model.model_config
         self.config = self.model.other_config
         self.thr = self.config['yesOrno_thr']
+        self.save_dict = {}
 
     def __call__(self,
                  in_audios: Union[np.ndarray, list],
@@ -66,7 +67,9 @@ class SpeakerVerificationPipeline(Pipeline):
         embs = self.forward(wavs)
         outputs = self.postprocess(embs, in_audios, save_dir)
         if output_emb:
-            return outputs, embs.numpy()
+            self.save_dict['outputs'] = outputs
+            self.save_dict['embs'] = embs.numpy()
+            return self.save_dict
         else:
             return outputs
 

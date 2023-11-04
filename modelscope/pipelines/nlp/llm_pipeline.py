@@ -156,6 +156,7 @@ class LLMPipeline(Pipeline):
         tokens = self.preprocess(inputs, is_messages, **preprocess_params)
 
         if self.llm_framework is None:
+            # pytorch model
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)
             elif hasattr(self.model, 'model') and hasattr(
@@ -167,7 +168,8 @@ class LLMPipeline(Pipeline):
             tokens = [list(tokens['inputs'].flatten().numpy())]
             outputs = self.model(tokens, **forward_params)[0]
 
-        if not isinstance(outputs, str):
+        if self.llm_framework is None:
+            # pytorch model
             outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
         response = self.postprocess(outputs, is_messages, **postprocess_params)
         return response

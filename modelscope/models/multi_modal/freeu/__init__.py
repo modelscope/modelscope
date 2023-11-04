@@ -4,16 +4,15 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbone import BloomModel
-    from .text_generation import BloomForTextGeneration
-    from .sentence_embedding import BloomForSentenceEmbedding
+    from .free_lunch_utils import register_free_upblock2d, register_free_crossattn_upblock2d
 else:
     _import_structure = {
-        'backbone': ['BloomModel'],
-        'text_generation': ['BloomForTextGeneration'],
-        'sentence_embedding': ['BloomForSentenceEmbedding']
+        'free_lunch_utils':
+        ['register_free_upblock2d', 'register_free_crossattn_upblock2d']
     }
+
     import sys
+
     sys.modules[__name__] = LazyImportModule(
         __name__,
         globals()['__file__'],

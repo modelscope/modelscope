@@ -232,13 +232,13 @@ def nms(dets, thresh):
     keep = []
     for i in range(len(dets)):
         box = dets[i]
-        if box[-1] < thresh:
+        if box[8] < thresh:
             break
         max_score_index = -1
         ctx = (dets[i][0] + dets[i][2] + dets[i][4] + dets[i][6]) / 4
         cty = (dets[i][1] + dets[i][3] + dets[i][5] + dets[i][7]) / 4
         for j in range(len(dets)):
-            if i == j or dets[j][-1] < thresh:
+            if i == j or dets[j][8] < thresh:
                 break
             x1, y1 = dets[j][0], dets[j][1]
             x2, y2 = dets[j][2], dets[j][3]

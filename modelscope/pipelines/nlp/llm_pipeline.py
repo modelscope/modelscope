@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import os.path as osp
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import json
 import torch
@@ -20,6 +21,57 @@ from modelscope.utils.constant import Invoke, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+
+class ModelTypeHelper:
+
+    @staticmethod
+    def _get_file_name(model: str, cfg_name: str,
+                       revision: Optional[str]) -> Optional[str]:
+        if osp.exists(model):
+            return osp.join(model, cfg_name)
+        try:
+            return model_file_download(model, cfg_name, revision=revision)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _parse_and_get(file: Optional[str], pattern: str) -> Optional[str]:
+        if file is None or not osp.exists(file):
+            return None
+        return Config.from_file(file).safe_get(pattern)
+
+    @classmethod
+    def _get(cls, model: str, revision: Optional[str]) -> Optional[str]:
+        cfg_file = cls._get_file_name(model, ModelFile.CONFIGURATION, revision)
+        hf_cfg_file = cls._get_file_name(model, ModelFile.CONFIG, revision)
+        cfg_model_type = cls._parse_and_get(cfg_file, 'model.type')
+        hf_cfg_model_type = cls._parse_and_get(hf_cfg_file, 'model_type')
+        return cfg_model_type or hf_cfg_model_type
+
+    @classmethod
+    def _get_adapter(cls, model: str,
+                     revision: Optional[str]) -> Optional[str]:
+        cfg_file = cls._get_file_name(model, ModelFile.CONFIGURATION, revision)
+        model = cls._parse_and_get(cfg_file, 'adapter_cfg.model_id_or_path')
+        revision = cls._parse_and_get(cfg_file, 'adapter_cfg.model_revision')
+        return None if model is None else cls._get(model, revision)
+
+    @classmethod
+    def get(cls,
+            model: str,
+            revision: Optional[str] = None,
+            with_adapter: bool = False,
+            split: Optional[str] = None) -> Optional[str]:
+        model_type = cls._get(model, revision)
+        if model_type is None and with_adapter:
+            model_type = cls._get_adapter(model, revision)
+        if model_type is None:
+            return None
+        model_type = model_type.lower()
+        if split is None:
+            return model_type
+        return model_type.split(split)[0]
 
 
 @PIPELINES.register_module(Tasks.chat, module_name='llm')
@@ -105,8 +157,7 @@ class LLMPipeline(Pipeline):
                 format_messages]
 
         if format_messages is None:
-            model_type = self.cfg.safe_get('model.type',
-                                           '').lower().split('-')[0]
+            model_type = ModelTypeHelper.get(self.model.model_dir, split='-')
             if model_type in LLM_FORMAT_MAP:
                 format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
                     model_type]
@@ -167,7 +218,10 @@ class LLMPipeline(Pipeline):
             device = self.model.model.device
         else:
             raise ValueError('model does not have `device` attribute!')
-        return {k: v.to(device) for k, v in tokens.items()}
+        return {
+            k: (v.to(device) if isinstance(v, torch.Tensor) else v)
+            for k, v in tokens.items()
+        }
 
     def postprocess(self, outputs, is_messages: bool, **kwargs):
 
@@ -460,6 +514,19 @@ def wizardcode_format_messages(messages, tokenizer, **kwargs):
     return inputs
 
 
+def chatglm3_format_messages(messages, tokenizer, **kwargs):
+    messages = messages['messages']
+    query, history = messages[-1]['content'], messages[:-1]
+    inputs = tokenizer.build_chat_input(query, history=history)
+    eos_token_id = [
+        tokenizer.eos_token_id,
+        tokenizer.get_command('<|user|>'),
+        tokenizer.get_command('<|observation|>')
+    ]
+    inputs['eos_token_id'] = eos_token_id
+    return inputs
+
+
 LLM_FORMAT_MAP = {
     'chatglm2':
     (chatglm2_format_messages, chatglm2_format_output, ChatGLM2Tokenizer),
@@ -469,5 +536,6 @@ LLM_FORMAT_MAP = {
     'baichuan': (baichuan_format_messages, None, None),
     'baichuan2': (baichuan_format_messages, None, None),
     'wizardlm': (wizardlm_format_messages, None, None),
-    'wizardcode': (wizardcode_format_messages, None, None)
+    'wizardcode': (wizardcode_format_messages, None, None),
+    'chatglm': (chatglm3_format_messages, chatglm2_format_output, None),
 }

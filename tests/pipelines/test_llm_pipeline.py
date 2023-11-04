@@ -153,6 +153,13 @@ class LLMPipelineTest(unittest.TestCase):
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_chatglm3(self):
+        pipe = pipeline(
+            task='chat', model='ZhipuAI/chatglm3-6b', llm_first=True)
+        print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_llama2(self):
         pipe = pipeline(
             task='chat',

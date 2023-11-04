@@ -126,6 +126,8 @@ class ASRTrainer(BaseTrainer):
             cfg_dict['cmvn_file'] = os.path.join(
                 cur_dir, config['model']['model_config']['mvn_file'])
             cfg_dict['seg_dict'] = os.path.join(cur_dir, 'seg_dict')
+            cfg_dict['bpemodel'] = os.path.join(
+                cur_dir, config['model']['model_config']['bpemodel'])
             if 'init_model' in config['model']['model_config']:
                 cfg_dict['init_model'] = os.path.join(
                     cur_dir, config['model']['model_config']['init_model'])

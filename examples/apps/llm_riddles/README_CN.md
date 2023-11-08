@@ -1,7 +1,7 @@
 # 完蛋！我被LLM包围了！(LLMRiddles)
 
 ## 项目简介
-《完蛋！我被LLM包围了！》是一款智力挑战游戏。该项目利用gpt4, 基于ModelScope社区内现有的LLM对话Gradio应用程序代码，结合知乎文章[《如何用“不可能”完成任务》](https://zhuanlan.zhihu.com/p/665393240)中的预设问题，自动生成了对应的游戏代码，创造了一个独特的游戏体验。在这个游戏中，玩家需要巧妙构造问题，挑战LLM给出满足特定条件的回答。
+《完蛋！我被LLM包围了！》是一款智力挑战游戏。该项目利用LLM代码生成, 基于ModelScope社区内现有的LLM对话Gradio应用程序代码，结合知乎文章[《如何用“不可能”完成任务》](https://zhuanlan.zhihu.com/p/665393240)中的预设问题，自动生成了对应的游戏代码，创造了一个独特的游戏体验。在这个游戏中，玩家需要巧妙构造问题，挑战LLM给出满足特定条件的回答。
 
 
 ## 更新
@@ -45,7 +45,7 @@
 我们诚挚感谢所有对本项目做出贡献的社区成员，特别是：
 
 - idea来源: [haoqiangfan](https://www.zhihu.com/people/haoqiang-fan)
-- 代码大部分来自于GPT4自动生成
+- 代码大部分来自于LLM自动生成
 
 ## 支持
 如果你在游戏过程中遇到任何问题或需要帮助，请通过项目的[Issues页面](https://github.com/modelscope/modelscope/issues)提交你的问题。

@@ -76,8 +76,8 @@ class DashScope:
             return response.output.choices[0].message.content
         else:
             print('Error accessing dashscope, please try again.',
-                  response.message)
-            return None
+                  response.request_id, response.message)
+            return ''
 
 
 def create_model(model_name: str):

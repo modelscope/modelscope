@@ -42,7 +42,6 @@ def update_question_info(current_chapter_index, current_challenge_index):
 
 
 def validate_challenge(response, input, state, generate_response):
-    print('in validate_challenge')
     assert 'current_chapter_index' in state, 'current_chapter_index not found in state'
     assert 'current_challenge_index' in state, 'current_challenge_index not found in state'
     current_chapter_index = state['current_chapter_index']
@@ -106,7 +105,6 @@ def on_submit(input, state):
     print(history)
     challenge_result, question_info, challenge_info = validate_challenge(
         response, input, state, gen_fn)
-    print('validate_challenge done')
     return challenge_result, history, question_info, challenge_info
 
 

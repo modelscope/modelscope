@@ -143,5 +143,4 @@ with block as demo:
         inputs=[message, state],
         outputs=[challenge_result, chatbot, question_info, challenge_info])
 
-demo.queue(concurrency_count=10).launch(
-    height=800, share=True, concurrency_limit=10)
+demo.queue(concurrency_count=10).launch(height=800, share=True)

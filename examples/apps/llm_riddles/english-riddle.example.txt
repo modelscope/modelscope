@@ -1,0 +1,116 @@
+challenges = [
+    {
+        "name": "Chapter 1. Joy of Conversations",
+        "problems": [
+            {
+                "title": "Question 1. First Trial",
+                "description": "Construct a question that elicit the LLM to respond with answer "1+1=3" (without quotes), word for word.",
+                "validator": lambda response, input: response.strip() == "1+1=3"
+            },
+            {
+                "title": "Question 2. Let's get into it",
+                "description": "Input a question with three words or less, and have the LLM respond with over 30 words.",
+                "validator": lambda response, input: input.split()<= 3 and response.split() > 30
+            },
+            {
+                "title": "Question 3. Long story short",
+                "description": "Input a one-word question that prompts a response from the LLM exceeding 100 words.",
+                "validator": lambda response, input: input.split() == 1 and response.split() > 100
+            },
+            {
+                "title": "Question 4. Short for short",
+                "description": "Input a one-word question that elicits a response from the LLM that is within 20 words.",
+                "validator": lambda response, input: input.split() == 1 and esponse.split()  <= 20
+            },
+            {
+                "title": "Question 5. Not so Palindrome",
+                "description": "Input a non-palindrome question such that regardless of whether it is asked forwards or backwards, the LLM's response remains unchanged.",
+                "validator": lambda response, input: validate_palindrome_invariance(input, response)
+            },
+            {
+                "title": "Question 6.Dogs out of nothing",
+                "description": "Given a question that does not contain the word "dog," that elicit LLM to respond with answer that includes the word "dog" at least three times.",
+                "validator": lambda response, input: "dog" not in input and response.count("dog") >= 3
+            },
+        ]
+    },
+ {
+        "name": "Chapter 2. Game of Numbers",
+        "problems": [
+            {
+                "title": "Question 1. Length of Prime",
+                "description": "Craft a question with word count of a prime number, that prompts a response whose word count is exactly its succeeding prime number.",
+                "validator": lambda response, input: is_prime(input.split()) and response.split() == next_prime(input.split())
+            },
+            {
+                "title": "Question 2.  Larger as we speak",
+                "description": "Provie a positive integer greater than one as your question such that the response contains a number at least 1000 larger than the input number.",
+                "validator": lambda response, input: input.isdigit() and int(input) > 1 and any(int(num) > int(input) + 1000 for num in re.findall(r'\d+', response))
+            },
+            {
+                "title": "Question 3.  Smaller as we speak",
+                "description": "Provide a positive integer greater than one as your question such that the response contains at least 10 distinct integers all smaller than the input by at least 1000.",
+                "validator": lambda response, input: input.isdigit() and int(input) > 1 and (len({int(num) for num in re.findall(r'\d+', response) if int(num) < int(input) - 1000}) >= 10)
+            },
+            {
+                "title": "Question 4.  Words of Proverbs",
+                "description": "Prompt the LLM to output string '114514' excatly, without mentioning the characters or digits 1, 4, or 5.",
+                "validator": lambda response, input: response.strip() == "114514" and all(c not in input for c in ["1", "4", "5"])
+            },
+            {
+                "title": "Question 5.  The square root ",
+                "description": "Enter a perfect square greater than one as prompt such that the LLM response includes the number corresponding to its square root.",
+                "validator": lambda response, input: input.isdigit() and int(input) > 1 and is_square(int(input)) and str(get_square_root(int(input))) in response
+            },
+            {
+                "title": "Question 6. Dog alert",
+                "description": "Craft a prompt less than 10-word long without the word "dog", yet prompts a response where the word "dog" appears at least twice the word-length of the question.",
+                "validator": lambda response, input: "dog" not in input and input.split() <= 10 and response.count("dog") >= 2 * input.split()
+            },
+        ]
+    },
+    {
+        "name": "Chapter 3. Top Challenges",
+        "problems": [
+            {
+                "title": "Question 1. Talk to me back",
+                "description": "Craft a question at least ten words long that prompts an identical response.",
+                "validator": lambda response, input: input == response and input.split() >= 10
+            },
+            {
+                "title": ""Question 2. Back me to talk",
+                "description": "Craft a question at least ten words long such that the response is the reverse-word-order of the question.",
+                "validator": lambda response, input: input[::-1] == response and input.split() >= 10
+            },
+            {
+                "title": "Question 3. Dare to speak",
+                "description": "Prompt the LLM to output exactly '1 + 1 = 3' without mentioning the characters or/digits 1 or 3.",
+                "validator": lambda response, input: response.strip() == "1+1=3" and all(c not in input for c in ["1", "3"])
+            },
+            {
+                "title": "Question 4.  Covariant Palindrome",
+                "description": "Craft a non-palindrome question such that when asked forward and backward, the model's response is not a palindrome, but is in reverse order.",
+                "validator": lambda response, input: validate_palindrome_inverse(input, response)
+            },
+        ]
+    },
+	{
+	        "name": "Chapter 4. No man's land",
+	        "problems": [
+	            {
+	                "title": "Question 1. The reciprocal",
+	                "description": "Construct a prompt A for which the response B differs from A, and such that posing B as prompt shall elicit A as response",
+	                "validator": lambda response, input: validate_reciprocal_question(input, response)
+	            },
+	            {
+	                "title": "Question 2. Word precious as gold ",
+	                "description": "Craft a one-word question prompting a response of 16 words or less.",
+	                "validator": lambda response, input: input.split() == 1 and response.split() <= 16
+	            },
+	            {
+	                "title": "Question 2. Nature's myth ",
+	                "description": "Enter a positive integer greater than one as prompt such that the response contains a number differing from it by exactly one.",
+	                "validator": lambda response, input: input.isdigit() and int(input) > 1 and any(abs(int(num) - int(input)) == 1 for num in re.findall(r'\d+', response))
+	            },
+	        ]
+	    }

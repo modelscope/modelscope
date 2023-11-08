@@ -93,7 +93,9 @@ def generate_response(input, model_name):
     try:
         return model(input)
     except RuntimeError as e:
-        gr.Error(str(e))
+        # if exception happens, print error in log and return empty str
+        print(e)
+        return ''
 
 
 def on_submit(input, state):

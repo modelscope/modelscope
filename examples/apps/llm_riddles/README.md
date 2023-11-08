@@ -3,6 +3,10 @@
 ## Project Introduction
 "Oh No! I'm Surrounded by LLMs!" is an intellectual challenge game. We use GPT4 to automatically generate corresponding game code based on existing Large Language Model (LLM) dialogue Gradio application codes within the ModelScope community, combined with preset questions from the Zhihu article ["How to Accomplish Tasks with 'Impossible'"](https://zhuanlan.zhihu.com/p/665393240), creating a unique gameplay experience. In this stream, players are required to cleverly construct questions that challenge the LLM to provide answers that meet specific conditions.
 
+## News
+November 7, 2023 - Released the initial demo version 🔥
+November 8, 2023 - Segregated level modules and LLM, enabling independent integration of levels and LLM. Pull Requests welcome 🔥 🔥
+
 ## Getting Started
 
 ### Online Experience

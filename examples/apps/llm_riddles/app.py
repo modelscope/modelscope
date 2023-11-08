@@ -94,7 +94,7 @@ def generate_response(input, model_name):
         return model(input)
     except RuntimeError as e:
         # if exception happens, print error in log and return empty str
-        print(e)
+        print('error', e)
         return ''
 
 
@@ -143,4 +143,5 @@ with block as demo:
         inputs=[message, state],
         outputs=[challenge_result, chatbot, question_info, challenge_info])
 
-demo.queue().launch(height=800, share=True)
+demo.queue(concurrency_count=10).launch(
+    height=800, share=True, concurrency_limit=10)

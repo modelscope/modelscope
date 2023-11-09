@@ -1,3 +1,4 @@
 dashscope
 gradio==3.39.0
+pillow
 sympy

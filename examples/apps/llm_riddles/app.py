@@ -6,6 +6,7 @@ from http import HTTPStatus
 import dashscope
 import gradio as gr
 import sympy
+import unicodedata
 
 dashscope.api_key = os.getenv('DASHSCOPE_API_KEY')
 
@@ -148,6 +149,17 @@ challenges = [
                 'validator':
                 lambda response, input: '狗' not in input and response.count(
                     '狗') >= 3
+            },
+            {
+                'title':
+                '第7题 魔搭 （🐶）',
+                'description':
+                '请提一个不包含任何中文字符、换行或空格的问题，使模型正好回答"魔搭"。',
+                'validator':
+                lambda response, input: not any('CJK' in unicodedata.name(
+                    char, '') for char in input) and (
+                    not any(char in '\n\t ' for char in input)) and (
+                    response.strip() == '魔搭')
             },
         ]
     },

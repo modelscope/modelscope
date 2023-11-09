@@ -1,5 +1,6 @@
 import inspect
 import os
+from types import MethodType
 from typing import Any, Optional
 
 from packaging import version
@@ -31,7 +32,8 @@ def fix_upgrade(module_obj: Any):
         if version.parse(transformers.__version__) >= version.parse('4.35.0'):
             if isinstance(module_obj, PreTrainedModel) and hasattr(module_obj, '_set_gradient_checkpointing') \
                     and 'value' in inspect.signature(module_obj._set_gradient_checkpointing).parameters.keys():
-                module_obj._set_gradient_checkpointing = PreTrainedModel._set_gradient_checkpointing
+                module_obj._set_gradient_checkpointing = MethodType(
+                    PreTrainedModel._set_gradient_checkpointing, module_obj)
 
 
 def _can_load_by_hf_automodel(automodel_class: type, config) -> bool:

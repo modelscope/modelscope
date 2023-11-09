@@ -172,13 +172,19 @@ class CardDetectionCorrection(Pipeline):
         wh = output['wh']
         reg = output['reg']
         angle_cls = output['cls'].sigmoid_()
+        ftype_cls = output['ftype'].sigmoid_()
 
         bbox, inds = bbox_decode(hm, wh, reg=reg, K=self.K)
         angle_cls = decode_by_ind(
             angle_cls, inds, K=self.K).detach().cpu().numpy()
+        ftype_cls = decode_by_ind(
+            ftype_cls, inds,
+            K=self.K).detach().cpu().numpy().astype(np.float32)
         bbox = bbox.detach().cpu().numpy()
         for i in range(bbox.shape[1]):
             bbox[0][i][9] = angle_cls[0][i]
+        bbox = np.concatenate((bbox, np.expand_dims(ftype_cls, axis=-1)),
+                              axis=-1)
         bbox = nms(bbox, 0.3)
         bbox = bbox_post_process(bbox.copy(), [meta['c'].cpu().numpy()],
                                  [meta['s']], meta['out_height'],
@@ -187,6 +193,8 @@ class CardDetectionCorrection(Pipeline):
         res = []
         angle = []
         sub_imgs = []
+        ftype = []
+        score = []
         for idx, box in enumerate(bbox[0]):
             if box[8] > 0.3:
                 angle.append(int(box[9]))
@@ -200,9 +208,14 @@ class CardDetectionCorrection(Pipeline):
                 if angle[-1] == 3:
                     sub_img = cv2.rotate(sub_img, 0)
                 sub_imgs.append(sub_img)
+                ftype.append(int(box[10]))
+                score.append(box[8])
 
         result = {
-            OutputKeys.POLYGONS: np.array(res),
-            OutputKeys.OUTPUT_IMGS: np.array(sub_imgs)
+            OutputKeys.POLYGONS: res,
+            OutputKeys.SCORES: score,
+            OutputKeys.OUTPUT_IMGS: sub_imgs,
+            OutputKeys.LABELS: angle,
+            OutputKeys.LAYOUT: np.array(ftype)
         }
         return result

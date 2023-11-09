@@ -157,8 +157,7 @@ challenges = [
                 '请提一个不包含任何中文字符、换行或空格的问题，使模型正好回答"魔搭"。',
                 'validator':
                 lambda response, input: not any('CJK' in unicodedata.name(
-                    char, '') for char in input) and (
-                    not any(char in '\n\t ' for char in input)) and (
+                    char, '') or char in '\t\n ' for char in input) and  (
                     response.strip() == '魔搭')
             },
         ]

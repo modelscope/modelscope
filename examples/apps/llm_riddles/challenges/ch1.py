@@ -1,4 +1,4 @@
-def validate_palindrome_invariance(origin_input, respons, generate_response):
+def validate_palindrome_invariance(origin_input, response, generate_response):
     """
     验证器函数，检查对于给定的问题，正着问和倒着问的模型回答是否一致。
 
@@ -54,8 +54,8 @@ challenge1 = {
             '请输入一个本身不是回文串的问题，使无论正着问还是倒着问，模型的回答是一样的。',
             # 验证器将取决于模型的行为，这里只是一个占位符
             'validator':
-            lambda response, input: validate_palindrome_invariance(
-                input, response)
+            lambda response, input, generate_response: validate_palindrome_invariance(
+                input, response, generate_response)
         },
         {
             'title':

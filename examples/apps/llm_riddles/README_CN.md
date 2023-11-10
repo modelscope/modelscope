@@ -23,11 +23,12 @@
    ```
 2. 进入到`examples/apps/llm_riddles`目录。
 3. 安装所需的Python依赖`pip install -r requirements.txt`。
-4. 执行启动命令`python app.py`.
+4. 前往[DashScope](https://dashscope.aliyun.com/)开通服务，获取token，配置环境变量`DASHSCOPE_API_KEY=你的API-KEY`
+5. 执行启动命令`python app.py`.
 
 ## RoadMap
 - [x] 初版本源码和创空间体验ready
-- [ ] 支持自定义问题和验证逻辑接入
+- [x] 支持自定义问题和验证逻辑接入
 - [ ] 扩充到9个大关卡，每个关卡9个问题
 - [ ] 支持更多开源模型
 - [ ] 支持云端API和本地推理切换

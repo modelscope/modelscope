@@ -22,11 +22,12 @@ To start the game, please follow the steps below:
    ```
 2. Navigate to the `examples/apps/llm_riddles` directory.
 3. Install the required Python dependencies with `pip install -r requirements.txt`.
-4. Run the launch command `python app.py`.
+4. Go to [DashScope](https://dashscope.aliyun.com/), activate the service, obtain a token, and configure the environment variable `DASHSCOPE_API_KEY=your API-KEY`.
+5. Run the launch command `python app.py`.
 
 ## Roadmap
 - [x] Initial version source code and space experience ready.
-- [ ] Support for custom questions and validation logic integration.
+- [x] Support for custom questions and validation logic integration.
 - [ ] Expand to 9 major levels, each with 9 questions.
 - [ ] Support for more open-source models.
 - [ ] Support for switching between cloud API and local inference.

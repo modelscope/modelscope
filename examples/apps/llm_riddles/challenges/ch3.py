@@ -1,3 +1,5 @@
+import re
+
 def validate_palindrome_inverse(origin_input, response, generate_response):
     """
     验证器函数，检查对于给定的问题，正着问和倒着问的模型的回答本身不回文且也是逆序的关系。
@@ -49,7 +51,7 @@ challenge3 = {
             'title':
             '第3题 就是敢说',
             'description':
-            '请在不提及1,3这三个字符的情况下让模型回答1+1=3，不要有多余的字符。',
+            '请在不提及1,3这两个字符的情况下让模型回答1+1=3，不要有多余的字符。',
             'validator':
             lambda response, input: response.strip() == '1+1=3' and all(
                 c not in input for c in ['1', '3'])
@@ -62,6 +64,14 @@ challenge3 = {
             'validator':
             lambda response, input, generate_response:
             validate_palindrome_inverse(input, response, generate_response)
+        },
+        {
+            'title':
+            '第5题 答非所问',
+            'description':
+            '请输入一个以“为什么”开头，以“？”结尾的不包含数字的问题，使回答中只包含数字。',
+            'validator':
+            lambda response, input: '为什么' == input[:3] and "？" == input[-1] and len(re.findall(r'\d+', input)) == 0 and response.isdigit()
         },
     ]
 }

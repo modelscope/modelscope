@@ -90,5 +90,18 @@ challenge2 = {
                 '狗' not in input and len(input) <= 10 and  # noqa: W504
                 response.count('狗') >= 2 * len(input))
         },
+        {
+            'title':
+            '第7题 暗藏玄机',
+            'description':
+            '请输入一个大于一的正整数作为问题，使回答包含一个两位数，其十位上的数字比个位上的数字小5。',
+            'validator':
+            lambda response, input:
+            (input.isdigit() and int(input) > 1 and (len({
+                int(num)
+                for num in re.findall(r'\d+', response)
+                if len(num) == 2 and int(num[1]) - int(num[0]) == 5
+            }) >= 1))
+        },
     ]
 }

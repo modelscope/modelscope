@@ -1,11 +1,15 @@
 def validate_palindrome_invariance(origin_input, response, generate_response):
     """
-    验证器函数，检查对于给定的问题，正着问和倒着问的模型回答是否一致。
+    验证器函数，检查对于给定的问题，检验是否是回文串，且正着问和倒着问的模型回答是否一致。
 
     :param origin_input: 原始问题
     :return: True 如果回答一致，否则 False
     """
 
+    # 检查原始输入不是回文
+    if origin_input == origin_input[::-1]:
+        return False
+    
     # 将原始问题倒序并提交
     reversed_question = origin_input[::-1]
     reversed_response = generate_response(reversed_question)
@@ -65,6 +69,14 @@ challenge1 = {
             'validator':
             lambda response, input: '狗' not in input and response.count('狗') \
                 >= 3
+        },
+        {
+            'title':
+            '第7题 事半功倍',
+            'description':
+            '请输入一个本身不是回文串的问题，使模型回答的长度刚好是问题长度的两倍。',
+            'validator':
+            lambda response, input: input != input[::-1] and len(response) == 2 * len(input)
         },
     ]
 }

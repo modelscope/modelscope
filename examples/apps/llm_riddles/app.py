@@ -176,7 +176,7 @@ with block as demo:
         disabled=True)
     challenge_result = gr.Textbox(label='挑战结果', disabled=True)
     chatbot = gr.Chatbot(
-        lines=8, label='Qwen-max', elem_classes='control-height')
+        lines=8, label='Qwen-plus', elem_classes='control-height')
     message = gr.Textbox(lines=2, label='输入')
 
     with gr.Row():

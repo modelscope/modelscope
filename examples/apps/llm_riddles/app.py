@@ -10,6 +10,7 @@ from challenges.ch2 import challenge2
 from challenges.ch3 import challenge3
 from challenges.ch4 import challenge4
 from llm import create_model
+from PIL import Image, ImageDraw, ImageFont
 
 model_cache = {}
 
@@ -19,6 +20,13 @@ challenges = [
     challenge2,
     challenge3,
     challenge4,
+]
+
+CONGRATS_STR = '所有挑战完成！👏🏻👏🏻👏🏻👏🏻👏🏻👏🏻'
+CONGRATS_QUESTION = f'<center><font size=4>{CONGRATS_STR}</center>\n\n <center><font size=3> </center>'
+
+SHARE_CHALLENGES_HINT = [
+    '小试牛刀新手上路', '数字玩家已经上线', '巅峰对决，你就是提示词高手', '无人之境，胜利就在前方', '哇塞，我冲出了LLM的重围'
 ]
 
 
@@ -33,6 +41,7 @@ def update_challenge_info(current_chapter_index, current_challenge_index):
 
 
 def update_question_info(current_chapter_index, current_challenge_index):
+
     global challenges
     current_chapter = challenges[current_chapter_index]
     challenge = get_problem(current_chapter_index, current_challenge_index)
@@ -42,6 +51,8 @@ def update_question_info(current_chapter_index, current_challenge_index):
 
 
 def validate_challenge(response, input, state, generate_response):
+    if 'success' in state:
+        return CONGRATS_STR, CONGRATS_QUESTION, ''
     assert 'current_chapter_index' in state, 'current_chapter_index not found in state'
     assert 'current_challenge_index' in state, 'current_challenge_index not found in state'
     current_chapter_index = state['current_chapter_index']
@@ -66,20 +77,24 @@ def validate_challenge(response, input, state, generate_response):
             current_challenge_index += 1
         else:
             # 如果当前章节的挑战已经完成，移动到下一个章节
-            current_challenge_index = 0
             if current_chapter_index < len(challenges) - 1:
+                current_challenge_index = 0
                 current_chapter_index += 1
             else:
+                state['success'] = True
                 challenge_result = '所有挑战完成！'
+
     else:
         challenge_result = '挑战失败，请再试一次。'
     state['current_chapter_index'] = current_chapter_index
     state['current_challenge_index'] = current_challenge_index
     print('update state: ', state)
-
-    return challenge_result, \
-        update_question_info(current_chapter_index, current_challenge_index), \
-        update_challenge_info(current_chapter_index, current_challenge_index)
+    if 'success' in state:
+        return CONGRATS_STR, CONGRATS_QUESTION, ''
+    else:
+        return challenge_result, \
+            update_question_info(current_chapter_index, current_challenge_index), \
+            update_challenge_info(current_chapter_index, current_challenge_index)
 
 
 def generate_response(input, model_name):
@@ -98,7 +113,7 @@ def generate_response(input, model_name):
 
 
 def on_submit(input, state):
-    model_name = 'qwen-plus'
+    model_name = os.environ.get('MODEL', 'qwen-plus')
     gen_fn = functools.partial(generate_response, model_name=model_name)
     response = gen_fn(input)
     history = [(input, response)]
@@ -108,13 +123,44 @@ def on_submit(input, state):
     return challenge_result, history, question_info, challenge_info
 
 
+def generate_share_image(state):
+    share_state = state['current_chapter_index']
+    if share_state > 3:
+        share_state = 3
+    if 'success' in state:
+        share_state = 4  # 全部通关为 4
+
+    img_pil = Image.open(f'assets/background{share_state}.png')
+    # 设置需要显示的字体
+    fontpath = 'assets/font.ttf'
+    font = ImageFont.truetype(fontpath, 48)
+    draw = ImageDraw.Draw(img_pil)
+    # 绘制文字信息
+    draw.text((70, 1000),
+              SHARE_CHALLENGES_HINT[share_state],
+              font=font,
+              fill=(255, 255, 255))
+    if share_state == 4:
+        share_chapter_text = '顺利闯过了全部关卡'
+    else:
+        share_chapter_text = f"我顺利闯到第 {state['current_chapter_index']+1}-{state['current_challenge_index']+1} 关"
+    draw.text((70, 1080), share_chapter_text, font=font, fill=(255, 255, 255))
+    draw.text((70, 1160), '你也来挑战一下吧～', font=font, fill=(255, 255, 255))
+
+    return gr.Image.update(visible=True, value=img_pil)
+
+
 # Gradio界面构建
 block = gr.Blocks()
 
 with block as demo:
-    state = gr.State(dict(current_challenge_index=0, current_chapter_index=0))
     current_chapter_index = 0
     current_challenge_index = 0
+    state = gr.State(
+        dict(
+            current_challenge_index=current_challenge_index,
+            current_chapter_index=current_chapter_index))
+
     gr.Markdown("""<center><font size=6>完蛋！我被LLM包围了！</center>""")
     gr.Markdown("""<font size=3>欢迎来玩LLM Riddles复刻版：完蛋！我被LLM包围了！
 
@@ -135,10 +181,26 @@ with block as demo:
 
     with gr.Row():
         submit = gr.Button('🚀 发送')
+        shareBtn = gr.Button('💯 分享成绩')
+
+    shareImg = gr.Image(label='分享成绩', visible=False, width=400)
 
     submit.click(
         on_submit,
         inputs=[message, state],
         outputs=[challenge_result, chatbot, question_info, challenge_info])
+    shareBtn.click(generate_share_image, inputs=[state], outputs=[shareImg])
+
+    gr.HTML("""
+<div style="text-align: center;">
+  <span>
+    Powered by <a href="https://dashscope.aliyun.com/" target="_blank">
+    <img src=
+    "//img.alicdn.com/imgextra/i4/O1CN01SgKFXM1qLQwFvk6j5_!!6000000005479-2-tps-99-84.png"
+    style="display: inline; height: 20px; vertical-align: bottom;"/>DashScope
+    </a>
+  </span>
+</div>
+""")
 
 demo.queue(concurrency_count=10).launch(height=800, share=True)

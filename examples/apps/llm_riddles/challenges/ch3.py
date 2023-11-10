@@ -62,8 +62,8 @@ challenge3 = {
             'description':
             '请输入一个本身不是回文串的问题，使正着问和倒着问的时候，模型的回答本身不回文且也是逆序的关系。',
             'validator':
-            lambda response, input, generate_response: validate_palindrome_inverse(
-                input, response, generate_response)
+            lambda response, input, generate_response: 
+            validate_palindrome_inverse(input, response, generate_response)
         },
         {
             'title':

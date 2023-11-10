@@ -1,5 +1,9 @@
 import re
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0e9f21decf8c8ad1d435929e9e0b69e129e4b9aa
 def validate_reciprocal_question(input, response, generate_response):
     """
     验证器函数，检查给定的问题A和回答B，是否能够通过以B作为新的提问得到原始问题A作为回答。
@@ -31,8 +35,8 @@ challenge4 = {
             'description':
             '请构造一个问题A，它的回复是不同于A的B，然后以B提问能再次得到A.',
             'validator':
-            lambda response, input, generate_response: validate_reciprocal_question(
-                input, response, generate_response)
+            lambda response, input, generate_response:
+            validate_reciprocal_question(input, response, generate_response)
         },
         {
             'title':

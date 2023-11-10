@@ -115,8 +115,8 @@ def generate_response(input, model_name):
 def on_submit(input, model_name, state):
     # model_name = os.environ.get('MODEL', 'qwen-plus')
     name_map = {
-        '通义千问max': 'qwen-max',
-        '通义千问plus': 'qwen-plus',
+        'qwen-max': 'qwen-max',
+        'qwen-plus': 'qwen-plus',
         'chatglm-turbo': 'chatglm_turbo',
     }
     gen_fn = functools.partial(
@@ -176,8 +176,8 @@ with block as demo:
 
     model_selector = gr.Dropdown(
         label='选择模型',
-        choices=['通义千问max', '通义千问plus', 'chatglm-turbo'],
-        value='qwen-plus')
+        choices=['qwen-max', 'qwen-plus', 'chatglm-turbo'],
+        value='qwen-max')
     question_info = gr.Markdown(
         update_question_info(current_chapter_index, current_challenge_index))
     challenge_info = gr.Textbox(

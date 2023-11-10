@@ -1,5 +1,6 @@
 import re
 
+
 def validate_palindrome_inverse(origin_input, response, generate_response):
     """
     验证器函数，检查对于给定的问题，正着问和倒着问的模型的回答本身不回文且也是逆序的关系。
@@ -71,7 +72,9 @@ challenge3 = {
             'description':
             '请输入一个以“为什么”开头，以“？”结尾的不包含数字的问题，使回答中只包含数字。',
             'validator':
-            lambda response, input: '为什么' == input[:3] and "？" == input[-1] and len(re.findall(r'\d+', input)) == 0 and response.isdigit()
+            lambda response, input: '为什么' == input[:3] and '？' == input[-1]
+            and  # noqa: W504
+            len(re.findall(r'\d+', input)) == 0 and response.isdigit()
         },
     ]
 }

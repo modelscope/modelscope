@@ -1,5 +1,9 @@
 import re
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6b8f0ac5b8339ee1f7d20406967e7f4c5e9b6bbe
 def validate_palindrome_inverse(origin_input, response, generate_response):
     """
     验证器函数，检查对于给定的问题，正着问和倒着问的模型的回答本身不回文且也是逆序的关系。

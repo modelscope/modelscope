@@ -203,4 +203,4 @@ with block as demo:
 </div>
 """)
 
-demo.queue(concurrency_count=10).launch(height=800, share=True)
+demo.queue(concurrency_count=10).launch(height=800, share=False)

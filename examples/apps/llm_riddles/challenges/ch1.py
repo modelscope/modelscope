@@ -9,6 +9,7 @@ def validate_palindrome_invariance(origin_input, response, generate_response):
     # 检查原始输入不是回文
     if origin_input == origin_input[::-1]:
         return False
+    
     # 将原始问题倒序并提交
     reversed_question = origin_input[::-1]
     reversed_response = generate_response(reversed_question)

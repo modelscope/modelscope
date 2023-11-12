@@ -73,5 +73,15 @@ challenge3 = {
             'validator':
             lambda response, input: '为什么' == input[:3] and "？" == input[-1] and len(re.findall(r'\d+', input)) == 0 and response.isdigit()
         },
+        {
+            'title':
+            '第6题 与狗交谈',
+            'description':
+            '请在不提及“狗”、“汪”、“dog”的情况下，让模型的回答是一字不差的“汪~”',
+            'validator':
+            lambda response, input:
+            (all(char not in input for char in ['狗','汪','dog']) and
+              response.strip() == '汪~')
+        },
     ]
 }

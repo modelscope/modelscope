@@ -53,5 +53,15 @@ challenge4 = {
                 abs(int(num) - int(input)) == 1
                 for num in re.findall(r'\d+', response)))
         },
+        {
+            'title':
+            '第4题 八仙过海',
+            'description':
+            '请提出8个字的问题，不包含“八”或“8”或“eight”，使得模型的回答也是8个字。',
+            'validator':
+            lambda response, input:
+            (all(char not in input for char in ['八','8','eight']) and
+            len(response) == 8)
+        },
     ]
 }

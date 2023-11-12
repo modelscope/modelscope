@@ -112,9 +112,15 @@ def generate_response(input, model_name):
         return ''
 
 
-def on_submit(input, state):
-    model_name = os.environ.get('MODEL', 'qwen-plus')
-    gen_fn = functools.partial(generate_response, model_name=model_name)
+def on_submit(input, model_name, state):
+    # model_name = os.environ.get('MODEL', 'qwen-plus')
+    name_map = {
+        '通义千问max': 'qwen-max',
+        '通义千问plus': 'qwen-plus',
+        'chatglm-turbo': 'chatglm_turbo',
+    }
+    gen_fn = functools.partial(
+        generate_response, model_name=name_map[model_name])
     response = gen_fn(input)
     history = [(input, response)]
     print(history)
@@ -167,6 +173,11 @@ with block as demo:
 你将通过本游戏对大型语言模型产生更深刻的理解。
 
 在本游戏中，你需要构造一个提给一个大型语言模型的问题，使得它回复的答案符合要求。""")
+
+    model_selector = gr.Dropdown(
+        label='选择模型',
+        choices=['通义千问max', '通义千问plus', 'chatglm-turbo'],
+        value='通义千问plus')
     question_info = gr.Markdown(
         update_question_info(current_chapter_index, current_challenge_index))
     challenge_info = gr.Textbox(
@@ -187,7 +198,7 @@ with block as demo:
 
     submit.click(
         on_submit,
-        inputs=[message, state],
+        inputs=[message, model_selector, state],
         outputs=[challenge_result, chatbot, question_info, challenge_info])
     shareBtn.click(generate_share_image, inputs=[state], outputs=[shareImg])
 

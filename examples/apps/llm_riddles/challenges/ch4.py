@@ -1,9 +1,5 @@
 import re
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 0e9f21decf8c8ad1d435929e9e0b69e129e4b9aa
 def validate_reciprocal_question(input, response, generate_response):
     """
     验证器函数，检查给定的问题A和回答B，是否能够通过以B作为新的提问得到原始问题A作为回答。
@@ -64,8 +60,8 @@ challenge4 = {
             '请提出8个字的问题，不包含“八”或“8”或“eight”，使得模型的回答也是8个字。',
             'validator':
             lambda response, input:
-            all(char not in input for char in ['八','8','eight']) and
-            len(response) == 8
+            (all(char not in input for char in ['八','8','eight']) and
+            len(response) == 8)
         },
     ]
 }

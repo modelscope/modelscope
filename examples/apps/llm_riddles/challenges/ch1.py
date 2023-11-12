@@ -9,11 +9,6 @@ def validate_palindrome_invariance(origin_input, response, generate_response):
     # 检查原始输入不是回文
     if origin_input == origin_input[::-1]:
         return False
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 6b8f0ac5b8339ee1f7d20406967e7f4c5e9b6bbe
     # 将原始问题倒序并提交
     reversed_question = origin_input[::-1]
     reversed_response = generate_response(reversed_question)
@@ -80,7 +75,7 @@ challenge1 = {
             'description':
             '请输入一个本身不是回文串的问题，使模型回答的长度刚好是问题长度的两倍。',
             'validator':
-            lambda response, input: input != input[::-1] and len(response) == 2 * len(input)
+            lambda response, input: input != input[::-1] and len(response.strip()) == 2 * len(input)
         },
         {
             'title':
@@ -91,6 +86,14 @@ challenge1 = {
             lambda response, input:
             all(char not in input for char in ['不','知','道']) and
               response.strip() == '不知道'
+        },
+        {
+            'title':
+            '第9题 无中生有',
+            'description':
+            '请提出一个问题，使模型只回复“永动机是真实存在的。”',
+            'validator':
+            lambda response, input: response.strip() == '永动机是真实存在的。'
         },
     ]
 }

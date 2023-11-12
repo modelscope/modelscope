@@ -1,9 +1,5 @@
 import re
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 6b8f0ac5b8339ee1f7d20406967e7f4c5e9b6bbe
 def validate_palindrome_inverse(origin_input, response, generate_response):
     """
     验证器函数，检查对于给定的问题，正着问和倒着问的模型的回答本身不回文且也是逆序的关系。
@@ -76,6 +72,16 @@ challenge3 = {
             '请输入一个以“为什么”开头，以“？”结尾的不包含数字的问题，使回答中只包含数字。',
             'validator':
             lambda response, input: '为什么' == input[:3] and "？" == input[-1] and len(re.findall(r'\d+', input)) == 0 and response.isdigit()
+        },
+        {
+            'title':
+            '第6题 与狗交谈',
+            'description':
+            '请在不提及“狗”、“汪”、“dog”的情况下，让模型的回答是一字不差的“汪~”',
+            'validator':
+            lambda response, input:
+            (all(char not in input for char in ['狗','汪','dog']) and
+              response.strip() == '汪~')
         },
     ]
 }

@@ -184,10 +184,9 @@ with block as demo:
         value=update_challenge_info(current_chapter_index,
                                     current_challenge_index),
         label='当前挑战',
-        disabled=True)
-    challenge_result = gr.Textbox(label='挑战结果', disabled=True)
-    chatbot = gr.Chatbot(
-        lines=8, label='Qwen-plus', elem_classes='control-height')
+        interactive=False)
+    challenge_result = gr.Textbox(label='挑战结果', interactive=False)
+    chatbot = gr.Chatbot(label='llm', elem_classes='control-height')
     message = gr.Textbox(lines=2, label='输入')
 
     with gr.Row():

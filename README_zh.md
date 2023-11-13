@@ -37,6 +37,8 @@ ModelScope Library为模型贡献者提供了必要的分层API，以便将来�
 
 除了包含各种模型的实现之外，ModelScope Library还支持与ModelScope后端服务进行必要的交互，特别是与Model-Hub和Dataset-Hub的交互。这种交互促进了模型和数据集的管理在后台无缝执行，包括模型数据集查询、版本控制、缓存管理等。
 
+
+
 # 部分模型和在线体验
 ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计算机视觉、语音、多模态、科学计算等，其中包含数百个SOTA模型。用户可以进入ModelScope网站([modelscope.cn](http://www.modelscope.cn))的模型中心零门槛在线体验，或者Notebook方式体验模型。
 
@@ -50,68 +52,67 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 
 自然语言处理：
 
-* [GPT-3预训练生成模型-中文-2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
-
-* [元语功能型对话大模型](https://modelscope.cn/models/ClueAI/ChatYuan-large)
-
-* [孟子T5预训练生成模型-中文-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
-
-* [CSANMT连续语义增强机器翻译-英中-通用领域-large](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
-
-* [RaNER命名实体识别-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
-
-* [BAStructBERT分词-中文-新闻领域-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
-
-* [二郎神-RoBERTa-330M-情感分类](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
-
-* [SPACE-T表格问答预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
+* [ChatGLM3-6B](https://modelscope.cn/models/ZhipuAI/chatglm3-6b/summary)
+  
+* [Qwen-14B-Chat](https://modelscope.cn/models/qwen/Qwen-14B-Chat/summary)
+  
+* [Baichuan2-13B-Chat](https://modelscope.cn/models/baichuan-inc/Baichuan2-13B-Chat/summary)
+  
+* [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
+  
+* [Internlm-chat-20b](https://modelscope.cn/models/Shanghai_AI_Laboratory/internlm-chat-20b/summary)
+  
+* [Udever-bloom-1b1](https://modelscope.cn/models/damo/udever-bloom-1b1/summary)
+  
+* [CoROM文本向量-中文-电商领域-base](https://modelscope.cn/models/damo/nlp_corom_sentence-embedding_chinese-base-ecom/summary)
+  
+* [MGeo地址相似度匹配实体对齐-中文-地址领域-base](https://modelscope.cn/models/damo/mgeo_geographic_entity_alignment_chinese_base/summary)
 
 多模态：
 
-* [CLIP模型-中文-通用领域-base](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [Qwen-VL-Chat](https://modelscope.cn/models/qwen/Qwen-VL-Chat/summary)
 
-* [OFA预训练模型-中文-通用领域-base](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [CogVLM](https://modelscope.cn/models/ZhipuAI/CogVLM/summary)
 
-* [太乙-Stable-Diffusion-1B-中文-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [Text-to-Video Synthesis Large Model - English - General Domain](https://modelscope.cn/models/damo/text-to-video-synthesis/summary)
 
-* [mPLUG视觉问答模型-英文-large](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [I2VGen-XL高清图片到视频大模型](https://modelscope.cn/models/damo/Image-to-Video/summary)
+
+* [I2VGen-XL高清视频到视频大模型](https://modelscope.cn/models/damo/Video-to-Video/summary)
+
 
 计算机视觉：
 
-* [ControlNet可控图像生成](https://modelscope.cn/models/dienstag/cv_controlnet_controllable-image-generation_nine-annotators/summary)
+* [DamoFD人脸检测关键点模型-0.5G](https://modelscope.cn/models/damo/cv_ddsar_face-detection_iclr23-damofd/summary)
+  
+* [BSHM人像抠图](https://modelscope.cn/models/damo/cv_unet_image-matting/summary)
 
-* [DAMOYOLO-高性能通用检测模型-S](https://modelscope.cn/models/damo/cv_tinynas_object-detection_damoyolo)
+* [DCT-Net人像卡通化-3D](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon-3d_compound-models/summary)
 
-* [DCT-Net人像卡通化](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon_compound-models)
+* [DCT-Net人像卡通化模型-3D](https://modelscope.cn/models/damo/face_chain_control_model/summary)
 
-* [读光-文字识别-行识别模型-中英-通用领域](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo)
+* [读光-文字识别-行识别模型-中英-通用领域](https://modelscope.cn/models/damo/cv_convnextTiny_ocr-recognition-general_damo/summary)
 
-* [人体检测-通用-Base](https://modelscope.cn/models/damo/cv_resnet18_human-detection)
+* [读光-文字识别-行识别模型-中英-通用领域](https://modelscope.cn/models/damo/cv_resnet18_ocr-detection-line-level_damo/summary)
 
-* [RetinaFace人脸检测关键点模型](https://modelscope.cn/models/damo/cv_resnet50_face-detection_retinaface)
+* [LaMa图像填充](https://modelscope.cn/models/damo/cv_fft_inpainting_lama/summary)
 
-* [BSHM人像抠图](https://modelscope.cn/models/damo/cv_unet_image-matting)
 
-* [图像分割-商品展示图场景的商品分割-电商领域](https://modelscope.cn/models/damo/cv_F3Net_product-segmentation)
-
-* [万物识别-中文-通用领域](https://modelscope.cn/models/damo/cv_resnest101_general_recognition)
 
 
 语音：
 
-* [Paraformer语音识别-中文-通用-16k-离线-large-pytorch](https://modelscope.cn/models/damo/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+* [Paraformer语音识别-中文-通用-16k-离线-大型-长音频版本](https://modelscope.cn/models/damo/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch/summary)
 
-* [语音合成-中文-多情感领域-16k-多发音人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k)
+* [FSMN声音端点检测-中文-通用-16k-onnx](https://modelscope.cn/models/damo/speech_fsmn_vad_zh-cn-16k-common-onnx/summary)
 
-* [CTC语音唤醒-移动端-单麦-16k-小云小云](https://modelscope.cn/models/damo/speech_charctc_kws_phone-xiaoyun)
+* [Monotonic-Aligner语音时间戳预测-16k-离线](https://modelscope.cn/models/damo/speech_timestamp_prediction-v1-16k-offline/summary)
 
-* [WeNet-U2pp_Conformer-语音识别-中文-16k-实时](https://modelscope.cn/models/wenet/u2pp_conformer-asr-cn-16k-online)
+* [CT-Transformer标点-中文-通用-onnx](https://modelscope.cn/models/damo/punc_ct-transformer_zh-cn-common-vocab272727-onnx/summary)
 
-* [FRCRN语音降噪-单麦-16k](https://modelscope.cn/models/damo/speech_frcrn_ans_cirm_16k)
+* [语音合成-中文-多情绪领域-16k-多发言人](https://modelscope.cn/models/damo/speech_sambert-hifigan_tts_zh-cn_16k/summary)
 
-* [DFSMN回声消除-单麦单参考-16k](https://modelscope.cn/models/damo/speech_dfsmn_aec_psm_16k)
-
-
+* [CAM++说话人验证-中文-通用-200k发言人](https://modelscope.cn/models/damo/speech_campplus_sv_zh-cn_16k-common/summary)
 
 
 科学计算：

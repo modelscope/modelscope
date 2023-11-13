@@ -156,61 +156,68 @@ def generate_share_image(state):
     return gr.Image.update(visible=True, value=img_pil)
 
 
-# Gradio界面构建
-block = gr.Blocks()
+def create_app():
+    # Gradio界面构建
+    block = gr.Blocks()
 
-with block as demo:
-    current_chapter_index = 0
-    current_challenge_index = 0
-    state = gr.State(
-        dict(
-            current_challenge_index=current_challenge_index,
-            current_chapter_index=current_chapter_index))
+    with block as demo:
+        current_chapter_index = 0
+        current_challenge_index = 0
+        state = gr.State(
+            dict(
+                current_challenge_index=current_challenge_index,
+                current_chapter_index=current_chapter_index))
 
-    gr.Markdown("""<center><font size=6>完蛋！我被LLM包围了！</center>""")
-    gr.Markdown("""<font size=3>欢迎来玩LLM Riddles复刻版：完蛋！我被LLM包围了！
+        gr.Markdown("""<center><font size=6>完蛋！我被LLM包围了！</center>""")
+        gr.Markdown("""<font size=3>欢迎来玩LLM Riddles复刻版：完蛋！我被LLM包围了！
 
-你将通过本游戏对大型语言模型产生更深刻的理解。
+    你将通过本游戏对大型语言模型产生更深刻的理解。
 
-在本游戏中，你需要构造一个提给一个大型语言模型的问题，使得它回复的答案符合要求。""")
+    在本游戏中，你需要构造一个提给一个大型语言模型的问题，使得它回复的答案符合要求。""")
 
-    model_selector = gr.Dropdown(
-        label='选择模型',
-        choices=['qwen-max', 'qwen-plus', 'chatglm-turbo'],
-        value='qwen-max')
-    question_info = gr.Markdown(
-        update_question_info(current_chapter_index, current_challenge_index))
-    challenge_info = gr.Textbox(
-        value=update_challenge_info(current_chapter_index,
-                                    current_challenge_index),
-        label='当前挑战',
-        interactive=False)
-    challenge_result = gr.Textbox(label='挑战结果', interactive=False)
-    chatbot = gr.Chatbot(label='llm', elem_classes='control-height')
-    message = gr.Textbox(lines=2, label='输入')
+        model_selector = gr.Dropdown(
+            label='选择模型',
+            choices=['qwen-max', 'qwen-plus', 'chatglm-turbo'],
+            value='qwen-max')
+        question_info = gr.Markdown(
+            update_question_info(current_chapter_index,
+                                 current_challenge_index))
+        challenge_info = gr.Textbox(
+            value=update_challenge_info(current_chapter_index,
+                                        current_challenge_index),
+            label='当前挑战',
+            interactive=False)
+        challenge_result = gr.Textbox(label='挑战结果', interactive=False)
+        chatbot = gr.Chatbot(label='llm', elem_classes='control-height')
+        message = gr.Textbox(lines=2, label='输入')
 
-    with gr.Row():
-        submit = gr.Button('🚀 发送')
-        shareBtn = gr.Button('💯 分享成绩')
+        with gr.Row():
+            submit = gr.Button('🚀 发送')
+            shareBtn = gr.Button('💯 分享成绩')
 
-    shareImg = gr.Image(label='分享成绩', visible=False, width=400)
+        shareImg = gr.Image(label='分享成绩', visible=False, width=400)
 
-    submit.click(
-        on_submit,
-        inputs=[message, model_selector, state],
-        outputs=[challenge_result, chatbot, question_info, challenge_info])
-    shareBtn.click(generate_share_image, inputs=[state], outputs=[shareImg])
+        submit.click(
+            on_submit,
+            inputs=[message, model_selector, state],
+            outputs=[challenge_result, chatbot, question_info, challenge_info])
+        shareBtn.click(
+            generate_share_image, inputs=[state], outputs=[shareImg])
 
-    gr.HTML("""
-<div style="text-align: center;">
-  <span>
-    Powered by <a href="https://dashscope.aliyun.com/" target="_blank">
-    <img src=
-    "//img.alicdn.com/imgextra/i4/O1CN01SgKFXM1qLQwFvk6j5_!!6000000005479-2-tps-99-84.png"
-    style="display: inline; height: 20px; vertical-align: bottom;"/>DashScope
-    </a>
-  </span>
-</div>
-""")
+        gr.HTML("""
+    <div style="text-align: center;">
+      <span>
+        Powered by <a href="https://dashscope.aliyun.com/" target="_blank">
+        <img src=
+        "//img.alicdn.com/imgextra/i4/O1CN01SgKFXM1qLQwFvk6j5_!!6000000005479-2-tps-99-84.png"
+        style="display: inline; height: 20px; vertical-align: bottom;"/>DashScope
+        </a>
+      </span>
+    </div>
+    """)
 
-demo.queue(concurrency_count=10).launch(height=800, share=True)
+    demo.queue(concurrency_count=10).launch(height=800, share=True)
+
+
+if __name__ == '__main__':
+    create_app()

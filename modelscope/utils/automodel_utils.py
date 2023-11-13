@@ -1,9 +1,14 @@
+import inspect
 import os
-from typing import Optional
+from types import MethodType
+from typing import Any, Optional
+
+from packaging import version
 
 from modelscope.metainfo import Tasks
 from modelscope.utils.ast_utils import INDEX_KEY
-from modelscope.utils.import_utils import LazyImportModule
+from modelscope.utils.import_utils import (LazyImportModule,
+                                           is_transformers_available)
 
 
 def can_load_by_ms(model_dir: str, task_name: Optional[str],
@@ -17,6 +22,18 @@ def can_load_by_ms(model_dir: str, task_name: Optional[str],
     if os.path.exists(ms_wrapper_path):
         return True
     return False
+
+
+def fix_upgrade(module_obj: Any):
+    if is_transformers_available():
+        # from 4.35.0, transformers changes its arguments of _set_gradient_checkpointing
+        import transformers
+        from transformers import PreTrainedModel
+        if version.parse(transformers.__version__) >= version.parse('4.35.0'):
+            if isinstance(module_obj, PreTrainedModel) and hasattr(module_obj, '_set_gradient_checkpointing') \
+                    and 'value' in inspect.signature(module_obj._set_gradient_checkpointing).parameters.keys():
+                module_obj._set_gradient_checkpointing = MethodType(
+                    PreTrainedModel._set_gradient_checkpointing, module_obj)
 
 
 def _can_load_by_hf_automodel(automodel_class: type, config) -> bool:

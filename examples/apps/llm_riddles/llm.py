@@ -136,6 +136,7 @@ class ZhiPu:
             prompt=messages,
             top_p=0.7,
             temperature=0.9,
+            return_type='text',
         )
         if response['code'] == 200:
             return response['data']['choices'][0]['content']

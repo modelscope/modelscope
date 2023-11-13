@@ -202,7 +202,7 @@ CPU docker image
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py37-torch1.11.0-tf1.15.5-1.6.1
 
 # py38
-registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py38-torch1.11.0-tf1.15.5-1.6.1
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py38-torch2.0.1-tf2.13.0-1.9.5
 ```
 
 GPU docker image
@@ -211,7 +211,7 @@ GPU docker image
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.6.1
 
 # py38
-registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py38-torch1.11.0-tf1.15.5-1.6.1
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.8.0-py38-torch2.0.1-tf2.13.0-1.9.5
 ```
 
 ## Setup Local Python Environment
@@ -220,7 +220,7 @@ One can also set up local ModelScope environment using pip and conda.  ModelScop
 We suggest [anaconda](https://docs.anaconda.com/anaconda/install/) for creating local python environment:
 
 ```shell
-conda create -n modelscope python=3.9
+conda create -n modelscope python=3.8
 conda activate modelscope
 ```
 

@@ -53,19 +53,19 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 自然语言处理：
 
 * [ChatGLM3-6B](https://modelscope.cn/models/ZhipuAI/chatglm3-6b/summary)
-  
+
 * [Qwen-14B-Chat](https://modelscope.cn/models/qwen/Qwen-14B-Chat/summary)
-  
+
 * [Baichuan2-13B-Chat](https://modelscope.cn/models/baichuan-inc/Baichuan2-13B-Chat/summary)
-  
+
 * [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
-  
+
 * [Internlm-chat-20b](https://modelscope.cn/models/Shanghai_AI_Laboratory/internlm-chat-20b/summary)
-  
+
 * [Udever-bloom-1b1](https://modelscope.cn/models/damo/udever-bloom-1b1/summary)
-  
+
 * [CoROM文本向量-中文-电商领域-base](https://modelscope.cn/models/damo/nlp_corom_sentence-embedding_chinese-base-ecom/summary)
-  
+
 * [MGeo地址相似度匹配实体对齐-中文-地址领域-base](https://modelscope.cn/models/damo/mgeo_geographic_entity_alignment_chinese_base/summary)
 
 多模态：
@@ -84,7 +84,7 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 计算机视觉：
 
 * [DamoFD人脸检测关键点模型-0.5G](https://modelscope.cn/models/damo/cv_ddsar_face-detection_iclr23-damofd/summary)
-  
+
 * [BSHM人像抠图](https://modelscope.cn/models/damo/cv_unet_image-matting/summary)
 
 * [DCT-Net人像卡通化-3D](https://modelscope.cn/models/damo/cv_unet_person-image-cartoon-3d_compound-models/summary)
@@ -195,7 +195,7 @@ CPU镜像
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py37-torch1.11.0-tf1.15.5-1.6.1
 
 # py38
-registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py38-torch1.11.0-tf1.15.5-1.6.1
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-py38-torch2.0.1-tf2.13.0-1.9.5
 ```
 
 GPU镜像
@@ -204,14 +204,14 @@ GPU镜像
 registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-1.6.1
 
 # py38
-registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.3.0-py38-torch1.11.0-tf1.15.5-1.6.1
+registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.8.0-py38-torch2.0.1-tf2.13.0-1.9.5
 ```
 
 ## 搭建本地Python环境
 
-你也可以使用pip和conda搭建本地python环境，我们推荐使用[Anaconda](https://docs.anaconda.com/anaconda/install/)，安装完成后，执行如下命令为modelscope library创建对应的python环境：
+你也可以使用pip和conda搭建本地python环境，ModelScope支持python3.7+以上环境，我们推荐使用[Anaconda](https://docs.anaconda.com/anaconda/install/)，安装完成后，执行如下命令为modelscope library创建对应的python环境：
 ```shell
-conda create -n modelscope python=3.7
+conda create -n modelscope python=3.8
 conda activate modelscope
 ```
 

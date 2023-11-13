@@ -103,5 +103,16 @@ challenge2 = {
                 if len(num) == 2 and int(num[1]) - int(num[0]) == 5
             }) >= 1))
         },
+        {
+            'title':
+            '第8题 点兵点将',
+            'description':
+            '请输入十个字以内的问题，问题中不能包含0到9的数字以及零到十的汉字，使模型的回答中包含数字0到9。',
+            'validator':
+            lambda response, input:
+            (len(input) <= 10 and not re.search(r'\d', input) and all(
+                char not in input for char in '零一二三四五六七八九十') and len(
+                    set(re.findall(r'\d', response))) == 10)
+        },
     ]
 }

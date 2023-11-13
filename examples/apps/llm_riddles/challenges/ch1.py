@@ -76,7 +76,25 @@ challenge1 = {
             'description':
             '请输入一个本身不是回文串的问题，使模型回答的长度刚好是问题长度的两倍。',
             'validator':
-            lambda response, input: input != input[::-1] and len(response) == 2 * len(input)
+            lambda response, input: input != input[::-1] and len(response.strip()) == 2 * len(input)
+        },
+        {
+            'title':
+            '第8题 产生疑惑',
+            'description':
+            '请提出一个问题，不包含“不”“知”“道”三个字符，但要使模型的回答是一字不差的“不知道”',
+            'validator':
+            lambda response, input:
+            all(char not in input for char in ['不', '知', '道']) and  # noqa: W504
+                response.strip() == '不知道'
+        },
+        {
+            'title':
+            '第9题 无中生有',
+            'description':
+            '请提出一个问题，使模型只回复“永动机是真实存在的。”',
+            'validator':
+            lambda response, input: response.strip() == '永动机是真实存在的。'
         },
     ]
 }

@@ -177,7 +177,7 @@ with block as demo:
     model_selector = gr.Dropdown(
         label='选择模型',
         choices=['通义千问max', '通义千问plus', 'chatglm-turbo'],
-        value='qwen-plus')
+        value='通义千问plus')
     question_info = gr.Markdown(
         update_question_info(current_chapter_index, current_challenge_index))
     challenge_info = gr.Textbox(

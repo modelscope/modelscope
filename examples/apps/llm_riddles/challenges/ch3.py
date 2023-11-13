@@ -83,8 +83,8 @@ challenge3 = {
             '请在不提及“狗”、“汪”、“dog”的情况下，让模型的回答是一字不差的“汪~”',
             'validator':
             lambda response, input:
-            (all(char not in input for char in ['狗','汪','dog']) and
-              response.strip() == '汪~')
+            (all(char not in input
+                 for char in ['狗', '汪', 'dog']) and response.strip() == '汪~')
         },
     ]
 }

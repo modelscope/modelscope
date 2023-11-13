@@ -222,10 +222,11 @@ registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu20.04-cuda11.
 
 ## Setup Local Python Environment
 
-One can also set up local ModelScope environment using pip and conda.  We suggest [anaconda](https://docs.anaconda.com/anaconda/install/) for creating local python environment:
+One can also set up local ModelScope environment using pip and conda.  ModelScope supports python3.7 and above.
+We suggest [anaconda](https://docs.anaconda.com/anaconda/install/) for creating local python environment:
 
 ```shell
-conda create -n modelscope python=3.7
+conda create -n modelscope python=3.9
 conda activate modelscope
 ```
 

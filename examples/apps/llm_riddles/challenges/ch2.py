@@ -22,10 +22,6 @@ def is_square(n):
 def get_square_root(n):
     return int(sympy.sqrt(n))
 
-# 辅助函数 - 检查一个数的素因子数
-def check_prime_factors(n):
-    return len(sympy.factorint(n))
-
 challenge2 = {
     'name':
     '第二章 数字游戏',

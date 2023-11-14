@@ -22,6 +22,9 @@ def is_square(n):
 def get_square_root(n):
     return int(sympy.sqrt(n))
 
+# 辅助函数 - 检查一个数的素因子数
+def check_prime_factors(n):
+    return len(sympy.factorint(n))
 
 challenge2 = {
     'name':
@@ -114,5 +117,17 @@ challenge2 = {
                 char not in input for char in '零一二三四五六七八九十') and len(
                     set(re.findall(r'\d', response))) == 10)
         },
+        {
+            'title':
+            '第9题 微言大义',
+            'description':
+            '请输入10个字以内的问题，使得模型的回答是一个超过一亿的素数',
+            'validator':
+            lambda response, input: 
+                len(input) <= 10 and 
+                len(response) >= 9 and 
+                response.isdigit() and
+                sympy.isprime(int(response))
+        }
     ]
 }

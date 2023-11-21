@@ -203,7 +203,7 @@ def get_default_pipeline_info(task):
 
 def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
                       revision: Optional[str]) -> Optional[str]:
-    from .nlp.llm_pipeline import ModelTypeHelper, LLM_FORMAT_MAP
+    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
 
     if isinstance(model, list):
         model = model[0]
@@ -211,5 +211,5 @@ def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
         model = model.model_dir
     model_type = ModelTypeHelper.get(
         model, revision, with_adapter=True, split='-')
-    if model_type in LLM_FORMAT_MAP:
+    if LLMAdapterRegistry.contains(model_type):
         return 'llm'

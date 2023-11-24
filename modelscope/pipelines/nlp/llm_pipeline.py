@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import os.path as osp
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import json
 import torch
@@ -9,25 +10,106 @@ from transformers import PreTrainedTokenizer
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
+from modelscope.hub.file_download import model_file_download
 from modelscope.models.base import Model
 from modelscope.models.nlp import ChatGLM2Tokenizer, Llama2Tokenizer
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
+from modelscope.utils.config import Config
 from modelscope.utils.constant import Invoke, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 
-@PIPELINES.register_module(Tasks.chat, module_name='llm-pipeline')
+class ModelTypeHelper:
+
+    @staticmethod
+    def _get_file_name(model: str, cfg_name: str,
+                       revision: Optional[str]) -> Optional[str]:
+        if osp.exists(model):
+            return osp.join(model, cfg_name)
+        try:
+            return model_file_download(model, cfg_name, revision=revision)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _parse_and_get(file: Optional[str], pattern: str) -> Optional[str]:
+        if file is None or not osp.exists(file):
+            return None
+        return Config.from_file(file).safe_get(pattern)
+
+    @classmethod
+    def _get(cls, model: str, revision: Optional[str]) -> Optional[str]:
+        cfg_file = cls._get_file_name(model, ModelFile.CONFIGURATION, revision)
+        hf_cfg_file = cls._get_file_name(model, ModelFile.CONFIG, revision)
+        cfg_model_type = cls._parse_and_get(cfg_file, 'model.type')
+        hf_cfg_model_type = cls._parse_and_get(hf_cfg_file, 'model_type')
+        return cfg_model_type or hf_cfg_model_type
+
+    @classmethod
+    def _get_adapter(cls, model: str,
+                     revision: Optional[str]) -> Optional[str]:
+        cfg_file = cls._get_file_name(model, ModelFile.CONFIGURATION, revision)
+        model = cls._parse_and_get(cfg_file, 'adapter_cfg.model_id_or_path')
+        revision = cls._parse_and_get(cfg_file, 'adapter_cfg.model_revision')
+        return None if model is None else cls._get(model, revision)
+
+    @classmethod
+    def get(cls,
+            model: str,
+            revision: Optional[str] = None,
+            with_adapter: bool = False,
+            split: Optional[str] = None) -> Optional[str]:
+        model_type = cls._get(model, revision)
+        if model_type is None and with_adapter:
+            model_type = cls._get_adapter(model, revision)
+        if model_type is None:
+            return None
+        model_type = model_type.lower()
+        if split is None:
+            return model_type
+        return model_type.split(split)[0]
+
+
+@PIPELINES.register_module(Tasks.chat, module_name='llm')
+@PIPELINES.register_module(Tasks.text_generation, module_name='llm')
 class LLMPipeline(Pipeline):
 
     def initiate_single_model(self, model):
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
+        if self._is_swift_model(model):
+            if self.llm_framework is not None:
+                logger.warning(
+                    f'Cannot using swift with llm_framework, ignoring {self.llm_framework}.'
+                )
+            from swift import Swift
+
+            base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
+            assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
+            revision = self.cfg.safe_get('adapter_cfg.model_revision',
+                                         'master')
+            base_model = Model.from_pretrained(
+                base_model,
+                revision,
+                invoked_by=Invoke.PIPELINE,
+                device_map=self.device_map,
+                torch_dtype=self.torch_dtype,
+                trust_remote_code=True)
+            swift_model = Swift.from_pretrained(base_model, model_id=model)
+            return swift_model
+
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
-            if is_model(model):
+            if self.llm_framework is not None:
+                model_dir = model if os.path.exists(
+                    model) else snapshot_download(model)
+                return self._wrap_infer_framework(model_dir,
+                                                  self.llm_framework)
+            elif is_model(model):
                 return Model.from_pretrained(
                     model,
                     invoked_by=Invoke.PIPELINE,
@@ -48,13 +130,36 @@ class LLMPipeline(Pipeline):
         else:
             return model
 
+    def _is_swift_model(self, model: Union[str, Any]) -> bool:
+        if not isinstance(model, str):
+            return False
+        if os.path.exists(model):
+            cfg_file = os.path.join(model, ModelFile.CONFIGURATION)
+        else:
+            try:
+                cfg_file = model_file_download(model, ModelFile.CONFIGURATION)
+            except Exception:
+                return False
+
+        self.cfg = Config.from_file(cfg_file)
+        return self.cfg.safe_get('adapter_cfg.tuner_backend') == 'swift'
+
+    def _wrap_infer_framework(self, model_dir, framework='vllm'):
+        from modelscope.pipelines.accelerate.base import InferFramework
+        return InferFramework.from_pretrained(model_dir, framework)
+
     def __init__(self,
                  format_messages: Union[Callable, str] = None,
                  format_output: Callable = None,
                  tokenizer: PreTrainedTokenizer = None,
+                 llm_framework: str = None,
                  *args,
                  **kwargs):
         self.device_map = kwargs.pop('device_map', None)
+        self.llm_framework = llm_framework
+        # TODO: qwen-int4 need 'cuda'/'auto' device_map.
+        if not self.device_map and 'qwen' in kwargs['model'].lower():
+            self.device_map = 'cuda'
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         with self._temp_configuration_file(kwargs):
@@ -68,8 +173,7 @@ class LLMPipeline(Pipeline):
                 format_messages]
 
         if format_messages is None:
-            model_type = self.cfg.safe_get('model.type',
-                                           '').lower().split('-')[0]
+            model_type = ModelTypeHelper.get(self.model.model_dir, split='-')
             if model_type in LLM_FORMAT_MAP:
                 format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
                     model_type]
@@ -102,15 +206,22 @@ class LLMPipeline(Pipeline):
         is_messages = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, is_messages, **preprocess_params)
 
-        if hasattr(self.model, 'generate'):
-            outputs = self.model.generate(**tokens, **forward_params)
-        elif hasattr(self.model, 'model') and hasattr(self.model.model,
-                                                      'generate'):
-            outputs = self.model.model.generate(**tokens, **forward_params)
+        if self.llm_framework is None:
+            # pytorch model
+            if hasattr(self.model, 'generate'):
+                outputs = self.model.generate(**tokens, **forward_params)
+            elif hasattr(self.model, 'model') and hasattr(
+                    self.model.model, 'generate'):
+                outputs = self.model.model.generate(**tokens, **forward_params)
+            else:
+                raise ValueError('model does not support `generate`!')
         else:
-            raise ValueError('model does not support `generate`!')
+            tokens = [list(tokens['inputs'].flatten().numpy())]
+            outputs = self.model(tokens, **forward_params)[0]
 
-        outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
+        if self.llm_framework is None:
+            # pytorch model
+            outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
         response = self.postprocess(outputs, is_messages, **postprocess_params)
         return response
 
@@ -128,16 +239,26 @@ class LLMPipeline(Pipeline):
         elif hasattr(self.model, 'model') and hasattr(self.model.model,
                                                       'device'):
             device = self.model.model.device
+        elif hasattr(self.model, 'llm_framework'):
+            device = 'cpu'
         else:
             raise ValueError('model does not have `device` attribute!')
-        return {k: v.to(device) for k, v in tokens.items()}
+        return {
+            k: (v.to(device) if isinstance(v, torch.Tensor) else v)
+            for k, v in tokens.items()
+        }
 
     def postprocess(self, outputs, is_messages: bool, **kwargs):
 
-        response = self.tokenizer.decode(
-            outputs, skip_special_tokens=True, **kwargs)
+        if not isinstance(outputs, str):
+            response = self.tokenizer.decode(
+                outputs, skip_special_tokens=True, **kwargs)
+        else:
+            response = outputs
         if is_messages:
             response = self.format_output(response, **kwargs)
+        else:
+            response = {OutputKeys.TEXT: response}
 
         return response
 
@@ -260,7 +381,7 @@ def chatglm2_format_output(response, **kwargs):
     response = response.replace('[[训练时间]]', '2023年')
     messages = {'role': 'assistant', 'content': response}
     outputs = {
-        'messages': messages,
+        'message': messages,
     }
     return outputs
 
@@ -421,6 +542,19 @@ def wizardcode_format_messages(messages, tokenizer, **kwargs):
     return inputs
 
 
+def chatglm3_format_messages(messages, tokenizer, **kwargs):
+    messages = messages['messages']
+    query, history = messages[-1]['content'], messages[:-1]
+    inputs = tokenizer.build_chat_input(query, history=history)
+    eos_token_id = [
+        tokenizer.eos_token_id,
+        tokenizer.get_command('<|user|>'),
+        tokenizer.get_command('<|observation|>')
+    ]
+    inputs['eos_token_id'] = eos_token_id
+    return inputs
+
+
 LLM_FORMAT_MAP = {
     'chatglm2':
     (chatglm2_format_messages, chatglm2_format_output, ChatGLM2Tokenizer),
@@ -430,5 +564,6 @@ LLM_FORMAT_MAP = {
     'baichuan': (baichuan_format_messages, None, None),
     'baichuan2': (baichuan_format_messages, None, None),
     'wizardlm': (wizardlm_format_messages, None, None),
-    'wizardcode': (wizardcode_format_messages, None, None)
+    'wizardcode': (wizardcode_format_messages, None, None),
+    'chatglm': (chatglm3_format_messages, chatglm2_format_output, None),
 }

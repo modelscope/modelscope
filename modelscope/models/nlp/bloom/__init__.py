@@ -6,10 +6,12 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .backbone import BloomModel
     from .text_generation import BloomForTextGeneration
+    from .sentence_embedding import BloomForSentenceEmbedding
 else:
     _import_structure = {
         'backbone': ['BloomModel'],
         'text_generation': ['BloomForTextGeneration'],
+        'sentence_embedding': ['BloomForSentenceEmbedding']
     }
     import sys
     sys.modules[__name__] = LazyImportModule(

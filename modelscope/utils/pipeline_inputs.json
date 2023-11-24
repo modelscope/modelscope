@@ -1,78 +1,85 @@
 {
     "action-detection":{
         "input":{
-            "video":"data/test/videos/action_detection_test_video.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_detection_test_video.mp4"
         }
     },
     "action-recognition":{
         "input":{
-            "video":"data/test/videos/action_recognition_test_video.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_recognition_test_video.mp4"
         }
     },
     "animal-recognition":{
         "input":{
-            "image":"data/test/images/dogs.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg"
         }
     },
     "chat":{
         "input":{
-            "text":"你有什么推荐吗？",
-            "history":[
-                [
-                    "今天天气真好，",
-                    "今天天气真好，出去走走怎么样？"
-                ]
-            ]
+            "messages": [{
+                "role": "user",
+                "content": "Hello! 你是谁？"
+            }, {
+                "role": "assistant",
+                "content": "我是你的助手。"
+            }, {
+                "role": "user",
+                "content": "你叫什么名字？"
+            }]
+        },
+        "parameters": {
+            "do_sample": true,
+            "max_length": 512
         }
     },
     "domain-specific-object-detection":{
         "input":{
-            "image":"data/test/images/image_traffic_sign.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_traffic_sign.jpg"
         }
     },
     "face-2d-keypoints":{
         "input":{
-            "image":"data/test/images/face_detection.png"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/face_detection.png"
         }
     },
     "face-attribute-recognition":{
         "input":{
-            "image":"data/test/images/face_recognition_1.png"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/face_recognition_1.png"
         }
     },
     "facial-expression-recognition":{
         "input":{
-            "image":"data/test/images/facial_expression_recognition.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/facial_expression_recognition.jpg"
         }
     },
     "general-recognition":{
         "input":{
-            "image":"data/test/images/dogs.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg"
         }
     },
     "human-detection":{
         "input":{
-            "image":"data/test/images/image_detection.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_detection.jpg"
         }
     },
     "image-captioning":{
         "input":{
-            "image":"data/test/images/image_captioning.png"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_captioning.png"
         }
     },
     "image-classification":{
         "input":{
-            "image":"data/test/images/content_check.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/content_check.jpg"
         }
     },
     "image-demoireing":{
         "input":{
-            "image":"data/test/images/shop_segmentation.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/shop_segmentation.jpg"
         }
     },
     "image-object-detection":{
         "input":{
-            "image":"data/test/images/image_detection.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_detection.jpg"
         }
     },
     "image-portrait-stylization":{
@@ -82,7 +89,7 @@
     },
     "image-segmentation":{
         "input":{
-            "image":"data/test/images/image_semantic_segmentation.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_semantic_segmentation.jpg"
         },
         "parameters":{
 
@@ -90,18 +97,18 @@
     },
     "image-text-retrieval":{
         "input":{
-            "image":"data/test/images/image_mplug_vqa.jpg",
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_mplug_vqa.jpg",
             "text":"What is the woman doing?"
         }
     },
     "indoor-layout-estimation":{
         "input":{
-            "image":"data/test/images/image_traffic_sign.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_traffic_sign.jpg"
         }
     },
     "live-category":{
         "input":{
-            "video":"data/test/videos/live_category_test_video.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/live_category_test_video.mp4"
         }
     },
     "motion-generation":{
@@ -125,22 +132,35 @@
     },
     "ocr-recognition":{
         "input":{
-            "image":"data/test/images/image_ocr_recognition.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_ocr_recognition.jpg"
         }
     },
     "panorama-depth-estimation":{
         "input":{
-            "image":"data/test/images/panorama_depth_estimation.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/panorama_depth_estimation.jpg"
         }
     },
     "semantic-segmentation":{
         "input":{
-            "image":"data/test/images/image_salient_detection.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_salient_detection.jpg"
+        }
+    },
+    "sentence-embedding":{
+        "input": {
+            "source_sentence":[
+                "吃完海鲜可以喝牛奶吗?"
+            ],
+            "sentences_to_compare":[
+                "不可以，早晨喝牛奶不科学",
+                "吃了海鲜后是不能再喝牛奶的，因为牛奶中含得有维生素C，如果海鲜喝牛奶一起服用会对人体造成一定的伤害",
+                "吃海鲜是不能同时喝牛奶吃水果，这个至少间隔6小时以上才可以。",
+                "吃海鲜是不可以吃柠檬的因为其中的维生素C会和海鲜中的矿物质形成砷"
+            ]
         }
     },
     "shop-segmentation":{
         "input":{
-            "image":"data/test/images/shop_segmentation.jpg"
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/shop_segmentation.jpg"
         }
     },
     "text-classification":{
@@ -153,7 +173,7 @@
     },
     "text-driven-segmentation":{
         "input":{
-            "image":"data/test/images/text_driven_segmentation.jpg",
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/text_driven_segmentation.jpg",
             "text":"bear"
         }
     },
@@ -194,60 +214,60 @@
     },
     "video-captioning":{
         "input":{
-            "video":"data/test/videos/video_caption_and_qa_test.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_caption_and_qa_test.mp4"
         }
     },
     "video-category":{
         "input":{
-            "video":"data/test/videos/video_category_test_video.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_category_test_video.mp4"
         }
     },
     "video-depth-estimation":{
         "input":{
-            "video":"data/test/videos/video_depth_estimation.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_depth_estimation.mp4"
         }
     },
     "video-embedding":{
         "input":{
-            "video":"data/test/videos/action_recognition_test_video.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_recognition_test_video.mp4"
         }
     },
     "video-multi-object-tracking":{
         "input":{
-            "video":"data/test/videos/MOT17-03-partial.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/MOT17-03-partial.mp4"
         }
     },
     "video-panoptic-segmentation":{
         "input":{
-            "video":"data/test/videos/kitti-step_testing_image_02_0000.mp4"
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/kitti-step_testing_image_02_0000.mp4"
         }
     },
     "video-question-answering":{
         "input":{
-            "video":"data/test/videos/video_caption_and_qa_test.mp4",
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_caption_and_qa_test.mp4",
             "text":"How many people are there?"
         }
     },
     "video-summarization":{
         "input":{
-            "text":"data/test/videos/video_category_test_video.mp4"
+            "text":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_category_test_video.mp4"
         }
     },
     "visual-entailment":{
         "input":{
-            "image":"data/test/images/dogs.jpg",
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg",
             "text":"there are two birds."
         }
     },
     "visual-grounding":{
         "input":{
-            "image":"data/test/images/visual_grounding.png",
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/visual_grounding.png",
             "text":"a blue turtle-like pokemon with round head"
         }
     },
     "visual-question-answering":{
         "input":{
-            "image":"data/test/images/image_mplug_vqa.jpg",
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_mplug_vqa.jpg",
             "text":"What is the woman doing?"
         }
     },

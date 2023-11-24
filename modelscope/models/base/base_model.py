@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
-from modelscope.utils.automodel_utils import (can_load_by_ms,
+from modelscope.utils.automodel_utils import (can_load_by_ms, fix_upgrade,
                                               try_to_load_hf_model)
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
@@ -117,6 +117,7 @@ class Model(ABC):
         else:
             invoked_by = Invoke.PRETRAINED
 
+        ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
@@ -126,7 +127,6 @@ class Model(ABC):
                 )
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
-            ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
             local_model_dir = snapshot_download(
                 model_name_or_path,
                 revision,
@@ -192,6 +192,7 @@ class Model(ABC):
         model_cfg.pop('model_dir', None)
         model.name = model_name_or_path
         model.model_dir = local_model_dir
+        fix_upgrade(model)
         return model
 
     def save_pretrained(self,

@@ -92,8 +92,9 @@ class SegmentationClusteringPipeline(Pipeline):
     def forward(self, input: list) -> np.ndarray:
         embeddings = []
         for s in input:
-            _, embs = self.sv_pipeline([s[2]], output_emb=True)
-            embeddings.append(embs)
+            save_dict = self.sv_pipeline([s[2]], output_emb=True)
+            if save_dict['embs'].shape == (1, 192):
+                embeddings.append(save_dict['embs'])
         embeddings = np.concatenate(embeddings)
         return embeddings
 

@@ -1,9 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import os
-import sys
 
-from transformers import CONFIG_MAPPING
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
@@ -15,12 +12,10 @@ from transformers import \
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
-from transformers import (PretrainedConfig, PreTrainedModel,
-                          PreTrainedTokenizerBase)
-from transformers.models.auto.tokenization_auto import (
-    TOKENIZER_MAPPING_NAMES, get_tokenizer_config)
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from modelscope import snapshot_download
+from modelscope.utils.automodel_utils import fix_upgrade
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 
 try:
@@ -117,6 +112,7 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
 
             if module_class.__name__.startswith('AutoModel'):
                 module_obj.model_dir = model_dir
+            fix_upgrade(module_obj)
             return module_obj
 
     ClassWrapper.__name__ = module_class.__name__

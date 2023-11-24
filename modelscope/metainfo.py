@@ -200,6 +200,7 @@ class Models(object):
     eres2net_sv = 'eres2net-sv'
     eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
+    scl_sd_xvector = 'scl-sd-xvector'
     campplus_lre = 'cam++-lre'
     eres2net_lre = 'eres2net-lre'
     cluster_backend = 'cluster-backend'
@@ -291,6 +292,7 @@ class Pipelines(object):
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
     image_editing = 'masactrl-image-editing'
+    freeu_stable_diffusion_text2image = 'freeu-stable-diffusion-text2image'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
@@ -514,6 +516,7 @@ class Pipelines(object):
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
     language_identification = 'language_identification'
     machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
+    llm = 'llm'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'

@@ -4,7 +4,7 @@ import os
 from typing import List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
+from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
@@ -117,6 +117,9 @@ def pipeline(task: str = None,
         model_revision,
         third_party=third_party,
         ignore_file_pattern=ignore_file_pattern)
+    if pipeline_name is None and kwargs.get('llm_first'):
+        pipeline_name = llm_first_checker(model, model_revision)
+        kwargs.pop('llm_first')
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
@@ -196,3 +199,17 @@ def get_default_pipeline_info(task):
     else:
         pipeline_name, default_model = DEFAULT_MODEL_FOR_PIPELINE[task]
     return pipeline_name, default_model
+
+
+def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
+                      revision: Optional[str]) -> Optional[str]:
+    from .nlp.llm_pipeline import ModelTypeHelper, LLM_FORMAT_MAP
+
+    if isinstance(model, list):
+        model = model[0]
+    if not isinstance(model, str):
+        model = model.model_dir
+    model_type = ModelTypeHelper.get(
+        model, revision, with_adapter=True, split='-')
+    if model_type in LLM_FORMAT_MAP:
+        return 'llm'

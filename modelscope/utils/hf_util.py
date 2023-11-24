@@ -2,6 +2,7 @@
 import os
 
 from transformers import AutoConfig as AutoConfigHF
+from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
@@ -10,11 +11,10 @@ from transformers import \
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoTokenizer as AutoTokenizerHF
+from transformers import BatchFeature as BatchFeatureHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
-from transformers import AutoImageProcessor as AutoImageProcessorHF
-from transformers import BatchFeature as BatchFeatureHF
 
 from modelscope import snapshot_download
 from modelscope.utils.automodel_utils import fix_upgrade

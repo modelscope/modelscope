@@ -82,8 +82,7 @@ else:
             'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification',
-            'AutoImageProcessor',
+            'AutoModelForTokenClassification', 'AutoImageProcessor',
             'BatchFeature'
         ],
         'msdatasets': ['MsDataset']

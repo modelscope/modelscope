@@ -13,6 +13,8 @@ from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import AutoImageProcessor as AutoImageProcessorHF
+from transformers import BatchFeature as BatchFeatureHF
 
 from modelscope import snapshot_download
 from modelscope.utils.automodel_utils import fix_upgrade
@@ -136,3 +138,5 @@ GenerationConfig = get_wrapped_class(
     GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
 GPTQConfig = GPTQConfigHF
 BitsAndBytesConfig = BitsAndBytesConfigHF
+AutoImageProcessor = get_wrapped_class(AutoImageProcessorHF)
+BatchFeature = get_wrapped_class(BatchFeatureHF)

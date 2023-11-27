@@ -117,12 +117,13 @@ def raise_on_error(rsp):
         raise RequestError(rsp['Message'])
 
 
-def datahub_raise_on_error(url, rsp):
+def datahub_raise_on_error(url, rsp, http_response: requests.Response):
     """If response error, raise exception
 
     Args:
         url (str): The request url
         rsp (HTTPResponse): The server response.
+        http_response: the origin http response.
 
     Raises:
         RequestError: the http request error.
@@ -133,7 +134,7 @@ def datahub_raise_on_error(url, rsp):
     if rsp.get('Code') == HTTPStatus.OK:
         return True
     else:
-        request_id = get_request_id(rsp)
+        request_id = get_request_id(http_response)
         raise RequestError(
             f"Url = {url}, Request id={request_id} Message = {rsp.get('Message')},\
                 Please specify correct dataset_name and namespace.")

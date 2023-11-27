@@ -44,6 +44,8 @@ for i in "$@"; do
           cudatoolkit_version=11.7
       elif [ "$cuda_version" == "11.8.0" ]; then
           cudatoolkit_version=11.8
+      elif [ "$cuda_version" == "12.1.0" ]; then
+          cudatoolkit_version=12.1
       else
           echo "Unsupport cuda version $cuda_version"
           exit 1
@@ -130,6 +132,17 @@ elif [[ $python_version == 3.8* ]]; then
         export BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda$cuda_version-py38-torch$torch_version-tf$tensorflow_version-base
     fi
     base_tag=$base_tag-py38
+elif [[ $python_version == 3.10* ]]; then
+    if [ "$is_cpu" == "True" ]; then
+        echo "Building python3.10 cpu image"
+        base_tag=ubuntu22.04-py310
+        export BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch$torch_version-tf$tensorflow_version-base
+    else
+        echo "Building python3.10 gpu image"
+        base_tag=ubuntu22.04-cuda$cuda_version-py310
+        # reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda12.1.0-py310-torch2.1.0-tf2.14.0-base
+        export BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda$cuda_version-py310-torch$torch_version-tf$tensorflow_version-base
+    fi
 else
     echo "Unsupport python version: $python_version"
     exit 1
@@ -150,7 +163,8 @@ echo -e "Building image with:\npython$python_version\npytorch$torch_version\nten
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir -U funasr transformers && pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/releases/build/modelscope-$modelscope_version-py3-none-any.whl "
+    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers<4.35.0'"
+    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && python setup.py install && cd / && rm -fr /tmp/MaaS-lib"
 fi
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
@@ -160,12 +174,6 @@ else
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
     docker_file_content="${docker_file_content} \nRUN python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
-    if [ "$is_cpu" == "True" ]; then
-        echo 'build cpu image'
-    else
-        # fix easycv extension and tinycudann conflict.
-        docker_file_content="${docker_file_content} \nRUN bash /tmp/install_tiny_cuda_nn.sh"
-    fi
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"
@@ -175,7 +183,7 @@ printf "$docker_file_content" > Dockerfile
 
 while true
 do
-  docker build -t $IMAGE_TO_BUILD  \
+  DOCKER_BUILDKIT=0 docker build -t $IMAGE_TO_BUILD  \
              --build-arg USE_GPU \
              --build-arg BASE_IMAGE \
              --build-arg PYTHON_VERSION \

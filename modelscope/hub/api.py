@@ -600,7 +600,7 @@ class HubApi:
         cookies = ModelScopeConfig.get_cookies()
         r = self.session.get(datahub_url, cookies=cookies)
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp)
+        datahub_raise_on_error(datahub_url, resp, r)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
@@ -613,7 +613,7 @@ class HubApi:
                              cookies=cookies,
                              headers=self.builder_headers(self.headers))
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp)
+        datahub_raise_on_error(datahub_url, resp, r)
         file_list = resp['Data']
         if file_list is None:
             raise NotExistError(
@@ -866,7 +866,7 @@ class HubApi:
             cookies=cookies,
             headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
-        datahub_raise_on_error(url, resp)
+        datahub_raise_on_error(url, resp, r)
         return resp['Data']
 
     def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool) -> None:

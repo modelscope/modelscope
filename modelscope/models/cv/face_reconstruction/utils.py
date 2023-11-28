@@ -767,6 +767,7 @@ def align_img(img, lm, lm3D, mask=None, target_size=224., rescale_factor=102.):
 
     # calculate translation and scale factors using 5 facial landmarks and standard landmarks of a 3D face
     t, s = POS(lm5p.transpose(), lm3D.transpose())
+    t = t.squeeze()
     s = rescale_factor / s
 
     # processing the image

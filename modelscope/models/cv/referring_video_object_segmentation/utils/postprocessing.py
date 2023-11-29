@@ -109,7 +109,7 @@ class ReferYoutubeVOSPostProcess(nn.Module):
                                                     1)  # remove the padding
             # resize the masks back to their original frames dataset size for evaluation:
             original_frames_size = video_metadata['original_frame_size']
-            tuple_size = tuple(original_frames_size.cpu().numpy())
+            tuple_size = tuple(original_frames_size.cpu())
             video_pred_masks = F.interpolate(
                 video_pred_masks.float(), size=tuple_size, mode='nearest')
             video_pred_masks = video_pred_masks.to(torch.uint8).cpu()

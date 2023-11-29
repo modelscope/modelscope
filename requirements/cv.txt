@@ -17,7 +17,8 @@ ffmpeg>=1.4
 ffmpeg-python>=0.2.0
 ftfy
 fvcore
-healpy
+# remove for windows support
+# healpy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0

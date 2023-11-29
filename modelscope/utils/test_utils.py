@@ -115,6 +115,9 @@ def get_case_model_info():
         elements = line.split(':')
         test_file = elements[0]
         model_pos = line.find('damo')
+        if model_pos == -1 or (model_pos -1) > len(line):
+            print('Processing line: %s failed'%line)
+            continue
         left_quote = line[model_pos - 1]
         rquote_idx = line.rfind(left_quote)
         model_name = line[model_pos:rquote_idx]

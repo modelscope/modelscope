@@ -104,12 +104,19 @@ class LLMPipeline(Pipeline):
 
         if isinstance(model, str) and is_official_hub_path(model):
             logger.info(f'initiate model from location {model}.')
-            if self.llm_framework is not None:
+            if self.llm_framework:
                 model_dir = model if os.path.exists(
                     model) else snapshot_download(model)
-                return self._wrap_infer_framework(model_dir,
-                                                  self.llm_framework)
-            elif is_model(model):
+                try:
+                    model = self._wrap_infer_framework(model_dir,
+                                                       self.llm_framework)
+                    logger.info(f'initiate model with {framework}.')
+                    return model
+                except Exception as e:
+                    self.llm_framework = None
+                    logger.warning(f'Cannot using llm_framework with {model}, '
+                                   f'ignoring llm_framework={self.llm_framework} : {e}')
+            if is_model(model):
                 return Model.from_pretrained(
                     model,
                     invoked_by=Invoke.PIPELINE,
@@ -152,7 +159,7 @@ class LLMPipeline(Pipeline):
                  format_messages: Union[Callable, str] = None,
                  format_output: Callable = None,
                  tokenizer: PreTrainedTokenizer = None,
-                 llm_framework: str = None,
+                 llm_framework: str = 'vllm',
                  *args,
                  **kwargs):
         self.device_map = kwargs.pop('device_map', None)

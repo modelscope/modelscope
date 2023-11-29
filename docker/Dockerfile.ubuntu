@@ -56,7 +56,3 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY examples /modelscope/examples
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
-RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \
-    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set install.trusted-host mirrors.aliyun.com && \
-    cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list

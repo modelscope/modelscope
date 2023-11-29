@@ -163,8 +163,9 @@ echo -e "Building image with:\npython$python_version\npytorch$torch_version\nten
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers<4.35.0'"
-    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && python setup.py install && cd / && rm -fr /tmp/MaaS-lib"
+    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers<4.35.0'"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && pip install . && cd / && rm -fr /tmp/MaaS-lib"
+        MMCV_WITH_OPS=1 MAX_JOBS=32 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
 fi
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
@@ -173,12 +174,17 @@ else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
-    docker_file_content="${docker_file_content} \nRUN python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
+    docker_file_content="${docker_file_content} \nRUN export TORCH_CUDA_ARCH_LIST='6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX' && python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"
     docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y"
 fi
+docker_file_content="${docker_file_content} \n RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set install.trusted-host mirrors.aliyun.com && \
+    cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list "
+
 printf "$docker_file_content" > Dockerfile
 
 while true

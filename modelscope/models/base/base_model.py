@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
-from modelscope.utils.automodel_utils import (can_load_by_ms,
+from modelscope.utils.automodel_utils import (can_load_by_ms, fix_upgrade,
                                               try_to_load_hf_model)
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
@@ -192,6 +192,7 @@ class Model(ABC):
         model_cfg.pop('model_dir', None)
         model.name = model_name_or_path
         model.model_dir = local_model_dir
+        fix_upgrade(model)
         return model
 
     def save_pretrained(self,

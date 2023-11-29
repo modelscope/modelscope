@@ -275,6 +275,18 @@ def is_espnet_available(pkg_name):
         and importlib.util.find_spec('espnet')
 
 
+def is_vllm_available():
+    return importlib.util.find_spec('vllm') is not None
+
+
+def is_transformers_available():
+    return importlib.util.find_spec('transformers') is not None
+
+
+def is_tensorrt_llm_available():
+    return importlib.util.find_spec('tensorrt_llm') is not None
+
+
 REQUIREMENTS_MAAPING = OrderedDict([
     ('protobuf', (is_protobuf_available, PROTOBUF_IMPORT_ERROR)),
     ('sentencepiece', (is_sentencepiece_available,

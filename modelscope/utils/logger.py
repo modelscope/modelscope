@@ -37,18 +37,20 @@ def get_logger(log_file: Optional[str] = None,
     # unexpectedly show up on the console, creating much unwanted clutter.
     # To fix this issue, we set the root logger's StreamHandler, if any, to log
     # at the ERROR level.
-    for handler in logger.root.handlers:
-        if type(handler) is logging.StreamHandler:
-            handler.setLevel(logging.ERROR)
+    torch_dist = False
+    is_worker0 = True
+    if importlib.util.find_spec('torch') is not None:
+        from modelscope.utils.torch_utils import is_dist, is_master
+        torch_dist = is_dist()
+        is_worker0 = is_master()
+
+    if torch_dist:
+        for handler in logger.root.handlers:
+            if type(handler) is logging.StreamHandler:
+                handler.setLevel(logging.ERROR)
 
     stream_handler = logging.StreamHandler()
     handlers = [stream_handler]
-
-    if importlib.util.find_spec('torch') is not None:
-        from modelscope.utils.torch_utils import is_master
-        is_worker0 = is_master()
-    else:
-        is_worker0 = True
 
     if is_worker0 and log_file is not None:
         file_handler = logging.FileHandler(log_file, file_mode)

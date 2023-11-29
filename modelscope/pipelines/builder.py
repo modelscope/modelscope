@@ -1,16 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import os.path as osp
 from typing import List, Optional, Union
 
-from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
+from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
-from modelscope.utils.config import Config, ConfigDict, check_config
+from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
-                                       ModelFile, ThirdParty)
+                                       ThirdParty)
 from modelscope.utils.hub import read_config
 from modelscope.utils.plugins import (register_modelhub_repo,
                                       register_plugins_repo)
@@ -205,42 +203,13 @@ def get_default_pipeline_info(task):
 
 def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
                       revision: Optional[str]) -> Optional[str]:
-    from modelscope.pipelines.nlp.llm_pipeline import LLM_FORMAT_MAP
-
-    def get_file_name(model: str, cfg_name: str,
-                      revision: Optional[str]) -> Optional[str]:
-        if osp.exists(model):
-            return osp.join(model, cfg_name)
-        try:
-            return model_file_download(model, cfg_name, revision=revision)
-        except Exception:
-            return None
-
-    def parse_and_get(file: Optional[str], pattern: str) -> Optional[str]:
-        if file is None or not osp.exists(file):
-            return None
-        return Config.from_file(file).safe_get(pattern)
-
-    def get_model_type(model: str, revision: Optional[str]) -> Optional[str]:
-        cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
-        hf_cfg_file = get_file_name(model, ModelFile.CONFIG, revision)
-        cfg_model_type = parse_and_get(cfg_file, 'model.type')
-        hf_cfg_model_type = parse_and_get(hf_cfg_file, 'model_type')
-        return cfg_model_type or hf_cfg_model_type
-
-    def get_adapter_type(model: str, revision: Optional[str]) -> Optional[str]:
-        cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
-        model = parse_and_get(cfg_file, 'adapter_cfg.model_id_or_path')
-        revision = parse_and_get(cfg_file, 'adapter_cfg.model_revision')
-        return None if model is None else get_model_type(model, revision)
+    from .nlp.llm_pipeline import ModelTypeHelper, LLM_FORMAT_MAP
 
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
-    model_type = get_model_type(model, revision) \
-        or get_adapter_type(model, revision)
-    if model_type is not None:
-        model_type = model_type.lower().split('-')[0]
-        if model_type in LLM_FORMAT_MAP:
-            return 'llm'
+    model_type = ModelTypeHelper.get(
+        model, revision, with_adapter=True, split='-')
+    if model_type in LLM_FORMAT_MAP:
+        return 'llm'

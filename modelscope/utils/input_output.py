@@ -36,16 +36,18 @@ decodes relevant fields.
 Example:
     # create pipeine instance and pipeline information, save it to app
     pipeline_instance = create_pipeline('damo/cv_gpen_image-portrait-enhancement', 'v1.0.0')
+    # get pipeline information, input,output, request example.
     pipeline_info = get_pipeline_information_by_pipeline(pipeline_instance)
+    # save the pipeline and info to the app for use in subsequent request processing
     app.state.pipeline = pipeline_instance
     app.state.pipeline_info = pipeline_info
 
-    # for service schema request.
-    pipeline_info = request.app.state.pipeline_info
-    return pipeline_info.schema
-
-    # for service call request.
-    def inference(request: Request):
+    # for inference request, use call_pipeline_with_json to decode input and
+    # call pipeline, call pipeline_output_to_service_base64_output
+    # to encode necessary fields, and return the result.
+    # request and response are json format.
+    @router.post('/call')
+    async def inference(request: Request):
         pipeline_service = request.app.state.pipeline
         pipeline_info = request.app.state.pipeline_info
         request_json = await request.json()
@@ -55,19 +57,30 @@ Example:
         # convert output to json, if binary field, we need encoded.
         output = pipeline_output_to_service_base64_output(pipeline_info.task_name, result)
         return output
+
+    # Inference service input and output and sample information can be obtained through the docs interface
+    @router.get('/describe')
+    async def index(request: Request):
+        pipeline_info = request.app.state.pipeline_info
+        return pipeline_info.schema
+
 Todo:
     * Support more service input type, such as form.
 
 """
 
 
-def create_pipeline(model_id: str, revision: str):
+def create_pipeline(model_id: str, revision: str, llm_first: bool = True):
     model_configuration_file = model_file_download(
         model_id=model_id,
         file_path=ModelFile.CONFIGURATION,
         revision=revision)
     cfg = Config.from_file(model_configuration_file)
-    return pipeline(task=cfg.task, model=model_id, model_revision=revision)
+    return pipeline(
+        task=cfg.task,
+        model=model_id,
+        model_revision=revision,
+        llm_first=llm_first)
 
 
 def get_class_user_attributes(cls):
@@ -632,7 +645,7 @@ def call_pipeline_with_json(pipeline_info: PipelineInfomation,
     #     result = pipeline(**pipeline_inputs)
     # else:
     pipeline_inputs, parameters = service_base64_input_to_pipeline_input(
-        pipeline_info.task_name, body)
+        pipeline_info['task_name'], body)
     result = pipeline(pipeline_inputs, **parameters)
 
     return result

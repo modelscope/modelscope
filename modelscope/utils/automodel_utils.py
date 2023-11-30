@@ -34,7 +34,7 @@ def fix_upgrade(module_obj: Any):
 
 def post_init(self, *args, **kwargs):
     fix_upgrade(self)
-    super().post_init_origin(*args, **kwargs)
+    self.post_init_origin(*args, **kwargs)
 
 
 def fix_transformers_upgrade():

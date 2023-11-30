@@ -15,7 +15,6 @@ from transformers import GenerationConfig as GenerationConfigHF
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from modelscope import snapshot_download
-from modelscope.utils.automodel_utils import fix_upgrade
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 
 try:
@@ -112,7 +111,6 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
 
             if module_class.__name__.startswith('AutoModel'):
                 module_obj.model_dir = model_dir
-            fix_upgrade(module_obj)
             return module_obj
 
     ClassWrapper.__name__ = module_class.__name__

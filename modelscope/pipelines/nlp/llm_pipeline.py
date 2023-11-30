@@ -26,6 +26,8 @@ logger = get_logger()
 
 class ModelTypeHelper:
 
+    model_type_cache = {}
+
     @staticmethod
     def _get_file_name(model: str, cfg_name: str,
                        revision: Optional[str]) -> Optional[str]:
@@ -64,15 +66,19 @@ class ModelTypeHelper:
             revision: Optional[str] = None,
             with_adapter: bool = False,
             split: Optional[str] = None) -> Optional[str]:
+        cache_key = osp.basename(model)
+        if cache_key in cls.model_type_cache:
+            return cls.model_type_cache[cache_key]
         model_type = cls._get(model, revision)
         if model_type is None and with_adapter:
             model_type = cls._get_adapter(model, revision)
         if model_type is None:
             return None
         model_type = model_type.lower()
-        if split is None:
-            return model_type
-        return model_type.split(split)[0]
+        if split is not None:
+            model_type = model_type.split(split)[0]
+        cls.model_type_cache[cache_key] = model_type
+        return model_type
 
 
 class LLMAdapterRegistry:
@@ -219,16 +225,16 @@ class LLMPipeline(Pipeline):
 
         tokenizer_class = None
         if isinstance(format_messages, str):
-            assert format_messages in LLM_FORMAT_MAP, \
+            assert LLMAdapterRegistry.contains(format_messages), \
                 f'Can not find function for `{format_messages}`!'
-            format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
-                format_messages]
+            format_messages, format_output, tokenizer_class = \
+                LLMAdapterRegistry.get(format_messages)
 
         if format_messages is None:
             model_type = ModelTypeHelper.get(self.model.model_dir, split='-')
-            if model_type in LLM_FORMAT_MAP:
-                format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
-                    model_type]
+            if LLMAdapterRegistry.contains(model_type):
+                format_messages, format_output, tokenizer_class = \
+                    LLMAdapterRegistry.get(model_type)
 
         if format_messages is not None:
             self.format_messages = format_messages
@@ -296,7 +302,7 @@ class LLMPipeline(Pipeline):
         else:
             raise ValueError('model does not have `device` attribute!')
         return {
-            k: (v.to(device) if isinstance(v, torch.Tensor) else v)
+            k: (v.to(device) if torch.is_tensor(v) else v)
             for k, v in tokens.items()
         }
 

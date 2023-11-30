@@ -44,10 +44,10 @@ class Vllm(InferFramework):
         """
 
         # convert hf generate config to vllm
-        do_sample = None if 'do_sample' not in kwargs else kwargs.pop('do_sample')
-        num_beam = 1 if 'num_beam' not in kwargs else kwargs.pop('num_beam')
-        max_length = None if 'max_length' not in kwargs else kwargs.pop('max_length')
-        max_new_tokens = None if 'max_new_tokens' not in kwargs else kwargs.pop('max_new_tokens')
+        do_sample = kwargs.pop('do_sample', None)
+        num_beam = kwargs.pop('num_beam', 1)
+        max_length = kwargs.pop('max_length', None)
+        max_new_tokens = kwargs.pop('max_new_tokens', None)
 
         # for vllm, default to do_sample/greedy(depends on temperature).
         # for hf, do_sample=false, num_beam=1 -> greedy(default)

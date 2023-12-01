@@ -33,7 +33,8 @@ if TYPE_CHECKING:
                                 AutoModelForSeq2SeqLM,
                                 AutoModelForSequenceClassification,
                                 AutoModelForTokenClassification, AutoTokenizer,
-                                GenerationConfig)
+                                GenerationConfig, AutoImageProcessor,
+                                BatchFeature)
     from .utils.hub import create_model_if_not_exist, read_config
     from .utils.logger import get_logger
     from .version import __release_datetime__, __version__
@@ -81,7 +82,8 @@ else:
             'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification'
+            'AutoModelForTokenClassification', 'AutoImageProcessor',
+            'BatchFeature'
         ],
         'msdatasets': ['MsDataset']
     }

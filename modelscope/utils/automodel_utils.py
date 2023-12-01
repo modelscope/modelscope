@@ -42,7 +42,8 @@ def fix_transformers_upgrade():
         # from 4.35.0, transformers changes its arguments of _set_gradient_checkpointing
         import transformers
         from transformers import PreTrainedModel
-        if version.parse(transformers.__version__) >= version.parse('4.35.0'):
+        if version.parse(transformers.__version__) >= version.parse('4.35.0') \
+                and not hasattr(PreTrainedModel, 'post_init_origin'):
             PreTrainedModel.post_init_origin = PreTrainedModel.post_init
             PreTrainedModel.post_init = post_init
 

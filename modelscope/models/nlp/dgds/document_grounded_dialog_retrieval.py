@@ -28,6 +28,8 @@ class DocumentGroundedDialogRetrievalModel(TorchModel):
             map_location='cpu')
         compatible_position_ids(state_dict,
                                 'ctx_encoder.encoder.embeddings.position_ids')
+        compatible_position_ids(state_dict,
+                                'qry_encoder.encoder.embeddings.position_ids')
         self.model.load_state_dict(state_dict)
 
     def forward(self, input: Dict[str, Tensor], gck_segment=32):

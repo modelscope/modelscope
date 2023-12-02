@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
+import os
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -49,6 +50,7 @@ class ERes2Net_Pipeline(Pipeline):
         self.config = self.model.other_config
         self.thr = self.config['yesOrno_thr']
         self.save_dict = {}
+        self.model = self.model.to(self.device)
 
     def __call__(self,
                  in_audios: Union[np.ndarray, list],
@@ -74,6 +76,7 @@ class ERes2Net_Pipeline(Pipeline):
     def forward(self, inputs: list):
         embs = []
         for x in inputs:
+            x = x.to(self.device)
             embs.append(self.model(x))
         embs = torch.cat(embs)
         return embs

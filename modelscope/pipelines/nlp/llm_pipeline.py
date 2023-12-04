@@ -114,8 +114,9 @@ class LLMPipeline(Pipeline):
                     return model
                 except Exception as e:
                     self.llm_framework = None
-                    logger.warning(f'Cannot using llm_framework with {model}, '
-                                   f'ignoring llm_framework={self.llm_framework} : {e}')
+                    logger.warning(
+                        f'Cannot using llm_framework with {model}, '
+                        f'ignoring llm_framework={self.llm_framework} : {e}')
             if is_model(model):
                 return Model.from_pretrained(
                     model,

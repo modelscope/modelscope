@@ -159,7 +159,7 @@ class LLMPipeline(Pipeline):
                  format_messages: Union[Callable, str] = None,
                  format_output: Callable = None,
                  tokenizer: PreTrainedTokenizer = None,
-                 llm_framework: str = 'vllm',
+                 llm_framework: str = None,
                  *args,
                  **kwargs):
         self.device_map = kwargs.pop('device_map', None)

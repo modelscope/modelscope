@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import os.path as osp
-import traceback
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -26,7 +25,7 @@ logger = get_logger()
 
 class ModelTypeHelper:
 
-    model_type_cache = {}
+    current_model_type = None
 
     @staticmethod
     def _get_file_name(model: str, cfg_name: str,
@@ -65,10 +64,10 @@ class ModelTypeHelper:
             model: str,
             revision: Optional[str] = None,
             with_adapter: bool = False,
-            split: Optional[str] = None) -> Optional[str]:
-        cache_key = osp.basename(model)
-        if cache_key in cls.model_type_cache:
-            return cls.model_type_cache[cache_key]
+            split: Optional[str] = None,
+            use_cache: bool = False) -> Optional[str]:
+        if use_cache and cls.current_model_type:
+            return cls.current_model_type
         model_type = cls._get(model, revision)
         if model_type is None and with_adapter:
             model_type = cls._get_adapter(model, revision)
@@ -77,28 +76,28 @@ class ModelTypeHelper:
         model_type = model_type.lower()
         if split is not None:
             model_type = model_type.split(split)[0]
-        cls.model_type_cache[cache_key] = model_type
+        if use_cache:
+            cls.current_model_type = model_type
         return model_type
+
+    @classmethod
+    def clear_cache(cls):
+        cls.current_model_type = None
 
 
 class LLMAdapterRegistry:
 
-    LLM_FORMAT_MAP = {'qwen': [None, None, None]}
+    llm_format_map = {'qwen': [None, None, None]}
 
     @classmethod
     def _add_to_map(cls, model_type: str, value_index: int = 0, member=None):
+        assert model_type or ModelTypeHelper.current_model_type
         if model_type is None:
-            result = traceback.extract_stack()
-            # _add_to_map -> _register -> @LLMAdapterRegistry.format_messages
-            caller = result[len(result) - 3]
-            file = str(caller).split(',')[0].lstrip('<FrameSummary file ')
-            model_dir = os.path.dirname(file)
-            model_type = ModelTypeHelper.get(model_dir, split='-')
-            assert model_type is not None
-        if model_type not in cls.LLM_FORMAT_MAP:
-            cls.LLM_FORMAT_MAP[model_type] = [None, None, None]
-        assert cls.LLM_FORMAT_MAP[model_type][value_index] is None
-        cls.LLM_FORMAT_MAP[model_type][value_index] = member
+            model_type = ModelTypeHelper.current_model_type
+        if model_type not in cls.llm_format_map:
+            cls.llm_format_map[model_type] = [None, None, None]
+        assert cls.llm_format_map[model_type][value_index] is None
+        cls.llm_format_map[model_type][value_index] = member
         return member
 
     @classmethod
@@ -125,11 +124,11 @@ class LLMAdapterRegistry:
 
     @classmethod
     def contains(cls, model_name: str) -> bool:
-        return model_name in cls.LLM_FORMAT_MAP
+        return model_name in cls.llm_format_map
 
     @classmethod
     def get(cls, model_name: str) -> bool:
-        return cls.LLM_FORMAT_MAP[model_name]
+        return cls.llm_format_map[model_name]
 
 
 @PIPELINES.register_module(Tasks.chat, module_name='llm')

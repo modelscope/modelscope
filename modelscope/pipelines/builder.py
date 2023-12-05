@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
@@ -157,7 +157,7 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
-    kwargs.pop('llm_first', None)
+    clear_llm_info(kwargs)
     if kwargs:
         cfg.update(kwargs)
 
@@ -215,6 +215,13 @@ def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
     if not isinstance(model, str):
         model = model.model_dir
     model_type = ModelTypeHelper.get(
-        model, revision, with_adapter=True, split='-')
+        model, revision, with_adapter=True, split='-', use_cache=True)
     if LLMAdapterRegistry.contains(model_type):
         return 'llm'
+
+
+def clear_llm_info(kwargs: Dict):
+    from .nlp.llm_pipeline import ModelTypeHelper
+
+    kwargs.pop('llm_first', None)
+    ModelTypeHelper.clear_cache()

@@ -89,6 +89,7 @@ class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
             self.postprocessor = cfg.get('postprocessor')
         if self.postprocessor is None:
             self.postprocessor = 'decode'
+        self.has_logged = False
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}
@@ -99,9 +100,12 @@ class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
             try:
                 return self.model.generate(inputs, **forward_params)
             except AttributeError as e:
-                logger.warning('When inputs are passed directly, '
-                               f'the error is {e}, '
-                               'which can be ignored if it runs correctly.')
+                if not self.has_logged:
+                    logger.warning(
+                        'When inputs are passed directly, '
+                        f'the error is {e}, '
+                        'which can be ignored if it runs correctly.')
+                    self.has_logged = True
                 return self.model.generate(**inputs, **forward_params)
 
     def decode(self, inputs) -> str:

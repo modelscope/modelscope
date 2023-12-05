@@ -110,13 +110,13 @@ class LLMPipeline(Pipeline):
                 try:
                     model = self._wrap_infer_framework(model_dir,
                                                        self.llm_framework)
-                    logger.info(f'initiate model with {framework}.')
+                    logger.info(f'initiate model with {self.llm_framework}.')
                     return model
                 except Exception as e:
-                    self.llm_framework = None
                     logger.warning(
                         f'Cannot using llm_framework with {model}, '
                         f'ignoring llm_framework={self.llm_framework} : {e}')
+                    self.llm_framework = None
             if is_model(model):
                 return Model.from_pretrained(
                     model,

@@ -157,6 +157,9 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
+    # support set llm_framework=None
+    if pipeline_name == 'llm' and kwargs.get('llm_framework', '') == '':
+        kwargs['llm_framework'] = 'vllm'
     clear_llm_info(kwargs)
     if kwargs:
         cfg.update(kwargs)

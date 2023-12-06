@@ -25,6 +25,8 @@ logger = get_logger()
 
 class ModelTypeHelper:
 
+    current_model_type = None
+
     @staticmethod
     def _get_file_name(model: str, cfg_name: str,
                        revision: Optional[str]) -> Optional[str]:
@@ -62,16 +64,71 @@ class ModelTypeHelper:
             model: str,
             revision: Optional[str] = None,
             with_adapter: bool = False,
-            split: Optional[str] = None) -> Optional[str]:
+            split: Optional[str] = None,
+            use_cache: bool = False) -> Optional[str]:
+        if use_cache and cls.current_model_type:
+            return cls.current_model_type
         model_type = cls._get(model, revision)
         if model_type is None and with_adapter:
             model_type = cls._get_adapter(model, revision)
         if model_type is None:
             return None
         model_type = model_type.lower()
-        if split is None:
-            return model_type
-        return model_type.split(split)[0]
+        if split is not None:
+            model_type = model_type.split(split)[0]
+        if use_cache:
+            cls.current_model_type = model_type
+        return model_type
+
+    @classmethod
+    def clear_cache(cls):
+        cls.current_model_type = None
+
+
+class LLMAdapterRegistry:
+
+    llm_format_map = {'qwen': [None, None, None]}
+
+    @classmethod
+    def _add_to_map(cls, model_type: str, value_index: int = 0, member=None):
+        assert model_type or ModelTypeHelper.current_model_type
+        if model_type is None:
+            model_type = ModelTypeHelper.current_model_type
+        if model_type not in cls.llm_format_map:
+            cls.llm_format_map[model_type] = [None, None, None]
+        assert cls.llm_format_map[model_type][value_index] is None
+        cls.llm_format_map[model_type][value_index] = member
+        return member
+
+    @classmethod
+    def _wrapper(cls, model_type: str, value_index: int = 0, member=None):
+        if member is not None:
+            return cls._add_to_map(model_type, value_index, member)
+
+        def _register(member):
+            return cls._add_to_map(model_type, value_index, member)
+
+        return _register
+
+    @classmethod
+    def register_format_messages(cls, model_type: str = None, function=None):
+        return cls._wrapper(model_type, 0, function)
+
+    @classmethod
+    def register_format_output(cls, model_type: str = None, function=None):
+        return cls._wrapper(model_type, 1, function)
+
+    @classmethod
+    def register_tokenizer(cls, model_type: str = None, tokenizer_class=None):
+        return cls._wrapper(model_type, 2, tokenizer_class)
+
+    @classmethod
+    def contains(cls, model_name: str) -> bool:
+        return model_name in cls.llm_format_map
+
+    @classmethod
+    def get(cls, model_name: str) -> bool:
+        return cls.llm_format_map[model_name]
 
 
 @PIPELINES.register_module(Tasks.chat, module_name='llm')
@@ -175,16 +232,16 @@ class LLMPipeline(Pipeline):
 
         tokenizer_class = None
         if isinstance(format_messages, str):
-            assert format_messages in LLM_FORMAT_MAP, \
+            assert LLMAdapterRegistry.contains(format_messages), \
                 f'Can not find function for `{format_messages}`!'
-            format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
-                format_messages]
+            format_messages, format_output, tokenizer_class = \
+                LLMAdapterRegistry.get(format_messages)
 
         if format_messages is None:
             model_type = ModelTypeHelper.get(self.model.model_dir, split='-')
-            if model_type in LLM_FORMAT_MAP:
-                format_messages, format_output, tokenizer_class = LLM_FORMAT_MAP[
-                    model_type]
+            if LLMAdapterRegistry.contains(model_type):
+                format_messages, format_output, tokenizer_class = \
+                    LLMAdapterRegistry.get(model_type)
 
         if format_messages is not None:
             self.format_messages = format_messages
@@ -252,7 +309,7 @@ class LLMPipeline(Pipeline):
         else:
             raise ValueError('model does not have `device` attribute!')
         return {
-            k: (v.to(device) if isinstance(v, torch.Tensor) else v)
+            k: (v.to(device) if torch.is_tensor(v) else v)
             for k, v in tokens.items()
         }
 
@@ -364,6 +421,7 @@ class LLMPipeline(Pipeline):
         return ids
 
 
+@LLMAdapterRegistry.register_format_messages('chatglm2')
 def chatglm2_format_messages(messages, tokenizer, **kwargs):
 
     def build_chatglm2_prompt(messages, **kwargs):
@@ -384,6 +442,8 @@ def chatglm2_format_messages(messages, tokenizer, **kwargs):
     return tokenizer(prompt, return_token_type_ids=False, return_tensors='pt')
 
 
+@LLMAdapterRegistry.register_format_output('chatglm')
+@LLMAdapterRegistry.register_format_output('chatglm2')
 def chatglm2_format_output(response, **kwargs):
     response = response.strip()
     response = response.replace('[[训练时间]]', '2023年')
@@ -394,6 +454,8 @@ def chatglm2_format_output(response, **kwargs):
     return outputs
 
 
+@LLMAdapterRegistry.register_format_messages('llama')
+@LLMAdapterRegistry.register_format_messages('llama2')
 def llama2_format_messages(messages, tokenizer, **kwargs):
     from transformers import BatchEncoding
 
@@ -445,6 +507,8 @@ def llama2_format_messages(messages, tokenizer, **kwargs):
     return BatchEncoding({'input_ids': tokens})
 
 
+@LLMAdapterRegistry.register_format_messages('baichuan')
+@LLMAdapterRegistry.register_format_messages('baichuan2')
 def baichuan_format_messages(messages, tokenizer, **kwargs):
     from transformers import BatchEncoding
 
@@ -498,6 +562,7 @@ def baichuan_format_messages(messages, tokenizer, **kwargs):
     return BatchEncoding({'input_ids': input_tokens})
 
 
+@LLMAdapterRegistry.register_format_messages('wizardlm')
 def wizardlm_format_messages(messages, tokenizer, **kwargs):
 
     def build_wizardlm_prompt(messages, tokenizer, **kwargs):
@@ -528,6 +593,7 @@ def wizardlm_format_messages(messages, tokenizer, **kwargs):
     return tokenizer(prompts, return_token_type_ids=False, return_tensors='pt')
 
 
+@LLMAdapterRegistry.register_format_messages('wizardcode')
 def wizardcode_format_messages(messages, tokenizer, **kwargs):
     messages = messages['messages']
     assert len(messages) == 2, 'wizard code only support two messages.'
@@ -550,6 +616,7 @@ def wizardcode_format_messages(messages, tokenizer, **kwargs):
     return inputs
 
 
+@LLMAdapterRegistry.register_format_messages('chatglm')
 def chatglm3_format_messages(messages, tokenizer, **kwargs):
     messages = messages['messages']
     query, history = messages[-1]['content'], messages[:-1]
@@ -563,15 +630,6 @@ def chatglm3_format_messages(messages, tokenizer, **kwargs):
     return inputs
 
 
-LLM_FORMAT_MAP = {
-    'chatglm2':
-    (chatglm2_format_messages, chatglm2_format_output, ChatGLM2Tokenizer),
-    'qwen': (LLMPipeline.format_messages, LLMPipeline.format_output, None),
-    'llama2': (llama2_format_messages, None, Llama2Tokenizer),
-    'llama': (llama2_format_messages, None, Llama2Tokenizer),
-    'baichuan': (baichuan_format_messages, None, None),
-    'baichuan2': (baichuan_format_messages, None, None),
-    'wizardlm': (wizardlm_format_messages, None, None),
-    'wizardcode': (wizardcode_format_messages, None, None),
-    'chatglm': (chatglm3_format_messages, chatglm2_format_output, None),
-}
+LLMAdapterRegistry.register_tokenizer('chatglm2', ChatGLM2Tokenizer)
+LLMAdapterRegistry.register_tokenizer('llama', Llama2Tokenizer)
+LLMAdapterRegistry.register_tokenizer('llama2', Llama2Tokenizer)

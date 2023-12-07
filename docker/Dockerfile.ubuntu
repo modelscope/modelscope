@@ -56,4 +56,3 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY examples /modelscope/examples
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
-ENV LD_LIBRARY_PATH=/usr/local/cuda/compat:$LD_LIBRARY_PATH

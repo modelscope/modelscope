@@ -493,8 +493,9 @@ class HubApi:
                     if len(revisions) > 0:
                         revision = revisions[0]  # use latest revision before release time.
                     else:
+                        revision = MASTER_MODEL_BRANCH
                         vl = '[%s]' % ','.join(all_revisions)
-                        raise NoValidRevisionError('Model revision should be specified from revisions: %s' % (vl))
+                        logger.warning('Model revision should be specified from revisions: %s' % (vl))
                     logger.warning('Model revision not specified, use revision: %s' % revision)
                 else:
                     # use user-specified revision

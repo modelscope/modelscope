@@ -49,6 +49,7 @@ class MsModelMixin:
             The loaded model, which is initialized by transformers.PreTrainedModel.from_pretrained
         """
         model_dir = kwargs.pop('model_dir', None)
+        device = kwargs.pop('device', None)
         if model_dir is None:
             config = LlamaConfig(**kwargs)
             model = cls(config)
@@ -56,7 +57,8 @@ class MsModelMixin:
             model = super(MsModelMixin, cls).from_pretrained(
                 pretrained_model_name_or_path=model_dir, **kwargs)
         model.model_dir = model_dir
-        return model
+        return model if 'device_map' in kwargs \
+            or device is None else model.to(device)
 
 
 class LlamaPreTrainedModel(MsModelMixin, LlamaPreTrainedModelHF, TorchModel):

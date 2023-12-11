@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
@@ -119,7 +119,6 @@ def pipeline(task: str = None,
         ignore_file_pattern=ignore_file_pattern)
     if pipeline_name is None and kwargs.get('llm_first'):
         pipeline_name = llm_first_checker(model, model_revision)
-        kwargs.pop('llm_first')
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
@@ -131,10 +130,15 @@ def pipeline(task: str = None,
                     model, revision=model_revision) if isinstance(
                         model, str) else read_config(
                             model[0], revision=model_revision)
-                check_config(cfg)
                 register_plugins_repo(cfg.safe_get('plugins'))
                 register_modelhub_repo(model, cfg.get('allow_remote', False))
-                pipeline_props = cfg.pipeline
+                pipeline_name = llm_first_checker(model, model_revision) \
+                    if kwargs.get('llm_first') else None
+                if pipeline_name is not None:
+                    pipeline_props = {'type': pipeline_name}
+                else:
+                    check_config(cfg)
+                    pipeline_props = cfg.pipeline
         elif model is not None:
             # get pipeline info from Model object
             first_model = model[0] if isinstance(model, list) else model
@@ -153,6 +157,10 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
+    # support set llm_framework=None
+    if pipeline_name == 'llm' and kwargs.get('llm_framework', '') == '':
+        kwargs['llm_framework'] = 'vllm'
+    clear_llm_info(kwargs)
     if kwargs:
         cfg.update(kwargs)
 
@@ -203,13 +211,20 @@ def get_default_pipeline_info(task):
 
 def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
                       revision: Optional[str]) -> Optional[str]:
-    from .nlp.llm_pipeline import ModelTypeHelper, LLM_FORMAT_MAP
+    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
 
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
     model_type = ModelTypeHelper.get(
-        model, revision, with_adapter=True, split='-')
-    if model_type in LLM_FORMAT_MAP:
+        model, revision, with_adapter=True, split='-', use_cache=True)
+    if LLMAdapterRegistry.contains(model_type):
         return 'llm'
+
+
+def clear_llm_info(kwargs: Dict):
+    from .nlp.llm_pipeline import ModelTypeHelper
+
+    kwargs.pop('llm_first', None)
+    ModelTypeHelper.clear_cache()

@@ -42,6 +42,24 @@ class Vllm(InferFramework):
                 The string batch or the token list batch to input to the model.
             kwargs: Sampling parameters.
         """
+
+        # convert hf generate config to vllm
+        do_sample = kwargs.pop('do_sample', None)
+        num_beam = kwargs.pop('num_beam', 1)
+        max_length = kwargs.pop('max_length', None)
+        max_new_tokens = kwargs.pop('max_new_tokens', None)
+
+        # for vllm, default to do_sample/greedy(depends on temperature).
+        # for hf, do_sample=false, num_beam=1 -> greedy(default)
+        #         do_sample=ture, num_beam=1 -> sample
+        #         do_sample=false, num_beam>1 -> beam_search
+        if not do_sample and num_beam > 1:
+            kwargs['use_beam_search'] = True
+        if max_length:
+            kwargs['max_tokens'] = max_length - len(prompts[0])
+        if max_new_tokens:
+            kwargs['max_tokens'] = max_new_tokens
+
         from vllm import SamplingParams
         sampling_params = SamplingParams(**kwargs)
         if isinstance(prompts[0], str):

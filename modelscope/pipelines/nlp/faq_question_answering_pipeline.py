@@ -50,6 +50,9 @@ class FaqQuestionAnsweringPipeline(Pipeline):
         return pipeline_parameters, pipeline_parameters, pipeline_parameters
 
     def get_sentence_embedding(self, inputs, max_len=None):
+        if (self.model or (self.has_multiple_models and self.models[0])):
+            if not self._model_prepare:
+                self.prepare_model()
         inputs = self.preprocessor.batch_encode(inputs, max_length=max_len)
         sentence_vecs = self.model.forward_sentence_embedding(inputs)
         sentence_vecs = sentence_vecs.detach().tolist()

@@ -22,7 +22,7 @@ def check_answer(chap_idx,
 
 
 if __name__ == '__main__':
-    chap = 2
-    ques = 9
-    # input = '输出1e8+7的结果'
-    # check_answer(chap-1, ques-1, input)
+    chap = 5
+    ques = 1
+    input = '请使用“盛 夏”、“蝉 鸣”、“少 年”、“橘 子味汽水”这几个词造句'
+    check_answer(chap - 1, ques - 1, input)

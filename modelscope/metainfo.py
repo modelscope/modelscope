@@ -127,6 +127,7 @@ class Models(object):
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    gaussian_splatting_recon = 'gaussian-splatting-recon'
 
     # nlp models
     bert = 'bert'
@@ -455,6 +456,7 @@ class Pipelines(object):
     human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    gaussian_splatting_recon = 'gaussian-splatting-recon'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -936,7 +938,11 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                  'damo/cv_image-view-transform'),
     Tasks.image_control_3d_portrait: (
         Pipelines.image_control_3d_portrait,
-        'damo/cv_vit_image-control-3d-portrait-synthesis')
+        'damo/cv_vit_image-control-3d-portrait-synthesis'),
+    Tasks.gaussian_splatting_recon: (
+        Pipelines.gaussian_splatting_recon,
+        'damo/cv_gaussian-splatting-recon_damo'
+    )
 }
 
 
@@ -1079,6 +1085,7 @@ class Preprocessors(object):
     nerf_recon_vq_compression_preprocessor = 'nerf-recon-vq-compression-preprocessor'
     controllable_image_generation_preprocessor = 'controllable-image-generation-preprocessor'
     image_classification_preprocessor = 'image-classification-preprocessor'
+    gaussian_splatting_recon_preprocessor = 'gaussian-splatting-recon-preprocessor'
 
     # nlp preprocessor
     sen_sim_tokenizer = 'sen-sim-tokenizer'

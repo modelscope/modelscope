@@ -175,6 +175,7 @@ class CVTasks(object):
     # bad image detecting
     bad_image_detecting = 'bad-image-detecting'
 
+    gaussian_splatting_recon = 'gaussian-splatting-recon'
 
 class NLPTasks(object):
     # chat

@@ -375,6 +375,8 @@ class ProtoNet(nn.Module):
             input_ids = torch.IntTensor(input_ids)
         if not isinstance(input_mask, Tensor):
             input_mask = torch.IntTensor(input_mask)
+        input_ids = input_ids.to(self.bert.device)
+        input_mask = input_mask.to(self.bert.device)
         rst = self.bert(input_ids, input_mask)
         last_hidden_states = rst.last_hidden_state
         if len(input_mask.shape) == 2:

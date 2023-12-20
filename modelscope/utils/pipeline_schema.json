@@ -3777,5 +3777,17 @@
                 }
             }
         }
+    },
+    "gaussian-splatting-4D": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output": {
+                    "type": "object"
+                }
+            }
+        }
     }
 }

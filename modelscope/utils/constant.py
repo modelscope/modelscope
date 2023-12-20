@@ -174,6 +174,9 @@ class CVTasks(object):
 
     # bad image detecting
     bad_image_detecting = 'bad-image-detecting'
+    
+    gaussian_splatting_4D = 'gaussian-splatting-4D'
+
 
 
 class NLPTasks(object):

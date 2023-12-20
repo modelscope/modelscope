@@ -115,6 +115,8 @@ if TYPE_CHECKING:
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
     from .human3d_render_pipeline import Human3DRenderPipeline
     from .human3d_animation_pipeline import Human3DAnimationPipeline
+    from .gaussian_splatting_4D_pipeline import GaussianSplatting4DPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -287,6 +289,7 @@ else:
         ],
         'human3d_render_pipeline': ['Human3DRenderPipeline'],
         'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
+        'gaussian_splatting_4D_pipeline': ['GaussianSplatting4DPipeline'],
     }
 
     import sys

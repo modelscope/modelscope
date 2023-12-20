@@ -1632,6 +1632,7 @@ TASK_OUTPUTS = {
     #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
     # }
     Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
+    Tasks.gaussian_splatting_4D: [OutputKeys.OUTPUT_IMGS],
 }
 
 

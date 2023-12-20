@@ -127,6 +127,7 @@ class Models(object):
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    gaussian_splatting_4D ='gaussian-splatting-4D'
 
     # nlp models
     bert = 'bert'
@@ -455,6 +456,7 @@ class Pipelines(object):
     human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    gaussian_splatting_4D ='gaussian-splatting-4D'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -936,7 +938,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                  'damo/cv_image-view-transform'),
     Tasks.image_control_3d_portrait: (
         Pipelines.image_control_3d_portrait,
-        'damo/cv_vit_image-control-3d-portrait-synthesis')
+        'damo/cv_vit_image-control-3d-portrait-synthesis'),
+    Tasks.gaussian_splatting_4D: (Pipelines.gaussian_splatting_4D,
+                                  'damo/cv_gaussian-splatting-4D_damo')
 }
 
 
@@ -959,6 +963,8 @@ class CVTrainers(object):
     nerf_recon_4k = 'nerf-recon-4k'
     action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
+    gaussian_splatting_4D ='gaussian-splatting-4D'
+
 
 
 class NLPTrainers(object):

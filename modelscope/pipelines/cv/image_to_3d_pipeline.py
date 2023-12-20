@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-os.system("pip install git+https://github.com/openai/CLIP.git")
 import os.path as osp
 from typing import Any, Dict
 import rembg

@@ -6,7 +6,8 @@ import kornia
 
 from modelscope.models.cv.image_to_3d.ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
 from modelscope.models.cv.image_to_3d.ldm.util import default
-import clip
+# import clip
+from modelscope.models.cv.image_to_3d.ldm.modules.encoders import clip
 
 
 class AbstractEncoder(nn.Module):

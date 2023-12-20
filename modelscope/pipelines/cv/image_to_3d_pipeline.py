@@ -1,4 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
+os.system("pip install git+https://github.com/openai/CLIP.git")
 import os.path as osp
 from typing import Any, Dict
 import rembg
@@ -93,6 +95,7 @@ class Image23DPipeline(Pipeline):
             self._device = torch.device('cpu')
         ckpt = config_path.replace("configuration.json", "syncdreamer-pretrain.ckpt")
         self.model = load_model(config_path.replace("configuration.json", "syncdreamer.yaml"), ckpt).to(self._device)
+        # os.system("pip install -r {}".format(config_path.replace("configuration.json", "requirements.txt")))
         # assert isinstance(self.model, SyncMultiviewDiffusion)
 
     def preprocess(self, input: Input) -> Dict[str, Any]:

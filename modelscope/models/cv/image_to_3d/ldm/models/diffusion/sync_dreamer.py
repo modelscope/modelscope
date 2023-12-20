@@ -220,7 +220,10 @@ class SpatialVolumeNet(nn.Module):
         t_embed_ = t_embed.unsqueeze(1).repeat(1,TN,1).view(B*TN,-1)
         volume_feats_dict = self.frustum_volume_feats(volume_feats, t_embed_, v_embed_)
         return volume_feats_dict, volume_depth
-
+"""
+    SyncDreamer is a SoTA Novel View Synthesis model which can generate 16 consistent views seamlessly.
+    Please refer to: https://arxiv.org/abs/2309.03453 for more technique details.
+"""
 class SyncMultiviewDiffusion(pl.LightningModule):
     def __init__(self, unet_config, scheduler_config,
                  finetune_unet=False, finetune_projection=True,

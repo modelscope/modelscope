@@ -69,6 +69,7 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_matching = 'image-matching'
+    image_local_feature_matching = 'image-local-feature-matching'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
 
     crowd_counting = 'crowd-counting'

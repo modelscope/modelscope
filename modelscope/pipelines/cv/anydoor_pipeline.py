@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import os
 from typing import Any, Dict
 
 import cv2
@@ -32,7 +33,29 @@ class AnydoorPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-        self.ddim_sampler = DDIMSampler(model)
+        model_ckpt = os.path.join(self.model.model_dir,
+                                  'epoch=1-step=8687.ckpt')
+        self.model.load_state_dict(
+            self._get_state_dict(model_ckpt, location='cuda'))
+        self.ddim_sampler = DDIMSampler(self.model)
+
+    @staticmethod
+    def _get_state_dict(ckpt_path, location='cpu'):
+
+        def get_state_dict(d):
+            return d.get('state_dict', d)
+
+        _, extension = os.path.splitext(ckpt_path)
+        if extension.lower() == '.safetensors':
+            import safetensors.torch
+            state_dict = safetensors.torch.load_file(
+                ckpt_path, device=location)
+        else:
+            state_dict = get_state_dict(
+                torch.load(ckpt_path, map_location=torch.device(location)))
+        state_dict = get_state_dict(state_dict)
+        print(f'Loaded state_dict from [{ckpt_path}]')
+        return state_dict
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
         ref_image, ref_mask, tar_image, tar_mask = inputs
@@ -146,16 +169,16 @@ class AnydoorPipeline(Pipeline):
                 strength=1.0,
                 ddim_steps=30,
                 scale=3.0) -> Dict[str, Any]:
-        tar_image = item['tar_image']
+        tar_image = item['tar_image'].cpu().numpy()
         ref = item['ref']
         hint = item['hint']
         num_samples = 1
 
-        control = torch.from_numpy(hint.copy()).float().cuda()
+        control = hint.float().cuda()
         control = torch.stack([control for _ in range(num_samples)], dim=0)
         control = einops.rearrange(control, 'b h w c -> b c h w').clone()
 
-        clip_input = torch.from_numpy(ref.copy()).float().cuda()
+        clip_input = ref.float().cuda()
         clip_input = torch.stack([clip_input for _ in range(num_samples)],
                                  dim=0)
         clip_input = einops.rearrange(clip_input, 'b h w c -> b c h w').clone()
@@ -195,8 +218,8 @@ class AnydoorPipeline(Pipeline):
 
         pred = x_samples[0]
         pred = np.clip(pred, 0, 255)[1:, :, :]
-        sizes = item['extra_sizes']
-        tar_box_yyxx_crop = item['tar_box_yyxx_crop']
+        sizes = item['extra_sizes'].cpu().numpy()
+        tar_box_yyxx_crop = item['tar_box_yyxx_crop'].cpu().numpy()
         return dict(
             pred=pred,
             tar_image=tar_image,
@@ -216,7 +239,9 @@ class AnydoorPipeline(Pipeline):
 
         if W1 == H1:
             tar_image[y1 + m:y2 - m, x1 + m:x2 - m, :] = pred[m:-m, m:-m]
-            return tar_image
+            gen_image = torch.from_numpy(tar_image.copy()).permute(2, 0, 1)
+            gen_image = gen_image.permute(1, 2, 0).numpy()
+            return {OutputKeys.OUTPUT_IMG: gen_image}
 
         if W1 < W2:
             pad1 = int((W2 - W1) / 2)

@@ -1,17 +1,15 @@
+import os
+
 import open_clip
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.transforms as T
-from omegaconf import OmegaConf
-from open_clip.transform import image_transform
-from PIL import Image
 from torch.utils.checkpoint import checkpoint
 from transformers import (CLIPTextModel, CLIPTokenizer, T5EncoderModel,
                           T5Tokenizer)
 
 from ....dinov2 import hubconf
-from ....ldm.util import count_params, default
+from ....ldm.util import count_params
 
 
 class LayerNormFp32(nn.LayerNorm):
@@ -328,17 +326,15 @@ class FrozenOpenCLIPImageEncoder(AbstractEncoder):
         return self(image)
 
 
-config_path = './configs/anydoor.yaml'
-config = OmegaConf.load(config_path)
-DINOv2_weight_path = config.model.params.cond_stage_config.weight
-
-
 class FrozenDinoV2Encoder(AbstractEncoder):
     """
     Uses the DINOv2 encoder for image
     """
 
-    def __init__(self, device='cuda', freeze=True):
+    def __init__(self, model_dir, device='cuda', freeze=True):
+        DINOv2_weight_path = os.path.join(model_dir,
+                                          'dinov2_vitg14_pretrain.pth')
+
         super().__init__()
         dinov2 = hubconf.dinov2_vitg14()
         state_dict = torch.load(DINOv2_weight_path)

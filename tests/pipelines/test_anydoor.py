@@ -40,9 +40,9 @@ class AnydoorTest(unittest.TestCase):
 
         anydoor_pipline: AnydoorPipeline = pipeline(
             self.task, model=self.model_id)
-        gen_image = anydoor_pipline(
+        out = anydoor_pipline(
             (ref_image, ref_mask, back_image.copy(), tar_mask))
-        cv2.imwrite(save_path, gen_image)
+        cv2.imwrite(save_path, out['output_img'])
 
 
 if __name__ == '__main__':

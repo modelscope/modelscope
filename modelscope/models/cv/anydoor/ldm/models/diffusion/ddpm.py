@@ -640,6 +640,7 @@ class LatentDiffusion(DDPM):
                  force_null_conditioning=False,
                  *args,
                  **kwargs):
+        self.model_dir = kwargs.get('model_dir')
         self.force_null_conditioning = force_null_conditioning
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scale_by_std = scale_by_std
@@ -740,6 +741,7 @@ class LatentDiffusion(DDPM):
             param.requires_grad = False
 
     def instantiate_cond_stage(self, config):
+        config.params.model_dir = self.model_dir
         if not self.cond_stage_trainable:
             if config == '__is_first_stage__':
                 print('Using first stage also as cond stage.')

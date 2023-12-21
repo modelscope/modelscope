@@ -1,6 +1,3 @@
-import sys
-
-import hubconf
 import open_clip
 import torch
 import torch.nn as nn
@@ -13,6 +10,7 @@ from torch.utils.checkpoint import checkpoint
 from transformers import (CLIPTextModel, CLIPTokenizer, T5EncoderModel,
                           T5Tokenizer)
 
+from ....dinov2 import hubconf
 from ....ldm.util import count_params, default
 
 
@@ -330,7 +328,6 @@ class FrozenOpenCLIPImageEncoder(AbstractEncoder):
         return self(image)
 
 
-sys.path.append('./dinov2')
 config_path = './configs/anydoor.yaml'
 config = OmegaConf.load(config_path)
 DINOv2_weight_path = config.model.params.cond_stage_config.weight

@@ -5,11 +5,12 @@ import cv2
 import numpy as np
 
 from modelscope.pipelines import pipeline
+from modelscope.pipelines.cv.anydoor_pipeline import AnydoorPipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class ActionDetectionTest(unittest.TestCase):
+class AnydoorTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_to_image_generation
@@ -37,7 +38,8 @@ class ActionDetectionTest(unittest.TestCase):
         tar_mask = cv2.imread(bg_mask_path)[:, :, 0] > 128
         tar_mask = tar_mask.astype(np.uint8)
 
-        anydoor_pipline = pipeline(self.task, model=self.model_id)
+        anydoor_pipline: AnydoorPipeline = pipeline(
+            self.task, model=self.model_id)
         gen_image = anydoor_pipline(
             (ref_image, ref_mask, back_image.copy(), tar_mask))
         cv2.imwrite(save_path, gen_image)

@@ -127,6 +127,7 @@ class Models(object):
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    anydoor = 'anydoor'
 
     # nlp models
     bert = 'bert'
@@ -455,6 +456,7 @@ class Pipelines(object):
     human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    anydoor = 'anydoor'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

@@ -69,6 +69,7 @@ class OutputKeys(object):
     PCD12 = 'pcd12'
     PCD12_ALIGN = 'pcd12_align'
     TBOUNDS = 'tbounds'
+    MV_IMGS = 'MViews'
 
 
 OutputTypes = {
@@ -132,6 +133,7 @@ OutputTypes = {
     OutputKeys.PCD12: np.ndarray,
     OutputKeys.PCD12_ALIGN: np.ndarray,
     OutputKeys.TBOUNDS: Dict,
+    OutputKeys.MV_IMGS: List[np.ndarray],
 }
 
 OutputTypeSchema = {
@@ -425,6 +427,15 @@ OutputTypeSchema = {
     },
     OutputKeys.TBOUNDS: {
         'type': 'object'
+    },
+    OutputKeys.MV_IMGS: {
+        'type': 'array',
+        'items': {
+            'type': 'array',
+            'items': {
+                'type': 'number'
+            }
+        }
     },
 }
 
@@ -1632,6 +1643,7 @@ TASK_OUTPUTS = {
     #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
     # }
     Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
+    Tasks.image_to_3d: [OutputKeys.MV_IMGS]
 }
 
 

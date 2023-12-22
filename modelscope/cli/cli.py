@@ -6,6 +6,7 @@ from modelscope.cli.download import DownloadCMD
 from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
+from modelscope.cli.server import ServerCMD
 
 
 def run_cmd():
@@ -17,6 +18,7 @@ def run_cmd():
     PluginsCMD.define_args(subparsers)
     PipelineCMD.define_args(subparsers)
     ModelCardCMD.define_args(subparsers)
+    ServerCMD.define_args(subparsers)
 
     args = parser.parse_args()
 

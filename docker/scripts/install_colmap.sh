@@ -8,7 +8,7 @@ wget -q https://cmake.org/files/v3.25/cmake-3.25.2-linux-x86_64.sh \
     && export CMAKE_BUILD_PARALLEL_LEVEL=36 \
     && export MAX_JOBS=16 \
     && export CUDA_ARCHITECTURES="all" \
-    && git clone --depth 1 --branch 3.8 https://github.com/colmap/colmap.git \
+    && git clone https://github.com/colmap/colmap.git \
     && cd colmap \
     && mkdir build \
     && cd build \

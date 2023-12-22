@@ -42,7 +42,8 @@ class AnydoorTest(unittest.TestCase):
             self.task, model=self.model_id)
         out = anydoor_pipline(
             (ref_image, ref_mask, back_image.copy(), tar_mask))
-        cv2.imwrite(save_path, out['output_img'])
+        image = cv2.cvtColor(out['output_img'].copy(), cv2.COLOR_RGB2BGR)
+        cv2.imwrite(save_path, image)
 
 
 if __name__ == '__main__':

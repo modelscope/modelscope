@@ -22,6 +22,15 @@ def is_square(n):
 def get_square_root(n):
     return int(sympy.sqrt(n))
 
+
+# 验证函数 - 微言大义
+def validate_9(response, input):
+    input_yes = len(input) <= 10
+    output_yes = len(response) >= 9 and response.isdigit() and sympy.isprime(
+        int(response))
+    return input_yes and output_yes
+
+
 challenge2 = {
     'name':
     '第二章 数字游戏',
@@ -114,16 +123,9 @@ challenge2 = {
                     set(re.findall(r'\d', response))) == 10)
         },
         {
-            'title':
-            '第9题 微言大义',
-            'description':
-            '请输入10个字以内的问题，使得模型的回答是一个超过一亿的素数',
-            'validator':
-            lambda response, input: 
-                len(input) <= 10 and 
-                len(response) >= 9 and 
-                response.isdigit() and
-                sympy.isprime(int(response))
+            'title': '第9题 微言大义',
+            'description': '请输入10个字以内的问题，使得模型的回答是一个超过一亿的素数',
+            'validator': validate_9
         }
     ]
 }

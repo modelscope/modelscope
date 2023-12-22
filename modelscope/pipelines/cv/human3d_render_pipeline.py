@@ -68,6 +68,8 @@ class Human3DRenderPipeline(Pipeline):
 
     def format_nvdiffrast_format(self, mesh, tex):
         vert = mesh['vertices']
+        cent = (vert.max(axis=0) + vert.min(axis=0)) / 2
+        vert -= cent
         tri = mesh['faces']
         tri = tri - 1 if tri.min() == 1 else tri
         vert_uv = mesh['uvs']
@@ -81,7 +83,7 @@ class Human3DRenderPipeline(Pipeline):
         tex = torch.from_numpy(tex.astype(np.float32) / 255.0).cuda()
         return vtx_pos, pos_idx, vtx_uv, uv_idx, tex
 
-    def render_scene(self, mesh_path):
+    def render_scene(self, mesh_path, resolution=512):
         if not os.path.exists(mesh_path):
             logger.info('can not found %s, use default one' % mesh_path)
             mesh_path = os.path.join(self.model_dir, '3D-assets',
@@ -99,8 +101,8 @@ class Human3DRenderPipeline(Pipeline):
         frames_normals = []
         for i in tqdm.tqdm(range(frame_length)):
             proj = projection(x=0.4, n=1.0, f=200.0)
-            a_rot = np.matmul(rotate_x(-0.1), rotate_y(ang))
-            a_mv = np.matmul(translate(0, 0, -2.5), a_rot)
+            a_rot = np.matmul(rotate_x(0.0), rotate_y(ang))
+            a_mv = np.matmul(translate(0, 0, -2.7), a_rot)
             r_mvp = np.matmul(proj, a_mv).astype(np.float32)
             pred_img, pred_mask, normal = render(
                 glctx,
@@ -110,7 +112,7 @@ class Human3DRenderPipeline(Pipeline):
                 vtx_uv,
                 uv_idx,
                 tex,
-                resolution=512,
+                resolution=resolution,
                 enable_mip=False,
                 max_mip_level=9)
             color = np.clip(
@@ -123,7 +125,7 @@ class Human3DRenderPipeline(Pipeline):
             frames_normals.append(normals)
             ang = ang + step
 
-        logger.info('load case %s done'
+        logger.info('render case %s done'
                     % os.path.basename(os.path.dirname(mesh_path)))
 
         return mesh, frames_color, frames_normals
@@ -131,6 +133,10 @@ class Human3DRenderPipeline(Pipeline):
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         dataset_id = input['dataset_id']
         case_id = input['case_id']
+        if 'resolution' in input:
+            resolution = input['resolution']
+        else:
+            resolution = 512
         if case_id.endswith('.obj'):
             mesh_path = case_id
         else:
@@ -142,7 +148,7 @@ class Human3DRenderPipeline(Pipeline):
             case_dir = os.path.join(data_dir, case_id)
             mesh_path = os.path.join(case_dir, 'body.obj')
 
-        mesh, colors, normals = self.render_scene(mesh_path)
+        mesh, colors, normals = self.render_scene(mesh_path, resolution)
 
         results = {
             'mesh': mesh,

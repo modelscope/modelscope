@@ -457,6 +457,8 @@ class Pipelines(object):
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
     gaussian_splatting_recon = 'gaussian-splatting-recon'
+    image_to_3d = 'image-to-3d'
+
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'

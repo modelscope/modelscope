@@ -45,6 +45,7 @@ class Human3DRenderTest(unittest.TestCase):
         input = {
             'dataset_id': 'damo/3DHuman_synthetic_dataset',
             'case_id': '3f2a7538253e42a8',
+            'resolution': 1024,
         }
         output = human3d(input)
         self.save_results(output, './human3d_results')

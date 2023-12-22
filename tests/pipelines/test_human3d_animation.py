@@ -21,6 +21,7 @@ class Human3DAnimationTest(unittest.TestCase):
             'action_dataset': 'damo/3DHuman_action_dataset',
             'action': 'SwingDancing',
             'save_dir': 'outputs',
+            'blender': 'blender',
         }
         output = human3d(input)
         print('saved animation file to %s' % output)

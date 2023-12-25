@@ -7,6 +7,7 @@ import cv2
 import einops
 import numpy as np
 import torch
+from PIL import Image
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.anydoor.cldm.ddim_hacked import DDIMSampler
@@ -25,6 +26,23 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_to_image_generation, module_name=Pipelines.anydoor)
 class AnydoorPipeline(Pipeline):
+    r""" AnyDoor Pipeline.
+
+    Examples:
+
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
+    >>> from PIL import Image
+
+    >>> ref_image = 'data/test/images/image_anydoor_fg.png'
+    >>> ref_mask = 'data/test/images/image_anydoor_fg_mask.png'
+    >>> bg_image = 'data/test/images/image_anydoor_bg.png'
+    >>> bg_mask = 'data/test/images/image_anydoor_bg_mask.png'
+
+    >>> anydoor_pipeline = pipeline(Tasks.image_to_image_generation, model='damo/AnyDoor')
+    >>> out = anydoor_pipeline((ref_image, ref_mask, bg_image, bg_mask))
+    >>> assert isinstance(out['output_img'], Image.Image)
+    """
 
     def __init__(self, model: str, **kwargs):
         """
@@ -59,6 +77,14 @@ class AnydoorPipeline(Pipeline):
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
         ref_image, ref_mask, tar_image, tar_mask = inputs
+        ref_image = np.asarray(Image.open(ref_image).convert('RGB'))
+        ref_mask = np.where(
+            np.asarray(Image.open(ref_mask).convert('L')) > 128, 1,
+            0).astype(np.uint8)
+        tar_image = np.asarray(Image.open(tar_image).convert('RGB'))
+        tar_mask = np.where(
+            np.asarray(Image.open(tar_mask).convert('L')) > 128, 1,
+            0).astype(np.uint8)
 
         # ========= Reference ===========
         # ref expand
@@ -235,12 +261,13 @@ class AnydoorPipeline(Pipeline):
         H1, W1, H2, W2 = extra_sizes
         y1, y2, x1, x2 = tar_box_yyxx_crop
         pred = cv2.resize(pred, (W2, H2))
-        m = 5  # maigin_pixel
+        m = 3  # maigin_pixel
 
         if W1 == H1:
             tar_image[y1 + m:y2 - m, x1 + m:x2 - m, :] = pred[m:-m, m:-m]
             gen_image = torch.from_numpy(tar_image.copy()).permute(2, 0, 1)
             gen_image = gen_image.permute(1, 2, 0).numpy()
+            gen_image = Image.fromarray(gen_image, mode='RGB')
             return {OutputKeys.OUTPUT_IMG: gen_image}
 
         if W1 < W2:
@@ -257,4 +284,5 @@ class AnydoorPipeline(Pipeline):
 
         gen_image = torch.from_numpy(gen_image).permute(2, 0, 1)
         gen_image = gen_image.permute(1, 2, 0).numpy()
+        gen_image = Image.fromarray(gen_image, mode='RGB')
         return {OutputKeys.OUTPUT_IMG: gen_image}

@@ -323,6 +323,17 @@ class ControlNet(nn.Module):
 @MODELS.register_module(
     Tasks.image_to_image_generation, module_name=Models.anydoor)
 class ControlLDM(LatentDiffusion, Model):
+    '''
+    This work presents AnyDoor, a diffusion-based image generator
+    with the power to teleport target objects to new scenes
+    at user-specified locations in a harmonious way.
+
+    Instead of tuning parameters for each object, our model
+    is trained only once and effortlessly generalizes
+    to diverse object-scene combinations at the inference stage.
+
+    arxiv: https://arxiv.org/abs/2307.09481
+    '''
 
     def __init__(self, control_stage_config, control_key, only_mid_control,
                  *args, **kwargs):

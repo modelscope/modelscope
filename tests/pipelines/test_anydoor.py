@@ -1,9 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
-import cv2
-import numpy as np
-
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv.anydoor_pipeline import AnydoorPipeline
 from modelscope.utils.constant import Tasks
@@ -18,32 +15,17 @@ class AnydoorTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
-        reference_image_path = 'data/test/images/image_anydoor_fg.png'
-        bg_image_path = 'data/test/images/image_anydoor_bg.png'
-        bg_mask_path = 'data/test/images/image_anydoor_bg_mask.png'
+        ref_image = 'data/test/images/image_anydoor_fg.png'
+        ref_mask = 'data/test/images/image_anydoor_fg_mask.png'
+        bg_image = 'data/test/images/image_anydoor_bg.png'
+        bg_mask = 'data/test/images/image_anydoor_bg_mask.png'
         save_path = 'data/test/images/image_anydoor_gen.png'
-
-        image = cv2.imread(reference_image_path, cv2.IMREAD_UNCHANGED)
-        mask = (image[:, :, -1] > 128).astype(np.uint8)
-        image = image[:, :, :-1]
-        image = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2RGB)
-        ref_image = image
-        ref_mask = mask
-
-        # background image
-        back_image = cv2.imread(bg_image_path).astype(np.uint8)
-        back_image = cv2.cvtColor(back_image, cv2.COLOR_BGR2RGB)
-
-        # background mask
-        tar_mask = cv2.imread(bg_mask_path)[:, :, 0] > 128
-        tar_mask = tar_mask.astype(np.uint8)
 
         anydoor_pipline: AnydoorPipeline = pipeline(
             self.task, model=self.model_id)
-        out = anydoor_pipline(
-            (ref_image, ref_mask, back_image.copy(), tar_mask))
-        image = cv2.cvtColor(out['output_img'].copy(), cv2.COLOR_RGB2BGR)
-        cv2.imwrite(save_path, image)
+        out = anydoor_pipline((ref_image, ref_mask, bg_image, bg_mask))
+        image = out['output_img']
+        image.save(save_path)
 
 
 if __name__ == '__main__':

@@ -119,7 +119,7 @@ git lfs install
 
 2. We use a public read model repository from ModelScope to store test data. The repository has been added by default as a submodule with the path data/test. To clone it, use the following command:
 ```shell
-git clone git@github.com:modelscope/modelscope.git --recursive
+git clone https://github.com/modelscope/modelscope.git --recursive
 ```
 
 3. Each time you add new data, go to the data/test directory (note that you are now in the submodule's git directory), check if you are on the master branch, and pull the latest master branch:

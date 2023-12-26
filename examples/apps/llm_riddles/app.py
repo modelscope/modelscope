@@ -9,6 +9,7 @@ from challenges.ch1 import challenge1
 from challenges.ch2 import challenge2
 from challenges.ch3 import challenge3
 from challenges.ch4 import challenge4
+from challenges.ch5 import challenge5
 from llm import create_model
 from PIL import Image, ImageDraw, ImageFont
 
@@ -20,6 +21,7 @@ challenges = [
     challenge2,
     challenge3,
     challenge4,
+    challenge5,
 ]
 
 CONGRATS_STR = '所有挑战完成！👏🏻👏🏻👏🏻👏🏻👏🏻👏🏻'

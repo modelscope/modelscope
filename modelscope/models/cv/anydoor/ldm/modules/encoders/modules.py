@@ -331,9 +331,8 @@ class FrozenDinoV2Encoder(AbstractEncoder):
     Uses the DINOv2 encoder for image
     """
 
-    def __init__(self, model_dir, device='cuda', freeze=True):
-        DINOv2_weight_path = os.path.join(model_dir,
-                                          'dinov2_vitg14_pretrain.pth')
+    def __init__(self, model_path, device='cuda', freeze=True):
+        DINOv2_weight_path = model_path
 
         super().__init__()
         dinov2 = hubconf.dinov2_vitg14()

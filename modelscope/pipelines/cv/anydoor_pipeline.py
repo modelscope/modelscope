@@ -52,7 +52,7 @@ class AnydoorPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         model_ckpt = os.path.join(self.model.model_dir,
-                                  'epoch=1-step=8687.ckpt')
+                                  self.cfg.model.model_path)
         self.model.load_state_dict(
             self._get_state_dict(model_ckpt, location='cuda'))
         self.ddim_sampler = DDIMSampler(self.model)

@@ -18,6 +18,7 @@ from modelscope.models.cv.anydoor.datasets.data_utils import (
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
@@ -77,21 +78,14 @@ class AnydoorPipeline(Pipeline):
         return state_dict
 
     def preprocess(self, inputs: Input) -> Dict[str, Any]:
-
-        def parse_url(path_or_url: str):
-            if path_or_url.startswith('http://') or path_or_url.startswith(
-                    'https://'):
-                return requests.get(path_or_url, stream=True).raw
-            return path_or_url
-
-        ref_image, ref_mask, tar_image, tar_mask = map(parse_url, inputs)
-        ref_image = np.asarray(Image.open(ref_image).convert('RGB'))
+        ref_image, ref_mask, tar_image, tar_mask = inputs
+        ref_image = np.asarray(load_image(ref_image).convert('RGB'))
         ref_mask = np.where(
-            np.asarray(Image.open(ref_mask).convert('L')) > 128, 1,
+            np.asarray(load_image(ref_mask).convert('L')) > 128, 1,
             0).astype(np.uint8)
-        tar_image = np.asarray(Image.open(tar_image).convert('RGB'))
+        tar_image = np.asarray(load_image(tar_image).convert('RGB'))
         tar_mask = np.where(
-            np.asarray(Image.open(tar_mask).convert('L')) > 128, 1,
+            np.asarray(load_image(tar_mask).convert('L')) > 128, 1,
             0).astype(np.uint8)
 
         # ========= Reference ===========

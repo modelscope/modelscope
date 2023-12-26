@@ -24,7 +24,7 @@ class ImageNormalEstimationTest(unittest.TestCase):
             Tasks.image_normal_estimation, model=self.model_id)
         result = estimator(input_location)
         normals_vis = result[OutputKeys.NORMALS_COLOR]
-        cv2.imwrite('result.jpg', normals_vis[:, :, ::-1])
+        cv2.imwrite('result.jpg', normals_vis)
 
         print('test_image_normal_estimation DONE')
 

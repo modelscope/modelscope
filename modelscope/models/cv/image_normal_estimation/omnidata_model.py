@@ -1,4 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+# Model: Omnidata: A Scalable Pipeline for Making Multi-Task Mid-Level Vision Datasets from 3D Scans
+# Paper link: https://arxiv.org/pdf/2110.04994.pdf
 import os.path as osp
 
 import torch
@@ -15,7 +17,7 @@ from modelscope.utils.constant import ModelFile, Tasks
 @MODELS.register_module(
     Tasks.image_normal_estimation,
     module_name=Models.omnidata_normal_estimation)
-class NormalEstimation(TorchModel):
+class OmnidataNormalEstimation(TorchModel):
 
     def __init__(self, model_dir: str, **kwargs):
         """str -- model file root."""
@@ -38,12 +40,11 @@ class NormalEstimation(TorchModel):
         self.model.load_state_dict(state_dict)
         self.model.eval()
 
-    def forward(self, Inputs):
-        return self.model(Inputs['imgs']).clamp(min=0, max=1)
+    def forward(self, inputs):
+        return self.model(inputs['imgs']).clamp(min=0, max=1)
 
-    def postprocess(self, Inputs):
-        normal_result = Inputs
-
+    def postprocess(self, inputs):
+        normal_result = inputs.flip(1)
         results = {OutputKeys.NORMALS: normal_result}
         return results
 

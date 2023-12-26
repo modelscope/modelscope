@@ -7,6 +7,7 @@ https://github.com/CompVis/taming-transformers
 """
 
 import itertools
+import os
 from contextlib import contextmanager, nullcontext
 from functools import partial
 
@@ -741,7 +742,8 @@ class LatentDiffusion(DDPM):
             param.requires_grad = False
 
     def instantiate_cond_stage(self, config):
-        config.params.model_dir = self.model_dir
+        config.params.model_path = os.path.join(self.model_dir,
+                                                config.params.model_path)
         if not self.cond_stage_trainable:
             if config == '__is_first_stage__':
                 print('Using first stage also as cond stage.')

@@ -11,7 +11,7 @@ class AnydoorTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = Tasks.image_to_image_generation
-        self.model_id = 'damo/AnyDoor'
+        self.model_id = 'damo/AnyDoor_models'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):

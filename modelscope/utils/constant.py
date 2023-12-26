@@ -242,6 +242,7 @@ class AudioTasks(object):
     speaker_verification = 'speaker-verification'
     speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
+    audio_quantization = 'audio-quantization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'

@@ -56,6 +56,7 @@ class Models(object):
     unifuse_depth_estimation = 'unifuse-depth-estimation'
     s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
+    raft_dense_optical_flow_estimation = 'raft-dense-optical-flow-estimation'
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
     fer = 'fer'
@@ -391,6 +392,7 @@ class Pipelines(object):
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
     panorama_depth_estimation_s2net = 'panorama-depth-estimation-s2net'
+    dense_optical_flow_estimation = 'dense-optical-flow-estimation'
     image_reid_person = 'passvitb-image-reid-person'
     image_inpainting = 'fft-inpainting'
     image_paintbyexample = 'stablediffusion-paintbyexample'
@@ -790,6 +792,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.panorama_depth_estimation:
     (Pipelines.panorama_depth_estimation,
      'damo/cv_unifuse_panorama-depth-estimation'),
+    Tasks.dense_optical_flow_estimation:
+    (Pipelines.dense_optical_flow_estimation,
+     'Damo_XR_Lab/cv_raft_dense-optical-flow_things'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,

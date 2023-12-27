@@ -18,7 +18,7 @@ class RIFEVideoFrameInterpolationTest(unittest.TestCase):
         self.model_id = 'Damo_XR_Lab/cv_rife_video-frame-interpolation'
         self.test_video = 'data/test/videos/video_frame_interpolation_test.mp4'
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
         cache_path = snapshot_download(self.model_id)
         pipeline = RIFEVideoFrameInterpolationPipeline(cache_path)

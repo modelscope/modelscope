@@ -31,7 +31,21 @@ logger = get_logger()
     Tasks.video_frame_interpolation,
     module_name=Pipelines.rife_video_frame_interpolation)
 class RIFEVideoFrameInterpolationPipeline(Pipeline):
+    r""" RIFE Video Frame Interpolation Pipeline.
 
+    Examples:
+
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
+    >>> from modelscope.outputs import OutputKeys
+
+    >>> video = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/video_frame_interpolation_test.mp4'
+    >>> video_frame_interpolation_pipeline = pipeline(Tasks.video_frame_interpolation,
+    'Damo_XR_Lab/cv_rife_video-frame-interpolation')
+    >>> result = video_frame_interpolation_pipeline(video)[OutputKeys.OUTPUT_VIDEO]
+    >>> print('pipeline: the output video path is {}'.format(result))
+
+    """
     def __init__(self,
                  model: Union[RIFEModel, str],
                  preprocessor=None,

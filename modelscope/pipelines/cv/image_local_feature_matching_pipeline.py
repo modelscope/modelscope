@@ -29,16 +29,18 @@ class ImageLocalFeatureMatchingPipeline(Pipeline):
     >>> from modelscope.utils.constant import Tasks
 
 
-    >>> task = 'image-matching'
-    >>> model_id = 'damo/cv_quadtree_attention_image-matching_outdoor'
+    >>> task = 'image-local-feature-matching'
+    >>> model_id = 'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'
 
+    >>> estimator = pipeline(Tasks.image_local_feature_matching, model=model_id)
     >>> input_location = [
     >>>                     ['data/test/images/image_matching1.jpg',
     >>>                     'data/test/images/image_matching2.jpg']
     >>>                 ]
-    >>> estimator = pipeline(Tasks.image_matching, model=self.model_id)
     >>> result = estimator(input_location)
     >>> kpts0, kpts1, conf = result[0][OutputKeys.MATCHES]
+    >>> vis_img = result[0][OutputKeys.OUTPUT_IMG]
+    >>> cv2.imwrite("vis_demo.jpg", vis_img)
     >>> print(f'Found {len(kpts0)} matches')
     """
 

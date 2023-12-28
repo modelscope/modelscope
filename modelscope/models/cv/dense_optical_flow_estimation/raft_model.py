@@ -8,7 +8,6 @@ from modelscope.models.builder import MODELS
 from modelscope.models.cv.dense_optical_flow_estimation.core.raft import RAFT
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
-# from import InputPadder
 import argparse
 
 @MODELS.register_module(
@@ -34,12 +33,9 @@ class DenseOpticalFlowEstimation(TorchModel):
         self.model.eval()
 
     def forward(self, Inputs):
-        # image2 = load_image(imfile2)
         image1 = Inputs["image1"]
         image2 = Inputs["image2"]
 
-        # padder = InputPadder(image1.shape)
-        # image1, image2 = padder.pad(image1, image2)
         flow_ups = self.model(image1, image2)
         flow_up = flow_ups[-1]
 

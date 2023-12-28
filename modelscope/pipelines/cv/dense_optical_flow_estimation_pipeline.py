@@ -17,24 +17,6 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-# class InputPadder:
-#     """ Pads images such that dimensions are divisible by 8 """
-#     def __init__(self, dims, mode='sintel'):
-#         self.ht, self.wd = dims[-2:]
-#         pad_ht = (((self.ht // 8) + 1) * 8 - self.ht) % 8
-#         pad_wd = (((self.wd // 8) + 1) * 8 - self.wd) % 8
-#         if mode == 'sintel':
-#             self._pad = [pad_wd//2, pad_wd - pad_wd//2, pad_ht//2, pad_ht - pad_ht//2]
-#         else:
-#             self._pad = [pad_wd//2, pad_wd - pad_wd//2, 0, pad_ht]
-# 
-#     def pad(self, *inputs):
-#         return [F.pad(x, self._pad, mode='replicate') for x in inputs]
-# 
-#     def unpad(self,x):
-#         ht, wd = x.shape[-2:]
-#         c = [self._pad[2], ht-self._pad[3], self._pad[0], wd-self._pad[1]]
-#         return x[..., c[0]:c[1], c[2]:c[3]]
 
 @PIPELINES.register_module(
     Tasks.dense_optical_flow_estimation,
@@ -53,9 +35,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
 
     def load_image(self, img_name):
         img = LoadImage.convert_to_ndarray(img_name).astype(np.float32)
-        # H, W = 480, 640
-        # img = cv2.resize(img, [W, H])
-        img = img.transpose(2, 0, 1) / 255.0
+        img = img.transpose(2, 0, 1)
 
         return img
 
@@ -69,12 +49,6 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
         padder = InputPadder(image1.shape)
         image1, image2 = padder.pad(image1, image2)
 
-        # img = LoadImage.convert_to_ndarray(input).astype(np.float32)
-        # H, W = 480, 640
-        # img = cv2.resize(img, [W, H])
-        # img = img.transpose(2, 0, 1) / 255.0
-        # imgs = img[None, ...]
-
         data = {'image1': image1, 'image2': image2}
 
         return data
@@ -86,10 +60,9 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         results = self.model.postprocess(inputs)
         flows = results[OutputKeys.FLOWS]
-        # if isinstance(depths, torch.Tensor):
-        #     depths = depths.detach().cpu().squeeze().numpy()
         
         flows_color = flow_to_color(flows)
+        flows_color = flows_color[:,:,[2,1,0]]
         outputs = {
             OutputKeys.FLOWS: flows,
             OutputKeys.FLOWS_COLOR: flows_color

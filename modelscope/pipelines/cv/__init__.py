@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from .image_super_resolution_pasd_pipeline import ImageSuperResolutionPASDPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
+
     from .image_inpainting_pipeline import ImageInpaintingPipeline
     from .image_paintbyexample_pipeline import ImagePaintbyexamplePipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
@@ -107,6 +108,7 @@ if TYPE_CHECKING:
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
+    from .image_to_3d_pipeline import Image23DPipeline
     from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
@@ -115,6 +117,7 @@ if TYPE_CHECKING:
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
     from .human3d_render_pipeline import Human3DRenderPipeline
     from .human3d_animation_pipeline import Human3DAnimationPipeline
+    from .anydoor_pipeline import AnydoorPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -163,6 +166,7 @@ else:
         ['ProductRetrievalEmbeddingPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generate_pipeline': ['Image2ImageGenerationPipeline'],
+        'image_to_3d_pipeline': ['Image23DPipeline'],
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'image_paintbyexample_pipeline': ['ImagePaintbyexamplePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
@@ -269,6 +273,7 @@ else:
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
         'nerf_recon_4k_pipeline': ['NeRFRecon4KPipeline'],
+        'nerf_recon_img_to_mv_pipeline': ['NeRFReconImgToMVPipeline'],
         'surface_recon_common_pipeline': ['SurfaceReconCommonPipeline'],
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
@@ -287,6 +292,7 @@ else:
         ],
         'human3d_render_pipeline': ['Human3DRenderPipeline'],
         'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
+        'anydoor_pipeline': ['AnydoorPipeline'],
     }
 
     import sys

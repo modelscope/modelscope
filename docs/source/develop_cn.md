@@ -90,8 +90,7 @@ git lfs install
 
 2. 我们使用 ModelScope 的一个公共读取模型仓库来存储测试数据。该仓库已默认添加为子模块，路径为 data/test。要克隆它，请使用以下命令：
 ```
-
-git clone git@github.com:modelscope/modelscope.git --recursive
+git clone https://github.com/modelscope/modelscope.git --recursive
 ```
 
 3. 每次添加新数据时，进入 data/test 目录（注意此时您已在子模块的 git 目录中），检查是否在 master 分支上，并拉取最新的 master 分支：

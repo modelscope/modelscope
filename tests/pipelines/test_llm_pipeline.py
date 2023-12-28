@@ -4,7 +4,9 @@ import unittest
 import torch
 
 from modelscope import pipeline
-from modelscope.pipelines.nlp.llm_pipeline import LLMPipeline
+from modelscope.pipelines.nlp.llm_pipeline import (LLMAdapterRegistry,
+                                                   LLMPipeline,
+                                                   ModelTypeHelper)
 from modelscope.utils.test_utils import test_level
 
 
@@ -149,6 +151,13 @@ class LLMPipelineTest(unittest.TestCase):
     def test_chatglm232k(self):
         pipe = pipeline(
             task='chat', model='ZhipuAI/chatglm2-6b-32k', llm_first=True)
+        print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_chatglm3(self):
+        pipe = pipeline(
+            task='chat', model='ZhipuAI/chatglm3-6b', llm_first=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -329,6 +338,16 @@ class LLMPipelineTest(unittest.TestCase):
     def test_qwen_vl(self):
         pipe = pipeline(task='chat', model='qwen/Qwen-VL-Chat', llm_first=True)
         print('messages: ', pipe(self.messages_mm, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_llm_adapter_registry(self):
+        model_id = 'damo/internlm-chat-7b-test-for-llm-pipeline'
+        model_type = ModelTypeHelper.get(model_id)
+        assert not LLMAdapterRegistry.contains(model_type)
+
+        pipe = pipeline(task='chat', model=model_id, llm_first=True)
+        print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
 

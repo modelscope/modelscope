@@ -5,6 +5,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+ARG CUDA_VERSION=cu121
 # install  jupyter plugin
 RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
     cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/
@@ -35,9 +36,9 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 # torchmetrics==0.11.4 for ofa
 RUN if [ "$USE_GPU" = "True" ] ; then \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator bitsandbytes basicsr optimum && \
-    pip install --no-cache-dir auto-gptq --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu118/ && \
-    pip install --no-cache-dir -U xformers --index-url https://download.pytorch.org/whl/cu118 && \
-    pip install --no-cache-dir flash_attn==2.3.3+torch2.1cu118 tinycudann==1.7+cu118 vllm==0.2.1+cu118torch2.1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+    pip install --no-cache-dir auto-gptq --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/ && \
+    pip install --no-cache-dir -U xformers --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install --no-cache-dir flash_attn  vllm; \
     else \
         echo 'cpu unsupport vllm auto-gptq'; \
     fi

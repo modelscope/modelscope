@@ -160,6 +160,7 @@ export TORCH_VERSION=$torch_version
 export CUDATOOLKIT_VERSION=$cudatoolkit_version
 export TENSORFLOW_VERSION=$tensorflow_version
 echo -e "Building image with:\npython$python_version\npytorch$torch_version\ntensorflow:$tensorflow_version\ncudatoolkit:$cudatoolkit_version\ncpu:$is_cpu\nis_ci:$is_ci_test\nis_dsw:$is_dsw\n"
+echo -e "Base iamge: $BASE_IMAGE"
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
@@ -174,7 +175,7 @@ else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
-    docker_file_content="${docker_file_content} \nRUN export TORCH_CUDA_ARCH_LIST='6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX' && python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"

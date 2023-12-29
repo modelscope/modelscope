@@ -52,6 +52,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     newcrfs_depth_estimation = 'newcrfs-depth-estimation'
+    
     panovit_layout_estimation = 'panovit-layout-estimation'
     unifuse_depth_estimation = 'unifuse-depth-estimation'
     s2net_depth_estimation = 's2net-depth-estimation'
@@ -117,6 +118,7 @@ class Models(object):
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     surface_recon_common = 'surface-recon-common'
     bts_depth_estimation = 'bts-depth-estimation'
+    marigold_depth_estimation = 'marigold-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
@@ -387,6 +389,9 @@ class Pipelines(object):
     language_guided_video_summarization = 'clip-it-video-summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_depth_estimation = 'image-depth-estimation'
+    
+
+
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
@@ -448,6 +453,7 @@ class Pipelines(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
+    image_depth_estimation_marigold = 'image-depth-estimation-marigold'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'

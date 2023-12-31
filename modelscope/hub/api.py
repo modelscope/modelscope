@@ -701,7 +701,7 @@ class HubApi:
             yield chunk_data
 
         iter_num = 0
-        with open(out_path, 'a') as f:
+        with open(out_path, 'a', encoding='utf-8') as f:
             for chunk in get_chunk(response):
                 progress.update(len(chunk))
                 if url.endswith('jsonl'):
@@ -713,7 +713,7 @@ class HubApi:
                     else:
                         with_header = False
                     chunk_df = pd.DataFrame(chunk)
-                    chunk_df.to_csv(f, index=False, header=with_header, encoding='utf-8-sig')
+                    chunk_df.to_csv(f, index=False, header=with_header)
                     iter_num += 1
                 else:
                     # csv or others

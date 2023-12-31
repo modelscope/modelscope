@@ -713,7 +713,7 @@ class HubApi:
                     else:
                         with_header = False
                     chunk_df = pd.DataFrame(chunk)
-                    chunk_df.to_csv(f, index=False, header=with_header, encoding='gbk')
+                    chunk_df.to_csv(f, index=False, header=with_header, encoding='utf-8-sig')
                     iter_num += 1
                 else:
                     # csv or others

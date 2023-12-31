@@ -219,7 +219,7 @@ class CsvDatasetBuilder(csv.Csv):
             csv_file_path,
             iterator=False,
             delimiter=self.csv_delimiter,
-            encoding='gbk')
+            encoding='utf-8-sig')
 
         transform_fields = []
         for field_name in df.columns.tolist():

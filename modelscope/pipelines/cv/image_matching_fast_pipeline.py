@@ -20,6 +20,26 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.image_matching, module_name=Pipelines.image_matching_fast)
 class ImageMatchingFastPipeline(Pipeline):
+    """ Image Matching Pipeline.
+
+    Examples:
+
+    >>> from modelscope.outputs import OutputKeys
+    >>> from modelscope.pipelines import pipeline
+    >>> from modelscope.utils.constant import Tasks
+
+    >>> task = 'image-matching'
+    >>> model_id = 'Damo_XR_Lab/cv_transformer_image-matching_fast'
+
+    >>> input_location =  [[
+    >>>        'data/test/images/image_matching1.jpg',
+    >>>         'data/test/images/image_matching1.jpg',
+    >>>    ]]
+    >>> estimator = pipeline(task, model=model_id)
+    >>> result = estimator(input_location)
+    >>> kpts0, kpts1, confidence = result[0][OutputKeys.MATCHES]
+    >>> print(f'Found {len(kpts0)} matches')
+    """
 
     def __init__(self, model: str, **kwargs):
         """

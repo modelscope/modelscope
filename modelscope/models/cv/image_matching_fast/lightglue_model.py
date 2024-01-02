@@ -21,6 +21,10 @@ from .config.default import lightglue_default_conf
 @MODELS.register_module(
     Tasks.image_matching, module_name=Models.lightglue_image_matching)
 class LightGlueImageMatching(TorchModel):
+    '''
+    LightGlue is an simple but effective enhancement of the state-of-the-art image matching method, SuperGlue.
+    For more details, please refer to https://arxiv.org/abs/2306.13643
+    '''
 
     def __init__(self, model_dir: str, max_num_keypoints=2048, **kwargs):
 

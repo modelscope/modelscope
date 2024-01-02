@@ -216,7 +216,10 @@ class CsvDatasetBuilder(csv.Csv):
     def _convert_csv_to_dataset(self, split_name, csv_file_path):
 
         df = pd.read_csv(
-            csv_file_path, iterator=False, delimiter=self.csv_delimiter)
+            csv_file_path,
+            iterator=False,
+            delimiter=self.csv_delimiter,
+            lineterminator='\n')
 
         transform_fields = []
         for field_name in df.columns.tolist():

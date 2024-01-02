@@ -502,7 +502,8 @@ class IterableDatasetBuilder(csv.Csv):
             self.meta_csv_df = pd.read_csv(
                 meta_csv_file_path,
                 iterator=False,
-                delimiter=self.csv_delimiter)
+                delimiter=self.csv_delimiter,
+                lineterminator='\n')
 
     @staticmethod
     def trans_data_to_mapping(headers: str, texts: list, delimiter: str):

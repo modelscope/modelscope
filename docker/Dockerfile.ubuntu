@@ -52,6 +52,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /var/modelscope/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/tests.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/svr.txt && \
     pip cache purge
 
 COPY examples /modelscope/examples

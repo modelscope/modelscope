@@ -128,6 +128,7 @@ class Models(object):
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    rife = 'rife'
     anydoor = 'anydoor'
 
     # nlp models
@@ -458,6 +459,7 @@ class Pipelines(object):
     human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    rife_video_frame_interpolation = 'rife-video-frame-interpolation'
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
 

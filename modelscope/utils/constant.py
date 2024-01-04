@@ -169,6 +169,9 @@ class CVTasks(object):
     human3d_animation = 'human3d-animation'
     image_control_3d_portrait = 'image-control-3d-portrait'
 
+    # 3d generation
+    image_to_3d = 'image-to-3d'
+
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
 

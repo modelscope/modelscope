@@ -2,6 +2,7 @@
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
+from .utils.automodel_utils import fix_transformers_upgrade
 
 if TYPE_CHECKING:
     from .exporters import Exporter, TfModelExporter, TorchModelExporter
@@ -33,7 +34,8 @@ if TYPE_CHECKING:
                                 AutoModelForSeq2SeqLM,
                                 AutoModelForSequenceClassification,
                                 AutoModelForTokenClassification, AutoTokenizer,
-                                GenerationConfig)
+                                GenerationConfig, AutoImageProcessor,
+                                BatchFeature)
     from .utils.hub import create_model_if_not_exist, read_config
     from .utils.logger import get_logger
     from .version import __release_datetime__, __version__
@@ -81,7 +83,8 @@ else:
             'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification'
+            'AutoModelForTokenClassification', 'AutoImageProcessor',
+            'BatchFeature'
         ],
         'msdatasets': ['MsDataset']
     }
@@ -95,3 +98,5 @@ else:
         module_spec=__spec__,
         extra_objects={},
     )
+
+fix_transformers_upgrade()

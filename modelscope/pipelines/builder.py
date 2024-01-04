@@ -1,16 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-import os.path as osp
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
-from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
+from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
-from modelscope.utils.config import Config, ConfigDict, check_config
+from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
-                                       ModelFile, ThirdParty)
+                                       ThirdParty)
 from modelscope.utils.hub import read_config
 from modelscope.utils.plugins import (register_modelhub_repo,
                                       register_plugins_repo)
@@ -121,7 +119,6 @@ def pipeline(task: str = None,
         ignore_file_pattern=ignore_file_pattern)
     if pipeline_name is None and kwargs.get('llm_first'):
         pipeline_name = llm_first_checker(model, model_revision)
-        kwargs.pop('llm_first')
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
@@ -133,10 +130,15 @@ def pipeline(task: str = None,
                     model, revision=model_revision) if isinstance(
                         model, str) else read_config(
                             model[0], revision=model_revision)
-                check_config(cfg)
                 register_plugins_repo(cfg.safe_get('plugins'))
                 register_modelhub_repo(model, cfg.get('allow_remote', False))
-                pipeline_props = cfg.pipeline
+                pipeline_name = llm_first_checker(model, model_revision) \
+                    if kwargs.get('llm_first') else None
+                if pipeline_name is not None:
+                    pipeline_props = {'type': pipeline_name}
+                else:
+                    check_config(cfg)
+                    pipeline_props = cfg.pipeline
         elif model is not None:
             # get pipeline info from Model object
             first_model = model[0] if isinstance(model, list) else model
@@ -155,6 +157,10 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
+    # support set llm_framework=None
+    if pipeline_name == 'llm' and kwargs.get('llm_framework', '') == '':
+        kwargs['llm_framework'] = 'vllm'
+    clear_llm_info(kwargs)
     if kwargs:
         cfg.update(kwargs)
 
@@ -205,42 +211,20 @@ def get_default_pipeline_info(task):
 
 def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
                       revision: Optional[str]) -> Optional[str]:
-    from modelscope.pipelines.nlp.llm_pipeline import LLM_FORMAT_MAP
-
-    def get_file_name(model: str, cfg_name: str,
-                      revision: Optional[str]) -> Optional[str]:
-        if osp.exists(model):
-            return osp.join(model, cfg_name)
-        try:
-            return model_file_download(model, cfg_name, revision=revision)
-        except Exception:
-            return None
-
-    def parse_and_get(file: Optional[str], pattern: str) -> Optional[str]:
-        if file is None or not osp.exists(file):
-            return None
-        return Config.from_file(file).safe_get(pattern)
-
-    def get_model_type(model: str, revision: Optional[str]) -> Optional[str]:
-        cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
-        hf_cfg_file = get_file_name(model, ModelFile.CONFIG, revision)
-        cfg_model_type = parse_and_get(cfg_file, 'model.type')
-        hf_cfg_model_type = parse_and_get(hf_cfg_file, 'model_type')
-        return cfg_model_type or hf_cfg_model_type
-
-    def get_adapter_type(model: str, revision: Optional[str]) -> Optional[str]:
-        cfg_file = get_file_name(model, ModelFile.CONFIGURATION, revision)
-        model = parse_and_get(cfg_file, 'adapter_cfg.model_id_or_path')
-        revision = parse_and_get(cfg_file, 'adapter_cfg.model_revision')
-        return None if model is None else get_model_type(model, revision)
+    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
 
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
-    model_type = get_model_type(model, revision) \
-        or get_adapter_type(model, revision)
-    if model_type is not None:
-        model_type = model_type.lower().split('-')[0]
-        if model_type in LLM_FORMAT_MAP:
-            return 'llm'
+    model_type = ModelTypeHelper.get(
+        model, revision, with_adapter=True, split='-', use_cache=True)
+    if LLMAdapterRegistry.contains(model_type):
+        return 'llm'
+
+
+def clear_llm_info(kwargs: Dict):
+    from .nlp.llm_pipeline import ModelTypeHelper
+
+    kwargs.pop('llm_first', None)
+    ModelTypeHelper.clear_cache()

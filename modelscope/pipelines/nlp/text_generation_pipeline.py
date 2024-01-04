@@ -18,8 +18,11 @@ from modelscope.preprocessors import Preprocessor
 from modelscope.utils.chinese_utils import remove_space_between_chinese_chars
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import Config, read_config
+from modelscope.utils.logger import get_logger
 from modelscope.utils.streaming_output import PipelineStreamingOutputMixin
 from modelscope.utils.torch_utils import is_on_same_device
+
+logger = get_logger()
 
 __all__ = [
     'TextGenerationPipeline', 'TextGenerationT5Pipeline',
@@ -86,14 +89,24 @@ class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
             self.postprocessor = cfg.get('postprocessor')
         if self.postprocessor is None:
             self.postprocessor = 'decode'
+        self.has_logged = False
 
     def _sanitize_parameters(self, **pipeline_parameters):
         return {}, pipeline_parameters, {}
 
-    def forward(self, inputs: Dict[str, Any],
+    def forward(self, inputs: Union[Dict[str, Any], Tensor],
                 **forward_params) -> Dict[str, Any]:
         with torch.no_grad():
-            return self.model.generate(inputs, **forward_params)
+            try:
+                return self.model.generate(inputs, **forward_params)
+            except AttributeError as e:
+                if not self.has_logged:
+                    logger.warning(
+                        'When inputs are passed directly, '
+                        f'the error is {e}, '
+                        'which can be ignored if it runs correctly.')
+                    self.has_logged = True
+                return self.model.generate(**inputs, **forward_params)
 
     def decode(self, inputs) -> str:
         return self.preprocessor.decode(

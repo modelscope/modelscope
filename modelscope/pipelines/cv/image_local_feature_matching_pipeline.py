@@ -21,27 +21,44 @@ logger = get_logger()
     Tasks.image_local_feature_matching,
     module_name=Pipelines.image_local_feature_matching)
 class ImageLocalFeatureMatchingPipeline(Pipeline):
-    """ Image Local Feature Matching Pipeline.
+    r""" Image Local Feature Matching Pipeline.
+
     Examples:
 
-    >>> from modelscope.outputs import OutputKeys
     >>> from modelscope.pipelines import pipeline
-    >>> from modelscope.utils.constant import Tasks
 
-
-    >>> task = 'image-local-feature-matching'
-    >>> model_id = 'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'
-
-    >>> estimator = pipeline(Tasks.image_local_feature_matching, model=model_id)
-    >>> input_location = [
-    >>>                     ['data/test/images/image_matching1.jpg',
-    >>>                     'data/test/images/image_matching2.jpg']
-    >>>                 ]
-    >>> result = estimator(input_location)
-    >>> kpts0, kpts1, conf = result[0][OutputKeys.MATCHES]
-    >>> vis_img = result[0][OutputKeys.OUTPUT_IMG]
-    >>> cv2.imwrite("vis_demo.jpg", vis_img)
-    >>> print(f'Found {len(kpts0)} matches')
+    >>> matcher = pipeline(Tasks.image_local_feature_matching, model='Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data')
+    >>> matcher([['https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching1.jpg','https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching2.jpg']])
+    >>>   [{
+    >>>    'matches': [array([[720.5    , 187.8    ],
+    >>>        [707.4    , 198.23334],
+    >>>        ...,
+    >>>        [746.7    , 594.7    ],
+    >>>        [759.8    , 594.7    ]], dtype=float32),
+    >>>        array([[652.49744 ,  29.599142],
+    >>>        [639.25287 ,  45.90798 ],
+    >>>        [653.041   ,  43.399014],
+    >>>        ...,
+    >>>        [670.8787  , 547.8298  ],
+    >>>        [608.5573  , 548.97815 ],
+    >>>        [617.82574 , 548.601   ]], dtype=float32),
+    >>>        array([0.25541496, 0.2781789 , 0.20776041, ..., 0.39656195, 0.7202848 ,
+    >>>        0.37208357], dtype=float32)],
+    >>>    'output_img': array([[[255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         ...,
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255]],
+    >>>         ...,
+    >>>        [[255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         ...,
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255],
+    >>>         [255, 255, 255]]], dtype=uint8)}]
     """
 
     def __init__(self, model: str, **kwargs):

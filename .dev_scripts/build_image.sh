@@ -190,7 +190,7 @@ printf "$docker_file_content" > Dockerfile
 
 while true
 do
-  DOCKER_BUILDKIT=0 docker build -t $IMAGE_TO_BUILD  \
+  docker build --progress=plain -t $IMAGE_TO_BUILD  \
              --build-arg USE_GPU \
              --build-arg BASE_IMAGE \
              --build-arg PYTHON_VERSION \

@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-base
 FROM $BASE_IMAGE
 RUN apt-get update && \
-    apt-get install -y libsox-dev unzip  zip iputils-ping telnet && \
+    apt-get install -y libsox-dev unzip  zip iputils-ping telnet sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

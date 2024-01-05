@@ -164,7 +164,7 @@ echo -e "Base iamge: $BASE_IMAGE"
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers<4.35.0'"
+    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers==4.36.2'"
     docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && pip install . && cd / && rm -fr /tmp/MaaS-lib"
         MMCV_WITH_OPS=1 MAX_JOBS=32 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
 fi

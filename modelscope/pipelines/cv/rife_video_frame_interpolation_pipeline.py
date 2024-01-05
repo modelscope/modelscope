@@ -46,6 +46,7 @@ class RIFEVideoFrameInterpolationPipeline(Pipeline):
     >>> print('pipeline: the output video path is {}'.format(result))
 
     """
+
     def __init__(self,
                  model: Union[RIFEModel, str],
                  preprocessor=None,

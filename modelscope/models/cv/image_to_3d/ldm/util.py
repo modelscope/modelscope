@@ -169,17 +169,16 @@ def get_obj_from_str(string, reload=False):
 
 class AdamWwithEMAandWings(optim.Optimizer):
     # credit to https://gist.github.com/crowsonkb/65f7265353f403714fce3b2595e0b298
-    def __init__(
-        self,
-        params,
-        lr=1.e-3,
-        betas=(0.9, 0.999),
-        eps=1.e-8,  # TODO: check hyperparameters before using
-        weight_decay=1.e-2,
-        amsgrad=False,
-        ema_decay=0.9999,  # ema decay to match previous code
-        ema_power=1.,
-        param_names=()):
+    def __init__(self,
+                 params,
+                 lr=1.e-3,
+                 betas=(0.9, 0.999),
+                 eps=1.e-8,  # TODO: check hyperparameters before using
+                 weight_decay=1.e-2,
+                 amsgrad=False,
+                 ema_decay=0.9999,  # ema decay to match previous code
+                 ema_power=1.,
+                 param_names=()):
         """AdamW that saves EMA versions of the parameters."""
         if not 0.0 <= lr:
             raise ValueError('Invalid learning rate: {}'.format(lr))

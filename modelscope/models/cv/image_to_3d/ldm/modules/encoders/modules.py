@@ -15,7 +15,7 @@ from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.util import (
     extract_into_tensor, make_beta_schedule, noise_like)
 # import clip
 from modelscope.models.cv.image_to_3d.ldm.modules.encoders import clip
-from modelscope.models.cv.image_to_3d.ldm.modules.x_transformer import (  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
+from modelscope.models.cv.image_to_3d.ldm.modules.x_transformer import (
     Encoder, TransformerWrapper)
 from modelscope.models.cv.image_to_3d.ldm.thirdp.psp.id_loss import IDFeatures
 from modelscope.models.cv.image_to_3d.ldm.util import (default,

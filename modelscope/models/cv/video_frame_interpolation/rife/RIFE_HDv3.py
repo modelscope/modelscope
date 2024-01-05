@@ -96,8 +96,8 @@ class RIFEModel(TorchModel):
                flow_gt=None):
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
-        img0 = imgs[:, :3]
-        img1 = imgs[:, 3:]
+        # img0 = imgs[:, :3]
+        # img1 = imgs[:, 3:]
         if training:
             self.train()
         else:
@@ -114,7 +114,7 @@ class RIFEModel(TorchModel):
             loss_G.backward()
             self.optimG.step()
         else:
-            flow_teacher = flow[2]
+            _ = flow[2]
         return merged[2], {
             'mask': mask,
             'flow': flow[2][:, :2],

@@ -70,7 +70,8 @@ class DiagonalGaussianDistribution(object):
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
-    source: https://github.com/openai/guided-diffusion/blob/27c20a8fab9cb472df5d6bdd6c8d11c8f430b924/guided_diffusion/losses.py#L12
+    source: https://github.com/openai/guided-diffusion/blob/27c20a8fab9cb472df5d6bdd6c8d11c8f430b924/
+    guided_diffusion/losses.py#L12
     Compute the KL divergence between two gaussians.
     Shapes are automatically broadcasted, so batches can be compared to
     scalars, among other use cases.

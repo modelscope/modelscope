@@ -115,7 +115,7 @@ class IFNet(nn.Module):
         # self.unet = Unet()
 
     def forward(self, x, scale_list=[4, 2, 1], training=False):
-        if training == False:
+        if training is False:
             channel = x.shape[1] // 2
             img0 = x[:, :channel]
             img1 = x[:, channel:]
@@ -126,7 +126,7 @@ class IFNet(nn.Module):
         warped_img1 = img1
         flow = (x[:, :4]).detach() * 0
         mask = (x[:, :1]).detach() * 0
-        loss_cons = 0
+        # loss_cons = 0
         block = [self.block0, self.block1, self.block2]
         for i in range(3):
             f0, m0 = block[i](

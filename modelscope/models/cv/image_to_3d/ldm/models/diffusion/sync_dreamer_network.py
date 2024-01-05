@@ -6,7 +6,10 @@ class Image2DResBlockWithTV(nn.Module):
 
     def __init__(self, dim, tdim, vdim):
         super().__init__()
-        norm = lambda c: nn.GroupNorm(8, c)
+
+        def norm(c):
+            return nn.GroupNorm(8, c)
+
         self.time_embed = nn.Conv2d(tdim, dim, 1, 1)
         self.view_embed = nn.Conv2d(vdim, dim, 1, 1)
         self.conv = nn.Sequential(
@@ -60,7 +63,10 @@ class SpatialUpTimeBlock(nn.Module):
 
     def __init__(self, x_in_dim, t_in_dim, out_dim):
         super().__init__()
-        norm_act = lambda c: nn.GroupNorm(8, c)
+
+        def norm_act(c):
+            return nn.GroupNorm(8, c)
+
         self.t_conv = nn.Conv3d(t_in_dim, x_in_dim, 1, 1)  # 16
         self.norm = norm_act(x_in_dim)
         self.silu = nn.SiLU(True)
@@ -81,7 +87,10 @@ class SpatialTimeBlock(nn.Module):
 
     def __init__(self, x_in_dim, t_in_dim, out_dim, stride):
         super().__init__()
-        norm_act = lambda c: nn.GroupNorm(8, c)
+
+        def norm_act(c):
+            return nn.GroupNorm(8, c)
+
         self.t_conv = nn.Conv3d(t_in_dim, x_in_dim, 1, 1)  # 16
         self.bn = norm_act(x_in_dim)
         self.silu = nn.SiLU(True)
@@ -147,7 +156,10 @@ class FrustumTVBlock(nn.Module):
 
     def __init__(self, x_dim, t_dim, v_dim, out_dim, stride):
         super().__init__()
-        norm_act = lambda c: nn.GroupNorm(8, c)
+
+        def norm_act(c):
+            return nn.GroupNorm(8, c)
+
         self.t_conv = nn.Conv3d(t_dim, x_dim, 1, 1)  # 16
         self.v_conv = nn.Conv3d(v_dim, x_dim, 1, 1)  # 16
         self.bn = norm_act(x_dim)
@@ -163,7 +175,10 @@ class FrustumTVUpBlock(nn.Module):
 
     def __init__(self, x_dim, t_dim, v_dim, out_dim):
         super().__init__()
-        norm_act = lambda c: nn.GroupNorm(8, c)
+
+        def norm_act(c):
+            return nn.GroupNorm(8, c)
+
         self.t_conv = nn.Conv3d(t_dim, x_dim, 1, 1)  # 16
         self.v_conv = nn.Conv3d(v_dim, x_dim, 1, 1)  # 16
         self.norm = norm_act(x_dim)

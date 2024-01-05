@@ -76,7 +76,6 @@ class RIFEVideoFrameInterpolationPipeline(Pipeline):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         inputs = input['video']
-        fps = input['fps']
         out_fps = input['out_fps']
         video_len = len(inputs)
 

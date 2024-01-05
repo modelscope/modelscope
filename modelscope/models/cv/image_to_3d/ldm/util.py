@@ -6,7 +6,6 @@ from inspect import isfunction
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy as np
 import PIL
 import torch
 import torchvision
@@ -150,7 +149,7 @@ def count_params(model, verbose=False):
 
 
 def instantiate_from_config(config):
-    if not 'target' in config:
+    if 'target' not in config:
         if config == '__is_first_stage__':
             return None
         elif config == '__is_unconditional__':
@@ -231,7 +230,7 @@ class AdamWwithEMAandWings(optim.Optimizer):
             exp_avgs = []
             exp_avg_sqs = []
             ema_params_with_grad = []
-            state_sums = []
+            # state_sums = []
             max_exp_avg_sqs = []
             state_steps = []
             amsgrad = group['amsgrad']

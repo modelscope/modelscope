@@ -198,9 +198,9 @@ class VQModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         log_dict = self._validation_step(batch, batch_idx)
-        with self.ema_scope():
-            log_dict_ema = self._validation_step(
-                batch, batch_idx, suffix='_ema')
+        # with self.ema_scope():
+        #     log_dict_ema = self._validation_step(
+        #         batch, batch_idx, suffix='_ema')
         return log_dict
 
     def _validation_step(self, batch, batch_idx, suffix=''):
@@ -305,7 +305,8 @@ class VQModel(pl.LightningModule):
         if plot_ema:
             with self.ema_scope():
                 xrec_ema, _ = self(x)
-                if x.shape[1] > 3: xrec_ema = self.to_rgb(xrec_ema)
+                if x.shape[1] > 3:
+                    xrec_ema = self.to_rgb(xrec_ema)
                 log['reconstructions_ema'] = xrec_ema
         return log
 

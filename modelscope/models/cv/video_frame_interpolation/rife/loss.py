@@ -110,7 +110,6 @@ class VGGPerceptualLoss(torch.nn.Module):
 
     def __init__(self, rank=0):
         super(VGGPerceptualLoss, self).__init__()
-        blocks = []
         pretrained = True
         self.vgg_pretrained_features = models.vgg19(
             pretrained=pretrained).features

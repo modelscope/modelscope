@@ -25,7 +25,7 @@ def convert_module_to_f32(x):
     pass
 
 
-## go
+# go
 class AttentionPool2d(nn.Module):
     """
     Adapted from CLIP: https://github.com/openai/CLIP/blob/main/clip/model.py
@@ -330,7 +330,7 @@ class AttentionBlock(nn.Module):
         return checkpoint(
             self._forward, (x, ), self.parameters(), True
         )  # TODO: check checkpoint usage, is True # TODO: fix the .half call!!!
-        #return pt_checkpoint(self._forward, x)  # pytorch
+        # return pt_checkpoint(self._forward, x)  # pytorch
 
     def _forward(self, x):
         b, c, *spatial = x.shape
@@ -489,10 +489,13 @@ class UNetModel(nn.Module):
             num_attention_blocks=None):
         super().__init__()
         if use_spatial_transformer:
-            assert context_dim is not None, 'Fool!! You forgot to include the dimension of your cross-attention conditioning...'
+            assert context_dim is not None, 'Fool!! You forgot to include the dimension of your \
+                                             cross-attention conditioning...'
 
         if context_dim is not None:
-            assert use_spatial_transformer, 'Fool!! You forgot to use the spatial transformer for your cross-attention conditioning...'
+            assert use_spatial_transformer, 'Fool!! You forgot to use the spatial transformer for your \
+                                             cross-attention conditioning...'
+
             from omegaconf.listconfig import ListConfig
             if type(context_dim) == ListConfig:
                 context_dim = list(context_dim)
@@ -519,7 +522,7 @@ class UNetModel(nn.Module):
                     'as a list/tuple (per-level) with the same length as channel_mult'
                 )
             self.num_res_blocks = num_res_blocks
-        #self.num_res_blocks = num_res_blocks
+        # self.num_res_blocks = num_res_blocks
         if disable_self_attentions is not None:
             # should be a list of booleans, indicating whether to disable self-attention in TransformerBlocks or not
             assert len(disable_self_attentions) == len(channel_mult)
@@ -588,7 +591,7 @@ class UNetModel(nn.Module):
                         num_heads = ch // num_head_channels
                         dim_head = num_head_channels
                     if legacy:
-                        #num_heads = 1
+                        # num_heads = 1
                         dim_head = ch // num_heads if use_spatial_transformer else num_head_channels
                     if exists(disable_self_attentions):
                         disabled_sa = disable_self_attentions[level]
@@ -642,7 +645,7 @@ class UNetModel(nn.Module):
             num_heads = ch // num_head_channels
             dim_head = num_head_channels
         if legacy:
-            #num_heads = 1
+            # num_heads = 1
             dim_head = ch // num_heads if use_spatial_transformer else num_head_channels
         self.middle_block = TimestepEmbedSequential(
             ResBlock(
@@ -700,7 +703,7 @@ class UNetModel(nn.Module):
                         num_heads = ch // num_head_channels
                         dim_head = num_head_channels
                     if legacy:
-                        #num_heads = 1
+                        # num_heads = 1
                         dim_head = ch // num_heads if use_spatial_transformer else num_head_channels
                     if exists(disable_self_attentions):
                         disabled_sa = disable_self_attentions[level]
@@ -752,7 +755,7 @@ class UNetModel(nn.Module):
             self.id_predictor = nn.Sequential(
                 normalization(ch),
                 conv_nd(dims, model_channels, n_embed, 1),
-                #nn.LogSoftmax(dim=1)  # change to cross_entropy and produce non-normalized logits
+                # nn.LogSoftmax(dim=1)  # change to cross_entropy and produce non-normalized logits
             )
 
     def convert_to_fp16(self):

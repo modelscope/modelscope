@@ -175,7 +175,8 @@ class SpatialVolumeNet(nn.Module):
         self.frustum_volume_depth = frustum_volume_depth
         self.time_dim = time_dim
         self.view_dim = view_dim
-        self.default_origin_depth = 1.5  # our rendered images are 1.5 away from the origin, we assume camera is 1.5 away from the origin
+        # our rendered images are 1.5 away from the origin, we assume camera is 1.5 away from the origin
+        self.default_origin_depth = 1.5
 
     def construct_spatial_volume(self, x, t_embed, v_embed, target_poses,
                                  target_Ks):
@@ -283,8 +284,8 @@ class SpatialVolumeNet(nn.Module):
         volume_xyz, volume_depth = create_target_volume(
             D, self.frustum_volume_size, self.input_image_size, poses_, Ks_,
             near, far)  # B*TN,3 or 1,D,H,W
-
-        volume_xyz_ = volume_xyz / self.spatial_volume_length  # since the spatial volume is constructed in [-spatial_volume_length,spatial_volume_length]
+        # since the spatial volume is constructed in [-spatial_volume_length,spatial_volume_length]
+        volume_xyz_ = volume_xyz / self.spatial_volume_length
         volume_xyz_ = volume_xyz_.permute(0, 2, 3, 4, 1)  # B*TN,D,H,W,3
         spatial_volume_ = spatial_volume.unsqueeze(1).repeat(
             1, TN, 1, 1, 1, 1).view(B * TN, -1, V, V, V)
@@ -698,8 +699,11 @@ class SyncMultiviewDiffusion(pl.LightningModule):
                   step,
                   output_dir,
                   only_first_row=False):
-        process = lambda x: ((torch.clip(x, min=-1, max=1).cpu().numpy() * 0.5
-                              + 0.5) * 255).astype(np.uint8)
+
+        def process(x):
+            return ((torch.clip(x, min=-1, max=1).cpu().numpy() * 0.5 + 0.5)
+                    * 255).astype(np.uint8)
+
         B = x_sample.shape[0]
         N = x_sample.shape[1]
         image_cond = []

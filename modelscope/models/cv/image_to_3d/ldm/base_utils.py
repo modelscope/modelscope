@@ -19,9 +19,9 @@ def read_pickle(pkl_path):
 def draw_epipolar_line(F, img0, img1, pt0, color):
     h1, w1 = img1.shape[:2]
     hpt = np.asarray([pt0[0], pt0[1], 1], dtype=np.float32)[:, None]
-    l = F @ hpt
-    l = l[:, 0]
-    a, b, c = l[0], l[1], l[2]
+    ln = F @ hpt
+    ln = ln[:, 0]
+    a, b, c = ln[0], ln[1], ln[2]
     pt1 = np.asarray([0, -c / b]).astype(np.int32)
     pt2 = np.asarray([w1, (-a * w1 - c) / b]).astype(np.int32)
 
@@ -116,7 +116,8 @@ def concat_images(img0, img1, vert=False):
 
 
 def concat_images_list(*args, vert=False):
-    if len(args) == 1: return args[0]
+    if len(args) == 1:
+        return args[0]
     img_out = args[0]
     for img in args[1:]:
         img_out = concat_images(img_out, img, vert)
@@ -134,9 +135,11 @@ def project_points(pts, RT, K):
     pts = np.matmul(pts, K.transpose())
     dpt = pts[:, 2]
     mask0 = (np.abs(dpt) < 1e-4) & (np.abs(dpt) > 0)
-    if np.sum(mask0) > 0: dpt[mask0] = 1e-4
+    if np.sum(mask0) > 0:
+        dpt[mask0] = 1e-4
     mask1 = (np.abs(dpt) > -1e-4) & (np.abs(dpt) < 0)
-    if np.sum(mask1) > 0: dpt[mask1] = -1e-4
+    if np.sum(mask1) > 0:
+        dpt[mask1] = -1e-4
     pts2d = pts[:, :2] / dpt[:, None]
     return pts2d, dpt
 

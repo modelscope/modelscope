@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from modelscope.models.cv.image_to_3d.ldm.modules.attention import (
+from modelscope.models.cv.image_to_3d.ldm.modules.attention import (  # no qa
     checkpoint, default, zero_module)
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.openaimodel import \
     UNetModel

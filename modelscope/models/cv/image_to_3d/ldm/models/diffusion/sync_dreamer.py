@@ -816,8 +816,9 @@ class SyncDDIMSampler:
         self.ddim_alphas_prev = torch.cat(
             [alphas_cumprod[0:1], alphas_cumprod[ddim_timesteps_[:-1]]],
             0)  # DT
-        self.ddim_sigmas = ddim_eta * torch.sqrt(
-            (1 - self.ddim_alphas_prev) / (1 - self.ddim_alphas) * (1 - self.ddim_alphas / self.ddim_alphas_prev))
+        self.ddim_sigmas = ddim_eta * torch.sqrt(  # noqa
+            (1 - self.ddim_alphas_prev) / (1 - self.ddim_alphas) *  # noqa
+            (1 - self.ddim_alphas / self.ddim_alphas_prev))  # noqa
 
         self.ddim_alphas_raw = self.model.alphas[ddim_timesteps_].float()  # DT
         self.ddim_sigmas = self.ddim_sigmas.float()

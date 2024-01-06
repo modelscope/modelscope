@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 
-from modelscope.models.cv.image_to_3d.ldm.modules.attention import (checkpoint,
-                                                                    default,
-                                                                    zero_module
-                                                                    )
+from modelscope.models.cv.image_to_3d.ldm.modules.attention import (
+    checkpoint, default, zero_module)
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.openaimodel import \
     UNetModel
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.util import \

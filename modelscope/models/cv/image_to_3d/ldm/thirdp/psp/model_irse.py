@@ -5,6 +5,7 @@ from torch.nn import (BatchNorm1d, BatchNorm2d, Conv2d, Dropout, Linear,
 
 from modelscope.models.cv.image_to_3d.ldm.thirdp.psp.helpers import (
     Flatten, bottleneck_IR, bottleneck_IR_SE, get_blocks, l2_norm)
+
 """
 Modified Backbone implementation from [TreB1eN](https://github.com/TreB1eN/InsightFace_Pytorch)
 """

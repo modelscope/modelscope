@@ -18,8 +18,8 @@ from torchvision.utils import save_image
 # import modelscope.models.cv.image_to_image_generation.models as models
 # import modelscope.models.cv.image_to_image_generation.ops as ops
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.image_to_3d.ldm.models.diffusion.sync_dreamer import \
-    SyncMultiviewDiffusion
+# from modelscope.models.cv.image_to_3d.ldm.models.diffusion.sync_dreamer import \
+#     SyncMultiviewDiffusion
 from modelscope.models.cv.image_to_3d.ldm.util import (add_margin,
                                                        instantiate_from_config)
 from modelscope.outputs import OutputKeys

@@ -7,50 +7,65 @@
 #
 # thanks!
 
-
-import os
 import math
+import os
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from einops import repeat
 
 from modelscope.models.cv.image_to_3d.ldm.util import instantiate_from_config
 
 
-def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2, cosine_s=8e-3):
-    if schedule == "linear":
+def make_beta_schedule(schedule,
+                       n_timestep,
+                       linear_start=1e-4,
+                       linear_end=2e-2,
+                       cosine_s=8e-3):
+    if schedule == 'linear':
         betas = (
-                torch.linspace(linear_start ** 0.5, linear_end ** 0.5, n_timestep, dtype=torch.float64) ** 2
-        )
+            torch.linspace(
+                linear_start**0.5,
+                linear_end**0.5,
+                n_timestep,
+                dtype=torch.float64)**2)
 
-    elif schedule == "cosine":
+    elif schedule == 'cosine':
         timesteps = (
-                torch.arange(n_timestep + 1, dtype=torch.float64) / n_timestep + cosine_s
-        )
+            torch.arange(n_timestep + 1, dtype=torch.float64) / n_timestep
+            + cosine_s)
         alphas = timesteps / (1 + cosine_s) * np.pi / 2
         alphas = torch.cos(alphas).pow(2)
         alphas = alphas / alphas[0]
         betas = 1 - alphas[1:] / alphas[:-1]
         betas = np.clip(betas, a_min=0, a_max=0.999)
 
-    elif schedule == "sqrt_linear":
-        betas = torch.linspace(linear_start, linear_end, n_timestep, dtype=torch.float64)
-    elif schedule == "sqrt":
-        betas = torch.linspace(linear_start, linear_end, n_timestep, dtype=torch.float64) ** 0.5
+    elif schedule == 'sqrt_linear':
+        betas = torch.linspace(
+            linear_start, linear_end, n_timestep, dtype=torch.float64)
+    elif schedule == 'sqrt':
+        betas = torch.linspace(
+            linear_start, linear_end, n_timestep, dtype=torch.float64)**0.5
     else:
         raise ValueError(f"schedule '{schedule}' unknown.")
     return betas.numpy()
 
 
-def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timesteps, verbose=True):
+def make_ddim_timesteps(ddim_discr_method,
+                        num_ddim_timesteps,
+                        num_ddpm_timesteps,
+                        verbose=True):
     if ddim_discr_method == 'uniform':
         c = num_ddpm_timesteps // num_ddim_timesteps
         ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
     elif ddim_discr_method == 'quad':
-        ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8), num_ddim_timesteps)) ** 2).astype(int)
+        ddim_timesteps = ((np.linspace(0, np.sqrt(num_ddpm_timesteps * .8),
+                                       num_ddim_timesteps))**2).astype(int)
     else:
-        raise NotImplementedError(f'There is no ddim discretization method called "{ddim_discr_method}"')
+        raise NotImplementedError(
+            f'There is no ddim discretization method called "{ddim_discr_method}"'
+        )
 
     # assert ddim_timesteps.shape[0] == num_ddim_timesteps
     # add one to get the final alpha values right (the ones from first scale to data during sampling)
@@ -60,17 +75,25 @@ def make_ddim_timesteps(ddim_discr_method, num_ddim_timesteps, num_ddpm_timestep
     return steps_out
 
 
-def make_ddim_sampling_parameters(alphacums, ddim_timesteps, eta, verbose=True):
+def make_ddim_sampling_parameters(alphacums,
+                                  ddim_timesteps,
+                                  eta,
+                                  verbose=True):
     # select alphas for computing the variance schedule
     alphas = alphacums[ddim_timesteps]
-    alphas_prev = np.asarray([alphacums[0]] + alphacums[ddim_timesteps[:-1]].tolist())
+    alphas_prev = np.asarray([alphacums[0]]
+                             + alphacums[ddim_timesteps[:-1]].tolist())
 
     # according the the formula provided in https://arxiv.org/abs/2010.02502
     sigmas = eta * np.sqrt((1 - alphas_prev) / (1 - alphas) * (1 - alphas / alphas_prev))
     if verbose:
-        print(f'Selected alphas for ddim sampler: a_t: {alphas}; a_(t-1): {alphas_prev}')
-        print(f'For the chosen value of eta, which is {eta}, '
-              f'this results in the following sigma_t schedule for ddim sampler {sigmas}')
+        print(
+            f'Selected alphas for ddim sampler: a_t: {alphas}; a_(t-1): {alphas_prev}'
+        )
+        print(
+            f'For the chosen value of eta, which is {eta}, '
+            f'this results in the following sigma_t schedule for ddim sampler {sigmas}'
+        )
     return sigmas, alphas, alphas_prev
 
 
@@ -96,7 +119,7 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
 def extract_into_tensor(a, t, x_shape):
     b, *_ = t.shape
     out = a.gather(-1, t)
-    return out.reshape(b, *((1,) * (len(x_shape) - 1)))
+    return out.reshape(b, *((1, ) * (len(x_shape) - 1)))
 
 
 def checkpoint(func, inputs, params, flag):
@@ -117,6 +140,7 @@ def checkpoint(func, inputs, params, flag):
 
 
 class CheckpointFunction(torch.autograd.Function):
+
     @staticmethod
     def forward(ctx, run_function, length, *args):
         ctx.run_function = run_function
@@ -129,7 +153,9 @@ class CheckpointFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, *output_grads):
-        ctx.input_tensors = [x.detach().requires_grad_(True) for x in ctx.input_tensors]
+        ctx.input_tensors = [
+            x.detach().requires_grad_(True) for x in ctx.input_tensors
+        ]
         with torch.enable_grad():
             # Fixes a bug where the first op in run_function modifies the
             # Tensor storage in place, which is not allowed for detach()'d
@@ -160,12 +186,14 @@ def timestep_embedding(timesteps, dim, max_period=10000, repeat_only=False):
     if not repeat_only:
         half = dim // 2
         freqs = torch.exp(
-            -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
-        ).to(device=timesteps.device)
+            -math.log(max_period)
+            * torch.arange(start=0, end=half, dtype=torch.float32)
+            / half).to(device=timesteps.device)
         args = timesteps[:, None].float() * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
-            embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
+            embedding = torch.cat(
+                [embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
     else:
         embedding = repeat(timesteps, 'b -> b d', d=dim)
     return embedding
@@ -207,13 +235,16 @@ def normalization(channels):
 
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
+
     def forward(self, x):
         return x * torch.sigmoid(x)
 
 
 class GroupNorm32(nn.GroupNorm):
+
     def forward(self, x):
         return super().forward(x.float()).type(x.dtype)
+
 
 def conv_nd(dims, *args, **kwargs):
     """
@@ -225,7 +256,7 @@ def conv_nd(dims, *args, **kwargs):
         return nn.Conv2d(*args, **kwargs)
     elif dims == 3:
         return nn.Conv3d(*args, **kwargs)
-    raise ValueError(f"unsupported dimensions: {dims}")
+    raise ValueError(f'unsupported dimensions: {dims}')
 
 
 def linear(*args, **kwargs):
@@ -245,7 +276,7 @@ def avg_pool_nd(dims, *args, **kwargs):
         return nn.AvgPool2d(*args, **kwargs)
     elif dims == 3:
         return nn.AvgPool3d(*args, **kwargs)
-    raise ValueError(f"unsupported dimensions: {dims}")
+    raise ValueError(f'unsupported dimensions: {dims}')
 
 
 class HybridConditioner(nn.Module):
@@ -253,7 +284,8 @@ class HybridConditioner(nn.Module):
     def __init__(self, c_concat_config, c_crossattn_config):
         super().__init__()
         self.concat_conditioner = instantiate_from_config(c_concat_config)
-        self.crossattn_conditioner = instantiate_from_config(c_crossattn_config)
+        self.crossattn_conditioner = instantiate_from_config(
+            c_crossattn_config)
 
     def forward(self, c_concat, c_crossattn):
         c_concat = self.concat_conditioner(c_concat)
@@ -262,6 +294,13 @@ class HybridConditioner(nn.Module):
 
 
 def noise_like(shape, device, repeat=False):
-    repeat_noise = lambda: torch.randn((1, *shape[1:]), device=device).repeat(shape[0], *((1,) * (len(shape) - 1)))
-    noise = lambda: torch.randn(shape, device=device)
+
+    def repeat_noise():
+        return torch.randn((1, *shape[1:]),
+                           device=device).repeat(shape[0],
+                                                 *((1, ) * (len(shape) - 1)))
+
+    def noise():
+        return torch.randn(shape, device=device)
+
     return repeat_noise() if repeat else noise()

@@ -3812,5 +3812,17 @@
                 }
             }
         }
-    }
+    },
+    "self-supervised-depth-completion": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output": {
+                    "type": "object"
+                }
+            }
+        }
+    },
 }

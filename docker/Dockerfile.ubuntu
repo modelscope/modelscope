@@ -32,11 +32,6 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     else \
         echo 'cpu unsupport detectron2'; \
     fi
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_tiny_cuda_nn.sh; \
-    else \
-     echo 'cpu unsupport tiny_duda_nn'; \
-    fi
 
 # torchmetrics==0.11.4 for ofa
 RUN if [ "$USE_GPU" = "True" ] ; then \

@@ -250,6 +250,7 @@ class AudioTasks(object):
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
+    emotion_recognition = 'emotion-recognition'
 
 
 class MultiModalTasks(object):

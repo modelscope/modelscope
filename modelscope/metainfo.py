@@ -208,6 +208,7 @@ class Models(object):
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
+    funasr = "funasr"
 
     # multi-modal models
     ofa = 'ofa'
@@ -585,9 +586,12 @@ class Pipelines(object):
     llama2_text_generation_chat_pipeline = 'llama2-text-generation-chat-pipeline'
     image_to_video_task_pipeline = 'image-to-video-task-pipeline'
     video_to_video_pipeline = 'video-to-video-pipeline'
-
+    
     # science tasks
     protein_structure = 'unifold-protein-structure'
+    
+    # funasr task
+    funasr_pipeline = 'funasr-pipeline'
 
 
 DEFAULT_MODEL_FOR_PIPELINE = {

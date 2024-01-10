@@ -3,6 +3,7 @@ import unittest
 
 import numpy as np
 from PIL import Image
+
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
@@ -24,11 +25,11 @@ class ImageTo3DTest(unittest.TestCase):
     def pipeline_inference(self, pipeline: Pipeline, input: str):
         result = pipeline(input['input_path'])
         np_content = []
-        for idx,img in enumerate(result['MViews']):
+        for idx, img in enumerate(result['MViews']):
             np_content.append(np.array(result['MViews'][idx]))
 
         np_content = np.concatenate(np_content, axis=1)
-        Image.fromarray(np_content).save("./concat.png")
+        Image.fromarray(np_content).save('./concat.png')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

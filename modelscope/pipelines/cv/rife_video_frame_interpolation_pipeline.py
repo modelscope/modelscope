@@ -46,6 +46,7 @@ class RIFEVideoFrameInterpolationPipeline(Pipeline):
     >>> print('pipeline: the output video path is {}'.format(result))
 
     """
+
     def __init__(self,
                  model: Union[RIFEModel, str],
                  preprocessor=None,
@@ -75,7 +76,7 @@ class RIFEVideoFrameInterpolationPipeline(Pipeline):
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
         inputs = input['video']
-        fps = input['fps']
+        # fps = input['fps']
         out_fps = input['out_fps']
         video_len = len(inputs)
 

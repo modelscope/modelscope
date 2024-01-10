@@ -52,12 +52,12 @@ class TranslationPipeline(Pipeline):
         self._src_vocab_path = osp.join(
             model, self.cfg['dataset']['src_vocab']['file'])
         self._src_vocab = dict([
-            (w.strip(), i) for i, w in enumerate(open(self._src_vocab_path))
+            (w.strip(), i) for i, w in enumerate(open(self._src_vocab_path, encoding='utf-8'))
         ])
         self._trg_vocab_path = osp.join(
             model, self.cfg['dataset']['trg_vocab']['file'])
         self._trg_rvocab = dict([
-            (i, w.strip()) for i, w in enumerate(open(self._trg_vocab_path))
+            (i, w.strip()) for i, w in enumerate(open(self._trg_vocab_path, encoding='utf-8'))
         ])
 
         tf_config = tf.ConfigProto(allow_soft_placement=True)
@@ -81,7 +81,7 @@ class TranslationPipeline(Pipeline):
             self._tok = MosesTokenizer(lang=self._src_lang)
         self._detok = MosesDetokenizer(lang=self._tgt_lang)
 
-        self._bpe = apply_bpe.BPE(open(self._src_bpe_path))
+        self._bpe = apply_bpe.BPE(open(self._src_bpe_path, encoding='utf-8'))
 
         # model
         output = self.model(self.input_wids)

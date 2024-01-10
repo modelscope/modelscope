@@ -53,7 +53,7 @@ class SpeakerVerificationPipeline(Pipeline):
         self.save_dict = {}
 
     def __call__(self,
-                 in_audios: Union[np.ndarray, list],
+                 in_audios: Union[np.ndarray, list, dict],
                  save_dir: str = None,
                  output_emb: bool = False,
                  thr: float = None):
@@ -63,6 +63,8 @@ class SpeakerVerificationPipeline(Pipeline):
             raise ValueError(
                 'modelscope error: the thr value should be in [-1, 1], but found to be %f.'
                 % self.thr)
+        if isinstance(in_audios, dict):
+            in_audios = in_audios['in_audios']
         wavs = self.preprocess(in_audios)
         embs = self.forward(wavs)
         outputs = self.postprocess(embs, in_audios, save_dir)

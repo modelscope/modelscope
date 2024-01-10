@@ -48,7 +48,7 @@ class RDINO_Pipeline(Pipeline):
         self.thr = self.config['yesOrno_thr']
 
     def __call__(self,
-                 in_audios: List[str],
+                 in_audios: Union[List[str], dict],
                  thr: float = None) -> Dict[str, Any]:
         if thr is not None:
             self.thr = thr
@@ -56,6 +56,8 @@ class RDINO_Pipeline(Pipeline):
             raise ValueError(
                 'modelscope error: the thr value should be in [-1, 1], but found to be %f.'
                 % self.thr)
+        if isinstance(in_audios, dict):
+            in_audios = in_audios['in_audios']
         outputs = self.preprocess(in_audios)
         outputs = self.forward(outputs)
         outputs = self.postprocess(outputs)

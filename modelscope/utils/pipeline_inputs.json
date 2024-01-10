@@ -293,5 +293,59 @@
                 "军事"
             ]
         }
+    },
+    "text2text-generation":{
+        "input":{
+            "text":"杨阳胖吗[SEP]我一个同学叫杨阳[SEP]他多少斤"
+        }
+    },
+    "speaker-verification":{
+        "input":{
+            "in_audios":["https://modelscope.cn/api/v1/models/damo/speech_campplus_sv_en_voxceleb_16k/repo?Revision=master&FilePath=examples/speaker1_a_en_16k.wav",
+                     "https://modelscope.cn/api/v1/models/damo/speech_campplus_sv_en_voxceleb_16k/repo?Revision=master&FilePath=examples/speaker2_a_en_16k.wav"]
+        }
+    },
+    "speaker-diarization":{
+        "input":{
+            "audio":"https://modelscope.cn/api/v1/models/damo/speech_campplus_sv_zh-cn_16k-common/repo?Revision=master&FilePath=examples/speaker2_a_cn_16k.wav"
+        }
+    },
+    "speech-language-recognition":{
+        "input":{
+            "audio":"https://modelscope.cn/api/v1/models/damo/speech_campplus_sv_zh-cn_16k-common/repo?Revision=master&FilePath=examples/speaker1_a_cn_16k.wav"
+        }
+    },
+    "image-reid-person":{
+        "input":{
+            "image":"https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_reid_person.jpg"
+        }
+    },
+    "product-retrieval-embedding":{
+        "input":{
+            "image":"https://mmsearch.oss-cn-zhangjiakou.aliyuncs.com/maas_test_img/tb_image_share_1666002161794.jpg"
+        }
+    },
+    "generative-multi-modal-embedding":{
+        "input":{
+            "image":"http://clip-multimodal.oss-cn-beijing.aliyuncs.com/lingchen/demo/dogs.jpg",
+            "text":"dogs playing in the grass"
+        }
+    },
+    "document-vl-embedding":{
+        "input":{
+            "images":["/mnt/workspace/demo.png"],
+            "ocr_info_paths":["/mnt/workspace/demo.json"]
+        }
+    },
+    "video-multi-modal-embedding":{
+        "input":{
+            "video":"https://modelscope.oss-cn-beijing.aliyuncs.com/test/videos/multi_modal_test_video_9770.mp4",
+            "text":"a person is connecting something to system"
+        }
+    },
+    "face-detection":{
+        "input":{
+            "image":"https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/mog_face_detection.jpg"
+        }
     }
 }

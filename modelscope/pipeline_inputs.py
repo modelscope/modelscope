@@ -437,6 +437,8 @@ TASK_INPUTS = {
     },
     Tasks.machine_reading_comprehension:
     InputType.TEXT,
+    Tasks.text2text_generation:
+    InputType.TEXT,
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.
@@ -470,7 +472,10 @@ TASK_INPUTS = {
     InputType.TEXT,
     Tasks.inverse_text_processing:
     InputType.TEXT,
-    Tasks.speaker_verification: [InputType.AUDIO, InputType.AUDIO],
+    Tasks.speaker_verification:
+    {'in_audios': (InputType.AUDIO, InputType.AUDIO)},
+    Tasks.speaker_diarization:
+    InputType.AUDIO,
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {
@@ -547,5 +552,13 @@ TASK_INPUTS = {
     Tasks.image_editing: {
         'img': InputType.IMAGE,
         'prompts': InputType.LIST
+    },
+    Tasks.document_vl_embedding: {
+        'images': InputType.LIST,
+        'ocr_info_paths': InputType.LIST
+    },
+    Tasks.video_multi_modal_embedding: {
+        'video': InputType.VIDEO,
+        'text': InputType.TEXT
     }
 }

@@ -85,9 +85,8 @@ def make_ddim_sampling_parameters(alphacums,
                              + alphacums[ddim_timesteps[:-1]].tolist())
 
     # according the the formula provided in https://arxiv.org/abs/2010.02502
-    # rewrite because of E125
-    tmp = (1 - alphas_prev) / (1 - alphas) * (1 - alphas / alphas_prev)
-    sigmas = (eta * np.sqrt(tmp))
+    sigmas = eta * np.sqrt((1 - alphas_prev) / (1 - alphas) *  # noqa
+                           (1 - alphas / alphas_prev))  # noqa
     if verbose:
         print(
             f'Selected alphas for ddim sampler: a_t: {alphas}; a_(t-1): {alphas_prev}'

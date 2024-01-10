@@ -70,8 +70,8 @@ class DiagonalGaussianDistribution(object):
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
-    source: https://github.com/openai/guided-diffusion/blob/
-            27c20a8fab9cb472df5d6bdd6c8d11c8f430b924/guided_diffusion/losses.py#L12
+    (source: https://github.com/openai/guided-diffusion/blob/27c20a8fab9cb472df5d6bdd6c8d11c8f430b924/
+    guided_diffusion/losses.py#L12)
     Compute the KL divergence between two gaussians.
     Shapes are automatically broadcasted, so batches can be compared to
     scalars, among other use cases.
@@ -90,7 +90,6 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
         for x in (logvar1, logvar2)
     ]
 
-    # rewrite because of W504
-    tmp = ((mean1 - mean2)**2) * torch.exp(-logvar2)
-    return 0.5 * (-1.0 + logvar2 - logvar1 + torch.exp(logvar1 - logvar2) + tmp
-                  )  # noqa
+    return 0.5 * (
+        -1.0 + logvar2 - logvar1 + torch.exp(logvar1 - logvar2) +  # noqa
+        ((mean1 - mean2)**2) * torch.exp(-logvar2))  # noqa

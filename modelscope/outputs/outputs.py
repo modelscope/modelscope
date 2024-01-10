@@ -25,6 +25,8 @@ class OutputKeys(object):
     MASKS = 'masks'
     DEPTHS = 'depths'
     DEPTHS_COLOR = 'depths_color'
+    NORMALS = 'normals'
+    NORMALS_COLOR = 'normals_color'
     LAYOUT = 'layout'
     TEXT = 'text'
     POLYGONS = 'polygons'

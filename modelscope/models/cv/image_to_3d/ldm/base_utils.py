@@ -19,9 +19,9 @@ def read_pickle(pkl_path):
 def draw_epipolar_line(F, img0, img1, pt0, color):
     h1, w1 = img1.shape[:2]
     hpt = np.asarray([pt0[0], pt0[1], 1], dtype=np.float32)[:, None]
-    _l = F @ hpt
-    _l = _l[:, 0]
-    a, b, c = _l[0], _l[1], _l[2]
+    ln = F @ hpt
+    ln = ln[:, 0]
+    a, b, c = ln[0], ln[1], ln[2]
     pt1 = np.asarray([0, -c / b]).astype(np.int32)
     pt2 = np.asarray([w1, (-a * w1 - c) / b]).astype(np.int32)
 
@@ -162,7 +162,7 @@ def output_points(fn, pts, colors=None):
             f.write(f'{pt[0]:.6f} {pt[1]:.6f} {pt[2]:.6f} ')
             if colors is not None:
                 f.write(
-                    f'{int(colors[pi, 0])} {int(colors[pi, 1])} {int(colors[pi, 2])}'
+                    f'{int(colors[pi,0])} {int(colors[pi,1])} {int(colors[pi,2])}'
                 )
             f.write('\n')
 

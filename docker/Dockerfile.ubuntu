@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu20.04-cuda11.3.0-py37-torch1.11.0-tf1.15.5-base
 FROM $BASE_IMAGE
 RUN apt-get update && \
-    apt-get install -y libsox-dev unzip  zip iputils-ping telnet && \
+    apt-get install -y libsox-dev unzip  zip iputils-ping telnet sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator bitsandbytes basicsr optimum && \
     pip install --no-cache-dir auto-gptq --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/ && \
     pip install --no-cache-dir -U xformers --index-url https://download.pytorch.org/whl/cu121 && \
-    pip install --no-cache-dir flash_attn  vllm; \
+    pip install --no-cache-dir -U flash_attn vllm; \
     else \
         echo 'cpu unsupport vllm auto-gptq'; \
     fi

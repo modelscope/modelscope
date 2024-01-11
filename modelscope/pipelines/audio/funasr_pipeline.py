@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Sequence, Tuple, Union
 import json
 import yaml
 
-
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys
@@ -30,8 +29,7 @@ __all__ = ['FunASRPipeline']
 @PIPELINES.register_module(
     Tasks.punctuation, module_name=Pipelines.funasr_pipeline)
 @PIPELINES.register_module(
-    Tasks.speaker_diarization,
-    module_name=Pipelines.funasr_pipeline)
+    Tasks.speaker_diarization, module_name=Pipelines.funasr_pipeline)
 @PIPELINES.register_module(
     Tasks.speaker_verification, module_name=Pipelines.funasr_pipeline)
 @PIPELINES.register_module(
@@ -58,17 +56,12 @@ class FunASRPipeline(Pipeline):
 
     """
 
-    def __init__(self,
-                 model: Union[Model, str] = None,
-                 **kwargs):
+    def __init__(self, model: Union[Model, str] = None, **kwargs):
         """use `model` to create an vad pipeline for prediction
         """
         super().__init__(model=model, **kwargs)
 
-        
-    def __call__(self,
-                 *args,
-                 **kwargs) -> Dict[str, Any]:
+    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Decoding the input audios
         Args:
@@ -78,7 +71,5 @@ class FunASRPipeline(Pipeline):
         """
 
         output = self.model(*args, **kwargs)
-        
+
         return output
-
-

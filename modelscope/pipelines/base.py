@@ -396,7 +396,6 @@ class Pipeline(ABC):
         assert not self.has_multiple_models, 'default implementation does not support multiple models in a pipeline.'
         return self.model(inputs, **forward_params)
 
-    @abstractmethod
     def postprocess(self, inputs: Dict[str, Any],
                     **post_params) -> Dict[str, Any]:
         """ If current pipeline support model reuse, common postprocess

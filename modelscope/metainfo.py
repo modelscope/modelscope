@@ -209,6 +209,7 @@ class Models(object):
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
+    funasr = 'funasr'
 
     # multi-modal models
     ofa = 'ofa'
@@ -533,11 +534,8 @@ class Pipelines(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'
     kws_kwsbp = 'kws-kwsbp'
-    asr_inference = 'asr-inference'
     asr_wenet_inference = 'asr-wenet-inference'
     itn_inference = 'itn-inference'
-    punc_inference = 'punc-inference'
-    sv_inference = 'sv-inference'
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     funasr_speech_separation = 'funasr-speech-separation'
@@ -590,6 +588,9 @@ class Pipelines(object):
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
+
+    # funasr task
+    funasr_pipeline = 'funasr-pipeline'
 
 
 DEFAULT_MODEL_FOR_PIPELINE = {

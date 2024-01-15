@@ -160,10 +160,11 @@ export TORCH_VERSION=$torch_version
 export CUDATOOLKIT_VERSION=$cudatoolkit_version
 export TENSORFLOW_VERSION=$tensorflow_version
 echo -e "Building image with:\npython$python_version\npytorch$torch_version\ntensorflow:$tensorflow_version\ncudatoolkit:$cudatoolkit_version\ncpu:$is_cpu\nis_ci:$is_ci_test\nis_dsw:$is_dsw\n"
+echo -e "Base iamge: $BASE_IMAGE"
 docker_file_content=`cat docker/Dockerfile.ubuntu`
 if [ "$is_ci_test" != "True" ]; then
     echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers<4.35.0'"
+    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers==4.36.2'"
     docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && pip install . && cd / && rm -fr /tmp/MaaS-lib"
         MMCV_WITH_OPS=1 MAX_JOBS=32 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
 fi
@@ -174,8 +175,15 @@ else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
-    docker_file_content="${docker_file_content} \nRUN export TORCH_CUDA_ARCH_LIST='6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX' && python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
+# install here for easycv extension conflict.
+docker_file_content="${docker_file_content} \nRUN if [ \"$USE_GPU\" = \"True\" ] ; then \
+        bash /tmp/install_tiny_cuda_nn.sh; \
+    else \
+     echo 'cpu unsupport tiny_cuda_nn'; \
+    fi"
+
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"
     docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y"
@@ -189,7 +197,7 @@ printf "$docker_file_content" > Dockerfile
 
 while true
 do
-  DOCKER_BUILDKIT=0 docker build -t $IMAGE_TO_BUILD  \
+  docker build --progress=plain -t $IMAGE_TO_BUILD  \
              --build-arg USE_GPU \
              --build-arg BASE_IMAGE \
              --build-arg PYTHON_VERSION \

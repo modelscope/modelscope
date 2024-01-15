@@ -19,7 +19,7 @@ class DepthAttention(nn.Module):
                  output_bias=True):
         super().__init__()
         inner_dim = dim_head * heads
-        context_dim = default(context_dim, query_dim)
+        context_dim = attention.default(context_dim, query_dim)
 
         self.scale = dim_head**-0.5
         self.heads = heads
@@ -91,9 +91,10 @@ class DepthTransformer(nn.Module):
             nn.Conv2d(inner_dim, inner_dim, 3, 1, 1, bias=False),
             nn.GroupNorm(8, inner_dim),
             nn.ReLU(True),
-            zero_module(nn.Conv2d(inner_dim, dim, 3, 1, 1, bias=False)),
+            attention.zero_module(
+                nn.Conv2d(inner_dim, dim, 3, 1, 1, bias=False)),
         )
-        self.checkpoint = checkpoint
+        self.checkpoint = attention.checkpoint
 
     def forward(self, x, context=None):
         return checkpoint(self._forward, (x, context), self.parameters(),

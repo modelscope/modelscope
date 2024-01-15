@@ -209,6 +209,8 @@ class Models(object):
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
+    audio_quantization = 'audio-quantization'
+    laura_codec = 'laura-codec'
     funasr = 'funasr'
 
     # multi-modal models
@@ -550,6 +552,9 @@ class Pipelines(object):
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
+    audio_quantization = 'audio-quantization'
+    audio_quantization_inference = 'audio-quantization-inference'
+    laura_codec_tts_inference = 'laura-codec-tts-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'

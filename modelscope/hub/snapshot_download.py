@@ -72,6 +72,7 @@ def snapshot_download(model_id: str,
     os.makedirs(temporary_cache_dir, exist_ok=True)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
+    name = name.replace('.', '_')
 
     cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
     if local_files_only:

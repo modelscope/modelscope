@@ -58,5 +58,5 @@ class GenericFunASR(Model):
         """preload model and return the info of the model
         """
 
-        output = self.model(*args, **kwargs)
+        output = self.model.generate(*args, **kwargs)
         return output

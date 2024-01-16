@@ -438,6 +438,10 @@ def run_in_subprocess(args):
         'test_hub_revision.py',
         'test_hub_revision_release_mode.py',
         'test_hub_upload.py',
+        'test_custom_pipeline_cmd.py',
+        'test_download_cmd.py',
+        'test_modelcard_cmd.py',
+        'test_plugins_cmd.py',
     ]
     test_suite_files = [
         x for x in test_suite_files if x not in non_parallelizable_suites

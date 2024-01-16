@@ -104,7 +104,7 @@ def download_and_untar(fpath, furl, dst) -> str:
 
 def get_case_model_info():
     status_code, result = subprocess.getstatusoutput(
-        'grep -rn "damo/" tests/  | grep -v ".pyc" | grep -v "Binary file" | grep -v run.py '
+        'grep -rn "damo/" tests/  | grep -v "*.pyc" | grep -v "Binary file" | grep -v run.py '
     )
     lines = result.split('\n')
     test_cases = OrderedDict()
@@ -116,7 +116,6 @@ def get_case_model_info():
         test_file = elements[0]
         model_pos = line.find('damo')
         if model_pos == -1 or (model_pos - 1) > len(line):
-            print('Processing line: %s failed' % line)
             continue
         left_quote = line[model_pos - 1]
         rquote_idx = line.rfind(left_quote)

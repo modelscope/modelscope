@@ -501,10 +501,7 @@ class TimeCostTextTestResult(TextTestResult):
         self.stream.writeln(
             'Test case: %s stop at: %s, cost time: %s(seconds)' %
             (test.test_full_name, test.stop_time, test.time_cost))
-        if torch.cuda.is_available(
-        ) and test.time_cost > 5.0:  # print nvidia-smi
-            cmd = ['nvidia-smi']
-            run_command_with_popen(cmd)
+
         super(TimeCostTextTestResult, self).stopTest(test)
 
     def addSuccess(self, test):

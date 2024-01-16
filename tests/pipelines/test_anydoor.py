@@ -15,9 +15,9 @@ class AnydoorTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
-        ref_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_fg.png'
+        ref_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_fg.jpg'
         ref_mask = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_fg_mask.png'
-        bg_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_bg.jpg'
+        bg_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_bg.png'
         bg_mask = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_bg_mask.png'
         save_path = 'data/test/images/image_anydoor_gen.png'
 

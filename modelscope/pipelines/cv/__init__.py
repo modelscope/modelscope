@@ -118,7 +118,8 @@ if TYPE_CHECKING:
     from .human3d_render_pipeline import Human3DRenderPipeline
     from .human3d_animation_pipeline import Human3DAnimationPipeline
     from .gaussian_splatting_4D_pipeline import GaussianSplatting4DPipeline
-
+    from .rife_video_frame_interpolation_pipeline import RIFEVideoFrameInterpolationPipeline
+    from .anydoor_pipeline import AnydoorPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -294,6 +295,10 @@ else:
         'human3d_render_pipeline': ['Human3DRenderPipeline'],
         'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
         'gaussian_splatting_4D_pipeline': ['GaussianSplatting4DPipeline'],
+        'rife_video_frame_interpolation_pipeline': [
+            'RIFEVideoFrameInterpolationPipeline'
+        ],
+        'anydoor_pipeline': ['AnydoorPipeline'],
     }
 
     import sys

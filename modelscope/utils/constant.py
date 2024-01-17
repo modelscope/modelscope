@@ -57,6 +57,7 @@ class CVTasks(object):
     semantic_segmentation = 'semantic-segmentation'
     image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
+    image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
@@ -248,11 +249,13 @@ class AudioTasks(object):
     speaker_verification = 'speaker-verification'
     speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
+    audio_quantization = 'audio-quantization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
+    emotion_recognition = 'emotion-recognition'
 
 
 class MultiModalTasks(object):

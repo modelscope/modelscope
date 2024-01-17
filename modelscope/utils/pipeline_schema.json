@@ -137,6 +137,27 @@
             }
         }
     },
+    "audio-quantization": {
+        "input": {
+            "type": "object",
+            "properties": {
+                "wav": {
+                    "type": "string",
+                    "description": "Base64 encoded audio file or url string.."
+                }
+            }
+        },
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output_wav": {
+                    "type": "string",
+                    "description": "The base64 encoded WAV."
+                }
+            }
+        }
+    },
     "bad-image-detecting": {
         "input": {
             "type": "object",
@@ -1138,6 +1159,13 @@
         }
     },
     "image-depth-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
+    "image-normal-estimation": {
         "input": {},
         "parameters": {},
         "output": {

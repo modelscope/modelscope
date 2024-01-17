@@ -177,13 +177,6 @@ else
     # pre compile extension
     docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
-# install here for easycv extension conflict.
-docker_file_content="${docker_file_content} \nRUN if [ \"$USE_GPU\" = \"True\" ] ; then \
-        bash /tmp/install_tiny_cuda_nn.sh; \
-    else \
-     echo 'cpu unsupport tiny_cuda_nn'; \
-    fi"
-
 if [ "$is_ci_test" == "True" ]; then
     echo "Building CI image, uninstall modelscope"
     docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y"

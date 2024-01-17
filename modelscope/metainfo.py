@@ -88,6 +88,7 @@ class Models(object):
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
     quadtree_attention_image_matching = 'quadtree-attention-image-matching'
+    loftr_image_local_feature_matching = 'loftr-image-local-feature-matching'
     lightglue_image_matching = 'lightglue-image-matching'
     vision_middleware = 'vision-middleware'
     vidt = 'vidt'
@@ -395,6 +396,7 @@ class Pipelines(object):
     image_depth_estimation = 'image-depth-estimation'
     image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
+    image_local_feature_matching = 'image-local-feature-matching'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
     panorama_depth_estimation_s2net = 'panorama-depth-estimation-s2net'
@@ -805,6 +807,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.panorama_depth_estimation:
     (Pipelines.panorama_depth_estimation,
      'damo/cv_unifuse_panorama-depth-estimation'),
+    Tasks.image_local_feature_matching:
+    (Pipelines.image_local_feature_matching, 'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,

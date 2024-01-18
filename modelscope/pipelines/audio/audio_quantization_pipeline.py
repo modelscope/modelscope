@@ -3,6 +3,7 @@ import os
 import shutil
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
+import numpy as np
 import yaml
 
 from modelscope.metainfo import Pipelines
@@ -10,34 +11,36 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.audio.audio_utils import (generate_scp_for_sv,
-                                                generate_sv_scp_from_url,
+from modelscope.utils.audio.audio_utils import (generate_scp_from_url,
                                                 update_local_model)
 from modelscope.utils.constant import Frameworks, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-__all__ = ['SpeakerVerificationPipeline']
+__all__ = ['AudioQuantizationPipeline']
 
 
 @PIPELINES.register_module(
-    Tasks.speaker_verification, module_name=Pipelines.sv_inference)
-class SpeakerVerificationPipeline(Pipeline):
-    """Speaker Verification Inference Pipeline
-    use `model` to create a Speaker Verification pipeline.
+    Tasks.audio_quantization,
+    module_name=Pipelines.audio_quantization_inference)
+class AudioQuantizationPipeline(Pipeline):
+    """Audio Quantization Inference Pipeline
+    use `model` to create a audio quantization pipeline.
 
     Args:
-        model (SpeakerVerificationPipeline): A model instance, or a model local dir, or a model id in the model hub.
+        model (AudioQuantizationPipeline): A model instance, or a model local dir, or a model id in the model hub.
         kwargs (dict, `optional`):
             Extra kwargs passed into the preprocessor's constructor.
     Examples:
         >>> from modelscope.pipelines import pipeline
-        >>> pipeline_sv = pipeline(
-        >>>    task=Tasks.speaker_verification, model='damo/speech_xvector_sv-zh-cn-cnceleb-16k-spk3465-pytorch')
-        >>> audio_in=('sv_example_enroll.wav', 'sv_example_same.wav')
-        >>> print(pipeline_sv(audio_in))
-        >>> # {'label': ['Same', 'Different'], 'scores': [0.8540488358969999, 0.14595116410300013]}
+        >>> from modelscope.utils.constant import Tasks
+        >>> pipeline_aq = pipeline(
+        >>>    task=Tasks.audio_quantization,
+        >>>    model='damo/audio_codec-encodec-zh_en-general-16k-nq32ds640-pytorch'
+        >>> )
+        >>> audio_in='example.wav'
+        >>> print(pipeline_aq(audio_in))
 
     """
 
@@ -51,8 +54,8 @@ class SpeakerVerificationPipeline(Pipeline):
         self.model_cfg = self.model.forward()
         self.cmd = self.get_cmd(kwargs, model)
 
-        from funasr.bin import sv_inference_launch
-        self.funasr_infer_modelscope = sv_inference_launch.inference_launch(
+        from funcodec.bin import codec_inference
+        self.funasr_infer_modelscope = codec_inference.inference_modelscope(
             mode=self.cmd['mode'],
             output_dir=self.cmd['output_dir'],
             batch_size=self.cmd['batch_size'],
@@ -62,13 +65,14 @@ class SpeakerVerificationPipeline(Pipeline):
             num_workers=self.cmd['num_workers'],
             log_level=self.cmd['log_level'],
             key_file=self.cmd['key_file'],
-            sv_train_config=self.cmd['sv_train_config'],
-            sv_model_file=self.cmd['sv_model_file'],
+            config_file=self.cmd['config_file'],
+            model_file=self.cmd['model_file'],
             model_tag=self.cmd['model_tag'],
             allow_variable_data_keys=self.cmd['allow_variable_data_keys'],
             streaming=self.cmd['streaming'],
-            embedding_node=self.cmd['embedding_node'],
-            sv_threshold=self.cmd['sv_threshold'],
+            sampling_rate=self.cmd['sampling_rate'],
+            bit_width=self.cmd['bit_width'],
+            use_scale=self.cmd['use_scale'],
             param_dict=self.cmd['param_dict'],
             **kwargs,
         )
@@ -78,7 +82,7 @@ class SpeakerVerificationPipeline(Pipeline):
                  output_dir: str = None,
                  param_dict: dict = None) -> Dict[str, Any]:
         if len(audio_in) == 0:
-            raise ValueError('The input of sv should not be null.')
+            raise ValueError('The input should not be null.')
         else:
             self.audio_in = audio_in
         if output_dir is not None:
@@ -94,19 +98,11 @@ class SpeakerVerificationPipeline(Pipeline):
         """
         rst = {}
         for i in range(len(inputs)):
-            # for single input, re-formate the output
-            # audio_in:
-            #   list/tuple: return speaker verification scores
-            #   single wav/bytes: return speaker embedding
             if len(inputs) == 1 and i == 0:
-                if isinstance(self.audio_in, tuple) or isinstance(
-                        self.audio_in, list):
-                    score = inputs[0]['value']
-                    rst[OutputKeys.LABEL] = ['Same', 'Different']
-                    rst[OutputKeys.SCORES] = [score / 100.0, 1 - score / 100.0]
-                else:
-                    embedding = inputs[0]['value']
-                    rst[OutputKeys.SPK_EMBEDDING] = embedding
+                recon_wav = inputs[0]['value']
+                output_wav = recon_wav.cpu().numpy()[0]
+                output_wav = (output_wav * (2**15)).astype(np.int16)
+                rst[OutputKeys.OUTPUT_WAV] = output_wav
             else:
                 # for multiple inputs
                 rst[inputs[i]['key']] = inputs[i]['value']
@@ -115,10 +111,12 @@ class SpeakerVerificationPipeline(Pipeline):
     def get_cmd(self, extra_args, model_path) -> Dict[str, Any]:
         # generate asr inference command
         mode = self.model_cfg['model_config']['mode']
-        sv_model_path = self.model_cfg['model_path']
-        sv_model_config = os.path.join(
+        _model_path = os.path.join(
             self.model_cfg['model_workspace'],
-            self.model_cfg['model_config']['sv_model_config'])
+            self.model_cfg['model_config']['model_file'])
+        _model_config = os.path.join(
+            self.model_cfg['model_workspace'],
+            self.model_cfg['model_config']['config_file'])
         update_local_model(self.model_cfg['model_config'], model_path,
                            extra_args)
         cmd = {
@@ -131,25 +129,27 @@ class SpeakerVerificationPipeline(Pipeline):
             'num_workers': 0,
             'log_level': 'ERROR',
             'key_file': None,
-            'sv_model_file': sv_model_path,
-            'sv_train_config': sv_model_config,
+            'model_file': _model_path,
+            'config_file': _model_config,
             'model_tag': None,
             'allow_variable_data_keys': True,
             'streaming': False,
-            'embedding_node': 'resnet1_dense',
-            'sv_threshold': 0.9465,
+            'sampling_rate': 16000,
+            'bit_width': 8000,
+            'use_scale': True,
             'param_dict': None,
         }
         user_args_dict = [
             'output_dir',
             'batch_size',
             'ngpu',
-            'embedding_node',
-            'sv_threshold',
             'log_level',
             'allow_variable_data_keys',
             'streaming',
             'num_workers',
+            'sampling_rate',
+            'bit_width',
+            'use_scale',
             'param_dict',
         ]
 
@@ -181,69 +181,34 @@ class SpeakerVerificationPipeline(Pipeline):
         """Decoding
         """
         # log  file_path/url or tuple (str, str)
-        if isinstance(audio_in, str) or \
-                (isinstance(audio_in, tuple) and all(isinstance(item, str) for item in audio_in)):
-            logger.info(f'Speaker Verification Processing: {audio_in} ...')
+        if isinstance(audio_in, str):
+            logger.info(f'Audio Quantization Processing: {audio_in} ...')
         else:
             logger.info(
-                f'Speaker Verification Processing: {str(audio_in)[:100]} ...')
+                f'Audio Quantization Processing: {str(audio_in)[:100]} ...')
 
         data_cmd, raw_inputs = None, None
-        if isinstance(audio_in, tuple) or isinstance(audio_in, list):
-            # generate audio_scp
-            assert len(audio_in) == 2
-            if isinstance(audio_in[0], str):
-                # for scp inputs
-                if len(audio_in[0].split(',')) == 3 and audio_in[0].split(
-                        ',')[0].endswith('.scp'):
-                    if len(audio_in[1].split(',')) == 3 and audio_in[1].split(
-                            ',')[0].endswith('.scp'):
-                        data_cmd = [
-                            tuple(audio_in[0].split(',')),
-                            tuple(audio_in[1].split(','))
-                        ]
-                # for single-file inputs
-                else:
-                    audio_scp_1, audio_scp_2 = generate_sv_scp_from_url(
-                        audio_in)
-                    if isinstance(audio_scp_1, bytes) and isinstance(
-                            audio_scp_2, bytes):
-                        data_cmd = [(audio_scp_1, 'speech', 'bytes'),
-                                    (audio_scp_2, 'ref_speech', 'bytes')]
-                    else:
-                        data_cmd = [(audio_scp_1, 'speech', 'sound'),
-                                    (audio_scp_2, 'ref_speech', 'sound')]
-            # for raw bytes inputs
-            elif isinstance(audio_in[0], bytes):
-                data_cmd = [(audio_in[0], 'speech', 'bytes'),
-                            (audio_in[1], 'ref_speech', 'bytes')]
+        if isinstance(audio_in, str):
+            # for scp inputs
+            if len(audio_in.split(',')) == 3:
+                data_cmd = [tuple(audio_in.split(','))]
+            # for single-file inputs
+            else:
+                audio_scp, _ = generate_scp_from_url(audio_in)
+                raw_inputs = audio_scp
+        # for raw bytes
+        elif isinstance(audio_in, bytes):
+            data_cmd = (audio_in, 'speech', 'bytes')
+        # for ndarray and tensor inputs
+        else:
+            import torch
+            import numpy as np
+            if isinstance(audio_in, torch.Tensor):
+                raw_inputs = audio_in
+            elif isinstance(audio_in, np.ndarray):
+                raw_inputs = audio_in
             else:
                 raise TypeError('Unsupported data type.')
-        else:
-            if isinstance(audio_in, str):
-                # for scp inputs
-                if len(audio_in.split(',')) == 3:
-                    data_cmd = [audio_in.split(',')]
-                # for single-file inputs
-                else:
-                    audio_scp = generate_scp_for_sv(audio_in)
-                    if isinstance(audio_scp, bytes):
-                        data_cmd = [(audio_scp, 'speech', 'bytes')]
-                    else:
-                        data_cmd = [(audio_scp, 'speech', 'sound')]
-            # for raw bytes
-            elif isinstance(audio_in, bytes):
-                data_cmd = [(audio_in, 'speech', 'bytes')]
-            # for ndarray and tensor inputs
-            else:
-                import torch
-                import numpy as np
-                if isinstance(audio_in, torch.Tensor):
-                    raw_inputs = audio_in
-                elif isinstance(audio_in, np.ndarray):
-                    raw_inputs = audio_in
-                else:
-                    raise TypeError('Unsupported data type.')
 
         self.cmd['name_and_type'] = data_cmd
         self.cmd['raw_inputs'] = raw_inputs

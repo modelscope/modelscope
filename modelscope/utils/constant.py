@@ -70,6 +70,7 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_matching = 'image-matching'
+    image_local_feature_matching = 'image-local-feature-matching'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
 
     crowd_counting = 'crowd-counting'
@@ -246,11 +247,13 @@ class AudioTasks(object):
     speaker_verification = 'speaker-verification'
     speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
+    audio_quantization = 'audio-quantization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
+    emotion_recognition = 'emotion-recognition'
 
 
 class MultiModalTasks(object):

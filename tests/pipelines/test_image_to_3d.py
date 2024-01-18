@@ -31,7 +31,9 @@ class ImageTo3DTest(unittest.TestCase):
         np_content = np.concatenate(np_content, axis=1)
         Image.fromarray(np_content).save('./concat.png')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        test_level() >= 1,
+        'skip for no test data: data/test/images/basketball.png')
     def test_run_modelhub(self):
         image_to_3d = pipeline(
             Tasks.image_to_3d, model=self.model_id, revision='v1.0.1')

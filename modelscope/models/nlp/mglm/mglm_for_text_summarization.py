@@ -58,6 +58,7 @@ def setup_model(args):
     if args.load_pretrained is not None:
         args.no_load_optim = True
         args.load = args.load_pretrained
+        args.no_load_rng = True
         _ = load_checkpoint(model, None, None, args)
 
     return model

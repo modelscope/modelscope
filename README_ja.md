@@ -242,7 +242,7 @@ pip install modelscope
 
 マルチモーダルモデルを使いたい場合:
 ```shell
-pip install modelscope[multi-modal]
+pip install modelscope[multi-model]
 ```
 
 nlp モデルを使いたい場合:

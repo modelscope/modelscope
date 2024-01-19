@@ -237,7 +237,7 @@ pip install modelscope
 
 If you want to use multi-modal models:
 ```shell
-pip install modelscope[multi-modal]
+pip install modelscope[multi-model]
 ```
 
 If you want to use nlp models:

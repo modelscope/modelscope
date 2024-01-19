@@ -229,7 +229,7 @@ pip install modelscope
 
 如仅需体验多模态领域的模型，可执行如下命令安装领域依赖：
 ```shell
-pip install modelscope[multi-modal]
+pip install modelscope[multi-model]
 ```
 
 如仅需体验NLP领域模型，可执行如下命令安装领域依赖（因部分依赖由ModelScope独立host，所以需要使用"-f"参数）：

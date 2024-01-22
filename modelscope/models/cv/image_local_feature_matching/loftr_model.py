@@ -1,21 +1,22 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-
 import io
-import cv2
-import torch
-import numpy as np
+import os.path as osp
 from copy import deepcopy
+
+import cv2
+import matplotlib.cm as cm
+import numpy as np
+import torch
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.models.cv.image_local_feature_matching.src.loftr import \
-    LoFTR, default_cfg
-from modelscope.models.cv.image_local_feature_matching.src.utils.plotting import make_matching_figure
+from modelscope.models.cv.image_local_feature_matching.src.loftr import (
+    LoFTR, default_cfg)
+from modelscope.models.cv.image_local_feature_matching.src.utils.plotting import \
+    make_matching_figure
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
-import matplotlib.cm as cm
 
 
 @MODELS.register_module(
@@ -51,15 +52,19 @@ class LocalFeatureMatching(TorchModel):
     def postprocess(self, Inputs):
         # Draw
         color = cm.jet(Inputs['conf'].cpu().numpy())
-        img0, img1, mkpts0, mkpts1 = Inputs["image0"].squeeze().cpu().numpy(), Inputs["image1"].squeeze().cpu().numpy(), Inputs["kpts0"].cpu().numpy(), Inputs["kpts1"].cpu().numpy()
+        img0, img1, mkpts0, mkpts1 = Inputs['image0'].squeeze().cpu().numpy(
+        ), Inputs['image1'].squeeze().cpu().numpy(), Inputs['kpts0'].cpu(
+        ).numpy(), Inputs['kpts1'].cpu().numpy()
         text = [
             'LoFTR',
             'Matches: {}'.format(len(Inputs['kpts0'])),
         ]
-        img0, img1 = (img0 * 255).astype(np.uint8), (img1 * 255).astype(np.uint8)
-        fig = make_matching_figure(img0, img1, mkpts0, mkpts1, color, text=text)
+        img0, img1 = (img0 * 255).astype(np.uint8), (img1 * 255).astype(
+            np.uint8)
+        fig = make_matching_figure(
+            img0, img1, mkpts0, mkpts1, color, text=text)
         io_buf = io.BytesIO()
-        fig.savefig(io_buf, format="png", dpi=75)
+        fig.savefig(io_buf, format='png', dpi=75)
         io_buf.seek(0)
         buf_data = np.frombuffer(io_buf.getvalue(), dtype=np.uint8)
         io_buf.close()

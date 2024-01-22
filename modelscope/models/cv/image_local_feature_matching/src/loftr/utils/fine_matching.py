@@ -1,4 +1,5 @@
 import math
+
 import torch
 import torch.nn as nn
 
@@ -7,8 +8,8 @@ def create_meshgrid(
     height: int,
     width: int,
     normalized_coordinates: bool = True,
-    device = None,
-    dtype = None,
+    device=None,
+    dtype=None,
 ):
     """Generate a coordinate grid for an image.
 
@@ -48,7 +49,8 @@ def create_meshgrid(
     if normalized_coordinates:
         xs = (xs / (width - 1) - 0.5) * 2
         ys = (ys / (height - 1) - 0.5) * 2
-    base_grid = torch.stack(torch.meshgrid([xs, ys], indexing="ij"), dim=-1)  # WxHx2
+    base_grid = torch.stack(
+        torch.meshgrid([xs, ys], indexing='ij'), dim=-1)  # WxHx2
     return base_grid.permute(1, 0, 2).unsqueeze(0)  # 1xHxWx2
 
 
@@ -120,7 +122,7 @@ class FineMatching(nn.Module):
 
         # corner case: if no coarse matches found
         if M == 0:
-            assert self.training == False, "M is always >0, when training, see coarse_matching.py"
+            assert self.training is False, 'M is always >0, when training, see coarse_matching.py'
             # logger.warning('No matches found in coarse-level.')
             data.update({
                 'expec_f': torch.empty(0, 3, device=feat_f0.device),
@@ -129,35 +131,41 @@ class FineMatching(nn.Module):
             })
             return
 
-        feat_f0_picked = feat_f0_picked = feat_f0[:, WW//2, :]
+        feat_f0_picked = feat_f0_picked = feat_f0[:, WW // 2, :]
         sim_matrix = torch.einsum('mc,mrc->mr', feat_f0_picked, feat_f1)
         softmax_temp = 1. / C**.5
-        heatmap = torch.softmax(softmax_temp * sim_matrix, dim=1).view(-1, W, W)
+        heatmap = torch.softmax(
+            softmax_temp * sim_matrix, dim=1).view(-1, W, W)
 
         # compute coordinates from heatmap
-        coords_normalized = spatial_expectation2d(heatmap[None], True)[0]  # [M, 2]
-        grid_normalized = create_meshgrid(W, W, True, heatmap.device).reshape(1, -1, 2)  # [1, WW, 2]
+        coords_normalized = spatial_expectation2d(heatmap[None],
+                                                  True)[0]  # [M, 2]
+        grid_normalized = create_meshgrid(W, W, True, heatmap.device).reshape(
+            1, -1, 2)  # [1, WW, 2]
 
         # compute std over <x, y>
-        var = torch.sum(grid_normalized**2 * heatmap.view(-1, WW, 1), dim=1) - coords_normalized**2  # [M, 2]
-        std = torch.sum(torch.sqrt(torch.clamp(var, min=1e-10)), -1)  # [M]  clamp needed for numerical stability
-        
+        var = torch.sum(
+            grid_normalized**2 * heatmap.view(-1, WW, 1),
+            dim=1) - coords_normalized**2  # [M, 2]
+        std = torch.sum(torch.sqrt(torch.clamp(var, min=1e-10)),
+                        -1)  # [M]  clamp needed for numerical stability
+
         # for fine-level supervision
-        data.update({'expec_f': torch.cat([coords_normalized, std.unsqueeze(1)], -1)})
+        data.update(
+            {'expec_f':
+             torch.cat([coords_normalized, std.unsqueeze(1)], -1)})
 
         # compute absolute kpt coords
         self.get_fine_match(coords_normalized, data)
 
     @torch.no_grad()
     def get_fine_match(self, coords_normed, data):
-        W, WW, C, scale = self.W, self.WW, self.C, self.scale
+        W, _, _, scale = self.W, self.WW, self.C, self.scale
 
         # mkpts0_f and mkpts1_f
         mkpts0_f = data['mkpts0_c']
-        scale1 = scale * data['scale1'][data['b_ids']] if 'scale0' in data else scale
-        mkpts1_f = data['mkpts1_c'] + (coords_normed * (W // 2) * scale1)[:len(data['mconf'])]
+        scale1 = scale * data['scale1'][
+            data['b_ids']] if 'scale0' in data else scale
+        mkpts1_f = data['mkpts1_c'] + (coords_normed * (W // 2) * scale1)[:len(data['mconf'])]  # yapf: disable
 
-        data.update({
-            "mkpts0_f": mkpts0_f,
-            "mkpts1_f": mkpts1_f
-        })
+        data.update({'mkpts0_f': mkpts0_f, 'mkpts1_f': mkpts1_f})

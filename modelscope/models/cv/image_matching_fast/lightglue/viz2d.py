@@ -22,10 +22,12 @@ def cm_RdGn(x):
 def cm_BlRdGn(x_):
     """Custom colormap: blue (-1) -> red (0.0) -> green (1)."""
     x = np.clip(x_, 0, 1)[..., None] * 2
-    c = x * np.array([[0, 1.0, 0, 1.0]]) + (2 - x) * np.array([[1.0, 0, 0, 1.0]])
+    c = x * np.array([[0, 1.0, 0, 1.0]]) + (2 - x) * np.array(
+        [[1.0, 0, 0, 1.0]])
 
     xn = -np.clip(x_, -1, 0)[..., None] * 2
-    cn = xn * np.array([[0, 0.1, 1, 1.0]]) + (2 - xn) * np.array([[1.0, 0, 0, 1.0]])
+    cn = xn * np.array([[0, 0.1, 1, 1.0]]) + (2 - xn) * np.array(
+        [[1.0, 0, 0, 1.0]])
     out = np.clip(np.where(x_[..., None] < 0, cn, c), 0, 1)
     return out
 
@@ -39,7 +41,12 @@ def cm_prune(x_):
     return cm_BlRdGn(norm_x)
 
 
-def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True):
+def plot_images(imgs,
+                titles=None,
+                cmaps='gray',
+                dpi=100,
+                pad=0.5,
+                adaptive=True):
     """Plot a set of images horizontally.
     Args:
         imgs: list of NumPy RGB (H, W, 3) or PyTorch RGB (3, H, W) or mono (H, W).
@@ -49,9 +56,8 @@ def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True
     """
     # conversion to (H, W, 3) for torch.Tensor
     imgs = [
-        img.permute(1, 2, 0).cpu().numpy()
-        if (isinstance(img, torch.Tensor) and img.dim() == 3)
-        else img
+        img.permute(1, 2, 0).cpu().numpy() if
+        (isinstance(img, torch.Tensor) and img.dim() == 3) else img
         for img in imgs
     ]
 
@@ -65,8 +71,7 @@ def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True
         ratios = [4 / 3] * n
     figsize = [sum(ratios) * 4.5, 4.5]
     fig, ax = plt.subplots(
-        1, n, figsize=figsize, dpi=dpi, gridspec_kw={"width_ratios": ratios}
-    )
+        1, n, figsize=figsize, dpi=dpi, gridspec_kw={'width_ratios': ratios})
     if n == 1:
         ax = [ax]
     for i in range(n):
@@ -81,7 +86,7 @@ def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True
     fig.tight_layout(pad=pad)
 
 
-def plot_keypoints(kpts, colors="lime", ps=4, axes=None, a=1.0):
+def plot_keypoints(kpts, colors='lime', ps=4, axes=None, a=1.0):
     """Plot keypoints for existing images.
     Args:
         kpts: list of ndarrays of size (N, 2).
@@ -100,7 +105,14 @@ def plot_keypoints(kpts, colors="lime", ps=4, axes=None, a=1.0):
         ax.scatter(k[:, 0], k[:, 1], c=c, s=ps, linewidths=0, alpha=alpha)
 
 
-def plot_matches(kpts0, kpts1, color=None, lw=1.5, ps=4, a=1.0, labels=None, axes=None):
+def plot_matches(kpts0,
+                 kpts1,
+                 color=None,
+                 lw=1.5,
+                 ps=4,
+                 a=1.0,
+                 labels=None,
+                 axes=None):
     """Plot matches for a pair of existing images.
     Args:
         kpts0, kpts1: corresponding keypoints of size (N, 2).
@@ -160,25 +172,28 @@ def add_text(
     text,
     pos=(0.01, 0.99),
     fs=15,
-    color="w",
-    lcolor="k",
+    color='w',
+    lcolor='k',
     lwidth=2,
-    ha="left",
-    va="top",
+    ha='left',
+    va='top',
 ):
     ax = plt.gcf().axes[idx]
     t = ax.text(
-        *pos, text, fontsize=fs, ha=ha, va=va, color=color, transform=ax.transAxes
-    )
+        *pos,
+        text,
+        fontsize=fs,
+        ha=ha,
+        va=va,
+        color=color,
+        transform=ax.transAxes)
     if lcolor is not None:
-        t.set_path_effects(
-            [
-                path_effects.Stroke(linewidth=lwidth, foreground=lcolor),
-                path_effects.Normal(),
-            ]
-        )
+        t.set_path_effects([
+            path_effects.Stroke(linewidth=lwidth, foreground=lcolor),
+            path_effects.Normal(),
+        ])
 
 
 def save_plot(path, **kw):
     """Save the current figure without any white margin."""
-    plt.savefig(path, bbox_inches="tight", pad_inches=0, **kw)
+    plt.savefig(path, bbox_inches='tight', pad_inches=0, **kw)

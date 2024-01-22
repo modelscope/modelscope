@@ -8,10 +8,11 @@ from . import (action_recognition, animal_recognition, bad_image_detecting,
                face_reconstruction, human3d_animation, human_reconstruction,
                image_classification, image_color_enhance, image_colorization,
                image_defrcn_fewshot, image_denoise, image_editing,
-               image_inpainting, image_instance_segmentation, image_matching,
-               image_mvs_depth_estimation, image_panoptic_segmentation,
-               image_portrait_enhancement, image_probing_model,
-               image_quality_assessment_degradation,
+               image_inpainting, image_instance_segmentation,
+               image_local_feature_matching, image_matching,
+               image_matching_fast, image_mvs_depth_estimation,
+               image_panoptic_segmentation, image_portrait_enhancement,
+               image_probing_model, image_quality_assessment_degradation,
                image_quality_assessment_man, image_quality_assessment_mos,
                image_reid_person, image_restoration,
                image_semantic_segmentation, image_super_resolution_pasd,
@@ -29,6 +30,6 @@ from . import (action_recognition, animal_recognition, bad_image_detecting,
                video_panoptic_segmentation, video_single_object_tracking,
                video_stabilization, video_summarization,
                video_super_resolution, vidt, virual_tryon, vision_middleware,
-               vop_retrieval, image_local_feature_matching,image_matching_fast)
+               vop_retrieval)
 
 # yapf: enable

@@ -32,7 +32,7 @@ class ImageMatchingFastTest(unittest.TestCase):
             kpts1,
             confidence,
             output_filename='lightglue-matches.png',
-            method="lightglue")
+            method='lightglue')
 
         print('test_image_matching DONE')
 

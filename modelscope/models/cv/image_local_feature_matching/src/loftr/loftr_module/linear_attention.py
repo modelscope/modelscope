@@ -4,7 +4,7 @@ Modified from: https://github.com/idiap/fast-transformers/blob/master/fast_trans
 """
 
 import torch
-from torch.nn import Module, Dropout
+from torch.nn import Dropout, Module
 
 
 def elu_feature_map(x):
@@ -12,6 +12,7 @@ def elu_feature_map(x):
 
 
 class LinearAttention(Module):
+
     def __init__(self, eps=1e-6):
         super().__init__()
         self.feature_map = elu_feature_map
@@ -40,14 +41,16 @@ class LinearAttention(Module):
 
         v_length = values.size(1)
         values = values / v_length  # prevent fp16 overflow
-        KV = torch.einsum("nshd,nshv->nhdv", K, values)  # (S,D)' @ S,V
-        Z = 1 / (torch.einsum("nlhd,nhd->nlh", Q, K.sum(dim=1)) + self.eps)
-        queried_values = torch.einsum("nlhd,nhdv,nlh->nlhv", Q, KV, Z) * v_length
+        KV = torch.einsum('nshd,nshv->nhdv', K, values)  # (S,D)' @ S,V
+        Z = 1 / (torch.einsum('nlhd,nhd->nlh', Q, K.sum(dim=1)) + self.eps)
+        queried_values = torch.einsum('nlhd,nhdv,nlh->nlhv', Q, KV,
+                                      Z) * v_length
 
         return queried_values.contiguous()
 
 
 class FullAttention(Module):
+
     def __init__(self, use_dropout=False, attention_dropout=0.1):
         super().__init__()
         self.use_dropout = use_dropout
@@ -66,9 +69,11 @@ class FullAttention(Module):
         """
 
         # Compute the unnormalized attention and apply the masks
-        QK = torch.einsum("nlhd,nshd->nlsh", queries, keys)
+        QK = torch.einsum('nlhd,nshd->nlsh', queries, keys)
         if kv_mask is not None:
-            QK.masked_fill_(~(q_mask[:, :, None, None] * kv_mask[:, None, :, None]), float('-inf'))
+            QK.masked_fill_(
+                ~(q_mask[:, :, None, None] * kv_mask[:, None, :, None]),
+                float('-inf'))
 
         # Compute the attention and the weighted average
         softmax_temp = 1. / queries.size(3)**.5  # sqrt(D)
@@ -76,6 +81,6 @@ class FullAttention(Module):
         if self.use_dropout:
             A = self.dropout(A)
 
-        queried_values = torch.einsum("nlsh,nshd->nlhd", A, values)
+        queried_values = torch.einsum('nlsh,nshd->nlhd', A, values)
 
         return queried_values.contiguous()

@@ -5,6 +5,7 @@ from einops.einops import rearrange
 
 INF = 1e9
 
+
 def mask_border(m, b: int, v):
     """ Mask borders with value
     Args:
@@ -45,7 +46,7 @@ def mask_border_with_padding(m, bd, v, p_m0, p_m1):
 
 def compute_max_candidates(p_m0, p_m1):
     """Compute the max candidates of all pairs within a batch
-    
+
     Args:
         p_m0, p_m1 (torch.Tensor): padded masks
     """
@@ -57,6 +58,7 @@ def compute_max_candidates(p_m0, p_m1):
 
 
 class CoarseMatching(nn.Module):
+
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -75,7 +77,7 @@ class CoarseMatching(nn.Module):
             try:
                 from .superglue import log_optimal_transport
             except ImportError:
-                raise ImportError("download superglue.py first!")
+                raise ImportError('download superglue.py first!')
             self.log_optimal_transport = log_optimal_transport
             self.bin_score = nn.Parameter(
                 torch.tensor(config['skh_init_bin_score'], requires_grad=True))
@@ -103,28 +105,27 @@ class CoarseMatching(nn.Module):
                 'mconf' (torch.Tensor): [M]}
             NOTE: M' != M during training.
         """
-        N, L, S, C = feat_c0.size(0), feat_c0.size(1), feat_c1.size(1), feat_c0.size(2)
+        _, L, S, _ = feat_c0.size(0), feat_c0.size(1), feat_c1.size(
+            1), feat_c0.size(2)
 
         # normalize
         feat_c0, feat_c1 = map(lambda feat: feat / feat.shape[-1]**.5,
                                [feat_c0, feat_c1])
 
         if self.match_type == 'dual_softmax':
-            sim_matrix = torch.einsum("nlc,nsc->nls", feat_c0,
+            sim_matrix = torch.einsum('nlc,nsc->nls', feat_c0,
                                       feat_c1) / self.temperature
             if mask_c0 is not None:
                 sim_matrix.masked_fill_(
-                    ~(mask_c0[..., None] * mask_c1[:, None]).bool(),
-                    -INF)
+                    ~(mask_c0[..., None] * mask_c1[:, None]).bool(), -INF)
             conf_matrix = F.softmax(sim_matrix, 1) * F.softmax(sim_matrix, 2)
 
         elif self.match_type == 'sinkhorn':
             # sinkhorn, dustbin included
-            sim_matrix = torch.einsum("nlc,nsc->nls", feat_c0, feat_c1)
+            sim_matrix = torch.einsum('nlc,nsc->nls', feat_c0, feat_c1)
             if mask_c0 is not None:
                 sim_matrix[:, :L, :S].masked_fill_(
-                    ~(mask_c0[..., None] * mask_c1[:, None]).bool(),
-                    -INF)
+                    ~(mask_c0[..., None] * mask_c1[:, None]).bool(), -INF)
 
             # build uniform prior & use sinkhorn
             log_assign_matrix = self.log_optimal_transport(
@@ -207,10 +208,10 @@ class CoarseMatching(nn.Module):
             else:
                 num_candidates_max = compute_max_candidates(
                     data['mask0'], data['mask1'])
-            num_matches_train = int(num_candidates_max *
-                                    self.train_coarse_percent)
+            num_matches_train = int(num_candidates_max
+                                    * self.train_coarse_percent)
             num_matches_pred = len(b_ids)
-            assert self.train_pad_num_gt_min < num_matches_train, "min-num-gt-pad should be less than num-train-matches"
+            assert self.train_pad_num_gt_min < num_matches_train, 'min-num-gt-pad should be less than num-train-matches'
 
             # pred_indices is to select from prediction
             if num_matches_pred <= num_matches_train - self.train_pad_num_gt_min:
@@ -223,11 +224,13 @@ class CoarseMatching(nn.Module):
 
             # gt_pad_indices is to select from gt padding. e.g. max(3787-4800, 200)
             gt_pad_indices = torch.randint(
-                    len(data['spv_b_ids']),
-                    (max(num_matches_train - num_matches_pred,
-                        self.train_pad_num_gt_min), ),
-                    device=_device)
-            mconf_gt = torch.zeros(len(data['spv_b_ids']), device=_device)  # set conf of gt paddings to all zero
+                len(data['spv_b_ids']),
+                (max(num_matches_train - num_matches_pred,
+                     self.train_pad_num_gt_min), ),
+                device=_device)
+            mconf_gt = torch.zeros(
+                len(data['spv_b_ids']),
+                device=_device)  # set conf of gt paddings to all zero
 
             b_ids, i_ids, j_ids, mconf = map(
                 lambda x, y: torch.cat([x[pred_indices], y[gt_pad_indices]],

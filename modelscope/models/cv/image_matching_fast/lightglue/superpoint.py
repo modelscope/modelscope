@@ -42,12 +42,13 @@
 
 # Adapted by Remi Pautrat, Philipp Lindenberger
 
+import os.path as osp
+
 import torch
 from kornia.color import rgb_to_grayscale
 from torch import nn
 
 from .utils import Extractor
-import os.path as osp
 
 
 def simple_nms(scores, nms_radius: int):
@@ -56,8 +57,7 @@ def simple_nms(scores, nms_radius: int):
 
     def max_pool(x):
         return torch.nn.functional.max_pool2d(
-            x, kernel_size=nms_radius * 2 + 1, stride=1, padding=nms_radius
-        )
+            x, kernel_size=nms_radius * 2 + 1, stride=1, padding=nms_radius)
 
     zeros = torch.zeros_like(scores)
     max_mask = scores == max_pool(scores)
@@ -80,19 +80,14 @@ def sample_descriptors(keypoints, descriptors, s: int = 8):
     """Interpolate descriptors at keypoint locations"""
     b, c, h, w = descriptors.shape
     keypoints = keypoints - s / 2 + 0.5
-    keypoints /= torch.tensor(
-        [(w * s - s / 2 - 0.5), (h * s - s / 2 - 0.5)],
-    ).to(
-        keypoints
-    )[None]
+    keypoints /= torch.tensor([(w * s - s / 2 - 0.5),
+                               (h * s - s / 2 - 0.5)], ).to(keypoints)[None]
     keypoints = keypoints * 2 - 1  # normalize to (-1, 1)
-    args = {"align_corners": True} if torch.__version__ >= "1.3" else {}
+    args = {'align_corners': True} if torch.__version__ >= '1.3' else {}
     descriptors = torch.nn.functional.grid_sample(
-        descriptors, keypoints.view(b, 1, -1, 2), mode="bilinear", **args
-    )
+        descriptors, keypoints.view(b, 1, -1, 2), mode='bilinear', **args)
     descriptors = torch.nn.functional.normalize(
-        descriptors.reshape(b, c, -1), p=2, dim=1
-    )
+        descriptors.reshape(b, c, -1), p=2, dim=1)
     return descriptors
 
 
@@ -106,20 +101,20 @@ class SuperPoint(Extractor):
     """
 
     default_conf = {
-        "descriptor_dim": 256,
-        "nms_radius": 4,
-        "max_num_keypoints": None,
-        "detection_threshold": 0.0005,
-        "remove_borders": 4,
+        'descriptor_dim': 256,
+        'nms_radius': 4,
+        'max_num_keypoints': None,
+        'detection_threshold': 0.0005,
+        'remove_borders': 4,
     }
 
     preprocess_conf = {
-        "resize": 1024,
+        'resize': 1024,
     }
 
-    required_data_keys = ["image"]
+    required_data_keys = ['image']
 
-    def __init__(self,model_dir, **conf):
+    def __init__(self, model_dir, **conf):
         super().__init__(**conf)  # Update with default configuration.
         self.relu = nn.ReLU(inplace=True)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -139,21 +134,19 @@ class SuperPoint(Extractor):
 
         self.convDa = nn.Conv2d(c4, c5, kernel_size=3, stride=1, padding=1)
         self.convDb = nn.Conv2d(
-            c5, self.conf.descriptor_dim, kernel_size=1, stride=1, padding=0
-        )
+            c5, self.conf.descriptor_dim, kernel_size=1, stride=1, padding=0)
 
-        
-        weights_path = osp.join(model_dir,"superpoint_v1.pth")
-        self.load_state_dict(torch.load(weights_path, map_location="cpu"))
+        weights_path = osp.join(model_dir, 'superpoint_v1.pth')
+        self.load_state_dict(torch.load(weights_path, map_location='cpu'))
 
         if self.conf.max_num_keypoints is not None and self.conf.max_num_keypoints <= 0:
-            raise ValueError("max_num_keypoints must be positive or None")
+            raise ValueError('max_num_keypoints must be positive or None')
 
     def forward(self, data: dict) -> dict:
         """Compute keypoints, scores, descriptors for image"""
         for key in self.required_data_keys:
-            assert key in data, f"Missing key {key} in data"
-        image = data["image"]
+            assert key in data, f'Missing key {key} in data'
+        image = data['image']
         if image.shape[1] == 3:
             image = rgb_to_grayscale(image)
 
@@ -193,20 +186,18 @@ class SuperPoint(Extractor):
 
         # Separate into batches
         keypoints = [
-            torch.stack(best_kp[1:3], dim=-1)[best_kp[0] == i] for i in range(b)
+            torch.stack(best_kp[1:3], dim=-1)[best_kp[0] == i]
+            for i in range(b)
         ]
         scores = [scores[best_kp[0] == i] for i in range(b)]
 
         # Keep the k keypoints with highest score
         if self.conf.max_num_keypoints is not None:
             keypoints, scores = list(
-                zip(
-                    *[
-                        top_k_keypoints(k, s, self.conf.max_num_keypoints)
-                        for k, s in zip(keypoints, scores)
-                    ]
-                )
-            )
+                zip(*[
+                    top_k_keypoints(k, s, self.conf.max_num_keypoints)
+                    for k, s in zip(keypoints, scores)
+                ]))
 
         # Convert (h, w) to (x, y)
         keypoints = [torch.flip(k, [1]).float() for k in keypoints]
@@ -223,7 +214,10 @@ class SuperPoint(Extractor):
         ]
 
         return {
-            "keypoints": torch.stack(keypoints, 0),
-            "keypoint_scores": torch.stack(scores, 0),
-            "descriptors": torch.stack(descriptors, 0).transpose(-1, -2).contiguous(),
+            'keypoints':
+            torch.stack(keypoints, 0),
+            'keypoint_scores':
+            torch.stack(scores, 0),
+            'descriptors':
+            torch.stack(descriptors, 0).transpose(-1, -2).contiguous(),
         }

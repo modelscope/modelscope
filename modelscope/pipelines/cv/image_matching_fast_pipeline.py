@@ -67,10 +67,7 @@ class ImageMatchingFastPipeline(Pipeline):
         img1 = self.load_image(input[0])
         img2 = self.load_image(input[1])
 
-        return {
-            'image0':img1,
-            'image1':img2
-        }
+        return {'image0': img1, 'image1': img2}
 
     def forward(self, input: Dict[str, Any]) -> list:
         results = self.model.inference(input)

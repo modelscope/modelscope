@@ -103,6 +103,10 @@ def snapshot_download(model_id: str,
                 'Snapshot': 'True'
             }
         }
+        if cache.cached_model_revision is not None:
+            snapshot_header[
+                'cached_model_revision'] = cache.cached_model_revision
+
         model_files = _api.get_model_files(
             model_id=model_id,
             revision=revision,
@@ -158,7 +162,9 @@ def snapshot_download(model_id: str,
                 temp_file = os.path.join(temp_cache_dir, model_file['Name'])
                 if FILE_HASH in model_file:
                     file_integrity_validation(temp_file, model_file[FILE_HASH])
-                # put file to cache
+                # put file into to cache
                 cache.put_file(model_file, temp_file)
+
+        cache.save_model_version(revision=revision)
 
         return os.path.join(cache.get_root_location())

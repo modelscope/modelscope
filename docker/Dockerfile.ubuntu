@@ -34,10 +34,13 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 # torchmetrics==0.11.4 for ofa
+# tinycudann for cuda12.1.0 pytorch 2.1.2
 RUN if [ "$USE_GPU" = "True" ] ; then \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator bitsandbytes basicsr optimum && \
     pip install --no-cache-dir auto-gptq --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/ && \
     pip install --no-cache-dir -U xformers --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install --no-cache-dir --force https://modelscope.oss-cn-beijing.aliyuncs.com/packages/tinycudann-1.7-cp310-cp310-linux_x86_64.whl && \
+    pip uninstall -y torch-scatter && TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5;8.0;8.6;8.9;9.0" pip install --no-cache-dir -U torch-scatter && \
     pip install --no-cache-dir -U flash_attn vllm; \
     else \
         echo 'cpu unsupport vllm auto-gptq'; \

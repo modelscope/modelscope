@@ -1281,6 +1281,13 @@
             "type": "object"
         }
     },
+    "image-local-feature-matching": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
     "image-multi-view-depth-estimation": {
         "input": {},
         "parameters": {},

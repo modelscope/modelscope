@@ -51,7 +51,7 @@ class CustomPipelineTest(unittest.TestCase):
                          **kwargs):
                 super().__init__(config_file, model, preprocessor, **kwargs)
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             CustomPipeline1()
 
     def test_batch(self):

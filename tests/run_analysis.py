@@ -263,8 +263,10 @@ def get_test_suites_to_run():
             # ["PREPROCESSORS", "cv", "object_detection_scrfd", "SCRFDPreprocessor"]
             # ["PREPROCESSORS", domain, preprocessor_name, class_name]
             for model_id, model_info in models_info.items():
-                if model_info['preprocessor_type'] is not None and model_info[
-                        'preprocessor_type'] == affected_register_module[2]:
+                if ('preprocessor_type' in model_info
+                        and model_info['preprocessor_type'] is not None
+                        and model_info['preprocessor_type']
+                        == affected_register_module[2]):
                     task = model_info['task']
                     if task in task_pipeline_test_suite_map:
                         affected_pipeline_cases.extend(

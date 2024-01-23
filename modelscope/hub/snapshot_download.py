@@ -96,6 +96,7 @@ def snapshot_download(model_id: str,
             cookies = ModelScopeConfig.get_cookies()
         revision_detail = _api.get_valid_revision_detail(
             model_id, revision=revision, cookies=cookies)
+        revision = revision_detail['Revision']
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
             **headers,

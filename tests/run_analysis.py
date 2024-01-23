@@ -2,7 +2,6 @@
 
 import os
 import subprocess
-import sys
 from fnmatch import fnmatch
 
 from trainers.model_trainer_map import model_trainer_map
@@ -12,7 +11,6 @@ from utils.source_file_analyzer import (get_all_register_modules,
                                         get_import_map)
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.utils.utils import (get_cache_dir,
                                         model_id_to_group_owner_name)

@@ -14,7 +14,8 @@ from utils.source_file_analyzer import (get_all_register_modules,
 from modelscope.hub.api import HubApi
 from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import get_cache_dir
+from modelscope.hub.utils.utils import (get_cache_dir,
+                                        model_id_to_group_owner_name)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger
@@ -27,12 +28,12 @@ def get_models_info(groups: list) -> dict:
     api = HubApi()
     for group in groups:
         page = 1
-        total_count = None
+        total_count = 0
         while True:
             query_result = api.list_models(group, page, 100)
-            if query_result is not None:
+            if query_result['Models'] is not None:
                 models.extend(query_result['Models'])
-            elif total_count is not None:
+            elif total_count != 0:
                 total_count = query_result['TotalCount']
             if len(models) >= total_count:
                 break
@@ -222,7 +223,12 @@ def get_test_suites_to_run():
         all_register_modules)
     # task_pipeline_test_suite_map key: pipeline task, value: case file path
     # trainer_test_suite_map key: trainer_name, value: case file path
-    models_info = get_models_info(['damo'])
+    iic_models_info = get_models_info(['iic'])
+    models_info = {}
+    # compatible model info
+    for model_id, model_info in iic_models_info.items():
+        _, model_name = model_id_to_group_owner_name(model_id)
+        models_info['damo/%s' % model_name] = models_info
     # model_info key: model_id, value: model info such as framework task etc.
     affected_pipeline_cases = []
     affected_trainer_cases = []

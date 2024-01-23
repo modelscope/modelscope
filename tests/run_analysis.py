@@ -27,10 +27,14 @@ def get_models_info(groups: list) -> dict:
     api = HubApi()
     for group in groups:
         page = 1
+        total_count = None
         while True:
             query_result = api.list_models(group, page, 100)
-            models.extend(query_result['Models'])
-            if len(models) >= query_result['TotalCount']:
+            if query_result is not None:
+                models.extend(query_result['Models'])
+            elif total_count is not None:
+                total_count = query_result['TotalCount']
+            if len(models) >= total_count:
                 break
             page += 1
     cache_root = get_cache_dir()

@@ -808,7 +808,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.panorama_depth_estimation,
      'damo/cv_unifuse_panorama-depth-estimation'),
     Tasks.image_local_feature_matching:
-    (Pipelines.image_local_feature_matching, 'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
+    (Pipelines.image_local_feature_matching,
+     'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
@@ -832,9 +833,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_object_detection:
     (Pipelines.image_object_detection_auto,
      'damo/cv_yolox_image-object-detection-auto'),
-    Tasks.ocr_recognition:
-    (Pipelines.ocr_recognition,
-     'damo/cv_convnextTiny_ocr-recognition-general_damo'),
+    Tasks.ocr_recognition: (
+        Pipelines.ocr_recognition,
+        'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
     Tasks.faq_question_answering: (

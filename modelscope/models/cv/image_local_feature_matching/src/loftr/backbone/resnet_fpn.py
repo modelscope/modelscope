@@ -4,15 +4,28 @@ import torch.nn.functional as F
 
 def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution without padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, padding=0, bias=False)
+    return nn.Conv2d(
+        in_planes,
+        out_planes,
+        kernel_size=1,
+        stride=stride,
+        padding=0,
+        bias=False)
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+    return nn.Conv2d(
+        in_planes,
+        out_planes,
+        kernel_size=3,
+        stride=stride,
+        padding=1,
+        bias=False)
 
 
 class BasicBlock(nn.Module):
+
     def __init__(self, in_planes, planes, stride=1):
         super().__init__()
         self.conv1 = conv3x3(in_planes, planes, stride)
@@ -26,8 +39,7 @@ class BasicBlock(nn.Module):
         else:
             self.downsample = nn.Sequential(
                 conv1x1(in_planes, planes, stride=stride),
-                nn.BatchNorm2d(planes)
-            )
+                nn.BatchNorm2d(planes))
 
     def forward(self, x):
         y = x
@@ -37,7 +49,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             x = self.downsample(x)
 
-        return self.relu(x+y)
+        return self.relu(x + y)
 
 
 class ResNetFPN_8_2(nn.Module):
@@ -57,7 +69,8 @@ class ResNetFPN_8_2(nn.Module):
         self.in_planes = initial_dim
 
         # Networks
-        self.conv1 = nn.Conv2d(1, initial_dim, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            1, initial_dim, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(initial_dim)
         self.relu = nn.ReLU(inplace=True)
 
@@ -84,7 +97,8 @@ class ResNetFPN_8_2(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -107,13 +121,15 @@ class ResNetFPN_8_2(nn.Module):
         # FPN
         x3_out = self.layer3_outconv(x3)
 
-        x3_out_2x = F.interpolate(x3_out, scale_factor=2., mode='bilinear', align_corners=True)
+        x3_out_2x = F.interpolate(
+            x3_out, scale_factor=2., mode='bilinear', align_corners=True)
         x2_out = self.layer2_outconv(x2)
-        x2_out = self.layer2_outconv2(x2_out+x3_out_2x)
+        x2_out = self.layer2_outconv2(x2_out + x3_out_2x)
 
-        x2_out_2x = F.interpolate(x2_out, scale_factor=2., mode='bilinear', align_corners=True)
+        x2_out_2x = F.interpolate(
+            x2_out, scale_factor=2., mode='bilinear', align_corners=True)
         x1_out = self.layer1_outconv(x1)
-        x1_out = self.layer1_outconv2(x1_out+x2_out_2x)
+        x1_out = self.layer1_outconv2(x1_out + x2_out_2x)
 
         return [x3_out, x1_out]
 
@@ -135,7 +151,8 @@ class ResNetFPN_16_4(nn.Module):
         self.in_planes = initial_dim
 
         # Networks
-        self.conv1 = nn.Conv2d(1, initial_dim, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            1, initial_dim, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(initial_dim)
         self.relu = nn.ReLU(inplace=True)
 
@@ -164,7 +181,8 @@ class ResNetFPN_16_4(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -188,12 +206,14 @@ class ResNetFPN_16_4(nn.Module):
         # FPN
         x4_out = self.layer4_outconv(x4)
 
-        x4_out_2x = F.interpolate(x4_out, scale_factor=2., mode='bilinear', align_corners=True)
+        x4_out_2x = F.interpolate(
+            x4_out, scale_factor=2., mode='bilinear', align_corners=True)
         x3_out = self.layer3_outconv(x3)
-        x3_out = self.layer3_outconv2(x3_out+x4_out_2x)
+        x3_out = self.layer3_outconv2(x3_out + x4_out_2x)
 
-        x3_out_2x = F.interpolate(x3_out, scale_factor=2., mode='bilinear', align_corners=True)
+        x3_out_2x = F.interpolate(
+            x3_out, scale_factor=2., mode='bilinear', align_corners=True)
         x2_out = self.layer2_outconv(x2)
-        x2_out = self.layer2_outconv2(x2_out+x3_out_2x)
+        x2_out = self.layer2_outconv2(x2_out + x3_out_2x)
 
         return [x4_out, x2_out]

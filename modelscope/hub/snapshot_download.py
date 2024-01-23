@@ -94,7 +94,7 @@ def snapshot_download(model_id: str,
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
-        revision = _api.get_valid_revision(
+        revision_detail = _api.get_valid_revision_detail(
             model_id, revision=revision, cookies=cookies)
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
@@ -165,6 +165,6 @@ def snapshot_download(model_id: str,
                 # put file into to cache
                 cache.put_file(model_file, temp_file)
 
-        cache.save_model_version(revision=revision)
+        cache.save_model_version(revision_info=revision_detail)
 
         return os.path.join(cache.get_root_location())

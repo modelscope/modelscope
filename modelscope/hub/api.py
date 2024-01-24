@@ -518,7 +518,7 @@ class HubApi:
             else:
                 if revision is None:  # user not specified revision, use latest revision before release time
                     revisions_detail = [x for x in
-                                        all_branches_detail if x['CreatedAt'] <= release_timestamp] if all_branches_detail else [] # noqa E501
+                                        all_tags_detail if x['CreatedAt'] <= release_timestamp] if all_tags_detail else [] # noqa E501
                     if len(revisions_detail) > 0:
                         revision = revisions_detail[0]['Revision']  # use latest revision before release time.
                         revision_detail = revisions_detail[0]

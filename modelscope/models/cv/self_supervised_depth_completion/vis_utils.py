@@ -1,11 +1,13 @@
 import os
-if not ("DISPLAY" in os.environ):
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+
+if not ('DISPLAY' in os.environ):
     import matplotlib as mpl
     mpl.use('Agg')
-import matplotlib.pyplot as plt
-from PIL import Image
-import numpy as np
-import cv2
 
 cmap = plt.cm.jet
 
@@ -17,6 +19,7 @@ def depth_colorize(depth):
 
 
 def merge_into_row(ele, pred):
+
     def preprocess_depth(x):
         y = np.squeeze(x.data.cpu().numpy())
         return depth_colorize(y)
@@ -55,16 +58,17 @@ def save_depth_as_uint16png(img, filename):
     cv2.imwrite(filename, img)
 
 
-if ("DISPLAY" in os.environ):
+if ('DISPLAY' in os.environ):
     f, axarr = plt.subplots(4, 1)
     plt.tight_layout()
     plt.ion()
 
 
 def display_warping(rgb_tgt, pred_tgt, warped):
+
     def preprocess(rgb_tgt, pred_tgt, warped):
-        rgb_tgt = 255 * np.transpose(np.squeeze(rgb_tgt.data.cpu().numpy()),
-                                     (1, 2, 0))  # H, W, C
+        rgb_tgt = 255 * np.transpose(
+            np.squeeze(rgb_tgt.data.cpu().numpy()), (1, 2, 0))  # H, W, C
         # depth = np.squeeze(depth.cpu().numpy())
         # depth = depth_colorize(depth)
 
@@ -75,11 +79,13 @@ def display_warping(rgb_tgt, pred_tgt, warped):
 
         pred_tgt = depth_colorize(pred_tgt)
 
-        warped = 255 * np.transpose(np.squeeze(warped.data.cpu().numpy()),
-                                    (1, 2, 0))  # H, W, C
+        warped = 255 * np.transpose(
+            np.squeeze(warped.data.cpu().numpy()), (1, 2, 0))  # H, W, C
         recon_err = np.absolute(
-            warped.astype('float') - rgb_tgt.astype('float')) * (warped > 0)
-        recon_err = recon_err[:, :, 0] + recon_err[:, :, 1] + recon_err[:, :, 2]
+            warped.astype('float') - rgb_tgt.astype('float')) * (
+                warped > 0)
+        recon_err = recon_err[:, :, 0] + recon_err[:, :, 1] + recon_err[:, :,
+                                                                        2]
         recon_err = depth_colorize(recon_err)
         return rgb_tgt.astype('uint8'), warped.astype(
             'uint8'), recon_err, pred_tgt
@@ -88,7 +94,7 @@ def display_warping(rgb_tgt, pred_tgt, warped):
                                                       warped)
 
     # 1st column
-    column = 0
+    # column = 0
     axarr[0].imshow(rgb_tgt)
     axarr[0].axis('off')
     axarr[0].axis('equal')

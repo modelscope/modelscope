@@ -2,11 +2,13 @@ import torch
 import torch.nn.functional as F
 
 from modelscope.utils.logger import get_logger
+
 logger = get_logger()
 
 
 class Intrinsics:
     """Intrinsics"""
+
     def __init__(self, width, height, fu, fv, cu=0, cv=0):
         self.height, self.width = height, width
         self.fu, self.fv = fu, fv  # fu, fv: focal length along the horizontal and vertical axes
@@ -17,8 +19,8 @@ class Intrinsics:
 
         # U, V represent the homogeneous horizontal and vertical coordinates in the pixel space
         self.U = torch.arange(start=0, end=width).expand(height, width).float()
-        self.V = torch.arange(start=0, end=height).expand(width,
-                                                          height).t().float()
+        self.V = torch.arange(
+            start=0, end=height).expand(width, height).t().float()
 
         # X_cam, Y_cam represent the homogeneous x, y coordinates (assuming depth z=1) in the camera coordinate system
         self.X_cam = (self.U - self.cu) / self.fu
@@ -46,9 +48,10 @@ class Intrinsics:
         return new_intrinsics
 
     def __print__(self):
-        logger.info('size=({},{})\nfocal length=({},{})\noptical center=({},{})'.
-                    format(self.height, self.width, self.fv, self.fu, self.cv,
-                           self.cu))
+        logger.info(
+            'size=({},{})\nfocal length=({},{})\noptical center=({},{})'.
+            format(self.height, self.width, self.fv, self.fu, self.cv,
+                   self.cu))
 
 
 def image_to_pointcloud(depth, intrinsics):
@@ -73,10 +76,10 @@ def pointcloud_to_image(pointcloud, intrinsics):
     V_proj = intrinsics.fv * Y / Z + intrinsics.cv  # vertical pixel coordinate
 
     # normalization to [-1, 1], required by torch.nn.functional.grid_sample
-    U_proj_normalized = (2 * U_proj / (intrinsics.width - 1) - 1).view(
-        batch_size, -1)
-    V_proj_normalized = (2 * V_proj / (intrinsics.height - 1) - 1).view(
-        batch_size, -1)
+    w = intrinsics.width
+    h = intrinsics.height
+    U_proj_normalized = (2 * U_proj / (w - 1) - 1).view(batch_size, -1)
+    V_proj_normalized = (2 * V_proj / (h - 1) - 1).view(batch_size, -1)
 
     # This was important since PyTorch didn't do as it claimed for points out of boundary
     # See https://github.com/ClementPinard/SfmLearner-Pytorch/blob/master/inverse_warp.py

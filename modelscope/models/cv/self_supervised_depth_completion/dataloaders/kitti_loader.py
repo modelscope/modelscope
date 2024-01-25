@@ -1,14 +1,18 @@
+import glob
 import os
 import os.path
-import glob
-import numpy as np
-from numpy import linalg as LA
 from random import choice
-from PIL import Image
-import torch.utils.data as data
+
 import cv2
-from modelscope.models.cv.self_supervised_depth_completion.dataloaders import transforms
-from modelscope.models.cv.self_supervised_depth_completion.dataloaders.pose_estimator import get_pose_pnp
+import numpy as np
+import torch.utils.data as data
+from numpy import linalg as LA
+from PIL import Image
+
+from modelscope.models.cv.self_supervised_depth_completion.dataloaders import \
+    transforms
+from modelscope.models.cv.self_supervised_depth_completion.dataloaders.pose_estimator import \
+    get_pose_pnp
 
 input_options = ['d', 'rgb', 'rgbd', 'g', 'gd']
 
@@ -17,11 +21,11 @@ def load_calib(args):
     """
     Temporarily hardcoding the calibration matrix using calib file from 2011_09_26
     """
-    calib = open(os.path.join(args.data_folder, "calib_cam_to_cam.txt"), "r")
+    calib = open(os.path.join(args.data_folder, 'calib_cam_to_cam.txt'), 'r')
     lines = calib.readlines()
     P_rect_line = lines[25]
 
-    Proj_str = P_rect_line.split(":")[1].split(" ")[1:]
+    Proj_str = P_rect_line.split(':')[1].split(' ')[1:]
     Proj = np.reshape(np.array([float(p) for p in Proj_str]),
                       (3, 4)).astype(np.float32)
     K = Proj[:3, :3]  # camera matrix
@@ -41,7 +45,7 @@ def get_paths_and_transform(split, args):
     assert (args.use_d or args.use_rgb
             or args.use_g), 'no proper input selected'
 
-    if split == "train":
+    if split == 'train':
         transform = train_transform
         glob_d = os.path.join(
             args.data_folder,
@@ -57,8 +61,8 @@ def get_paths_and_transform(split, args):
             pnew = '/'.join([args.data_folder] + ['data_rgb'] + ps[-6:-4]
                             + ps[-2:-1] + ['data'] + ps[-1:])
             return pnew
-    elif split == "val":
-        if args.val == "full":
+    elif split == 'val':
+        if args.val == 'full':
             transform = val_transform
             glob_d = os.path.join(
                 args.data_folder,
@@ -71,40 +75,40 @@ def get_paths_and_transform(split, args):
 
             def get_rgb_paths(p):
                 ps = p.split('/')
-                pnew = '/'.join(ps[:-7]
-                                + ['data_rgb '] + ps[-6:-4] + ps[-2:-1] + ['data'] + ps[-1:])
+                pnew = '/'.join(ps[:-7] + ['data_rgb '] + ps[-6:-4] + ps[-2:-1]
+                                + ['data'] + ps[-1:])
                 return pnew
-        elif args.val == "select":
+        elif args.val == 'select':
             transform = no_transform
             glob_d = os.path.join(
                 args.data_folder,
-                "depth_selection/val_selection_cropped/velodyne_raw/*.png")
+                'depth_selection/val_selection_cropped/velodyne_raw/*.png')
             glob_gt = os.path.join(
                 args.data_folder,
-                "depth_selection/val_selection_cropped/groundtruth_depth/*.png"
+                'depth_selection/val_selection_cropped/groundtruth_depth/*.png'
             )
 
             def get_rgb_paths(p):
-                return p.replace("groundtruth_depth", "image")
-    elif split == "test_completion":
+                return p.replace('groundtruth_depth', 'image')
+    elif split == 'test_completion':
         transform = no_transform
         glob_d = os.path.join(
             args.data_folder,
-            "depth_selection/test_depth_completion_anonymous/velodyne_raw/*.png"
+            'depth_selection/test_depth_completion_anonymous/velodyne_raw/*.png'
         )
         glob_gt = None  # "test_depth_completion_anonymous/"
         glob_rgb = os.path.join(
             args.data_folder,
-            "depth_selection/test_depth_completion_anonymous/image/*.png")
-    elif split == "test_prediction":
+            'depth_selection/test_depth_completion_anonymous/image/*.png')
+    elif split == 'test_prediction':
         transform = no_transform
         glob_d = None
         glob_gt = None  # "test_depth_completion_anonymous/"
         glob_rgb = os.path.join(
             args.data_folder,
-            "depth_selection/test_depth_prediction_anonymous/image/*.png")
+            'depth_selection/test_depth_prediction_anonymous/image/*.png')
     else:
-        raise ValueError("Unrecognized split " + str(split))
+        raise ValueError('Unrecognized split ' + str(split))
 
     if glob_gt is not None:
         # train or val-full or val-select
@@ -115,29 +119,29 @@ def get_paths_and_transform(split, args):
         # test only has d or rgb
         paths_rgb = sorted(glob.glob(glob_rgb))
         paths_gt = [None] * len(paths_rgb)
-        if split == "test_prediction":
+        if split == 'test_prediction':
             paths_d = [None] * len(
                 paths_rgb)  # test_prediction has no sparse depth
         else:
             paths_d = sorted(glob.glob(glob_d))
 
     if len(paths_d) == 0 and len(paths_rgb) == 0 and len(paths_gt) == 0:
-        raise (RuntimeError("Found 0 images under {}".format(glob_gt)))
+        raise (RuntimeError('Found 0 images under {}'.format(glob_gt)))
     if len(paths_d) == 0 and args.use_d:
-        raise (RuntimeError("Requested sparse depth but none was found"))
+        raise (RuntimeError('Requested sparse depth but none was found'))
     if len(paths_rgb) == 0 and args.use_rgb:
-        raise (RuntimeError("Requested rgb images but none was found"))
+        raise (RuntimeError('Requested rgb images but none was found'))
     if len(paths_rgb) == 0 and args.use_g:
-        raise (RuntimeError("Requested gray images but no rgb was found"))
+        raise (RuntimeError('Requested gray images but no rgb was found'))
     if len(paths_rgb) != len(paths_d) or len(paths_rgb) != len(paths_gt):
-        raise (RuntimeError("Produced different sizes for datasets"))
+        raise (RuntimeError('Produced different sizes for datasets'))
 
-    paths = {"rgb": paths_rgb, "d": paths_d, "gt": paths_gt}
+    paths = {'rgb': paths_rgb, 'd': paths_d, 'gt': paths_gt}
     return paths, transform
 
 
 def rgb_read(filename):
-    assert os.path.exists(filename), "file not found: {}".format(filename)
+    assert os.path.exists(filename), 'file not found: {}'.format(filename)
     img_file = Image.open(filename)
     # rgb_png = np.array(img_file, dtype=float) / 255.0 # scale pixels to the range [0,1]
     rgb_png = np.array(img_file, dtype='uint8')  # in the range [0,255]
@@ -149,13 +153,13 @@ def depth_read(filename):
     # loads depth map D from png file
     # and returns it as a numpy array,
     # for details see readme.txt
-    assert os.path.exists(filename), "file not found: {}".format(filename)
+    assert os.path.exists(filename), 'file not found: {}'.format(filename)
     img_file = Image.open(filename)
     depth_png = np.array(img_file, dtype=int)
     img_file.close()
     # make sure we have a proper 16bit depth map here.. not 8bit!
     assert np.max(depth_png) > 255, \
-        "np.max(depth_png)={}, path={}".format(np.max(depth_png), filename)
+        'np.max(depth_png)={}, path={}'.format(np.max(depth_png), filename)
 
     depth = depth_png.astype(float) / 256.
     # depth[depth_png == 0] = -1.
@@ -187,11 +191,11 @@ def train_transform(rgb, sparse, target, rgb_near, args):
         sparse = transform_geometric(sparse)
     target = transform_geometric(target)
     if rgb is not None:
-        brightness = np.random.uniform(max(0, 1 - args.jitter),
-                                       1 + args.jitter)
+        brightness = np.random.uniform(
+            max(0, 1 - args.jitter), 1 + args.jitter)
         contrast = np.random.uniform(max(0, 1 - args.jitter), 1 + args.jitter)
-        saturation = np.random.uniform(max(0, 1 - args.jitter),
-                                       1 + args.jitter)
+        saturation = np.random.uniform(
+            max(0, 1 - args.jitter), 1 + args.jitter)
         transform_rgb = transforms.Compose([
             transforms.ColorJitter(brightness, contrast, saturation, 0),
             transform_geometric
@@ -224,7 +228,10 @@ def no_transform(rgb, sparse, target, rgb_near, args):
 
 
 to_tensor = transforms.ToTensor()
-def to_float_tensor(x): return to_tensor(x).float()
+
+
+def to_float_tensor(x):
+    return to_tensor(x).float()
 
 
 def handle_gray(rgb, args):
@@ -243,7 +250,7 @@ def handle_gray(rgb, args):
 
 
 def get_rgb_near(path, args):
-    assert path is not None, "path is None"
+    assert path is not None, 'path is None'
 
     def extract_frame_id(filename):
         head, tail = os.path.split(filename)
@@ -268,7 +275,7 @@ def get_rgb_near(path, args):
         path_near = get_nearby_filename(path, number + random_offset)
         if os.path.exists(path_near):
             break
-        assert count < 20, "cannot find a nearby frame in 20 trials for {}".format(
+        assert count < 20, 'cannot find a nearby frame in 20 trials for {}'.format(
             path)
         count += 1
 
@@ -317,8 +324,15 @@ class KittiDepth(data.Dataset):
                 r_mat = np.eye(3)
 
         rgb, gray = handle_gray(rgb, self.args)
-        candidates = {"rgb": rgb, "d": sparse, "gt": target,
-                      "g": gray, "r_mat": r_mat, "t_vec": t_vec, "rgb_near": rgb_near}
+        candidates = {
+            'rgb': rgb,
+            'd': sparse,
+            'gt': target,
+            'g': gray,
+            'r_mat': r_mat,
+            't_vec': t_vec,
+            'rgb_near': rgb_near
+        }
         items = {
             key: to_float_tensor(val)
             for key, val in candidates.items() if val is not None

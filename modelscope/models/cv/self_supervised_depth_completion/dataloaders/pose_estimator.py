@@ -86,16 +86,14 @@ def get_pose_pnp(rgb_curr, rgb_near, depth_curr, K):
 
     # the minimal number of points accepted by solvePnP is 4:
     if len(pts3d_curr) >= 4 and len(pts2d_near_filtered) >= 4:
-        pts3d_curr = np.expand_dims(np.array(pts3d_curr).astype(np.float32),
-                                    axis=1)
+        pts3d_curr = np.expand_dims(
+            np.array(pts3d_curr).astype(np.float32), axis=1)
         pts2d_near_filtered = np.expand_dims(
             np.array(pts2d_near_filtered).astype(np.float32), axis=1)
 
         # ransac
-        ret = cv2.solvePnPRansac(pts3d_curr,
-                                 pts2d_near_filtered,
-                                 K,
-                                 distCoeffs=None)
+        ret = cv2.solvePnPRansac(
+            pts3d_curr, pts2d_near_filtered, K, distCoeffs=None)
         success = ret[0]
         rotation_vector = ret[1]
         translation_vector = ret[2]

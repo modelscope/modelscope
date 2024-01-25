@@ -3820,7 +3820,8 @@
             "type": "object",
             "properties": {
                 "output": {
-                    "type": "object"
+                    "type": "string",
+                    "description":"The base64 encoded image."
                 }
             }
         }

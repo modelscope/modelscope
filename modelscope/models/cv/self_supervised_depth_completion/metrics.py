@@ -1,6 +1,7 @@
-import torch
 import math
+
 import numpy as np
+import torch
 
 lg_e_10 = math.log(10)
 
@@ -12,6 +13,7 @@ def log10(x):
 
 class Result(object):
     """Result"""
+
     def __init__(self):
         self.irmse = 0
         self.imae = 0
@@ -45,8 +47,22 @@ class Result(object):
         self.data_time = 0
         self.gpu_time = 0
 
-    def update(self, irmse, imae, mse, rmse, mae, absrel, squared_rel, lg10,
-               delta1, delta2, delta3, gpu_time, data_time, silog, photometric=0):
+    def update(self,
+               irmse,
+               imae,
+               mse,
+               rmse,
+               mae,
+               absrel,
+               squared_rel,
+               lg10,
+               delta1,
+               delta2,
+               delta3,
+               gpu_time,
+               data_time,
+               silog,
+               photometric=0):
         """update"""
         self.irmse = irmse
         self.imae = imae
@@ -107,6 +123,7 @@ class Result(object):
 
 class AverageMeter(object):
     """AverageMeter"""
+
     def __init__(self):
         self.reset()
 

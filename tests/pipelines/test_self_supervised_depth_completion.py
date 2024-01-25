@@ -2,19 +2,24 @@
 import os
 import unittest
 
+import cv2
 import torch
 
+from modelscope import get_logger
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.msdatasets import MsDataset
+from modelscope.outputs.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import DownloadMode, Tasks
 from modelscope.utils.test_utils import test_level
-from modelscope import get_logger
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 logger = get_logger()
 
 
 class SelfSupervisedDepthCompletionTest(unittest.TestCase):
     """class SelfSupervisedDepthCompletionTest"""
+
     def setUp(self) -> None:
         self.model_id = 'Damo_XR_Lab/Self_Supervised_Depth_Completion'
         data_dir = MsDataset.load(
@@ -38,8 +43,11 @@ class SelfSupervisedDepthCompletionTest(unittest.TestCase):
             # ,config_file = os.path.join(modelPath, "configuration.json")
         )
 
-        self_supervised_depth_completion(dict(model_dir=snapshot_path, source_dir=self.source_dir))
-        logger.info('self-supervised-depth-completion_damo.test_run_modelhub done')
+        result = self_supervised_depth_completion(
+            dict(model_dir=snapshot_path, source_dir=self.source_dir))
+        cv2.imwrite('result.jpg', result[OutputKeys.OUTPUT])
+        logger.info(
+            'self-supervised-depth-completion_damo.test_run_modelhub done')
 
 
 if __name__ == '__main__':

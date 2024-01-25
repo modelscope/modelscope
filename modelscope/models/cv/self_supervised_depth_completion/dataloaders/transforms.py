@@ -1,18 +1,17 @@
 from __future__ import division
-import torch
+import numbers
+import types
 
+import numpy as np
+import scipy.ndimage.interpolation as itpl
+import skimage.transform
+import torch
 from PIL import Image, ImageEnhance
+
 try:
     import accimage
 except ImportError:
     accimage = None
-
-import numpy as np
-import numbers
-import types
-
-import scipy.ndimage.interpolation as itpl
-import skimage.transform
 
 
 def _is_numpy_image(img):
@@ -115,7 +114,7 @@ def adjust_hue(img, hue_factor):
     """
     if not (-0.5 <= hue_factor <= 0.5):
         raise ValueError(
-            'hue_factor is not in [-0.5, 0.5].'.format(hue_factor))
+            'hue_factor is not in [-0.5, 0.5]. Got {}'.format(hue_factor))
 
     if not _is_pil_image(img):
         raise TypeError('img should be PIL Image. Got {}'.format(type(img)))

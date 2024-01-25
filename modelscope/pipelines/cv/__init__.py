@@ -305,8 +305,9 @@ else:
             'RIFEVideoFrameInterpolationPipeline'
         ],
         'anydoor_pipeline': ['AnydoorPipeline'],
-        'self_supervised_depth_completion_pipeline': ['SelfSupervisedDepthCompletionPipeline'],
-
+        'self_supervised_depth_completion_pipeline': [
+            'SelfSupervisedDepthCompletionPipeline'
+        ],
     }
 
     import sys

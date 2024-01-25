@@ -172,7 +172,6 @@ class CVTasks(object):
     image_control_3d_portrait = 'image-control-3d-portrait'
     self_supervised_depth_completion = 'self-supervised-depth-completion'
 
-
     # 3d generation
     image_to_3d = 'image-to-3d'
 

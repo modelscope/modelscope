@@ -52,7 +52,7 @@ class Models(object):
     vitadapter_semantic_segmentation = 'vitadapter-semantic-segmentation'
     text_driven_segmentation = 'text-driven-segmentation'
     newcrfs_depth_estimation = 'newcrfs-depth-estimation'
-    
+    omnidata_normal_estimation = 'omnidata-normal-estimation'
     panovit_layout_estimation = 'panovit-layout-estimation'
     unifuse_depth_estimation = 'unifuse-depth-estimation'
     s2net_depth_estimation = 's2net-depth-estimation'
@@ -88,6 +88,8 @@ class Models(object):
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
     quadtree_attention_image_matching = 'quadtree-attention-image-matching'
+    loftr_image_local_feature_matching = 'loftr-image-local-feature-matching'
+    lightglue_image_matching = 'lightglue-image-matching'
     vision_middleware = 'vision-middleware'
     vidt = 'vidt'
     video_stabilization = 'video-stabilization'
@@ -129,6 +131,7 @@ class Models(object):
     human_image_generation = 'human-image-generation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    rife = 'rife'
     anydoor = 'anydoor'
 
     # nlp models
@@ -209,6 +212,9 @@ class Models(object):
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
+    audio_quantization = 'audio-quantization'
+    laura_codec = 'laura-codec'
+    funasr = 'funasr'
 
     # multi-modal models
     ofa = 'ofa'
@@ -389,10 +395,9 @@ class Pipelines(object):
     language_guided_video_summarization = 'clip-it-video-summarization'
     image_semantic_segmentation = 'image-semantic-segmentation'
     image_depth_estimation = 'image-depth-estimation'
-    
-
-
+    image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
+    image_local_feature_matching = 'image-local-feature-matching'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
     panorama_depth_estimation_s2net = 'panorama-depth-estimation-s2net'
@@ -422,6 +427,7 @@ class Pipelines(object):
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
     image_matching = 'image-matching'
+    image_matching_fast = 'image-matching-fast'
     video_stabilization = 'video-stabilization'
     video_super_resolution = 'realbasicvsr-video-super-resolution'
     pointcloud_sceneflow_estimation = 'pointcloud-sceneflow-estimation'
@@ -462,6 +468,7 @@ class Pipelines(object):
     human3d_animation = 'human3d-animation'
     image_view_transform = 'image-view-transform'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    rife_video_frame_interpolation = 'rife-video-frame-interpolation'
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
 
@@ -535,11 +542,8 @@ class Pipelines(object):
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'
     kws_kwsbp = 'kws-kwsbp'
-    asr_inference = 'asr-inference'
     asr_wenet_inference = 'asr-wenet-inference'
     itn_inference = 'itn-inference'
-    punc_inference = 'punc-inference'
-    sv_inference = 'sv-inference'
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
     funasr_speech_separation = 'funasr-speech-separation'
@@ -554,6 +558,9 @@ class Pipelines(object):
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
+    audio_quantization = 'audio-quantization'
+    audio_quantization_inference = 'audio-quantization-inference'
+    laura_codec_tts_inference = 'laura-codec-tts-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'
@@ -592,6 +599,9 @@ class Pipelines(object):
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
+
+    # funasr task
+    funasr_pipeline = 'funasr-pipeline'
 
 
 DEFAULT_MODEL_FOR_PIPELINE = {
@@ -787,6 +797,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_depth_estimation:
     (Pipelines.image_depth_estimation,
      'damo/cv_newcrfs_image-depth-estimation_indoor'),
+    Tasks.image_normal_estimation:
+    (Pipelines.image_normal_estimation,
+     'Damo_XR_Lab/cv_omnidata_image-normal-estimation_normal'),
     Tasks.indoor_layout_estimation:
     (Pipelines.indoor_layout_estimation,
      'damo/cv_panovit_indoor-layout-estimation'),
@@ -796,6 +809,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.panorama_depth_estimation:
     (Pipelines.panorama_depth_estimation,
      'damo/cv_unifuse_panorama-depth-estimation'),
+    Tasks.image_local_feature_matching:
+    (Pipelines.image_local_feature_matching,
+     'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
@@ -819,14 +835,14 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_object_detection:
     (Pipelines.image_object_detection_auto,
      'damo/cv_yolox_image-object-detection-auto'),
-    Tasks.ocr_recognition:
-    (Pipelines.ocr_recognition,
-     'damo/cv_convnextTiny_ocr-recognition-general_damo'),
+    Tasks.ocr_recognition: (
+        Pipelines.ocr_recognition,
+        'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
-    Tasks.faq_question_answering:
-    (Pipelines.faq_question_answering,
-     'damo/nlp_structbert_faq-question-answering_chinese-base'),
+    Tasks.faq_question_answering: (
+        Pipelines.faq_question_answering,
+        'damo/nlp_structbert_faq-question-answering_chinese-base'),
     Tasks.crowd_counting: (Pipelines.crowd_counting,
                            'damo/cv_hrnet_crowd-counting_dcanet'),
     Tasks.video_single_object_tracking: (

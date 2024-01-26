@@ -9,8 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
-from timm.models.layers.drop import drop_path
-from timm.models.layers.weight_init import trunc_normal_
+from timm.models.layers import drop_path, trunc_normal_
 
 from .common import Upsample, resize
 

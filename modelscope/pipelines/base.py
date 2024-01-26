@@ -44,7 +44,7 @@ class Pipeline(ABC):
     """Pipeline base.
     """
 
-    def initiate_single_model(self, model):
+    def initiate_single_model(self, model, **kwargs):
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):
@@ -55,7 +55,8 @@ class Pipeline(ABC):
                 device=self.device_name,
                 model_prefetched=True,
                 invoked_by=Invoke.PIPELINE,
-                device_map=self.device_map) if is_model(model) else model
+                device_map=self.device_map,
+                **kwargs) if is_model(model) else model
         else:
             return model
 
@@ -96,7 +97,7 @@ class Pipeline(ABC):
         self.device_name = device
 
         if not isinstance(model, List):
-            self.model = self.initiate_single_model(model)
+            self.model = self.initiate_single_model(model, **kwargs)
             self.models = [self.model]
         else:
             self.model = None
@@ -396,7 +397,6 @@ class Pipeline(ABC):
         assert not self.has_multiple_models, 'default implementation does not support multiple models in a pipeline.'
         return self.model(inputs, **forward_params)
 
-    @abstractmethod
     def postprocess(self, inputs: Dict[str, Any],
                     **post_params) -> Dict[str, Any]:
         """ If current pipeline support model reuse, common postprocess

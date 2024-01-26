@@ -5,9 +5,10 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .VFINet_arch import VFINet
+    from .rife import RIFEModel
 
 else:
-    _import_structure = {'VFINet_arch': ['VFINet']}
+    _import_structure = {'VFINet_arch': ['VFINet'], 'rife': ['RIFEModel']}
 
     import sys
 

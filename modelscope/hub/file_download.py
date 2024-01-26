@@ -190,7 +190,7 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
 
 def download_part_with_retry(params):
     # unpack parameters
-    progress, start, end, url, file_name, cookies, headers = params
+    model_file_name, progress, start, end, url, file_name, cookies, headers = params
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['Range'] = 'bytes=%s-%s' % (start, end)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
@@ -216,8 +216,8 @@ def download_part_with_retry(params):
             break
         except (Exception) as e:  # no matter what exception, we will retry.
             retry = retry.increment('GET', url, error=e)
-            logger.warning('Download file from: %s to: %s failed, will retry' %
-                           (start, end))
+            logger.warning('Downloading: %s failed, reason: %s will retry' %
+                           (model_file_name, e))
             retry.sleep()
 
 
@@ -246,10 +246,10 @@ def parallel_download(
         for idx in range(int(file_size / PART_SIZE)):
             start = idx * PART_SIZE
             end = (idx + 1) * PART_SIZE - 1
-            tasks.append(
-                (progress, start, end, url, temp_file.name, cookies, headers))
+            tasks.append((file_name, progress, start, end, url, temp_file.name,
+                          cookies, headers))
         if end + 1 < file_size:
-            tasks.append((progress, end + 1, file_size - 1, url,
+            tasks.append((file_name, progress, end + 1, file_size - 1, url,
                           temp_file.name, cookies, headers))
         parallels = MODELSCOPE_DOWNLOAD_PARALLELS if MODELSCOPE_DOWNLOAD_PARALLELS <= 4 else 4
         with ThreadPoolExecutor(

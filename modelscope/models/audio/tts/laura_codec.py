@@ -8,12 +8,11 @@ from modelscope.models.base import Model
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Frameworks, Tasks
 
+__all__ = ['LauraCodecGenModel']
 
-@MODELS.register_module(
-    Tasks.speaker_verification, module_name=Models.generic_sv)
-@MODELS.register_module(
-    Tasks.speaker_diarization, module_name=Models.generic_sv)
-class SpeakerVerification(Model):
+
+@MODELS.register_module(Tasks.text_to_speech, module_name=Models.laura_codec)
+class LauraCodecGenModel(Model):
 
     def __init__(self, model_dir: str, model_name: str,
                  model_config: Dict[str, Any], *args, **kwargs):

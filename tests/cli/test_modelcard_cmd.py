@@ -9,6 +9,8 @@ import uuid
 from modelscope.hub.api import HubApi
 from modelscope.utils.test_utils import TEST_ACCESS_TOKEN1, TEST_MODEL_ORG
 
+os.environ['MKL_THREADING_LAYER'] = 'GNU'
+
 
 class ModelUploadCMDTest(unittest.TestCase):
 

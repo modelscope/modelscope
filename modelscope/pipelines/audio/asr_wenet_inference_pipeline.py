@@ -35,7 +35,7 @@ class WeNetAutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_fs: int = None,
                  recog_type: str = None,
                  audio_format: str = None) -> Dict[str, Any]:
-        from funasr.utils import asr_utils
+        # from funasr.utils import asr_utils
 
         self.recog_type = recog_type
         self.audio_format = audio_format
@@ -54,17 +54,17 @@ class WeNetAutomaticSpeechRecognitionPipeline(Pipeline):
         if checking_audio_fs is not None:
             self.audio_fs = checking_audio_fs
 
-        if recog_type is None or audio_format is None:
-            self.recog_type, self.audio_format, self.audio_in = asr_utils.type_checking(
-                audio_in=self.audio_in,
-                recog_type=recog_type,
-                audio_format=audio_format)
+        # if recog_type is None or audio_format is None:
+        #     self.recog_type, self.audio_format, self.audio_in = asr_utils.type_checking(
+        #         audio_in=self.audio_in,
+        #         recog_type=recog_type,
+        #         audio_format=audio_format)
 
-        if hasattr(asr_utils, 'sample_rate_checking'):
-            checking_audio_fs = asr_utils.sample_rate_checking(
-                self.audio_in, self.audio_format)
-            if checking_audio_fs is not None:
-                self.audio_fs = checking_audio_fs
+        # if hasattr(asr_utils, 'sample_rate_checking'):
+        #     checking_audio_fs = asr_utils.sample_rate_checking(
+        #         self.audio_in, self.audio_format)
+        #     if checking_audio_fs is not None:
+        #         self.audio_fs = checking_audio_fs
 
         inputs = {
             'audio': self.audio_in,

@@ -439,6 +439,30 @@ class HubApi:
         Returns:
             Tuple[List[str], List[str]]: Return list of branch name and tags
         """
+        tags_details = self.list_model_revisions_detail(model_id=model_id,
+                                                        cutoff_timestamp=cutoff_timestamp,
+                                                        use_cookies=use_cookies)
+        tags = [x['Revision'] for x in tags_details
+                ] if tags_details else []
+        return tags
+
+    def list_model_revisions_detail(
+            self,
+            model_id: str,
+            cutoff_timestamp: Optional[int] = None,
+            use_cookies: Union[bool, CookieJar] = False) -> List[str]:
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            cutoff_timestamp (int): Tags created before the cutoff will be included.
+                                    The timestamp is represented by the seconds elapsed from the epoch time.
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
+                        will load cookie from local. Defaults to False.
+
+        Returns:
+            Tuple[List[str], List[str]]: Return list of branch name and tags
+        """
         cookies = self._check_cookie(use_cookies)
         if cutoff_timestamp is None:
             cutoff_timestamp = get_release_datetime()
@@ -450,66 +474,84 @@ class HubApi:
         raise_on_error(d)
         info = d[API_RESPONSE_FIELD_DATA]
         # tags returned from backend are guaranteed to be ordered by create-time
-        tags = [x['Revision'] for x in info['RevisionMap']['Tags']
-                ] if info['RevisionMap']['Tags'] else []
-        return tags
+        return info['RevisionMap']['Tags']
 
-    def get_valid_revision(self,
-                           model_id: str,
-                           revision=None,
-                           cookies: Optional[CookieJar] = None):
+    def get_branch_tag_detail(self, details, name):
+        for item in details:
+            if item['Revision'] == name:
+                return item
+        return None
+
+    def get_valid_revision_detail(self,
+                                  model_id: str,
+                                  revision=None,
+                                  cookies: Optional[CookieJar] = None):
         release_timestamp = get_release_datetime()
         current_timestamp = int(round(datetime.datetime.now().timestamp()))
         # for active development in library codes (non-release-branches), release_timestamp
         # is set to be a far-away-time-in-the-future, to ensure that we shall
         # get the master-HEAD version from model repo by default (when no revision is provided)
+        all_branches_detail, all_tags_detail = self.get_model_branches_and_tags_details(
+            model_id, use_cookies=False if cookies is None else cookies)
+        all_branches = [x['Revision'] for x in all_branches_detail] if all_branches_detail else []
+        all_tags = [x['Revision'] for x in all_tags_detail] if all_tags_detail else []
         if release_timestamp > current_timestamp + ONE_YEAR_SECONDS:
-            branches, tags = self.get_model_branches_and_tags(
-                model_id, use_cookies=False if cookies is None else cookies)
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
                     'Model revision not specified, use default: %s in development mode'
                     % revision)
-            if revision not in branches and revision not in tags:
+            if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
+
+            revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
+            if revision_detail is None:
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
             logger.info('Development mode use revision: %s' % revision)
         else:
-            all_revisions = self.list_model_revisions(
-                model_id,
-                cutoff_timestamp=current_timestamp,
-                use_cookies=False if cookies is None else cookies)
-            if len(all_revisions) == 0:
+            if len(all_tags_detail) == 0:  # use no revision use master as default.
                 if revision is None or revision == MASTER_MODEL_BRANCH:
                     revision = MASTER_MODEL_BRANCH
                 else:
                     raise NotExistError('The model: %s has no revision: %s !' % (model_id, revision))
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
             else:
                 if revision is None:  # user not specified revision, use latest revision before release time
-                    revisions = self.list_model_revisions(
-                        model_id,
-                        cutoff_timestamp=release_timestamp,
-                        use_cookies=False if cookies is None else cookies)
-                    if len(revisions) > 0:
-                        revision = revisions[0]  # use latest revision before release time.
+                    revisions_detail = [x for x in
+                                        all_tags_detail if x['CreatedAt'] <= release_timestamp] if all_tags_detail else [] # noqa E501
+                    if len(revisions_detail) > 0:
+                        revision = revisions_detail[0]['Revision']  # use latest revision before release time.
+                        revision_detail = revisions_detail[0]
                     else:
                         revision = MASTER_MODEL_BRANCH
-                        vl = '[%s]' % ','.join(all_revisions)
+                        revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+                        vl = '[%s]' % ','.join(all_tags)
                         logger.warning('Model revision should be specified from revisions: %s' % (vl))
                     logger.warning('Model revision not specified, use revision: %s' % revision)
                 else:
                     # use user-specified revision
-                    if revision not in all_revisions:
+                    if revision not in all_tags:
                         if revision == MASTER_MODEL_BRANCH:
                             logger.warning('Using the master branch is fragile, please use it with caution!')
+                            revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
                         else:
-                            vl = '[%s]' % ','.join(all_revisions)
+                            vl = '[%s]' % ','.join(all_tags)
                             raise NotExistError('The model: %s has no revision: %s valid are: %s!' %
                                                 (model_id, revision, vl))
+                    else:
+                        revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
                     logger.info('Use user-specified model revision: %s' % revision)
-        return revision
+        return revision_detail
 
-    def get_model_branches_and_tags(
+    def get_valid_revision(self,
+                           model_id: str,
+                           revision=None,
+                           cookies: Optional[CookieJar] = None):
+        return self.get_valid_revision_detail(model_id=model_id,
+                                              revision=revision,
+                                              cookies=cookies)['Revision']
+
+    def get_model_branches_and_tags_details(
         self,
         model_id: str,
         use_cookies: Union[bool, CookieJar] = False,
@@ -533,10 +575,29 @@ class HubApi:
         d = r.json()
         raise_on_error(d)
         info = d[API_RESPONSE_FIELD_DATA]
-        branches = [x['Revision'] for x in info['RevisionMap']['Branches']
-                    ] if info['RevisionMap']['Branches'] else []
-        tags = [x['Revision'] for x in info['RevisionMap']['Tags']
-                ] if info['RevisionMap']['Tags'] else []
+        return info['RevisionMap']['Branches'], info['RevisionMap']['Tags']
+
+    def get_model_branches_and_tags(
+        self,
+        model_id: str,
+        use_cookies: Union[bool, CookieJar] = False,
+    ) -> Tuple[List[str], List[str]]:
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
+                        will load cookie from local. Defaults to False.
+
+        Returns:
+            Tuple[List[str], List[str]]: Return list of branch name and tags
+        """
+        branches_detail, tags_detail = self.get_model_branches_and_tags_details(model_id=model_id,
+                                                                                use_cookies=use_cookies)
+        branches = [x['Revision'] for x in branches_detail
+                    ] if branches_detail else []
+        tags = [x['Revision'] for x in tags_detail
+                ] if tags_detail else []
         return branches, tags
 
     def get_model_files(self,

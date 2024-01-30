@@ -5,6 +5,7 @@ import os
 import pickle
 import tempfile
 from shutil import move, rmtree
+from typing import Dict
 
 from modelscope.utils.logger import get_logger
 
@@ -159,11 +160,13 @@ class ModelFileSystemCache(FileSystemCache):
         else:
             return None
 
-    def save_model_version(self, revision: str):
+    def save_model_version(self, revision_info: Dict):
         model_version_file_path = os.path.join(
             self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
         with open(model_version_file_path, 'w') as f:
-            f.write(revision)
+            version_info_str = 'Revision:%s,CreatedAt:%s' % (
+                revision_info['Revision'], revision_info['CreatedAt'])
+            f.write(version_info_str)
 
     def get_model_id(self):
         return self.model_meta[FileSystemCache.MODEL_META_MODEL_ID]

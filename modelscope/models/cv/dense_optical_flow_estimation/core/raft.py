@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from modelscope.models.base.base_torch_model import TorchModel
 
 from modelscope.models.cv.dense_optical_flow_estimation.core.update import BasicUpdateBlock, SmallUpdateBlock
 from modelscope.models.cv.dense_optical_flow_estimation.core.extractor import BasicEncoder, SmallEncoder
@@ -21,7 +22,7 @@ except:
             pass
 
 
-class RAFT(nn.Module):
+class RAFT(TorchModel):
     def __init__(self, args):
         super(RAFT, self).__init__()
         self.args = args

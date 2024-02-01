@@ -130,17 +130,19 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
         return data
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        results = self.model.inference(input)
+        image1 = input["image1"]
+        image2 = input["image2"]
+
+        flow_ups = self.model(image1, image2)
+        results = flow_ups[-1]
+
         return results
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        results = self.model.postprocess(inputs)
-        flows = results[OutputKeys.FLOWS]
-        
-        flows_color = flow_to_color(flows)
+        flows_color = flow_to_color(inputs)
         flows_color = flows_color[:,:,[2,1,0]]
         outputs = {
-            OutputKeys.FLOWS: flows,
+            OutputKeys.FLOWS: inputs,
             OutputKeys.FLOWS_COLOR: flows_color
         }
 

@@ -1,5 +1,5 @@
 # The implementation is adopted from OpenAI-CLIP,
-# made pubicly available under the MIT License at https://github.com/openai/CLIP
+# made publicly available under the MIT License at https://github.com/openai/CLIP
 
 import math
 import sys

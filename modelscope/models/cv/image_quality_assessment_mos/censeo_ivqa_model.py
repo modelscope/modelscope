@@ -1,4 +1,4 @@
-# The implementation is adopted from CenseoQoE, made pubicly available under the MIT License at
+# The implementation is adopted from CenseoQoE, made publicly available under the MIT License at
 # https://github.com/Tencent/CenseoQoE
 
 import torch

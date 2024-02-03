@@ -155,7 +155,7 @@ class ParallelSelfAttention(torch.nn.Module):
     """Parallel self-attention layer for GPT2.
 
     Self-attention layer takes input with size [b, s, h] where b is
-    the batch size, s is the sequence lenght, and h is the hidden size
+    the batch size, s is the sequence length, and h is the hidden size
     and creates output of the same size.
     Arguments:
         hidden_size: total hidden size of the layer (h).

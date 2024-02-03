@@ -46,7 +46,7 @@ class BertConfig(object):
                 (e.g., 512 or 1024 or 2048).
             type_vocab_size: The vocabulary size of the `token_type_ids` passed into
                 `BertModel`.
-            initializer_range: The sttdev of the truncated_normal_initializer for
+            initializer_range: The stdev of the truncated_normal_initializer for
                 initializing all weight matrices.
             layer_norm_eps: The epsilon used by LayerNorm.
     """

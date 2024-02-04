@@ -40,6 +40,30 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 m_logger = get_logger()
 
 
+class ArgsList():
+    """ArgsList Class"""
+
+    def __init__(self) -> None:
+        self.workers = 4
+        self.epochs = 11
+        self.start_epoch = 0
+        self.criterion = 'l2'
+        self.batch_size = 1
+        self.learning_rate = 1e-5
+        self.weight_decay = 0
+        self.print_freq = 10
+        self.resume = ''
+        self.data_folder = '../data'
+        self.input = 'gd'
+        self.layers = 34
+        self.pretrained = True
+        self.val = 'select'
+        self.jitter = 0.1
+        self.rank_metric = 'rmse'
+        self.evaluate = ''
+        self.cpu = False
+
+
 @MODELS.register_module(
     Tasks.self_supervised_depth_completion,
     module_name=Models.self_supervised_depth_completion)
@@ -49,11 +73,8 @@ class SelfSupervisedDepthCompletion(TorchModel):
     def __init__(self, model_dir: str, **kwargs):
         """str -- model file root."""
         super().__init__(model_dir, **kwargs)
-        parser = ArgumentParser(description='Testing script parameters')
-        self.add_args(parser)
 
-        args = parser.parse_args()
-
+        args = ArgsList()
         # define loss functions
         self.depth_criterion = criteria.MaskedMSELoss()
         self.photometric_criterion = criteria.PhotometricLoss()
@@ -113,112 +134,6 @@ class SelfSupervisedDepthCompletion(TorchModel):
 
         self.model = model
         self.args = args
-
-    def add_args(self, parser):
-        """add args."""
-        parser.add_argument(
-            '-w',
-            '--workers',
-            default=4,
-            type=int,
-            metavar='N',
-            help='number of data loading workers (default: 4)')
-        parser.add_argument(
-            '--epochs',
-            default=11,
-            type=int,
-            metavar='N',
-            help='number of total epochs to run (default: 11)')
-        parser.add_argument(
-            '--start-epoch',
-            default=0,
-            type=int,
-            metavar='N',
-            help='manual epoch number (useful on restarts)')
-        parser.add_argument(
-            '-c',
-            '--criterion',
-            metavar='LOSS',
-            default='l2',
-            choices=criteria.loss_names,
-            help='loss function: | '.join(criteria.loss_names)
-            + ' (default: l2)')
-        parser.add_argument(
-            '-b',
-            '--batch-size',
-            default=1,
-            type=int,
-            help='mini-batch size (default: 1)')
-        parser.add_argument(
-            '--lr',
-            '--learning-rate',
-            default=1e-5,
-            type=float,
-            metavar='LR',
-            help='initial learning rate (default 1e-5)')
-        parser.add_argument(
-            '--weight-decay',
-            '--wd',
-            default=0,
-            type=float,
-            metavar='W',
-            help='weight decay (default: 0)')
-        parser.add_argument(
-            '--print-freq',
-            '-p',
-            default=10,
-            type=int,
-            metavar='N',
-            help='print frequency (default: 10)')
-        parser.add_argument(
-            '--resume',
-            default='',
-            type=str,
-            metavar='PATH',
-            help='path to latest checkpoint (default: none)')
-        parser.add_argument(
-            '--data-folder',
-            default='../data',
-            type=str,
-            metavar='PATH',
-            help='data folder (default: none)')
-        parser.add_argument(
-            '-i',
-            '--input',
-            type=str,
-            default='gd',
-            choices=input_options,
-            help='input: | '.join(input_options))
-        parser.add_argument(
-            '-l',
-            '--layers',
-            type=int,
-            default=34,
-            help='use 16 for sparse_conv; use 18 or 34 for resnet')
-        parser.add_argument(
-            '--pretrained',
-            action='store_true',
-            help='use ImageNet pre-trained weights')
-        parser.add_argument(
-            '--val',
-            type=str,
-            default='select',
-            choices=['select', 'full'],
-            help='full or select validation set')
-        parser.add_argument(
-            '--jitter',
-            type=float,
-            default=0.1,
-            help='color jitter for images')
-        parser.add_argument(
-            '--rank-metric',
-            type=str,
-            default='rmse',
-            choices=[m for m in dir(Result()) if not m.startswith('_')],
-            help='metrics for which best result is sbatch_datacted')
-        parser.add_argument(
-            '-e', '--evaluate', default='', type=str, metavar='PATH')
-        parser.add_argument('--cpu', action='store_true', help='run on cpu')
 
     def iterate(self, mode, args, loader, model, optimizer, logger, epoch):
         """iterate data"""

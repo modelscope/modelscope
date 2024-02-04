@@ -117,7 +117,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/mmcv_full-1.7.0-cp310-cp310-linux_x86_64.whl; \
+        pip install --no-cache-dir mmcv-full==1.7.0+torch2.1.1cu121 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     else \
         pip install --no-cache-dir mmcv_full==1.7.0+torch2.1cpu -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     fi

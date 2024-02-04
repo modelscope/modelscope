@@ -547,6 +547,9 @@ class PipelineInfomation():
             },
         }
 
+    def __getitem__(self, key):
+        return self.__dict__.get('_%s' % key)
+
 
 def is_url(url: str):
     """Check the input url is valid url.
@@ -645,7 +648,7 @@ def call_pipeline_with_json(pipeline_info: PipelineInfomation,
     #     result = pipeline(**pipeline_inputs)
     # else:
     pipeline_inputs, parameters = service_base64_input_to_pipeline_input(
-        pipeline_info['task_name'], body)
+        pipeline_info.task_name, body)
     result = pipeline(pipeline_inputs, **parameters)
 
     return result

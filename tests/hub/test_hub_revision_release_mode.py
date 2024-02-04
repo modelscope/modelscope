@@ -77,6 +77,7 @@ class HubRevisionTest(unittest.TestCase):
         with mock.patch.dict(os.environ, self.modified_environ, clear=True):
             self.prepare_repo_data()  # no tag, default get master
             with tempfile.TemporaryDirectory() as temp_cache_dir:
+                time.sleep(11)
                 snapshot_path = snapshot_download(
                     self.model_id, cache_dir=temp_cache_dir)
                 assert os.path.exists(
@@ -94,6 +95,7 @@ class HubRevisionTest(unittest.TestCase):
             branch_name = 'test'
             self.add_new_file_and_branch_to_repo(branch_name)
             with tempfile.TemporaryDirectory() as temp_cache_dir:
+                time.sleep(10)
                 snapshot_path = snapshot_download(
                     self.model_id,
                     revision=branch_name,
@@ -101,6 +103,7 @@ class HubRevisionTest(unittest.TestCase):
                 assert os.path.exists(
                     os.path.join(snapshot_path, download_model_file_name))
             with tempfile.TemporaryDirectory() as temp_cache_dir:
+                time.sleep(11)
                 file_path = model_file_download(
                     self.model_id,
                     download_model_file_name,
@@ -113,7 +116,7 @@ class HubRevisionTest(unittest.TestCase):
             self.prepare_repo_data_and_tag()
             t1 = datetime.now().isoformat(sep=' ', timespec='seconds')
             logger.info('First time: %s' % t1)
-            time.sleep(10)
+            time.sleep(11)
             self.add_new_file_and_tag_to_repo()
             t2 = datetime.now().isoformat(sep=' ', timespec='seconds')
             logger.info('Second time: %s' % t2)
@@ -134,6 +137,7 @@ class HubRevisionTest(unittest.TestCase):
                 version.__release_datetime__ = t2
                 logger.info('Setting __release_datetime__ to: %s' % t2)
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    time.sleep(11)
                     snapshot_path = snapshot_download(
                         self.model_id, cache_dir=temp_cache_dir)
                     assert os.path.exists(
@@ -169,6 +173,7 @@ class HubRevisionTest(unittest.TestCase):
                     assert not os.path.exists(
                         os.path.join(snapshot_path, download_model_file_name2))
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    time.sleep(11)
                     snapshot_path = snapshot_download(
                         self.model_id,
                         revision=self.revision2,

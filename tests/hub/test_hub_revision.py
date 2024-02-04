@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import tempfile
+import time
 import unittest
 import uuid
 from datetime import datetime
@@ -87,6 +88,7 @@ class HubRevisionTest(unittest.TestCase):
             os.path.join(snapshot_path, download_model_file_name))
         self.add_new_file_and_tag()
         with tempfile.TemporaryDirectory() as temp_cache_dir:
+            time.sleep(11)
             snapshot_path = snapshot_download(
                 self.model_id,
                 revision=self.revision,
@@ -96,6 +98,7 @@ class HubRevisionTest(unittest.TestCase):
             assert not os.path.exists(
                 os.path.join(snapshot_path, download_model_file_name2))
         with tempfile.TemporaryDirectory() as temp_cache_dir:
+            time.sleep(11)
             snapshot_path = snapshot_download(
                 self.model_id,
                 revision=self.revision2,

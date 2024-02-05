@@ -30,8 +30,8 @@ def inter_distances(tensors: torch.Tensor):
     """
     distances = []
     for i, j in torch.combinations(torch.arange(tensors.shape[0])):
-        arr1 = tensors[i : i + 1]
-        arr2 = tensors[j : j + 1]
+        arr1 = tensors[i: i + 1]
+        arr2 = tensors[j: j + 1]
         distances.append(arr1 - arr2)
     dist = torch.concatenate(distances, dim=0)
     return dist
@@ -74,9 +74,9 @@ def ensemble_depths(
 
     # objective function
     def closure(x):
-        l = len(x)
-        s = x[: int(l / 2)]
-        t = x[int(l / 2) :]
+        length = len(x)
+        s = x[: int(length / 2)]
+        t = x[int(length / 2):]
         s = torch.from_numpy(s).to(dtype=dtype).to(device)
         t = torch.from_numpy(t).to(dtype=dtype).to(device)
 
@@ -102,9 +102,9 @@ def ensemble_depths(
         closure, x, method="BFGS", tol=tol, options={"maxiter": max_iter, "disp": False}
     )
     x = res.x
-    l = len(x)
-    s = x[: int(l / 2)]
-    t = x[int(l / 2) :]
+    length = len(x)
+    s = x[: int(length / 2)]
+    t = x[int(length / 2):]
 
     # Prediction
     s = torch.from_numpy(s).to(dtype=dtype).to(device)

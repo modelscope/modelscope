@@ -18,10 +18,11 @@ logger = get_logger()
 class ImageDepthEstimationMarigoldPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
-        """
+        r"""
         use `model` to create a image depth estimation pipeline for prediction
         Args:
-            model: model id on modelscope hub.
+        
+        >>> model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
         logger.info('depth estimation marigold model, pipeline init')

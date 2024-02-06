@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import sys
 import warnings
 from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
@@ -224,7 +225,9 @@ class MsDataset:
             return MsDataset.to_ms_dataset(dataset_inst, target=target)
 
         dataset_name = os.path.expanduser(dataset_name)
-        is_local_path = os.path.exists(dataset_name)
+        is_local_path = os.path.exists(dataset_name) and len(
+            os.listdir(dataset_name)) > 0
+        # Parse the path in form of `namespace/dataset_name`
         if is_relative_path(dataset_name) and dataset_name.count(
                 '/') == 1 and not is_local_path:
             dataset_name_split = dataset_name.split('/')
@@ -251,8 +254,8 @@ class MsDataset:
             **config_kwargs)
 
         # Load from local disk
-        if dataset_name in _PACKAGED_DATASETS_MODULES or os.path.isdir(
-                dataset_name) or os.path.isfile(dataset_name):
+        if dataset_name in _PACKAGED_DATASETS_MODULES or is_local_path or os.path.isfile(
+                dataset_name):
             dataset_inst = LocalDataLoaderManager(
                 dataset_context_config).load_dataset(
                     LocalDataLoaderType.HF_DATA_LOADER)

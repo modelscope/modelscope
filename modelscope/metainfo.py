@@ -120,7 +120,6 @@ class Models(object):
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
     surface_recon_common = 'surface-recon-common'
     bts_depth_estimation = 'bts-depth-estimation'
-    marigold_depth_estimation = 'marigold-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'

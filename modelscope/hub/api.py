@@ -774,7 +774,11 @@ class HubApi:
                     else:
                         with_header = False
                     chunk_df = pd.DataFrame(chunk)
-                    chunk_df.to_csv(f, index=False, header=with_header)
+                    try:
+                        chunk_df.to_csv(f, index=False, header=with_header)
+                    except Exception as e:
+                        logger.info(f'Failed to dump dataframe chunk to csv: {e}, try to set escapechar')
+                        chunk_df.to_csv(f, index=False, header=with_header, escapechar='\\')
                     iter_num += 1
                 else:
                     # csv or others

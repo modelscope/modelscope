@@ -1,46 +1,38 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 from typing import Any, Dict, Union
 
-from PIL import Image
-import torch
 import numpy as np
-import os
+import torch
+from diffusers import (AutoencoderKL, DDIMScheduler, DiffusionPipeline,
+                       UNet2DConditionModel)
 from PIL import Image
-from tqdm.auto import tqdm
-from typing import Dict
 from torch.utils.data import DataLoader, TensorDataset
+from tqdm.auto import tqdm
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.cv.image_depth_estimation_marigold import (
+    MarigoldDepthOutput, chw2hwc, colorize_depth_maps, ensemble_depths,
+    find_batch_size, inter_distances, resize_max_res)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
-from diffusers import (
-    DiffusionPipeline,
-    DDIMScheduler,
-    UNet2DConditionModel,
-    AutoencoderKL,
-)
-
-from transformers import CLIPTextModel, CLIPTokenizer
-from modelscope.models.cv.image_depth_estimation_marigold import MarigoldDepthOutput
-from modelscope.models.cv.image_depth_estimation_marigold import (
-    find_batch_size, inter_distances, ensemble_depths,
-    colorize_depth_maps, chw2hwc, resize_max_res)
-
 logger = get_logger()
 
 
 @PIPELINES.register_module(
-    Tasks.image_depth_estimation, module_name=Pipelines.image_depth_estimation_marigold)
+    Tasks.image_depth_estimation,
+    module_name=Pipelines.image_depth_estimation_marigold)
 class ImageDepthEstimationMarigoldPipeline(Pipeline):
 
     def __init__(self, model=str, **kwargs):
         r"""
         use `model` to create a image depth estimation pipeline for prediction
-        Args:        
+        Args:
         >>> model: modelscope model_id "Damo_XR_Lab/cv_marigold_monocular-depth-estimation"
 
         Examples:
@@ -55,14 +47,14 @@ class ImageDepthEstimationMarigoldPipeline(Pipeline):
         >>> pipe = pipeline(
         >>>     Tasks.image_depth_estimation,
         >>>     model='Damo_XR_Lab/cv_marigold_monocular-depth-estimation')
-        >>> 
+        >>>
         >>> depth_vis = pipe(input)[OutputKeys.DEPTHS_COLOR]
         >>> depth_vis.save(output_image_path)
         >>> print('pipeline: the output image path is {}'.format(output_image_path))
 
         """
         super().__init__(model=model, **kwargs)
-        
+
         self._device = getattr(
             kwargs, 'device',
             torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
@@ -70,14 +62,13 @@ class ImageDepthEstimationMarigoldPipeline(Pipeline):
         logger.info('load depth estimation marigold pipeline done')
 
         self.checkpoint_path = os.path.join(model, 'Marigold_v1_merged_2')
-        self.pipeline = _MarigoldPipeline.from_pretrained(self.checkpoint_path, 
-                                                         torch_dtype = self._dtype)
+        self.pipeline = _MarigoldPipeline.from_pretrained(
+            self.checkpoint_path, torch_dtype=self._dtype)
         self.pipeline.to(self._device)
-
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         # print('pipeline preprocess')
-        #TODO: input type: Image
+        # TODO: input type: Image
         return input
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
@@ -101,7 +92,7 @@ class _MarigoldPipeline(DiffusionPipeline):
     """
     Pipeline for monocular depth estimation using Marigold: https://marigoldmonodepth.github.io.
 
-    This model inherits from [`DiffusionPipeline`]. 
+    This model inherits from [`DiffusionPipeline`].
     Check the superclass documentation for the generic methods the
     library implements for all the pipelines (such as downloading or saving, running on a particular device, etc.)
 
@@ -119,7 +110,7 @@ class _MarigoldPipeline(DiffusionPipeline):
             CLIP tokenizer.
     """
     rgb_latent_scale_factor = 0.18215
-    depth_latent_scale_factor = 0.18215        
+    depth_latent_scale_factor = 0.18215
 
     def __init__(
         self,
@@ -150,7 +141,7 @@ class _MarigoldPipeline(DiffusionPipeline):
         processing_res: int = 768,
         match_input_res: bool = True,
         batch_size: int = 0,
-        color_map: str = "Spectral",
+        color_map: str = 'Spectral',
         show_progress_bar: bool = True,
         ensemble_kwargs: Dict = None,
     ) -> MarigoldDepthOutput:
@@ -182,7 +173,8 @@ class _MarigoldPipeline(DiffusionPipeline):
         Returns:
             `MarigoldDepthOutput`: Output class for Marigold monocular depth prediction pipeline, including:
             - **depth_np** (`np.ndarray`) Predicted depth map, with depth values in the range of [0, 1]
-            - **depth_colored** (`PIL.Image.Image`) Colorized depth map, with the shape of [3, H, W] and values in [0, 1]
+            - **depth_colored** (`PIL.Image.Image`) Colorized depth map, with the shape of [3, H, W]
+                    and values in [0, 1]
             - **uncertainty** (`None` or `np.ndarray`) Uncalibrated uncertainty(MAD, median absolute deviation)
                     coming from ensembling. None if `ensemble_size = 1`
         """
@@ -191,9 +183,8 @@ class _MarigoldPipeline(DiffusionPipeline):
         input_size = input_image.size
 
         if not match_input_res:
-            assert (
-                processing_res is not None
-            ), "Value error: `resize_output_back` is only valid with "
+            assert (processing_res is not None
+                    ), 'Value error: `resize_output_back` is only valid with '
         assert processing_res >= 0
         assert denoising_steps >= 1
         assert ensemble_size >= 1
@@ -202,10 +193,9 @@ class _MarigoldPipeline(DiffusionPipeline):
         # Resize image
         if processing_res > 0:
             input_image = resize_max_res(
-                input_image, max_edge_resolution=processing_res
-            )
+                input_image, max_edge_resolution=processing_res)
         # Convert the image to RGB, to 1.remove the alpha channel 2.convert B&W to 3-channel
-        input_image = input_image.convert("RGB")
+        input_image = input_image.convert('RGB')
         image = np.asarray(input_image)
 
         # Normalize rgb values
@@ -229,19 +219,19 @@ class _MarigoldPipeline(DiffusionPipeline):
             )
 
         single_rgb_loader = DataLoader(
-            single_rgb_dataset, batch_size=_bs, shuffle=False
-        )
+            single_rgb_dataset, batch_size=_bs, shuffle=False)
 
         # Predict depth maps (batched)
         depth_pred_ls = []
         if show_progress_bar:
             iterable = tqdm(
-                single_rgb_loader, desc=" " * 2 + "Inference batches", leave=False
-            )
+                single_rgb_loader,
+                desc=' ' * 2 + 'Inference batches',
+                leave=False)
         else:
             iterable = single_rgb_loader
         for batch in iterable:
-            (batched_img,) = batch
+            (batched_img, ) = batch
             depth_pred_raw = self.single_infer(
                 rgb_in=batched_img,
                 num_inference_steps=denoising_steps,
@@ -254,8 +244,7 @@ class _MarigoldPipeline(DiffusionPipeline):
         # ----------------- Test-time ensembling -----------------
         if ensemble_size > 1:
             depth_pred, pred_uncert = ensemble_depths(
-                depth_preds, **(ensemble_kwargs or {})
-            )
+                depth_preds, **(ensemble_kwargs or {}))
         else:
             depth_pred = depth_preds
             pred_uncert = None
@@ -279,8 +268,9 @@ class _MarigoldPipeline(DiffusionPipeline):
         depth_pred = depth_pred.clip(0, 1)
 
         # Colorize
-        depth_colored = colorize_depth_maps(depth_pred, 0, 1, 
-                                            cmap=color_map).squeeze()  # [3, H, W], value in (0, 1)
+        depth_colored = colorize_depth_maps(
+            depth_pred, 0, 1,
+            cmap=color_map).squeeze()  # [3, H, W], value in (0, 1)
         depth_colored = (depth_colored * 255).astype(np.uint8)
         depth_colored_hwc = chw2hwc(depth_colored)
         depth_colored_img = Image.fromarray(depth_colored_hwc)
@@ -294,21 +284,21 @@ class _MarigoldPipeline(DiffusionPipeline):
         """
         Encode text embedding for empty prompt
         """
-        prompt = ""
+        prompt = ''
         text_inputs = self.tokenizer(
             prompt,
-            padding="do_not_pad",
+            padding='do_not_pad',
             max_length=self.tokenizer.model_max_length,
             truncation=True,
-            return_tensors="pt",
+            return_tensors='pt',
         )
         text_input_ids = text_inputs.input_ids.to(self.text_encoder.device)
-        self.empty_text_embed = self.text_encoder(text_input_ids)[0].to(self.dtype)
+        self.empty_text_embed = self.text_encoder(text_input_ids)[0].to(
+            self.dtype)
 
     @torch.no_grad()
-    def single_infer(
-        self, rgb_in: torch.Tensor, num_inference_steps: int, show_pbar: bool
-    ) -> torch.Tensor:
+    def single_infer(self, rgb_in: torch.Tensor, num_inference_steps: int,
+                     show_pbar: bool) -> torch.Tensor:
         r"""
         Perform an individual depth prediction without ensembling.
 
@@ -333,15 +323,13 @@ class _MarigoldPipeline(DiffusionPipeline):
 
         # Initial depth map (noise)
         depth_latent = torch.randn(
-            rgb_latent.shape, device=device, dtype=self.dtype
-        )  # [B, 4, h, w]
+            rgb_latent.shape, device=device, dtype=self.dtype)  # [B, 4, h, w]
 
         # Batched empty text embedding
         if self.empty_text_embed is None:
             self.__encode_empty_text()
         batch_empty_text_embed = self.empty_text_embed.repeat(
-            (rgb_latent.shape[0], 1, 1)
-        )  # [B, 2, 1024]
+            (rgb_latent.shape[0], 1, 1))  # [B, 2, 1024]
 
         # Denoising loop
         if show_pbar:
@@ -349,15 +337,14 @@ class _MarigoldPipeline(DiffusionPipeline):
                 enumerate(timesteps),
                 total=len(timesteps),
                 leave=False,
-                desc=" " * 4 + "Diffusion denoising",
+                desc=' ' * 4 + 'Diffusion denoising',
             )
         else:
             iterable = enumerate(timesteps)
 
         for i, t in iterable:
-            unet_input = torch.cat(
-                [rgb_latent, depth_latent], dim=1
-            )  # this order is important
+            unet_input = torch.cat([rgb_latent, depth_latent],
+                                   dim=1)  # this order is important
 
             # predict the noise residual
             noise_pred = self.unet(
@@ -365,7 +352,8 @@ class _MarigoldPipeline(DiffusionPipeline):
             ).sample  # [B, 4, h, w]
 
             # compute the previous noisy sample x_t -> x_t-1
-            depth_latent = self.scheduler.step(noise_pred, t, depth_latent).prev_sample
+            depth_latent = self.scheduler.step(noise_pred, t,
+                                               depth_latent).prev_sample
         torch.cuda.empty_cache()
         depth = self.decode_depth(depth_latent)
 
@@ -414,7 +402,7 @@ class _MarigoldPipeline(DiffusionPipeline):
         # mean of output channels
         depth_mean = stacked.mean(dim=1, keepdim=True)
         return depth_mean
-    
+
     def forward(self, x):
         out = self.__call__(x)
         return out

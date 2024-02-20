@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import os.path as osp
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Tuple, Union
 
 import json
 import torch
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedModel, PreTrainedTokenizer
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
@@ -20,6 +19,8 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import Invoke, ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.model_type_helper import ModelTypeHelper
+from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
+                                               add_stream_generate)
 
 logger = get_logger()
 
@@ -72,7 +73,7 @@ class LLMAdapterRegistry:
 
 @PIPELINES.register_module(Tasks.chat, module_name='llm')
 @PIPELINES.register_module(Tasks.text_generation, module_name='llm')
-class LLMPipeline(Pipeline):
+class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def initiate_single_model(self, model):
         if isinstance(model, str):
@@ -168,6 +169,8 @@ class LLMPipeline(Pipeline):
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         with self._temp_configuration_file(kwargs):
             super().__init__(*args, **kwargs)
+        if isinstance(self.model, PreTrainedModel):
+            self.model = add_stream_generate(self.model)
 
         tokenizer_class = None
         if isinstance(format_messages, str):

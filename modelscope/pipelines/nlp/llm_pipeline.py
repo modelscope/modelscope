@@ -288,7 +288,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 yield out
 
     def preprocess(self, inputs: Union[str, Dict], **kwargs):
-        if kwargs.get('is_messages'):
+        is_messages = kwargs.pop('is_messages')
+        if is_messages:
             tokens = self.format_messages(inputs, self.tokenizer, **kwargs)
         else:
             tokens = self.tokenizer(inputs, return_tensors='pt', **kwargs)
@@ -310,13 +311,13 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         }
 
     def postprocess(self, outputs, **kwargs):
-
+        is_messages = kwargs.pop('is_messages')
         if not isinstance(outputs, str):
             response = self.tokenizer.decode(
                 outputs, skip_special_tokens=True, **kwargs)
         else:
             response = outputs
-        if kwargs.get('is_messages'):
+        if is_messages:
             response = self.format_output(response, **kwargs)
         else:
             response = {OutputKeys.TEXT: response}

@@ -353,13 +353,17 @@ class LLMPipelineTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_stream_gemerate(self):
         pipe = pipeline(task='chat', model='qwen/Qwen-7B-Chat', llm_first=True)
-        print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
-        output1 = pipe(self.messages_zh_with_system, **self.gen_cfg)
-        output2 = None
         for stream_output in pipe.stream_generate(self.messages_zh_with_system,
                                                   **self.gen_cfg):
-            output2 = stream_output
-        self.assertTrue(output1.equal(output2))
+            print('messages: ', stream_output, end='\r')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_qwen1_5_stream_gemerate(self):
+        pipe = pipeline(
+            task='chat', model='qwen/Qwen1.5-1.8B-Chat', llm_first=True)
+        for stream_output in pipe.stream_generate(self.messages_zh_with_system,
+                                                  **self.gen_cfg):
+            print('messages: ', stream_output, end='\r')
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-# Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team and Alibaba inc.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team and Alibaba inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ class BertConfig(object):
                 (e.g., 512 or 1024 or 2048).
             type_vocab_size: The vocabulary size of the `token_type_ids` passed into
                 `BertModel`.
-            initializer_range: The sttdev of the truncated_normal_initializer for
+            initializer_range: The stdev of the truncated_normal_initializer for
                 initializing all weight matrices.
         """
         self.vocab_size = vocab_size

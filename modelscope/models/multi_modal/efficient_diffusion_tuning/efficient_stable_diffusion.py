@@ -1,6 +1,6 @@
 # Copyright 2023-2024 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 # The implementation is adopted from HighCWu,
-# made pubicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
+# made publicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
 import os
 import os.path as osp
 from functools import partial

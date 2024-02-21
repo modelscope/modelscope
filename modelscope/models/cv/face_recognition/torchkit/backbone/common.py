@@ -1,4 +1,4 @@
-# The implementation is adopted from TFace,made pubicly available under the Apache-2.0 license at
+# The implementation is adopted from TFace,made publicly available under the Apache-2.0 license at
 # https://github.com/Tencent/TFace/blob/master/recognition/torchkit/backbone/common.py
 import torch
 import torch.nn as nn

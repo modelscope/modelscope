@@ -1,4 +1,4 @@
-# This implementation is adopted from CLIP-Interrogator, made pubicly available under the MIT License at
+# This implementation is adopted from CLIP-Interrogator, made publicly available under the MIT License at
 # https://github.com/pharmapsychotic/clip-interrogator/blob/main/clip_interrogator/clip_interrogator.py
 
 import hashlib

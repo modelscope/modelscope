@@ -656,7 +656,7 @@ class PreTrainedBertModel(nn.Module):
                     . `bert_config.json` a configuration file for the model
                     . `pytorch_model.bin` a PyTorch dump of a BertForPreTraining instance
             cache_dir: an optional path to a folder in which the pre-trained models will be cached.
-            state_dict: an optional state dictionnary (collections.OrderedDict object)
+            state_dict: an optional state dictionary (collections.OrderedDict object)
                 to use instead of Google pre-trained models
             *inputs, **kwargs: additional input for the specific Bert class
                 (ex: num_labels for BertForSequenceClassification)

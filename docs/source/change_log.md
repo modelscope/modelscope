@@ -16,7 +16,7 @@ Second internal release.
 * add palm2.0
 * add space model
 * add MPLUG model
-* add dialog_intent, dialog_modeling, dialog state tracking pipleline
+* add dialog_intent, dialog_modeling, dialog state tracking pipeline
 * add maskedlm model and fill_mask pipeline
 * add nli pipeline
 * add sentence similarity pipeline
@@ -28,7 +28,7 @@ Second internal release.
 
 #### Audio
 * add tts pipeline
-* add kws kwsbp pipline
+* add kws kwsbp pipeline
 * add linear aec pipeline
 * add ans pipeline
 

@@ -728,11 +728,24 @@ class HubApi:
             file_name: str,
             dataset_name: str,
             namespace: str,
-            revision: Optional[str] = DEFAULT_DATASET_REVISION):
-        if file_name and os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
-            file_name = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
-                        f'Revision={revision}&FilePath={file_name}'
-        return file_name
+            revision: Optional[str] = DEFAULT_DATASET_REVISION,
+            extension_filter: Optional[bool] = True):
+
+        if not file_name or not dataset_name or not namespace:
+            raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
+
+        file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+                   f'Revision={revision}&FilePath={file_name}'
+
+        if extension_filter:
+            if os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
+                file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'\
+                           f'Revision={revision}&FilePath={file_name}'
+            else:
+                file_url = file_name
+            return file_url
+        else:
+            return file_url
 
     def get_dataset_access_config(
             self,

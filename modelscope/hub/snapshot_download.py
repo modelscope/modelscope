@@ -10,8 +10,7 @@ from typing import Dict, List, Optional, Union
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .constants import (FILE_HASH, MINIMUM_DOWNLOAD_INTERVAL_SECONDS,
-                        MODELSCOPE_DOWNLOAD_PARALLELS,
+from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
                         MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
 from .file_download import (get_file_download_url, http_get_file,
                             parallel_download)

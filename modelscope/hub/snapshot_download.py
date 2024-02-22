@@ -3,8 +3,6 @@
 import os
 import re
 import tempfile
-import threading
-import time
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -22,8 +20,6 @@ from .utils.utils import (file_integrity_validation, get_cache_dir,
                           model_id_to_group_owner_name)
 
 logger = get_logger()
-
-recent_downloaded = threading.local()
 
 
 def snapshot_download(model_id: str,
@@ -81,17 +77,6 @@ def snapshot_download(model_id: str,
 
     cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
 
-    is_recent_downloaded = False
-    current_time = time.time()
-    recent_download_models = getattr(recent_downloaded, 'models', None)
-    if recent_download_models is None:
-        recent_downloaded.models = {}
-    else:
-        if model_id in recent_download_models:
-            recent_download_time = recent_download_models[model_id]
-            if current_time - recent_download_time < MINIMUM_DOWNLOAD_INTERVAL_SECONDS:
-                is_recent_downloaded = True
-                recent_download_models[model_id] = current_time
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -102,9 +87,6 @@ def snapshot_download(model_id: str,
                        % revision)
         return cache.get_root_location(
         )  # we can not confirm the cached file is for snapshot 'revision'
-    elif is_recent_downloaded:
-        logger.warning('Download interval is too small, use local cache')
-        return cache.get_root_location()
     else:
         # make headers
         headers = {
@@ -187,5 +169,4 @@ def snapshot_download(model_id: str,
                 cache.put_file(model_file, temp_file)
 
         cache.save_model_version(revision_info=revision_detail)
-        recent_downloaded.models[model_id] = time.time()
         return os.path.join(cache.get_root_location())

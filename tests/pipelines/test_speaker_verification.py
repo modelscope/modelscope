@@ -38,9 +38,6 @@ class SpeakerVerificationTest(unittest.TestCase):
     res2net_3dspeaker_16k_model_id = 'iic/speech_res2net_sv_zh-cn_3dspeaker_16k'
     lre_eres2net_large_five_lang_8k_model_id = 'damo/speech_eres2net_large_five_lre_8k'
 
-    def setUp(self) -> None:
-        self.task = Tasks.speaker_verification
-
     def run_pipeline(self,
                      model_id: str,
                      audios: Union[List[str], str],
@@ -48,6 +45,8 @@ class SpeakerVerificationTest(unittest.TestCase):
                      model_revision=None) -> Dict[str, Any]:
         if task is not None:
             self.task = task
+        else:
+            self.task = Tasks.speaker_verification
         p = pipeline(
             task=self.task, model=model_id, model_revision=model_revision)
         result = p(audios)

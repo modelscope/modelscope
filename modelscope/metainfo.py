@@ -132,6 +132,7 @@ class Models(object):
     image_control_3d_portrait = 'image-control-3d-portrait'
     rife = 'rife'
     anydoor = 'anydoor'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
     # nlp models
     bert = 'bert'
@@ -469,6 +470,7 @@ class Pipelines(object):
     rife_video_frame_interpolation = 'rife-video-frame-interpolation'
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -959,7 +961,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                  'damo/cv_image-view-transform'),
     Tasks.image_control_3d_portrait: (
         Pipelines.image_control_3d_portrait,
-        'damo/cv_vit_image-control-3d-portrait-synthesis')
+        'damo/cv_vit_image-control-3d-portrait-synthesis'),
+    Tasks.self_supervised_depth_completion: (
+        Pipelines.self_supervised_depth_completion,
+        'damo/self-supervised-depth-completion')
 }
 
 
@@ -982,6 +987,7 @@ class CVTrainers(object):
     nerf_recon_4k = 'nerf-recon-4k'
     action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
 
 class NLPTrainers(object):

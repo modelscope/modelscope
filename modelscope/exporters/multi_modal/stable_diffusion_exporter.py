@@ -23,7 +23,7 @@ from modelscope.utils.hub import snapshot_download
 
 @EXPORTERS.register_module(
     Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
-class StableDiffuisonExporter(TorchModelExporter):
+class StableDiffusionExporter(TorchModelExporter):
 
     @torch.no_grad()
     def export_onnx(self,

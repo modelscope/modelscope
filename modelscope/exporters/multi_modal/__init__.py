@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .stable_diffusion_export import StableDiffuisonExporter
+    from .stable_diffusion_export import StableDiffusionExporter
 else:
     _import_structure = {
-        'stable_diffusion_export': ['StableDiffuisonExporter'],
+        'stable_diffusion_export': ['StableDiffusionExporter'],
     }
 
     import sys

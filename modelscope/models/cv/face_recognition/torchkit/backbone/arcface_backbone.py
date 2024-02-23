@@ -1,4 +1,4 @@
-# The implementation is adopted from TFace,made pubicly available under the Apache-2.0 license at
+# The implementation is adopted from TFace,made publicly available under the Apache-2.0 license at
 # https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/backbones/iresnet.py
 import torch
 from torch import nn

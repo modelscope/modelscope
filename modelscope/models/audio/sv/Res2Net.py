@@ -1,5 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """ Res2Net implementation is adapted from https://github.com/Res2Net/Res2Net-PretrainedModels.
+    Res2Net is an advanced neural network architecture that enhances the capabilities of standard ResNets
+    by incorporating hierarchical residual-like connections. This innovative structure improves
+    performance across various computer vision tasks, such as image classification and object
+    detection, without significant computational overhead.
+    Reference: https://arxiv.org/pdf/1904.01169.pdf
     Some modifications from the original architecture:
     1. Smaller kernel size for the input layer
     2. Smaller expansion in BasicBlockRes2Net

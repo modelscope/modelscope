@@ -1,5 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """ ResNet implementation is adapted from https://github.com/wenet-e2e/wespeaker.
+    ResNet, or Residual Neural Network, is notable for its optimization ease
+    and depth-induced accuracy gains. It utilizes skip connections within its residual
+    blocks to counteract the vanishing gradient problem in deep networks.
     Reference: Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """

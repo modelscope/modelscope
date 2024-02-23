@@ -155,7 +155,7 @@ docker_file_content=`cat docker/Dockerfile.ubuntu`
 
 BUILD_HASH_ID=$(git rev-parse HEAD)
 # install thrid part library
-docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers==4.36.2'"
+docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr timm 'transformers==4.36.2'"
 
 docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$BUILD_HASH_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $build_branch  --single-branch $REPO_URL && cd modelscope && pip install . && cd / && rm -fr /tmp/modelscope"
     && pip cache purge; \

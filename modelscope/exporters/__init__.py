@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from .base import Exporter
     from .builder import build_exporter
     from .cv import CartoonTranslationExporter, FaceDetectionSCRFDExporter
-    from .multi_modal import StableDiffuisonExporter
+    from .multi_modal import StableDiffusionExporter
     from .nlp import (CsanmtForTranslationExporter,
                       SbertForSequenceClassificationExporter,
                       SbertForZeroShotClassificationExporter)
@@ -19,7 +19,7 @@ else:
         'base': ['Exporter'],
         'builder': ['build_exporter'],
         'cv': ['CartoonTranslationExporter', 'FaceDetectionSCRFDExporter'],
-        'multi_modal': ['StableDiffuisonExporter'],
+        'multi_modal': ['StableDiffusionExporter'],
         'nlp': [
             'CsanmtForTranslationExporter',
             'SbertForSequenceClassificationExporter',

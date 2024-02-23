@@ -1,5 +1,5 @@
 # Copyright 2021-2022 The Alibaba DAMO Team Authors. All rights reserved.
-# Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ class SpaceTCnConfig(object):
                 layer in the Transformer encoder.
             hidden_act: The non-linear activation function (function or string) in the
                 encoder and pooler. If string, "gelu", "relu" and "swish" are supported.
-            hidden_dropout_prob: The dropout probabilitiy for all fully connected
+            hidden_dropout_prob: The dropout probability for all fully connected
                 layers in the embeddings, encoder, and pooler.
             attention_probs_dropout_prob: The dropout ratio for the attention
                 probabilities.
@@ -60,7 +60,7 @@ class SpaceTCnConfig(object):
                 ever be used with. Typically set this to something large just in case
                 (e.g., 512 or 1024 or 2048).
             type_vocab_size: The vocabulary size of the `token_type_ids` passed into `SpaceTCnConfig`.
-            initializer_range: The sttdev of the truncated_normal_initializer for
+            initializer_range: The stdev of the truncated_normal_initializer for
                 initializing all weight matrices.
         """
         if isinstance(vocab_size_or_config_json_file, str):

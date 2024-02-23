@@ -1,4 +1,4 @@
-# Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 # Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
@@ -203,7 +203,7 @@ class BertConfig(object):
                 layer in the Transformer encoder.
             hidden_act: The non-linear activation function (function or string) in the
                 encoder and pooler. If string, "gelu", "relu" and "swish" are supported.
-            hidden_dropout_prob: The dropout probabilitiy for all fully connected
+            hidden_dropout_prob: The dropout probability for all fully connected
                 layers in the embeddings, encoder, and pooler.
             attention_probs_dropout_prob: The dropout ratio for the attention
                 probabilities.
@@ -212,7 +212,7 @@ class BertConfig(object):
                 (e.g., 512 or 1024 or 2048).
             type_vocab_size: The vocabulary size of the `token_type_ids` passed into
                 `BertModel`.
-            initializer_range: The sttdev of the truncated_normal_initializer for
+            initializer_range: The stdev of the truncated_normal_initializer for
                 initializing all weight matrices.
         """
         if isinstance(vocab_size_or_config_json_file, str):
@@ -743,7 +743,7 @@ class BertPreTrainingHeads(nn.Module):
 
 class PreTrainedBertModel(nn.Module):
     """ An abstract class to handle weights initialization and
-        a simple interface for dowloading and loading pretrained models.
+        a simple interface for downloading and loading pretrained models.
     """
 
     def __init__(self, config, *inputs, **kwargs):
@@ -799,7 +799,7 @@ class PreTrainedBertModel(nn.Module):
                     . `bert_config.json` a configuration file for the model
                     . `pytorch_model.bin` a PyTorch dump of a BertForPreTraining instance
             cache_dir: an optional path to a folder in which the pre-trained models will be cached.
-            state_dict: an optional state dictionnary (collections.OrderedDict object) to use instead of Google pre-trained models
+            state_dict: an optional state dictionary (collections.OrderedDict object) to use instead of Google pre-trained models
             *inputs, **kwargs: additional input for the specific Bert class
                 (ex: num_labels for BertForSequenceClassification)
         """ # noqa

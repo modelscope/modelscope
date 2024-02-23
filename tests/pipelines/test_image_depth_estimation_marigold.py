@@ -1,14 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import unittest
 
-import os
-
-from modelscope.utils.constant import Tasks
+from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.cv import ImageDepthEstimationMarigoldPipeline
-from modelscope.outputs import OutputKeys
-from modelscope.hub.snapshot_download import snapshot_download
-
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 

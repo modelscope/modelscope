@@ -1,8 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch
 from diffusers import (AutoencoderKL, DDIMScheduler, DiffusionPipeline,
                        UNet2DConditionModel)
@@ -10,6 +8,7 @@ from PIL import Image
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_depth_estimation_marigold import (

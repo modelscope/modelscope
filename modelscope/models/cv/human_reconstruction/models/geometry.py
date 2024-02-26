@@ -44,7 +44,7 @@ def perspective(points, calib, transform=None):
     args:
         points: [B, 3, N] 3d points in world coordinates
         calib: [B, 3, 4] projection matrix
-        transform: [B, 2, 3] screen space trasnformation
+        transform: [B, 2, 3] screen space transformation
     return:
         [B, 3, N] 3d coordinates in screen space
     """

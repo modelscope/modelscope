@@ -41,7 +41,7 @@ class AttentionBase:
         self.cur_att_layer = 0
 
 
-def regiter_attention_editor_diffusers(model, editor: AttentionBase):
+def register_attention_editor_diffusers(model, editor: AttentionBase):
     """
     Register a attention editor to Diffuser Pipeline, refer from [Prompt-to-Prompt]
     """

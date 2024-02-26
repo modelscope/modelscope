@@ -92,7 +92,7 @@ class Res18Backbone(nn.Module):
     r"""The ResNet-18 backbone.
 
     Args:
-        pretrained (bool, optional): Whether to use the torchvison pretrained weights.
+        pretrained (bool, optional): Whether to use the torchvision pretrained weights.
             Default: True.
         input_resolution (int, optional): Resolution for pre-downsampling. Default: 224.
         extra_pooling (bool, optional): [ignore].
@@ -312,7 +312,7 @@ class AdaIntImageColorEnhance(TorchModel):
         and bias, respectively.
         """
 
-        def special_initilization(m):
+        def special_initialization(m):
             classname = m.__class__.__name__
             if 'Conv' in classname:
                 nn.init.xavier_normal_(m.weight.data)
@@ -321,7 +321,7 @@ class AdaIntImageColorEnhance(TorchModel):
                 nn.init.constant_(m.bias.data, 0.0)
 
         if self.backbone_name not in ['res18']:
-            self.apply(special_initilization)
+            self.apply(special_initialization)
         self.lut_generator.init_weights()
         if self.en_adaint:
             self.adaint.init_weights()

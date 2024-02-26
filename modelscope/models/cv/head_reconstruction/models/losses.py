@@ -49,7 +49,7 @@ def perceptual_loss(id_featureA, id_featureB):
 # image level loss
 def photo_loss(imageA, imageB, mask, eps=1e-6):
     """
-    l2 norm (with sqrt, to ensure backward stabililty, use eps, otherwise Nan may occur)
+    l2 norm (with sqrt, to ensure backward stability, use eps, otherwise Nan may occur)
     Parameters:
         imageA       --torch.tensor (B, 3, H, W), range (0, 1), RGB order
         imageB       --same as imageA

@@ -439,10 +439,10 @@ def get_heatmap_cv(img, magn, max_flow_mag):
     return cv_out
 
 
-def save_heatmap_cv(img, flow, supression=2):
+def save_heatmap_cv(img, flow, suppression=2):
 
     flow_magn = np.sqrt(flow[:, :, 0]**2 + flow[:, :, 1]**2)
-    flow_magn -= supression
+    flow_magn -= suppression
     flow_magn[flow_magn <= 0] = 0
     cv_out = get_heatmap_cv(img, flow_magn, np.max(flow_magn) * 1.3)
     return cv_out

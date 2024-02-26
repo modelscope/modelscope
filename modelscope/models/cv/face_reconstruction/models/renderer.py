@@ -20,7 +20,7 @@ def set_rasterizer():
 
 
 class Pytorch3dRasterizer(nn.Module):
-    # TODO: add support for rendering non-squared images, since pytorc3d supports this now
+    # TODO: add support for rendering non-squared images, since pytorch3d supports this now
     """  Borrowed from https://github.com/facebookresearch/pytorch3d
     Notice:
         x,y,z are in image space, normalized
@@ -158,7 +158,7 @@ class SRenderY(nn.Module):
             -- Texture Rendering
             vertices: [batch_size, V, 3], vertices in world space, for calculating normals, then shading
             transformed_vertices: [batch_size, V, 3], range:normalized to [-1,1], projected vertices in image space
-                                    (that is aligned to the iamge pixel), for rasterization
+                                    (that is aligned to the image pixel), for rasterization
             albedos: [batch_size, 3, h, w], uv map
             lights:
                 spherical homarnic: [N, 9(shcoeff), 3(rgb)]

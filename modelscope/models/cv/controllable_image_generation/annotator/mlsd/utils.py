@@ -13,7 +13,7 @@ import torch
 from torch.nn import functional as F
 
 
-def deccode_output_score_and_ptss(tpMap, topk_n=200, ksize=5):
+def decode_output_score_and_ptss(tpMap, topk_n=200, ksize=5):
     '''
     tpMap:
     center: tpMap[1, 0, :, :]
@@ -61,7 +61,7 @@ def pred_lines(image,
 
     batch_image = torch.from_numpy(batch_image).float().cuda()
     outputs = model(batch_image)
-    pts, pts_score, vmap = deccode_output_score_and_ptss(outputs, 200, 3)
+    pts, pts_score, vmap = decode_output_score_and_ptss(outputs, 200, 3)
     start = vmap[:, :, :2]
     end = vmap[:, :, 2:]
     dist_map = np.sqrt(np.sum((start - end)**2, axis=-1))
@@ -116,7 +116,7 @@ def pred_squares(image, model, input_shape=[512, 512], params=params_glob):
     batch_image = torch.from_numpy(batch_image).float().cuda()
     outputs = model(batch_image)
 
-    pts, pts_score, vmap = deccode_output_score_and_ptss(outputs, 200, 3)
+    pts, pts_score, vmap = decode_output_score_and_ptss(outputs, 200, 3)
     start = vmap[:, :, :2]  # (x, y)
     end = vmap[:, :, 2:]  # (x, y)
     dist_map = np.sqrt(np.sum((start - end)**2, axis=-1))
@@ -268,7 +268,7 @@ def pred_squares(image, model, input_shape=[512, 512], params=params_glob):
         | dist(inter,0), dist(inter,0), dist(inter,0), ... |
         | dist(inter,1), dist(inter,1), dist(inter,1), ... |
         ...
-    dist_inter_to_semgnet2:
+    dist_inter_to_segment2:
         | dist(inter,0), dist(inter,1), dist(inter,2), ... |
         | dist(inter,0), dist(inter,1), dist(inter,2), ... |
         ...

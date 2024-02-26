@@ -64,7 +64,7 @@ __C.TRAIN.score_com_strength = 100.0
 # scale strength weight
 __C.TRAIN.scale_com_strength = 100.0
 
-# non maximum supression threshold
+# non maximum suppression threshold
 __C.TRAIN.NMS_THRESH = 0.0
 
 # nms kernel size

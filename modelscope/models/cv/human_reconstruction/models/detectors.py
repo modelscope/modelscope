@@ -1,4 +1,4 @@
-# The implementation here is modified based on Pytorch, originally BSD License and publicly avaialbe at
+# The implementation here is modified based on Pytorch, originally BSD License and publicly available at
 # https://github.com/pytorch/pytorch
 import numpy as np
 import torch

@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import numpy as np
+
 import os
+import numpy as np
 import torch
 from diffusers import (AutoencoderKL, DDIMScheduler, DiffusionPipeline,
                        UNet2DConditionModel)

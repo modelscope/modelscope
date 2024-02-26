@@ -225,7 +225,7 @@ def get_mosaic_mask(image, fg_mask, N=16, ratio=0.5):
     return noise_mask
 
 
-def extract_canney_noise(image, mask, dilate=True):
+def extract_canny_noise(image, mask, dilate=True):
     h, w = image.shape[0], image.shape[1]
     mask = cv2.resize(mask.astype(np.uint8), (w, h)) > 0.5
     kernel = np.ones((8, 8), dtype=np.uint8)

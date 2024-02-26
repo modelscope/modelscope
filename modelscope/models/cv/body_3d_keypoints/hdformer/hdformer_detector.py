@@ -58,7 +58,7 @@ class HDFormerDetector(TorchModel):
         self.net.eval()
 
     def preprocess(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        """Proprocess of 2D input joints.
+        """Preprocess of 2D input joints.
 
         Args:
             input (Dict[str, Any]): [NUM_FRAME, NUM_JOINTS, 2], input 2d human body keypoints.

@@ -1,5 +1,5 @@
 # The implementation here is modified based on spade,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/NVlabs/SPADE
+# originally Apache 2.0 License and publicly available at https://github.com/NVlabs/SPADE
 
 import functools
 import os

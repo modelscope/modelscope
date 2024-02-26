@@ -1,4 +1,4 @@
-# The implementation here is modified based on PIFU, originally MIT License and publicly avaialbe at
+# The implementation here is modified based on PIFU, originally MIT License and publicly available at
 # https://github.com/shunsukesaito/PIFu/blob/master/lib/geometry.py
 import torch
 

@@ -27,7 +27,7 @@ class MasterNet(plain_net_utils.PlainNet):
         """
         Any ReLU-CNN Backbone
         Args:
-        plainet_struct: (obj: str):
+        plainnet_struct: (obj: str):
             Str of network topology structure.
         no_reslink: (obj:bool):
             no use residual structure.

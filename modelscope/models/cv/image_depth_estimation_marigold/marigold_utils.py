@@ -17,6 +17,7 @@
 # More information about the method can be found at https://marigoldmonodepth.github.io
 
 import math
+
 import matplotlib
 import numpy as np
 import torch

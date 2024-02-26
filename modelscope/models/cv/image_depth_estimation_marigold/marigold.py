@@ -17,10 +17,11 @@
 # More information about the method can be found at https://marigoldmonodepth.github.io
 # --------------------------------------------------------------------------
 
+from typing import Dict, Union
+
 import numpy as np
 from diffusers.utils import BaseOutput
 from PIL import Image
-from typing import Dict, Union
 
 
 class MarigoldDepthOutput(BaseOutput):

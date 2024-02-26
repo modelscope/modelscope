@@ -16,7 +16,7 @@ from matplotlib.animation import writers
 from matplotlib.ticker import MultipleLocator
 
 from modelscope.metainfo import Pipelines
-from modelscope.models.cv.body_3d_keypoints.cannonical_pose.body_3d_pose import \
+from modelscope.models.cv.body_3d_keypoints.canonical_pose.body_3d_pose import \
     KeypointsTypes
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

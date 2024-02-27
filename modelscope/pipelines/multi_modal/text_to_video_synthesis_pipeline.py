@@ -81,7 +81,12 @@ class TextToVideoSynthesisPipeline(Pipeline):
         # Stack frames along a new dimension to create a 4D tensor (T, H, W, C)
         imgs_tensor = torch.stack(frames, dim=0)
 
-        torchvision.io.write_video(output_video_path, imgs_tensor, fps=8, video_codec='h264', options={'crf': '10'})
+        torchvision.io.write_video(
+            output_video_path,
+            imgs_tensor,
+            fps=8,
+            video_codec='h264',
+            options={'crf': '10'})
         if temp_video_file:
             video_file_content = b''
             with open(output_video_path, 'rb') as f:

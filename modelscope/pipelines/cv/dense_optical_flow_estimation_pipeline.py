@@ -12,7 +12,7 @@ from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
-from modelscope.utils.cv.image_utils import flow_to_color, InputPadder
+from modelscope.utils.cv.image_utils import InputPadder, flow_to_color
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -40,7 +40,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>           [-2.0998, -2.1007, -2.0958,  ..., -1.4086, -1.4055, -1.3996],
     >>>           [-2.1043, -2.1031, -2.0988,  ..., -1.4075, -1.4049, -1.3991],
     >>>           [-2.1016, -2.0985, -2.0939,  ..., -1.4062, -1.4029, -1.3969]],
-    >>> 
+    >>>
     >>>          [[ 0.0343,  0.0386,  0.0401,  ...,  0.8053,  0.8050,  0.8057],
     >>>           [ 0.0311,  0.0354,  0.0369,  ...,  0.8004,  0.8007,  0.8050],
     >>>           [ 0.0274,  0.0309,  0.0322,  ...,  0.8007,  0.8016,  0.8080],
@@ -55,7 +55,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>         [236, 255, 213],
     >>>         [236, 255, 213],
     >>>         [236, 255, 213]],
-    >>> 
+    >>>
     >>>        [[255, 249, 219],
     >>>         [255, 249, 219],
     >>>         [255, 249, 219],
@@ -63,7 +63,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>         [236, 255, 213],
     >>>         [236, 255, 213],
     >>>         [236, 255, 213]],
-    >>> 
+    >>>
     >>>        [[255, 249, 219],
     >>>         [255, 249, 219],
     >>>         [255, 249, 219],
@@ -71,9 +71,9 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>         [236, 255, 213],
     >>>         [236, 255, 213],
     >>>         [236, 255, 213]],
-    >>> 
+    >>>
     >>>        ...,
-    >>> 
+    >>>
     >>>        [[251, 255, 207],
     >>>         [251, 255, 207],
     >>>         [251, 255, 207],
@@ -81,7 +81,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>         [251, 255, 222],
     >>>         [251, 255, 222],
     >>>         [250, 255, 222]],
-    >>> 
+    >>>
     >>>        [[250, 255, 207],
     >>>         [250, 255, 207],
     >>>         [250, 255, 207],
@@ -89,7 +89,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     >>>         [251, 255, 222],
     >>>         [250, 255, 222],
     >>>         [249, 255, 222]],
-    >>> 
+    >>>
     >>>        [[249, 255, 207],
     >>>         [249, 255, 207],
     >>>         [250, 255, 207],
@@ -118,7 +118,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img1 = self.load_image(input[0])
         img2 = self.load_image(input[1])
-        
+
         image1 = torch.from_numpy(img1)[None].cuda().float()
         image2 = torch.from_numpy(img2)[None].cuda().float()
 
@@ -130,8 +130,8 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
         return data
 
     def forward(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        image1 = input["image1"]
-        image2 = input["image2"]
+        image1 = input['image1']
+        image2 = input['image2']
 
         flow_ups = self.model(image1, image2)
         results = flow_ups[-1]
@@ -140,7 +140,7 @@ class DenseOpticalFlowEstimationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         flows_color = flow_to_color(inputs)
-        flows_color = flows_color[:,:,[2,1,0]]
+        flows_color = flows_color[:, :, [2, 1, 0]]
         outputs = {
             OutputKeys.FLOWS: inputs,
             OutputKeys.FLOWS_COLOR: flows_color

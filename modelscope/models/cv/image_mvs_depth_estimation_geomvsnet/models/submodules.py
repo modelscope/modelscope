@@ -2,6 +2,7 @@
 # @Author: Zhe Zhang (doublez@stu.pku.edu.cn)
 # @Affiliation: Peking University (PKU)
 # @LastEditDate: 2023-09-07
+# @https://github.com/doublez0108/geomvsnet
 
 import torch
 import torch.nn as nn

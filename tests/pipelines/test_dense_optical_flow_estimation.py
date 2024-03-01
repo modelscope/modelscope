@@ -10,6 +10,7 @@ from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
+
 class DenseOpticalFlowEstimationTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -23,10 +24,11 @@ class DenseOpticalFlowEstimationTest(unittest.TestCase):
             'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow1.png',
             'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow2.png'
         ]]
-        estimator = pipeline(Tasks.dense_optical_flow_estimation, model=self.model_id)
+        estimator = pipeline(
+            Tasks.dense_optical_flow_estimation, model=self.model_id)
         result = estimator(input_location)
         print(type(result[0]), result[0].keys())
-        flow = result[0][OutputKeys.FLOWS]
+        # flow = result[0][OutputKeys.FLOWS]
         flow_vis = result[0][OutputKeys.FLOWS_COLOR]
         cv2.imwrite('result.jpg', flow_vis)
 

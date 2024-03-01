@@ -7,34 +7,39 @@ import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import torch.nn.functional as F
 from PIL import Image
 
 from modelscope.outputs import OutputKeys
 from modelscope.preprocessors.image import load_image
 from modelscope.utils import logger as logging
 
-import torch.nn.functional as F
-
 logger = logging.get_logger()
+
 
 class InputPadder:
     """ Pads images such that dimensions are divisible by 8 """
+
     def __init__(self, dims, mode='sintel'):
         self.ht, self.wd = dims[-2:]
         pad_ht = (((self.ht // 8) + 1) * 8 - self.ht) % 8
         pad_wd = (((self.wd // 8) + 1) * 8 - self.wd) % 8
         if mode == 'sintel':
-            self._pad = [pad_wd//2, pad_wd - pad_wd//2, pad_ht//2, pad_ht - pad_ht//2]
+            self._pad = [
+                pad_wd // 2, pad_wd - pad_wd // 2, pad_ht // 2,
+                pad_ht - pad_ht // 2
+            ]
         else:
-            self._pad = [pad_wd//2, pad_wd - pad_wd//2, 0, pad_ht]
+            self._pad = [pad_wd // 2, pad_wd - pad_wd // 2, 0, pad_ht]
 
     def pad(self, *inputs):
         return [F.pad(x, self._pad, mode='replicate') for x in inputs]
 
-    def unpad(self,x):
+    def unpad(self, x):
         ht, wd = x.shape[-2:]
-        c = [self._pad[2], ht-self._pad[3], self._pad[0], wd-self._pad[1]]
+        c = [self._pad[2], ht - self._pad[3], self._pad[0], wd - self._pad[1]]
         return x[..., c[0]:c[1], c[2]:c[3]]
+
 
 def numpy_to_cv2img(img_array):
     """to convert a np.array with shape(h, w) to cv2 img
@@ -533,6 +538,7 @@ def depth_to_color(depth):
     depth_color = cv2.cvtColor(depth_color, cv2.COLOR_RGB2BGR)
     return depth_color
 
+
 def make_colorwheel():
     """
     Generates a color wheel for optical flow visualization as presented in:
@@ -559,27 +565,27 @@ def make_colorwheel():
 
     # RY
     colorwheel[0:RY, 0] = 255
-    colorwheel[0:RY, 1] = np.floor(255*np.arange(0,RY)/RY)
-    col = col+RY
+    colorwheel[0:RY, 1] = np.floor(255 * np.arange(0, RY) / RY)
+    col = col + RY
     # YG
-    colorwheel[col:col+YG, 0] = 255 - np.floor(255*np.arange(0,YG)/YG)
-    colorwheel[col:col+YG, 1] = 255
-    col = col+YG
+    colorwheel[col:col + YG, 0] = 255 - np.floor(255 * np.arange(0, YG) / YG)
+    colorwheel[col:col + YG, 1] = 255
+    col = col + YG
     # GC
-    colorwheel[col:col+GC, 1] = 255
-    colorwheel[col:col+GC, 2] = np.floor(255*np.arange(0,GC)/GC)
-    col = col+GC
+    colorwheel[col:col + GC, 1] = 255
+    colorwheel[col:col + GC, 2] = np.floor(255 * np.arange(0, GC) / GC)
+    col = col + GC
     # CB
-    colorwheel[col:col+CB, 1] = 255 - np.floor(255*np.arange(CB)/CB)
-    colorwheel[col:col+CB, 2] = 255
-    col = col+CB
+    colorwheel[col:col + CB, 1] = 255 - np.floor(255 * np.arange(CB) / CB)
+    colorwheel[col:col + CB, 2] = 255
+    col = col + CB
     # BM
-    colorwheel[col:col+BM, 2] = 255
-    colorwheel[col:col+BM, 0] = np.floor(255*np.arange(0,BM)/BM)
-    col = col+BM
+    colorwheel[col:col + BM, 2] = 255
+    colorwheel[col:col + BM, 0] = np.floor(255 * np.arange(0, BM) / BM)
+    col = col + BM
     # MR
-    colorwheel[col:col+MR, 2] = 255 - np.floor(255*np.arange(MR)/MR)
-    colorwheel[col:col+MR, 0] = 255
+    colorwheel[col:col + MR, 2] = 255 - np.floor(255 * np.arange(MR) / MR)
+    colorwheel[col:col + MR, 0] = 255
     return colorwheel
 
 
@@ -602,23 +608,23 @@ def flow_uv_to_colors(u, v, convert_to_bgr=False):
     colorwheel = make_colorwheel()  # shape [55x3]
     ncols = colorwheel.shape[0]
     rad = np.sqrt(np.square(u) + np.square(v))
-    a = np.arctan2(-v, -u)/np.pi
-    fk = (a+1) / 2*(ncols-1)
+    a = np.arctan2(-v, -u) / np.pi
+    fk = (a + 1) / 2 * (ncols - 1)
     k0 = np.floor(fk).astype(np.int32)
     k1 = k0 + 1
     k1[k1 == ncols] = 0
     f = fk - k0
     for i in range(colorwheel.shape[1]):
-        tmp = colorwheel[:,i]
+        tmp = colorwheel[:, i]
         col0 = tmp[k0] / 255.0
         col1 = tmp[k1] / 255.0
-        col = (1-f)*col0 + f*col1
+        col = (1 - f) * col0 + f * col1
         idx = (rad <= 1)
-        col[idx]  = 1 - rad[idx] * (1-col[idx])
-        col[~idx] = col[~idx] * 0.75   # out of range
+        col[idx] = 1 - rad[idx] * (1 - col[idx])
+        col[~idx] = col[~idx] * 0.75  # out of range
         # Note the 2-i => BGR instead of RGB
-        ch_idx = 2-i if convert_to_bgr else i
-        flow_image[:,:,ch_idx] = np.floor(255 * col)
+        ch_idx = 2 - i if convert_to_bgr else i
+        flow_image[:, :, ch_idx] = np.floor(255 * col)
     return flow_image
 
 
@@ -638,8 +644,8 @@ def flow_to_image(flow_uv, clip_flow=None, convert_to_bgr=False):
     assert flow_uv.shape[2] == 2, 'input flow must have shape [H,W,2]'
     if clip_flow is not None:
         flow_uv = np.clip(flow_uv, 0, clip_flow)
-    u = flow_uv[:,:,0]
-    v = flow_uv[:,:,1]
+    u = flow_uv[:, :, 0]
+    v = flow_uv[:, :, 1]
     rad = np.sqrt(np.square(u) + np.square(v))
     rad_max = np.max(rad)
     epsilon = 1e-5
@@ -647,10 +653,12 @@ def flow_to_image(flow_uv, clip_flow=None, convert_to_bgr=False):
     v = v / (rad_max + epsilon)
     return flow_uv_to_colors(u, v, convert_to_bgr)
 
+
 def flow_to_color(flow):
-    flow = flow[0].permute(1,2,0).cpu().numpy()
+    flow = flow[0].permute(1, 2, 0).cpu().numpy()
     flow_color = flow_to_image(flow)
     return flow_color
+
 
 def show_video_depth_estimation_result(depths, video_save_path):
     height, width, layers = depths[0].shape

@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .stable_diffusion_export import StableDiffusionExporter
+    from .self_supervised_depth_completion import SelfSupervisedDepthCompletion
 else:
     _import_structure = {
-        'stable_diffusion_export': ['StableDiffusionExporter'],
+        'selfsuperviseddepthcompletion': ['SelfSupervisedDepthCompletion'],
     }
 
     import sys

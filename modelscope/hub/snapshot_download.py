@@ -3,6 +3,8 @@
 import os
 import re
 import tempfile
+import threading
+import time
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -10,7 +12,8 @@ from typing import Dict, List, Optional, Union
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.logger import get_logger
-from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
+from .constants import (FILE_HASH, MINIMUM_DOWNLOAD_INTERVAL_SECONDS,
+                        MODELSCOPE_DOWNLOAD_PARALLELS,
                         MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
 from .file_download import (get_file_download_url, http_get_file,
                             parallel_download)
@@ -19,6 +22,8 @@ from .utils.utils import (file_integrity_validation, get_cache_dir,
                           model_id_to_group_owner_name)
 
 logger = get_logger()
+
+recent_downloaded = threading.local()
 
 
 def snapshot_download(model_id: str,
@@ -75,6 +80,18 @@ def snapshot_download(model_id: str,
     name = name.replace('.', '___')
 
     cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
+
+    is_recent_downloaded = False
+    current_time = time.time()
+    recent_download_models = getattr(recent_downloaded, 'models', None)
+    if recent_download_models is None:
+        recent_downloaded.models = {}
+    else:
+        if model_id in recent_download_models:
+            recent_download_time = recent_download_models[model_id]
+            if current_time - recent_download_time < MINIMUM_DOWNLOAD_INTERVAL_SECONDS:
+                is_recent_downloaded = True
+                recent_download_models[model_id] = current_time
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -85,6 +102,9 @@ def snapshot_download(model_id: str,
                        % revision)
         return cache.get_root_location(
         )  # we can not confirm the cached file is for snapshot 'revision'
+    elif is_recent_downloaded:
+        logger.warning('Download interval is too small, use local cache')
+        return cache.get_root_location()
     else:
         # make headers
         headers = {
@@ -94,8 +114,9 @@ def snapshot_download(model_id: str,
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
-        revision = _api.get_valid_revision(
+        revision_detail = _api.get_valid_revision_detail(
             model_id, revision=revision, cookies=cookies)
+        revision = revision_detail['Revision']
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
             **headers,
@@ -165,6 +186,6 @@ def snapshot_download(model_id: str,
                 # put file into to cache
                 cache.put_file(model_file, temp_file)
 
-        cache.save_model_version(revision=revision)
-
+        cache.save_model_version(revision_info=revision_detail)
+        recent_downloaded.models[model_id] = time.time()
         return os.path.join(cache.get_root_location())

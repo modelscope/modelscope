@@ -21,8 +21,10 @@ from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 
 try:
     from transformers import GPTQConfig as GPTQConfigHF
+    from transformers import AwqConfig as AwqConfigHF
 except ImportError:
     GPTQConfigHF = None
+    AwqConfigHF = None
 
 
 def user_agent(invoked_by=None):
@@ -135,6 +137,7 @@ AutoConfig = get_wrapped_class(
 GenerationConfig = get_wrapped_class(
     GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
 GPTQConfig = GPTQConfigHF
+AwqConfig = AwqConfigHF
 BitsAndBytesConfig = BitsAndBytesConfigHF
 AutoImageProcessor = get_wrapped_class(AutoImageProcessorHF)
 BatchFeature = get_wrapped_class(BatchFeatureHF)

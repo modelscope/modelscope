@@ -58,7 +58,7 @@ class TextToVideoSynthesis(Model):
                       `True`.
         """
         super().__init__(model_dir=model_dir, *args, **kwargs)
-        self.device = torch.device('cuda') if torch.cuda.is_available() \
+        self.device = torch.device(kwargs.get('device', 'cuda')) if torch.cuda.is_available() \
             else torch.device('cpu')
         self.config = Config.from_file(
             osp.join(model_dir, ModelFile.CONFIGURATION))

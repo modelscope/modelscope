@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
                            build_dataset_from_file)
     from .utils.constant import Tasks
-    from .utils.hf_util import AutoConfig, GPTQConfig, BitsAndBytesConfig
+    from .utils.hf_util import AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig
     from .utils.hf_util import (AutoModel, AutoModelForCausalLM,
                                 AutoModelForSeq2SeqLM,
                                 AutoModelForSequenceClassification,
@@ -80,7 +80,7 @@ else:
         'utils.constant': ['Tasks'],
         'utils.hf_util': [
             'AutoConfig', 'GenerationConfig', 'AutoModel', 'GPTQConfig',
-            'BitsAndBytesConfig', 'AutoModelForCausalLM',
+            'AwqConfig', 'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
             'AutoModelForTokenClassification', 'AutoImageProcessor',

@@ -1,3 +1,4 @@
+import argparse
 import os.path as osp
 
 import torch
@@ -8,12 +9,13 @@ from modelscope.models.builder import MODELS
 from modelscope.models.cv.dense_optical_flow_estimation.core.raft import RAFT
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
-import argparse
+
 
 @MODELS.register_module(
     Tasks.dense_optical_flow_estimation,
     module_name=Models.raft_dense_optical_flow_estimation)
 class DenseOpticalFlowEstimation(TorchModel):
+
     def __init__(self, model_dir: str, **kwargs):
         """str -- model file root."""
         super().__init__(model_dir, **kwargs)
@@ -33,8 +35,8 @@ class DenseOpticalFlowEstimation(TorchModel):
         self.model.eval()
 
     def forward(self, Inputs):
-        image1 = Inputs["image1"]
-        image2 = Inputs["image2"]
+        image1 = Inputs['image1']
+        image2 = Inputs['image2']
 
         flow_ups = self.model(image1, image2)
         flow_up = flow_ups[-1]
@@ -48,4 +50,3 @@ class DenseOpticalFlowEstimation(TorchModel):
     def inference(self, data):
         results = self.forward(data)
         return results
-

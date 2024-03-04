@@ -1,5 +1,5 @@
 # Part of the implementation is borrowed and modified from stable-diffusion,
-# publicly avaialbe at https://github.com/Stability-AI/stablediffusion.
+# publicly available at https://github.com/Stability-AI/stablediffusion.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import math

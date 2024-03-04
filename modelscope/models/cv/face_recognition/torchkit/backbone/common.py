@@ -7,7 +7,7 @@ from torch.nn import (BatchNorm1d, BatchNorm2d, Conv2d, Linear, Module, ReLU,
 
 
 def initialize_weights(modules):
-    """ Weight initilize, conv2d and linear is initialized with kaiming_normal
+    """ Weight initialize, conv2d and linear is initialized with kaiming_normal
     """
     for m in modules:
         if isinstance(m, nn.Conv2d):

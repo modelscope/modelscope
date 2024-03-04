@@ -1,6 +1,6 @@
-# The implementation is modified from original resent implementaiton, which is
-#  also open-sourced by the authors as Yang Liu,
-#  and is available publicly on  https://github.com/damo-cv/MogFace
+# The implementation is modified from original resent implementation, which is
+# also open-sourced by the authors as Yang Liu,
+# and is available publicly on  https://github.com/damo-cv/MogFace
 
 import torch.nn as nn
 

@@ -186,7 +186,7 @@ class GhostBlocks(nn.Module):
         out_channels (int): Number of output channels.
         expand (int): Expand ratio of GhostBottleneck. Default: 1.
         kernel_size (int): Kernel size of depthwise convolution. Default: 5.
-        num_blocks (int): Number of GhostBottlecneck blocks. Default: 1.
+        num_blocks (int): Number of GhostBottleneck blocks. Default: 1.
         use_res (bool): Whether to use residual connection. Default: False.
         activation (str): Name of activation function. Default: LeakyReLU.
     """
@@ -242,7 +242,7 @@ class GhostPAN(nn.Module):
             blocks. Default: False
         kernel_size (int): Kernel size of depthwise convolution. Default: 5.
         expand (int): Expand ratio of GhostBottleneck. Default: 1.
-        num_blocks (int): Number of GhostBottlecneck blocks. Default: 1.
+        num_blocks (int): Number of GhostBottleneck blocks. Default: 1.
         use_res (bool): Whether to use residual connection. Default: False.
         num_extra_level (int): Number of extra conv layers for more feature levels.
             Default: 0.

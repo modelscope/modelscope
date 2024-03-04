@@ -56,7 +56,7 @@ TORCH_VERSION_IMPORT_ERROR = """
 `pip install torch==1.11`
 """
 
-REQUIREMENTS_MAAPING_VERSION = OrderedDict([
+REQUIREMENTS_MAPPING_VERSION = OrderedDict([
     ('detectron2-0.3', (is_detectron2_version_available,
                         DETECTRON2_IMPORT_ERROR)),
     ('torch-1.11', (is_torch_version_available, TORCH_VERSION_IMPORT_ERROR)),
@@ -68,8 +68,8 @@ REQUIREMENTS = ['detectron2-0.3', 'torch-1.11']
 def requires_version():
     checks = []
     for req in REQUIREMENTS:
-        if req in REQUIREMENTS_MAAPING_VERSION:
-            check = REQUIREMENTS_MAAPING_VERSION[req]
+        if req in REQUIREMENTS_MAPPING_VERSION:
+            check = REQUIREMENTS_MAPPING_VERSION[req]
         else:
             raise NotImplementedError('{} do not supported check'.format(req))
         checks.append(check)

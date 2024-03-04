@@ -148,7 +148,7 @@ class FreqHPTForHumanImageGeneration(TorchModel):
         return pred_result
 
 
-def trans_keypoins(keypoints, param, img_size, offset=None):
+def trans_keypoints(keypoints, param, img_size, offset=None):
     missing_keypoint_index = keypoints == -1
 
     # crop the white line in the original dataset
@@ -194,7 +194,7 @@ def get_label_tensor(path, img, param):
               [255, 0, 170], [255, 0, 85]]
     canvas = np.zeros((img.shape[1], img.shape[2], 3)).astype(np.uint8)
     keypoint = np.loadtxt(path)
-    keypoint, normalized_kp = trans_keypoins(keypoint, param, img.shape[1:])
+    keypoint, normalized_kp = trans_keypoints(keypoint, param, img.shape[1:])
     stickwidth = 4
     for i in range(18):
         x, y = keypoint[i, 0:2]

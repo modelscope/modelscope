@@ -1,4 +1,4 @@
-# The implementation here is modified based on Pix2PixHD, originally BSD License and publicly avaialbe at
+# The implementation here is modified based on Pix2PixHD, originally BSD License and publicly available at
 # https://github.com/NVIDIA/pix2pixHD
 import functools
 

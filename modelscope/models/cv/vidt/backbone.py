@@ -440,7 +440,7 @@ class SwinTransformerBlock(nn.Module):
             det = det + det_pos
             shifted_x = (shifted_x, cross_patch)
         else:
-            # it cross_attn is deativated, only [PATCH] and [DET] self-attention are performed
+            # it cross_attn is deactivated, only [PATCH] and [DET] self-attention are performed
             det = det + det_pos
             shifted_x = shifted_x
 
@@ -961,7 +961,7 @@ class SwinTransformer(nn.Module):
                 block.det_token_num = det_token_num
                 block.det_pos_linear = nn.Linear(pos_dim, block.dim)
 
-        # neck-free model do not require downsamling at the last stage.
+        # neck-free model do not require downsampling at the last stage.
         if method == 'vidt_wo_neck':
             self.layers[-1].downsample = None
 

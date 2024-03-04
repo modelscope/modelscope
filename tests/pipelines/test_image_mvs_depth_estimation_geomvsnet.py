@@ -9,14 +9,14 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
-class ImageMVSDepthEstimationTest(unittest.TestCase):
+class ImageMVSDepthEstimationGeomvsnetTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.task = 'image-multi-view-depth-estimation'
         self.model_id = 'Damo_XR_Lab/cv_geomvsnet_multi-view-depth-estimation_general'
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_image_mvs_depth_estimation(self):
+    def test_image_mvs_depth_estimation_gemomvsnet(self):
         estimator = pipeline(
             Tasks.image_multi_view_depth_estimation,
             model='Damo_XR_Lab/cv_geomvsnet_multi-view-depth-estimation_general'

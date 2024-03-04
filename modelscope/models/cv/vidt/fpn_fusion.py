@@ -30,7 +30,7 @@ class FPNFusionModule(nn.Module):
 
         x_blocks = x_blocks
 
-        # preperation: channel reduction and normalization
+        # preparation: channel reduction and normalization
         for idx in range(self.n_block - 1, -1, -1):
             x_blocks[idx] = getattr(self.multi_scaler, f'layer_{idx}_rn')(
                 x_blocks[idx])
@@ -111,8 +111,8 @@ class FeatureFusionBlock(nn.Module):
             features (int): channel dim of the input feature
             activation: activation function to use
             bn: whether to use bn
-            expand: whether to exapnd feature or not
-            align_corners: wheter to use align_corners for interpolation
+            expand: whether to expand feature or not
+            align_corners: whether to use align_corners for interpolation
         """
 
         super(FeatureFusionBlock, self).__init__()

@@ -5,11 +5,11 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .masactrl import MutualSelfAttentionControl
-    from .masactrl_utils import regiter_attention_editor_diffusers
+    from .masactrl_utils import register_attention_editor_diffusers
 else:
     _import_structure = {
         'masactrl': ['MutualSelfAttentionControl'],
-        'masactrl_utils': ['regiter_attention_editor_diffusers']
+        'masactrl_utils': ['register_attention_editor_diffusers']
     }
 
     import sys

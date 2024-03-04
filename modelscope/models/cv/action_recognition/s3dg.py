@@ -47,7 +47,7 @@ class InceptionBlock3D(nn.Module):
     Element constructing the S3D/S3DG.
     See models/base/backbone.py L99-186.
 
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self, cfg, in_planes, out_planes):
@@ -139,7 +139,7 @@ class STConv3d(nn.Module):
     Element constructing the S3D/S3DG.
     See models/base/backbone.py L99-186.
 
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self,
@@ -213,7 +213,7 @@ class STConv3d(nn.Module):
 class Inception3D(nn.Module):
     """
     Backbone architecture for I3D/S3DG.
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self, cfg):

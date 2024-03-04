@@ -96,6 +96,7 @@ class Models(object):
     real_basicvsr = 'real-basicvsr'
     rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
+    image_geomvsnet_depth_estimation = 'image-geomvsnet-depth-estimation'
     vop_retrieval_model = 'vop-retrieval-model'
     vop_retrieval_model_se = 'vop-retrieval-model-se'
     ddcolor = 'ddcolor'

@@ -30,6 +30,6 @@ from . import (action_recognition, animal_recognition, bad_image_detecting,
                video_panoptic_segmentation, video_single_object_tracking,
                video_stabilization, video_summarization,
                video_super_resolution, vidt, virual_tryon, vision_middleware,
-               vop_retrieval, dense_optical_flow_estimation)
+               vop_retrieval)
 
 # yapf: enable

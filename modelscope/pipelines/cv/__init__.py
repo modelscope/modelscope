@@ -121,6 +121,7 @@ if TYPE_CHECKING:
     from .image_local_feature_matching_pipeline import ImageLocalFeatureMatchingPipeline
     from .rife_video_frame_interpolation_pipeline import RIFEVideoFrameInterpolationPipeline
     from .anydoor_pipeline import AnydoorPipeline
+    from .image_depth_estimation_marigold_pipeline import ImageDepthEstimationMarigoldPipeline
     from .self_supervised_depth_completion_pipeline import SelfSupervisedDepthCompletionPipeline
 
 else:
@@ -305,6 +306,9 @@ else:
             'RIFEVideoFrameInterpolationPipeline'
         ],
         'anydoor_pipeline': ['AnydoorPipeline'],
+        'image_depth_estimation_marigold_pipeline': [
+            'ImageDepthEstimationMarigoldPipeline'
+        ],
         'self_supervised_depth_completion_pipeline': [
             'SelfSupervisedDepthCompletionPipeline'
         ],

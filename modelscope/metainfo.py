@@ -96,6 +96,7 @@ class Models(object):
     real_basicvsr = 'real-basicvsr'
     rcp_sceneflow_estimation = 'rcp-sceneflow-estimation'
     image_casmvs_depth_estimation = 'image-casmvs-depth-estimation'
+    image_geomvsnet_depth_estimation = 'image-geomvsnet-depth-estimation'
     vop_retrieval_model = 'vop-retrieval-model'
     vop_retrieval_model_se = 'vop-retrieval-model-se'
     ddcolor = 'ddcolor'
@@ -132,6 +133,7 @@ class Models(object):
     image_control_3d_portrait = 'image-control-3d-portrait'
     rife = 'rife'
     anydoor = 'anydoor'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
     # nlp models
     bert = 'bert'
@@ -203,6 +205,8 @@ class Models(object):
     ecapa_tdnn_sv = 'ecapa-tdnn-sv'
     campplus_sv = 'cam++-sv'
     eres2net_sv = 'eres2net-sv'
+    resnet_sv = 'resnet-sv'
+    res2net_sv = 'res2net-sv'
     eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
     scl_sd_xvector = 'scl-sd-xvector'
@@ -458,6 +462,7 @@ class Pipelines(object):
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     image_bts_depth_estimation = 'image-bts-depth-estimation'
+    image_depth_estimation_marigold = 'image-depth-estimation-marigold'
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
@@ -469,6 +474,7 @@ class Pipelines(object):
     rife_video_frame_interpolation = 'rife-video-frame-interpolation'
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -548,6 +554,8 @@ class Pipelines(object):
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
+    speaker_verification_resnet = 'speaker-verification-resnet'
+    speaker_verification_res2net = 'speaker-verification-res2net'
     speech_language_recognition = 'speech-language-recognition'
     speech_language_recognition_eres2net = 'speech-language-recognition-eres2net'
     speaker_change_locating = 'speaker-change-locating'
@@ -808,7 +816,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     (Pipelines.panorama_depth_estimation,
      'damo/cv_unifuse_panorama-depth-estimation'),
     Tasks.image_local_feature_matching:
-    (Pipelines.image_local_feature_matching, 'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
+    (Pipelines.image_local_feature_matching,
+     'Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data'),
     Tasks.image_style_transfer: (Pipelines.image_style_transfer,
                                  'damo/cv_aams_style-transfer_damo'),
     Tasks.face_image_generation: (Pipelines.face_image_generation,
@@ -832,9 +841,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_object_detection:
     (Pipelines.image_object_detection_auto,
      'damo/cv_yolox_image-object-detection-auto'),
-    Tasks.ocr_recognition:
-    (Pipelines.ocr_recognition,
-     'damo/cv_convnextTiny_ocr-recognition-general_damo'),
+    Tasks.ocr_recognition: (
+        Pipelines.ocr_recognition,
+        'damo/cv_convnextTiny_ocr-recognition-general_damo'),
     Tasks.skin_retouching: (Pipelines.skin_retouching,
                             'damo/cv_unet_skin-retouching'),
     Tasks.faq_question_answering: (
@@ -958,7 +967,10 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                  'damo/cv_image-view-transform'),
     Tasks.image_control_3d_portrait: (
         Pipelines.image_control_3d_portrait,
-        'damo/cv_vit_image-control-3d-portrait-synthesis')
+        'damo/cv_vit_image-control-3d-portrait-synthesis'),
+    Tasks.self_supervised_depth_completion: (
+        Pipelines.self_supervised_depth_completion,
+        'damo/self-supervised-depth-completion')
 }
 
 
@@ -981,6 +993,7 @@ class CVTrainers(object):
     nerf_recon_4k = 'nerf-recon-4k'
     action_detection = 'action-detection'
     vision_efficient_tuning = 'vision-efficient-tuning'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
 
 class NLPTrainers(object):

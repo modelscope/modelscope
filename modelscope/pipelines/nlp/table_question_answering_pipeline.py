@@ -62,7 +62,7 @@ class TableQuestionAnsweringPipeline(Pipeline):
             self.preprocessor = TableQuestionAnsweringPreprocessor(
                 self.model.model_dir, **kwargs)
 
-        # initilize tokenizer
+        # initialize tokenizer
         self.tokenizer = BertTokenizer(
             os.path.join(self.model.model_dir, ModelFile.VOCAB_FILE))
 

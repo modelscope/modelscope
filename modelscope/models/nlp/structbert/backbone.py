@@ -881,7 +881,7 @@ class SbertModel(SbertPreTrainedModel):
         head_mask = self.get_head_mask(head_mask,
                                        self.config.num_hidden_layers)
 
-        embedding_output, orignal_embeds = self.embeddings(
+        embedding_output, original_embeds = self.embeddings(
             input_ids=input_ids,
             position_ids=position_ids,
             token_type_ids=token_type_ids,
@@ -907,7 +907,7 @@ class SbertModel(SbertPreTrainedModel):
 
         if not return_dict:
             return (sequence_output,
-                    pooled_output) + encoder_outputs[1:] + (orignal_embeds, )
+                    pooled_output) + encoder_outputs[1:] + (original_embeds, )
 
         return AttentionBackboneModelOutputWithEmbedding(
             last_hidden_state=sequence_output,
@@ -916,4 +916,4 @@ class SbertModel(SbertPreTrainedModel):
             hidden_states=encoder_outputs.hidden_states,
             attentions=encoder_outputs.attentions,
             cross_attentions=encoder_outputs.cross_attentions,
-            embedding_output=orignal_embeds)
+            embedding_output=original_embeds)

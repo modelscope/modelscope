@@ -55,11 +55,11 @@ def conv3x3(in_planes, out_planes, stride=1):
         bias=False)
 
 
-class BasicBlockRes2Net(nn.Module):
+class BasicBlockERes2Net(nn.Module):
     expansion = 2
 
     def __init__(self, in_planes, planes, stride=1, baseWidth=32, scale=2):
-        super(BasicBlockRes2Net, self).__init__()
+        super(BasicBlockERes2Net, self).__init__()
         width = int(math.floor(planes * (baseWidth / 64.0)))
         self.conv1 = conv1x1(in_planes, width * scale, stride)
         self.bn1 = nn.BatchNorm2d(width * scale)
@@ -118,11 +118,11 @@ class BasicBlockRes2Net(nn.Module):
         return out
 
 
-class BasicBlockRes2Net_diff_AFF(nn.Module):
+class BasicBlockERes2Net_AFF(nn.Module):
     expansion = 2
 
     def __init__(self, in_planes, planes, stride=1, baseWidth=32, scale=2):
-        super(BasicBlockRes2Net_diff_AFF, self).__init__()
+        super(BasicBlockERes2Net_AFF, self).__init__()
         width = int(math.floor(planes * (baseWidth / 64.0)))
         self.conv1 = conv1x1(in_planes, width * scale, stride)
         self.bn1 = nn.BatchNorm2d(width * scale)
@@ -190,8 +190,8 @@ class BasicBlockRes2Net_diff_AFF(nn.Module):
 class ERes2Net(nn.Module):
 
     def __init__(self,
-                 block=BasicBlockRes2Net,
-                 block_fuse=BasicBlockRes2Net_diff_AFF,
+                 block=BasicBlockERes2Net,
+                 block_fuse=BasicBlockERes2Net_AFF,
                  num_blocks=[3, 4, 6, 3],
                  m_channels=32,
                  feat_dim=80,

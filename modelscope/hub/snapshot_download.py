@@ -75,6 +75,7 @@ def snapshot_download(model_id: str,
     name = name.replace('.', '___')
 
     cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
+
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -94,8 +95,9 @@ def snapshot_download(model_id: str,
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
-        revision = _api.get_valid_revision(
+        revision_detail = _api.get_valid_revision_detail(
             model_id, revision=revision, cookies=cookies)
+        revision = revision_detail['Revision']
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
             **headers,
@@ -103,6 +105,10 @@ def snapshot_download(model_id: str,
                 'Snapshot': 'True'
             }
         }
+        if cache.cached_model_revision is not None:
+            snapshot_header[
+                'cached_model_revision'] = cache.cached_model_revision
+
         model_files = _api.get_model_files(
             model_id=model_id,
             revision=revision,
@@ -158,7 +164,8 @@ def snapshot_download(model_id: str,
                 temp_file = os.path.join(temp_cache_dir, model_file['Name'])
                 if FILE_HASH in model_file:
                     file_integrity_validation(temp_file, model_file[FILE_HASH])
-                # put file to cache
+                # put file into to cache
                 cache.put_file(model_file, temp_file)
 
+        cache.save_model_version(revision_info=revision_detail)
         return os.path.join(cache.get_root_location())

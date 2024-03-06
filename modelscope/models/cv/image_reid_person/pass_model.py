@@ -1,4 +1,4 @@
-# The implementation is adopted from PASS-reID, made pubicly available under the Apache-2.0 License at
+# The implementation is adopted from PASS-reID, made publicly available under the Apache-2.0 License at
 # https://github.com/CASIA-IVA-Lab/PASS-reID
 
 import os

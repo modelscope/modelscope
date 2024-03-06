@@ -14,9 +14,9 @@ from ...ldm.modules.diffusionmodules.util import checkpoint
 try:
     import xformers
     import xformers.ops
-    XFORMERS_IS_AVAILBLE = True
+    XFORMERS_IS_AVAILABLE = True
 except Exception:
-    XFORMERS_IS_AVAILBLE = False
+    XFORMERS_IS_AVAILABLE = False
 
 _ATTN_PRECISION = os.environ.get('ATTN_PRECISION', 'fp32')
 
@@ -258,7 +258,7 @@ class BasicTransformerBlock(nn.Module):
                  checkpoint=True,
                  disable_self_attn=False):
         super().__init__()
-        attn_mode = 'softmax-xformers' if XFORMERS_IS_AVAILBLE else 'softmax'
+        attn_mode = 'softmax-xformers' if XFORMERS_IS_AVAILABLE else 'softmax'
         assert attn_mode in self.ATTENTION_MODES
         attn_cls = self.ATTENTION_MODES[attn_mode]
         self.disable_self_attn = disable_self_attn

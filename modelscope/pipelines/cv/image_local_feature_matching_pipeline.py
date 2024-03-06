@@ -27,8 +27,10 @@ class ImageLocalFeatureMatchingPipeline(Pipeline):
 
     >>> from modelscope.pipelines import pipeline
 
-    >>> matcher = pipeline(Tasks.image_local_feature_matching, model='Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data')
-    >>> matcher([['https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching1.jpg','https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching2.jpg']])
+    >>> matcher = pipeline(Tasks.image_local_feature_matching,
+    >>>    model='Damo_XR_Lab/cv_resnet-transformer_local-feature-matching_outdoor-data')
+    >>> matcher([['https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching1.jpg',
+    >>>          'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_matching2.jpg']])
     >>>   [{
     >>>    'matches': [array([[720.5    , 187.8    ],
     >>>        [707.4    , 198.23334],
@@ -68,7 +70,6 @@ class ImageLocalFeatureMatchingPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
-
 
     def load_image(self, img_name):
         img = LoadImage.convert_to_ndarray(img_name).astype(np.float32)

@@ -3812,5 +3812,18 @@
                 }
             }
         }
-    }
+    },
+    "self-supervised-depth-completion": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output_img": {
+                    "type": "string",
+                    "description":"The base64 encoded image."
+                }
+            }
+        }
+    },
 }

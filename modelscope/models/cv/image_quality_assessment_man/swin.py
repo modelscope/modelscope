@@ -1,4 +1,4 @@
-# This implementation is adopted form SwinTransformer, made pubicly available under the MIT License at
+# This implementation is adopted form SwinTransformer, made publicly available under the MIT License at
 # https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
 
 import collections.abc

@@ -1,5 +1,5 @@
 # The implementation here is modified based on flow-style-vton,
-# originally Apache 2.0 License and publicly avaialbe at https://github.com/SenHe/Flow-Style-VTON
+# originally Apache 2.0 License and publicly available at https://github.com/SenHe/Flow-Style-VTON
 
 from collections import OrderedDict
 from math import sqrt

@@ -5,8 +5,8 @@ import os
 import pickle
 import tempfile
 from shutil import move, rmtree
+from typing import Dict
 
-from modelscope.hub.constants import MODEL_META_FILE_NAME, MODEL_META_MODEL_ID
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -16,6 +16,9 @@ logger = get_logger()
 
 class FileSystemCache(object):
     KEY_FILE_NAME = '.msc'
+    MODEL_META_FILE_NAME = '.mdl'
+    MODEL_META_MODEL_ID = 'id'
+    MODEL_VERSION_FILE_NAME = '.mv'
     """Local file cache.
     """
 
@@ -133,24 +136,44 @@ class ModelFileSystemCache(FileSystemCache):
             self.load_model_meta()
         else:
             super().__init__(os.path.join(cache_root, owner, name))
-            self.model_meta = {MODEL_META_MODEL_ID: '%s/%s' % (owner, name)}
+            self.model_meta = {
+                FileSystemCache.MODEL_META_MODEL_ID: '%s/%s' % (owner, name)
+            }
             self.save_model_meta()
+        self.cached_model_revision = self.load_model_version()
 
     def load_model_meta(self):
         meta_file_path = os.path.join(self.cache_root_location,
-                                      MODEL_META_FILE_NAME)
+                                      FileSystemCache.MODEL_META_FILE_NAME)
         if os.path.exists(meta_file_path):
             with open(meta_file_path, 'rb') as f:
                 self.model_meta = pickle.load(f)
         else:
-            self.model_meta = {MODEL_META_MODEL_ID: 'unknown'}
+            self.model_meta = {FileSystemCache.MODEL_META_MODEL_ID: 'unknown'}
+
+    def load_model_version(self):
+        model_version_file_path = os.path.join(
+            self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
+        if os.path.exists(model_version_file_path):
+            with open(model_version_file_path, 'r') as f:
+                return f.read().strip()
+        else:
+            return None
+
+    def save_model_version(self, revision_info: Dict):
+        model_version_file_path = os.path.join(
+            self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
+        with open(model_version_file_path, 'w') as f:
+            version_info_str = 'Revision:%s,CreatedAt:%s' % (
+                revision_info['Revision'], revision_info['CreatedAt'])
+            f.write(version_info_str)
 
     def get_model_id(self):
-        return self.model_meta[MODEL_META_MODEL_ID]
+        return self.model_meta[FileSystemCache.MODEL_META_MODEL_ID]
 
     def save_model_meta(self):
         meta_file_path = os.path.join(self.cache_root_location,
-                                      MODEL_META_FILE_NAME)
+                                      FileSystemCache.MODEL_META_FILE_NAME)
         with open(meta_file_path, 'wb') as f:
             pickle.dump(self.model_meta, f)
 

@@ -121,6 +121,9 @@ if TYPE_CHECKING:
     from .image_local_feature_matching_pipeline import ImageLocalFeatureMatchingPipeline
     from .rife_video_frame_interpolation_pipeline import RIFEVideoFrameInterpolationPipeline
     from .anydoor_pipeline import AnydoorPipeline
+    from .image_depth_estimation_marigold_pipeline import ImageDepthEstimationMarigoldPipeline
+    from .self_supervised_depth_completion_pipeline import SelfSupervisedDepthCompletionPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -296,11 +299,19 @@ else:
         ],
         'human3d_render_pipeline': ['Human3DRenderPipeline'],
         'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
-        'image_local_feature_matching_pipeline': ['ImageLocalFeatureMatchingPipeline'],
+        'image_local_feature_matching_pipeline': [
+            'ImageLocalFeatureMatchingPipeline'
+        ],
         'rife_video_frame_interpolation_pipeline': [
             'RIFEVideoFrameInterpolationPipeline'
         ],
         'anydoor_pipeline': ['AnydoorPipeline'],
+        'image_depth_estimation_marigold_pipeline': [
+            'ImageDepthEstimationMarigoldPipeline'
+        ],
+        'self_supervised_depth_completion_pipeline': [
+            'SelfSupervisedDepthCompletionPipeline'
+        ],
     }
 
     import sys

@@ -6,20 +6,20 @@ from .utils import Extractor
 
 class DISK(Extractor):
     default_conf = {
-        "weights": "depth",
-        "max_num_keypoints": None,
-        "desc_dim": 128,
-        "nms_window_size": 5,
-        "detection_threshold": 0.0,
-        "pad_if_not_divisible": True,
+        'weights': 'depth',
+        'max_num_keypoints': None,
+        'desc_dim': 128,
+        'nms_window_size': 5,
+        'detection_threshold': 0.0,
+        'pad_if_not_divisible': True,
     }
 
     preprocess_conf = {
-        "resize": 1024,
-        "grayscale": False,
+        'resize': 1024,
+        'grayscale': False,
     }
 
-    required_data_keys = ["image"]
+    required_data_keys = ['image']
 
     def __init__(self, **conf) -> None:
         super().__init__(**conf)  # Update with default configuration.
@@ -28,8 +28,8 @@ class DISK(Extractor):
     def forward(self, data: dict) -> dict:
         """Compute keypoints, scores, descriptors for image"""
         for key in self.required_data_keys:
-            assert key in data, f"Missing key {key} in data"
-        image = data["image"]
+            assert key in data, f'Missing key {key} in data'
+        image = data['image']
         if image.shape[1] == 1:
             image = kornia.color.grayscale_to_rgb(image)
         features = self.model(
@@ -49,7 +49,7 @@ class DISK(Extractor):
         descriptors = torch.stack(descriptors, 0)
 
         return {
-            "keypoints": keypoints.to(image).contiguous(),
-            "keypoint_scores": scores.to(image).contiguous(),
-            "descriptors": descriptors.to(image).contiguous(),
+            'keypoints': keypoints.to(image).contiguous(),
+            'keypoint_scores': scores.to(image).contiguous(),
+            'descriptors': descriptors.to(image).contiguous(),
         }

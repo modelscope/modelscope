@@ -13,10 +13,9 @@ cudatoolkit_version=11.7
 tensorflow_version=1.15.5
 modelscope_version=None
 cuda_version=11.7.1
-is_ci_test=False
 is_dsw=False
 is_cpu=False
-run_ci_test=False
+build_branch='master'
 function usage(){
     echo "usage: build.sh "
     echo "       --python=python_version set python version, default: $python_version"
@@ -24,10 +23,9 @@ function usage(){
     echo "       --torch=torch_version set pytorch version, fefault: $torch_version"
     echo "       --tensorflow=tensorflow_version set tensorflow version, default: $tensorflow_version"
     echo "       --modelscope=modelscope_version set modelscope version, default: $modelscope_version"
-    echo "       --test option for run test before push image, only push on ci test pass"
+    echo "       --branch=build_branch set modelscope build branch, default: $build_branch"
     echo "       --cpu option for build cpu version"
     echo "       --dsw option for build dsw version"
-    echo "       --ci  option for build ci version"
     echo "       --push option for push image to remote repo"
 }
 for i in "$@"; do
@@ -68,17 +66,13 @@ for i in "$@"; do
       modelscope_version="${i#*=}"
       shift # modelscope version
       ;;
-    --test)
-      run_ci_test=True
-      shift # will run ci test
+    --branch=*)
+      build_branch="${i#*=}"
+      shift # build branch
       ;;
     --cpu)
       is_cpu=True
       shift # is cpu image
-      ;;
-    --ci)
-      is_ci_test=True
-      shift # is ci, will not install modelscope
       ;;
     --dsw)
       is_dsw=True
@@ -148,12 +142,8 @@ else
     exit 1
 fi
 
-target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version
-if [ "$is_ci_test" == "True" ]; then
-    target_image_tag=$target_image_tag-$modelscope_version-ci
-else
-    target_image_tag=$target_image_tag-$modelscope_version-test
-fi
+target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-$modelscope_version-test
+
 export IMAGE_TO_BUILD=$MODELSCOPE_REPO_ADDRESS:$target_image_tag
 export PYTHON_VERSION=$python_version
 export TORCH_VERSION=$torch_version
@@ -162,12 +152,13 @@ export TENSORFLOW_VERSION=$tensorflow_version
 echo -e "Building image with:\npython$python_version\npytorch$torch_version\ntensorflow:$tensorflow_version\ncudatoolkit:$cudatoolkit_version\ncpu:$is_cpu\nis_ci:$is_ci_test\nis_dsw:$is_dsw\n"
 echo -e "Base iamge: $BASE_IMAGE"
 docker_file_content=`cat docker/Dockerfile.ubuntu`
-if [ "$is_ci_test" != "True" ]; then
-    echo "Building ModelScope lib, will install ModelScope lib to image"
-    docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$CIS_ENV_COMMIT_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr 'transformers==4.36.2'"
-    docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$CIS_ENV_COMMIT_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $CIS_ENV_BRANCH  --single-branch $REPO_URL && cd MaaS-lib && pip install . && cd / && rm -fr /tmp/MaaS-lib"
-        MMCV_WITH_OPS=1 MAX_JOBS=32 pip install --no-cache-dir 'mmcv-full<=1.7.0' && pip cache purge; \
-fi
+
+BUILD_HASH_ID=$(git rev-parse HEAD)
+# install thrid part library
+docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv ms_swift funasr timm 'transformers==4.36.2'"
+
+docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$BUILD_HASH_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $build_branch  --single-branch $REPO_URL && cd modelscope && pip install . && cd / && rm -fr /tmp/modelscope && pip cache purge;"
+
 echo "$is_dsw"
 if [ "$is_dsw" == "False" ]; then
     echo "Not DSW image"
@@ -177,10 +168,7 @@ else
     # pre compile extension
     docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
-if [ "$is_ci_test" == "True" ]; then
-    echo "Building CI image, uninstall modelscope"
-    docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y"
-fi
+
 docker_file_content="${docker_file_content} \n RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
@@ -206,26 +194,6 @@ do
   fi
 done
 
-if [ "$run_ci_test" == "True" ]; then
-    echo "Running ci case."
-    export MODELSCOPE_CACHE=/home/mulin.lyh/model_scope_cache
-    export MODELSCOPE_HOME_CACHE=/home/mulin.lyh/ci_case_home # for credential
-    export IMAGE_NAME=$MODELSCOPE_REPO_ADDRESS
-    export IMAGE_VERSION=$target_image_tag
-    export MODELSCOPE_DOMAIN=www.modelscope.cn
-    export HUB_DATASET_ENDPOINT=http://www.modelscope.cn
-    export CI_TEST=True
-    export TEST_LEVEL=1
-    if [ "$is_ci_test" != "True" ]; then
-        echo "Testing for dsw image or MaaS-lib image"
-        export CI_COMMAND="python tests/run.py"
-    fi
-    bash .dev_scripts/dockerci.sh
-    if [ $? -ne 0 ]; then
-       echo "Running unittest failed, please check the log!"
-       exit -1
-    fi
-fi
 if [ "$is_push" == "True" ]; then
     echo "Pushing image: $IMAGE_TO_BUILD"
     docker push $IMAGE_TO_BUILD

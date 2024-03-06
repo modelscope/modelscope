@@ -10,7 +10,7 @@ import torch
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
-from modelscope.models.cv.body_3d_keypoints.cannonical_pose.canonical_pose_modules import (
+from modelscope.models.cv.body_3d_keypoints.canonical_pose.canonical_pose_modules import (
     TemporalModel, TransCan3Dkeys)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
@@ -218,17 +218,17 @@ class BodyKeypointsDetection3D(TorchModel):
         w = input_video_frame_num - pad * 2
 
         lst_pose2d_rr = []
-        lst_pose2d_cannoical = []
+        lst_pose2d_canonical = []
         for i in range(pad, w + pad):
             lst_pose2d_rr.append(pose2d_rr[:, i - pad:i + pad + 1])
-            lst_pose2d_cannoical.append(pose2d_canonical[:,
+            lst_pose2d_canonical.append(pose2d_canonical[:,
                                                          i - pad:i + pad + 1])
 
-        input_pose2d_rr = torch.cat(lst_pose2d_cannoical, axis=0)
-        input_pose2d_cannoical = torch.cat(lst_pose2d_cannoical, axis=0)
+        input_pose2d_rr = torch.cat(lst_pose2d_canonical, axis=0)
+        input_pose2d_canonical = torch.cat(lst_pose2d_canonical, axis=0)
 
         if self.cfg.model.MODEL.USE_CANONICAL_COORDS:
-            input_pose2d_abs = input_pose2d_cannoical.clone()
+            input_pose2d_abs = input_pose2d_canonical.clone()
         else:
             input_pose2d_abs = input_pose2d_rr.clone()
             input_pose2d_abs[:, :, 1:] += input_pose2d_abs[:, :, :1]
@@ -238,8 +238,8 @@ class BodyKeypointsDetection3D(TorchModel):
     def canonicalize_2Ds(self, pos2d, f, c):
         cs = np.array([c[0], c[1]]).reshape(1, 1, 2)
         fs = np.array([f[0], f[1]]).reshape(1, 1, 2)
-        canoical_2Ds = (pos2d - cs) / fs
-        return canoical_2Ds
+        canonical_2Ds = (pos2d - cs) / fs
+        return canonical_2Ds
 
     def normalize_screen_coordinates(self, X, w, h):
         assert X.shape[-1] == 2

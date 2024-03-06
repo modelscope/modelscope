@@ -1,5 +1,5 @@
 # The implementation is adopted from https://github.com/TengdaHan/CoCLR,
-# made pubicly available under the Apache License, Version 2.0 at https://github.com/TengdaHan/CoCLR
+# made publicly available under the Apache License, Version 2.0 at https://github.com/TengdaHan/CoCLR
 # Copyright 2021-2022 The Alibaba FVI Team Authors. All rights reserved.
 import torch
 import torch.nn as nn
@@ -47,7 +47,7 @@ class InceptionBlock3D(nn.Module):
     Element constructing the S3D/S3DG.
     See models/base/backbone.py L99-186.
 
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self, cfg, in_planes, out_planes):
@@ -139,7 +139,7 @@ class STConv3d(nn.Module):
     Element constructing the S3D/S3DG.
     See models/base/backbone.py L99-186.
 
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self,
@@ -213,7 +213,7 @@ class STConv3d(nn.Module):
 class Inception3D(nn.Module):
     """
     Backbone architecture for I3D/S3DG.
-    Modifed from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
+    Modified from https://github.com/TengdaHan/CoCLR/blob/main/backbone/s3dg.py.
     """
 
     def __init__(self, cfg):

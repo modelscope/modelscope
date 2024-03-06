@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import os.path as osp
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union
 
 import json
 import torch
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedModel, PreTrainedTokenizer
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
@@ -14,12 +13,17 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.models.base import Model
 from modelscope.models.nlp import ChatGLM2Tokenizer, Llama2Tokenizer
 from modelscope.outputs import OutputKeys
+from modelscope.pipelines.base import Input
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
 from modelscope.utils.config import Config
-from modelscope.utils.constant import Invoke, ModelFile, Tasks
+from modelscope.utils.constant import Frameworks, Invoke, ModelFile, Tasks
+from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
 from modelscope.utils.model_type_helper import ModelTypeHelper
+from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
+                                               StreamingOutputMixin,
+                                               add_stream_generate)
 
 logger = get_logger()
 
@@ -72,7 +76,7 @@ class LLMAdapterRegistry:
 
 @PIPELINES.register_module(Tasks.chat, module_name='llm')
 @PIPELINES.register_module(Tasks.text_generation, module_name='llm')
-class LLMPipeline(Pipeline):
+class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def initiate_single_model(self, model):
         if isinstance(model, str):
@@ -168,6 +172,8 @@ class LLMPipeline(Pipeline):
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         with self._temp_configuration_file(kwargs):
             super().__init__(*args, **kwargs)
+        if isinstance(self.model, PreTrainedModel):
+            self.model = add_stream_generate(self.model)
 
         tokenizer_class = None
         if isinstance(format_messages, str):
@@ -207,8 +213,9 @@ class LLMPipeline(Pipeline):
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
 
-        is_messages = isinstance(inputs, dict) and 'messages' in inputs
-        tokens = self.preprocess(inputs, is_messages, **preprocess_params)
+        preprocess_params['is_messages'] = postprocess_params['is_messages'] \
+            = isinstance(inputs, dict) and 'messages' in inputs
+        tokens = self.preprocess(inputs, **preprocess_params)
 
         if self.llm_framework is None:
             # pytorch model
@@ -226,11 +233,62 @@ class LLMPipeline(Pipeline):
         if self.llm_framework is None:
             # pytorch model
             outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
-        response = self.postprocess(outputs, is_messages, **postprocess_params)
+        response = self.postprocess(outputs, **postprocess_params)
         return response
 
-    def preprocess(self, inputs: Union[str, Dict], is_messages: bool,
-                   **kwargs):
+    def stream_generate(self, inputs: Union[Input, List[Input]], *args,
+                        **kwargs) -> Generator:
+        assert isinstance(self.model, StreamingOutputMixin
+                          ), 'pipeline.model must be StreamingOutputMixin!'
+        if (self.model or (self.has_multiple_models and self.models[0])):
+            if not self._model_prepare:
+                self.prepare_model()
+
+        preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
+            **kwargs)
+        preprocess_params['is_messages'] = postprocess_params['is_messages'] \
+            = isinstance(inputs, dict) and 'messages' in inputs
+
+        if isinstance(inputs, list):
+            model_input_list = [
+                self._preprocess_with_check(i, preprocess_params)
+                for i in inputs
+            ]
+            output = []
+            for ele in model_input_list:
+                output.append(
+                    self._stream_single(ele, forward_params,
+                                        postprocess_params))
+        else:
+            model_input = self._preprocess_with_check(inputs,
+                                                      preprocess_params)
+            output = self._stream_single(model_input, forward_params,
+                                         postprocess_params)
+        return output
+
+    def _stream_single(self, model_input: Dict[str, Any],
+                       forward_params: Dict[str, Any],
+                       postprocess_params: Dict[str, Any]) -> Generator:
+
+        with device_placement(self.framework, self.device_name):
+            if self.framework == Frameworks.torch:
+                with torch.no_grad():
+                    if self._auto_collate:
+                        model_input = self._collate_fn(model_input)
+                    stream = self.model.stream_generate(
+                        **model_input, **forward_params)
+            else:
+                stream = self.model.stream_generate(**model_input,
+                                                    **forward_params)
+
+            for out in stream:
+                out = out.tolist()[0][len(model_input['inputs'][0]):]
+                out = self.postprocess(out, **postprocess_params)
+                self._check_output(out)
+                yield out
+
+    def preprocess(self, inputs: Union[str, Dict], **kwargs):
+        is_messages = kwargs.pop('is_messages')
         if is_messages:
             tokens = self.format_messages(inputs, self.tokenizer, **kwargs)
         else:
@@ -252,8 +310,8 @@ class LLMPipeline(Pipeline):
             for k, v in tokens.items()
         }
 
-    def postprocess(self, outputs, is_messages: bool, **kwargs):
-
+    def postprocess(self, outputs, **kwargs):
+        is_messages = kwargs.pop('is_messages')
         if not isinstance(outputs, str):
             response = self.tokenizer.decode(
                 outputs, skip_special_tokens=True, **kwargs)
@@ -567,6 +625,14 @@ def chatglm3_format_messages(messages, tokenizer, **kwargs):
     ]
     inputs['eos_token_id'] = eos_token_id
     return inputs
+
+
+@LLMAdapterRegistry.register_format_messages('qwen2')
+def qwen2_format_messages(messages, tokenizer, **kwargs):
+    messages = messages['messages']
+    text = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True)
+    return tokenizer([text], return_tensors='pt')
 
 
 LLMAdapterRegistry.register_tokenizer('chatglm2', ChatGLM2Tokenizer)

@@ -15,7 +15,7 @@ class PersonInfo(object):
     def __init__(self, joints):
         self.joints = joints
         self.flow = None
-        self.pad_boder = False
+        self.pad_border = False
         self.height_expand = 0
         self.width_expand = 0
         self.coeff = 0.2
@@ -24,11 +24,11 @@ class PersonInfo(object):
         self.divider = 20
         self.flow_scales = ['upper_2']
 
-    def update_attribute(self, pad_boder, height_expand, width_expand):
-        self.pad_boder = pad_boder
+    def update_attribute(self, pad_border, height_expand, width_expand):
+        self.pad_border = pad_border
         self.height_expand = height_expand
         self.width_expand = width_expand
-        if pad_boder:
+        if pad_border:
             self.joints[:, 0] += width_expand
             self.joints[:, 1] += height_expand
 
@@ -41,7 +41,7 @@ class PersonInfo(object):
             if len(img.shape) == 2:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-            if self.pad_boder:
+            if self.pad_border:
                 height_expand = self.height_expand
                 width_expand = self.width_expand
                 pad_img = cv2.copyMakeBorder(

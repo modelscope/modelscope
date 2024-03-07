@@ -18,8 +18,7 @@ from datasets import (BuilderConfig, Dataset, DatasetBuilder, DatasetDict,
 from datasets.data_files import (
     FILES_TO_IGNORE, DataFilesDict, DataFilesList, EmptyDatasetError,
     _get_data_files_patterns, _is_inside_unrequested_special_dir,
-    _is_unrequested_hidden_file_or_is_inside_unrequested_hidden_dir,
-    get_data_patterns, get_metadata_patterns, sanitize_patterns)
+    _is_unrequested_hidden_file_or_is_inside_unrequested_hidden_dir, get_metadata_patterns, sanitize_patterns)
 from datasets.download.streaming_download_manager import (
     _prepare_path_and_storage_options, xbasename, xjoin)
 from datasets.exceptions import DataFilesNotFoundError, DatasetNotFoundError
@@ -460,7 +459,7 @@ def _resolve_pattern(
 data_files.resolve_pattern = _resolve_pattern
 
 
-def _get_data_patterns(  # noqa: F881
+def _get_data_patterns(
         base_path: str,
         download_config: Optional[DownloadConfig] = None) -> Dict[str,
                                                                   List[str]]:

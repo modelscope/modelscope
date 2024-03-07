@@ -756,7 +756,7 @@ class DatasetsWrapperHF:
         num_proc: Optional[int] = None,
         storage_options: Optional[Dict] = None,
         trust_remote_code: bool = None,
-        return_config_only: Optional[bool] = None,
+        dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset,
                dict]:
@@ -831,7 +831,7 @@ class DatasetsWrapperHF:
         )
 
         # Note: Only for preview mode
-        if return_config_only:
+        if dataset_info_only:
             ret_dict = {}
             if builder_instance is None or not hasattr(builder_instance,
                                                        'builder_configs'):
@@ -840,8 +840,9 @@ class DatasetsWrapperHF:
 
             _tmp_builder_configs = builder_instance.builder_configs
             for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
+                tmp_config_name = str(tmp_config_name)
                 if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
-                    ret_dict[tmp_config_name] = list(tmp_builder_config.data_files.keys())
+                    ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
                 else:
                     ret_dict[tmp_config_name] = []
             return ret_dict

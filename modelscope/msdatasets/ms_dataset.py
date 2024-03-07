@@ -168,7 +168,7 @@ class MsDataset:
         stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
-        return_config_only: Optional[bool] = False,
+        dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -198,7 +198,7 @@ class MsDataset:
                 custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
-                return_config_only (bool, Optional): If set to True, only return the dataset configuration (list).
+                dataset_info_only (bool, Optional): If set to True, only return the dataset config and info (dict).
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -305,7 +305,7 @@ class MsDataset:
                     revision=version,
                     token=token,
                     streaming=use_streaming,
-                    return_config_only=return_config_only,
+                    dataset_info_only=dataset_info_only,
                     **config_kwargs)
 
             else:

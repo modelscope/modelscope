@@ -13,7 +13,6 @@ from datasets.utils.file_utils import is_relative_path
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
-from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
 from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
@@ -31,7 +30,7 @@ from modelscope.utils.config_ds import HUB_DATASET_ENDPOINT, MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
                                        DownloadMode, Hubs, ModeKeys, Tasks,
-                                       UploadMode, VirgoDatasetConfig)
+                                       UploadMode)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -326,6 +325,8 @@ class MsDataset:
                 return dataset_inst
 
         elif hub == Hubs.virgo:
+            from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
+            from modelscope.utils.constant import VirgoDatasetConfig
             # Rewrite the namespace, version and cache_dir for virgo dataset.
             if namespace == DEFAULT_DATASET_NAMESPACE:
                 dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace

@@ -759,7 +759,7 @@ class DatasetsWrapperHF:
         return_config_only: Optional[bool] = None,
         **config_kwargs,
     ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset,
-               list]:
+               dict]:
 
         if use_auth_token != 'deprecated':
             warnings.warn(
@@ -832,12 +832,19 @@ class DatasetsWrapperHF:
 
         # Note: Only for preview mode
         if return_config_only:
+            ret_dict = {}
             if builder_instance is None or not hasattr(builder_instance,
                                                        'builder_configs'):
                 logger.error(f'No builder_configs found for {path} dataset.')
-                return []
-            subset_list = list(builder_instance.builder_configs.keys())
-            return subset_list
+                return ret_dict
+
+            _tmp_builder_configs = builder_instance.builder_configs
+            for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
+                if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
+                    ret_dict[tmp_config_name] = list(tmp_builder_config.data_files.keys())
+                else:
+                    ret_dict[tmp_config_name] = []
+            return ret_dict
 
         # Return iterable dataset in case of streaming
         if streaming:

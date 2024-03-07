@@ -290,6 +290,8 @@ class MsDataset:
             _, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
 
+            print(f'>>dataset type: {dataset_type}')
+
             if str(dataset_type) == '4':
                 return hf_load_dataset_wrapper(
                     path=namespace + '/' + dataset_name,

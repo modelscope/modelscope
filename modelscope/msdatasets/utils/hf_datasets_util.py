@@ -63,7 +63,7 @@ from modelscope import HubApi
 from modelscope.utils.config_ds import HUB_DATASET_ENDPOINT
 from modelscope.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 config.HF_ENDPOINT = HUB_DATASET_ENDPOINT
 

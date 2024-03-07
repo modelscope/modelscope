@@ -1,4 +1,4 @@
-# noqa: isort:skip_file
+# noqa: isort:skip_file, yapf: disable
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
 

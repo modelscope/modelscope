@@ -977,6 +977,10 @@ class HubApi:
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
 
+    @staticmethod
+    def get_file_base_path(endpoint: str, namespace: str, dataset_name: str, revision: str) -> str:
+        return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)

@@ -22,10 +22,12 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
+from modelscope.msdatasets.utils.hf_datasets_util import \
+    load_dataset as hf_load_dataset_wrapper
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.config_ds import MS_DATASETS_CACHE
+from modelscope.utils.config_ds import HUB_DATASET_ENDPOINT, MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
                                        DownloadMode, Hubs, ModeKeys, Tasks,
@@ -167,6 +169,7 @@ class MsDataset:
         stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
+        return_config_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -196,6 +199,7 @@ class MsDataset:
                 custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
+                return_config_only (bool, Optional): If set to True, only return the dataset configuration (list).
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -279,18 +283,46 @@ class MsDataset:
             return dataset_inst
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
-            remote_dataloader_manager = RemoteDataLoaderManager(
-                dataset_context_config)
-            dataset_inst = remote_dataloader_manager.load_dataset(
-                RemoteDataLoaderType.MS_DATA_LOADER)
-            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
-            if isinstance(dataset_inst, MsDataset):
-                dataset_inst._dataset_context_config = remote_dataloader_manager.dataset_context_config
-                if custom_cfg:
-                    dataset_inst.to_custom_dataset(
-                        custom_cfg=custom_cfg, **config_kwargs)
-                    dataset_inst.is_custom = True
-            return dataset_inst
+
+            # Get dataset type from ModelScope Hub;  dataset_type->4: General Dataset
+            from modelscope.hub.api import HubApi
+            _api = HubApi(endpoint=HUB_DATASET_ENDPOINT)
+            _, dataset_type = _api.get_dataset_id_and_type(
+                dataset_name=dataset_name, namespace=namespace)
+
+            if str(dataset_type) == '4':
+                return hf_load_dataset_wrapper(
+                    path=namespace + '/' + dataset_name,
+                    name=subset_name,
+                    data_dir=data_dir,
+                    data_files=data_files,
+                    split=split,
+                    cache_dir=cache_dir,
+                    features=None,
+                    download_config=None,
+                    download_mode=download_mode.value,
+                    revision=version,
+                    token=token,
+                    streaming=use_streaming,
+                    return_config_only=return_config_only,
+                    **config_kwargs)
+
+            else:
+
+                remote_dataloader_manager = RemoteDataLoaderManager(
+                    dataset_context_config)
+                dataset_inst = remote_dataloader_manager.load_dataset(
+                    RemoteDataLoaderType.MS_DATA_LOADER)
+                dataset_inst = MsDataset.to_ms_dataset(
+                    dataset_inst, target=target)
+                if isinstance(dataset_inst, MsDataset):
+                    dataset_inst._dataset_context_config = remote_dataloader_manager.dataset_context_config
+                    if custom_cfg:
+                        dataset_inst.to_custom_dataset(
+                            custom_cfg=custom_cfg, **config_kwargs)
+                        dataset_inst.is_custom = True
+                return dataset_inst
+
         elif hub == Hubs.virgo:
             # Rewrite the namespace, version and cache_dir for virgo dataset.
             if namespace == DEFAULT_DATASET_NAMESPACE:

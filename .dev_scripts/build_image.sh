@@ -155,7 +155,7 @@ docker_file_content=`cat docker/Dockerfile.ubuntu`
 
 BUILD_HASH_ID=$(git rev-parse HEAD)
 # install thrid part library
-docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv https://modelscope-open.oss-cn-hangzhou.aliyuncs.com/ms_swift-1.7.0-py3-none-any.whl 'funasr==1.0.14' autoawq timm 'transformers==4.38.2' tensorboardX"
+docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv https://modelscope-open.oss-cn-hangzhou.aliyuncs.com/ms_swift-1.7.0-py3-none-any.whl 'funasr==1.0.14' autoawq timm 'transformers==4.38.2'"
 
 docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$BUILD_HASH_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $build_branch  --single-branch $REPO_URL && cd modelscope && pip install . && cd / && rm -fr /tmp/modelscope && pip cache purge;"
 
@@ -166,7 +166,7 @@ else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
-    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboardX tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 
 docker_file_content="${docker_file_content} \n RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \

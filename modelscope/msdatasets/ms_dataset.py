@@ -20,13 +20,14 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
                                                NativeIterableDataset)
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
+from modelscope.msdatasets.meta.data_meta_manager import DataMetaManager
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.hf_datasets_util import \
     load_dataset as hf_load_dataset_wrapper
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor
 from modelscope.utils.config import Config, ConfigDict
-from modelscope.utils.config_ds import HUB_DATASET_ENDPOINT, MS_DATASETS_CACHE
+from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
                                        DownloadMode, Hubs, ModeKeys, Tasks,
@@ -285,28 +286,52 @@ class MsDataset:
 
             # Get dataset type from ModelScope Hub;  dataset_type->4: General Dataset
             from modelscope.hub.api import HubApi
-            _api = HubApi(endpoint=HUB_DATASET_ENDPOINT)
-            _, dataset_type = _api.get_dataset_id_and_type(
+            _api = HubApi()
+            dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
+
+            _meta_manager = DataMetaManager(dataset_context_config)
+            _meta_manager.fetch_meta_files()
+            _meta_manager.parse_dataset_structure()
+            general_dataset_py_paths = _meta_manager.dataset_context_config.data_meta_config.\
+                dataset_scripts.get('.py', [])
 
             print(f'>>dataset type: {dataset_type}')
 
+            # 不包含 with_scripts的情况
             if str(dataset_type) == '4':
-                return hf_load_dataset_wrapper(
-                    path=namespace + '/' + dataset_name,
-                    name=subset_name,
-                    data_dir=data_dir,
-                    data_files=data_files,
-                    split=split,
-                    cache_dir=cache_dir,
-                    features=None,
-                    download_config=None,
-                    download_mode=download_mode.value,
-                    revision=version,
-                    token=token,
-                    streaming=use_streaming,
-                    dataset_info_only=dataset_info_only,
-                    **config_kwargs)
+
+                if len(general_dataset_py_paths) > 0:
+                    general_dataset_py_path = general_dataset_py_paths[0]
+
+                    return hf_load_dataset_wrapper(
+                        general_dataset_py_path,
+                        name=subset_name,
+                        revision=version,
+                        split=split,
+                        data_dir=data_dir,
+                        data_files=data_files,
+                        cache_dir=cache_dir,
+                        download_mode=download_mode.value,
+                        ignore_verifications=True,
+                        **config_kwargs)
+
+                else:
+                    return hf_load_dataset_wrapper(
+                        path=namespace + '/' + dataset_name,
+                        name=subset_name,
+                        data_dir=data_dir,
+                        data_files=data_files,
+                        split=split,
+                        cache_dir=cache_dir,
+                        features=None,
+                        download_config=None,
+                        download_mode=download_mode.value,
+                        revision=version,
+                        token=token,
+                        streaming=use_streaming,
+                        dataset_info_only=dataset_info_only,
+                        **config_kwargs)
 
             else:
 

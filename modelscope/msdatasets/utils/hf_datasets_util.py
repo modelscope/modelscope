@@ -7,7 +7,6 @@ import warnings
 from functools import partial
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union
-from urllib.parse import quote
 
 import json
 import requests
@@ -42,30 +41,27 @@ from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        _raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
                                        is_relative_path,
-                                       relative_to_absolute_path,
-                                       url_or_path_join)
-from datasets.utils.hub import hf_hub_url
+                                       relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
 from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (REPO_TYPE_MODEL, DatasetCard, DatasetCardData,
+from huggingface_hub import (DatasetCard, DatasetCardData,
                              HfFileSystem, get_session)
-from huggingface_hub.constants import DEFAULT_REVISION, REPO_TYPE_DATASET
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from huggingface_hub.utils import hf_raise_for_status
 from packaging import version
 
 from modelscope import HubApi
-from modelscope.utils.config_ds import HUB_DATASET_ENDPOINT
+from modelscope.hub.utils.utils import get_endpoint
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-config.HF_ENDPOINT = HUB_DATASET_ENDPOINT
+config.HF_ENDPOINT = get_endpoint()
 
 
 def _ms_download(self, url_or_filename: str,
@@ -222,7 +218,7 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
-    _endpoint = self.endpoint or HUB_DATASET_ENDPOINT
+    _endpoint = self.endpoint or get_endpoint()
 
     _ms_api = HubApi(endpoint=_endpoint)
     _namespace, _dataset_name = repo_id.split('/')
@@ -561,7 +557,7 @@ def _get_data_patterns(
 
 
 def get_module_without_script(self) -> DatasetModule:
-    _ms_api = HubApi(HUB_DATASET_ENDPOINT)
+    _ms_api = HubApi()
     _repo_id: str = self.name
     _namespace, _dataset_name = _repo_id.split('/')
 
@@ -669,7 +665,7 @@ def get_module_without_script(self) -> DatasetModule:
         # "base_path": hf_hub_url(self.name, "", revision=revision).rstrip("/"),
         'base_path':
         HubApi.get_file_base_path(
-            endpoint=HUB_DATASET_ENDPOINT,
+            endpoint=get_endpoint(),
             namespace=_namespace,
             dataset_name=_dataset_name,
             revision=revision),
@@ -1070,7 +1066,7 @@ class DatasetsWrapperHF:
 
                 # TODO: hf_api --> TBD
                 try:
-                    dataset_info = HfApi(HUB_DATASET_ENDPOINT).dataset_info(
+                    dataset_info = HfApi().dataset_info(
                         repo_id=path,
                         revision=revision,
                         token=download_config.token,

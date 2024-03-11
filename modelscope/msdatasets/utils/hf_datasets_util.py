@@ -147,14 +147,16 @@ def _dataset_info(
 
     </Tip>
     """
+    # TODO: 问题： self.endpoint 是huggingface.co，当加载 aya_dataset_mini时
+    _endpoint = get_endpoint()
     headers = self._build_hf_headers(token=token)
-    _ms_api = HubApi(endpoint=self.endpoint)
+    _ms_api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
     dataset_hub_id, dataset_type = _ms_api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)
 
     revision: str = revision or 'master'
-    path = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+    path = f'{_endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
     params = {'Revision': revision, 'Root': None, 'Recursive': 'True'}
 
     if files_metadata:
@@ -218,9 +220,9 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
-    _endpoint = self.endpoint or get_endpoint()
+    _endpoint = get_endpoint()
 
-    _ms_api = HubApi(endpoint=_endpoint)
+    _ms_api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
     dataset_hub_id, dataset_type = _ms_api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)

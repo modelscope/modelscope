@@ -27,7 +27,6 @@ class DenseOpticalFlowEstimationTest(unittest.TestCase):
         estimator = pipeline(
             Tasks.dense_optical_flow_estimation, model=self.model_id)
         result = estimator(input_location)
-        print(type(result[0]), result[0].keys())
         # flow = result[0][OutputKeys.FLOWS]
         flow_vis = result[0][OutputKeys.FLOWS_COLOR]
         cv2.imwrite('result.jpg', flow_vis)

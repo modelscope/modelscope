@@ -297,17 +297,6 @@ class MsDataset:
             _meta_manager.fetch_meta_files()
             general_dataset_py_path: str = _meta_manager.dataset_context_config.data_meta_config.dataset_py_script
 
-            # try:
-            #     _meta_manager = DataMetaManager(dataset_context_config)
-            #     _meta_manager.fetch_meta_files()
-            #     _meta_manager.parse_dataset_structure()
-            #     general_dataset_py_paths: list = _meta_manager.dataset_context_config.data_meta_config.\
-            #         dataset_scripts.get('.py', [])
-            # except:
-            #     general_dataset_py_paths = []
-
-            print(f'>>dataset type: {dataset_type}')
-
             # 不包含 with_scripts的情况
             if str(dataset_type) == '4':
 

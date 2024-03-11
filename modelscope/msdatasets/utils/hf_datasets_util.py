@@ -594,6 +594,8 @@ def get_module_without_script(self) -> DatasetModule:
     except FileNotFoundError:
         dataset_card_data = DatasetCardData()
 
+    subset_name: str = download_config.storage_options.get('name', None)
+
     metadata_configs = MetadataConfigs.from_dataset_card_data(
         dataset_card_data)
     dataset_infos = DatasetInfosDict.from_dataset_card_data(dataset_card_data)
@@ -603,8 +605,12 @@ def get_module_without_script(self) -> DatasetModule:
         patterns = sanitize_patterns(self.data_files)
     elif metadata_configs and 'data_files' in next(
             iter(metadata_configs.values())):
-        patterns = sanitize_patterns(
-            next(iter(metadata_configs.values()))['data_files'])
+
+        if subset_name is not None:
+            subset_data_files = metadata_configs[subset_name]['data_files']
+        else:
+            subset_data_files = next(iter(metadata_configs.values()))['data_files']
+        patterns = sanitize_patterns(subset_data_files)
     else:
         patterns = _get_data_patterns(
             base_path, download_config=self.download_config)
@@ -644,8 +650,6 @@ def get_module_without_script(self) -> DatasetModule:
 
     module_path, _ = _PACKAGED_DATASETS_MODULES[module_name]
 
-    metadata_configs = {}  # TODO: ONLY FOR TEST
-
     if metadata_configs:
         builder_configs, default_config_name = create_builder_configs_from_metadata_configs(
             module_path,
@@ -675,6 +679,7 @@ def get_module_without_script(self) -> DatasetModule:
         self.name,
         'dataset_name':
         camelcase_to_snakecase(Path(self.name).name),
+        'data_files': data_files,       # TODO: TO BE CHECKED !!
     }
     download_config = self.download_config.copy()
     if download_config.download_desc is None:
@@ -935,6 +940,7 @@ class DatasetsWrapperHF:
             trust_remote_code=trust_remote_code,
             _require_default_config_name=_require_default_config_name,
             _require_custom_configs=bool(config_kwargs),
+            name=name,
         )
         # Get dataset builder class from the processing script
         builder_kwargs = dataset_module.builder_kwargs
@@ -996,8 +1002,10 @@ class DatasetsWrapperHF:
         **download_kwargs,
     ) -> DatasetModule:
 
+        subset_name: str = download_kwargs.pop('name', None)
         if download_config is None:
             download_config = DownloadConfig(**download_kwargs)
+        download_config.storage_options.update({'name': subset_name})
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         download_config.extract_compressed_file = True

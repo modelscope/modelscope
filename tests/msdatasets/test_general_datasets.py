@@ -48,6 +48,10 @@ class GeneralMsDatasetTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
                          'skip test in current test level')
     def test_inner_aya_dataset_mini(self):
+        # Dataset Format:
+        # data/train-xxx-of-xxx.parquet; data/test-xxx-of-xxx.parquet
+        # demographics/train-xxx-of-xxx.parquet
+
         ds = MsDataset.load(
             'wangxingjun778test/aya_dataset_mini', split='train')
         print(f'>>output of test_inner_aya_dataset_mini:\n {next(iter(ds))}')

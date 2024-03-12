@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import requests
+from datasets.utils.file_utils import is_relative_path
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
@@ -666,6 +667,42 @@ class HubApi:
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
+
+    def get_dataset_infos(self, dataset_hub_id: str, revision: str, files_metadata: bool = False, timeout: float = 100):
+        """
+        Get dataset infos.
+        """
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision, 'Root': None, 'Recursive': 'True'}
+        cookies = ModelScopeConfig.get_cookies()
+        if files_metadata:
+            params['blobs'] = True
+        r = self.session.get(datahub_url, params=params, cookies=cookies, timeout=timeout)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
+
+    def list_repo_tree_ms(self,
+                          dataset_name: str,
+                          namespace: str,
+                          revision: str,
+                          root_path: str,
+                          recursive: bool = True):
+
+        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
+            dataset_name=dataset_name, namespace=namespace)
+
+        recursive = 'True' if recursive else 'False'
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision, 'Root': root_path, 'Recursive': recursive}
+        cookies = ModelScopeConfig.get_cookies()
+
+        r = self.session.get(datahub_url, params=params, cookies=cookies)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str, dataset_id: str, revision: str):
         """ Get the meta file-list of the dataset. """

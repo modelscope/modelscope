@@ -36,7 +36,7 @@ from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_SUPPORTS_METADATA,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
-from datasets.utils import _datasets_server
+from datasets.utils import _datasets_server, file_utils
 from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        _raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
@@ -56,12 +56,18 @@ from huggingface_hub.utils import hf_raise_for_status
 from packaging import version
 
 from modelscope import HubApi
+from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.utils.utils import get_endpoint
+from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 config.HF_ENDPOINT = get_endpoint()
+
+
+file_utils.get_from_cache = get_from_cache_ms
 
 
 def _ms_download(self, url_or_filename: str,
@@ -147,46 +153,37 @@ def _dataset_info(
 
     </Tip>
     """
-    # TODO: 问题： self.endpoint 是huggingface.co，当加载 aya_dataset_mini时
-    _endpoint = get_endpoint()
-    headers = self._build_hf_headers(token=token)
     _ms_api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
     dataset_hub_id, dataset_type = _ms_api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)
 
     revision: str = revision or 'master'
-    path = f'{_endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-    params = {'Revision': revision, 'Root': None, 'Recursive': 'True'}
-
-    if files_metadata:
-        params['blobs'] = True
-
-    r = get_session().get(
-        path, headers=headers, timeout=timeout, params=params)
-    hf_raise_for_status(r)
-    data = r.json()
+    data = _ms_api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
+                                     revision=revision,
+                                     files_metadata=files_metadata,
+                                     timeout=timeout)
 
     # Parse data
     data_d: dict = data['Data']
     data_file_list: list = data_d['Files']
     # commit_info: dict = data_d['LatestCommitter']
 
-    # Update data
+    # Update data   # TODO: columns align with HfDatasetInfo
     data['id'] = repo_id
-    data['private'] = False  # TODO
+    data['private'] = False
     data['author'] = repo_id.split('/')[0] if repo_id else None
-    data['sha'] = revision  # TODO
-    data['lastModified'] = None  # TODO
+    data['sha'] = revision
+    data['lastModified'] = None
     data['gated'] = False
     data['disabled'] = False
-    data['downloads'] = 0  # TODO
-    data['likes'] = 0  # TODO
-    data['tags'] = []  # TODO
-    data['cardData'] = []  # TODO
-    data['createdAt'] = None  # TODO
+    data['downloads'] = 0
+    data['likes'] = 0
+    data['tags'] = []
+    data['cardData'] = []
+    data['createdAt'] = None
 
-    # {'rfilename': 'xxx', 'blobId': 'xxx', 'size': 0, 'lfs': {'size': 0, 'sha256': 'xxx', 'pointerSize': 0}}
+    # e.g. {'rfilename': 'xxx', 'blobId': 'xxx', 'size': 0, 'lfs': {'size': 0, 'sha256': 'xxx', 'pointerSize': 0}}
     data['siblings'] = []
     for file_info_d in data_file_list:
         file_info = {
@@ -197,7 +194,7 @@ def _dataset_info(
             'lfs': {
                 'size': file_info_d['Size'],
                 'sha256': file_info_d['Sha256'],
-                'pointerSize': 0  # TODO
+                'pointerSize': 0
             }
         }
         data['siblings'].append(file_info)
@@ -220,23 +217,23 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
-    _endpoint = get_endpoint()
+    _api = HubApi()
 
-    _ms_api = HubApi()
-    _namespace, _dataset_name = repo_id.split('/')
-    dataset_hub_id, dataset_type = _ms_api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_namespace)
+    if is_relative_path(repo_id) and repo_id.count('/') == 1:
+        _namespace, _dataset_name = repo_id.split('/')
+    elif is_relative_path(repo_id) and repo_id.count('/') == 0:
+        logger.warning(f'Got a relative path: {repo_id} without namespace, '
+                       f'Use default namespace: {DEFAULT_DATASET_NAMESPACE}')
+        _namespace, _dataset_name = DEFAULT_DATASET_NAMESPACE, repo_id
+    else:
+        raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-    revision = revision or 'master'
-    # recursive = 'True' if recursive else 'False'
-    root_path = path_in_repo or None
-    path = f'{_endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-    params = {'Revision': revision, 'Root': root_path, 'Recursive': 'True'}
-
-    r = get_session().get(path, params=params)
-    hf_raise_for_status(r)
-    data = r.json()
-
+    data: dict = _api.list_repo_tree_ms(dataset_name=_dataset_name,
+                                        namespace=_namespace,
+                                        revision=revision or 'master',
+                                        root_path=path_in_repo or None,
+                                        recursive=True,
+                                        )
     # Parse data
     # Type: 'tree' or 'blob'
     data_d: dict = data['Data']
@@ -1074,7 +1071,6 @@ class DatasetsWrapperHF:
             try:
                 _raise_if_offline_mode_is_enabled()
 
-                # TODO: hf_api --> TBD
                 try:
                     dataset_info = HfApi().dataset_info(
                         repo_id=path,

@@ -3,7 +3,7 @@
 import copy
 import os
 import tempfile
-import threading
+import urllib
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -179,6 +179,8 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
     Returns:
         str: The file url.
     """
+    file_path = urllib.parse.quote_plus(file_path)
+    revision = urllib.parse.quote_plus(revision)
     download_url_template = '{endpoint}/api/v1/models/{model_id}/repo?Revision={revision}&FilePath={file_path}'
     return download_url_template.format(
         endpoint=get_endpoint(),

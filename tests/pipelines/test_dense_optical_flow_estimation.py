@@ -20,9 +20,10 @@ class DenseOpticalFlowEstimationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dense_optical_flow_estimation(self):
         input_location = [[
-            # 'data/test/images/dense_flow1.png',
-            'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow1.png',
-            'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow2.png'
+            'data/test/images/dense_flow1.png',
+            'data/test/images/dense_flow2.png',
+            # 'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow1.png',
+            # 'modelscope/models/cv/dense_optical_flow_estimation/data/test/images/dense_flow2.png'
         ]]
         estimator = pipeline(
             Tasks.dense_optical_flow_estimation, model=self.model_id)

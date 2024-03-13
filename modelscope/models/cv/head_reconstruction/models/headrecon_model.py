@@ -109,7 +109,7 @@ class HeadReconModel(TorchModel):
         ]
 
         self.compute_feat_loss = perceptual_loss
-        self.comupte_color_loss = photo_loss
+        self.compute_color_loss = photo_loss
         self.compute_lm_loss = landmark_loss
         self.compute_reg_loss = reg_loss
         self.compute_reflc_loss = reflectance_loss
@@ -519,7 +519,7 @@ class HeadReconModel(TorchModel):
     def compute_losses_fitting(self):
         face_mask = self.pred_mask
         face_mask = face_mask.detach()
-        self.loss_color = self.opt.w_color * self.comupte_color_loss(
+        self.loss_color = self.opt.w_color * self.compute_color_loss(
             self.pred_face, self.input_img, face_mask)  # 1.0
 
         loss_reg, loss_gamma = self.compute_reg_loss(
@@ -552,7 +552,7 @@ class HeadReconModel(TorchModel):
 
         head_mask = self.pred_mask_head
         head_mask = head_mask.detach()
-        self.loss_color_head = self.opt.w_color * self.comupte_color_loss(
+        self.loss_color_head = self.opt.w_color * self.compute_color_loss(
             self.pred_head, self.input_img, head_mask)  # 1.0
         self.loss_smooth_offset_head = TVLoss()(
             self.shape_offset_uv_head.permute(0, 3, 1, 2)) * 100  # 10000

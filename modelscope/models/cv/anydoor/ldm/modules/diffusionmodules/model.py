@@ -12,9 +12,9 @@ from ....ldm.modules.attention import MemoryEfficientCrossAttention
 try:
     import xformers
     import xformers.ops
-    XFORMERS_IS_AVAILBLE = True
+    XFORMERS_IS_AVAILABLE = True
 except Exception:
-    XFORMERS_IS_AVAILBLE = False
+    XFORMERS_IS_AVAILABLE = False
     print("No module 'xformers'. Proceeding without it.")
 
 
@@ -259,7 +259,7 @@ def make_attn(in_channels, attn_type='vanilla', attn_kwargs=None):
         'vanilla', 'vanilla-xformers', 'memory-efficient-cross-attn', 'linear',
         'none'
     ], f'attn_type {attn_type} unknown'
-    if XFORMERS_IS_AVAILBLE and attn_type == 'vanilla':
+    if XFORMERS_IS_AVAILABLE and attn_type == 'vanilla':
         attn_type = 'vanilla-xformers'
     print(
         f"making attention of type '{attn_type}' with {in_channels} in_channels"

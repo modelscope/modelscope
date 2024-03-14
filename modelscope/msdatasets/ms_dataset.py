@@ -312,6 +312,8 @@ class MsDataset:
                         cache_dir=cache_dir,
                         download_mode=download_mode.value,
                         ignore_verifications=True,
+                        streaming=use_streaming,
+                        dataset_info_only=dataset_info_only,
                         **config_kwargs)
 
                 else:

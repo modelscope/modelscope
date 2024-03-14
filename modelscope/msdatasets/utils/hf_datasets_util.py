@@ -833,6 +833,14 @@ class DatasetsWrapperHF:
         # Note: Only for preview mode
         if dataset_info_only:
             ret_dict = {}
+            # Get dataset config info from python script
+            if isinstance(path, str) and path.endswith('.py') and os.path.exists(path):
+                from datasets import get_dataset_infos
+                infos = get_dataset_infos(path)
+                for _conf_name, _ds_info_d in infos.items():
+                    ret_dict[_conf_name] = list(_ds_info_d.splits.keys())
+                return ret_dict
+
             if builder_instance is None or not hasattr(builder_instance,
                                                        'builder_configs'):
                 logger.error(f'No builder_configs found for {path} dataset.')

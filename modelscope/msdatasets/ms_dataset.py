@@ -299,7 +299,7 @@ class MsDataset:
 
             # 不包含 with_scripts的情况
             if str(dataset_type) == '4':
-
+                # TODO: 1. 修改cache路径； 2. reuse模式和force下载模式
                 if general_dataset_py_path:
 
                     return hf_load_dataset_wrapper(

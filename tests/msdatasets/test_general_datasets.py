@@ -63,6 +63,17 @@ class GeneralMsDatasetTest(unittest.TestCase):
             f">>output of test_inner_aya_dataset_mini:\n {next(iter(ds['train']))}"
         )
 
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_inner_no_standard_imgs(self):
+        infos = MsDataset.load(
+            'xxxxtest0004/png_jpg_txt_test', dataset_info_only=True)
+        assert infos['default']
+
+        ds = MsDataset.load('xxxxtest0004/png_jpg_txt_test', split='train')
+        print(f'>>>output of test_inner_no_standard_imgs: \n{next(iter(ds))}')
+        assert next(iter(ds))
+
 
 if __name__ == '__main__':
     unittest.main()

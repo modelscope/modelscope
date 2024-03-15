@@ -15,6 +15,7 @@ from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urlencode
 
 import pandas as pd
 import requests
@@ -832,18 +833,21 @@ class HubApi:
         if not file_name or not dataset_name or not namespace:
             raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
 
-        file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
-                   f'Revision={revision}&FilePath={file_name}'
+        params: dict = {'Revision': revision, 'FilePath': file_name}
+        params: str = urlencode(params)
+        file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?{params}'
 
-        if extension_filter:
-            if os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
-                file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'\
-                           f'Revision={revision}&FilePath={file_name}'
-            else:
-                file_url = file_name
-            return file_url
-        else:
-            return file_url
+        return file_url
+
+        # if extension_filter:
+        #     if os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
+        #         file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'\
+        #                    f'Revision={revision}&FilePath={file_name}'
+        #     else:
+        #         file_url = file_name
+        #     return file_url
+        # else:
+        #     return file_url
 
     def get_dataset_access_config(
             self,
@@ -1016,7 +1020,8 @@ class HubApi:
 
     @staticmethod
     def get_file_base_path(endpoint: str, namespace: str, dataset_name: str, revision: str) -> str:
-        return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
+        return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
+        # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
 
 class ModelScopeConfig:

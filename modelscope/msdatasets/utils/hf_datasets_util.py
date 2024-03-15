@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import json
+from urllib.parse import urlencode
+
 import requests
 from datasets import (BuilderConfig, Dataset, DatasetBuilder, DatasetDict,
                       DownloadConfig, DownloadManager, DownloadMode, Features,
@@ -69,34 +71,39 @@ config.HF_ENDPOINT = get_endpoint()
 
 file_utils.get_from_cache = get_from_cache_ms
 
-
-def _ms_download(self, url_or_filename: str,
-                 download_config: DownloadConfig) -> str:
-    url_or_filename = str(url_or_filename)
-    if url_or_filename.startswith('hf://'):
-        url_or_filename = url_or_filename.split('@')[-1].split('/', 1)[-1]
-    if is_relative_path(url_or_filename):
-        # append the relative path to the base_path
-        # url_or_filename = url_or_path_join(self._base_path, url_or_filename)  # TODO: VERIFY
-        url_or_filename = self._base_path + url_or_filename
-    out = cached_path(url_or_filename, download_config=download_config)
-    out = tracked_str(out)
-    out.set_origin(url_or_filename)
-    return out
-
-
-DownloadManager._download = _ms_download
+#
+# def _ms_download(self, url_or_filename: str,
+#                  download_config: DownloadConfig) -> str:
+#     url_or_filename = str(url_or_filename)
+#     if url_or_filename.startswith('hf://'):
+#         url_or_filename = url_or_filename.split('@')[-1].split('/', 1)[-1]
+#     if is_relative_path(url_or_filename):
+#         # append the relative path to the base_path
+#         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)  # TODO: VERIFY
+#         url_or_filename = self._base_path + url_or_filename
+#     out = cached_path(url_or_filename, download_config=download_config)
+#     out = tracked_str(out)
+#     out.set_origin(url_or_filename)
+#     return out
+#
+#
+# DownloadManager._download = _ms_download
 
 
 def _download(self, url_or_filename: str,
               download_config: DownloadConfig) -> str:
     url_or_filename = str(url_or_filename)
+    # for temp val
+    revision = None
     if url_or_filename.startswith('hf://'):
-        url_or_filename = url_or_filename.split('@')[-1].split('/', 1)[-1]
-    if is_relative_path(url_or_filename):
+        revision, url_or_filename = url_or_filename.split('@', 1)[-1].split('/', 1)
+    if is_relative_path(url_or_filename) and revision is not None:
         # append the relative path to the base_path
-        # url_or_filename = url_or_path_join(self._base_path, url_or_filename)  # TODO: VERIFY
-        url_or_filename = self._base_path + url_or_filename
+        # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
+        params: dict = {'Revision': revision, 'FilePath': url_or_filename}
+        params: str = urlencode(params)
+        url_or_filename = self._base_path + params
+
     out = cached_path(url_or_filename, download_config=download_config)
     out = tracked_str(out)
     out.set_origin(url_or_filename)

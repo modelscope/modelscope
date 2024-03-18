@@ -728,12 +728,12 @@ class HubApi:
 
         return resp
 
-    def list_repo_tree_ms(self,
-                          dataset_name: str,
-                          namespace: str,
-                          revision: str,
-                          root_path: str,
-                          recursive: bool = True):
+    def list_repo_tree(self,
+                       dataset_name: str,
+                       namespace: str,
+                       revision: str,
+                       root_path: str,
+                       recursive: bool = True):
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace)

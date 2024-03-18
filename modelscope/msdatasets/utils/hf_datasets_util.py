@@ -213,12 +213,12 @@ def _list_repo_tree(
     else:
         raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-    data: dict = _api.list_repo_tree_ms(dataset_name=_dataset_name,
-                                        namespace=_namespace,
-                                        revision=revision or 'master',
-                                        root_path=path_in_repo or None,
-                                        recursive=True,
-                                        )
+    data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
+                                     namespace=_namespace,
+                                     revision=revision or 'master',
+                                     root_path=path_in_repo or None,
+                                     recursive=True,
+                                     )
     # Parse data
     # Type: 'tree' or 'blob'
     data_d: dict = data['Data']

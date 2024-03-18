@@ -708,12 +708,17 @@ class HubApi:
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
 
-    def get_dataset_infos(self, dataset_hub_id: str, revision: str, files_metadata: bool = False, timeout: float = 100):
+    def get_dataset_infos(self,
+                          dataset_hub_id: str,
+                          revision: str,
+                          files_metadata: bool = False,
+                          timeout: float = 100,
+                          recursive: str = 'True'):
         """
         Get dataset infos.
         """
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-        params = {'Revision': revision, 'Root': None, 'Recursive': 'True'}
+        params = {'Revision': revision, 'Root': None, 'Recursive': recursive}
         cookies = ModelScopeConfig.get_cookies()
         if files_metadata:
             params['blobs'] = True

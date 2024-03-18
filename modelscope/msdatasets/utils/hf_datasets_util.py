@@ -241,7 +241,6 @@ def _list_repo_tree(
 HfApi.list_repo_tree = _list_repo_tree
 
 
-# TODO： 重写get_paths_info
 def _get_paths_info(
     self,
     repo_id: str,
@@ -253,42 +252,27 @@ def _get_paths_info(
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
 
-    # repo_type = repo_type or REPO_TYPE_DATASET
-    # revision = quote(revision, safe="") if revision is not None else 'master'
-    # headers = self._build_hf_headers(token=token)
-    #
-    # response = get_session().post(
-    #     f"{self.endpoint}/api/{repo_type}s/{repo_id}/paths-info/{revision}",
-    #     data={
-    #         "paths": paths if isinstance(paths, list) else [paths],
-    #         "expand": expand,
-    #     },
-    #     headers=headers,
-    # )
-    # hf_raise_for_status(response)
-    # paths_info = response.json()
-    # return [
-    #     RepoFile(**path_info) if path_info["type"] == "file" else RepoFolder(**path_info)
-    #     for path_info in paths_info
-    # ]
+    _api = HubApi()
+    _namespace, _dataset_name = repo_id.split('/')
+    dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
+        dataset_name=_dataset_name, namespace=_namespace)
 
-    # TODO: RepoFile和RepoFolder中，oid or blob_id
+    revision: str = revision or 'master'
+    data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
+                                  revision=revision,
+                                  files_metadata=False,
+                                  recursive='False')
+    data_d: dict = data['Data']
+    data_file_list: list = data_d['Files']
+
     return [
-        RepoFile(
-            path='README.md',
-            size=28,
-            oid='154df8298fab5ecf322016157858e08cd1bccbe1',
-            lfs=None,
-            last_commit=None,
-            security=None),
-        RepoFolder(
-            path='test',
-            oid='f1bd19328ef39f2f0bf04210359c0195db91d50b',
-            last_commit=None),
-        RepoFolder(
-            path='train',
-            oid='c345eb39a565ec406b11c393d02dbdab28a2f0b5',
-            last_commit=None)
+        RepoFile(path=item_d['Name'],
+                 size=item_d['Size'],
+                 oid=item_d['Revision'],
+                 lfs=item_d['IsLFS'],
+                 last_commit=item_d['CommittedDate'],
+                 security=None
+                 ) for item_d in data_file_list if item_d['Name'] == 'README.md'
     ]
 
 
@@ -375,11 +359,6 @@ def _resolve_pattern(
     Returns:
         List[str]: List of paths or URLs to the local or remote files that match the patterns.
     """
-
-    # TODO: ONLY FOR TEST
-    # base_path = 'hf://datasets/wangxingjun778test/aya_dataset_mini@master'
-    # print(f'>>\nbase_path: {base_path}')
-
     if is_relative_path(pattern):
         pattern = xjoin(base_path, pattern)
     elif is_local_path(pattern):
@@ -396,7 +375,6 @@ def _resolve_pattern(
     protocol = fs.protocol if isinstance(fs.protocol, str) else fs.protocol[0]
     protocol_prefix = protocol + '://' if protocol != 'file' else ''
     glob_kwargs = {}
-    # TODO: protocol  hf --> ms
     if protocol == 'hf' and config.HF_HUB_VERSION >= version.parse('0.20.0'):
         # 10 times faster glob with detail=True (ignores costly info like lastCommit)
         glob_kwargs['expand_info'] = False
@@ -597,7 +575,6 @@ def get_module_without_script(self) -> DatasetModule:
         patterns = _get_data_patterns(
             base_path, download_config=self.download_config)
 
-    # TODO:
     data_files = DataFilesDict.from_patterns(
         patterns,
         base_path=base_path,
@@ -661,40 +638,13 @@ def get_module_without_script(self) -> DatasetModule:
         self.name,
         'dataset_name':
         camelcase_to_snakecase(Path(self.name).name),
-        'data_files': data_files,       # TODO: TO BE CHECKED !!
+        'data_files': data_files,
     }
     download_config = self.download_config.copy()
     if download_config.download_desc is None:
         download_config.download_desc = 'Downloading metadata'
 
     # Note: `dataset_infos.json` is deprecated and can cause an error during loading if it exists
-    # try:
-    #     # this file is deprecated and was created automatically in old versions of push_to_hub
-    #     url_or_filename = _ms_api.get_dataset_file_url(
-    #         file_name='dataset_infos.json',
-    #         dataset_name=_dataset_name,
-    #         namespace=_namespace,
-    #         revision=revision,
-    #         extension_filter=False,
-    #     )
-    #
-    #     dataset_infos_path = cached_path(
-    #         url_or_filename=url_or_filename, download_config=download_config)
-    #
-    #     with open(dataset_infos_path, encoding='utf-8') as f:
-    #         legacy_dataset_infos = DatasetInfosDict({
-    #             config_name: DatasetInfo.from_dict(dataset_info_dict)
-    #             for config_name, dataset_info_dict in json.load(f).items()
-    #         })
-    #         if len(legacy_dataset_infos) == 1:
-    #             # old config e.g. named "username--dataset_name"
-    #             legacy_config_name = next(iter(legacy_dataset_infos))
-    #             legacy_dataset_infos['default'] = legacy_dataset_infos.pop(
-    #                 legacy_config_name)
-    #     legacy_dataset_infos.update(dataset_infos)
-    #     dataset_infos = legacy_dataset_infos
-    # except Exception as e:
-    #     logger.warning(f'Error while loading dataset_infos.json: {e}')
 
     if default_config_name is None and len(dataset_infos) == 1:
         default_config_name = next(iter(dataset_infos))
@@ -713,7 +663,6 @@ def get_module_without_script(self) -> DatasetModule:
     )
 
 
-# TODO: Others Module --> to be added
 HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
 
 
@@ -921,7 +870,6 @@ class DatasetsWrapperHF:
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
 
-        # TODO: dataset_module_factory --> TBD
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
             revision=revision,
@@ -1106,7 +1054,6 @@ class DatasetsWrapperHF:
                         sibling.rfilename for sibling in dataset_info.siblings
                 ]:  # contains a dataset script
 
-                    # TODO: HfFileSystem --> TBD
                     fs = HfFileSystem(
                         endpoint=config.HF_ENDPOINT,
                         token=download_config.token)
@@ -1152,7 +1099,7 @@ class DatasetsWrapperHF:
                         data_files=data_files,
                         download_config=download_config,
                         download_mode=download_mode,
-                    ).get_module()  # TODO: get_module --> TBD
+                    ).get_module()
             except Exception as e1:
                 # All the attempts failed, before raising the error we should check if the module is already cached
                 try:

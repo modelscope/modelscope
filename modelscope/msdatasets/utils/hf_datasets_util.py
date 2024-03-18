@@ -8,7 +8,6 @@ from functools import partial
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
-import json
 from urllib.parse import urlencode
 
 import requests
@@ -23,7 +22,7 @@ from datasets.data_files import (
 from datasets.download.streaming_download_manager import (
     _prepare_path_and_storage_options, xbasename, xjoin)
 from datasets.exceptions import DataFilesNotFoundError, DatasetNotFoundError
-from datasets.info import DatasetInfo, DatasetInfosDict
+from datasets.info import DatasetInfosDict
 from datasets.load import (
     ALL_ALLOWED_EXTENSIONS, BuilderConfigsParameters,
     CachedDatasetModuleFactory, DatasetModule,
@@ -139,16 +138,16 @@ def _dataset_info(
 
     </Tip>
     """
-    _ms_api = HubApi()
+    _api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
-    dataset_hub_id, dataset_type = _ms_api.get_dataset_id_and_type(
+    dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)
 
     revision: str = revision or 'master'
-    data = _ms_api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
-                                     revision=revision,
-                                     files_metadata=files_metadata,
-                                     timeout=timeout)
+    data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
+                                  revision=revision,
+                                  files_metadata=files_metadata,
+                                  timeout=timeout)
 
     # Parse data
     data_d: dict = data['Data']
@@ -777,7 +776,7 @@ class DatasetsWrapperHF:
                 f"Empty 'data_files': '{data_files}'. It should be either non-empty or None (default)."
             )
         if Path(path, config.DATASET_STATE_JSON_FILENAME).exists(
-        ):  # TODO: config --> TBD
+        ):
             raise ValueError(
                 'You are trying to load a dataset that was saved using `save_to_disk`. '
                 'Please use `load_from_disk` instead.')
@@ -788,12 +787,6 @@ class DatasetsWrapperHF:
                 'To parallelize streaming, you can wrap the dataset with a PyTorch DataLoader '
                 'using `num_workers` > 1 instead.')
 
-        # _base_file_path = get_file_base_path(
-        #     endpoint=HUB_DATASET_ENDPOINT,
-        #     namespace=_namespace,
-        #     dataset_name=_dataset_name,
-        #     revision=revision),
-
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         verification_mode = VerificationMode((
@@ -801,7 +794,6 @@ class DatasetsWrapperHF:
         ) if not save_infos else VerificationMode.ALL_CHECKS)
 
         # Create a dataset builder
-        # TODO: load_dataset_builder --> TBD
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
             path=path,
             name=name,
@@ -879,6 +871,14 @@ class DatasetsWrapperHF:
                 ds = ds.prepare_for_task(task)
         if save_infos:
             builder_instance._save_infos()
+
+        try:
+            _api = HubApi()
+            if is_relative_path(path) and path.count('/') == 1:
+                _namespace, _dataset_name = path.split('/')
+                _api.dataset_download_statistics(dataset_name=_dataset_name, namespace=_namespace)
+        except Exception as e:
+            logger.warning(f'Could not record download statistics: {e}')
 
         return ds
 

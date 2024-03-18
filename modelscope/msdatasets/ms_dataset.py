@@ -30,8 +30,8 @@ from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
-                                       DownloadMode, Hubs, ModeKeys, Tasks,
-                                       UploadMode)
+                                       DatasetFormations, DownloadMode, Hubs,
+                                       ModeKeys, Tasks, UploadMode)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -294,8 +294,7 @@ class MsDataset:
             general_dataset_py_path: str = _meta_manager.dataset_context_config.data_meta_config.dataset_py_script
 
             # 不包含 with_scripts的情况
-            if str(dataset_type) == '4':
-                # TODO: 1. 修改cache路径； 2. reuse模式和force下载模式
+            if str(dataset_type) == str(DatasetFormations.general.value):
                 if general_dataset_py_path:
 
                     return hf_load_dataset_wrapper(

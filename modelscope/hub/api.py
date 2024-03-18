@@ -17,6 +17,7 @@ from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
+import json
 import pandas as pd
 import requests
 from datasets.utils.file_utils import is_relative_path
@@ -33,7 +34,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
-                                      REQUESTS_API_HTTP_METHOD, Licenses,
+                                      REQUESTS_API_HTTP_METHOD,
+                                      DatasetVisibility, Licenses,
                                       ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -649,6 +651,43 @@ class HubApi:
             files.append(file)
         return files
 
+    def create_dataset(self,
+                       dataset_name: str,
+                       namespace: str,
+                       chinese_name: Optional[str] = '',
+                       license: Optional[str] = Licenses.APACHE_V2,
+                       visibility: Optional[int] = DatasetVisibility.PUBLIC,
+                       description: Optional[str] = '') -> str:
+
+        if dataset_name is None or namespace is None:
+            raise InvalidParameter('dataset_name and namespace is required!')
+
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        body = {'Name': dataset_name,
+                'Owner': namespace,
+                'ChineseName': chinese_name,
+                'License': license,
+                'Visibility': visibility,
+                'Description': description,
+                }
+
+        path = f'{self.endpoint}/api/v1/datasets'
+
+        r = self.session.post(
+            path,
+            data=body,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers),
+        )
+
+        handle_http_post_error(r, path, body)
+        raise_on_error(r.json())
+        dataset_repo_url = f'{get_endpoint()}/datasets/{namespace}/{dataset_name}'
+        return dataset_repo_url
+
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
         params = {}
@@ -773,7 +812,6 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        import json
         from tqdm import tqdm
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
@@ -985,7 +1023,7 @@ class HubApi:
         datahub_raise_on_error(url, resp, r)
         return resp['Data']
 
-    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool) -> None:
+    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool = False) -> None:
         is_ci_test = os.getenv('CI_TEST') == 'True'
         if dataset_name and namespace and not is_ci_test and not use_streaming:
             try:

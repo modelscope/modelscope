@@ -79,7 +79,7 @@ def _download(self, url_or_filename: str,
     if is_relative_path(url_or_filename) and revision is not None:
         # append the relative path to the base_path
         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
-        params: dict = {'Revision': revision, 'FilePath': url_or_filename}
+        params: dict = {'Revision': revision, 'FilePath': url_or_filename, 'Source': 'SDK'}
         params: str = urlencode(params)
         url_or_filename = self._base_path + params
 

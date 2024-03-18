@@ -289,10 +289,6 @@ class MsDataset:
             _api = HubApi()
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
-            print(
-                f'>>>dataset_id_on_hub: {dataset_id_on_hub}, >>dataset_type: {dataset_type}'
-            )
-
             _meta_manager = DataMetaManager(dataset_context_config)
             _meta_manager.fetch_meta_files()
             general_dataset_py_path: str = _meta_manager.dataset_context_config.data_meta_config.dataset_py_script

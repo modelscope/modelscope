@@ -3,7 +3,7 @@ import unittest
 
 from modelscope import MsDataset
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import require_tf, require_torch, test_level
+from modelscope.utils.test_utils import test_level
 
 logger = get_logger()
 
@@ -72,6 +72,29 @@ class GeneralMsDatasetTest(unittest.TestCase):
 
         ds = MsDataset.load('xxxxtest0004/png_jpg_txt_test', split='train')
         print(f'>>>output of test_inner_no_standard_imgs: \n{next(iter(ds))}')
+        assert next(iter(ds))
+
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_inner_hf_pictures(self):
+        ds = MsDataset.load('xxxxtest0004/hf_Pictures')
+        print(ds)
+        assert next(iter(ds))
+
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
+    def test_inner_speech_yinpin(self):
+        ds = MsDataset.load('xxxxtest0004/hf_lj_speech_yinpin_test')
+        print(ds)
+        assert next(iter(ds))
+
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_inner_yuancheng_picture(self):
+        ds = MsDataset.load(
+            'xxxxtest0004/yuancheng_picture',
+            subset_name='remote_images',
+            split='train')
+        print(next(iter(ds)))
         assert next(iter(ds))
 
 

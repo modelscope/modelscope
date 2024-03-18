@@ -50,15 +50,12 @@ from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (DatasetCard, DatasetCardData,
-                             HfFileSystem, get_session)
+from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem)
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
-from huggingface_hub.utils import hf_raise_for_status
 from packaging import version
 
 from modelscope import HubApi
-from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
@@ -70,24 +67,6 @@ config.HF_ENDPOINT = get_endpoint()
 
 
 file_utils.get_from_cache = get_from_cache_ms
-
-#
-# def _ms_download(self, url_or_filename: str,
-#                  download_config: DownloadConfig) -> str:
-#     url_or_filename = str(url_or_filename)
-#     if url_or_filename.startswith('hf://'):
-#         url_or_filename = url_or_filename.split('@')[-1].split('/', 1)[-1]
-#     if is_relative_path(url_or_filename):
-#         # append the relative path to the base_path
-#         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)  # TODO: VERIFY
-#         url_or_filename = self._base_path + url_or_filename
-#     out = cached_path(url_or_filename, download_config=download_config)
-#     out = tracked_str(out)
-#     out.set_origin(url_or_filename)
-#     return out
-#
-#
-# DownloadManager._download = _ms_download
 
 
 def _download(self, url_or_filename: str,
@@ -688,33 +667,36 @@ def get_module_without_script(self) -> DatasetModule:
     download_config = self.download_config.copy()
     if download_config.download_desc is None:
         download_config.download_desc = 'Downloading metadata'
-    try:
-        # this file is deprecated and was created automatically in old versions of push_to_hub
-        url_or_filename = _ms_api.get_dataset_file_url(
-            file_name='dataset_infos.json',
-            dataset_name=_dataset_name,
-            namespace=_namespace,
-            revision=revision,
-            extension_filter=False,
-        )
 
-        dataset_infos_path = cached_path(
-            url_or_filename=url_or_filename, download_config=download_config)
+    # Note: `dataset_infos.json` is deprecated and can cause an error during loading if it exists
+    # try:
+    #     # this file is deprecated and was created automatically in old versions of push_to_hub
+    #     url_or_filename = _ms_api.get_dataset_file_url(
+    #         file_name='dataset_infos.json',
+    #         dataset_name=_dataset_name,
+    #         namespace=_namespace,
+    #         revision=revision,
+    #         extension_filter=False,
+    #     )
+    #
+    #     dataset_infos_path = cached_path(
+    #         url_or_filename=url_or_filename, download_config=download_config)
+    #
+    #     with open(dataset_infos_path, encoding='utf-8') as f:
+    #         legacy_dataset_infos = DatasetInfosDict({
+    #             config_name: DatasetInfo.from_dict(dataset_info_dict)
+    #             for config_name, dataset_info_dict in json.load(f).items()
+    #         })
+    #         if len(legacy_dataset_infos) == 1:
+    #             # old config e.g. named "username--dataset_name"
+    #             legacy_config_name = next(iter(legacy_dataset_infos))
+    #             legacy_dataset_infos['default'] = legacy_dataset_infos.pop(
+    #                 legacy_config_name)
+    #     legacy_dataset_infos.update(dataset_infos)
+    #     dataset_infos = legacy_dataset_infos
+    # except Exception as e:
+    #     logger.warning(f'Error while loading dataset_infos.json: {e}')
 
-        with open(dataset_infos_path, encoding='utf-8') as f:
-            legacy_dataset_infos = DatasetInfosDict({
-                config_name: DatasetInfo.from_dict(dataset_info_dict)
-                for config_name, dataset_info_dict in json.load(f).items()
-            })
-            if len(legacy_dataset_infos) == 1:
-                # old config e.g. named "username--dataset_name"
-                legacy_config_name = next(iter(legacy_dataset_infos))
-                legacy_dataset_infos['default'] = legacy_dataset_infos.pop(
-                    legacy_config_name)
-        legacy_dataset_infos.update(dataset_infos)
-        dataset_infos = legacy_dataset_infos
-    except Exception as e:
-        logger.warning(f'Error while loading dataset_infos.json: {e}')
     if default_config_name is None and len(dataset_infos) == 1:
         default_config_name = next(iter(dataset_infos))
 

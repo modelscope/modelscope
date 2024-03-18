@@ -212,7 +212,10 @@ def get_dataset_files(subset_split_into: dict,
 
             csv_delimiter = context_config.config_kwargs.get('delimiter', ',')
             csv_df = pd.read_csv(
-                meta_csv_file_path, iterator=False, delimiter=csv_delimiter)
+                meta_csv_file_path,
+                iterator=False,
+                delimiter=csv_delimiter,
+                escapechar='\\')
             target_col = csv_df.columns[csv_df.columns.str.contains(
                 ':FILE')].to_list()
             if len(target_col) == 0:

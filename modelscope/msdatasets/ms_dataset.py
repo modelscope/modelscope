@@ -289,45 +289,25 @@ class MsDataset:
             _api = HubApi()
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
-            _meta_manager = DataMetaManager(dataset_context_config)
-            _meta_manager.fetch_meta_files()
-            general_dataset_py_path: str = _meta_manager.dataset_context_config.data_meta_config.dataset_py_script
 
-            # 不包含 with_scripts的情况
+            print(f'>>>dataset_type: {dataset_type}')
+            # Load from the ModelScope Hub for type=4 (general)
             if str(dataset_type) == str(DatasetFormations.general.value):
-                if general_dataset_py_path:
-
-                    return hf_load_dataset_wrapper(
-                        general_dataset_py_path,
-                        name=subset_name,
-                        revision=version,
-                        split=split,
-                        data_dir=data_dir,
-                        data_files=data_files,
-                        cache_dir=cache_dir,
-                        download_mode=download_mode.value,
-                        ignore_verifications=True,
-                        streaming=use_streaming,
-                        dataset_info_only=dataset_info_only,
-                        **config_kwargs)
-
-                else:
-                    return hf_load_dataset_wrapper(
-                        path=namespace + '/' + dataset_name,
-                        name=subset_name,
-                        data_dir=data_dir,
-                        data_files=data_files,
-                        split=split,
-                        cache_dir=cache_dir,
-                        features=None,
-                        download_config=None,
-                        download_mode=download_mode.value,
-                        revision=version,
-                        token=token,
-                        streaming=use_streaming,
-                        dataset_info_only=dataset_info_only,
-                        **config_kwargs)
-
+                return hf_load_dataset_wrapper(
+                    path=namespace + '/' + dataset_name,
+                    name=subset_name,
+                    data_dir=data_dir,
+                    data_files=data_files,
+                    split=split,
+                    cache_dir=cache_dir,
+                    features=None,
+                    download_config=None,
+                    download_mode=download_mode.value,
+                    revision=version,
+                    token=token,
+                    streaming=use_streaming,
+                    dataset_info_only=dataset_info_only,
+                    **config_kwargs)
             else:
 
                 remote_dataloader_manager = RemoteDataLoaderManager(

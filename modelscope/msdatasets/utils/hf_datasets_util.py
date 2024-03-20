@@ -1,12 +1,12 @@
 # noqa: isort:skip_file, yapf: disable
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
-
+import importlib
 import os
 import warnings
 from functools import partial
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union, Tuple
 
 from urllib.parse import urlencode
 
@@ -31,7 +31,9 @@ from datasets.load import (
     HubDatasetModuleFactoryWithScript, LocalDatasetModuleFactoryWithoutScript,
     LocalDatasetModuleFactoryWithScript, PackagedDatasetModuleFactory,
     create_builder_configs_from_metadata_configs, get_dataset_builder_class,
-    import_main_class, infer_module_for_data_files)
+    import_main_class, infer_module_for_data_files, files_to_hash,
+    _get_importable_file_path, resolve_trust_remote_code, _create_importable_file, _load_importable_file,
+    init_dynamic_modules)
 from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_SUPPORTS_METADATA,
@@ -45,11 +47,12 @@ from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
+from datasets.utils.py_utils import get_imports
 from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem)
+from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem, hf_hub_url)
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from packaging import version
@@ -75,9 +78,10 @@ def _download(self, url_or_filename: str,
     revision = None
     if url_or_filename.startswith('hf://'):
         revision, url_or_filename = url_or_filename.split('@', 1)[-1].split('/', 1)
-    if is_relative_path(url_or_filename) and revision is not None:
+    if is_relative_path(url_or_filename):
         # append the relative path to the base_path
         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
+        revision = revision or 'master'
         params: dict = {'Revision': revision, 'FilePath': url_or_filename, 'Source': 'SDK'}
         params: str = urlencode(params)
         url_or_filename = self._base_path + params
@@ -629,11 +633,10 @@ def get_module_without_script(self) -> DatasetModule:
     builder_kwargs = {
         # "base_path": hf_hub_url(self.name, "", revision=revision).rstrip("/"),
         'base_path':
-        HubApi.get_file_base_path(
-            endpoint=get_endpoint(),
+        _ms_api.get_file_base_path(
             namespace=_namespace,
             dataset_name=_dataset_name,
-            revision=revision),
+        ),
         'repo_id':
         self.name,
         'dataset_name':
@@ -664,6 +667,201 @@ def get_module_without_script(self) -> DatasetModule:
 
 
 HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
+
+
+def _download_additional_modules(
+        name: str,
+        dataset_name: str,
+        namespace: str,
+        revision: str,
+        imports: Tuple[str, str, str, str],
+        download_config: Optional[DownloadConfig]
+) -> List[Tuple[str, str]]:
+    """
+    Download additional module for a module <name>.py at URL (or local path) <base_path>/<name>.py
+    The imports must have been parsed first using ``get_imports``.
+
+    If some modules need to be installed with pip, an error is raised showing how to install them.
+    This function return the list of downloaded modules as tuples (import_name, module_file_path).
+
+    The downloaded modules can then be moved into an importable directory
+    with ``_copy_script_and_other_resources_in_importable_dir``.
+    """
+    local_imports = []
+    library_imports = []
+    download_config = download_config.copy()
+    if download_config.download_desc is None:
+        download_config.download_desc = 'Downloading extra modules'
+    for import_type, import_name, import_path, sub_directory in imports:
+        if import_type == 'library':
+            library_imports.append((import_name, import_path))  # Import from a library
+            continue
+
+        if import_name == name:
+            raise ValueError(
+                f'Error in the {name} script, importing relative {import_name} module '
+                f'but {import_name} is the name of the script. '
+                f"Please change relative import {import_name} to another name and add a '# From: URL_OR_PATH' "
+                f'comment pointing to the original relative import file path.'
+            )
+        if import_type == 'internal':
+            _api = HubApi()
+            # url_or_filename = url_or_path_join(base_path, import_path + ".py")
+            file_name = import_path + '.py'
+            url_or_filename = _api.get_dataset_file_url(file_name=file_name,
+                                                        dataset_name=dataset_name,
+                                                        namespace=namespace,
+                                                        revision=revision,)
+        elif import_type == 'external':
+            url_or_filename = import_path
+        else:
+            raise ValueError('Wrong import_type')
+
+        local_import_path = cached_path(
+            url_or_filename,
+            download_config=download_config,
+        )
+        if sub_directory is not None:
+            local_import_path = os.path.join(local_import_path, sub_directory)
+        local_imports.append((import_name, local_import_path))
+
+    # Check library imports
+    needs_to_be_installed = {}
+    for library_import_name, library_import_path in library_imports:
+        try:
+            lib = importlib.import_module(library_import_name)  # noqa F841
+        except ImportError:
+            if library_import_name not in needs_to_be_installed or library_import_path != library_import_name:
+                needs_to_be_installed[library_import_name] = library_import_path
+    if needs_to_be_installed:
+        _dependencies_str = 'dependencies' if len(needs_to_be_installed) > 1 else 'dependency'
+        _them_str = 'them' if len(needs_to_be_installed) > 1 else 'it'
+        if 'sklearn' in needs_to_be_installed.keys():
+            needs_to_be_installed['sklearn'] = 'scikit-learn'
+        if 'Bio' in needs_to_be_installed.keys():
+            needs_to_be_installed['Bio'] = 'biopython'
+        raise ImportError(
+            f'To be able to use {name}, you need to install the following {_dependencies_str}: '
+            f"{', '.join(needs_to_be_installed)}.\nPlease install {_them_str} using 'pip install "
+            f"{' '.join(needs_to_be_installed.values())}' for instance."
+        )
+    return local_imports
+
+
+def get_module_with_script(self) -> DatasetModule:
+    if config.HF_DATASETS_TRUST_REMOTE_CODE and self.trust_remote_code is None:
+        warnings.warn(
+            f'The repository for {self.name} contains custom code which must be executed to correctly '
+            f'load the dataset. You can inspect the repository content at https://hf.co/datasets/{self.name}\n'
+            f'You can avoid this message in future by passing the argument `trust_remote_code=True`.\n'
+            f'Passing `trust_remote_code=True` will be mandatory '
+            f'to load this dataset from the next major release of `datasets`.',
+            FutureWarning,
+        )
+    # get script and other files
+    # local_path = self.download_loading_script()
+    # dataset_infos_path = self.download_dataset_infos_file()
+    # dataset_readme_path = self.download_dataset_readme_file()
+
+    _api = HubApi()
+    _dataset_name: str = self.name.split('/')[-1]
+    _namespace: str = self.name.split('/')[0]
+
+    script_file_name = f'{_dataset_name}.py'
+    script_url: str = _api.get_dataset_file_url(
+        file_name=script_file_name,
+        dataset_name=_dataset_name,
+        namespace=_namespace,
+        revision=self.revision,
+        extension_filter=False,
+    )
+    local_script_path = cached_path(
+        url_or_filename=script_url, download_config=self.download_config)
+
+    dataset_infos_path = None
+    # try:
+    #     dataset_infos_url: str = _api.get_dataset_file_url(
+    #         file_name='dataset_infos.json',
+    #         dataset_name=_dataset_name,
+    #         namespace=_namespace,
+    #         revision=self.revision,
+    #         extension_filter=False,
+    #     )
+    #     dataset_infos_path = cached_path(
+    #         url_or_filename=dataset_infos_url, download_config=self.download_config)
+    # except Exception as e:
+    #     logger.info(f'Cannot find dataset_infos.json: {e}')
+    #     dataset_infos_path = None
+
+    dataset_readme_url: str = _api.get_dataset_file_url(
+        file_name='README.md',
+        dataset_name=_dataset_name,
+        namespace=_namespace,
+        revision=self.revision,
+        extension_filter=False,
+    )
+    dataset_readme_path = cached_path(
+        url_or_filename=dataset_readme_url, download_config=self.download_config)
+
+    imports = get_imports(local_script_path)
+    local_imports = _download_additional_modules(
+        name=self.name,
+        dataset_name=_dataset_name,
+        namespace=_namespace,
+        revision=self.revision,
+        imports=imports,
+        download_config=self.download_config,
+    )
+    additional_files = []
+    if dataset_infos_path:
+        additional_files.append((config.DATASETDICT_INFOS_FILENAME, dataset_infos_path))
+    if dataset_readme_path:
+        additional_files.append((config.REPOCARD_FILENAME, dataset_readme_path))
+    # copy the script and the files in an importable directory
+    dynamic_modules_path = self.dynamic_modules_path if self.dynamic_modules_path else init_dynamic_modules()
+    hash = files_to_hash([local_script_path] + [loc[1] for loc in local_imports])
+    importable_file_path = _get_importable_file_path(
+        dynamic_modules_path=dynamic_modules_path,
+        module_namespace='datasets',
+        subdirectory_name=hash,
+        name=self.name,
+    )
+    if not os.path.exists(importable_file_path):
+        trust_remote_code = resolve_trust_remote_code(self.trust_remote_code, self.name)
+        if trust_remote_code:
+            _create_importable_file(
+                local_path=local_script_path,
+                local_imports=local_imports,
+                additional_files=additional_files,
+                dynamic_modules_path=dynamic_modules_path,
+                module_namespace='datasets',
+                subdirectory_name=hash,
+                name=self.name,
+                download_mode=self.download_mode,
+            )
+        else:
+            raise ValueError(
+                f'Loading {self.name} requires you to execute the dataset script in that'
+                ' repo on your local machine. Make sure you have read the code there to avoid malicious use, then'
+                ' set the option `trust_remote_code=True` to remove this error.'
+            )
+    module_path, hash = _load_importable_file(
+        dynamic_modules_path=dynamic_modules_path,
+        module_namespace='datasets',
+        subdirectory_name=hash,
+        name=self.name,
+    )
+    # make the new module to be noticed by the import system
+    importlib.invalidate_caches()
+    builder_kwargs = {
+        # "base_path": hf_hub_url(self.name, "", revision=self.revision).rstrip("/"),
+        'base_path': _api.get_file_base_path(namespace=_namespace, dataset_name=_dataset_name),
+        'repo_id': self.name,
+    }
+    return DatasetModule(module_path, hash, builder_kwargs)
+
+
+HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
 
 
 class DatasetsWrapperHF:
@@ -800,7 +998,7 @@ class DatasetsWrapperHF:
             try_from_hf_gcs=False,
             num_proc=num_proc,
             storage_options=storage_options,
-            base_path=builder_instance.base_path,
+            # base_path=builder_instance.base_path,
             # file_format=builder_instance.name or 'arrow',
         )
 

@@ -18,6 +18,7 @@ from datasets.utils.file_utils import hash_url_to_filename, get_authentication_h
     http_head, _raise_if_offline_mode_is_enabled, ftp_get, fsspec_get, http_get
 from filelock import FileLock
 
+from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.logger import get_logger
 from modelscope.hub.api import HubApi, ModelScopeConfig
 
@@ -62,7 +63,7 @@ def get_from_cache_ms(
         )
         token = use_auth_token
     if cache_dir is None:
-        cache_dir = config.HF_DATASETS_CACHE        # TODO: modify HF_DATASETS_CACHE
+        cache_dir = MS_DATASETS_CACHE
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
 
@@ -202,7 +203,7 @@ def get_from_cache_ms(
         # Download to temporary file, then copy to cache path once finished.
         # Otherwise, you get corrupt cache entries if the download gets interrupted.
         with temp_file_manager() as temp_file:
-            logger.info(f'{url} not found in cache or force_download set to True, downloading to {temp_file.name}')
+            logger.info(f'Downloading to {temp_file.name}')
 
             # GET file object
             if scheme == 'ftp':

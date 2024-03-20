@@ -20,7 +20,6 @@ from urllib.parse import urlencode
 import json
 import pandas as pd
 import requests
-from datasets.utils.file_utils import is_relative_path
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
@@ -651,6 +650,7 @@ class HubApi:
             files.append(file)
         return files
 
+    # TODO: to be checked
     def create_dataset(self,
                        dataset_name: str,
                        namespace: str,
@@ -1061,9 +1061,8 @@ class HubApi:
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
 
-    @staticmethod
-    def get_file_base_path(endpoint: str, namespace: str, dataset_name: str, revision: str) -> str:
-        return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
+    def get_file_base_path(self, namespace: str, dataset_name: str) -> str:
+        return f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
         # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
 

@@ -52,7 +52,7 @@ from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem, hf_hub_url)
+from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem)
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from packaging import version
@@ -60,6 +60,7 @@ from packaging import version
 from modelscope import HubApi
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
+from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
 from modelscope.utils.logger import get_logger
 
@@ -82,7 +83,8 @@ def _download(self, url_or_filename: str,
         # append the relative path to the base_path
         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
         revision = revision or 'master'
-        params: dict = {'Revision': revision, 'FilePath': url_or_filename, 'Source': 'SDK'}
+        # Note: make sure the FilePath is the last param
+        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': url_or_filename}
         params: str = urlencode(params)
         url_or_filename = self._base_path + params
 
@@ -273,8 +275,8 @@ def _get_paths_info(
         RepoFile(path=item_d['Name'],
                  size=item_d['Size'],
                  oid=item_d['Revision'],
-                 lfs=item_d['IsLFS'],
-                 last_commit=item_d['CommittedDate'],
+                 lfs=None,           # TODO: lfs type to be supported
+                 last_commit=None,   # TODO: lfs type to be supported
                  security=None
                  ) for item_d in data_file_list if item_d['Name'] == 'README.md'
     ]
@@ -1145,6 +1147,10 @@ class DatasetsWrapperHF:
         if download_config is None:
             download_config = DownloadConfig(**download_kwargs)
         download_config.storage_options.update({'name': subset_name})
+
+        if download_config and download_config.cache_dir is None:
+            download_config.cache_dir = MS_DATASETS_CACHE
+
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         download_config.extract_compressed_file = True
@@ -1252,22 +1258,24 @@ class DatasetsWrapperHF:
                         sibling.rfilename for sibling in dataset_info.siblings
                 ]:  # contains a dataset script
 
-                    fs = HfFileSystem(
-                        endpoint=config.HF_ENDPOINT,
-                        token=download_config.token)
+                    # fs = HfFileSystem(
+                    #     endpoint=config.HF_ENDPOINT,
+                    #     token=download_config.token)
 
-                    if _require_custom_configs:
-                        can_load_config_from_parquet_export = False
-                    elif _require_default_config_name:
-                        with fs.open(
-                                f'datasets/{path}/{filename}',
-                                'r',
-                                revision=revision,
-                                encoding='utf-8') as f:
-                            can_load_config_from_parquet_export = 'DEFAULT_CONFIG_NAME' not in f.read(
-                            )
-                    else:
-                        can_load_config_from_parquet_export = True
+                    # TODO
+                    can_load_config_from_parquet_export = False
+                    # if _require_custom_configs:
+                    #     can_load_config_from_parquet_export = False
+                    # elif _require_default_config_name:
+                    #     with fs.open(
+                    #             f'datasets/{path}/{filename}',
+                    #             'r',
+                    #             revision=revision,
+                    #             encoding='utf-8') as f:
+                    #         can_load_config_from_parquet_export = 'DEFAULT_CONFIG_NAME' not in f.read(
+                    #         )
+                    # else:
+                    #     can_load_config_from_parquet_export = True
                     if config.USE_PARQUET_EXPORT and can_load_config_from_parquet_export:
                         # If the parquet export is ready (parquet files + info available for the current sha),
                         # we can use it instead

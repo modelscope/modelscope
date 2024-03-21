@@ -20,7 +20,6 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
                                                NativeIterableDataset)
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
-from modelscope.msdatasets.meta.data_meta_manager import DataMetaManager
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
 from modelscope.msdatasets.utils.hf_datasets_util import \
     load_dataset as hf_load_dataset_wrapper
@@ -290,7 +289,8 @@ class MsDataset:
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
 
-            print(f'>>>dataset_type: {dataset_type}')
+            logger.info(f'dataset_type: {dataset_type}')
+
             # Load from the ModelScope Hub for type=4 (general)
             if str(dataset_type) == str(DatasetFormations.general.value):
                 return hf_load_dataset_wrapper(

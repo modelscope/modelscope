@@ -876,7 +876,8 @@ class HubApi:
         if not file_name or not dataset_name or not namespace:
             raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
 
-        params: dict = {'Revision': revision, 'FilePath': file_name, 'Source': 'SDK'}
+        # Note: make sure the FilePath is the last parameter in the url
+        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': file_name}
         params: str = urlencode(params)
         file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?{params}'
 

@@ -224,7 +224,7 @@ def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
 
 
 def clear_llm_info(kwargs: Dict):
-    from .nlp.llm_pipeline import ModelTypeHelper
+    from modelscope.utils.model_type_helper import ModelTypeHelper
 
     kwargs.pop('llm_first', None)
     ModelTypeHelper.clear_cache()

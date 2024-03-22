@@ -1165,6 +1165,13 @@
             "type": "object"
         }
     },
+    "image-normal-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
     "image-driving-perception": {
         "input": {
             "type": "object",
@@ -1268,6 +1275,13 @@
         }
     },
     "image-matching": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
+    "image-local-feature-matching": {
         "input": {},
         "parameters": {},
         "output": {
@@ -3798,5 +3812,18 @@
                 }
             }
         }
-    }
+    },
+    "self-supervised-depth-completion": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output_img": {
+                    "type": "string",
+                    "description":"The base64 encoded image."
+                }
+            }
+        }
+    },
 }

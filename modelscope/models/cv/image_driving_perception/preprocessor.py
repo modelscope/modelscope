@@ -92,7 +92,7 @@ class ImageDrivingPerceptionPreprocessor(Preprocessor):
         Args:
             data (str): image path
         Returns:
-            Dict[ndarry, Any]: the preprocessed data
+            Dict[ndarray, Any]: the preprocessed data
             {
                 "img": the preprocessed resized image (640x640)
             }

@@ -233,7 +233,7 @@ class ResNet3D(Backbone):
             ops=ops[sum(layers[:3], 0):][:layers[3]])
         if num_classes is not None:
             self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-            self.sptial_atten = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+            self.spatial_atten = nn.Conv2d(2, 1, kernel_size=7, padding=3)
             self.drop = nn.Dropout(0.5)
             if reduce_dim > 0:
                 self.rd_conv = nn.Conv2d(
@@ -308,7 +308,7 @@ class ResNet3D(Backbone):
             ftr = torch.cat(
                 (x.max(dim=1, keepdim=True)[0], x.mean(dim=1, keepdim=True)),
                 dim=1)
-            score = self.sptial_atten(ftr)  # N,1,H,W
+            score = self.spatial_atten(ftr)  # N,1,H,W
             x = x * torch.sigmoid(score)  # N,C,H,W
             self.score = score
 

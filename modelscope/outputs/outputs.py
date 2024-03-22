@@ -25,6 +25,8 @@ class OutputKeys(object):
     MASKS = 'masks'
     DEPTHS = 'depths'
     DEPTHS_COLOR = 'depths_color'
+    NORMALS = 'normals'
+    NORMALS_COLOR = 'normals_color'
     LAYOUT = 'layout'
     TEXT = 'text'
     POLYGONS = 'polygons'
@@ -772,6 +774,7 @@ TASK_OUTPUTS = {
     Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
     Tasks.image_control_3d_portrait: [OutputKeys.OUTPUT],
+    Tasks.self_supervised_depth_completion: [OutputKeys.OUTPUT_IMG],
 
     # image quality assessment degradation result for single image
     # {

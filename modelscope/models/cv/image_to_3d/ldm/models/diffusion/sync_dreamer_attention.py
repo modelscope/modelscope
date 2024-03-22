@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-import modelscope.models.cv.image_to_3d.ldm.modules.attention as attention
+from modelscope.models.cv.image_to_3d.ldm.modules.attention import (  # no qa
+    checkpoint, default, zero_module)
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.openaimodel import \
     UNetModel
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.util import \
@@ -96,9 +97,8 @@ class DepthTransformer(nn.Module):
         self.checkpoint = attention.checkpoint
 
     def forward(self, x, context=None):
-
-        return attention.checkpoint(self._forward, (x, context),
-                                    self.parameters(), self.checkpoint)  # noqa
+        return checkpoint(self._forward, (x, context), self.parameters(),
+                          self.checkpoint)
 
     def _forward(self, x, context):
         x_in = x

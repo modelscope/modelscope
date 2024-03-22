@@ -198,8 +198,9 @@ class VQModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         log_dict = self._validation_step(batch, batch_idx)
-        with self.ema_scope():
-            self._validation_step(batch, batch_idx, suffix='_ema')
+        # with self.ema_scope():
+        #     log_dict_ema = self._validation_step(
+        #         batch, batch_idx, suffix='_ema')
         return log_dict
 
     def _validation_step(self, batch, batch_idx, suffix=''):

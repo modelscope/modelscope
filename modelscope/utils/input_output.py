@@ -547,6 +547,9 @@ class PipelineInfomation():
             },
         }
 
+    def __getitem__(self, key):
+        return self.__dict__.get('_%s' % key)
+
 
 def is_url(url: str):
     """Check the input url is valid url.

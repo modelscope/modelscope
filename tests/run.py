@@ -438,6 +438,10 @@ def run_in_subprocess(args):
         'test_hub_revision.py',
         'test_hub_revision_release_mode.py',
         'test_hub_upload.py',
+        'test_custom_pipeline_cmd.py',
+        'test_download_cmd.py',
+        'test_modelcard_cmd.py',
+        'test_plugins_cmd.py',
     ]
     test_suite_files = [
         x for x in test_suite_files if x not in non_parallelizable_suites
@@ -501,10 +505,7 @@ class TimeCostTextTestResult(TextTestResult):
         self.stream.writeln(
             'Test case: %s stop at: %s, cost time: %s(seconds)' %
             (test.test_full_name, test.stop_time, test.time_cost))
-        if torch.cuda.is_available(
-        ) and test.time_cost > 5.0:  # print nvidia-smi
-            cmd = ['nvidia-smi']
-            run_command_with_popen(cmd)
+
         super(TimeCostTextTestResult, self).stopTest(test)
 
     def addSuccess(self, test):

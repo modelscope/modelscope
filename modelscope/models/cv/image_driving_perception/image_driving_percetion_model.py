@@ -22,7 +22,7 @@ __all__ = ['YOLOPv2']
     Tasks.image_driving_perception, module_name=Models.yolopv2)
 class YOLOPv2(TorchModel):
     """ YOLOPv2 use E-ELAN which first adopted in Yolov7 as backbone, SPP+FPN+PAN as neck and head.
-    For more infomation, please refer to https://arxiv.org/pdf/2208.11434.pdf
+    For more information, please refer to https://arxiv.org/pdf/2208.11434.pdf
     """
 
     def __init__(self, model_dir: str, *args, **kwargs):

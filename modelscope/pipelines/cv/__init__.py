@@ -85,6 +85,7 @@ if TYPE_CHECKING:
     from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
     from .video_deinterlace_pipeline import VideoDeinterlacePipeline
     from .image_matching_pipeline import ImageMatchingPipeline
+    from .image_matching_fast_pipeline import ImageMatchingFastPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
     from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
@@ -117,7 +118,12 @@ if TYPE_CHECKING:
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
     from .human3d_render_pipeline import Human3DRenderPipeline
     from .human3d_animation_pipeline import Human3DAnimationPipeline
+    from .image_local_feature_matching_pipeline import ImageLocalFeatureMatchingPipeline
+    from .rife_video_frame_interpolation_pipeline import RIFEVideoFrameInterpolationPipeline
     from .anydoor_pipeline import AnydoorPipeline
+    from .image_depth_estimation_marigold_pipeline import ImageDepthEstimationMarigoldPipeline
+    from .self_supervised_depth_completion_pipeline import SelfSupervisedDepthCompletionPipeline
+
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -232,6 +238,7 @@ else:
         ],
         'video_deinterlace_pipeline': ['VideoDeinterlacePipeline'],
         'image_matching_pipeline': ['ImageMatchingPipeline'],
+        'image_matching_fast_pipeline': ['ImageMatchingFastPipeline'],
         'video_stabilization_pipeline': ['VideoStabilizationPipeline'],
         'video_super_resolution_pipeline': ['VideoSuperResolutionPipeline'],
         'pointcloud_sceneflow_estimation_pipeline': [
@@ -292,7 +299,19 @@ else:
         ],
         'human3d_render_pipeline': ['Human3DRenderPipeline'],
         'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
+        'image_local_feature_matching_pipeline': [
+            'ImageLocalFeatureMatchingPipeline'
+        ],
+        'rife_video_frame_interpolation_pipeline': [
+            'RIFEVideoFrameInterpolationPipeline'
+        ],
         'anydoor_pipeline': ['AnydoorPipeline'],
+        'image_depth_estimation_marigold_pipeline': [
+            'ImageDepthEstimationMarigoldPipeline'
+        ],
+        'self_supervised_depth_completion_pipeline': [
+            'SelfSupervisedDepthCompletionPipeline'
+        ],
     }
 
     import sys

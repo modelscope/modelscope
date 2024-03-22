@@ -104,7 +104,7 @@ class FaceReconModel(TorchModel):
             zfar=opt.z_far,
             rasterize_size=int(2 * opt.center))
 
-        self.comupte_color_loss = photo_loss
+        self.compute_color_loss = photo_loss
 
     def set_device(self, device):
         self.device = device
@@ -444,7 +444,7 @@ class FaceReconModel(TorchModel):
                         self.facemodel_front.face_buf, self.bfm_UVs.clone(),
                         pred_color_high)
 
-                    loss_color_high = self.w_color * self.comupte_color_loss(
+                    loss_color_high = self.w_color * self.compute_color_loss(
                         pred_face_high, self.input_img_for_tex,
                         self.pred_mask.detach())
                     loss_smooth = TVLoss()(texture_offset) * self.w_tex_smooth

@@ -271,12 +271,10 @@ class VisionTransformer(nn.Module):
         x = x.reshape(x.shape[0], x.shape[1],
                       -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
-
-        # rewrite because of E126
-        tmp = self.class_embedding.to(x.dtype) + torch.zeros(
-            x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device)  # noqs
-        x = torch.cat([tmp, x], dim=1)
-        # shape = [*, grid ** 2 + 1, width]
+        torch_zeros = torch.zeros(
+            x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device)
+        x = torch.cat([self.class_embedding.to(x.dtype) + torch_zeros, x],
+                      dim=1)  # shape = [*, grid ** 2 + 1, width]
         x = x + self.positional_embedding.to(x.dtype)
         x = self.ln_pre(x)
 
@@ -435,24 +433,24 @@ class CLIP(nn.Module):
 def convert_weights(model: nn.Module):
     """Convert applicable model parameters to fp16"""
 
-    def _convert_weights_to_fp16(_l):
-        if isinstance(_l, (nn.Conv1d, nn.Conv2d, nn.Linear)):
-            _l.weight.data = _l.weight.data.half()
-            if _l.bias is not None:
-                _l.bias.data = _l.bias.data.half()
+    def _convert_weights_to_fp16(layer):
+        if isinstance(layer, (nn.Conv1d, nn.Conv2d, nn.Linear)):
+            layer.weight.data = layer.weight.data.half()
+            if layer.bias is not None:
+                layer.bias.data = layer.bias.data.half()
 
-        if isinstance(_l, nn.MultiheadAttention):
+        if isinstance(layer, nn.MultiheadAttention):
             for attr in [
                     *[f'{s}_proj_weight' for s in ['in', 'q', 'k', 'v']],
                     'in_proj_bias', 'bias_k', 'bias_v'
             ]:
-                tensor = getattr(_l, attr)
+                tensor = getattr(layer, attr)
                 if tensor is not None:
                     tensor.data = tensor.data.half()
 
         for name in ['text_projection', 'proj']:
-            if hasattr(_l, name):
-                attr = getattr(_l, name)
+            if hasattr(layer, name):
+                attr = getattr(layer, name)
                 if attr is not None:
                     attr.data = attr.data.half()
 

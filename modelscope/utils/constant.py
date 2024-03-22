@@ -57,6 +57,7 @@ class CVTasks(object):
     semantic_segmentation = 'semantic-segmentation'
     image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
+    image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
@@ -69,6 +70,7 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_matching = 'image-matching'
+    image_local_feature_matching = 'image-local-feature-matching'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
 
     crowd_counting = 'crowd-counting'
@@ -168,6 +170,7 @@ class CVTasks(object):
     human3d_render = 'human3d-render'
     human3d_animation = 'human3d-animation'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
 
     # 3d generation
     image_to_3d = 'image-to-3d'
@@ -251,6 +254,7 @@ class AudioTasks(object):
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
+    emotion_recognition = 'emotion-recognition'
 
 
 class MultiModalTasks(object):

@@ -1,4 +1,4 @@
-# This implementation is adopted from MANIQA, made pubicly available under the Apache License 2.0 at
+# This implementation is adopted from MANIQA, made publicly available under the Apache License 2.0 at
 # https://github.com/IIGROUP/MANIQA/blob/master/models/maniqa.py
 
 import timm

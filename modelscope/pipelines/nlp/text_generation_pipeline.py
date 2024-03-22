@@ -464,7 +464,7 @@ class SeqGPTPipeline(Pipeline):
             padding=True,
             truncation=True,
             max_length=1024)
-        input_ids = input_ids.input_ids.cuda()
+        input_ids = input_ids.input_ids.to(self.model.device)
         outputs = self.model.generate(
             input_ids, num_beams=4, do_sample=False, max_new_tokens=256)
         decoded_sentences = self.tokenizer.batch_decode(

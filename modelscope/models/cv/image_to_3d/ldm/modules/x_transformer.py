@@ -428,8 +428,9 @@ class AttentionLayers(nn.Module):
             dim) if position_infused_attn else None
         self.rotary_pos_emb = always(None)
 
-        assert rel_pos_num_buckets <= rel_pos_max_distance, \
-            'number of relative position buckets must be less than the relative position max distance'
+        assert rel_pos_num_buckets <= rel_pos_max_distance, 'number of relative position buckets must be less than \
+        the relative position max distance'
+
         self.rel_pos = None
 
         self.pre_norm = pre_norm
@@ -639,8 +640,7 @@ class TransformerWrapper(nn.Module):
                 return_attn=False,
                 mems=None,
                 **kwargs):
-        # b, n, device, num_mem = *x.shape, x.device, self.num_memory_tokens
-        b, _, num_mem = *x.shape, self.num_memory_tokens
+        b, _, _, num_mem = *x.shape, x.device, self.num_memory_tokens
         x = self.token_emb(x)
         x += self.pos_emb(x)
         x = self.emb_dropout(x)

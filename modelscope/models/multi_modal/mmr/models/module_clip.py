@@ -1,5 +1,5 @@
 # The implementation is  adopated from the CLIP4Clip implementation,
-# made pubicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
+# made publicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
 
 import hashlib
 import os

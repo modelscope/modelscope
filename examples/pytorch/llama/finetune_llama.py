@@ -8,15 +8,15 @@ from dataclasses import dataclass, field
 
 import json
 import torch
+from swift import LoRAConfig, Swift
 
-from modelscope import TrainingArgs
+from modelscope import TrainingArgs, build_dataset_from_file
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.models.nlp.llama import LlamaForTextGeneration, LlamaTokenizer
+from modelscope.msdatasets import MsDataset
 from modelscope.msdatasets.dataset_cls.custom_datasets.torch_custom_dataset import \
     TorchCustomDataset
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers import build_trainer
 
 IGNORE_INDEX = -100
@@ -39,6 +39,23 @@ PROMPT_DICT = {
 
 @dataclass(init=False)
 class TextGenerationArguments(TrainingArgs):
+    instruction: str = field(
+        default='instruction',
+        metadata={
+            'help': 'The instruction text key of dataset',
+        })
+
+    input: str = field(
+        default='input', metadata={
+            'help': 'The input text key of dataset',
+        })
+
+    output: str = field(
+        default='output',
+        metadata={
+            'help': 'The output text key of dataset',
+        })
+
     src_txt: str = field(
         default=None,
         metadata={
@@ -146,12 +163,7 @@ def smart_tokenizer_and_embedding_resize(special_tokens_dict, tokenizer,
 class SupervisedDataset(TorchCustomDataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str, tokenizer):
-        logging.warning('Loading data...')
-        f = open(data_path, 'r')
-        list_data_dict = json.load(f)
-        f.close()
-
+    def __init__(self, list_data_dict, tokenizer):
         logging.warning('Formatting inputs...')
         prompt_input, prompt_no_input = PROMPT_DICT[
             'prompt_input'], PROMPT_DICT['prompt_no_input']
@@ -170,6 +182,24 @@ class SupervisedDataset(TorchCustomDataset):
 
         self.input_ids = data_dict['input_ids']
         self.labels = data_dict['labels']
+
+    def __len__(self):
+        return len(self.input_ids)
+
+    def __getitem__(self, i):
+        if isinstance(i, int):
+            return dict(input_ids=self.input_ids[i], labels=self.labels[i])
+        elif isinstance(i, slice):
+            return SliceSupervisedDataset(self.input_ids, self.labels, i)
+        else:
+            raise TypeError(f'Unsupported input type: {type(i)}')
+
+
+class SliceSupervisedDataset(TorchCustomDataset):
+
+    def __init__(self, input_ids, labels, slice_):
+        self.input_ids = input_ids[slice_]
+        self.labels = labels[slice_]
 
     def __len__(self):
         return len(self.input_ids)
@@ -200,7 +230,9 @@ class DataCollatorForSupervisedDataset(object):
         )
 
 
-config, args = TextGenerationArguments().parse_cli().to_config()
+training_args = TextGenerationArguments().parse_cli()
+config, args = training_args.to_config()
+print(args)
 
 if __name__ == '__main__':
 
@@ -218,7 +250,7 @@ if __name__ == '__main__':
         }
         cfg.train.optimizer = {
             'type': 'AdamW',
-            'lr': 2e-5,
+            'lr': training_args.lr,
             'weight_decay': 0.0,
             'options': {
                 'cumulative_iters': 8,
@@ -228,9 +260,15 @@ if __name__ == '__main__':
                 }
             }
         }
-        cfg.train.logging = {'interval': 8, 'by_epoch': False}
+        cfg.train.logging = {
+            'interval': training_args.logging_interval,
+            'by_epoch': False
+        }
         cfg.train['bf16'] = True
-        cfg.train.dataloader = {'batch_size_per_gpu': 4, 'workers_per_gpu': 1}
+        cfg.train.dataloader = {
+            'batch_size_per_gpu': training_args.per_device_train_batch_size,
+            'workers_per_gpu': 1
+        }
         if 'hooks' not in cfg.train:
             cfg.train['hooks'] = []
         if args.deepspeed is not None:
@@ -248,19 +286,60 @@ if __name__ == '__main__':
 
     model_path = args.model if os.path.exists(
         args.model) else snapshot_download(args.model)
-    data_path = args.src_txt if args.src_txt else os.path.join(
-        model_path, 'alpaca_data.json')
+
+    dataset_mapping_dict = {
+        args.instruction: 'instruction',
+        args.input: 'input',
+        args.output: 'output'
+    }
+    if args.dataset_json_file is None:
+        if args.train_dataset_name is not None and args.val_dataset_name is not None:
+            train_dataset = MsDataset.load(
+                args.train_dataset_name,
+                subset_name=args.train_subset_name,
+                split=args.train_split,
+                namespace=args.train_dataset_namespace).remap_columns(
+                    dataset_mapping_dict)
+            validation_dataset = MsDataset.load(
+                args.val_dataset_name,
+                subset_name=args.val_subset_name,
+                split=args.val_split,
+                namespace=args.val_dataset_namespace).remap_columns(
+                    dataset_mapping_dict)
+        elif args.train_dataset_name is not None and args.val_dataset_name is None:
+            ms_dataset = MsDataset.load(
+                args.train_dataset_name,
+                subset_name=args.train_subset_name,
+                split=args.train_split,
+                namespace=args.train_dataset_namespace).remap_columns(
+                    dataset_mapping_dict).train_test_split(
+                        test_size=0.02, seed=args.seed)
+            train_dataset = ms_dataset['train']
+            validation_dataset = ms_dataset['test']
+        else:
+            data_path = training_args.src_txt if training_args.src_txt else os.path.join(
+                model_path, 'alpaca_data.json')
+            ms_dataset = MsDataset.load(
+                'json', data_files=data_path).remap_columns(
+                    dataset_mapping_dict).train_test_split(
+                        test_size=0.02, seed=args.seed)
+            train_dataset = ms_dataset['train']
+            validation_dataset = ms_dataset['test']
+    else:
+        train_dataset, validation_dataset = build_dataset_from_file(
+            args.dataset_json_file)
+
     model = LlamaForTextGeneration.from_pretrained(
         model_path, device_map=args.device_map)
 
     if args.use_lora != 0:
         lora_config = LoRAConfig(
-            replace_modules=['q_proj', 'k_proj', 'v_proj'],
-            rank=args.lora_rank,
+            target_modules=['q_proj', 'k_proj', 'v_proj'],
+            r=args.lora_rank,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout)
         model = model.bfloat16()
-        Swift.prepare_model(model, lora_config)
+        model = Swift.prepare_model(model, lora_config)
 
     tokenizer = LlamaTokenizer.from_pretrained(
         model_path,
@@ -284,17 +363,19 @@ if __name__ == '__main__':
         model=model,
     )
 
-    train_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=data_path)
+    train_dataset = SupervisedDataset(
+        tokenizer=tokenizer, list_data_dict=train_dataset)
+    validation_dataset = SupervisedDataset(
+        tokenizer=tokenizer, list_data_dict=validation_dataset)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
 
     kwargs = dict(
         model=model,
         cfg_file=os.path.join(model_path, 'configuration.json'),
         train_dataset=train_dataset,
+        eval_dataset=validation_dataset,
         data_collator=data_collator,
-        max_epochs=3,
-        cfg_modify_fn=cfg_modify_fn,
-        device='cpu')
+        cfg_modify_fn=cfg_modify_fn)
 
     # Construct trainer and train
     trainer = build_trainer(

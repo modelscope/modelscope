@@ -2,3 +2,4 @@
 -r audio/audio_kws.txt
 -r audio/audio_signal.txt
 -r audio/audio_tts.txt
+-r audio/audio_codec.txt

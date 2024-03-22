@@ -83,10 +83,6 @@ def check_input_type(input_type, input):
 
 TASK_INPUTS = {
 
-    Tasks.task_template: {
-        'image': InputType.IMAGE,
-        'text': InputType.TEXT
-    },
     # if task input is single var, value is  InputType
     # if task input is a tuple,  value is tuple of InputType
     # if task input is a dict, value is a dict of InputType, where key
@@ -95,12 +91,58 @@ TASK_INPUTS = {
     # each element corresponds to one input format as described above and
     # must include a dict format.
 
+
+    Tasks.task_template: {
+        'image': InputType.IMAGE,
+        'text': InputType.TEXT
+    },
     # ============ vision tasks ===================
+
+    Tasks.image_text_retrieval: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.general_recognition:
+    InputType.IMAGE,
+    Tasks.video_depth_estimation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        InputKeys.TEXT: InputType.TEXT
+    },
+    Tasks.indoor_layout_estimation:
+    InputType.IMAGE,
+    Tasks.image_demoireing:
+    InputType.IMAGE,
+    Tasks.panorama_depth_estimation:
+    InputType.IMAGE,
+    Tasks.video_depth_estimation:
+    InputType.VIDEO,
+    Tasks.animal_recognition:
+    InputType.IMAGE,
+    Tasks.motion_generation:
+    InputType.TEXT,
+    Tasks.video_panoptic_segmentation:
+    InputType.VIDEO,
+
+
     Tasks.ocr_detection:
     InputType.IMAGE,
     Tasks.ocr_recognition:
     InputType.IMAGE,
     Tasks.face_2d_keypoints:
+    InputType.IMAGE,
+    Tasks.face_liveness:
+    InputType.IMAGE,
+    Tasks.face_quality_assessment:
+    InputType.IMAGE,
+    Tasks.card_detection:
+    InputType.IMAGE,
+    Tasks.license_plate_detection:
+    InputType.IMAGE,
+    Tasks.card_detection_correction:
+    InputType.IMAGE,
+    Tasks.lineless_table_recognition:
+    InputType.IMAGE,
+    Tasks.table_recognition:
     InputType.IMAGE,
     Tasks.face_detection:
     InputType.IMAGE,
@@ -112,19 +154,39 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.face_reconstruction:
     InputType.IMAGE,
+    Tasks.head_reconstruction:
+    InputType.IMAGE,
+    Tasks.text_to_head:
+    InputType.TEXT,
     Tasks.human_detection:
     InputType.IMAGE,
     Tasks.face_image_generation:
     InputType.NUMBER,
     Tasks.image_classification:
     InputType.IMAGE,
+    Tasks.image_quality_assessment_mos:
+    InputType.IMAGE,
+    Tasks.image_quality_assessment_degradation:
+    InputType.IMAGE,
     Tasks.image_object_detection:
     InputType.IMAGE,
     Tasks.domain_specific_object_detection:
     InputType.IMAGE,
+    Tasks.human_wholebody_keypoint:
+    InputType.IMAGE,
     Tasks.image_segmentation:
     InputType.IMAGE,
     Tasks.portrait_matting:
+    InputType.IMAGE,
+    Tasks.universal_matting:
+    InputType.IMAGE,
+    Tasks.product_segmentation:
+    InputType.IMAGE,
+    Tasks.semantic_segmentation:
+    InputType.IMAGE,
+    Tasks.face_human_hand_detection:
+    InputType.IMAGE,
+    Tasks.hand_static:
     InputType.IMAGE,
     Tasks.image_fewshot_detection:
     InputType.IMAGE,
@@ -148,10 +210,16 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.image_denoising:
     InputType.IMAGE,
+    Tasks.image_body_reshaping:
+    InputType.IMAGE,
     Tasks.image_portrait_enhancement:
     InputType.IMAGE,
     Tasks.crowd_counting:
     InputType.IMAGE,
+    Tasks.image_super_resolution_pasd: {
+        'image': InputType.IMAGE,
+        'prompt': InputType.TEXT,
+    },
     Tasks.image_inpainting: {
         'img': InputType.IMAGE,
         'mask': InputType.IMAGE,
@@ -173,12 +241,16 @@ TASK_INPUTS = {
         'template': InputType.IMAGE,
         'user': InputType.IMAGE,
     },
+    Tasks.image_deblurring:
+    InputType.IMAGE,
     Tasks.video_colorization:
     InputType.VIDEO,
 
     # image generation task result for a single image
-    Tasks.image_to_image_generation:
-    InputType.IMAGE,
+    Tasks.image_to_image_generation: [
+        InputType.IMAGE,
+        (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE, InputType.IMAGE)
+    ],
     Tasks.image_to_image_translation:
     InputType.IMAGE,
     Tasks.image_style_transfer: {
@@ -208,7 +280,14 @@ TASK_INPUTS = {
     InputType.IMAGE,
     Tasks.video_embedding:
     InputType.VIDEO,
-    Tasks.virtual_try_on: (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+    Tasks.virtual_try_on: [
+        (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE),
+        {
+            'masked_model': InputType.IMAGE,
+            'pose': InputType.IMAGE,
+            'cloth': InputType.IMAGE,
+        }
+    ],
     Tasks.text_driven_segmentation: {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.TEXT: InputType.TEXT
@@ -224,11 +303,46 @@ TASK_INPUTS = {
         InputKeys.IMAGE: InputType.IMAGE,
         InputKeys.IMAGE: InputType.IMAGE
     },
+    Tasks.human_image_generation: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_pose_path': InputType.TEXT
+    },
+    Tasks.human3d_render: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+    },
+    Tasks.human3d_animation: {
+        'dataset_id': InputType.TEXT,
+        'case_id': InputType.TEXT,
+        'action_dataset': InputType.TEXT,
+        'action': InputType.TEXT
+    },
+    Tasks.image_view_transform: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'target_view': InputType.LIST
+    },
+    Tasks.image_control_3d_portrait: {
+        InputKeys.IMAGE: InputType.IMAGE,
+        'save_dir': InputType.TEXT
+    },
 
     # ============ nlp tasks ===================
     Tasks.chat: {
-        'text': InputType.TEXT,
-        'history': InputType.LIST,
+        # An input example for `messages` format (Dict[str, List[Dict[str, str]]]):
+        # {'messages': [{
+        #     'role': 'system',
+        #     'content': 'You are a helpful assistant.'
+        # }, {
+        #     'role': 'user',
+        #     'content': 'Hello! Where is the capital of Zhejiang?'
+        # }, {
+        #     'role': 'assistant',
+        #     'content': 'Hangzhou is the capital of Zhejiang.'
+        # }, {
+        #     'role': 'user',
+        #     'content': 'Tell me something about HangZhou?'
+        # }]}
+        'messages': InputType.LIST
     },
     Tasks.text_classification: [
         InputType.TEXT,
@@ -238,15 +352,25 @@ TASK_INPUTS = {
             'text2': InputType.TEXT
         },
     ],
-    Tasks.sentence_similarity: (InputType.TEXT, InputType.TEXT),
+    Tasks.sentence_similarity: [
+        (InputType.TEXT, InputType.TEXT),
+        {
+            'source_text': InputType.TEXT,
+            'target_text': InputType.TEXT,
+        },
+    ],
     Tasks.nli: (InputType.TEXT, InputType.TEXT),
     Tasks.sentiment_classification:
     InputType.TEXT,
-    Tasks.zero_shot_classification: InputType.TEXT,
+    Tasks.zero_shot_classification:
+    InputType.TEXT,
     Tasks.relation_extraction:
     InputType.TEXT,
     Tasks.translation:
     InputType.TEXT,
+    Tasks.text_summarization: [InputType.TEXT, {
+        'text': InputType.TEXT,
+    }],
     Tasks.competency_aware_translation:
     InputType.TEXT,
     Tasks.word_segmentation: [InputType.TEXT, {
@@ -279,10 +403,6 @@ TASK_INPUTS = {
     },
     Tasks.fill_mask:
     InputType.TEXT,
-    Tasks.task_oriented_conversation: {
-        'user_input': InputType.TEXT,
-        'history': InputType.DICT,
-    },
     Tasks.table_question_answering: {
         'question': InputType.TEXT,
         'history_sql': InputType.DICT,
@@ -315,6 +435,8 @@ TASK_INPUTS = {
         'positive': InputType.LIST,
         'negative': InputType.LIST
     },
+    Tasks.machine_reading_comprehension:
+    InputType.TEXT,
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.
@@ -338,12 +460,17 @@ TASK_INPUTS = {
     InputType.AUDIO,
     Tasks.speaker_diarization_dialogue_detection:
     InputType.TEXT,
+    Tasks.language_score_prediction:
+    InputType.TEXT,
+    Tasks.punctuation:
+    InputType.TEXT,
     Tasks.speech_language_recognition:
     InputType.AUDIO,
     Tasks.speaker_diarization_semantic_speaker_turn_detection:
     InputType.TEXT,
     Tasks.inverse_text_processing:
     InputType.TEXT,
+    Tasks.speaker_verification: [InputType.AUDIO, InputType.AUDIO],
 
     # ============ multi-modal tasks ===================
     Tasks.image_captioning: [InputType.IMAGE, {
@@ -374,6 +501,10 @@ TASK_INPUTS = {
         'img': InputType.IMAGE,
         'text': InputType.TEXT
     },
+    Tasks.text_video_retrieval: {
+        'video': InputType.VIDEO,
+        'text': InputType.TEXT
+    },
     Tasks.visual_question_answering: {
         'image': InputType.IMAGE,
         'text': InputType.TEXT
@@ -391,6 +522,14 @@ TASK_INPUTS = {
     InputType.VIDEO,
     Tasks.human_reconstruction:
     InputType.IMAGE,
+    Tasks.text_texture_generation: {
+        'mesh_path': InputType.TEXT,
+        'texture_path': InputType.TEXT,
+        'prompt': InputType.TEXT,
+        'uvsize': InputType.NUMBER,
+        'image_size': InputType.NUMBER,
+        'output_dir': InputType.NUMBER,
+    },
     Tasks.image_reid_person:
     InputType.IMAGE,
     Tasks.video_inpainting: {
@@ -405,4 +544,8 @@ TASK_INPUTS = {
     Tasks.text_to_360panorama_image: {
         'prompt': InputType.TEXT,
     },
+    Tasks.image_editing: {
+        'img': InputType.IMAGE,
+        'prompts': InputType.LIST
+    }
 }

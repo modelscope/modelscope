@@ -9,7 +9,6 @@ import cv2
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.cv import Text2360PanoramaImagePipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
@@ -17,6 +16,7 @@ from modelscope.utils.test_utils import test_level
 logger = get_logger()
 
 
+@unittest.skip('For need realesrgan')
 class Text2360PanoramaImageTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -41,8 +41,9 @@ class Text2360PanoramaImageTest(unittest.TestCase):
             'refinement': self.refinement,
         }
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 3, 'skip test due to gpu oom')
     def test_run_by_direct_model_download(self):
+        from modelscope.pipelines.cv import Text2360PanoramaImagePipeline
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         cache_path = snapshot_download(self.model_id)
         pipeline = Text2360PanoramaImagePipeline(cache_path)
@@ -52,8 +53,9 @@ class Text2360PanoramaImageTest(unittest.TestCase):
         print(
             'pipeline: the output image path is {}'.format(output_image_path))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 3, 'skip test due to gpu oom')
     def test_run_with_model_from_modelhub(self):
+        from modelscope.pipelines.cv import Text2360PanoramaImagePipeline
         output_image_path = tempfile.NamedTemporaryFile(suffix='.png').name
         pipeline_ins = pipeline(
             task=Tasks.text_to_360panorama_image,

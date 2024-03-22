@@ -1,6 +1,5 @@
 boto3
 embeddings
-en_core_web_sm>=2.3.5
 filelock
 ftfy
 jieba>=0.42.1

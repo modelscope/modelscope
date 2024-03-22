@@ -48,6 +48,11 @@ class OutputKeys(object):
     PROBABILITIES = 'probabilities'
     DIALOG_STATES = 'dialog_states'
     VIDEO_EMBEDDING = 'video_embedding'
+    PHRASE_PROTOTYPE = 'phrase_prototype'
+    OBJECT_PROTOTYPE = 'object_prototype'
+    SENTENCE_PROTOTYPE = 'sentence_prototype'
+    EVENT_PROTOTYPE = 'event_prototype'
+    TEXTVIDEO_SIM = 'textvideo_sim'
     UUID = 'uuid'
     WORD = 'word'
     KWS_LIST = 'kws_list'
@@ -64,6 +69,7 @@ class OutputKeys(object):
     PCD12 = 'pcd12'
     PCD12_ALIGN = 'pcd12_align'
     TBOUNDS = 'tbounds'
+    MV_IMGS = 'MViews'
 
 
 OutputTypes = {
@@ -106,6 +112,11 @@ OutputTypes = {
     OutputKeys.PROBABILITIES: np.ndarray,
     OutputKeys.DIALOG_STATES: object,
     OutputKeys.VIDEO_EMBEDDING: np.ndarray,
+    OutputKeys.PHRASE_PROTOTYPE: np.ndarray,
+    OutputKeys.OBJECT_PROTOTYPE: np.ndarray,
+    OutputKeys.SENTENCE_PROTOTYPE: np.ndarray,
+    OutputKeys.EVENT_PROTOTYPE: np.ndarray,
+    OutputKeys.TEXTVIDEO_SIM: np.ndarray,
     OutputKeys.UUID: str,
     OutputKeys.WORD: str,
     OutputKeys.KWS_LIST: List[str],
@@ -122,6 +133,7 @@ OutputTypes = {
     OutputKeys.PCD12: np.ndarray,
     OutputKeys.PCD12_ALIGN: np.ndarray,
     OutputKeys.TBOUNDS: Dict,
+    OutputKeys.MV_IMGS: List[np.ndarray],
 }
 
 OutputTypeSchema = {
@@ -329,6 +341,24 @@ OutputTypeSchema = {
             'type': 'number'
         }
     },
+    OutputKeys.PHRASE_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.OBJECT_PROTOTYPE: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
+    OutputKeys.TEXTVIDEO_SIM: {
+        'type': 'array',
+        'items': {
+            'type': 'number'
+        }
+    },
     OutputKeys.UUID: {
         'type': 'string'
     },
@@ -398,6 +428,15 @@ OutputTypeSchema = {
     OutputKeys.TBOUNDS: {
         'type': 'object'
     },
+    OutputKeys.MV_IMGS: {
+        'type': 'array',
+        'items': {
+            'type': 'array',
+            'items': {
+                'type': 'number'
+            }
+        }
+    },
 }
 
 TASK_OUTPUTS = {
@@ -414,6 +453,10 @@ TASK_OUTPUTS = {
     Tasks.table_recognition: [OutputKeys.POLYGONS],
     Tasks.lineless_table_recognition: [OutputKeys.POLYGONS, OutputKeys.BOXES],
     Tasks.license_plate_detection: [OutputKeys.POLYGONS, OutputKeys.TEXT],
+    Tasks.card_detection_correction: [
+        OutputKeys.POLYGONS, OutputKeys.SCORES, OutputKeys.OUTPUT_IMGS,
+        OutputKeys.LABELS, OutputKeys.LAYOUT
+    ],
 
     # ocr recognition result for single sample
     # {
@@ -532,6 +575,7 @@ TASK_OUTPUTS = {
     #   }
     Tasks.facial_expression_recognition:
     [OutputKeys.SCORES, OutputKeys.LABELS],
+    Tasks.general_recognition: [OutputKeys.SCORES, OutputKeys.LABELS],
 
     # face processing base result for single img
     #   {
@@ -688,6 +732,7 @@ TASK_OUTPUTS = {
     # }
     Tasks.portrait_matting: [OutputKeys.OUTPUT_IMG],
     Tasks.universal_matting: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_deblurring: [OutputKeys.OUTPUT_IMG],
     Tasks.image_face_fusion: [OutputKeys.OUTPUT_IMG],
 
     # image_quality_assessment_mos result for a single image is a score in range [0, 1]
@@ -698,9 +743,11 @@ TASK_OUTPUTS = {
     # {"output_img": np.array with shape (h, w, 3)}
     Tasks.skin_retouching: [OutputKeys.OUTPUT_IMG],
     Tasks.image_super_resolution: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_super_resolution_pasd: [OutputKeys.OUTPUT_IMG],
     Tasks.image_colorization: [OutputKeys.OUTPUT_IMG],
     Tasks.image_color_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.image_denoising: [OutputKeys.OUTPUT_IMG],
+    Tasks.image_editing: [OutputKeys.OUTPUT_IMG],
     Tasks.image_portrait_enhancement: [OutputKeys.OUTPUT_IMG],
     Tasks.crowd_counting: [OutputKeys.SCORES, OutputKeys.OUTPUT_IMG],
     Tasks.image_inpainting: [OutputKeys.OUTPUT_IMG],
@@ -722,7 +769,9 @@ TASK_OUTPUTS = {
     Tasks.video_deinterlace: [OutputKeys.OUTPUT_VIDEO],
     Tasks.nerf_recon_acc: [OutputKeys.OUTPUT],
     Tasks.nerf_recon_vq_compression: [OutputKeys.OUTPUT],
+    Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
+    Tasks.image_control_3d_portrait: [OutputKeys.OUTPUT],
 
     # image quality assessment degradation result for single image
     # {
@@ -825,6 +874,43 @@ TASK_OUTPUTS = {
     #     }
     # }
     Tasks.face_reconstruction: [OutputKeys.OUTPUT],
+    Tasks.human3d_render: [OutputKeys.OUTPUT],
+    Tasks.human3d_animation: [OutputKeys.OUTPUT],
+
+    # 3D head reconstruction result for single sample
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     }
+    # }
+    Tasks.head_reconstruction: [OutputKeys.OUTPUT],
+
+    # text to head result for text input
+    # {
+    #     "output_obj": io.BytesIO,
+    #     "output_img": np.array with shape(h, w, 3),
+    #     "output": {
+    #         "mesh": {
+    #             "vertices": np.array with shape(n, 3),
+    #             "faces": np.array with shape(n, 3),
+    #             "faces_uv": np.array with shape(n, 3),
+    #             "faces_normal": np.array with shape(n, 3),
+    #             "UVs": np.array with shape(n, 2),
+    #             "normals": np.array with shape(n, 3),
+    #         },
+    #     },
+    #     "image": np.array with shape(h, w, 3),
+    # }
+    Tasks.text_to_head: [OutputKeys.OUTPUT],
 
     # 3D human reconstruction result for single sample
     # {
@@ -835,6 +921,14 @@ TASK_OUTPUTS = {
     #     }
     # }
     Tasks.human_reconstruction: [OutputKeys.OUTPUT],
+
+    # 3D text 2 texture generation result
+    # {
+    #     "output": {
+    #         "Done"
+    #     }
+    # }
+    Tasks.text_texture_generation: [OutputKeys.OUTPUT],
 
     # 2D hand keypoints result for single sample
     # {
@@ -914,6 +1008,32 @@ TASK_OUTPUTS = {
     #   "video_embedding": np.array with shape [D],
     # }
     Tasks.video_embedding: [OutputKeys.VIDEO_EMBEDDING],
+
+    # phrase prototype result for single sentence
+    # {
+    #   "phrase_prototype": np.array with shape [K*D],
+    # }
+    # sentence prototype result for single sentence
+    # {
+    #   "sentence_prototype": np.array with shape [1*D],
+    # }
+    # object prototype result for single video
+    # {
+    #   "object_prototype": np.array with shape [N*K*D],
+    # }
+    # event prototype result for single video
+    # {
+    #   "event_prototype": np.array with shape [N*M*D],
+    # }
+    # text search video result for single sentence
+    # {
+    #   "textvideo_sim": np.array with shape [N*N],
+    # }
+    Tasks.text_video_retrieval: [
+        OutputKeys.PHRASE_PROTOTYPE, OutputKeys.SENTENCE_PROTOTYPE,
+        OutputKeys.OBJECT_PROTOTYPE, OutputKeys.EVENT_PROTOTYPE,
+        OutputKeys.TEXTVIDEO_SIM
+    ],
 
     # video stabilization task result for a single video
     # {"output_video": "path_to_rendered_video"}
@@ -1513,6 +1633,17 @@ TASK_OUTPUTS = {
     #    "output_img": np.ndarray with shape [height, width, 3]
     # }
     Tasks.image_try_on: [OutputKeys.OUTPUT_IMG],
+    # Tasks.human_image_generation result for a single sample
+    # {
+    #    "output_img": np.ndarray with shape [height, width, 3]
+    # }
+    Tasks.human_image_generation: [OutputKeys.OUTPUT_IMG],
+    # Tasks.image_view_transform result for a single sample
+    # {
+    #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
+    # }
+    Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
+    Tasks.image_to_3d: [OutputKeys.MV_IMGS]
 }
 
 

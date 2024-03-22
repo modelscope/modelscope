@@ -17,4 +17,5 @@ PYTHONPATH=. torchrun examples/pytorch/stable_diffusion/dreambooth/finetune_stab
     --train.dataloader.workers_per_gpu 0 \
     --evaluation.dataloader.workers_per_gpu 0 \
     --train.optimizer.lr 5e-6 \
+    --torch_type 'float32' \
     --use_model_config true

@@ -27,7 +27,9 @@ if TYPE_CHECKING:
     from .translation_quality_estimation_pipeline import TranslationQualityEstimationPipeline
     from .text_error_correction_pipeline import TextErrorCorrectionPipeline
     from .word_alignment_pipeline import WordAlignmentPipeline
-    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline
+    from .text_generation_pipeline import TextGenerationPipeline, TextGenerationT5Pipeline, \
+        SeqGPTPipeline, ChatGLM6bTextGenerationPipeline, ChatGLM6bV2TextGenerationPipeline, \
+        QWenChatPipeline, QWenTextGenerationPipeline, Llama2TaskPipeline
     from .fid_dialogue_pipeline import FidDialoguePipeline
     from .token_classification_pipeline import TokenClassificationPipeline
     from .translation_pipeline import TranslationPipeline
@@ -45,6 +47,8 @@ if TYPE_CHECKING:
     from .document_grounded_dialog_retrieval_pipeline import DocumentGroundedDialogRetrievalPipeline
     from .document_grounded_dialog_rerank_pipeline import DocumentGroundedDialogRerankPipeline
     from .language_identification_pipline import LanguageIdentificationPipeline
+    from .machine_reading_comprehension_pipeline import MachineReadingComprehensionForNERPipeline
+    from .llm_pipeline import LLMPipeline
 
 else:
     _import_structure = {
@@ -77,8 +81,13 @@ else:
         'text_classification_pipeline': ['TextClassificationPipeline'],
         'text_error_correction_pipeline': ['TextErrorCorrectionPipeline'],
         'word_alignment_pipeline': ['WordAlignmentPipeline'],
-        'text_generation_pipeline':
-        ['TextGenerationPipeline', 'TextGenerationT5Pipeline'],
+        'text_generation_pipeline': [
+            'TextGenerationPipeline', 'TextGenerationT5Pipeline',
+            'ChatGLM6bTextGenerationPipeline',
+            'ChatGLM6bV2TextGenerationPipeline', 'QWenChatPipeline',
+            'QWenTextGenerationPipeline', 'SeqGPTPipeline',
+            'Llama2TaskPipeline'
+        ],
         'fid_dialogue_pipeline': ['FidDialoguePipeline'],
         'token_classification_pipeline': ['TokenClassificationPipeline'],
         'translation_pipeline': ['TranslationPipeline'],
@@ -99,16 +108,19 @@ else:
         'user_satisfaction_estimation_pipeline':
         ['UserSatisfactionEstimationPipeline'],
         'siamese_uie_pipeline': ['SiameseUiePipeline'],
-        'document_grounded_dialog_generate_pipeline': [
-            'DocumentGroundedDialogGeneratePipeline'
-        ],
+        'document_grounded_dialog_generate_pipeline':
+        ['DocumentGroundedDialogGeneratePipeline'],
         'document_grounded_dialog_rerank_pipeline': [
             'DocumentGroundedDialogRerankPipeline'
         ],
         'document_grounded_dialog_retrieval_pipeline': [
             'DocumentGroundedDialogRetrievalPipeline'
         ],
-        'language_identification_pipline': ['LanguageIdentificationPipeline']
+        'language_identification_pipline': ['LanguageIdentificationPipeline'],
+        'machine_reading_comprehension_pipeline': [
+            'MachineReadingComprehensionForNERPipeline'
+        ],
+        'llm_pipeline': ['LLMPipeline'],
     }
 
     import sys

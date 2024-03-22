@@ -12,6 +12,7 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
+@unittest.skip('For tensorflow 2.x compatible')
 class LanguageGuidedVideoSummarizationTest(unittest.TestCase):
 
     def setUp(self) -> None:

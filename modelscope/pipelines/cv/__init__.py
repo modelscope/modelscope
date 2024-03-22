@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .image_colorization_pipeline import ImageColorizationPipeline
     from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
+    from .image_editing_pipeline import ImageEditingPipeline
     from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
     from .image_matting_pipeline import ImageMattingPipeline
     from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
@@ -37,8 +38,10 @@ if TYPE_CHECKING:
     from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
     from .image_style_transfer_pipeline import ImageStyleTransferPipeline
     from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
+    from .image_super_resolution_pasd_pipeline import ImageSuperResolutionPASDPipeline
     from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
     from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
+
     from .image_inpainting_pipeline import ImageInpaintingPipeline
     from .image_paintbyexample_pipeline import ImagePaintbyexamplePipeline
     from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
@@ -46,6 +49,7 @@ if TYPE_CHECKING:
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
     from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
+    from .card_detection_correction_pipeline import CardDetectionCorrectionPipeline
     from .table_recognition_pipeline import TableRecognitionPipeline
     from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
     from .skin_retouching_pipeline import SkinRetouchingPipeline
@@ -104,11 +108,16 @@ if TYPE_CHECKING:
     from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
     from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
+    from .image_to_3d_pipeline import Image23DPipeline
+    from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
     from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
     from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
     from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
     from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
     from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
+    from .human3d_render_pipeline import Human3DRenderPipeline
+    from .human3d_animation_pipeline import Human3DAnimationPipeline
+    from .anydoor_pipeline import AnydoorPipeline
 else:
     _import_structure = {
         'action_recognition_pipeline': ['ActionRecognitionPipeline'],
@@ -136,6 +145,7 @@ else:
         'image_cartoon_pipeline': ['ImageCartoonPipeline'],
         'image_denoise_pipeline': ['ImageDenoisePipeline'],
         'image_deblur_pipeline': ['ImageDeblurPipeline'],
+        'image_editing_pipeline': ['ImageEditingPipeline'],
         'image_color_enhance_pipeline': ['ImageColorEnhancePipeline'],
         'image_colorization_pipeline': ['ImageColorizationPipeline'],
         'image_instance_segmentation_pipeline':
@@ -148,17 +158,22 @@ else:
         ['ImageSemanticSegmentationPipeline'],
         'image_style_transfer_pipeline': ['ImageStyleTransferPipeline'],
         'image_super_resolution_pipeline': ['ImageSuperResolutionPipeline'],
+        'image_super_resolution_pasd_pipeline':
+        ['ImageSuperResolutionPASDPipeline'],
         'image_to_image_translation_pipeline':
         ['Image2ImageTranslationPipeline'],
         'product_retrieval_embedding_pipeline':
         ['ProductRetrievalEmbeddingPipeline'],
         'live_category_pipeline': ['LiveCategoryPipeline'],
         'image_to_image_generate_pipeline': ['Image2ImageGenerationPipeline'],
+        'image_to_3d_pipeline': ['Image23DPipeline'],
         'image_inpainting_pipeline': ['ImageInpaintingPipeline'],
         'image_paintbyexample_pipeline': ['ImagePaintbyexamplePipeline'],
         'ocr_detection_pipeline': ['OCRDetectionPipeline'],
         'ocr_recognition_pipeline': ['OCRRecognitionPipeline'],
         'license_plate_detection_pipeline': ['LicensePlateDetectionPipeline'],
+        'card_detection_correction_pipeline':
+        ['CardDetectionCorrectionPipeline'],
         'table_recognition_pipeline': ['TableRecognitionPipeline'],
         'skin_retouching_pipeline': ['SkinRetouchingPipeline'],
         'face_reconstruction_pipeline': ['FaceReconstructionPipeline'],
@@ -178,12 +193,14 @@ else:
         'facial_landmark_confidence_pipeline':
         ['FacialLandmarkConfidencePipeline'],
         'face_processing_base_pipeline': ['FaceProcessingBasePipeline'],
-        'face_attribute_recognition_pipeline':
-        ['FaceAttributeRecognitionPipeline'],
+        'face_attribute_recognition_pipeline': [
+            'FaceAttributeRecognitionPipeline'
+        ],
         'mtcnn_face_detection_pipeline': ['MtcnnFaceDetectionPipeline'],
         'hand_static_pipeline': ['HandStaticPipeline'],
-        'referring_video_object_segmentation_pipeline':
-        ['ReferringVideoObjectSegmentationPipeline'],
+        'referring_video_object_segmentation_pipeline': [
+            'ReferringVideoObjectSegmentationPipeline'
+        ],
         'language_guided_video_summarization_pipeline': [
             'LanguageGuidedVideoSummarizationPipeline'
         ],
@@ -256,6 +273,8 @@ else:
         'image_human_parsing_pipeline': ['ImageHumanParsingPipeline'],
         'nerf_recon_acc_pipeline': ['NeRFReconAccPipeline'],
         'nerf_recon_4k_pipeline': ['NeRFRecon4KPipeline'],
+        'nerf_recon_img_to_mv_pipeline': ['NeRFReconImgToMVPipeline'],
+        'surface_recon_common_pipeline': ['SurfaceReconCommonPipeline'],
         'controllable_image_generation_pipeline': [
             'ControllableImageGenerationPipeline'
         ],
@@ -271,6 +290,9 @@ else:
         'text_to_360panorama_image_pipeline': [
             'Text2360PanoramaImagePipeline'
         ],
+        'human3d_render_pipeline': ['Human3DRenderPipeline'],
+        'human3d_animation_pipeline': ['Human3DAnimationPipeline'],
+        'anydoor_pipeline': ['AnydoorPipeline'],
     }
 
     import sys

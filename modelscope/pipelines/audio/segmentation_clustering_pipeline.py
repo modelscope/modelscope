@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ast
 import io
 from typing import Any, Dict, List, Union
 
@@ -91,8 +92,9 @@ class SegmentationClusteringPipeline(Pipeline):
     def forward(self, input: list) -> np.ndarray:
         embeddings = []
         for s in input:
-            _, embs = self.sv_pipeline([s[2]], output_emb=True)
-            embeddings.append(embs)
+            save_dict = self.sv_pipeline([s[2]], output_emb=True)
+            if save_dict['embs'].shape == (1, 192):
+                embeddings.append(save_dict['embs'])
         embeddings = np.concatenate(embeddings)
         return embeddings
 
@@ -180,7 +182,14 @@ class SegmentationClusteringPipeline(Pipeline):
                 model=self.config['vad_model'])
         vad_time = self.vad_pipeline(audio, audio_fs=self.fs)
         vad_segments = []
-        for t in vad_time['text']:
+        if isinstance(vad_time['text'], str):
+            vad_time_list = ast.literal_eval(vad_time['text'])
+        elif isinstance(vad_time['text'], list):
+            vad_time_list = vad_time['text']
+        else:
+            raise ValueError('Incorrect vad result. Get %s' %
+                             (type(vad_time['text'])))
+        for t in vad_time_list:
             st = int(t[0]) / 1000
             ed = int(t[1]) / 1000
             vad_segments.append(

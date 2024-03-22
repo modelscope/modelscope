@@ -11,29 +11,31 @@ import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        DPMSolverMultistepScheduler, UNet2DConditionModel,
                        utils)
-from diffusers.models import cross_attention
+from diffusers.models import attention
 from diffusers.utils import deprecation_utils
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from modelscope import snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.multi_modal.efficient_diffusion_tuning.sd_lora import \
+    LoRATuner
 from modelscope.outputs import OutputKeys
-from modelscope.swift import Swift
-from modelscope.swift.adapter import AdapterConfig
-from modelscope.swift.control_sd_lora import ControlLoRATuner
-from modelscope.swift.lora import LoRAConfig
-from modelscope.swift.prompt import PromptConfig
-from modelscope.swift.sd_lora import LoRATuner
 from modelscope.utils.checkpoint import save_checkpoint, save_configuration
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.import_utils import is_swift_available
+from .control_sd_lora import ControlLoRATuner
 
 utils.deprecate = lambda *arg, **kwargs: None
 deprecation_utils.deprecate = lambda *arg, **kwargs: None
-cross_attention.deprecate = lambda *arg, **kwargs: None
+attention.deprecate = lambda *arg, **kwargs: None
 
 __tuner_MAP__ = {'lora': LoRATuner, 'control_lora': ControlLoRATuner}
+
+if is_swift_available():
+    from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
 
 
 @MODELS.register_module(
@@ -56,7 +58,10 @@ class EfficientStableDiffusion(TorchModel):
         super().__init__(model_dir, *args, **kwargs)
         tuner_name = kwargs.pop('tuner_name', 'lora')
         pretrained_model_name_or_path = kwargs.pop(
-            'pretrained_model_name_or_path', 'runwayml/stable-diffusion-v1-5')
+            'pretrained_model_name_or_path',
+            'AI-ModelScope/stable-diffusion-v1-5')
+        pretrained_model_name_or_path = snapshot_download(
+            pretrained_model_name_or_path)
         tuner_config = kwargs.pop('tuner_config', None)
         pretrained_tuner = kwargs.pop('pretrained_tuner', None)
         revision = kwargs.pop('revision', None)
@@ -81,6 +86,8 @@ class EfficientStableDiffusion(TorchModel):
                 self.pipe.scheduler.config)
             self.pipe = self.pipe.to(self.device)
             self.unet = self.pipe.unet
+            self.text_encoder = self.pipe.text_encoder
+            self.vae = self.pipe.vae
         else:
             # Load scheduler, tokenizer and models.
             self.noise_scheduler = DDPMScheduler.from_pretrained(
@@ -108,28 +115,45 @@ class EfficientStableDiffusion(TorchModel):
         self.tuner_name = tuner_name
 
         if tuner_name == 'swift-lora':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             rank = tuner_config[
                 'rank'] if tuner_config and 'rank' in tuner_config else 4
             lora_config = LoRAConfig(
-                rank=rank,
-                replace_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
+                r=rank,
+                target_modules=['to_q', 'to_k', 'to_v', 'to_out.0'],
                 merge_weights=False,
-                only_lora_trainable=False,
-                use_merged_linear=False,
-                pretrained_weights=pretrained_tuner)
+                use_merged_linear=False)
             self.unet = Swift.prepare_model(self.unet, lora_config)
         elif tuner_name == 'swift-adapter':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             adapter_length = tuner_config[
                 'adapter_length'] if tuner_config and 'adapter_length' in tuner_config else 10
-            adapter_config = AdapterConfig(
-                dim=-1,
-                hidden_pos=0,
-                module_name=r'.*ff\.net\.2$',
-                adapter_length=adapter_length,
-                only_adapter_trainable=False,
-                pretrained_weights=pretrained_tuner)
-            self.unet = Swift.prepare_model(self.unet, adapter_config)
+            adapter_config_dict = {}
+            dim_list = [320, 640, 1280]
+            target_modules_list = [
+                r'(down_blocks.0.*ff\.net\.2$)|(up_blocks.3.*ff\.net\.2$)',
+                r'(down_blocks.1.*ff\.net\.2$)|(up_blocks.2.*ff\.net\.2$)',
+                r'(down_blocks.2.*ff\.net\.2$)|(up_blocks.1.*ff\.net\.2$)|(mid_block.*ff\.net\.2$)'
+            ]
+            for dim, target_modules in zip(dim_list, target_modules_list):
+                adapter_config = AdapterConfig(
+                    dim=dim,
+                    hidden_pos=0,
+                    target_modules=target_modules,
+                    adapter_length=adapter_length)
+                adapter_config_dict[f'adapter_{dim}'] = adapter_config
+            self.unet = Swift.prepare_model(self.unet, adapter_config_dict)
         elif tuner_name == 'swift-prompt':
+            if not is_swift_available():
+                raise ValueError(
+                    'Please install swift by `pip install ms-swift` to use swift tuners.'
+                )
             prompt_length = tuner_config[
                 'prompt_length'] if tuner_config and 'prompt_length' in tuner_config else 10
             prompt_config = PromptConfig(
@@ -137,13 +161,11 @@ class EfficientStableDiffusion(TorchModel):
                     320, 320, 640, 640, 1280, 1280, 1280, 1280, 1280, 640, 640,
                     640, 320, 320, 320
                 ],
-                module_layer_name=
+                target_modules=
                 r'.*[down_blocks|up_blocks|mid_block]\.\d+\.attentions\.\d+\.transformer_blocks\.\d+$',
                 embedding_pos=0,
                 prompt_length=prompt_length,
-                only_prompt_trainable=False,
                 attach_front=False,
-                pretrained_weights=pretrained_tuner,
                 extract_embedding=True)
             self.unet = Swift.prepare_model(self.unet, prompt_config)
         elif tuner_name in ('lora', 'control_lora'):
@@ -171,13 +193,13 @@ class EfficientStableDiffusion(TorchModel):
         else:
             super().load_state_dict(state_dict=state_dict, strict=strict)
 
-    def state_dict(self):
+    def state_dict(self, *arg, **kwargs):
         if hasattr(self, 'tuner'):
-            return self.tuner.state_dict()
-        elif self.tuner_name.startswith('swift'):
-            return self.unet.state_dict()
+            return self.tuner.state_dict(*arg, **kwargs)
+        elif self.tuner_name.startswith('swift-'):
+            return self.unet.state_dict(*arg, **kwargs)
         else:
-            return super().state_dict()
+            return super().state_dict(*arg, **kwargs)
 
     def tokenize_caption(self, captions):
         """ Convert caption text to token data.
@@ -194,7 +216,7 @@ class EfficientStableDiffusion(TorchModel):
             return_tensors='pt')
         return inputs.input_ids
 
-    def forward(self, prompt='', cond=None, target=None, **args):
+    def forward(self, prompt, cond=None, target=None, **args):
         if self.inference:
             if 'generator_seed' in args and isinstance(args['generator_seed'],
                                                        int):
@@ -203,11 +225,13 @@ class EfficientStableDiffusion(TorchModel):
             else:
                 generator = None
             num_inference_steps = args.get('num_inference_steps', 30)
+            guidance_scale = args.get('guidance_scale', 7.5)
             if self.is_control:
                 _ = self.tuner(cond.to(self.device)).control_states
             images = self.pipe(
                 prompt,
                 num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
                 generator=generator).images
             return images
         else:
@@ -233,8 +257,8 @@ class EfficientStableDiffusion(TorchModel):
             input_ids = self.tokenize_caption(prompt).to(self.device)
 
             # Get the text embedding for conditioning
-            with torch.no_grad():
-                encoder_hidden_states = self.text_encoder(input_ids)[0]
+            # with torch.no_grad():
+            encoder_hidden_states = self.text_encoder(input_ids)[0]
 
             # Inject control states to unet
             if self.is_control:

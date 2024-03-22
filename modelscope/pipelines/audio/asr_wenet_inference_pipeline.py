@@ -35,7 +35,7 @@ class WeNetAutomaticSpeechRecognitionPipeline(Pipeline):
                  audio_fs: int = None,
                  recog_type: str = None,
                  audio_format: str = None) -> Dict[str, Any]:
-        from easyasr.common import asr_utils
+        from funasr.utils import asr_utils
 
         self.recog_type = recog_type
         self.audio_format = audio_format

@@ -6,8 +6,9 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .cartoon_translation_exporter import CartoonTranslationExporter
-    from .object_detection_damoyolo_exporter import ObjectDetectionDamoyoloExporter
     from .face_detection_scrfd_exporter import FaceDetectionSCRFDExporter
+    from .object_detection_damoyolo_exporter import \
+        ObjectDetectionDamoyoloExporter
 else:
     _import_structure = {
         'cartoon_translation_exporter': ['CartoonTranslationExporter'],

@@ -246,6 +246,10 @@ def is_wenetruntime_available():
     return importlib.util.find_spec('wenetruntime') is not None
 
 
+def is_swift_available():
+    return importlib.util.find_spec('swift') is not None
+
+
 def is_tf_available():
     return _tf_available
 
@@ -271,6 +275,18 @@ def is_espnet_available(pkg_name):
         and importlib.util.find_spec('espnet')
 
 
+def is_vllm_available():
+    return importlib.util.find_spec('vllm') is not None
+
+
+def is_transformers_available():
+    return importlib.util.find_spec('transformers') is not None
+
+
+def is_tensorrt_llm_available():
+    return importlib.util.find_spec('tensorrt_llm') is not None
+
+
 REQUIREMENTS_MAAPING = OrderedDict([
     ('protobuf', (is_protobuf_available, PROTOBUF_IMPORT_ERROR)),
     ('sentencepiece', (is_sentencepiece_available,
@@ -292,7 +308,6 @@ REQUIREMENTS_MAAPING = OrderedDict([
                  GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
     ('espnet', (is_espnet_available,
                 GENERAL_IMPORT_ERROR.replace('REQ', 'espnet'))),
-    ('easyasr', (is_package_available('easyasr'), AUDIO_IMPORT_ERROR)),
     ('funasr', (is_package_available('funasr'), AUDIO_IMPORT_ERROR)),
     ('kwsbp', (is_package_available('kwsbp'), AUDIO_IMPORT_ERROR)),
     ('decord', (is_package_available('decord'), DECORD_IMPORT_ERROR)),
@@ -307,6 +322,7 @@ REQUIREMENTS_MAAPING = OrderedDict([
     ('open_clip', (is_package_available('open_clip'), OPENCLIP_IMPORT_ERROR)),
     ('taming', (is_package_available('taming'), TAMING_IMPORT_ERROR)),
     ('xformers', (is_package_available('xformers'), XFORMERS_IMPORT_ERROR)),
+    ('swift', (is_package_available('swift'), SWIFT_IMPORT_ERROR)),
 ])
 
 SYSTEM_PACKAGE = set(['os', 'sys', 'typing'])

@@ -3,6 +3,7 @@
 import io
 import os
 import re
+import sys
 import time
 from collections import OrderedDict
 from shutil import copytree, ignore_patterns, rmtree
@@ -17,6 +18,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from modelscope.fileio import File, LocalStorage
 from modelscope.utils.config import Config, JSONIteratorEncoder
 from modelscope.utils.constant import ConfigFields, ModelFile
+from modelscope.utils.file_utils import copytree_py37
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import is_master
 
@@ -622,7 +624,11 @@ def save_pretrained(model,
     ignore_file_set.add('.*')
     if hasattr(model,
                'model_dir') and model.model_dir is not None and is_master():
-        copytree(
+        if sys.version_info.minor >= 8:
+            copytree_func = copytree
+        else:  # == 7
+            copytree_func = copytree_py37
+        copytree_func(
             model.model_dir,
             target_folder,
             ignore=ignore_patterns(*ignore_file_set),

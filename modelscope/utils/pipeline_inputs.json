@@ -1,0 +1,297 @@
+{
+    "action-detection":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_detection_test_video.mp4"
+        }
+    },
+    "action-recognition":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_recognition_test_video.mp4"
+        }
+    },
+    "animal-recognition":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg"
+        }
+    },
+    "chat":{
+        "input":{
+            "messages": [{
+                "role": "user",
+                "content": "Hello! 你是谁？"
+            }, {
+                "role": "assistant",
+                "content": "我是你的助手。"
+            }, {
+                "role": "user",
+                "content": "你叫什么名字？"
+            }]
+        },
+        "parameters": {
+            "do_sample": true,
+            "max_length": 512
+        }
+    },
+    "domain-specific-object-detection":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_traffic_sign.jpg"
+        }
+    },
+    "face-2d-keypoints":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/face_detection.png"
+        }
+    },
+    "face-attribute-recognition":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/face_recognition_1.png"
+        }
+    },
+    "facial-expression-recognition":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/facial_expression_recognition.jpg"
+        }
+    },
+    "general-recognition":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg"
+        }
+    },
+    "human-detection":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_detection.jpg"
+        }
+    },
+    "image-captioning":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_captioning.png"
+        }
+    },
+    "image-classification":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/content_check.jpg"
+        }
+    },
+    "image-demoireing":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/shop_segmentation.jpg"
+        }
+    },
+    "image-object-detection":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_detection.jpg"
+        }
+    },
+    "image-portrait-stylization":{
+        "input":{
+            "image":"https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_cartoon.png"
+        }
+    },
+    "image-segmentation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_semantic_segmentation.jpg"
+        },
+        "parameters":{
+
+        }
+    },
+    "image-text-retrieval":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_mplug_vqa.jpg",
+            "text":"What is the woman doing?"
+        }
+    },
+    "indoor-layout-estimation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_traffic_sign.jpg"
+        }
+    },
+    "live-category":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/live_category_test_video.mp4"
+        }
+    },
+    "motion-generation":{
+        "input":{
+            "text":"the person walked forward and is picking up his toolbox"
+        }
+    },
+    "named-entity-recognition":{
+        "input":{
+            "text":"这与温岭市新河镇的一个神秘的传说有关。[SEP]地名"
+        }
+    },
+    "nli":{
+        "input":[
+            "四川商务职业学院和四川财经职业学院哪个好？",
+            "四川商务职业学院商务管理在哪个校区？"
+        ],
+        "parameters":{
+
+        }
+    },
+    "ocr-recognition":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_ocr_recognition.jpg"
+        }
+    },
+    "panorama-depth-estimation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/panorama_depth_estimation.jpg"
+        }
+    },
+    "semantic-segmentation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_salient_detection.jpg"
+        }
+    },
+    "sentence-embedding":{
+        "input": {
+            "source_sentence":[
+                "吃完海鲜可以喝牛奶吗?"
+            ],
+            "sentences_to_compare":[
+                "不可以，早晨喝牛奶不科学",
+                "吃了海鲜后是不能再喝牛奶的，因为牛奶中含得有维生素C，如果海鲜喝牛奶一起服用会对人体造成一定的伤害",
+                "吃海鲜是不能同时喝牛奶吃水果，这个至少间隔6小时以上才可以。",
+                "吃海鲜是不可以吃柠檬的因为其中的维生素C会和海鲜中的矿物质形成砷"
+            ]
+        }
+    },
+    "shop-segmentation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/shop_segmentation.jpg"
+        }
+    },
+    "text-classification":{
+        "input":{
+            "text":"i like this wonderful place"
+        },
+        "parameters":{
+
+        }
+    },
+    "text-driven-segmentation":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/text_driven_segmentation.jpg",
+            "text":"bear"
+        }
+    },
+    "text-generation":{
+        "input":{
+            "text":"蒙古国的首都是乌兰巴托（Ulaanbaatar）\n冰岛的首都是雷克雅未克（Reykjavik）\n埃塞俄比亚的首都是"
+        },
+        "parameters":{
+
+        }
+    },
+    "text-ranking":{
+        "input":{
+            "source_sentence":[
+                "how long it take to get a master's degree"
+            ],
+            "sentences_to_compare":[
+                "On average, students take about 18 to 24 months to complete a master's degree.",
+                "On the other hand, some students prefer to go at a slower pace and choose to take several years to complete their studies.",
+                "It can take anywhere from two semesters"
+            ]
+        }
+    },
+    "text-summarization":{
+        "input":{
+            "text":"five-time world champion michelle kwan withdrew from the #### us figure skating championships on wednesday , but will petition us skating officials for the chance to compete at the #### turin olympics ."
+        }
+    },
+    "text-to-video-synthesis":{
+        "input":{
+            "text":"A panda eating bamboo on a rock."
+        }
+    },
+    "translation":{
+        "input":{
+            "text":"声明补充说，沃伦的同事都深感震惊，并且希望他能够投案自首。"
+        }
+    },
+    "video-captioning":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_caption_and_qa_test.mp4"
+        }
+    },
+    "video-category":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_category_test_video.mp4"
+        }
+    },
+    "video-depth-estimation":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_depth_estimation.mp4"
+        }
+    },
+    "video-embedding":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/action_recognition_test_video.mp4"
+        }
+    },
+    "video-multi-object-tracking":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/MOT17-03-partial.mp4"
+        }
+    },
+    "video-panoptic-segmentation":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/kitti-step_testing_image_02_0000.mp4"
+        }
+    },
+    "video-question-answering":{
+        "input":{
+            "video":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_caption_and_qa_test.mp4",
+            "text":"How many people are there?"
+        }
+    },
+    "video-summarization":{
+        "input":{
+            "text":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/videos/video_category_test_video.mp4"
+        }
+    },
+    "visual-entailment":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/dogs.jpg",
+            "text":"there are two birds."
+        }
+    },
+    "visual-grounding":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/visual_grounding.png",
+            "text":"a blue turtle-like pokemon with round head"
+        }
+    },
+    "visual-question-answering":{
+        "input":{
+            "image":"http://modelscope.oss-cn-beijing.aliyuncs.com/demo/images/image_mplug_vqa.jpg",
+            "text":"What is the woman doing?"
+        }
+    },
+    "word-segmentation":{
+        "input":{
+            "text":"今天天气不错，适合出去游玩"
+        }
+    },
+    "zero-shot-classification":{
+        "input":{
+            "text":"全新突破 解放军运20版空中加油机曝光"
+        },
+        "parameters":{
+            "candidate_labels":[
+                "文化",
+                "体育",
+                "娱乐",
+                "财经",
+                "家居",
+                "汽车",
+                "教育",
+                "科技",
+                "军事"
+            ]
+        }
+    }
+}

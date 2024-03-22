@@ -11,7 +11,8 @@ from collections import OrderedDict
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-from timm.models.layers import drop, drop_path, trunc_normal_
+from timm.models.layers.drop import drop_path
+from timm.models.layers.weight_init import trunc_normal_
 from torch import nn
 
 

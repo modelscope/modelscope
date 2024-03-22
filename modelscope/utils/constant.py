@@ -19,6 +19,7 @@ class CVTasks(object):
     table_recognition = 'table-recognition'
     lineless_table_recognition = 'lineless-table-recognition'
     license_plate_detection = 'license-plate-detection'
+    card_detection_correction = 'card-detection-correction'
 
     # human face body related
     animal_recognition = 'animal-recognition'
@@ -75,6 +76,7 @@ class CVTasks(object):
     # image editing
     skin_retouching = 'skin-retouching'
     image_super_resolution = 'image-super-resolution'
+    image_super_resolution_pasd = 'image-super-resolution-pasd'
     image_debanding = 'image-debanding'
     image_colorization = 'image-colorization'
     image_color_enhancement = 'image-color-enhancement'
@@ -85,6 +87,7 @@ class CVTasks(object):
     image_paintbyexample = 'image-paintbyexample'
     image_skychange = 'image-skychange'
     image_demoireing = 'image-demoireing'
+    image_editing = 'image-editing'
 
     # image generation
     image_to_image_translation = 'image-to-image-translation'
@@ -98,6 +101,8 @@ class CVTasks(object):
     controllable_image_generation = 'controllable-image-generation'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
+    image_view_transform = 'image-view-transform'
 
     # video recognition
     live_category = 'live-category'
@@ -144,9 +149,12 @@ class CVTasks(object):
 
     # 3d face reconstruction
     face_reconstruction = 'face-reconstruction'
+    head_reconstruction = 'head-reconstruction'
+    text_to_head = 'text-to-head'
 
     # 3d human reconstruction
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
 
     # image quality assessment mos
     image_quality_assessment_mos = 'image-quality-assessment-mos'
@@ -156,6 +164,13 @@ class CVTasks(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
+    human3d_render = 'human3d-render'
+    human3d_animation = 'human3d-animation'
+    image_control_3d_portrait = 'image-control-3d-portrait'
+
+    # 3d generation
+    image_to_3d = 'image-to-3d'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
@@ -213,6 +228,7 @@ class NLPTasks(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class AudioTasks(object):
@@ -229,6 +245,7 @@ class AudioTasks(object):
     speaker_verification = 'speaker-verification'
     speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
+    audio_quantization = 'audio-quantization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
@@ -242,6 +259,7 @@ class MultiModalTasks(object):
     visual_grounding = 'visual-grounding'
     text_to_image_synthesis = 'text-to-image-synthesis'
     multi_modal_embedding = 'multi-modal-embedding'
+    text_video_retrieval = 'text-video-retrieval'
     generative_multi_modal_embedding = 'generative-multi-modal-embedding'
     multi_modal_similarity = 'multi-modal-similarity'
     visual_question_answering = 'visual-question-answering'
@@ -255,6 +273,8 @@ class MultiModalTasks(object):
     text_to_video_synthesis = 'text-to-video-synthesis'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
+    image_to_video = 'image-to-video'
+    video_to_video = 'video-to-video'
 
 
 class ScienceTasks(object):

@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import numpy as np
 
 from modelscope.metainfo import Pipelines
-from modelscope.models import Model
 from modelscope.models.audio.tts import SambertHifigan
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, InputModel, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.constant import Fields, Tasks
+from modelscope.utils.constant import Tasks
 
 __all__ = ['TextToSpeechSambertHifiganPipeline']
 

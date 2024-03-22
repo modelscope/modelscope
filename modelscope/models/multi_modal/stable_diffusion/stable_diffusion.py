@@ -20,7 +20,7 @@ from modelscope.utils.constant import Tasks
 @MODELS.register_module(
     Tasks.text_to_image_synthesis, module_name=Models.stable_diffusion)
 class StableDiffusion(TorchModel):
-    """ The implementation of efficient diffusion tuning model based on TorchModel.
+    """ The implementation of stable diffusion model based on TorchModel.
 
     This model is constructed with the implementation of stable diffusion model. If you want to
     finetune lightweight parameters on your own dataset, you can define you own tuner module
@@ -28,7 +28,7 @@ class StableDiffusion(TorchModel):
     """
 
     def __init__(self, model_dir, *args, **kwargs):
-        """ Initialize a vision efficient diffusion tuning model.
+        """ Initialize a vision stable diffusion model.
 
         Args:
           model_dir: model id or path
@@ -39,7 +39,7 @@ class StableDiffusion(TorchModel):
         self.lora_tune = kwargs.pop('lora_tune', False)
         self.dreambooth_tune = kwargs.pop('dreambooth_tune', False)
 
-        self.weight_dtype = torch.float32
+        self.weight_dtype = kwargs.pop('torch_type', torch.float32)
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -59,14 +59,15 @@ class StableDiffusion(TorchModel):
         # Freeze gradient calculation and move to device
         if self.vae is not None:
             self.vae.requires_grad_(False)
-            self.vae = self.vae.to(self.device)
+            self.vae = self.vae.to(self.device, dtype=self.weight_dtype)
         if self.text_encoder is not None:
             self.text_encoder.requires_grad_(False)
-            self.text_encoder = self.text_encoder.to(self.device)
+            self.text_encoder = self.text_encoder.to(
+                self.device, dtype=self.weight_dtype)
         if self.unet is not None:
             if self.lora_tune:
                 self.unet.requires_grad_(False)
-            self.unet = self.unet.to(self.device)
+            self.unet = self.unet.to(self.device, dtype=self.weight_dtype)
 
         # xformers accelerate memory efficient attention
         if xformers_enable:
@@ -157,9 +158,9 @@ class StableDiffusion(TorchModel):
                         config: Optional[dict] = None,
                         save_config_function: Callable = save_configuration,
                         **kwargs):
-        config['pipeline']['type'] = 'diffusers-stable-diffusion'
         # Skip copying the original weights for lora and dreambooth method
         if self.lora_tune or self.dreambooth_tune:
+            config['pipeline']['type'] = 'diffusers-stable-diffusion'
             pass
         else:
             super().save_pretrained(target_folder, save_checkpoint_names,

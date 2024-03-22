@@ -17,6 +17,7 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
     DiffusersPipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import is_swift_available
 
 
 @PIPELINES.register_module(
@@ -38,8 +39,11 @@ class StableDiffusionPipeline(DiffusersPipeline):
             custom_dir: custom diffusion weight dir for unet.
             modifier_token: token to use as a modifier for the concept of custom diffusion.
             use_safetensors: load safetensors weights.
+            use_swift: Whether to use swift lora dir for unet.
         """
         use_safetensors = kwargs.pop('use_safetensors', False)
+        torch_type = kwargs.pop('torch_type', torch.float32)
+        use_swift = kwargs.pop('use_swift', False)
         # check custom diffusion input value
         if custom_dir is None and modifier_token is not None:
             raise ValueError(
@@ -50,7 +54,6 @@ class StableDiffusionPipeline(DiffusersPipeline):
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # load pipeline
-        torch_type = torch.float16 if self.device == 'cuda' else torch.float32
         self.pipeline = DiffusionPipeline.from_pretrained(
             model, use_safetensors=use_safetensors, torch_dtype=torch_type)
         self.pipeline = self.pipeline.to(self.device)
@@ -58,7 +61,17 @@ class StableDiffusionPipeline(DiffusersPipeline):
         # load lora moudle to unet
         if lora_dir is not None:
             assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
-            self.pipeline.unet.load_attn_procs(lora_dir)
+            if use_swift:
+                if not is_swift_available():
+                    raise ValueError(
+                        'Please install swift by `pip install ms-swift` to use efficient_tuners.'
+                    )
+                from swift import Swift
+                self.pipeline.unet = Swift.from_pretrained(
+                    self.pipeline.unet, lora_dir)
+            else:
+                self.pipeline.unet.load_attn_procs(lora_dir)
+
         # load custom diffusion to unet
         if custom_dir is not None:
             assert os.path.exists(custom_dir), f"{custom_dir} isn't exist"

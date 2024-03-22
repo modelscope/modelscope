@@ -4,11 +4,12 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
-from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
-from modelscope.utils.config import Config
+from modelscope.utils.automodel_utils import (can_load_by_ms,
+                                              try_to_load_hf_model)
+from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
@@ -84,12 +85,22 @@ class Model(ABC):
             device(str, `optional`): The device to load the model.
             **kwargs:
                 task(str, `optional`): The `Tasks` enumeration value to replace the task value
-                read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
-                equal to the model saved.
-                For example, load a `backbone` into a `text-classification` model.
-                Other kwargs will be directly fed into the `model` key, to replace the default configs.
-                use_hf(bool): If set True, will use AutoModel in hf to initialize the model to keep compatibility
-                    with huggingface transformers.
+                    read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
+                    equal to the model saved.
+                    For example, load a `backbone` into a `text-classification` model.
+                    Other kwargs will be directly fed into the `model` key, to replace the default configs.
+                use_hf(bool, `optional`):
+                    If set to True, it will initialize the model using AutoModel or AutoModelFor* from hf.
+                    If set to False, the model is loaded using the modelscope mode.
+                    If set to None, the loading mode will be automatically selected.
+                ignore_file_pattern(List[str], `optional`):
+                    This parameter is passed to snapshot_download
+                device_map(str | Dict[str, str], `optional`):
+                    This parameter is passed to AutoModel or AutoModelFor*
+                torch_dtype(torch.dtype, `optional`):
+                    This parameter is passed to AutoModel or AutoModelFor*
+                config(PretrainedConfig, `optional`):
+                    This parameter is passed to AutoModel or AutoModelFor*
         Returns:
             A model instance.
 
@@ -106,6 +117,7 @@ class Model(ABC):
         else:
             invoked_by = Invoke.PRETRAINED
 
+        ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
         else:
@@ -116,24 +128,44 @@ class Model(ABC):
 
             invoked_by = '%s/%s' % (Invoke.KEY, invoked_by)
             local_model_dir = snapshot_download(
-                model_name_or_path, revision, user_agent=invoked_by)
+                model_name_or_path,
+                revision,
+                user_agent=invoked_by,
+                ignore_file_pattern=ignore_file_pattern)
         logger.info(f'initialize model from {local_model_dir}')
 
-        if kwargs.pop('use_hf', False):
-            from modelscope import AutoModel
-            return AutoModel.from_pretrained(local_model_dir)
-
+        configuration_path = osp.join(local_model_dir, ModelFile.CONFIGURATION)
+        cfg = None
         if cfg_dict is not None:
             cfg = cfg_dict
-        else:
-            cfg = Config.from_file(
-                osp.join(local_model_dir, ModelFile.CONFIGURATION))
-        task_name = cfg.task
+        elif os.path.exists(configuration_path):
+            cfg = Config.from_file(configuration_path)
+        task_name = getattr(cfg, 'task', None)
         if 'task' in kwargs:
             task_name = kwargs.pop('task')
-        model_cfg = cfg.model
+        model_cfg = getattr(cfg, 'model', ConfigDict())
         if hasattr(model_cfg, 'model_type') and not hasattr(model_cfg, 'type'):
             model_cfg.type = model_cfg.model_type
+        model_type = getattr(model_cfg, 'type', None)
+        if isinstance(device, str) and device.startswith('gpu'):
+            device = 'cuda' + device[3:]
+        use_hf = kwargs.pop('use_hf', None)
+        if use_hf is None and can_load_by_ms(local_model_dir, task_name,
+                                             model_type):
+            use_hf = False
+        model = None
+        if use_hf in {True, None}:
+            model = try_to_load_hf_model(local_model_dir, task_name, use_hf,
+                                         **kwargs)
+        if model is not None:
+            device_map = kwargs.pop('device_map', None)
+            if device_map is None and device is not None:
+                model = model.to(device)
+            return model
+        # use ms
+        if cfg is None:
+            raise FileNotFoundError(
+                f'`{ModelFile.CONFIGURATION}` file not found.')
         model_cfg.model_dir = local_model_dir
 
         # install and import remote repos before build

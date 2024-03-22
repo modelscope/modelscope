@@ -82,6 +82,7 @@ class Models(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     video_frame_interpolation = 'video-frame-interpolation'
     video_object_segmentation = 'video-object-segmentation'
     video_deinterlace = 'video-deinterlace'
@@ -114,6 +115,7 @@ class Models(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
     bts_depth_estimation = 'bts-depth-estimation'
     vision_efficient_tuning = 'vision-efficient-tuning'
     bad_image_detecting = 'bad-image-detecting'
@@ -122,6 +124,10 @@ class Models(object):
     fastinst = 'fastinst'
     pedestrian_attribute_recognition = 'pedestrian-attribute-recognition'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
+    image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
+    anydoor = 'anydoor'
 
     # nlp models
     bert = 'bert'
@@ -183,6 +189,7 @@ class Models(object):
     speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
+    speech_mossformer2_separation_temporal_8k = 'speech_mossformer2_separation_temporal_8k'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'
@@ -194,10 +201,14 @@ class Models(object):
     eres2net_sv = 'eres2net-sv'
     eres2net_aug_sv = 'eres2net-aug-sv'
     scl_sd = 'scl-sd'
+    scl_sd_xvector = 'scl-sd-xvector'
     campplus_lre = 'cam++-lre'
+    eres2net_lre = 'eres2net-lre'
     cluster_backend = 'cluster-backend'
     rdino_tdnn_sv = 'rdino_ecapa-tdnn-sv'
     generic_lm = 'generic-lm'
+    audio_quantization = 'audio-quantization'
+    laura_codec = 'laura-codec'
 
     # multi-modal models
     ofa = 'ofa'
@@ -210,15 +221,22 @@ class Models(object):
     video_synthesis = 'latent-text-to-video-synthesis'
     team = 'team-multi-modal-similarity'
     video_clip = 'video-clip-multi-modal-embedding'
+    prost = 'prost-clip-text-video-retrieval'
     mgeo = 'mgeo'
     vldoc = 'vldoc'
     hitea = 'hitea'
     soonet = 'soonet'
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
+    cones2_inference = 'cones2-inference'
     mplug_owl = 'mplug-owl'
+
     clip_interrogator = 'clip-interrogator'
     stable_diffusion = 'stable-diffusion'
+    stable_diffusion_xl = 'stable-diffusion-xl'
+    videocomposer = 'videocomposer'
     text_to_360panorama_image = 'text-to-360panorama-image'
+    image_to_video_model = 'image-to-video-model'
+    video_to_video_model = 'video-to-video-model'
 
     # science models
     unifold = 'unifold'
@@ -234,6 +252,7 @@ class TaskModels(object):
     feature_extraction = 'feature-extraction'
     text_generation = 'text-generation'
     text_ranking = 'text-ranking'
+    machine_reading_comprehension = 'machine-reading-comprehension'
 
 
 class Heads(object):
@@ -275,11 +294,14 @@ class Pipelines(object):
     universal_matting = 'unet-universal-matting'
     image_denoise = 'nafnet-image-denoise'
     image_deblur = 'nafnet-image-deblur'
+    image_editing = 'masactrl-image-editing'
+    freeu_stable_diffusion_text2image = 'freeu-stable-diffusion-text2image'
     person_image_cartoon = 'unet-person-image-cartoon'
     ocr_detection = 'resnet18-ocr-detection'
     table_recognition = 'dla34-table-recognition'
     lineless_table_recognition = 'lore-lineless-table-recognition'
     license_plate_detection = 'resnet18-license-plate-detection'
+    card_detection_correction = 'resnet18-card-detection-correction'
     action_recognition = 'TAdaConv_action-recognition'
     animal_recognition = 'resnet101-animal-recognition'
     general_recognition = 'resnet101-general-recognition'
@@ -326,6 +348,7 @@ class Pipelines(object):
     image_colorization = 'unet-image-colorization'
     image_style_transfer = 'AAMS-style-transfer'
     image_super_resolution = 'rrdb-image-super-resolution'
+    image_super_resolution_pasd = 'image-super-resolution-pasd'
     image_debanding = 'rrdb-image-debanding'
     face_image_generation = 'gan-face-image-generation'
     product_retrieval_embedding = 'resnet50-product-retrieval-embedding'
@@ -351,6 +374,8 @@ class Pipelines(object):
     hand_detection = 'yolox-pai_hand-detection'
     skin_retouching = 'unet-skin-retouching'
     face_reconstruction = 'resnet50-face-reconstruction'
+    head_reconstruction = 'HRN-head-reconstruction'
+    text_to_head = 'HRN-text-to-head'
     tinynas_classification = 'tinynas-classification'
     easyrobust_classification = 'easyrobust-classification'
     tinynas_detection = 'tinynas-detection'
@@ -387,6 +412,7 @@ class Pipelines(object):
     image_skychange = 'image-skychange'
     video_human_matting = 'video-human-matting'
     human_reconstruction = 'human-reconstruction'
+    text_texture_generation = 'text-texture-generation'
     vision_middleware_multi_task = 'vision-middleware-multi-task'
     vidt = 'vidt'
     video_frame_interpolation = 'video-frame-interpolation'
@@ -415,6 +441,7 @@ class Pipelines(object):
     nerf_recon_acc = 'nerf-recon-acc'
     nerf_recon_4k = 'nerf-recon-4k'
     nerf_recon_vq_compression = 'nerf-recon-vq-compression'
+    surface_recon_common = 'surface-recon-common'
     bad_image_detecting = 'bad-image-detecting'
     controllable_image_generation = 'controllable-image-generation'
     fast_instance_segmentation = 'fast-instance-segmentation'
@@ -426,6 +453,13 @@ class Pipelines(object):
     pedestrian_attribute_recognition = 'resnet50_pedestrian-attribute-recognition_image'
     text_to_360panorama_image = 'text-to-360panorama-image'
     image_try_on = 'image-try-on'
+    human_image_generation = 'human-image-generation'
+    human3d_render = 'human3d-render'
+    human3d_animation = 'human3d-animation'
+    image_view_transform = 'image-view-transform'
+    image_control_3d_portrait = 'image-control-3d-portrait'
+    anydoor = 'anydoor'
+    image_to_3d = 'image-to-3d'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -486,6 +520,8 @@ class Pipelines(object):
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
     language_identification = 'language_identification'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
+    llm = 'llm'
 
     # audio tasks
     sambert_hifigan_tts = 'sambert-hifigan-tts'
@@ -502,16 +538,21 @@ class Pipelines(object):
     sv_inference = 'sv-inference'
     speaker_diarization_inference = 'speaker-diarization-inference'
     vad_inference = 'vad-inference'
+    funasr_speech_separation = 'funasr-speech-separation'
     speaker_verification = 'speaker-verification'
     speaker_verification_rdino = 'speaker-verification-rdino'
     speaker_verification_eres2net = 'speaker-verification-eres2net'
     speech_language_recognition = 'speech-language-recognition'
+    speech_language_recognition_eres2net = 'speech-language-recognition-eres2net'
     speaker_change_locating = 'speaker-change-locating'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
     segmentation_clustering = 'segmentation-clustering'
     lm_inference = 'language-score-prediction'
     speech_timestamp_inference = 'speech-timestamp-inference'
+    audio_quantization = 'audio-quantization'
+    audio_quantization_inference = 'audio-quantization-inference'
+    laura_codec_tts_inference = 'laura-codec-tts-inference'
 
     # multi-modal tasks
     image_captioning = 'image-captioning'
@@ -523,6 +564,8 @@ class Pipelines(object):
     multi_modal_similarity = 'multi-modal-similarity'
     text_to_image_synthesis = 'text-to-image-synthesis'
     video_multi_modal_embedding = 'video-multi-modal-embedding'
+    prost_text_video_retrieval = 'prost-text-video-retrieval'
+    videocomposer = 'videocomposer'
     image_text_retrieval = 'image-text-retrieval'
     ofa_ocr_recognition = 'ofa-ocr-recognition'
     ofa_asr = 'ofa-asr'
@@ -534,6 +577,7 @@ class Pipelines(object):
     disco_guided_diffusion = 'disco_guided_diffusion'
     document_vl_embedding = 'document-vl-embedding'
     chinese_stable_diffusion = 'chinese-stable-diffusion'
+    cones2_inference = 'cones2-inference'
     text_to_video_synthesis = 'latent-text-to-video-synthesis'  # latent-text-to-video-synthesis
     gridvlp_multi_modal_classification = 'gridvlp-multi-modal-classification'
     gridvlp_multi_modal_embedding = 'gridvlp-multi-modal-embedding'
@@ -541,6 +585,9 @@ class Pipelines(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     multimodal_dialogue = 'multimodal-dialogue'
     llama2_text_generation_pipeline = 'llama2-text-generation-pipeline'
+    llama2_text_generation_chat_pipeline = 'llama2-text-generation-chat-pipeline'
+    image_to_video_task_pipeline = 'image-to-video-task-pipeline'
+    video_to_video_pipeline = 'video-to-video-pipeline'
 
     # science tasks
     protein_structure = 'unifold-protein-structure'
@@ -596,6 +643,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                             'damo/cv_nafnet_image-denoise_sidd'),
     Tasks.image_deblurring: (Pipelines.image_deblur,
                              'damo/cv_nafnet_image-deblur_gopro'),
+    Tasks.image_editing: (Pipelines.image_editing,
+                          'damo/cv_masactrl_image-editing'),
     Tasks.video_stabilization: (Pipelines.video_stabilization,
                                 'damo/cv_dut-raft_video-stabilization_base'),
     Tasks.video_super_resolution:
@@ -650,6 +699,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.license_plate_detection:
     (Pipelines.license_plate_detection,
      'damo/cv_resnet18_license-plate-detection_damo'),
+    Tasks.card_detection_correction: (Pipelines.card_detection_correction,
+                                      'damo/cv_resnet18_card_correction'),
     Tasks.fill_mask: (Pipelines.fill_mask, 'damo/nlp_veco_fill-mask-large'),
     Tasks.feature_extraction: (Pipelines.feature_extraction,
                                'damo/pert_feature-extraction_base-test'),
@@ -715,6 +766,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.video_multi_modal_embedding:
     (Pipelines.video_multi_modal_embedding,
      'damo/multi_modal_clip_vtretrival_msrvtt_53'),
+    Tasks.text_video_retrieval: (Pipelines.prost_text_video_retrieval,
+                                 'damo/multi_modal_clip_vtretrieval_prost'),
     Tasks.image_color_enhancement:
     (Pipelines.image_color_enhance,
      'damo/cv_csrnet_image-color-enhance-models'),
@@ -801,6 +854,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
                                 'damo/cv_effnetv2_video-human-matting'),
     Tasks.human_reconstruction: (Pipelines.human_reconstruction,
                                  'damo/cv_hrnet_image-human-reconstruction'),
+    Tasks.text_texture_generation: (
+        Pipelines.text_texture_generation,
+        'damo/cv_diffuser_text-texture-generation'),
     Tasks.video_frame_interpolation: (
         Pipelines.video_frame_interpolation,
         'damo/cv_raft_video-frame-interpolation'),
@@ -866,6 +922,8 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.nerf_recon_vq_compression: (
         Pipelines.nerf_recon_vq_compression,
         'damo/cv_nerf-3d-reconstruction-vq-compression_damo'),
+    Tasks.surface_recon_common: (Pipelines.surface_recon_common,
+                                 'damo/cv_surface-reconstruction-common'),
     Tasks.siamese_uie: (Pipelines.siamese_uie,
                         'damo/nlp_structbert_siamese-uie_chinese-base'),
     Tasks.pedestrian_attribute_recognition: (
@@ -875,7 +933,18 @@ DEFAULT_MODEL_FOR_PIPELINE = {
         Pipelines.text_to_360panorama_image,
         'damo/cv_diffusion_text-to-360panorama-image_generation'),
     Tasks.image_try_on: (Pipelines.image_try_on,
-                         'damo/cv_SAL-VTON_virtual-try-on')
+                         'damo/cv_SAL-VTON_virtual-try-on'),
+    Tasks.human_image_generation: (Pipelines.human_image_generation,
+                                   'damo/cv_FreqHPT_human-image-generation'),
+    Tasks.human3d_render: (Pipelines.human3d_render,
+                           'damo/cv_3d-human-synthesis-library'),
+    Tasks.human3d_animation: (Pipelines.human3d_animation,
+                              'damo/cv_3d-human-animation'),
+    Tasks.image_view_transform: (Pipelines.image_view_transform,
+                                 'damo/cv_image-view-transform'),
+    Tasks.image_control_3d_portrait: (
+        Pipelines.image_control_3d_portrait,
+        'damo/cv_vit_image-control-3d-portrait-synthesis')
 }
 
 
@@ -930,8 +999,10 @@ class MultiModalTrainers(object):
     efficient_diffusion_tuning = 'efficient-diffusion-tuning'
     stable_diffusion = 'stable-diffusion'
     lora_diffusion = 'lora-diffusion'
+    lora_diffusion_xl = 'lora-diffusion-xl'
     dreambooth_diffusion = 'dreambooth-diffusion'
     custom_diffusion = 'custom-diffusion'
+    cones2_inference = 'cones2-inference'
 
 
 class AudioTrainers(object):
@@ -1060,6 +1131,7 @@ class Preprocessors(object):
     document_grounded_dialog_retrieval = 'document-grounded-dialog-retrieval'
     document_grounded_dialog_rerank = 'document-grounded-dialog-rerank'
     document_grounded_dialog_generate = 'document-grounded-dialog-generate'
+    machine_reading_comprehension_for_ner = 'machine-reading-comprehension-for-ner'
 
     # audio preprocessor
     linear_aec_fbank = 'linear-aec-fbank'
@@ -1197,6 +1269,7 @@ class Hooks(object):
     DeepspeedHook = 'DeepspeedHook'
     MegatronHook = 'MegatronHook'
     DDPHook = 'DDPHook'
+    SwiftHook = 'SwiftHook'
 
 
 class LR_Schedulers(object):

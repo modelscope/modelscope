@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 from chatglm_trainer import Seq2SeqTrainer
+from swift import LoRAConfig, Swift
 from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq
 
@@ -11,8 +12,6 @@ from modelscope import build_dataset_from_file, snapshot_download
 from modelscope.metainfo import Models
 from modelscope.models import Model
 from modelscope.msdatasets import MsDataset
-from modelscope.swift import Swift
-from modelscope.swift.lora import LoRAConfig
 from modelscope.trainers.training_args import TrainingArgs
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.hub import read_config
@@ -243,15 +242,15 @@ elif not args.use_lora:
 
 if args.use_lora != 0:
     lora_config = LoRAConfig(
-        replace_modules=['attention.query_key_value'],
-        rank=args.lora_rank,
+        target_modules=['attention.query_key_value'],
+        r=args.lora_rank,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout)
     if args.use_amp:
         model = model.float()
     else:
         model = model.bfloat16()
-    Swift.prepare_model(model, lora_config)
+    model = Swift.prepare_model(model, lora_config)
 
 prefix = args.source_prefix if args.source_prefix is not None else ''
 

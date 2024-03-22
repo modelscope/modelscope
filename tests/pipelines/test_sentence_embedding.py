@@ -21,6 +21,7 @@ class SentenceEmbeddingTest(unittest.TestCase):
     medical_tiny_model_id = 'damo/nlp_corom_sentence-embedding_chinese-tiny-medical'
     general_base_model_id = 'damo/nlp_corom_sentence-embedding_chinese-base'
     general_tiny_model_id = 'damo/nlp_corom_sentence-embedding_chinese-tiny'
+    bloom_model_id = 'damo/udever-bloom-7b1'
 
     inputs = {
         'source_sentence': ["how long it take to get a master's degree"],
@@ -153,6 +154,14 @@ class SentenceEmbeddingTest(unittest.TestCase):
               f'pipeline1:{pipeline1(input=self.medical_inputs1)}')
         print()
         print(f'pipeline2: {pipeline2(input=self.medical_inputs1)}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_bloom_model_from_modelhub(self):
+        model = Model.from_pretrained(self.bloom_model_id)
+        tokenizer = SentenceEmbeddingTransformersPreprocessor(model.model_dir)
+        pipeline_ins = pipeline(
+            task=Tasks.sentence_embedding, model=model, preprocessor=tokenizer)
+        print(pipeline_ins(input=self.inputs))
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):

@@ -125,16 +125,22 @@ def get_current_branch():
 
 
 def get_modified_files():
-    cmd = ['git', 'diff', '--name-only', 'origin/master...']
-    cmd_output = run_command_get_output(cmd)
-    logger.info('Modified files: ')
-    logger.info(cmd_output)
+    if 'PR_CHANGED_FILES' in os.environ and os.environ[
+            'PR_CHANGED_FILES'].strip() != '':
+        logger.info('Getting PR modified files.')
+        # get modify file from environment
+        diff_files = os.environ['PR_CHANGED_FILES'].replace('#', '\n')
+    else:
+        logger.info('Getting diff of branch.')
+        cmd = ['git', 'diff', '--name-only', 'origin/master...']
+        diff_files = run_command_get_output(cmd)
+    logger.info('Diff files: ')
+    logger.info(diff_files)
     modified_files = []
     # remove the deleted file.
-    for diff_file in cmd_output.splitlines():
-        if os.path.exists(diff_file):
-            modified_files.append(diff_file)
-
+    for diff_file in diff_files.splitlines():
+        if os.path.exists(diff_file.strip()):
+            modified_files.append(diff_file.strip())
     return modified_files
 
 
@@ -225,8 +231,8 @@ def get_test_suites_to_run():
                 affected_pipeline_cases.extend(
                     task_pipeline_test_suite_map[affected_register_module[1]])
             else:
-                logger.warn('Pipeline task: %s has no test case!'
-                            % affected_register_module[1])
+                logger.warning('Pipeline task: %s has no test case!'
+                               % affected_register_module[1])
         elif affected_register_module[0] == 'MODELS':
             # ["MODELS", "keyword_spotting", "kws_kwsbp", "GenericKeyWordSpotting"],
             # ["MODELS", task, model_name, model_class_name]
@@ -234,8 +240,8 @@ def get_test_suites_to_run():
                 affected_pipeline_cases.extend(
                     task_pipeline_test_suite_map[affected_register_module[1]])
             else:
-                logger.warn('Pipeline task: %s has no test case!'
-                            % affected_register_module[1])
+                logger.warning('Pipeline task: %s has no test case!'
+                               % affected_register_module[1])
         elif affected_register_module[0] == 'TRAINERS':
             # ["TRAINERS", "", "nlp_base_trainer", "NlpEpochBasedTrainer"],
             # ["TRAINERS", "", trainer_name, trainer_class_name]
@@ -292,13 +298,27 @@ def get_test_suites_to_run():
     return test_suites_to_run
 
 
-def get_files_related_modules(files):
+def get_files_related_modules(files, reverse_import_map):
     register_modules = []
     for single_file in files:
         if single_file.startswith('./modelscope') or \
            single_file.startswith('modelscope'):
             register_modules.extend(get_file_register_modules(single_file))
 
+    while len(register_modules) == 0:
+        logger.warn('There is no affected register module')
+        deeper_imported_by = []
+        has_deeper_affected_files = False
+        for source_file in files:
+            if len(source_file.split('/')) > 4 and source_file.startswith(
+                    'modelscope'):
+                deeper_imported_by.extend(reverse_import_map[source_file])
+                has_deeper_affected_files = True
+        if not has_deeper_affected_files:
+            break
+        for file in deeper_imported_by:
+            register_modules = get_file_register_modules(file)
+        files = deeper_imported_by
     return register_modules
 
 
@@ -348,8 +368,8 @@ def get_all_file_test_info():
         file_test_info = {}
         file_test_info['imports'] = import_map[f]
         file_test_info['imported_by'] = reverse_depend_map[f]
-        register_modules = get_files_related_modules([f]
-                                                     + reverse_depend_map[f])
+        register_modules = get_files_related_modules(
+            [f] + reverse_depend_map[f], reverse_depend_map)
         file_test_info['relate_modules'] = register_modules
         affected_pipeline_cases, affected_trainer_cases = get_modules_related_cases(
             register_modules, task_pipeline_test_suite_map,

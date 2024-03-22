@@ -50,6 +50,7 @@ class SpeakerVerificationPipeline(Pipeline):
         self.model_config = self.model.model_config
         self.config = self.model.other_config
         self.thr = self.config['yesOrno_thr']
+        self.save_dict = {}
 
     def __call__(self,
                  in_audios: Union[np.ndarray, list],
@@ -66,7 +67,9 @@ class SpeakerVerificationPipeline(Pipeline):
         embs = self.forward(wavs)
         outputs = self.postprocess(embs, in_audios, save_dir)
         if output_emb:
-            return outputs, embs.numpy()
+            self.save_dict['outputs'] = outputs
+            self.save_dict['embs'] = embs.numpy()
+            return self.save_dict
         else:
             return outputs
 
@@ -81,28 +84,24 @@ class SpeakerVerificationPipeline(Pipeline):
                     inputs: torch.Tensor,
                     in_audios: Union[np.ndarray, list],
                     save_dir=None):
-        if isinstance(in_audios[0], str):
-            if save_dir is not None:
-                # save the embeddings
-                os.makedirs(save_dir, exist_ok=True)
-                for i, p in enumerate(in_audios):
-                    save_path = os.path.join(
-                        save_dir, '%s.npy' %
-                        (os.path.basename(p).rsplit('.', 1)[0]))
-                    np.save(save_path, inputs[i].numpy())
+        if isinstance(in_audios[0], str) and save_dir is not None:
+            # save the embeddings
+            os.makedirs(save_dir, exist_ok=True)
+            for i, p in enumerate(in_audios):
+                save_path = os.path.join(
+                    save_dir, '%s.npy' %
+                    (os.path.basename(p).rsplit('.', 1)[0]))
+                np.save(save_path, inputs[i].numpy())
 
-            if len(in_audios) == 2:
-                # compute the score
-                score = self.compute_cos_similarity(inputs[0], inputs[1])
-                score = round(score, 5)
-                if score >= self.thr:
-                    ans = 'yes'
-                else:
-                    ans = 'no'
-                output = {OutputKeys.SCORE: score, OutputKeys.TEXT: ans}
+        if len(inputs) == 2:
+            # compute the score
+            score = self.compute_cos_similarity(inputs[0], inputs[1])
+            score = round(score, 5)
+            if score >= self.thr:
+                ans = 'yes'
             else:
-                output = {OutputKeys.TEXT: 'No similarity score output'}
-
+                ans = 'no'
+            output = {OutputKeys.SCORE: score, OutputKeys.TEXT: ans}
         else:
             output = {OutputKeys.TEXT: 'No similarity score output'}
 

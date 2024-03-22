@@ -20,7 +20,11 @@ class VirtualTryonTest(unittest.TestCase):
     masked_model = Image.open('data/test/images/virtual_tryon_model.jpg')
     pose = Image.open('data/test/images/virtual_tryon_pose.jpg')
     cloth = Image.open('data/test/images/virtual_tryon_cloth.jpg')
-    input_imgs = (masked_model, pose, cloth)
+    input_imgs = {
+        'masked_model': masked_model,
+        'pose': pose,
+        'cloth': cloth,
+    }
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

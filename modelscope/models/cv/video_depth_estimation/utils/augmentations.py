@@ -12,7 +12,7 @@ from modelscope.models.cv.video_depth_estimation.utils.misc import filter_dict
 ########################################################################################################################
 
 
-def resize_image(image, shape, interpolation=Image.ANTIALIAS):
+def resize_image(image, shape, interpolation=Image.Resampling.LANCZOS):
     """
     Resizes input image.
 
@@ -57,7 +57,8 @@ def resize_depth(depth, shape):
 
 def resize_sample_image_and_intrinsics(sample,
                                        shape,
-                                       image_interpolation=Image.ANTIALIAS):
+                                       image_interpolation=Image.Resampling.
+                                       LANCZOS):
     """
     Resizes the image and intrinsics of a sample
 
@@ -102,7 +103,7 @@ def resize_sample_image_and_intrinsics(sample,
     return sample
 
 
-def resize_sample(sample, shape, image_interpolation=Image.ANTIALIAS):
+def resize_sample(sample, shape, image_interpolation=Image.Resampling.LANCZOS):
     """
     Resizes a sample, including image, intrinsics and depth maps.
 

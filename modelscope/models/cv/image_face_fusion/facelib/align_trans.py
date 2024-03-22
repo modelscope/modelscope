@@ -15,6 +15,77 @@ REFERENCE_FACIAL_POINTS = [[30.29459953, 51.69630051],
 DEFAULT_CROP_SIZE = (96, 112)
 
 
+def _umeyama(src, dst, estimate_scale=True, scale=1.0):
+    """Estimate N-D similarity transformation with or without scaling.
+    Parameters
+    ----------
+    src : (M, N) array
+        Source coordinates.
+    dst : (M, N) array
+        Destination coordinates.
+    estimate_scale : bool
+        Whether to estimate scaling factor.
+    Returns
+    -------
+    T : (N + 1, N + 1)
+        The homogeneous similarity transformation matrix. The matrix contains
+        NaN values only if the problem is not well-conditioned.
+    References
+    ----------
+    .. [1] "Least-squares estimation of transformation parameters between two
+            point patterns", Shinji Umeyama, PAMI 1991, :DOI:`10.1109/34.88573`
+    """
+
+    num = src.shape[0]
+    dim = src.shape[1]
+
+    # Compute mean of src and dst.
+    src_mean = src.mean(axis=0)
+    dst_mean = dst.mean(axis=0)
+
+    # Subtract mean from src and dst.
+    src_demean = src - src_mean
+    dst_demean = dst - dst_mean
+
+    # Eq. (38).
+    A = dst_demean.T @ src_demean / num
+
+    # Eq. (39).
+    d = np.ones((dim, ), dtype=np.double)
+    if np.linalg.det(A) < 0:
+        d[dim - 1] = -1
+
+    T = np.eye(dim + 1, dtype=np.double)
+
+    U, S, V = np.linalg.svd(A)
+
+    # Eq. (40) and (43).
+    rank = np.linalg.matrix_rank(A)
+    if rank == 0:
+        return np.nan * T
+    elif rank == dim - 1:
+        if np.linalg.det(U) * np.linalg.det(V) > 0:
+            T[:dim, :dim] = U @ V
+        else:
+            s = d[dim - 1]
+            d[dim - 1] = -1
+            T[:dim, :dim] = U @ np.diag(d) @ V
+            d[dim - 1] = s
+    else:
+        T[:dim, :dim] = U @ np.diag(d) @ V
+
+    if estimate_scale:
+        # Eq. (41) and (42).
+        scale = 1.0 / src_demean.var(axis=0).sum() * (S @ d)
+    else:
+        scale = scale
+
+    T[:dim, dim] = dst_mean - scale * (T[:dim, :dim] @ src_mean.T)
+    T[:dim, :dim] *= scale
+
+    return T, scale
+
+
 class FaceWarpException(Exception):
 
     def __str__(self):
@@ -244,6 +315,65 @@ def warp_and_crop_face(src_img,
         return face_img, tfm_inv
     else:
         return face_img
+
+
+def warp_and_crop_face_enhance(src_img,
+                               facial_pts,
+                               reference_pts=None,
+                               crop_size=(96, 112),
+                               align_type='smilarity'):
+    if reference_pts is None:
+        if crop_size[0] == 96 and crop_size[1] == 112:
+            reference_pts = REFERENCE_FACIAL_POINTS
+        else:
+            default_square = False
+            inner_padding_factor = 0
+            outer_padding = (0, 0)
+            output_size = crop_size
+
+            reference_pts = get_reference_facial_points(
+                output_size, inner_padding_factor, outer_padding,
+                default_square)
+
+    ref_pts = np.float32(reference_pts)
+    ref_pts_shp = ref_pts.shape
+    if max(ref_pts_shp) < 3 or min(ref_pts_shp) != 2:
+        raise FaceWarpException(
+            'reference_pts.shape must be (K,2) or (2,K) and K>2')
+
+    if ref_pts_shp[0] == 2:
+        ref_pts = ref_pts.T
+
+    src_pts = np.float32(facial_pts)
+    src_pts_shp = src_pts.shape
+    if max(src_pts_shp) < 3 or min(src_pts_shp) != 2:
+        raise FaceWarpException(
+            'facial_pts.shape must be (K,2) or (2,K) and K>2')
+
+    if src_pts_shp[0] == 2:
+        src_pts = src_pts.T
+
+    if src_pts.shape != ref_pts.shape:
+        raise FaceWarpException(
+            'facial_pts and reference_pts must have the same shape')
+
+    if align_type == 'cv2_affine':
+        tfm = cv2.getAffineTransform(src_pts[0:3], ref_pts[0:3])
+        tfm_inv = cv2.getAffineTransform(ref_pts[0:3], src_pts[0:3])
+    elif align_type == 'affine':
+        tfm = get_affine_transform_matrix(src_pts, ref_pts)
+        tfm_inv = get_affine_transform_matrix(ref_pts, src_pts)
+    else:
+        params, scale = _umeyama(src_pts, ref_pts)
+        tfm = params[:2, :]
+
+        params, _ = _umeyama(ref_pts, src_pts, False, scale=1.0 / scale)
+        tfm_inv = params[:2, :]
+
+    face_img = cv2.warpAffine(
+        src_img, tfm, (crop_size[0], crop_size[1]), flags=3)
+
+    return face_img, tfm_inv
 
 
 def get_f5p(landmarks, np_img):

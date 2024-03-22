@@ -31,7 +31,8 @@ class F3NetForProductSegmentationPipeline(Pipeline):
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        img = LoadImage.convert_to_ndarray(input['input_path'])
+        img = LoadImage.convert_to_ndarray(input)
+
         img = img.astype(np.float32)
         return img
 

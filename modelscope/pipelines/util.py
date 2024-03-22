@@ -14,7 +14,7 @@ logger = get_logger()
 def is_config_has_model(cfg_file):
     try:
         cfg = Config.from_file(cfg_file)
-        return hasattr(cfg, 'model')
+        return hasattr(cfg, 'model') or hasattr(cfg, 'model_type')
     except Exception as e:
         logger.error(f'parse config file {cfg_file} failed: {e}')
         return False
@@ -58,14 +58,21 @@ def is_model(path: Union[str, List]):
     def is_modelhub_path_impl(path):
         if osp.exists(path):
             cfg_file = osp.join(path, ModelFile.CONFIGURATION)
+            hf_cfg_file = osp.join(path, ModelFile.CONFIG)
             if osp.exists(cfg_file):
                 return is_config_has_model(cfg_file)
+            elif osp.exists(hf_cfg_file):
+                return is_config_has_model(hf_cfg_file)
             else:
                 return False
         else:
             try:
                 cfg_file = model_file_download(path, ModelFile.CONFIGURATION)
-                return is_config_has_model(cfg_file)
+                if is_config_has_model(cfg_file):
+                    return True
+                else:
+                    hf_cfg_file = model_file_download(path, ModelFile.CONFIG)
+                    return is_config_has_model(hf_cfg_file)
             except Exception:
                 return False
 

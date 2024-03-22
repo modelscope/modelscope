@@ -4,30 +4,29 @@
 # TODO: handle environments without threads
 # (Python compiled without thread support)
 
+import numpy as np
 import simplejson as json
-from operator import attrgetter
-from sortedcontainers import SortedList
-from datetime import datetime, timedelta, date, time
-from dateutil.parser import parse as parse_datetime
-from functools import wraps, partial
-from operator import methodcaller
-from decimal import Decimal
-from fractions import Fraction
-from collections import namedtuple
 import threading
 import uuid
-import numpy as np
+from collections import namedtuple
+from datetime import date, datetime, time, timedelta
+from dateutil.parser import parse as parse_datetime
+from decimal import Decimal
+from fractions import Fraction
+from functools import partial, wraps
+from operator import attrgetter, methodcaller
+from sortedcontainers import SortedList
 
 try:
-    from moneyed import Money, Currency
+    from moneyed import Currency, Money
 except ImportError:
     # defer failing to actual (de-)serialization
     pass
 
-__all__ = ["loads", "dumps", "pretty",
-           "json_loads", "json_dumps", "json_prettydump",
-           "encoder", "decoder"]
-
+__all__ = [
+    "loads", "dumps", "pretty", "json_loads", "json_dumps", "json_prettydump",
+    "encoder", "decoder"
+]
 
 # Should we aim for the *exact* reproduction of Python types,
 # or for maximum *compatibility* when (de-)serializing?
@@ -59,11 +58,14 @@ CODING_DEFAULT = EXACT
 
 _local = threading.local()
 
+
 def prefer(coding):
     _local.coding = coding
 
+
 def prefer_exact():
     prefer(EXACT)
+
 
 def prefer_compat():
     prefer(COMPAT)
@@ -103,14 +105,17 @@ def kwargified(constructor):
         >>> test({'b': 3})
         4
     """
+
     @wraps(constructor)
     def kwargs_constructor(kwargs):
         return constructor(**kwargs)
+
     return kwargs_constructor
 
 
 _PredicatedEncoder = namedtuple('_PredicatedEncoder',
                                 'priority predicate encoder typename')
+
 
 def encoder(classname, predicate=None, priority=None, exact=True):
     """A decorator for registering a new encoder for object type
@@ -182,14 +187,18 @@ def _json_default_exact(obj):
     # first try predicate-based encoders
     for handler in _encode_handlers['exact']['predicate']:
         if handler.predicate(obj):
-            return {"__class__": handler.typename,
-                    "__value__": handler.encoder(obj)}
+            return {
+                "__class__": handler.typename,
+                "__value__": handler.encoder(obj)
+            }
 
     # then classname-based
     classname = type(obj).__name__
     if classname in _encode_handlers['exact']['classname']:
-        return {"__class__": classname,
-                "__value__": _encode_handlers['exact']['classname'][classname](obj)}
+        return {
+            "__class__": classname,
+            "__value__": _encode_handlers['exact']['classname'][classname](obj)
+        }
 
     raise TypeError(repr(obj) + " is not JSON serializable")
 
@@ -217,8 +226,10 @@ def decoder(classname):
         def mytype_decoder(value):
             return mytype(value, reconstruct=True)
     """
+
     def _decorator(f):
         _decode_handlers.setdefault(classname, f)
+
     return _decorator
 
 
@@ -235,25 +246,25 @@ def _json_object_hook(dict):
     return dict
 
 
-
 def _encoder_default_args(kw):
     """Shape default arguments for encoding functions."""
-    
+
     # manual override of the preferred coding with `exact=False`
     if kw.pop('exact', getattr(_local, 'coding', CODING_DEFAULT) == EXACT):
         # settings necessary for the "exact coding"
         kw.update({
             'default': _json_default_exact,
-            'use_decimal': False,           # don't encode `Decimal` as JSON's `Number`
-            'tuple_as_array': False,        # don't encode `tuple` as `Array`
-            'namedtuple_as_object': False   # don't call `_asdict` on `namedtuple`
+            'use_decimal': False,  # don't encode `Decimal` as JSON's `Number`
+            'tuple_as_array': False,  # don't encode `tuple` as `Array`
+            'namedtuple_as_object':
+            False  # don't call `_asdict` on `namedtuple`
         })
     else:
         # settings for the "compatibility coding"
         kw.update({
             'default': _json_default_compat,
-            'ignore_nan': True      # be compliant with the ECMA-262 specification:
-                                    # serialize nan/inf as null
+            'ignore_nan': True  # be compliant with the ECMA-262 specification:
+            # serialize nan/inf as null
         })
 
     # NOTE: if called from ``simplejson.dumps()`` with ``cls=JSONEncoder``,
@@ -276,8 +287,8 @@ def _decoder_default_args(kw):
     kw.update({'object_hook': _json_object_hook})
 
 
-
 class JSONEncoder(json.JSONEncoder):
+
     def __init__(self, **kw):
         """Constructor for simplejson.JSONEncoder, with defaults overriden
         for jsonplus.
@@ -287,13 +298,13 @@ class JSONEncoder(json.JSONEncoder):
 
 
 class JSONDecoder(json.JSONDecoder):
+
     def __init__(self, **kw):
         """Constructor for simplejson.JSONDecoder, with defaults overriden
         for jsonplus.
         """
         _decoder_default_args(kw)
         super(JSONDecoder, self).__init__(**kw)
-
 
 
 def dumps(*pa, **kw):
@@ -306,12 +317,11 @@ def loads(*pa, **kw):
     return json.loads(*pa, **kw)
 
 
-def pretty(x, sort_keys=True, indent=4*' ', separators=(',', ': '), **kw):
+def pretty(x, sort_keys=True, indent=4 * ' ', separators=(',', ': '), **kw):
     kw.setdefault('sort_keys', sort_keys)
     kw.setdefault('indent', indent)
     kw.setdefault('separators', separators)
     return dumps(x, **kw)
-
 
 
 json_dumps = dumps
@@ -330,21 +340,36 @@ def generic_to_item(value):
 _encode_handlers = {
     'exact': {
         'classname': {
-            'datetime': methodcaller('isoformat'),
-            'date': methodcaller('isoformat'),
-            'time': methodcaller('isoformat'),
-            'timedelta': partial(getattrs, attrs=['days', 'seconds', 'microseconds']),
-            'tuple': list,
-            'set': list,
-            'ndarray': np_to_list,
-            'float16': generic_to_item,
-            'float32': generic_to_item,
-            'frozenset': list,
-            'complex': partial(getattrs, attrs=['real', 'imag']),
-            'Decimal': str,
-            'Fraction': partial(getattrs, attrs=['numerator', 'denominator']),
-            'UUID': partial(getattrs, attrs=['hex']),
-            'Money': partial(getattrs, attrs=['amount', 'currency'])
+            'datetime':
+            methodcaller('isoformat'),
+            'date':
+            methodcaller('isoformat'),
+            'time':
+            methodcaller('isoformat'),
+            'timedelta':
+            partial(getattrs, attrs=['days', 'seconds', 'microseconds']),
+            'tuple':
+            list,
+            'set':
+            list,
+            'ndarray':
+            np_to_list,
+            'float16':
+            generic_to_item,
+            'float32':
+            generic_to_item,
+            'frozenset':
+            list,
+            'complex':
+            partial(getattrs, attrs=['real', 'imag']),
+            'Decimal':
+            str,
+            'Fraction':
+            partial(getattrs, attrs=['numerator', 'denominator']),
+            'UUID':
+            partial(getattrs, attrs=['hex']),
+            'Money':
+            partial(getattrs, attrs=['amount', 'currency'])
         },
         'predicate': SortedList(key=attrgetter('priority'))
     },
@@ -368,7 +393,6 @@ _encode_handlers = {
     }
 }
 
-
 # all decode handlers are for EXACT decoding BY CLASSNAME
 _decode_handlers = {
     'datetime': parse_datetime,
@@ -388,11 +412,14 @@ _decode_handlers = {
 }
 
 
-@encoder('namedtuple', lambda obj: isinstance(obj, tuple) and hasattr(obj, '_fields'))
+@encoder('namedtuple',
+         lambda obj: isinstance(obj, tuple) and hasattr(obj, '_fields'))
 def _dump_namedtuple(obj):
-    return {"name": type(obj).__name__,
-            "fields": list(obj._fields),
-            "values": list(obj)}
+    return {
+        "name": type(obj).__name__,
+        "fields": list(obj._fields),
+        "values": list(obj)
+    }
 
 
 @decoder('namedtuple')
@@ -404,7 +431,8 @@ def _load_namedtuple(val):
 @encoder('timedelta', exact=False)
 def _timedelta_total_seconds(td):
     # timedelta.total_seconds() is only available since python 2.7
-    return (td.microseconds + (td.seconds + td.days * 24 * 3600.0) * 10**6) / 10**6
+    return (td.microseconds +
+            (td.seconds + td.days * 24 * 3600.0) * 10**6) / 10**6
 
 
 @encoder('Currency')
@@ -412,7 +440,7 @@ def _dump_currency(obj):
     """Serialize standard (ISO-defined) currencies to currency code only,
     and non-standard (user-added) currencies in full.
     """
-    from moneyed import get_currency, CurrencyDoesNotExist
+    from moneyed import CurrencyDoesNotExist, get_currency
     try:
         get_currency(obj.code)
         return obj.code

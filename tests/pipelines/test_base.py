@@ -141,6 +141,51 @@ class CustomPipelineTest(unittest.TestCase):
             self.assertEqual(out['url'], img_url + 'dummy_end')
             self.assertEqual(out['img'].shape, (1, 640, 640, 3))
 
+    def test_chat_task(self):
+        dummy_module = 'dummy_module'
+
+        @PIPELINES.register_module(
+            group_key=Tasks.chat, module_name=dummy_module)
+        class CustomChat(Pipeline):
+
+            def __init__(self,
+                         config_file: str = None,
+                         model=None,
+                         preprocessor=None,
+                         **kwargs):
+
+                def f(x):
+                    return x
+
+                preprocessor = f
+                super().__init__(config_file, model, preprocessor, **kwargs)
+
+            def forward(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                """ Provide default implementation using self.model and user can reimplement it
+                """
+                return inputs
+
+            def postprocess(self, out, **kwargs):
+                return {'message': {'role': 'assistant', 'content': 'xxx'}}
+
+        pipe = pipeline(
+            task=Tasks.chat, pipeline_name=dummy_module, model=self.model_dir)
+        pipe('text')
+        inputs = {'text': 'aaa', 'history': [('dfd', 'fds')]}
+        inputs = {
+            'messages': [{
+                'role': 'user',
+                'content': 'dfd'
+            }, {
+                'role': 'assistant',
+                'content': 'fds'
+            }, {
+                'role': 'user',
+                'content': 'aaa'
+            }]
+        }
+        pipe(inputs)
+
     def test_custom(self):
         dummy_task = 'dummy-task'
 

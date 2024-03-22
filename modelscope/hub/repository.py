@@ -105,7 +105,7 @@ class Repository:
                 examples '*.safetensors'
         """
         os.system(
-            "printf '%s filter=lfs diff=lfs merge=lfs -text\n'>>%s" %
+            "printf '\n%s filter=lfs diff=lfs merge=lfs -text\n'>>%s" %
             (file_name_suffix, os.path.join(self.model_dir, '.gitattributes')))
 
     def push(self,

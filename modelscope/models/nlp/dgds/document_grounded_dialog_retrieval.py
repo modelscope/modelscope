@@ -6,6 +6,8 @@ import torch
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.utils.compatible_with_transformers import \
+    compatible_position_ids
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from .backbone import DPRModel
@@ -24,6 +26,10 @@ class DocumentGroundedDialogRetrievalModel(TorchModel):
         state_dict = torch.load(
             os.path.join(self.model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
             map_location='cpu')
+        compatible_position_ids(state_dict,
+                                'ctx_encoder.encoder.embeddings.position_ids')
+        compatible_position_ids(state_dict,
+                                'qry_encoder.encoder.embeddings.position_ids')
         self.model.load_state_dict(state_dict)
 
     def forward(self, input: Dict[str, Tensor], gck_segment=32):

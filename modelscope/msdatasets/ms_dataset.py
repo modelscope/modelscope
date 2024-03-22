@@ -13,7 +13,6 @@ from datasets.utils.file_utils import is_relative_path
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
-from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
 from modelscope.msdatasets.data_loader.data_loader_manager import (
     LocalDataLoaderManager, LocalDataLoaderType, RemoteDataLoaderManager,
     RemoteDataLoaderType)
@@ -22,14 +21,16 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
+from modelscope.msdatasets.utils.hf_datasets_util import \
+    load_dataset as hf_load_dataset_wrapper
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DEFAULT_DATASET_REVISION, ConfigFields,
-                                       DownloadMode, Hubs, ModeKeys, Tasks,
-                                       UploadMode, VirgoDatasetConfig)
+                                       DatasetFormations, DownloadMode, Hubs,
+                                       ModeKeys, Tasks, UploadMode)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -167,6 +168,7 @@ class MsDataset:
         stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
+        dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -196,6 +198,7 @@ class MsDataset:
                 custom_cfg (str, Optional): Model configuration, this can be used for custom datasets.
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
+                dataset_info_only (bool, Optional): If set to True, only return the dataset config and info (dict).
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -279,19 +282,51 @@ class MsDataset:
             return dataset_inst
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
-            remote_dataloader_manager = RemoteDataLoaderManager(
-                dataset_context_config)
-            dataset_inst = remote_dataloader_manager.load_dataset(
-                RemoteDataLoaderType.MS_DATA_LOADER)
-            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
-            if isinstance(dataset_inst, MsDataset):
-                dataset_inst._dataset_context_config = remote_dataloader_manager.dataset_context_config
-                if custom_cfg:
-                    dataset_inst.to_custom_dataset(
-                        custom_cfg=custom_cfg, **config_kwargs)
-                    dataset_inst.is_custom = True
-            return dataset_inst
+
+            # Get dataset type from ModelScope Hub;  dataset_type->4: General Dataset
+            from modelscope.hub.api import HubApi
+            _api = HubApi()
+            dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
+                dataset_name=dataset_name, namespace=namespace)
+
+            logger.info(f'dataset_type: {dataset_type}')
+
+            # Load from the ModelScope Hub for type=4 (general)
+            if str(dataset_type) == str(DatasetFormations.general.value):
+                return hf_load_dataset_wrapper(
+                    path=namespace + '/' + dataset_name,
+                    name=subset_name,
+                    data_dir=data_dir,
+                    data_files=data_files,
+                    split=split,
+                    cache_dir=cache_dir,
+                    features=None,
+                    download_config=None,
+                    download_mode=download_mode.value,
+                    revision=version,
+                    token=token,
+                    streaming=use_streaming,
+                    dataset_info_only=dataset_info_only,
+                    **config_kwargs)
+            else:
+
+                remote_dataloader_manager = RemoteDataLoaderManager(
+                    dataset_context_config)
+                dataset_inst = remote_dataloader_manager.load_dataset(
+                    RemoteDataLoaderType.MS_DATA_LOADER)
+                dataset_inst = MsDataset.to_ms_dataset(
+                    dataset_inst, target=target)
+                if isinstance(dataset_inst, MsDataset):
+                    dataset_inst._dataset_context_config = remote_dataloader_manager.dataset_context_config
+                    if custom_cfg:
+                        dataset_inst.to_custom_dataset(
+                            custom_cfg=custom_cfg, **config_kwargs)
+                        dataset_inst.is_custom = True
+                return dataset_inst
+
         elif hub == Hubs.virgo:
+            from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
+            from modelscope.utils.constant import VirgoDatasetConfig
             # Rewrite the namespace, version and cache_dir for virgo dataset.
             if namespace == DEFAULT_DATASET_NAMESPACE:
                 dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace
@@ -323,6 +358,10 @@ class MsDataset:
             chunksize: Optional[int] = 1,
             filter_hidden_files: Optional[bool] = True,
             upload_mode: Optional[UploadMode] = UploadMode.OVERWRITE) -> None:
+        r"""
+        @deprecated
+        This method is deprecated and may be removed in future releases, please use git command line instead.
+        """
         """Upload dataset file or directory to the ModelScope Hub. Please log in to the ModelScope Hub first.
 
         Args:
@@ -346,6 +385,10 @@ class MsDataset:
             None
 
         """
+        warnings.warn(
+            'upload is deprecated, please use git command line to upload the dataset.',
+            DeprecationWarning)
+
         if not object_name:
             raise ValueError('object_name cannot be empty!')
 
@@ -392,6 +435,10 @@ class MsDataset:
         Returns:
             None
         """
+
+        warnings.warn(
+            'upload is deprecated, please use git command line to upload the dataset.',
+            DeprecationWarning)
 
         _repo = DatasetRepository(
             repo_work_dir=dataset_work_dir,

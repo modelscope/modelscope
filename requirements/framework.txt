@@ -4,6 +4,7 @@ datasets>=2.14.5
 einops
 filelock>=3.3.0
 gast>=0.2.2
+huggingface_hub
 numpy
 oss2
 pandas

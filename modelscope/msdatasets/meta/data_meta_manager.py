@@ -92,6 +92,10 @@ class DataMetaManager(object):
         data_meta_config.meta_cache_dir = meta_cache_dir
         data_meta_config.dataset_scripts = dataset_scripts
         data_meta_config.dataset_formation = dataset_formation
+        if '.py' in dataset_scripts:
+            tmp_py_scripts = dataset_scripts['.py']
+            if len(tmp_py_scripts) > 0:
+                data_meta_config.dataset_py_script = tmp_py_scripts[0]
 
         # Set dataset_context_config
         self.dataset_context_config.data_meta_config = data_meta_config

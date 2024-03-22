@@ -650,7 +650,6 @@ class HubApi:
             files.append(file)
         return files
 
-    # TODO: to be checked
     def create_dataset(self,
                        dataset_name: str,
                        namespace: str,
@@ -666,26 +665,27 @@ class HubApi:
         if cookies is None:
             raise ValueError('Token does not exist, please login first.')
 
-        body = {'Name': dataset_name,
-                'Owner': namespace,
-                'ChineseName': chinese_name,
-                'License': license,
-                'Visibility': visibility,
-                'Description': description,
-                }
-
         path = f'{self.endpoint}/api/v1/datasets'
+        files = {
+            'Name': (None, dataset_name),
+            'ChineseName': (None, chinese_name),
+            'Owner': (None, namespace),
+            'License': (None, license),
+            'Visibility': (None, visibility),
+            'Description': (None, description)
+        }
 
         r = self.session.post(
             path,
-            data=body,
+            files=files,
             cookies=cookies,
             headers=self.builder_headers(self.headers),
         )
 
-        handle_http_post_error(r, path, body)
+        handle_http_post_error(r, path, files)
         raise_on_error(r.json())
-        dataset_repo_url = f'{get_endpoint()}/datasets/{namespace}/{dataset_name}'
+        dataset_repo_url = f'{self.endpoint}/datasets/{namespace}/{dataset_name}'
+        logger.info(f'Create dataset success: {dataset_repo_url}')
         return dataset_repo_url
 
     def list_datasets(self):

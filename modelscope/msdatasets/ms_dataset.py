@@ -358,6 +358,10 @@ class MsDataset:
             chunksize: Optional[int] = 1,
             filter_hidden_files: Optional[bool] = True,
             upload_mode: Optional[UploadMode] = UploadMode.OVERWRITE) -> None:
+        r"""
+        @deprecated
+        This method is deprecated and may be removed in future releases, please use git command line instead.
+        """
         """Upload dataset file or directory to the ModelScope Hub. Please log in to the ModelScope Hub first.
 
         Args:
@@ -381,6 +385,10 @@ class MsDataset:
             None
 
         """
+        warnings.warn(
+            'upload is deprecated, please use git command line to upload the dataset.',
+            DeprecationWarning)
+
         if not object_name:
             raise ValueError('object_name cannot be empty!')
 
@@ -427,6 +435,10 @@ class MsDataset:
         Returns:
             None
         """
+
+        warnings.warn(
+            'upload is deprecated, please use git command line to upload the dataset.',
+            DeprecationWarning)
 
         _repo = DatasetRepository(
             repo_work_dir=dataset_work_dir,

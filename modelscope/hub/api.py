@@ -659,7 +659,7 @@ class HubApi:
                        description: Optional[str] = '') -> str:
 
         if dataset_name is None or namespace is None:
-            raise InvalidParameter('dataset_name and namespace is required!')
+            raise InvalidParameter('dataset_name and namespace are required!')
 
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:

@@ -1165,6 +1165,13 @@
             "type": "object"
         }
     },
+    "dense-optical-flow-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
     "image-normal-estimation": {
         "input": {},
         "parameters": {},

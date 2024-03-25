@@ -25,6 +25,8 @@ class OutputKeys(object):
     MASKS = 'masks'
     DEPTHS = 'depths'
     DEPTHS_COLOR = 'depths_color'
+    FLOWS = 'flows'
+    FLOWS_COLOR = 'flows_color'
     NORMALS = 'normals'
     NORMALS_COLOR = 'normals_color'
     LAYOUT = 'layout'

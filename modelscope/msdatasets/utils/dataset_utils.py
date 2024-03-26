@@ -195,7 +195,7 @@ def get_dataset_files(subset_split_into: dict,
 
     for split, info in subset_split_into.items():
         custom_type_map[split] = info.get('custom', '')
-        meta_map[split] = modelscope_api.get_dataset_file_url(
+        meta_map[split] = modelscope_api.get_dataset_file_url_origin(
             info.get('meta', ''), dataset_name, namespace, revision)
         if info.get('file'):
             file_map[split] = info['file']

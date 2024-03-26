@@ -893,6 +893,17 @@ class HubApi:
         # else:
         #     return file_url
 
+    def get_dataset_file_url_origin(
+            self,
+            file_name: str,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION):
+        if file_name and os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
+            file_name = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?' \
+                        f'Revision={revision}&FilePath={file_name}'
+        return file_name
+
     def get_dataset_access_config(
             self,
             dataset_name: str,

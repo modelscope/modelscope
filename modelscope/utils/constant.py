@@ -57,6 +57,7 @@ class CVTasks(object):
     semantic_segmentation = 'semantic-segmentation'
     image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
+    dense_optical_flow_estimation = 'dense-optical-flow-estimation'
     image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'

@@ -125,7 +125,8 @@ class DataMetaManager(object):
                     dataset_json = json.load(dataset_json_file)
                 break
         if not dataset_json and not dataset_py_script:
-            raise FileNotFoundError(f'File {dataset_name}.json and {dataset_name}.py not found, please specify at least one meta-file.')
+            raise FileNotFoundError(f'File {dataset_name}.json and {dataset_name}.py not found,'
+                                    'please specify at least one meta-file.')
 
         # Parse meta and get dataset structure
         if dataset_py_script:

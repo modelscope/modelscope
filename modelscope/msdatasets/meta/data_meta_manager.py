@@ -116,7 +116,7 @@ class DataMetaManager(object):
         dataset_py_script = None
         dataset_scripts = data_meta_config.dataset_scripts
         if not dataset_scripts or len(dataset_scripts) == 0:
-            raise 'Cannot find dataset meta-files, please fetch meta from modelscope hub.'
+            raise FileNotFoundError('Cannot find dataset meta-files, please fetch meta from modelscope hub.')
         if '.py' in dataset_scripts:
             dataset_py_script = dataset_scripts['.py'][0]
         for json_path in dataset_scripts['.json']:
@@ -125,7 +125,8 @@ class DataMetaManager(object):
                     dataset_json = json.load(dataset_json_file)
                 break
         if not dataset_json and not dataset_py_script:
-            raise f'File {dataset_name}.json and {dataset_name}.py not found, please specify at least one meta-file.'
+            raise FileNotFoundError(f'File {dataset_name}.json and {dataset_name}.py not found,'
+                                    'please specify at least one meta-file.')
 
         # Parse meta and get dataset structure
         if dataset_py_script:

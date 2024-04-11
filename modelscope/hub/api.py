@@ -15,7 +15,9 @@ from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urlencode
 
+import json
 import pandas as pd
 import requests
 from requests import Session
@@ -31,7 +33,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
-                                      REQUESTS_API_HTTP_METHOD, Licenses,
+                                      REQUESTS_API_HTTP_METHOD,
+                                      DatasetVisibility, Licenses,
                                       ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -647,6 +650,44 @@ class HubApi:
             files.append(file)
         return files
 
+    def create_dataset(self,
+                       dataset_name: str,
+                       namespace: str,
+                       chinese_name: Optional[str] = '',
+                       license: Optional[str] = Licenses.APACHE_V2,
+                       visibility: Optional[int] = DatasetVisibility.PUBLIC,
+                       description: Optional[str] = '') -> str:
+
+        if dataset_name is None or namespace is None:
+            raise InvalidParameter('dataset_name and namespace are required!')
+
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        path = f'{self.endpoint}/api/v1/datasets'
+        files = {
+            'Name': (None, dataset_name),
+            'ChineseName': (None, chinese_name),
+            'Owner': (None, namespace),
+            'License': (None, license),
+            'Visibility': (None, visibility),
+            'Description': (None, description)
+        }
+
+        r = self.session.post(
+            path,
+            files=files,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers),
+        )
+
+        handle_http_post_error(r, path, files)
+        raise_on_error(r.json())
+        dataset_repo_url = f'{self.endpoint}/datasets/{namespace}/{dataset_name}'
+        logger.info(f'Create dataset success: {dataset_repo_url}')
+        return dataset_repo_url
+
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
         params = {}
@@ -666,6 +707,47 @@ class HubApi:
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
+
+    def get_dataset_infos(self,
+                          dataset_hub_id: str,
+                          revision: str,
+                          files_metadata: bool = False,
+                          timeout: float = 100,
+                          recursive: str = 'True'):
+        """
+        Get dataset infos.
+        """
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision, 'Root': None, 'Recursive': recursive}
+        cookies = ModelScopeConfig.get_cookies()
+        if files_metadata:
+            params['blobs'] = True
+        r = self.session.get(datahub_url, params=params, cookies=cookies, timeout=timeout)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
+
+    def list_repo_tree(self,
+                       dataset_name: str,
+                       namespace: str,
+                       revision: str,
+                       root_path: str,
+                       recursive: bool = True):
+
+        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
+            dataset_name=dataset_name, namespace=namespace)
+
+        recursive = 'True' if recursive else 'False'
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision, 'Root': root_path, 'Recursive': recursive}
+        cookies = ModelScopeConfig.get_cookies()
+
+        r = self.session.get(datahub_url, params=params, cookies=cookies)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str, dataset_id: str, revision: str):
         """ Get the meta file-list of the dataset. """
@@ -735,7 +817,6 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        import json
         from tqdm import tqdm
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
@@ -774,7 +855,7 @@ class HubApi:
                     else:
                         with_header = False
                     chunk_df = pd.DataFrame(chunk)
-                    chunk_df.to_csv(f, index=False, header=with_header)
+                    chunk_df.to_csv(f, index=False, header=with_header, escapechar='\\')
                     iter_num += 1
                 else:
                     # csv or others
@@ -785,6 +866,34 @@ class HubApi:
         return out_path
 
     def get_dataset_file_url(
+            self,
+            file_name: str,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION,
+            extension_filter: Optional[bool] = True):
+
+        if not file_name or not dataset_name or not namespace:
+            raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
+
+        # Note: make sure the FilePath is the last parameter in the url
+        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': file_name}
+        params: str = urlencode(params)
+        file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?{params}'
+
+        return file_url
+
+        # if extension_filter:
+        #     if os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
+        #         file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'\
+        #                    f'Revision={revision}&FilePath={file_name}'
+        #     else:
+        #         file_url = file_name
+        #     return file_url
+        # else:
+        #     return file_url
+
+    def get_dataset_file_url_origin(
             self,
             file_name: str,
             dataset_name: str,
@@ -931,7 +1040,7 @@ class HubApi:
         datahub_raise_on_error(url, resp, r)
         return resp['Data']
 
-    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool) -> None:
+    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool = False) -> None:
         is_ci_test = os.getenv('CI_TEST') == 'True'
         if dataset_name and namespace and not is_ci_test and not use_streaming:
             try:
@@ -963,6 +1072,10 @@ class HubApi:
     def builder_headers(self, headers):
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
+
+    def get_file_base_path(self, namespace: str, dataset_name: str) -> str:
+        return f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
+        # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
 
 class ModelScopeConfig:

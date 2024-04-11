@@ -237,7 +237,7 @@ pip install modelscope[multi-modal]
 pip install modelscope[nlp] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```
 
-If you want to use cv models:
+如仅需体验计算机视觉领域的模型，可执行如下命令安装领域依赖（因部分依赖由ModelScope独立host，所以需要使用"-f"参数）：
 ```shell
 pip install modelscope[cv] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 ```

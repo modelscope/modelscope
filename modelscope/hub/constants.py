@@ -47,3 +47,9 @@ class ModelVisibility(object):
     PRIVATE = 1
     INTERNAL = 3
     PUBLIC = 5
+
+
+class DatasetVisibility(object):
+    PRIVATE = 1
+    INTERNAL = 3
+    PUBLIC = 5

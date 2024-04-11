@@ -57,6 +57,7 @@ class CVTasks(object):
     semantic_segmentation = 'semantic-segmentation'
     image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
+    dense_optical_flow_estimation = 'dense-optical-flow-estimation'
     image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
@@ -393,9 +394,14 @@ class DatasetFormations(enum.Enum):
     # formation that is compatible with official huggingface dataset, which
     # organizes whole dataset into one single (zip) file.
     hf_compatible = 1
+
     # native modelscope formation that supports, among other things,
     # multiple files in a dataset
     native = 2
+
+    # general formation for datasets
+    general = 4
+
     # for local meta cache mark
     formation_mark_ext = '.formation_mark'
 
@@ -403,6 +409,7 @@ class DatasetFormations(enum.Enum):
 DatasetMetaFormats = {
     DatasetFormations.native: ['.json'],
     DatasetFormations.hf_compatible: ['.py'],
+    DatasetFormations.general: ['.py'],
 }
 
 

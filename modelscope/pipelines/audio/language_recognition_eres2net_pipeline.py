@@ -55,24 +55,34 @@ class LanguageRecognitionPipeline(Pipeline):
                  in_audios: Union[str, list, np.ndarray],
                  out_file: str = None):
         wavs = self.preprocess(in_audios)
-        results = self.forward(wavs)
-        outputs = self.postprocess(results, in_audios, out_file)
+        scores, results = self.forward(wavs)
+        outputs = self.postprocess(results, scores, in_audios, out_file)
         return outputs
 
     def forward(self, inputs: list):
+        scores = []
         results = []
         for x in inputs:
-            results.append(self.model(x).item())
-        return results
+            score, result = self.model(x)
+            scores.append(score.tolist())
+            results.append(result.item())
+        return scores, results
 
     def postprocess(self,
                     inputs: list,
+                    scores: list,
                     in_audios: Union[str, list, np.ndarray],
                     out_file=None):
         if isinstance(in_audios, str):
-            output = {OutputKeys.TEXT: self.languages[inputs[0]]}
+            output = {
+                OutputKeys.TEXT: self.languages[inputs[0]],
+                OutputKeys.SCORE: scores
+            }
         else:
-            output = {OutputKeys.TEXT: [self.languages[i] for i in inputs]}
+            output = {
+                OutputKeys.TEXT: [self.languages[i] for i in inputs],
+                OutputKeys.SCORE: scores
+            }
             if out_file is not None:
                 out_lines = []
                 for i, audio in enumerate(in_audios):

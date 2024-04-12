@@ -89,9 +89,9 @@ class LanguageRecognitionCAMPPlus(TorchModel):
         # audio shape: [N, T]
         feature = self._extract_feature(audio)
         embs = self.encoder(feature.to(self.device))
-        output = self.backend(embs)
-        output = output.detach().cpu().argmax(-1)
-        return output
+        scores = self.backend(embs).detach()
+        output = scores.cpu().argmax(-1)
+        return scores, output
 
     def _extract_feature(self, audio):
         features = []

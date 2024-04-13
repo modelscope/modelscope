@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import soundfile as sf
 import torch
+import librosa
 import torchaudio
 
 from modelscope.fileio import File
@@ -118,13 +119,8 @@ class ERes2Net_Pipeline(Pipeline):
                     logger.warning(
                         'The sample rate of audio is not %d, resample it.'
                         % self.model_config['sample_rate'])
-                    data, fs = torchaudio.sox_effects.apply_effects_tensor(
-                        data,
-                        fs,
-                        effects=[[
-                            'rate',
-                            str(self.model_config['sample_rate'])
-                        ]])
+                    data, fs = librosa.load(inputs[i], sr=self.model_config['sample_rate'])
+                    data = torch.from_numpy(data).unsqueeze(0)
                 data = data.squeeze(0)
             elif isinstance(inputs[i], np.ndarray):
                 assert len(

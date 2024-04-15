@@ -22,8 +22,8 @@ logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.speaker_verification,
-    module_name=Pipelines.speaker_verification_res2net)
-class Res2Net_Pipeline(Pipeline):
+    module_name=Pipelines.speaker_verification_eres2netv2)
+class ERes2NetV2_Pipeline(Pipeline):
     """Speaker Verification Inference Pipeline
     use `model` to create a Speaker Verification pipeline.
 
@@ -35,7 +35,7 @@ class Res2Net_Pipeline(Pipeline):
     >>> from modelscope.pipelines import pipeline
     >>> from modelscope.utils.constant import Tasks
     >>> p = pipeline(
-    >>>    task=Tasks.speaker_verification, model='iic/speech_res2net_sv_zh-cn_3dspeaker_16k')
+    >>>    task=Tasks.speaker_verification, model='damo/speech_ecapa-tdnn_sv_en_voxceleb_16k')
     >>> print(p([audio_1, audio_2]))
 
     """

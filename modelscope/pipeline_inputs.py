@@ -438,6 +438,8 @@ TASK_INPUTS = {
     Tasks.machine_reading_comprehension:
     InputType.TEXT,
 
+    Tasks.siamese_uie: InputType.TEXT,
+
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.
     [InputType.AUDIO, {

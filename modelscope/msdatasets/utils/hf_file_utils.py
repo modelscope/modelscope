@@ -20,7 +20,7 @@ from filelock import FileLock
 
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.logger import get_logger
-from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.api import ModelScopeConfig
 
 logger = get_logger()
 

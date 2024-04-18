@@ -1,6 +1,6 @@
 addict
 attrs
-datasets>=2.14.5
+datasets>=2.16.0
 einops
 filelock>=3.3.0
 gast>=0.2.2

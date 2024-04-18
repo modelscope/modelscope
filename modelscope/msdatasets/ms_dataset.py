@@ -21,8 +21,6 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
 from modelscope.msdatasets.dataset_cls.custom_datasets.builder import \
     build_custom_dataset
 from modelscope.msdatasets.utils.delete_utils import DatasetDeleteManager
-# from modelscope.msdatasets.utils.hf_datasets_util import \
-#     load_dataset as hf_load_dataset_wrapper
 from modelscope.msdatasets.utils.hf_datasets_util import load_dataset_with_ctx
 from modelscope.msdatasets.utils.upload_utils import DatasetUploadManager
 from modelscope.preprocessors import build_preprocessor

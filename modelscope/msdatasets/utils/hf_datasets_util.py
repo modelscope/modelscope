@@ -2,6 +2,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
 import importlib
+import contextlib
 import os
 import warnings
 from functools import partial
@@ -52,7 +53,7 @@ from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (DatasetCard, DatasetCardData, HfFileSystem)
+from huggingface_hub import (DatasetCard, DatasetCardData)
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from packaging import version
@@ -66,14 +67,8 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-config.HF_ENDPOINT = get_endpoint()
 
-
-file_utils.get_from_cache = get_from_cache_ms
-
-
-def _download(self, url_or_filename: str,
-              download_config: DownloadConfig) -> str:
+def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) -> str:
     url_or_filename = str(url_or_filename)
     # for temp val
     revision = None
@@ -92,9 +87,6 @@ def _download(self, url_or_filename: str,
     out = tracked_str(out)
     out.set_origin(url_or_filename)
     return out
-
-
-DownloadManager._download = _download
 
 
 def _dataset_info(
@@ -193,9 +185,6 @@ def _dataset_info(
     return HfDatasetInfo(**data)
 
 
-HfApi.dataset_info = _dataset_info
-
-
 def _list_repo_tree(
     self,
     repo_id: str,
@@ -244,9 +233,6 @@ def _list_repo_tree(
                 **path_info)
 
 
-HfApi.list_repo_tree = _list_repo_tree
-
-
 def _get_paths_info(
     self,
     repo_id: str,
@@ -280,9 +266,6 @@ def _get_paths_info(
                  security=None
                  ) for item_d in data_file_list if item_d['Name'] == 'README.md'
     ]
-
-
-HfApi.get_paths_info = _get_paths_info
 
 
 def get_fs_token_paths(
@@ -418,9 +401,6 @@ def _resolve_pattern(
             error_msg += f' with any supported extension {list(allowed_extensions)}'
         raise FileNotFoundError(error_msg)
     return out
-
-
-data_files.resolve_pattern = _resolve_pattern
 
 
 def _get_data_patterns(
@@ -668,9 +648,6 @@ def get_module_without_script(self) -> DatasetModule:
     )
 
 
-HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
-
-
 def _download_additional_modules(
         name: str,
         dataset_name: str,
@@ -861,9 +838,6 @@ def get_module_with_script(self) -> DatasetModule:
         'repo_id': self.name,
     }
     return DatasetModule(module_path, hash, builder_kwargs)
-
-
-HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
 
 
 class DatasetsWrapperHF:
@@ -1336,4 +1310,40 @@ class DatasetsWrapperHF:
                 f'any data file in the same directory.')
 
 
-load_dataset = DatasetsWrapperHF.load_dataset
+@contextlib.contextmanager
+def load_dataset_with_ctx(*args, **kwargs):
+    hf_endpoint_origin = config.HF_ENDPOINT
+    get_from_cache_origin = file_utils.get_from_cache
+    _download_origin = DownloadManager._download
+    dataset_info_origin = HfApi.dataset_info
+    list_repo_tree_origin = HfApi.list_repo_tree
+    get_paths_info_origin = HfApi.get_paths_info
+    resolve_pattern_origin = data_files.resolve_pattern
+    get_module_without_script_origin = HubDatasetModuleFactoryWithoutScript.get_module
+    get_module_with_script_origin = HubDatasetModuleFactoryWithScript.get_module
+
+    config.HF_ENDPOINT = get_endpoint()
+    file_utils.get_from_cache = get_from_cache_ms
+    DownloadManager._download = _download_ms
+    HfApi.dataset_info = _dataset_info
+    HfApi.list_repo_tree = _list_repo_tree
+    HfApi.get_paths_info = _get_paths_info
+    data_files.resolve_pattern = _resolve_pattern
+    HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
+    HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
+
+    try:
+        dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
+        yield dataset_res
+    finally:
+        config.HF_ENDPOINT = hf_endpoint_origin
+        file_utils.get_from_cache = get_from_cache_origin
+        DownloadManager._download = _download_origin
+        HfApi.dataset_info = dataset_info_origin
+        HfApi.list_repo_tree = list_repo_tree_origin
+        HfApi.get_paths_info = get_paths_info_origin
+        data_files.resolve_pattern = resolve_pattern_origin
+        HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
+        HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
+
+        logger.info('Context manager of ms-dataset exited.')

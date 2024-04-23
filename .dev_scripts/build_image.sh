@@ -169,11 +169,6 @@ else
     docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 
-docker_file_content="${docker_file_content} \n RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \
-    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set install.trusted-host mirrors.aliyun.com && \
-    cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list "
-
 printf "$docker_file_content" > Dockerfile
 
 while true

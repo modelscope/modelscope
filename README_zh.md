@@ -19,6 +19,10 @@
 <!-- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) -->
 
 <h4 align="center">
+<a href="https://trendshift.io/repositories/4784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4784" alt="modelscope%2Fmodelscope | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</h4>
+
+<h4 align="center">
     <p>
       <a href="https://github.com/modelscope/modelscope/blob/master/README.md">English</a> |
        <b>中文</b> |
@@ -50,36 +54,36 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 
 示例如下:
 
-自然语言处理：
+大模型：
 
-* [ChatGLM3-6B](https://modelscope.cn/models/ZhipuAI/chatglm3-6b/summary)
+* [Yi-1.5-34B-Chat](https://modelscope.cn/models/01ai/Yi-1.5-34B-Chat/summary)
 
-* [Qwen-14B-Chat](https://modelscope.cn/models/qwen/Qwen-14B-Chat/summary)
+* [Qwen1.5-110B-Chat](https://modelscope.cn/models/qwen/Qwen1.5-110B-Chat/summary)
 
-* [Baichuan2-13B-Chat](https://modelscope.cn/models/baichuan-inc/Baichuan2-13B-Chat/summary)
+* [DeepSeek-V2-Chat](https://modelscope.cn/models/deepseek-ai/DeepSeek-V2-Chat/summary)
 
 * [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
 
-* [Internlm-chat-20b](https://modelscope.cn/models/Shanghai_AI_Laboratory/internlm-chat-20b/summary)
+* [Meta-Llama-3-8B-Instruct](https://modelscope.cn/models/LLM-Research/Meta-Llama-3-8B-Instruct/summary)
 
-* [Udever-bloom-1b1](https://modelscope.cn/models/damo/udever-bloom-1b1/summary)
+* [Phi-3-mini-128k-instruct](https://modelscope.cn/models/LLM-Research/Phi-3-mini-128k-instruct/summary)
 
-* [CoROM文本向量-中文-电商领域-base](https://modelscope.cn/models/damo/nlp_corom_sentence-embedding_chinese-base-ecom/summary)
-
-* [MGeo地址相似度匹配实体对齐-中文-地址领域-base](https://modelscope.cn/models/damo/mgeo_geographic_entity_alignment_chinese_base/summary)
 
 多模态：
 
 * [Qwen-VL-Chat](https://modelscope.cn/models/qwen/Qwen-VL-Chat/summary)
 
-* [CogVLM](https://modelscope.cn/models/ZhipuAI/CogVLM/summary)
+* [Yi-VL-6B](https://modelscope.cn/models/01ai/Yi-VL-6B/summary)
 
-* [Text-to-Video Synthesis Large Model - English - General Domain](https://modelscope.cn/models/damo/text-to-video-synthesis/summary)
+* [InternVL-Chat-V1-5](https://modelscope.cn/models/AI-ModelScope/InternVL-Chat-V1-5/summary)
 
-* [I2VGen-XL高清图片到视频大模型](https://modelscope.cn/models/damo/Image-to-Video/summary)
+* [deepseek-vl-7b-chat](https://modelscope.cn/models/deepseek-ai/deepseek-vl-7b-chat/summary)
 
-* [I2VGen-XL高清视频到视频大模型](https://modelscope.cn/models/damo/Video-to-Video/summary)
+* [OpenSoraPlan](https://modelscope.cn/models/AI-ModelScope/Open-Sora-Plan-v1.0.0/summary)
 
+* [OpenSora](https://modelscope.cn/models/luchentech/OpenSora-STDiT-v1-HQ-16x512x512/summary)
+
+* [I2VGen-XL](https://modelscope.cn/models/iic/i2vgen-xl/summary)
 
 计算机视觉：
 

@@ -288,8 +288,6 @@ class MsDataset:
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name, namespace=namespace)
 
-            logger.info(f'dataset_type: {dataset_type}')
-
             # Load from the ModelScope Hub for type=4 (general)
             if str(dataset_type) == str(DatasetFormations.general.value):
 

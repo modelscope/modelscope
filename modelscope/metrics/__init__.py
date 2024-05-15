@@ -69,7 +69,9 @@ else:
         'loss_metric': ['LossMetric'],
         'image_colorization_metric': ['ImageColorizationMetric'],
         'ocr_recognition_metric': ['OCRRecognitionMetric'],
-        'translation_evaluation_metric': ['TranslationEvaluationMetric']
+        'translation_evaluation_metric': ['TranslationEvaluationMetric'],
+        'video_super_resolution_metric.video_super_resolution_metric':
+        ['VideoSuperResolutionMetric'],
     }
 
     import sys

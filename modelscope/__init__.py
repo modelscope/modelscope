@@ -40,7 +40,7 @@ if TYPE_CHECKING:
                                     AutoImageProcessor, BatchFeature)
     else:
         print(
-            'transformer is not installed, please install it if you want to use releated modules'
+            'transformer is not installed, please install it if you want to use related modules'
         )
     from .utils.hub import create_model_if_not_exist, read_config
     from .utils.logger import get_logger
@@ -98,7 +98,7 @@ else:
         ]
     else:
         print(
-            'transformer is not installed, please install it if you want to use releated modules'
+            'transformer is not installed, please install it if you want to use related modules'
         )
 
     import sys

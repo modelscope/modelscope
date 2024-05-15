@@ -36,7 +36,7 @@ else:
         'nlp_trainer': ['NlpEpochBasedTrainer', 'VecoTrainer'],
         'trainer': ['EpochBasedTrainer'],
         'training_args': ['TrainingArgs', 'build_dataset_from_file'],
-        'hooks': ['Hook']
+        'hooks': ['Hook', 'Priority']
     }
 
     import sys

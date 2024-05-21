@@ -2,7 +2,6 @@
 
 import os
 import re
-import tempfile
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -22,13 +21,15 @@ from .utils.utils import (file_integrity_validation,
 logger = get_logger()
 
 
-def snapshot_download(model_id: str,
-                      revision: Optional[str] = DEFAULT_MODEL_REVISION,
-                      cache_dir: Union[str, Path, None] = None,
-                      user_agent: Optional[Union[Dict, str]] = None,
-                      local_files_only: Optional[bool] = False,
-                      cookies: Optional[CookieJar] = None,
-                      ignore_file_pattern: List = None) -> str:
+def snapshot_download(
+    model_id: str,
+    revision: Optional[str] = DEFAULT_MODEL_REVISION,
+    cache_dir: Union[str, Path, None] = None,
+    user_agent: Optional[Union[Dict, str]] = None,
+    local_files_only: Optional[bool] = False,
+    cookies: Optional[CookieJar] = None,
+    ignore_file_pattern: List = None,
+) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
     is useful when you want all files from a repo, because you don't know which
@@ -69,10 +70,9 @@ def snapshot_download(model_id: str,
         cache_dir = get_model_cache_root()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
-    temporary_cache_dir = os.path.join(cache_dir, 'temp')
-    os.makedirs(temporary_cache_dir, exist_ok=True)
-
     group_or_owner, name = model_id_to_group_owner_name(model_id)
+    temporary_cache_dir = os.path.join(cache_dir, 'temp', group_or_owner, name)
+    os.makedirs(temporary_cache_dir, exist_ok=True)
     name = name.replace('.', '___')
 
     cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
@@ -123,50 +123,48 @@ def snapshot_download(model_id: str,
         if isinstance(ignore_file_pattern, str):
             ignore_file_pattern = [ignore_file_pattern]
 
-        with tempfile.TemporaryDirectory(
-                dir=temporary_cache_dir) as temp_cache_dir:
-            for model_file in model_files:
-                if model_file['Type'] == 'tree' or \
-                        any([re.search(pattern, model_file['Name']) is not None for pattern in ignore_file_pattern]):
-                    continue
-                # check model_file is exist in cache, if existed, skip download, otherwise download
-                if cache.exists(model_file):
-                    file_name = os.path.basename(model_file['Name'])
-                    logger.debug(
-                        f'File {file_name} already in cache, skip downloading!'
-                    )
-                    continue
+        for model_file in model_files:
+            if model_file['Type'] == 'tree' or \
+                    any([re.search(pattern, model_file['Name']) is not None for pattern in ignore_file_pattern]):
+                continue
 
-                # get download url
-                url = get_file_download_url(
-                    model_id=model_id,
-                    file_path=model_file['Path'],
-                    revision=revision)
+            # check model_file is exist in cache, if existed, skip download, otherwise download
+            if cache.exists(model_file):
+                file_name = os.path.basename(model_file['Name'])
+                logger.debug(
+                    f'File {file_name} already in cache, skip downloading!')
+                continue
 
-                if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < model_file[
-                        'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:
-                    parallel_download(
-                        url,
-                        temp_cache_dir,
-                        model_file['Name'],
-                        headers=headers,
-                        cookies=None
-                        if cookies is None else cookies.get_dict(),
-                        file_size=model_file['Size'])
-                else:
-                    http_get_file(
-                        url,
-                        temp_cache_dir,
-                        model_file['Name'],
-                        headers=headers,
-                        cookies=cookies)
+            # get download url
+            url = get_file_download_url(
+                model_id=model_id,
+                file_path=model_file['Path'],
+                revision=revision)
 
-                # check file integrity
-                temp_file = os.path.join(temp_cache_dir, model_file['Name'])
-                if FILE_HASH in model_file:
-                    file_integrity_validation(temp_file, model_file[FILE_HASH])
-                # put file into to cache
-                cache.put_file(model_file, temp_file)
+            if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < model_file[
+                    'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:
+                parallel_download(
+                    url,
+                    temporary_cache_dir,
+                    model_file['Name'],
+                    headers=headers,
+                    cookies=None if cookies is None else cookies.get_dict(),
+                    file_size=model_file['Size'])
+            else:
+                http_get_file(
+                    url,
+                    temporary_cache_dir,
+                    model_file['Name'],
+                    file_size=model_file['Size'],
+                    headers=headers,
+                    cookies=cookies)
+
+            # check file integrity
+            temp_file = os.path.join(temporary_cache_dir, model_file['Name'])
+            if FILE_HASH in model_file:
+                file_integrity_validation(temp_file, model_file[FILE_HASH])
+            # put file into to cache
+            cache.put_file(model_file, temp_file)
 
         cache.save_model_version(revision_info=revision_detail)
         return os.path.join(cache.get_root_location())

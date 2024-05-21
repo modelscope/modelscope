@@ -39,6 +39,16 @@ def get_default_modelscope_cache_dir():
     return default_cache_dir
 
 
+def get_modelscope_cache_dir():
+    """Get modelscope cache dir, default location or
+       setting with MODELSCOPE_CACHE
+
+    Returns:
+        str: the modelscope cache root.
+    """
+    return os.getenv('MODELSCOPE_CACHE', get_default_modelscope_cache_dir())
+
+
 def read_file(path):
 
     with open(path, 'r') as f:

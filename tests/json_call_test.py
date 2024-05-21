@@ -4,7 +4,7 @@ import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import get_cache_dir
+from modelscope.hub.utils.utils import get_model_cache_dir
 from modelscope.pipelines import pipeline
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
@@ -20,7 +20,7 @@ class ModelJsonTest:
 
     def test_single(self, model_id: str, model_revision=None):
         # get model_revision & task info
-        cache_root = get_cache_dir()
+        cache_root = get_model_cache_dir()
         configuration_file = os.path.join(cache_root, model_id,
                                           ModelFile.CONFIGURATION)
         if not model_revision:

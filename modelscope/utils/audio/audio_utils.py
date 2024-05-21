@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
-from modelscope.hub.utils.utils import get_cache_dir
+from modelscope.hub.utils.utils import get_model_cache_dir
 from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
 
@@ -334,7 +334,7 @@ def update_local_model(model_config, model_path, extra_args):
             model_revision = extra_args['update_model']
     if model_config.__contains__('model'):
         model_name = model_config['model']
-        dst_dir_root = get_cache_dir()
+        dst_dir_root = get_model_cache_dir()
         if isinstance(model_path, str) and os.path.exists(
                 model_path) and not model_path.startswith(dst_dir_root):
             try:

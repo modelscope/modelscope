@@ -15,7 +15,7 @@ from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
 from .file_download import (get_file_download_url, http_get_file,
                             parallel_download)
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import (file_integrity_validation, get_cache_dir,
+from .utils.utils import (file_integrity_validation, get_model_cache_dir,
                           model_id_to_group_owner_name)
 
 logger = get_logger()
@@ -65,7 +65,7 @@ def snapshot_download(model_id: str,
     """
 
     if cache_dir is None:
-        cache_dir = get_cache_dir()
+        cache_dir = get_model_cache_dir()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
     temporary_cache_dir = os.path.join(cache_dir, 'temp')

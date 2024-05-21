@@ -31,7 +31,7 @@ def func_receive_dict_inputs(func):
     return False
 
 
-def get_default_cache_dir():
+def get_default_modelscope_cache_dir():
     """
     default base dir: '~/.cache/modelscope'
     """

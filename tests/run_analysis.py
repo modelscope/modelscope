@@ -12,7 +12,7 @@ from utils.source_file_analyzer import (get_all_register_modules,
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import (get_cache_dir,
+from modelscope.hub.utils.utils import (get_model_cache_dir,
                                         model_id_to_group_owner_name)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
@@ -36,7 +36,7 @@ def get_models_info(groups: list) -> dict:
             if len(models) >= total_count:
                 break
             page += 1
-    cache_root = get_cache_dir()
+    cache_root = get_model_cache_dir()
     models_info = {}  # key model id, value model info
     for model_info in models:
         model_id = '%s/%s' % (group, model_info['Name'])

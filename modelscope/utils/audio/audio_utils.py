@@ -333,11 +333,7 @@ def update_local_model(model_config, model_path, extra_args):
             model_revision = extra_args['update_model']
     if model_config.__contains__('model'):
         model_name = model_config['model']
-<<<<<<< HEAD
         dst_dir_root = get_model_cache_root()
-=======
-        dst_dir_root = get_model_cache_dir()
->>>>>>> 93218573 (fix #845)
         if isinstance(model_path, str) and os.path.exists(
                 model_path) and not model_path.startswith(dst_dir_root):
             try:

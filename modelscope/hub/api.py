@@ -267,6 +267,8 @@ class HubApi:
         This function must be called before calling HubApi's login with a valid token
         which can be obtained from ModelScope's website.
 
+        If any error, please upload via git commands.
+
         Args:
             model_id (str):
                 The model id to be uploaded, caller must have write permission for it.
@@ -336,7 +338,7 @@ class HubApi:
         git_wrapper = GitCommandWrapper()
         try:
             repo = Repository(model_dir=tmp_dir, clone_from=model_id)
-            branches, _ = self.get_model_branches_and_tags(model_id=model_id, use_cookies=cookies)
+            branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
                 logger.info('Create new branch %s' % revision)
                 git_wrapper.new_branch(tmp_dir, revision)

@@ -28,23 +28,6 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
-def get_model_cache_dir(model_id: Optional[str] = None):
-    """cache dir precedence:
-        function parameter > environment > ~/.cache/modelscope/hub
-
-    Args:
-        model_id (str, optional): The model id.
-
-    Returns:
-        str: the model_id dir if model_id not None, otherwise cache root dir.
-    """
-    base_path = os.getenv('MODELSCOPE_CACHE',
-                          get_default_modelscope_cache_dir())
-    base_path = os.path.join(base_path, 'hub')
-    return base_path if model_id is None else os.path.join(
-        base_path, model_id + '/')
-
-
 def get_release_datetime():
     if MODELSCOPE_SDK_DEBUG in os.environ:
         rt = int(round(datetime.now().timestamp()))

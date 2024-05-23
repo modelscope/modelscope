@@ -4,10 +4,10 @@ import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import get_model_cache_dir
 from modelscope.pipelines import pipeline
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.file_utils import get_model_cache_dir
 from modelscope.utils.input_output import (
     call_pipeline_with_json, get_pipeline_information_by_pipeline,
     get_task_input_examples, pipeline_output_to_service_base64_output)
@@ -20,9 +20,8 @@ class ModelJsonTest:
 
     def test_single(self, model_id: str, model_revision=None):
         # get model_revision & task info
-        cache_root = get_model_cache_dir()
-        configuration_file = os.path.join(cache_root, model_id,
-                                          ModelFile.CONFIGURATION)
+        configuration_file = os.path.join(
+            get_model_cache_dir(model_id), ModelFile.CONFIGURATION)
         if not model_revision:
             model_revision = self.api.list_model_revisions(
                 model_id=model_id)[0]

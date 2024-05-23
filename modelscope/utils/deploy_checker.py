@@ -1,13 +1,9 @@
 import argparse
-import os
 import traceback
 from typing import List, Union
 
-import json
-
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import get_model_cache_dir
 from modelscope.pipelines import pipeline
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile

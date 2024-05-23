@@ -19,9 +19,11 @@ SD_EXAMPLE_WAV = 'data/test/audios/2speakers_example.wav'
 
 
 class SpeakerVerificationTest(unittest.TestCase):
+    tdnn_voxceleb_16k_model_id = 'iic/speech_tdnn_sv_en_voxceleb_16k'
     ecapatdnn_voxceleb_16k_model_id = 'damo/speech_ecapa-tdnn_sv_en_voxceleb_16k'
     campplus_voxceleb_16k_model_id = 'damo/speech_campplus_sv_en_voxceleb_16k'
     rdino_voxceleb_16k_model_id = 'damo/speech_rdino_ecapa_tdnn_sv_en_voxceleb_16k'
+    sdpn_voxceleb_16k_model_id = 'iic/speech_sdpn_ecapa_tdnn_sv_en_voxceleb_16k'
     speaker_change_locating_cn_model_id = 'damo/speech_campplus-transformer_scl_zh-cn_16k-common'
     speaker_change_lcoating_xvector_cn_model_id = 'damo/speech_xvector_transformer_scl_zh-cn_16k-common'
     eres2net_voxceleb_16k_model_id = 'damo/speech_eres2net_sv_en_voxceleb_16k'
@@ -54,10 +56,20 @@ class SpeakerVerificationTest(unittest.TestCase):
         return result
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_tdnn_voxceleb_16k(self):
+        logger.info(
+            'Run speaker verification for ecapatdnn_voxceleb_16k model')
+        result = self.run_pipeline(
+            model_id=self.tdnn_voxceleb_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV],
+            model_revision='v1.0.0')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_verification_ecapatdnn_voxceleb_16k(self):
         logger.info(
             'Run speaker verification for ecapatdnn_voxceleb_16k model')
-
         result = self.run_pipeline(
             model_id=self.ecapatdnn_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV])
@@ -67,7 +79,6 @@ class SpeakerVerificationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_verification_campplus_voxceleb_16k(self):
         logger.info('Run speaker verification for campplus_voxceleb_16k model')
-
         result = self.run_pipeline(
             model_id=self.campplus_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV])
@@ -81,6 +92,16 @@ class SpeakerVerificationTest(unittest.TestCase):
             model_id=self.rdino_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
             model_revision='v1.0.1')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_sdpn_voxceleb_16k(self):
+        logger.info('Run speaker verification for sdpn_voxceleb_16k model')
+        result = self.run_pipeline(
+            model_id=self.sdpn_voxceleb_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.0')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 

@@ -6,11 +6,11 @@ import sys
 import tempfile
 import unittest
 
-from modelscope.hub.utils.utils import get_cache_dir
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode
+from modelscope.utils.file_utils import get_model_cache_dir
 from modelscope.utils.test_utils import test_level
 
 
@@ -57,7 +57,7 @@ class TestImageDefrcnFewShotTrainer(unittest.TestCase):
             cfg.model.roi_heads.freeze_feat = False
             cfg.model.roi_heads.cls_dropout = False
             cfg.model.weights = os.path.join(
-                get_cache_dir(), self.model_id,
+                get_model_cache_dir(self.model_id),
                 'ImageNetPretrained/MSRA/R-101.pkl')
 
             cfg.datasets.root = self.data_dir

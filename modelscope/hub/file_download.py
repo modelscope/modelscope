@@ -21,11 +21,12 @@ from modelscope.hub.constants import (
     API_FILE_DOWNLOAD_TIMEOUT, FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
     MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
+from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
 from .errors import FileDownloadError, NotExistError
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import (file_integrity_validation, get_cache_dir,
-                          get_endpoint, model_id_to_group_owner_name)
+from .utils.utils import (file_integrity_validation, get_endpoint,
+                          model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -75,7 +76,7 @@ def model_file_download(
             if some parameter value is invalid
     """
     if cache_dir is None:
-        cache_dir = get_cache_dir()
+        cache_dir = get_model_cache_root()
     if isinstance(cache_dir, Path):
         cache_dir = str(cache_dir)
     temporary_cache_dir = os.path.join(cache_dir, 'temp')

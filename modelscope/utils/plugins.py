@@ -20,14 +20,14 @@ import pkg_resources
 from modelscope.fileio.file import LocalStorage
 from modelscope.utils.ast_utils import FilesAstScanning
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
-from modelscope.utils.file_utils import get_default_cache_dir
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 storage = LocalStorage()
 
-MODELSCOPE_FILE_DIR = get_default_cache_dir()
+MODELSCOPE_FILE_DIR = get_modelscope_cache_dir()
 MODELSCOPE_DYNAMIC_MODULE = 'modelscope_modules'
 BASE_MODULE_DIR = os.path.join(MODELSCOPE_FILE_DIR, MODELSCOPE_DYNAMIC_MODULE)
 

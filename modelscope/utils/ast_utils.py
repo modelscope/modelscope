@@ -14,11 +14,12 @@ import gast
 import json
 
 from modelscope.fileio.file import LocalStorage
+# do not delete
 from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
-from modelscope.utils.file_utils import get_default_cache_dir
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
@@ -29,7 +30,7 @@ p = Path(__file__)
 # get the path of package 'modelscope'
 SKIP_FUNCTION_SCANNING = True
 MODELSCOPE_PATH = p.resolve().parents[1]
-INDEXER_FILE_DIR = get_default_cache_dir()
+INDEXER_FILE_DIR = get_modelscope_cache_dir()
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [

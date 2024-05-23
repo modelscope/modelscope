@@ -45,8 +45,9 @@ class GitCommandWrapper(metaclass=Singleton):
         logger.debug(' '.join(args))
         git_env = os.environ.copy()
         git_env['GIT_TERMINAL_PROMPT'] = '0'
+        command = [self.git_path, *args]
         response = subprocess.run(
-            [self.git_path, *args],
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=git_env,
@@ -55,10 +56,11 @@ class GitCommandWrapper(metaclass=Singleton):
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            logger.error('There are error run git command.')
-            raise GitError(
-                'stdout: %s, stderr: %s' %
-                (response.stdout.decode('utf8'), error.stderr.decode('utf8')))
+            output = 'stdout: %s, stderr: %s' % (
+                response.stdout.decode('utf8'), error.stderr.decode('utf8'))
+            logger.error('Running git command: %s failed, output: %s.' %
+                         (command, output))
+            raise GitError(output)
 
     def config_auth_token(self, repo_dir, auth_token):
         url = self.get_repo_remote_url(repo_dir)

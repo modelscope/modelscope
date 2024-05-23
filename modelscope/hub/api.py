@@ -267,6 +267,8 @@ class HubApi:
         This function must be called before calling HubApi's login with a valid token
         which can be obtained from ModelScope's website.
 
+        If any error, please upload via git commands.
+
         Args:
             model_id (str):
                 The model id to be uploaded, caller must have write permission for it.

@@ -12,7 +12,7 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
-from modelscope.utils.file_utils import get_default_cache_dir
+from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -26,23 +26,6 @@ def model_id_to_group_owner_name(model_id):
         group_or_owner = DEFAULT_MODELSCOPE_GROUP
         name = model_id
     return group_or_owner, name
-
-
-def get_cache_dir(model_id: Optional[str] = None):
-    """cache dir precedence:
-        function parameter > environment > ~/.cache/modelscope/hub
-
-    Args:
-        model_id (str, optional): The model id.
-
-    Returns:
-        str: the model_id dir if model_id not None, otherwise cache root dir.
-    """
-    default_cache_dir = get_default_cache_dir()
-    base_path = os.getenv('MODELSCOPE_CACHE',
-                          os.path.join(default_cache_dir, 'hub'))
-    return base_path if model_id is None else os.path.join(
-        base_path, model_id + '/')
 
 
 def get_release_datetime():

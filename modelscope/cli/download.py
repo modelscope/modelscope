@@ -73,6 +73,8 @@ class DownloadCMD(CLICommand):
             model_file_download(
                 self.args.model,
                 self.args.files[0],
+                cache_dir=self.args.cache_dir,
+                local_dir=self.args.local_dir,
                 revision=self.args.revision)
         elif len(self.args.files) > 1:  # download specified multiple files.
             snapshot_download(

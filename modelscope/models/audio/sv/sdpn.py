@@ -1,5 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """ This ECAPA-TDNN implementation is adapted from https://github.com/speechbrain/speechbrain.
+    Self-Distillation Prototypes Network(SDPN) is a self-supervised learning framwork in SV.
+    It comprises a teacher and a student network with identical architecture
+    but different parameters. Teacher/student network consists of three main modules:
+    the encoder for extracting speaker embeddings, multi-layer perceptron for
+    feature transformation, and prototypes for computing soft-distributions between
+    global and local views. EMA denotes Exponential Moving Average.
 """
 import math
 import os
@@ -550,7 +556,12 @@ class Combiner(torch.nn.Module):
 
 
 @MODELS.register_module(Tasks.speaker_verification, module_name=Models.sdpn_sv)
-class SpeakerVerification_SDPN(TorchModel):
+class SpeakerVerificationSDPN(TorchModel):
+    """
+    Self-Distillation Prototypes Network (SDPN) effectively facilitates
+    self-supervised speaker representation learning. The specific structure can be
+    referred to in https://arxiv.org/pdf/2308.02774.
+    """
 
     def __init__(self, model_dir, model_config: Dict[str, Any], *args,
                  **kwargs):

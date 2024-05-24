@@ -1,5 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-""" This TDNN implementation is adapted from https://github.com/wenet-e2e/wespeaker.
+"""
+    This TDNN implementation is adapted from https://github.com/wenet-e2e/wespeaker.
+    TDNN replaces i-vectors for text-independent speaker verification with embeddings
+    extracted from a feedforward deep neural network. The specific structure can be
+    referred to in https://www.danielpovey.com/files/2017_interspeech_embeddings.pdf.
 """
 import math
 import os

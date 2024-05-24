@@ -20,7 +20,7 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.speaker_verification,
     module_name=Pipelines.speaker_verification_sdpn)
-class SDPN_Pipeline(Pipeline):
+class SDPNPipeline(Pipeline):
     """Speaker Verification Inference Pipeline
     use `model` to create a Speaker Verification pipeline.
 

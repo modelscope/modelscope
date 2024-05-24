@@ -72,6 +72,7 @@ def file_integrity_validation(file_path, expected_sha256):
     file_sha256 = compute_hash(file_path)
     if not file_sha256 == expected_sha256:
         os.remove(file_path)
-        msg = 'File %s integrity check failed, the download may be incomplete, please try again.' % file_path
+        msg = 'File %s integrity check failed, expected sha256 signature is %s, actual is %s, the download may be incomplete, please try again.' % (  # noqa E501
+            file_path, expected_sha256, file_sha256)
         logger.error(msg)
         raise FileIntegrityError(msg)

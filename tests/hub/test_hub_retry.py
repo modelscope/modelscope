@@ -113,6 +113,7 @@ class HubOperationTest(unittest.TestCase):
             url=url,
             local_dir='./',
             file_name=test_file_name,
+            file_size=2957783,
             headers={},
             cookies=None)
 
@@ -154,10 +155,11 @@ class HubOperationTest(unittest.TestCase):
                 url=url,
                 local_dir='./',
                 file_name=test_file_name,
+                file_size=2957783,
                 headers={},
                 cookies=None)
 
-        assert not os.path.exists('./%s' % test_file_name)
+        assert os.stat('./%s' % test_file_name).st_size == 0
 
 
 if __name__ == '__main__':

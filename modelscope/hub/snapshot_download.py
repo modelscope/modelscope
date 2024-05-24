@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import fnmatch
 import os
-import re
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -11,7 +11,8 @@ from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
 from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
-                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
+                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB,
+                        TEMPORARY_FOLDER_NAME)
 from .file_download import (get_file_download_url, http_get_file,
                             parallel_download)
 from .utils.caching import ModelFileSystemCache
@@ -28,7 +29,9 @@ def snapshot_download(
     user_agent: Optional[Union[Dict, str]] = None,
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
-    ignore_file_pattern: List = None,
+    ignore_file_pattern: List[str] = None,
+    allow_file_pattern: List[str] = None,
+    local_dir: Optional[str] = None,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -50,6 +53,9 @@ def snapshot_download(
         cookies (CookieJar, optional): The cookie of the request, default None.
         ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
             Any file pattern to be ignored in downloading, like exact file names or file extensions.
+        allow_file_pattern (`str` or `List`, *optional*, default to `None`):
+            Any file pattern to be downloading, like exact file names or file extensions.
+        local_dir (str, optional): Specific download file location.
     Raises:
         ValueError: the value details.
 
@@ -65,17 +71,21 @@ def snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-
-    if cache_dir is None:
-        cache_dir = get_model_cache_root()
-    if isinstance(cache_dir, Path):
-        cache_dir = str(cache_dir)
     group_or_owner, name = model_id_to_group_owner_name(model_id)
-    temporary_cache_dir = os.path.join(cache_dir, 'temp', group_or_owner, name)
-    os.makedirs(temporary_cache_dir, exist_ok=True)
-    name = name.replace('.', '___')
+    if local_dir is not None:
+        temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
+        cache = ModelFileSystemCache(local_dir)
+    else:
+        if cache_dir is None:
+            cache_dir = get_model_cache_root()
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+        temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
+                                           group_or_owner, name)
+        name = name.replace('.', '___')
+        cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
 
-    cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
+    os.makedirs(temporary_cache_dir, exist_ok=True)
 
     if local_files_only:
         if len(cache.cached_files) == 0:
@@ -123,10 +133,20 @@ def snapshot_download(
         if isinstance(ignore_file_pattern, str):
             ignore_file_pattern = [ignore_file_pattern]
 
+        if allow_file_pattern is not None:
+            if isinstance(allow_file_pattern, str):
+                allow_file_pattern = [allow_file_pattern]
+
         for model_file in model_files:
             if model_file['Type'] == 'tree' or \
-                    any([re.search(pattern, model_file['Name']) is not None for pattern in ignore_file_pattern]):
+                    any(fnmatch.fnmatch(model_file['Path'], pattern) for pattern in ignore_file_pattern):
                 continue
+
+            if allow_file_pattern is not None and allow_file_pattern:
+                if not any(
+                        fnmatch.fnmatch(model_file['Path'], pattern)
+                        for pattern in allow_file_pattern):
+                    continue
 
             # check model_file is exist in cache, if existed, skip download, otherwise download
             if cache.exists(model_file):

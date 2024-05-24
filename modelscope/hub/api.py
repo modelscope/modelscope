@@ -92,7 +92,7 @@ class HubApi:
     def login(
         self,
         access_token: str,
-    ) -> tuple():
+    ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.
 

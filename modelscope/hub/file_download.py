@@ -18,7 +18,7 @@ from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (
     API_FILE_DOWNLOAD_CHUNK_SIZE, API_FILE_DOWNLOAD_RETRY_TIMES,
     API_FILE_DOWNLOAD_TIMEOUT, FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
-    MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
+    MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB, TEMPORARY_FOLDER_NAME)
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
@@ -38,6 +38,7 @@ def model_file_download(
     user_agent: Union[Dict, str, None] = None,
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
+    local_dir: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
     """Download from a given URL and cache it if it's not already present in the local cache.
 
@@ -55,6 +56,7 @@ def model_file_download(
         local_files_only (bool, optional):  If `True`, avoid downloading the file and return the path to the
             local cached file if it exists. if `False`, download the file anyway even it exists.
         cookies (CookieJar, optional): The cookie of download request.
+        local_dir (str, optional): Specific download file location.
 
     Returns:
         string: string of local file or if networking is off, last version of
@@ -74,14 +76,21 @@ def model_file_download(
             - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
             if some parameter value is invalid
     """
-    if cache_dir is None:
-        cache_dir = get_model_cache_root()
-    if isinstance(cache_dir, Path):
-        cache_dir = str(cache_dir)
     group_or_owner, name = model_id_to_group_owner_name(model_id)
-    temporary_cache_dir = os.path.join(cache_dir, 'temp', group_or_owner, name)
+    if local_dir is not None:
+        temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
+        cache = ModelFileSystemCache(local_dir)
+    else:
+        if cache_dir is None:
+            cache_dir = get_model_cache_root()
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+        temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
+                                           group_or_owner, name)
+        name = name.replace('.', '___')
+        cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
+
     os.makedirs(temporary_cache_dir, exist_ok=True)
-    cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
 
     # if local_files_only is `True` and the file already exists in cached_path
     # return the cached path

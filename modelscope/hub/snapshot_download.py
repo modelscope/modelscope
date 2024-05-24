@@ -8,16 +8,13 @@ from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
-from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
 from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
-                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB,
-                        TEMPORARY_FOLDER_NAME)
-from .file_download import (get_file_download_url, http_get_file,
+                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
+from .file_download import (create_temporary_directory_and_cache,
+                            get_file_download_url, http_get_file,
                             parallel_download)
-from .utils.caching import ModelFileSystemCache
-from .utils.utils import (file_integrity_validation,
-                          model_id_to_group_owner_name)
+from .utils.utils import file_integrity_validation
 
 logger = get_logger()
 
@@ -55,7 +52,7 @@ def snapshot_download(
             Any file pattern to be ignored in downloading, like exact file names or file extensions.
         allow_file_pattern (`str` or `List`, *optional*, default to `None`):
             Any file pattern to be downloading, like exact file names or file extensions.
-        local_dir (str, optional): Specific download file location.
+        local_dir (str, optional): Specific local directory path to which the file will be downloaded.
     Raises:
         ValueError: the value details.
 
@@ -71,21 +68,8 @@ def snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-    group_or_owner, name = model_id_to_group_owner_name(model_id)
-    if local_dir is not None:
-        temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
-        cache = ModelFileSystemCache(local_dir)
-    else:
-        if cache_dir is None:
-            cache_dir = get_model_cache_root()
-        if isinstance(cache_dir, Path):
-            cache_dir = str(cache_dir)
-        temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
-                                           group_or_owner, name)
-        name = name.replace('.', '___')
-        cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
-
-    os.makedirs(temporary_cache_dir, exist_ok=True)
+    temporary_cache_dir, cache = create_temporary_directory_and_cache(
+        model_id, local_dir, cache_dir)
 
     if local_files_only:
         if len(cache.cached_files) == 0:

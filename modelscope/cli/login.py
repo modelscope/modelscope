@@ -20,7 +20,7 @@ class LoginCMD(CLICommand):
 
     @staticmethod
     def define_args(parsers: ArgumentParser):
-        """ define args for download command.
+        """ define args for login command.
         """
         parser = parsers.add_parser(LoginCMD.name)
         parser.add_argument(

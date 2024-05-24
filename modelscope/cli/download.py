@@ -43,15 +43,14 @@ class DownloadCMD(CLICommand):
             '--local_dir',
             type=str,
             default=None,
-            help='The files in the library will be downloaded'
-            'directly in this directory without model id.'
-            'If this parameter provided cache_dir will be ignored.')
+            help='File will be downloaded to local location specified by'
+            'local_dir, in this case, cache_dir parameter will be ignored.')
         parser.add_argument(
             'files',
             type=str,
             default=None,
             nargs='*',
-            help='Specify file paths in the repository to download'
+            help='Specify relative path to the repository file(s) to download.'
             "(e.g 'tokenizer.json', 'onnx/decoder_model.onnx').")
         parser.add_argument(
             '--include',

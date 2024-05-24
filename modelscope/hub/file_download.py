@@ -56,7 +56,7 @@ def model_file_download(
         local_files_only (bool, optional):  If `True`, avoid downloading the file and return the path to the
             local cached file if it exists. if `False`, download the file anyway even it exists.
         cookies (CookieJar, optional): The cookie of download request.
-        local_dir (str, optional): Specific download file location.
+        local_dir (str, optional): Specific local directory path to which the file will be downloaded.
 
     Returns:
         string: string of local file or if networking is off, last version of
@@ -76,22 +76,8 @@ def model_file_download(
             - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
             if some parameter value is invalid
     """
-    group_or_owner, name = model_id_to_group_owner_name(model_id)
-    if local_dir is not None:
-        temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
-        cache = ModelFileSystemCache(local_dir)
-    else:
-        if cache_dir is None:
-            cache_dir = get_model_cache_root()
-        if isinstance(cache_dir, Path):
-            cache_dir = str(cache_dir)
-        temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
-                                           group_or_owner, name)
-        name = name.replace('.', '___')
-        cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
-
-    os.makedirs(temporary_cache_dir, exist_ok=True)
-
+    temporary_cache_dir, cache = create_temporary_directory_and_cache(
+        model_id, local_dir, cache_dir)
     # if local_files_only is `True` and the file already exists in cached_path
     # return the cached path
     if local_files_only:
@@ -171,6 +157,26 @@ def model_file_download(
                                   file_to_download_info[FILE_HASH])
     return cache.put_file(file_to_download_info,
                           os.path.join(temporary_cache_dir, file_path))
+
+
+def create_temporary_directory_and_cache(model_id: str, local_dir: str,
+                                         cache_dir: str):
+    group_or_owner, name = model_id_to_group_owner_name(model_id)
+    if local_dir is not None:
+        temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
+        cache = ModelFileSystemCache(local_dir)
+    else:
+        if cache_dir is None:
+            cache_dir = get_model_cache_root()
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+        temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
+                                           group_or_owner, name)
+        name = name.replace('.', '___')
+        cache = ModelFileSystemCache(cache_dir, group_or_owner, name)
+
+    os.makedirs(temporary_cache_dir, exist_ok=True)
+    return temporary_cache_dir, cache
 
 
 def get_file_download_url(model_id: str, file_path: str, revision: str):

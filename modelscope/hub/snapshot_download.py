@@ -29,8 +29,8 @@ def snapshot_download(
     user_agent: Optional[Union[Dict, str]] = None,
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
-    ignore_file_pattern: List[str] = None,
-    allow_file_pattern: List[str] = None,
+    ignore_file_pattern: Optional[Union[str, List[str]]] = None,
+    allow_file_pattern: Optional[Union[str, List[str]]] = None,
     local_dir: Optional[str] = None,
 ) -> str:
     """Download all files of a repo.

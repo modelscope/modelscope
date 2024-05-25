@@ -78,6 +78,7 @@ def model_file_download(
     """
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
         model_id, local_dir, cache_dir)
+
     # if local_files_only is `True` and the file already exists in cached_path
     # return the cached path
     if local_files_only:

@@ -3,6 +3,7 @@
 import argparse
 
 from modelscope.cli.download import DownloadCMD
+from modelscope.cli.login import LoginCMD
 from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
@@ -19,6 +20,7 @@ def run_cmd():
     PipelineCMD.define_args(subparsers)
     ModelCardCMD.define_args(subparsers)
     ServerCMD.define_args(subparsers)
+    LoginCMD.define_args(subparsers)
 
     args = parser.parse_args()
 

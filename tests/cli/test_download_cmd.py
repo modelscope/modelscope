@@ -53,12 +53,12 @@ class DownloadCMDTest(unittest.TestCase):
         super().tearDown()
 
     def test_download(self):
-        cmd = f'python -m modelscope.cli.cli download {self.model_id}'
+        cmd = f'python -m modelscope.cli.cli download --model {self.model_id}'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
 
     def test_download_with_cache(self):
-        cmd = f'python -m modelscope.cli.cli download {self.model_id} --cache_dir {self.tmp_dir}'
+        cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --cache_dir {self.tmp_dir}'
         stat, output = subprocess.getstatusoutput(cmd)
         if stat != 0:
             print(output)
@@ -68,7 +68,7 @@ class DownloadCMDTest(unittest.TestCase):
                 f'{self.tmp_dir}/{self.model_id}/{download_model_file_name}'))
 
     def test_download_with_revision(self):
-        cmd = f'python -m modelscope.cli.cli download {self.model_id} --revision {self.revision}'
+        cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --revision {self.revision}'
         stat, output = subprocess.getstatusoutput(cmd)
         if stat != 0:
             print(output)

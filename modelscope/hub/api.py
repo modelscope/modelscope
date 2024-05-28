@@ -404,7 +404,7 @@ class HubApi:
             (owner_or_group, page_number, page_size),
             cookies=cookies,
             headers=self.builder_headers(self.headers))
-        handle_http_response(r, logger, cookies, 'list_model')
+        handle_http_response(r, logger, cookies, owner_or_group)
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
                 data = r.json()[API_RESPONSE_FIELD_DATA]

@@ -9,7 +9,7 @@ import requests
 from urllib3.exceptions import MaxRetryError
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.file_download import http_get_file
+from modelscope.hub.file_download import http_get_model_file
 
 
 class HubOperationTest(unittest.TestCase):
@@ -109,7 +109,7 @@ class HubOperationTest(unittest.TestCase):
             success_rsp,
         ]
         url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
-        http_get_file(
+        http_get_model_file(
             url=url,
             local_dir='./',
             file_name=test_file_name,
@@ -151,7 +151,7 @@ class HubOperationTest(unittest.TestCase):
         ]
         url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
         with self.assertRaises(MaxRetryError):
-            http_get_file(
+            http_get_model_file(
                 url=url,
                 local_dir='./',
                 file_name=test_file_name,

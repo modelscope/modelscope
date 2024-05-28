@@ -43,7 +43,8 @@ def snapshot_download(
         model_id (str): A user or an organization name and a repo name separated by a `/`.
         revision (str, optional): An optional Git revision id which can be a branch name, a tag, or a
             commit hash. NOTE: currently only branch and tag name is supported
-        cache_dir (str, Path, optional): Path to the folder where cached files are stored.
+        cache_dir (str, Path, optional): Path to the folder where cached files are stored, model will
+            be save as cache_dir/model_id/THE_MODEL_FILES.
         user_agent (str, dict, optional): The user-agent info in the form of a dictionary or a string.
         local_files_only (bool, optional): If `True`, avoid downloading the file and return the path to the
             local cached file if it exists.

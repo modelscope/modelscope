@@ -3,6 +3,7 @@
 import hashlib
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -26,6 +27,21 @@ def model_id_to_group_owner_name(model_id):
         group_or_owner = DEFAULT_MODELSCOPE_GROUP
         name = model_id
     return group_or_owner, name
+
+
+def get_cache_dir(model_id: Optional[str] = None):
+    """cache dir precedence:
+        function parameter > environment > ~/.cache/modelscope/hub
+    Args:
+        model_id (str, optional): The model id.
+    Returns:
+        str: the model_id dir if model_id not None, otherwise cache root dir.
+    """
+    default_cache_dir = Path.home().joinpath('.cache', 'modelscope')
+    base_path = os.getenv('MODELSCOPE_CACHE',
+                          os.path.join(default_cache_dir, 'hub'))
+    return base_path if model_id is None else os.path.join(
+        base_path, model_id + '/')
 
 
 def get_release_datetime():

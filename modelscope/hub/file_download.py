@@ -224,10 +224,10 @@ def download_part_with_retry(params):
                 with open(part_file_name, 'rb') as f:
                     partial_length = f.seek(0, io.SEEK_END)
                     progress.update(partial_length)
-            start = start + partial_length
-            if start > end:
+            download_start = start + partial_length
+            if download_start > end:
                 break  # this part is download completed.
-            get_headers['Range'] = 'bytes=%s-%s' % (start, end)
+            get_headers['Range'] = 'bytes=%s-%s' % (download_start, end)
             with open(part_file_name, 'ab+') as f:
                 r = requests.get(
                     url,

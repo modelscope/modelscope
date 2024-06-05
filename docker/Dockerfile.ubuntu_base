@@ -2,20 +2,20 @@ ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cud
 FROM $BASE_IMAGE
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
-ENV CONDA_DIR /opt/conda
-ENV PATH="${CONDA_DIR}/bin:${PATH}"
 ENV arch=x86_64
 SHELL ["/bin/bash", "-c"]
 COPY docker/rcfiles /tmp/resources
 COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
-RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
-    apt-get install -y apt-utils openssh-server locales wget git strace gdb sox libopenmpi-dev curl \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-certificates && \
+    apt-get install -y make apt-utils openssh-server locales wget git strace gdb sox libopenmpi-dev curl \
     iputils-ping net-tools iproute2 autoconf automake gperf libre2-dev libssl-dev \
     libtool libcurl4-openssl-dev libb64-dev libgoogle-perftools-dev patchelf \
     rapidjson-dev scons software-properties-common pkg-config unzip zlib1g-dev \
-    libarchive-dev libxml2-dev libnuma-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev \
+    libarchive-dev libxml2-dev libnuma-dev cmake \
     libgeos-dev strace vim ffmpeg libsm6 tzdata language-pack-zh-hans \
-    ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build && \
+    ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build \
+    libjpeg-dev libpng-dev && \
     wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
     dpkg -i ./git-lfs_3.2.0_amd64.deb && \
     rm -f ./git-lfs_3.2.0_amd64.deb && \
@@ -28,46 +28,128 @@ RUN apt-get update && apt-get install -y --reinstall ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
-RUN wget -O /tmp/boost.tar.gz         https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz &&     (cd /tmp && tar xzf boost.tar.gz) &&     mv /tmp/boost_1_80_0/boost /usr/include/boost
+RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz && \
+    cd /tmp && tar xzf boost.tar.gz  && \
+    mv /tmp/boost_1_80_0/boost /usr/include/boost && \
+    rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
 
-#install and config python
-ARG PYTHON_VERSION=3.10.13
-# Miniconda3-py37_23.1.0-1-Linux-x86_64.sh is last python3.7 version
-RUN  wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py310_23.9.0-0-Linux-x86_64.sh -O ./miniconda.sh && \
-    /bin/bash  miniconda.sh -b -p /opt/conda && \
-    rm  -f miniconda.sh && \
-    ln  -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    source /root/.bashrc
+#install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
+ARG PYTHON_VERSION=3.10.14
+ENV PATH /usr/local/bin:$PATH
+ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV PYTHON_VERSION 3.10.14
+
+RUN set -eux; \
+        \
+        wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
+        wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
+        GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
+        gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+        gpg --batch --verify python.tar.xz.asc python.tar.xz; \
+        gpgconf --kill all; \
+        rm -rf "$GNUPGHOME" python.tar.xz.asc; \
+        mkdir -p /usr/src/python; \
+        tar --extract --directory /usr/src/python --strip-components=1 --file python.tar.xz; \
+        rm python.tar.xz; \
+        \
+        cd /usr/src/python; \
+        gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)"; \
+        ./configure \
+                --build="$gnuArch" \
+                --enable-loadable-sqlite-extensions \
+                --enable-optimizations \
+                --enable-option-checking=fatal \
+                --enable-shared \
+                --with-lto \
+                --with-system-expat \
+                --without-ensurepip \
+        ; \
+        nproc="$(nproc)"; \
+        EXTRA_CFLAGS="$(dpkg-buildflags --get CFLAGS)"; \
+        LDFLAGS="$(dpkg-buildflags --get LDFLAGS)"; \
+        make -j "$nproc" \
+                "EXTRA_CFLAGS=${EXTRA_CFLAGS:-}" \
+                "LDFLAGS=${LDFLAGS:-}" \
+                "PROFILE_TASK=${PROFILE_TASK:-}" \
+        ; \
+# https://github.com/docker-library/python/issues/784
+# prevent accidental usage of a system installed libpython of the same version
+        rm python; \
+        make -j "$nproc" \
+                "EXTRA_CFLAGS=${EXTRA_CFLAGS:-}" \
+                "LDFLAGS=${LDFLAGS:--Wl},-rpath='\$\$ORIGIN/../lib'" \
+                "PROFILE_TASK=${PROFILE_TASK:-}" \
+                python \
+        ; \
+        make install; \
+        \
+# enable GDB to load debugging data: https://github.com/docker-library/python/pull/701
+        bin="$(readlink -ve /usr/local/bin/python3)"; \
+        dir="$(dirname "$bin")"; \
+        mkdir -p "/usr/share/gdb/auto-load/$dir"; \
+        cp -vL Tools/gdb/libpython.py "/usr/share/gdb/auto-load/$bin-gdb.py"; \
+        \
+        cd /; \
+        rm -rf /usr/src/python; \
+        \
+        find /usr/local -depth \
+                \( \
+                        \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
+                        -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
+                \) -exec rm -rf '{}' + \
+        ; \
+        \
+        ldconfig; \
+        \
+        python3 --version
+
+# make some useful symlinks that are expected to exist ("/usr/local/bin/python" and friends)
+RUN set -eux; \
+        for src in idle3 pydoc3 python3 python3-config; do \
+                dst="$(echo "$src" | tr -d 3)"; \
+                [ -s "/usr/local/bin/$src" ]; \
+                [ ! -e "/usr/local/bin/$dst" ]; \
+                ln -svT "$src" "/usr/local/bin/$dst"; \
+        done
+
+# if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
+ENV PYTHON_PIP_VERSION 23.0.1
+# https://github.com/docker-library/python/issues/365
+ENV PYTHON_SETUPTOOLS_VERSION 65.5.1
+# https://github.com/pypa/get-pip
+ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/dbf0c85f76fb6e1ab42aa672ffca6f0a675d9ee4/public/get-pip.py
+ENV PYTHON_GET_PIP_SHA256 dfe9fd5c28dc98b5ac17979a953ea550cec37ae1b47a5116007395bfacff2ab9
+
+RUN set -eux; \
+        \
+        wget -O get-pip.py "$PYTHON_GET_PIP_URL"; \
+        echo "$PYTHON_GET_PIP_SHA256 *get-pip.py" | sha256sum -c -; \
+        \
+        export PYTHONDONTWRITEBYTECODE=1; \
+        \
+        python get-pip.py \
+                --disable-pip-version-check \
+                --no-cache-dir \
+                --no-compile \
+                "pip==$PYTHON_PIP_VERSION" \
+                "setuptools==$PYTHON_SETUPTOOLS_VERSION" \
+        ; \
+        rm -f get-pip.py; \
+        \
+        pip --version
+# end of install python
 
 ARG USE_GPU=True
 
 # install pytorch
-ARG TORCH_VERSION=1.12.0
-ARG CUDATOOLKIT_VERSION=cu117
+ARG TORCH_VERSION=2.3.0
+ARG CUDATOOLKIT_VERSION=cu121
+
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/$CUDATOOLKIT_VERSION; \
+       pip install --no-cache-dir "torch==2.3.0" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+       pip install --no-cache-dir torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
-    fi
-
-# install tensorflow
-ARG TENSORFLOW_VERSION=1.15.5
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        if [ "$TENSORFLOW_VERSION" = "1.15.5" ] ; then \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
-        else \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-         fi \
-    else \
-        # only python 3.7 has tensorflow 1.15.5
-        if [ "$PYTHON_VERSION" = "3.7.13" ] ; then \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-        elif [ "$TENSORFLOW_VERSION" = "1.15.5" ] ; then \
-            pip install --no-cache-dir numpy==1.18.5 https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/tensorflow-1.15.5-cp38-cp38-linux_x86_64.whl; \
-        else \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-        fi \
     fi
 
 
@@ -109,17 +191,18 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
      echo 'cpu unsupport Pointnet2'; \
     fi
 
-# install apex after deepspeed
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_apex.sh; \
-    else \
-     echo 'cpu unsupport apex'; \
+
+ARG TENSORFLOW_VERSION=1.15.5
+ RUN if [ "$USE_GPU" = "True" ] ; then \
+            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
+        else \
+            echo 'cpu not install tensorflow'; \
     fi
 
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir mmcv-full==1.7.0+torch2.1.1cu121 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
-    else \
-        pip install --no-cache-dir mmcv_full==1.7.0+torch2.1cpu -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+ RUN if [ "$USE_GPU" = "True" ] ; then \
+            pip install --no-cache-dir "https://modelscope.oss-cn-beijing.aliyuncs.com/packages/mmcv/mmcv_full-1.7.0-cp310-cp310-linux_x86_64.whl"; \
+        else \
+            pip install --no-cache-dir mmcv_full==1.7.0+cputorch230 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     fi
-RUN conda install imageio-ffmpeg -c conda-forge -y
+
 ENTRYPOINT []

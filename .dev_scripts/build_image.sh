@@ -130,7 +130,7 @@ elif [[ $python_version == 3.10* ]]; then
     if [ "$is_cpu" == "True" ]; then
         echo "Building python3.10 cpu image"
         base_tag=ubuntu22.04-py310
-        export BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch$torch_version-tf$tensorflow_version-base
+        export BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch$torch_version-base
     else
         echo "Building python3.10 gpu image"
         base_tag=ubuntu22.04-cuda$cuda_version-py310
@@ -141,9 +141,13 @@ else
     echo "Unsupport python version: $python_version"
     exit 1
 fi
-
-target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-$modelscope_version-test
-
+# cpu not intall tensorflow
+# target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-$modelscope_version-test
+if [ "$is_cpu" == "True" ]; then
+    target_image_tag=$base_tag-torch$torch_version-$modelscope_version-test
+else
+    target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-$modelscope_version-test
+fi
 export IMAGE_TO_BUILD=$MODELSCOPE_REPO_ADDRESS:$target_image_tag
 export PYTHON_VERSION=$python_version
 export TORCH_VERSION=$torch_version
@@ -155,7 +159,7 @@ docker_file_content=`cat docker/Dockerfile.ubuntu`
 
 BUILD_HASH_ID=$(git rev-parse HEAD)
 # install thrid part library
-docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv &&  pip install --no-cache-dir -U 'ms-swift==2.0.2' 'funasr==1.0.14' autoawq 'timm>0.9.5' 'transformers==4.38.2'"
+docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv &&  pip install --no-cache-dir -U 'ms-swift' 'funasr' autoawq 'timm>0.9.5' 'transformers'"
 
 docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$BUILD_HASH_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $build_branch  --single-branch $REPO_URL && cd modelscope && pip install . && cd / && rm -fr /tmp/modelscope && pip cache purge;"
 
@@ -169,8 +173,8 @@ else
     docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()'"
 fi
 
-docker_file_content="${docker_file_content} \n RUN cp /tmp/resources/conda.aliyun  ~/.condarc && \
-    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+
+docker_file_content="${docker_file_content} \n RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list "
 

@@ -131,7 +131,13 @@ class LLMPipelineTest(unittest.TestCase):
                 ]
             }]
         }
-        self.gen_cfg = {'do_sample': True, 'max_length': 512}
+        self.messages_zh_one_round = {
+            'messages': [{
+                'role': 'user',
+                'content': '你叫什么名字？'
+            }]
+        }
+        self.gen_cfg = {'do_sample': True, 'max_new_tokens': 128}
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm2(self):
@@ -362,6 +368,59 @@ class LLMPipelineTest(unittest.TestCase):
         pipe = pipeline(
             task='chat', model='qwen/Qwen1.5-1.8B-Chat', llm_first=True)
         for stream_output in pipe.stream_generate(self.messages_zh_with_system,
+                                                  **self.gen_cfg):
+            print('messages: ', stream_output, end='\r')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_baichuan2_with_swift(self):
+        pipe = pipeline(
+            task='chat',
+            model='baichuan-inc/Baichuan2-13B-Chat',
+            llm_first=True)
+        print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_baichuan2_stream_gemerate(self):
+        pipe = pipeline(
+            task='chat',
+            model='baichuan-inc/Baichuan2-13B-Chat',
+            llm_first=True)
+        for stream_output in pipe.stream_generate(self.messages_zh,
+                                                  **self.gen_cfg):
+            print('messages: ', stream_output, end='\r')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_yi_with_swift(self):
+        pipe = pipeline(
+            task='chat', model='01ai/Yi-1.5-6B-Chat', llm_first=True)
+        print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_yi_stream_gemerate(self):
+        pipe = pipeline(
+            task='chat', model='01ai/Yi-1.5-6B-Chat', llm_first=True)
+        for stream_output in pipe.stream_generate(self.messages_zh,
+                                                  **self.gen_cfg):
+            print('messages: ', stream_output, end='\r')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_internlm2_with_swift(self):
+        pipe = pipeline(
+            task='chat',
+            model='Shanghai_AI_Laboratory/internlm2-1_8b',
+            llm_first=True)
+        print('messages: ', pipe(self.messages_zh_one_round, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_internlm2_stream_gemerate(self):
+        pipe = pipeline(
+            task='chat',
+            model='Shanghai_AI_Laboratory/internlm2-1_8b',
+            llm_first=True)
+        for stream_output in pipe.stream_generate(self.messages_zh_one_round,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
 

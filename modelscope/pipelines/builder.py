@@ -112,13 +112,14 @@ def pipeline(task: str = None,
     third_party = kwargs.get(ThirdParty.KEY)
     if third_party is not None:
         kwargs.pop(ThirdParty.KEY)
-    model = normalize_model_input(
-        model,
-        model_revision,
-        third_party=third_party,
-        ignore_file_pattern=ignore_file_pattern)
     if pipeline_name is None and kwargs.get('llm_first'):
         pipeline_name = llm_first_checker(model, model_revision)
+    else:
+        model = normalize_model_input(
+            model,
+            model_revision,
+            third_party=third_party,
+            ignore_file_pattern=ignore_file_pattern)
     pipeline_props = {'type': pipeline_name}
     if pipeline_name is None:
         # get default pipeline for this task
@@ -157,9 +158,6 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
-    # support set llm_framework=None
-    if pipeline_name == 'llm' and kwargs.get('llm_framework', '') == '':
-        kwargs['llm_framework'] = 'vllm'
     clear_llm_info(kwargs)
     if kwargs:
         cfg.update(kwargs)
@@ -211,12 +209,15 @@ def get_default_pipeline_info(task):
 
 def llm_first_checker(model: Union[str, List[str], Model, List[Model]],
                       revision: Optional[str]) -> Optional[str]:
-    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
+    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry, MODEL_ID_MAPPING
 
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
+
+    if model in MODEL_ID_MAPPING:
+        return 'llm'
     model_type = ModelTypeHelper.get(
         model, revision, with_adapter=True, split='-', use_cache=True)
     if LLMAdapterRegistry.contains(model_type):

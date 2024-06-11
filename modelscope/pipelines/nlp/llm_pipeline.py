@@ -238,7 +238,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             history = list(zip(contents[::2], contents[1::2]))
             return dict(system=system, prompt=prompt, history=history)
 
-        if not isinstance(model_id, str) and model_id not in MODEL_ID_MAPPING:
+        if not isinstance(model_id, str) or model_id not in MODEL_ID_MAPPING:
             return False
         args = InferArguments(model_type=MODEL_ID_MAPPING[model_id])
         model, template = prepare_model_template(

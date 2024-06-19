@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import argparse
+import logging
 
 from modelscope.cli.download import DownloadCMD
 from modelscope.cli.login import LoginCMD
@@ -8,6 +9,9 @@ from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
 from modelscope.cli.server import ServerCMD
+from modelscope.utils.logger import get_logger
+
+logger = get_logger(log_level=logging.WARNING)
 
 
 def run_cmd():

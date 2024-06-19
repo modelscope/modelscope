@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import logging
 import os
 import os.path as osp
 import time
@@ -23,7 +24,7 @@ from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 storage = LocalStorage()
 p = Path(__file__)
 

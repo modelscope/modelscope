@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import logging
 from http import HTTPStatus
 
 import requests
@@ -8,7 +9,7 @@ from requests.exceptions import HTTPError
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 
 
 class NotSupportError(Exception):

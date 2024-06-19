@@ -3,6 +3,7 @@
 import ast
 import functools
 import importlib
+import logging
 import os
 import os.path as osp
 import sys
@@ -25,7 +26,7 @@ if sys.version_info < (3, 8):
 else:
     import importlib.metadata as importlib_metadata
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 
 AST_INDEX = None
 

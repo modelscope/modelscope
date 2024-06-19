@@ -3,12 +3,12 @@ from http import HTTPStatus
 from typing import Generic, Optional, Type, TypeVar
 
 import json
-from pydantic.generics import GenericModel
+from pydantic import BaseModel
 
 ResultType = TypeVar('ResultType')
 
 
-class ApiResponse(GenericModel, Generic[ResultType]):
+class ApiResponse(BaseModel, Generic[ResultType]):
     Code: Optional[int] = HTTPStatus.OK
     Success: Optional[bool] = True
     RequestId: Optional[str] = ''

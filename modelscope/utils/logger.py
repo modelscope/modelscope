@@ -28,6 +28,8 @@ def get_logger(log_file: Optional[str] = None,
     logger.propagate = False
     if logger_name in init_loggers:
         add_file_handler_if_needed(logger, log_file, file_mode, log_level)
+        if logger.level != log_level:
+            logger.setLevel(log_level)
         return logger
 
     # handle duplicate logs to the console

@@ -6,10 +6,10 @@ from typing import Any, Dict
 
 import json
 import numpy as np
+import packaging
 import torch
 import torch.cuda
 from PIL import Image
-from pkg_resources import packaging
 from taming.models.vqgan import GumbelVQ, VQModel
 from torchvision.transforms import (CenterCrop, Compose, Normalize, Resize,
                                     ToTensor)

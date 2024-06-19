@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import logging
 import os
 from argparse import ArgumentParser
 from string import Template
@@ -9,7 +10,7 @@ from modelscope.cli.base import CLICommand
 from modelscope.server.api_server import add_server_args, get_app
 from modelscope.utils.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(current_path, 'template')

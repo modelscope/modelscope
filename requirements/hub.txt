@@ -1,0 +1,4 @@
+datasets
+requests>=2.25
+setuptools
+tqdm

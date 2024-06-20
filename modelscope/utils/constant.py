@@ -5,11 +5,13 @@ import enum
 class Fields(object):
     """ Names for different application fields
     """
+    framework = 'framework'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
     multi_modal = 'multi-modal'
     science = 'science'
+    server = 'server'
 
 
 class CVTasks(object):

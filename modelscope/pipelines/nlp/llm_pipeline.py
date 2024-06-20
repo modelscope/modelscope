@@ -5,10 +5,8 @@ from threading import Lock
 from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union
 
 import json
+import numpy as np
 import torch
-from swift import Swift
-from swift.llm import prepare_model_template
-from swift.llm.utils import MODEL_MAPPING, InferArguments
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
@@ -31,7 +29,7 @@ from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
 
 logger = get_logger()
 
-MODEL_ID_MAPPING = {v['model_id_or_path']: k for k, v in MODEL_MAPPING.items()}
+SWIFT_MODEL_ID_MAPPING = {}
 
 
 class LLMAdapterRegistry:
@@ -85,6 +83,8 @@ class LLMAdapterRegistry:
 class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def initiate_single_model(self, model):
+        from swift import Swift
+
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
         if self._is_swift_model(model):
@@ -176,7 +176,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
 
-        if self._init_swift(kwargs['model'], kwargs.get('device', 'gpu')):
+        if llm_framework == 'swift':
+            self._init_swift(kwargs['model'], kwargs.get('device', 'gpu'))
             return
         with self._temp_configuration_file(kwargs):
             super().__init__(*args, **kwargs)
@@ -203,7 +204,16 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.tokenizer = self._get_tokenizer(
             tokenizer_class) if tokenizer is None else tokenizer
 
-    def _init_swift(self, model_id, device) -> bool:
+    def _init_swift(self, model_id, device) -> None:
+        from swift.llm import prepare_model_template
+        from swift.llm.utils import MODEL_MAPPING, InferArguments
+
+        global SWIFT_MODEL_ID_MAPPING
+        if not SWIFT_MODEL_ID_MAPPING:
+            SWIFT_MODEL_ID_MAPPING = {
+                v['model_id_or_path']: k
+                for k, v in MODEL_MAPPING.items()
+            }
 
         def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,
@@ -238,9 +248,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             history = list(zip(contents[::2], contents[1::2]))
             return dict(system=system, prompt=prompt, history=history)
 
-        if not isinstance(model_id, str) or model_id not in MODEL_ID_MAPPING:
-            return False
-        args = InferArguments(model_type=MODEL_ID_MAPPING[model_id])
+        assert model_id in SWIFT_MODEL_ID_MAPPING, 'Swift framework does not support current model!'
+        args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id])
         model, template = prepare_model_template(
             args, device_map=self.device_map)
         self.model = add_stream_generate(model)
@@ -257,7 +266,6 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self._model_prepare_lock = Lock()
         self._auto_collate = True
         self._compile = False
-        return True
 
     @contextmanager
     def _temp_configuration_file(self, kwargs: Dict[str, Any]):
@@ -281,7 +289,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, **preprocess_params)
 
-        if self.llm_framework is None:
+        if self.llm_framework in (None, 'swift'):
             # pytorch model
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)
@@ -377,6 +385,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
     def postprocess(self, outputs, **kwargs):
         is_messages = kwargs.pop('is_messages')
         if not isinstance(outputs, str):
+            shape_type = (torch.Tensor, np.ndarray)
+            if isinstance(outputs, shape_type) and len(outputs.shape) > 1:
+                outputs = outputs[0]
             response = self.tokenizer.decode(
                 outputs, skip_special_tokens=True, **kwargs)
         else:

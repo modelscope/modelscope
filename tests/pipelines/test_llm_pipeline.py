@@ -376,6 +376,7 @@ class LLMPipelineTest(unittest.TestCase):
         pipe = pipeline(
             task='chat',
             model='baichuan-inc/Baichuan2-13B-Chat',
+            llm_framework='swift',
             llm_first=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
@@ -385,6 +386,7 @@ class LLMPipelineTest(unittest.TestCase):
         pipe = pipeline(
             task='chat',
             model='baichuan-inc/Baichuan2-13B-Chat',
+            llm_framework='swift',
             llm_first=True)
         for stream_output in pipe.stream_generate(self.messages_zh,
                                                   **self.gen_cfg):
@@ -393,14 +395,20 @@ class LLMPipelineTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_yi_with_swift(self):
         pipe = pipeline(
-            task='chat', model='01ai/Yi-1.5-6B-Chat', llm_first=True)
+            task='chat',
+            model='01ai/Yi-1.5-6B-Chat',
+            llm_framework='swift',
+            llm_first=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_yi_stream_gemerate(self):
         pipe = pipeline(
-            task='chat', model='01ai/Yi-1.5-6B-Chat', llm_first=True)
+            task='chat',
+            model='01ai/Yi-1.5-6B-Chat',
+            llm_framework='swift',
+            llm_first=True)
         for stream_output in pipe.stream_generate(self.messages_zh,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
@@ -410,6 +418,7 @@ class LLMPipelineTest(unittest.TestCase):
         pipe = pipeline(
             task='chat',
             model='Shanghai_AI_Laboratory/internlm2-1_8b',
+            llm_framework='swift',
             llm_first=True)
         print('messages: ', pipe(self.messages_zh_one_round, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
@@ -419,6 +428,7 @@ class LLMPipelineTest(unittest.TestCase):
         pipe = pipeline(
             task='chat',
             model='Shanghai_AI_Laboratory/internlm2-1_8b',
+            llm_framework='swift',
             llm_first=True)
         for stream_output in pipe.stream_generate(self.messages_zh_one_round,
                                                   **self.gen_cfg):

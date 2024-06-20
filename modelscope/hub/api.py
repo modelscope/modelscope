@@ -18,7 +18,6 @@ from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import json
-import pandas as pd
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
@@ -820,6 +819,8 @@ class HubApi:
         """
         import hashlib
         from tqdm import tqdm
+        import pandas as pd
+
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
             os.remove(out_path)

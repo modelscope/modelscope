@@ -119,7 +119,7 @@ Will create model THE_MODEL_ID in www.modelscope.cn
 
 ### Upload model files
 ```bash
-    modelscope model -act upload -gid citest -mid 'testt1' -md modelfiles/ -vt 'v0.0.1' -vi 'upload model files'
+    modelscope model -act upload -gid 'YOUR_GROUP_ID' -mid 'THE_MODEL_ID' -md modelfiles/ -vt 'v0.0.1' -vi 'upload model files'
 ```
 
 ## Pipeline

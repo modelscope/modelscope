@@ -18,6 +18,7 @@ scipy
 setuptools
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
+sortedcontainers
 tqdm>=4.64.0
 urllib3>=1.26
 yapf

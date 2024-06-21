@@ -193,10 +193,11 @@ if __name__ == '__main__':
         extra_requires[filed_name], _ = parse_requirements(
             f'requirements/audio/{filed_name}.txt')
     framework_requires = extra_requires['framework']
-    del extra_requires['framework']
     # add framework dependencies to every field
     for field, requires in extra_requires.items():
-        if field != 'server':  # server need install model's field dependencies before.
+        if field not in [
+                'server', 'framework'
+        ]:  # server need install model's field dependencies before.
             extra_requires[field] = framework_requires + extra_requires[field]
     extra_requires['all'] = all_requires
 

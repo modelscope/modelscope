@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import importlib
+import importlib.util as iutil
 import logging
 from typing import Optional
 
@@ -41,7 +41,7 @@ def get_logger(log_file: Optional[str] = None,
     # at the ERROR level.
     torch_dist = False
     is_worker0 = True
-    if importlib.util.find_spec('torch') is not None:
+    if iutil.find_spec('torch') is not None:
         from modelscope.utils.torch_utils import is_dist, is_master
         torch_dist = is_dist()
         is_worker0 = is_master()
@@ -78,7 +78,7 @@ def add_file_handler_if_needed(logger, log_file, file_mode, log_level):
         if isinstance(handler, logging.FileHandler):
             return
 
-    if importlib.util.find_spec('torch') is not None:
+    if iutil.find_spec('torch') is not None:
         from modelscope.utils.torch_utils import is_master
         is_worker0 = is_master()
     else:

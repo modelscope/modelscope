@@ -3,8 +3,6 @@ import os
 from types import MethodType
 from typing import Any, Optional
 
-from packaging import version
-
 from modelscope.metainfo import Tasks
 from modelscope.utils.ast_utils import INDEX_KEY
 from modelscope.utils.import_utils import (LazyImportModule,
@@ -42,6 +40,7 @@ def fix_transformers_upgrade():
         # from 4.35.0, transformers changes its arguments of _set_gradient_checkpointing
         import transformers
         from transformers import PreTrainedModel
+        from packaging import version
         if version.parse(transformers.__version__) >= version.parse('4.35.0') \
                 and not hasattr(PreTrainedModel, 'post_init_origin'):
             PreTrainedModel.post_init_origin = PreTrainedModel.post_init

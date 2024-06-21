@@ -9,7 +9,7 @@ import simplejson as json
 import threading
 import uuid
 from collections import namedtuple
-from datetime import date, datetime, time, timedelta
+from datetime import timedelta
 from dateutil.parser import parse as parse_datetime
 from decimal import Decimal
 from fractions import Fraction

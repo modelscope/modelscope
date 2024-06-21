@@ -1,9 +1,5 @@
 import argparse
 
-from modelscope.server.api.routers.router import api_router
-from modelscope.server.core.event_handlers import (start_app_handler,
-                                                   stop_app_handler)
-
 
 def add_server_args(parser: argparse.ArgumentParser):
     parser.add_argument(
@@ -21,13 +17,26 @@ def add_server_args(parser: argparse.ArgumentParser):
 
 
 def run_server(args):
-    import uvicorn
-    app = get_app(args)
-    uvicorn.run(app, host=args.host, port=args.port)
+    try:
+        import uvicorn
+        app = get_app(args)
+        uvicorn.run(app, host=args.host, port=args.port)
+    except ModuleNotFoundError as e:
+        print(e)
+        print(
+            'To execute the server command, first '
+            'install the domain dependencies with: '
+            'pip install modelscope[DOMAIN] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html '
+            'the "DOMAIN" include [cv|nlp|audio|multi-modal|science] '
+            'and then install server dependencies with: pip install modelscope[server]'
+        )
 
 
 def get_app(args):
     from fastapi import FastAPI
+    from modelscope.server.api.routers.router import api_router
+    from modelscope.server.core.event_handlers import (start_app_handler,
+                                                       stop_app_handler)
     app = FastAPI(
         title='modelscope_server',
         version='0.1',

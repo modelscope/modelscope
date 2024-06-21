@@ -359,8 +359,8 @@ class AstScanning(object):
         with open(file, 'r', encoding='utf8') as code:
             data = code.readlines()
         data = ''.join(data)
-        import gast
-        node = gast.parse(data)
+        # import gast
+        node = ast.parse(data)
         output = self.scan_import(node, show_offsets=False)
         output[DECORATOR_KEY] = self.parse_decorators(output[DECORATOR_KEY])
         output[EXPRESS_KEY] = self.parse_decorators(output[EXPRESS_KEY])

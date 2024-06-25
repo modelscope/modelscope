@@ -12,7 +12,7 @@ from modelscope.utils.logger import get_logger
 from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
                         MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
 from .file_download import (create_temporary_directory_and_cache,
-                            get_file_download_url, http_get_file,
+                            get_file_download_url, http_get_model_file,
                             parallel_download)
 from .utils.utils import file_integrity_validation
 
@@ -156,7 +156,7 @@ def snapshot_download(
                     cookies=None if cookies is None else cookies.get_dict(),
                     file_size=model_file['Size'])
             else:
-                http_get_file(
+                http_get_model_file(
                     url,
                     temporary_cache_dir,
                     model_file['Name'],

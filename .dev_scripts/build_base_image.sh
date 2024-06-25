@@ -120,7 +120,14 @@ else
     echo "Unsupport python version: $python_version"
     exit 1
 fi
-target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-base
+# target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-base
+# cpu no tensorflow
+if [ "$is_cpu" == "True" ]; then
+    target_image_tag=$base_tag-torch$torch_version-base
+else
+    target_image_tag=$base_tag-torch$torch_version-tf$tensorflow_version-base
+fi
+
 export IMAGE_TO_BUILD=$MODELSCOPE_REPO_ADDRESS:$target_image_tag
 export PYTHON_VERSION=$python_version
 export TORCH_VERSION=$torch_version

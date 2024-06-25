@@ -185,6 +185,17 @@ class HubOperationTest(unittest.TestCase):
         assert snapshot_download_path == local_dir
         assert os.path.exists(os.path.join(local_dir, ModelFile.README))
 
+    def test_snapshot_download_ignore_file_pattern_test(self):
+        self.prepare_case()
+        snapshot_download_path = snapshot_download(
+            model_id=self.model_id,
+            revision=self.revision,
+            ignore_file_pattern=[".*.pt", ".*.safetensors", ".*.bin"])
+        for _, _, files in os.walk(snapshot_download_path):
+            for file in files:
+                assert not file.endswith("pt") and not file.endswith(
+                    "safetensors") and not file.endswith("bin")
+
 
 if __name__ == '__main__':
     unittest.main()

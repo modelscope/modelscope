@@ -2,9 +2,9 @@
 
 import fnmatch
 import os
+import re
 from http.cookiejar import CookieJar
 from pathlib import Path
-import re
 from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig

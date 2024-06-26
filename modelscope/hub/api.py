@@ -1086,6 +1086,7 @@ class ModelScopeConfig:
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'
     USER_SESSION_ID_FILE_NAME = 'session'
+    cookie_expired_warning = False
 
     @staticmethod
     def make_sure_credential_path_exist():
@@ -1107,8 +1108,9 @@ class ModelScopeConfig:
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
-                    if cookie.is_expired():
-                        logger.debug(
+                    if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
+                        ModelScopeConfig.cookie_expired_warning = True
+                        logger.warning(
                             'Authentication has expired, '
                             'please re-login if you need to access private models or datasets.')
                         return None

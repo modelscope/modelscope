@@ -9,6 +9,8 @@ ARG CUDA_VERSION=cu121
 # install  jupyter plugin
 RUN mkdir -p /root/.local/share/jupyter/labextensions/ && \
     cp -r  /tmp/resources/jupyter_plugins/*  /root/.local/share/jupyter/labextensions/
+# install ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
 # python3.8 pip install git+https://github.com/jin-s13/xtcocoapi.git@v1.13

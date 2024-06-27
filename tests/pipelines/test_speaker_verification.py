@@ -213,9 +213,11 @@ class SpeakerVerificationTest(unittest.TestCase):
         self.assertTrue(OutputKeys.SCORE in result)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_run_with_speaker_verification_eres2netv2ep4w24s4_zh_cn_common_16k(self):
+    def test_run_with_speaker_verification_eres2netv2ep4w24s4_zh_cn_common_16k(
+            self):
         logger.info(
-            'Run speaker verification for eres2netv2ep4_zh_cn_common_16k model')
+            'Run speaker verification for eres2netv2ep4_zh_cn_common_16k model'
+        )
         result = self.run_pipeline(
             model_id=self.eres2netv2ep4_zh_cn_16k_common_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],

@@ -16,10 +16,8 @@ from typing import Dict, Union
 
 import addict
 import json
-from yapf.yapflib.yapf_api import FormatCode
 
 from modelscope.utils.constant import ConfigFields, ModelFile
-from modelscope.utils.import_utils import import_modules_from_file
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -101,6 +99,8 @@ class Config:
             shutil.copyfile(filename, tmp_cfg_file.name)
 
             if filename.endswith('.py'):
+                # import as needed.
+                from modelscope.utils.import_utils import import_modules_from_file
                 module_nanme, mod = import_modules_from_file(
                     osp.join(tmp_cfg_dir, tmp_cfg_name))
                 cfg_dict = {}
@@ -282,6 +282,7 @@ class Config:
             based_on_style='pep8',
             blank_line_before_nested_class_or_def=True,
             split_before_expression_after_opening_paren=True)
+        from yapf.yapflib.yapf_api import FormatCode
         text, _ = FormatCode(text, style_config=yapf_style, verify=True)
 
         return text

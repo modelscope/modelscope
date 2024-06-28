@@ -4,10 +4,8 @@ import os
 from argparse import ArgumentParser
 from string import Template
 
-import uvicorn
-
 from modelscope.cli.base import CLICommand
-from modelscope.server.api_server import add_server_args, get_app
+from modelscope.server.api_server import add_server_args, run_server
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
@@ -37,5 +35,4 @@ class ServerCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        app = get_app(self.args)
-        uvicorn.run(app, host=self.args.host, port=self.args.port)
+        run_server(self.args)

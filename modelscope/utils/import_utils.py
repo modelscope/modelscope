@@ -14,8 +14,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from packaging import version
-
 from modelscope.utils.ast_utils import (INDEX_KEY, MODULE_KEY, REQUIREMENT_KEY,
                                         load_index)
 from modelscope.utils.error import *  # noqa
@@ -193,6 +191,7 @@ if USE_TF in ENV_VARS_TRUE_AND_AUTO_VALUES and USE_TORCH not in ENV_VARS_TRUE_VA
                 pass
         _tf_available = _tf_version is not None
     if _tf_available:
+        from packaging import version
         if version.parse(_tf_version) < version.parse('2'):
             pass
         else:

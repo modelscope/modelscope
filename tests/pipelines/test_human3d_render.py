@@ -44,7 +44,7 @@ class Human3DRenderTest(unittest.TestCase):
         human3d = pipeline(self.task, model=self.model_id)
         input = {
             'dataset_id': 'damo/3DHuman_synthetic_dataset',
-            'case_id': '3f2a7538253e42a8',
+            'case_id': '000039',
             'resolution': 1024,
         }
         output = human3d(input)

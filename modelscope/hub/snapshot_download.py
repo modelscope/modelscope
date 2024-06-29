@@ -125,7 +125,8 @@ def snapshot_download(
 
         for model_file in model_files:
             if model_file['Type'] == 'tree' or \
-                    any([re.search(pattern, model_file['Name']) is not None for pattern in ignore_file_pattern]):
+                    any(fnmatch.fnmatch(model_file['Path'], pattern) for pattern in ignore_file_pattern) or \
+                    any(fnmatch.fnmatch(model_file['Name'], pattern) for pattern in ignore_file_pattern):
                 continue
 
             if allow_file_pattern is not None and allow_file_pattern:

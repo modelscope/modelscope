@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from starlette.routing import Route, WebSocketRoute
 
 from modelscope.server.api.routers import health, model_router
 

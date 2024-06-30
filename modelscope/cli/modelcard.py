@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import logging
 import os
 import shutil
 import tempfile
@@ -11,7 +12,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.utils.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(current_path, 'template')
@@ -29,7 +30,8 @@ class ModelCardCMD(CLICommand):
     def __init__(self, args):
         self.args = args
         self.api = HubApi()
-        self.api.login(args.access_token)
+        if args.access_token:
+            self.api.login(args.access_token)
         self.model_id = os.path.join(
             self.args.group_id, self.args.model_id
         ) if '/' not in self.args.model_id else self.args.model_id
@@ -39,12 +41,12 @@ class ModelCardCMD(CLICommand):
     def define_args(parsers: ArgumentParser):
         """ define args for create or upload modelcard command.
         """
-        parser = parsers.add_parser(ModelCardCMD.name)
+        parser = parsers.add_parser(ModelCardCMD.name, aliases=['model'])
         parser.add_argument(
             '-tk',
             '--access_token',
             type=str,
-            required=True,
+            required=False,
             help='the certification of visit ModelScope')
         parser.add_argument(
             '-act',
@@ -70,13 +72,15 @@ class ModelCardCMD(CLICommand):
             '--visibility',
             type=int,
             default=5,
-            help='the visibility of ModelScope')
+            help=
+            'the visibility of ModelScope[PRIVATE: 1, INTERNAL:3, PUBLIC:5]')
         parser.add_argument(
             '-lic',
             '--license',
             type=str,
             default='Apache License 2.0',
-            help='the license of visit ModelScope')
+            help='the license of visit ModelScope[Apache License 2.0|'
+            'GPL-2.0|GPL-3.0|LGPL-2.1|LGPL-3.0|AFL-3.0|ECL-2.0|MIT]')
         parser.add_argument(
             '-ch',
             '--chinese_name',

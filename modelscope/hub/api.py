@@ -18,7 +18,6 @@ from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import json
-import pandas as pd
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
@@ -820,6 +819,8 @@ class HubApi:
         """
         import hashlib
         from tqdm import tqdm
+        import pandas as pd
+
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
             os.remove(out_path)
@@ -1086,6 +1087,7 @@ class ModelScopeConfig:
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'
     USER_SESSION_ID_FILE_NAME = 'session'
+    cookie_expired_warning = False
 
     @staticmethod
     def make_sure_credential_path_exist():
@@ -1107,7 +1109,8 @@ class ModelScopeConfig:
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
-                    if cookie.is_expired():
+                    if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
+                        ModelScopeConfig.cookie_expired_warning = True
                         logger.warning(
                             'Authentication has expired, '
                             'please re-login if you need to access private models or datasets.')

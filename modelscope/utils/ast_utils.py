@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import logging
 import os
 import os.path as osp
 import time
@@ -10,10 +11,8 @@ from functools import reduce
 from pathlib import Path
 from typing import Union
 
-import gast
 import json
 
-from modelscope.fileio.file import LocalStorage
 # do not delete
 from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
@@ -23,8 +22,7 @@ from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
-logger = get_logger()
-storage = LocalStorage()
+logger = get_logger(log_level=logging.WARNING)
 p = Path(__file__)
 
 # get the path of package 'modelscope'
@@ -361,8 +359,7 @@ class AstScanning(object):
         with open(file, 'r', encoding='utf8') as code:
             data = code.readlines()
         data = ''.join(data)
-
-        node = gast.parse(data)
+        node = ast.parse(data)
         output = self.scan_import(node, show_offsets=False)
         output[DECORATOR_KEY] = self.parse_decorators(output[DECORATOR_KEY])
         output[EXPRESS_KEY] = self.parse_decorators(output[EXPRESS_KEY])
@@ -574,6 +571,25 @@ class FilesAstScanning(object):
 file_scanner = FilesAstScanning()
 
 
+def ensure_write(obj: bytes, filepath: Union[str, Path]) -> None:
+    """Write data to a given ``filepath`` with 'wb' mode.
+
+    Note:
+        ``write`` will create a directory if the directory of ``filepath``
+        does not exist.
+
+    Args:
+        obj (bytes): Data to be written.
+        filepath (str or Path): Path to write data.
+    """
+    dirname = os.path.dirname(filepath)
+    if dirname and not os.path.exists(dirname):
+        os.makedirs(dirname, exist_ok=True)
+
+    with open(filepath, 'wb') as f:
+        f.write(obj)
+
+
 def _save_index(index, file_path, file_list=None, with_template=False):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
@@ -586,7 +602,7 @@ def _save_index(index, file_path, file_list=None, with_template=False):
     if with_template:
         json_index = json_index.replace(MODELSCOPE_PATH.as_posix(),
                                         TEMPLATE_PATH)
-    storage.write(json_index.encode(), file_path)
+    ensure_write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
         ast.literal_eval(k): v
         for k, v in index[INDEX_KEY].items()
@@ -594,7 +610,8 @@ def _save_index(index, file_path, file_list=None, with_template=False):
 
 
 def _load_index(file_path, with_template=False):
-    bytes_index = storage.read(file_path)
+    with open(file_path, 'rb') as f:
+        bytes_index = f.read()
     if with_template:
         bytes_index = bytes_index.decode().replace(TEMPLATE_PATH,
                                                    MODELSCOPE_PATH.as_posix())

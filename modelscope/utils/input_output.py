@@ -8,12 +8,9 @@ from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
 
-import cv2
 import json
 import numpy as np
 
-from modelscope.hub.api import HubApi
-from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
 from modelscope.outputs.outputs import (TASK_OUTPUTS, OutputKeys, OutputTypes,
                                         OutputTypeSchema)
@@ -714,6 +711,7 @@ def service_base64_input_to_pipeline_input(task_name, body):
 
 
 def encode_numpy_image_to_base64(image):
+    import cv2
     _, img_encode = cv2.imencode('.png', image)
     bytes_data = img_encode.tobytes()
     base64_str = str(base64.b64encode(bytes_data), 'utf-8')

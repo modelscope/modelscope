@@ -6,6 +6,8 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 import torch
 import torch.distributed as dist
+import transformers
+from packaging import version
 from torch import nn
 from transformers import PreTrainedModel
 from transformers.generation import GreedySearchDecoderOnlyOutput  # noqa
@@ -173,16 +175,24 @@ class PretrainedModelStreamingOutputMixin(StreamingOutputMixin):
 
     @contextmanager
     def _replace_generate(self, model: PreTrainedModel) -> Generator:
-        greedy_search = model.greedy_search
-        sample = model.sample
-        model.greedy_search = types.MethodType(self._greedy_search, model)
-        model.sample = types.MethodType(self._sample, model)
+        if version.parse(transformers.__version__) >= version.parse('4.39.0'):
+            greedy_search_name = '_greedy_search'
+            sample_name = '_sample'
+        else:
+            greedy_search_name = 'greedy_search'
+            sample_name = 'sample'
+        origin_greedy_search = getattr(model, greedy_search_name)
+        origin_sample = getattr(model, sample_name)
+        setattr(model, greedy_search_name,
+                types.MethodType(self.stream_greedy_search, model))
+        setattr(model, sample_name, types.MethodType(self.stream_sample,
+                                                     model))
         yield
-        model.greedy_search = greedy_search
-        model.sample = sample
+        setattr(model, greedy_search_name, origin_greedy_search)
+        setattr(model, sample_name, origin_sample)
 
     @staticmethod
-    def _greedy_search(
+    def stream_greedy_search(
         self,
         input_ids: torch.LongTensor,
         logits_processor: Optional[LogitsProcessorList] = None,
@@ -356,7 +366,7 @@ class PretrainedModelStreamingOutputMixin(StreamingOutputMixin):
                 break
 
     @staticmethod
-    def _sample(
+    def stream_sample(
         self,
         input_ids: torch.LongTensor,
         logits_processor: Optional[LogitsProcessorList] = None,

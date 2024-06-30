@@ -1,9 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 from contextlib import contextmanager
+from threading import Lock
 from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union
 
 import json
+import numpy as np
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
@@ -18,7 +20,7 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
 from modelscope.utils.config import Config
 from modelscope.utils.constant import Frameworks, Invoke, ModelFile, Tasks
-from modelscope.utils.device import device_placement
+from modelscope.utils.device import create_device, device_placement
 from modelscope.utils.logger import get_logger
 from modelscope.utils.model_type_helper import ModelTypeHelper
 from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
@@ -26,6 +28,8 @@ from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
                                                add_stream_generate)
 
 logger = get_logger()
+
+SWIFT_MODEL_ID_MAPPING = {}
 
 
 class LLMAdapterRegistry:
@@ -79,6 +83,8 @@ class LLMAdapterRegistry:
 class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def initiate_single_model(self, model):
+        from swift import Swift
+
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
         if self._is_swift_model(model):
@@ -86,7 +92,6 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 logger.warning(
                     f'Cannot using swift with llm_framework, ignoring {self.llm_framework}.'
                 )
-            from swift import Swift
 
             base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
             assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
@@ -170,6 +175,10 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             self.device_map = 'cuda'
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
+
+        if llm_framework == 'swift':
+            self._init_swift(kwargs['model'], kwargs.get('device', 'gpu'))
+            return
         with self._temp_configuration_file(kwargs):
             super().__init__(*args, **kwargs)
         if isinstance(self.model, PreTrainedModel):
@@ -195,6 +204,69 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.tokenizer = self._get_tokenizer(
             tokenizer_class) if tokenizer is None else tokenizer
 
+    def _init_swift(self, model_id, device) -> None:
+        from swift.llm import prepare_model_template
+        from swift.llm.utils import MODEL_MAPPING, InferArguments
+
+        global SWIFT_MODEL_ID_MAPPING
+        if not SWIFT_MODEL_ID_MAPPING:
+            SWIFT_MODEL_ID_MAPPING = {
+                v['model_id_or_path']: k
+                for k, v in MODEL_MAPPING.items()
+            }
+
+        def format_messages(messages: Dict[str, List[Dict[str, str]]],
+                            tokenizer: PreTrainedTokenizer,
+                            **kwargs) -> Dict[str, torch.Tensor]:
+            inputs, _ = self.template.encode(get_example(messages))
+            inputs.pop('labels', None)
+            if 'input_ids' in inputs:
+                input_ids = torch.tensor(inputs['input_ids'])[None]
+                inputs['input_ids'] = input_ids
+                token_len = input_ids.shape[1]
+            if 'inputs_embeds' in inputs:
+                inputs_embeds = inputs['inputs_embeds'][None]
+                inputs['inputs_embeds'] = inputs_embeds
+                token_len = inputs_embeds.shape[1]
+            inputs['attention_mask'] = torch.ones(token_len)[None]
+            if 'token_type_ids' in inputs:
+                inputs['token_type_ids'] = torch.tensor(
+                    inputs['token_type_ids'])[None]
+            return inputs
+
+        def get_example(
+                messages: Dict[str, List[Dict[str, str]]]) -> Dict[str, str]:
+            messages = messages['messages']
+            assert len(messages) > 0, 'messages cannot be empty!'
+            system = None
+            if messages[0]['role'] == 'system':
+                system = messages[0]['content']
+                messages = messages[1:]
+            assert len(messages) % 2 == 1, 'Unsupported messages format!'
+            contents = [message['content'] for message in messages]
+            prompt = contents[-1]
+            history = list(zip(contents[::2], contents[1::2]))
+            return dict(system=system, prompt=prompt, history=history)
+
+        assert model_id in SWIFT_MODEL_ID_MAPPING, 'Swift framework does not support current model!'
+        args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id])
+        model, template = prepare_model_template(
+            args, device_map=self.device_map)
+        self.model = add_stream_generate(model)
+        template.model = self.model
+        self.template = template
+        self.tokenizer = template.tokenizer
+        self.format_messages = format_messages
+
+        self.has_multiple_models = False
+        self.framework = Frameworks.torch
+        self.device_name = device
+        self.device = create_device(device)
+        self._model_prepare = False
+        self._model_prepare_lock = Lock()
+        self._auto_collate = True
+        self._compile = False
+
     @contextmanager
     def _temp_configuration_file(self, kwargs: Dict[str, Any]):
         kwargs['model'] = model = self.initiate_single_model(kwargs['model'])
@@ -217,7 +289,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, **preprocess_params)
 
-        if self.llm_framework is None:
+        if self.llm_framework in (None, 'swift'):
             # pytorch model
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)
@@ -313,6 +385,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
     def postprocess(self, outputs, **kwargs):
         is_messages = kwargs.pop('is_messages')
         if not isinstance(outputs, str):
+            shape_type = (torch.Tensor, np.ndarray)
+            if isinstance(outputs, shape_type) and len(outputs.shape) > 1:
+                outputs = outputs[0]
             response = self.tokenizer.decode(
                 outputs, skip_special_tokens=True, **kwargs)
         else:

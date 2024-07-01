@@ -36,8 +36,9 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 
 # torchmetrics==0.11.4 for ofa
 # tinycudann for cuda12.1.0 pytorch 2.1.2
+# fix pip compatible issue.
+# pip install --no-cache-dir --upgrade pip && \
 RUN if [ "$USE_GPU" = "True" ] ; then \
-    pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator bitsandbytes basicsr optimum && \
     pip install --no-cache-dir flash_attn==2.5.9.post1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir auto-gptq --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/ && \
@@ -50,8 +51,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 COPY requirements /var/modelscope
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

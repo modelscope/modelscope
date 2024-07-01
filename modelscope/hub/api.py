@@ -61,7 +61,7 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
-    def __init__(self, endpoint: Optional[str] = None):
+    def __init__(self, endpoint: Optional[str] = None, timeout=API_HTTP_CLIENT_TIMEOUT):
         """The ModelScope HubApi。
 
         Args:
@@ -86,7 +86,7 @@ class HubApi:
                 self.session, method,
                 functools.partial(
                     getattr(self.session, method),
-                    timeout=API_HTTP_CLIENT_TIMEOUT))
+                    timeout=timeout))
 
     def login(
         self,

@@ -118,10 +118,18 @@ def snapshot_download(
             ignore_file_pattern = []
         if isinstance(ignore_file_pattern, str):
             ignore_file_pattern = [ignore_file_pattern]
+        ignore_file_pattern = [
+            item if not item.endswith('/') else item + '*'
+            for item in ignore_file_pattern
+        ]
 
         if allow_file_pattern is not None:
             if isinstance(allow_file_pattern, str):
                 allow_file_pattern = [allow_file_pattern]
+            allow_file_pattern = [
+                item if not item.endswith('/') else item + '*'
+                for item in allow_file_pattern
+            ]
 
         for model_file in model_files:
             if model_file['Type'] == 'tree' or \

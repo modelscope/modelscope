@@ -2,7 +2,8 @@ accelerate
 cloudpickle
 decord>=0.6.0
 diffusers>=0.25.0
-fairseq
+# 0.12.1 has issue of No such file or directory: 'fairseq/version.txt'
+fairseq==0.12.2
 ftfy>=6.0.3
 librosa==0.10.1
 opencv-python

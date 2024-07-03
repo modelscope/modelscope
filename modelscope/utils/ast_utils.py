@@ -667,7 +667,7 @@ def __is_develop_model():
             datetime.strptime(version.__release_datetime__,
                               '%Y-%m-%d %H:%M:%S').timestamp()))
     SECONDS_PER_YEAR = 24 * 365 * 60 * 60
-    current_timestamp = int(round(datetime.datetime.now().timestamp()))
+    current_timestamp = int(round(datetime.now().timestamp()))
     if release_timestamp > current_timestamp + SECONDS_PER_YEAR:
         return True
     return False

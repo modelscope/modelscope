@@ -7,12 +7,14 @@ import os
 import os.path as osp
 import time
 import traceback
+from datetime import datetime
 from functools import reduce
 from pathlib import Path
 from typing import Union
 
 import json
 
+from modelscope import version
 # do not delete
 from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
@@ -658,6 +660,19 @@ def _update_index(index, files_mtime):
     index[REQUIREMENT_KEY].update(updated_index[REQUIREMENT_KEY])
 
 
+def __is_develop_model():
+    # use the trick of release time check is in development
+    release_timestamp = int(
+        round(
+            datetime.strptime(version.__release_datetime__,
+                              '%Y-%m-%d %H:%M:%S').timestamp()))
+    SECONDS_PER_YEAR = 24 * 365 * 60 * 60
+    current_timestamp = int(round(datetime.datetime.now().timestamp()))
+    if release_timestamp > current_timestamp + SECONDS_PER_YEAR:
+        return True
+    return False
+
+
 def load_index(
     file_list=None,
     force_rebuild=False,
@@ -699,51 +714,42 @@ def load_index(
     file_path = os.path.join(cache_dir, index_file)
     logger.info(f'Loading ast index from {file_path}')
     index = None
-    local_changed = False
-    if not force_rebuild and os.path.exists(file_path):
-        wrapped_index = _load_index(file_path)
-        md5, files_mtime = file_scanner.files_mtime_md5(file_list=file_list)
-        from modelscope.version import __version__
-        if (wrapped_index[VERSION_KEY] == __version__):
-            index = wrapped_index
-            if (wrapped_index[MD5_KEY] != md5):
-                local_changed = True
-    full_index_flag = False
 
-    if index is None:
-        full_index_flag = True
-    elif index and local_changed and FILES_MTIME_KEY not in index:
-        full_index_flag = True
-    elif index and local_changed and MODELSCOPE_PATH_KEY not in index:
-        full_index_flag = True
-    elif index and local_changed and index[
-            MODELSCOPE_PATH_KEY] != MODELSCOPE_PATH.as_posix():
-        full_index_flag = True
+    if force_rebuild:
+        logger.info('Force rebuilding ast index from scanning every file!')
+        index = file_scanner.get_files_scan_results(file_list)
+        return index
 
-    if full_index_flag:
-        if force_rebuild:
-            logger.info('Force rebuilding ast index from scanning every file!')
-            index = file_scanner.get_files_scan_results(file_list)
+    # when developing, we need to generator as need.
+    if __is_develop_model():
+        if os.path.exists(file_path):  # already exist, check it's latest
+            wrapped_index = _load_index(file_path)
+            md5, files_mtime = file_scanner.files_mtime_md5(
+                file_list=file_list)
+            from modelscope.version import __version__
+            if (wrapped_index[VERSION_KEY] == __version__):
+                index = wrapped_index
+                if (wrapped_index[MD5_KEY] != md5):
+                    logger.info(
+                        'Updating the files for the changes of local files, '
+                        'first time updating will take longer time! Please wait till updating done!'
+                    )
+                    _update_index(index, files_mtime)
+                    _save_index(index, file_path, file_list)
         else:
             logger.info(
-                f'No valid ast index found from {file_path}, generating ast index from prebuilt!'
+                f'No valid ast index found from {file_path}, generating ast index from scratch!'
             )
-            index = load_from_prebuilt()
-            if index is None:
-                index = file_scanner.get_files_scan_results(file_list)
-        _save_index(index, file_path, file_list)
-    elif local_changed and not full_index_flag:
+            index = file_scanner.get_files_scan_results(
+                file_list)  # generate new
+            _save_index(index, file_path, file_list)  # save to generate path.
         logger.info(
-            'Updating the files for the changes of local files, '
-            'first time updating will take longer time! Please wait till updating done!'
-        )
-        _update_index(index, files_mtime)
-        _save_index(index, file_path, file_list)
+            f'Loading done! Current index file version is {index[VERSION_KEY]}, '
+            f'with md5 {index[MD5_KEY]} and a total number of '
+            f'{len(index[INDEX_KEY])} components indexed')
+    else:  # just load the prebuild index file.
+        index = load_from_prebuilt()
 
-    logger.info(
-        f'Loading done! Current index file version is {index[VERSION_KEY]}, '
-        f'with md5 {index[MD5_KEY]} and a total number of '
-        f'{len(index[INDEX_KEY])} components indexed')
     return index
 
 

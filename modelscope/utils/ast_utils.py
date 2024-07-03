@@ -24,7 +24,6 @@ from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
-logger = get_logger(log_level=logging.WARNING)
 p = Path(__file__)
 
 # get the path of package 'modelscope'
@@ -56,6 +55,17 @@ MODULE_NAME = 'module_name'
 MODULE_CLS = 'module_cls'
 TEMPLATE_PATH = 'TEMPLATE_PATH'
 TEMPLATE_FILE = 'ast_index_file.py'
+
+
+def get_ast_logger():
+    _logger = get_logger()
+    ast_logger = logging.getLogger('modelscope.ast')
+    for handler in _logger.handlers:
+        ast_logger.addHandler(handler)
+    return ast_logger
+
+
+logger = get_ast_logger()
 
 
 class AstScanning(object):

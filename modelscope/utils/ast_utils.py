@@ -726,9 +726,9 @@ def load_index(
             wrapped_index = _load_index(file_path)
             md5, files_mtime = file_scanner.files_mtime_md5(
                 file_list=file_list)
+            index = wrapped_index
             from modelscope.version import __version__
             if (wrapped_index[VERSION_KEY] == __version__):
-                index = wrapped_index
                 if (wrapped_index[MD5_KEY] != md5):
                     logger.info(
                         'Updating the files for the changes of local files, '

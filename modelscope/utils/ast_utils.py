@@ -728,14 +728,15 @@ def load_index(
                 file_list=file_list)
             index = wrapped_index
             from modelscope.version import __version__
-            if (wrapped_index[VERSION_KEY] == __version__):
-                if (wrapped_index[MD5_KEY] != md5):
-                    logger.info(
-                        'Updating the files for the changes of local files, '
-                        'first time updating will take longer time! Please wait till updating done!'
-                    )
-                    _update_index(index, files_mtime)
-                    _save_index(index, file_path, file_list)
+            if (wrapped_index[VERSION_KEY] == __version__
+                    and wrapped_index[MD5_KEY] != md5) or \
+                    wrapped_index[VERSION_KEY] != __version__:
+                logger.info(
+                    'Updating the files for the changes of local files, '
+                    'first time updating will take longer time! Please wait till updating done!'
+                )
+                _update_index(index, files_mtime)
+                _save_index(index, file_path, file_list)
         else:
             logger.info(
                 f'No valid ast index found from {file_path}, generating ast index from scratch!'

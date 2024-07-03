@@ -21,10 +21,8 @@ from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
 from modelscope.utils.file_utils import get_modelscope_cache_dir
-from modelscope.utils.logger import get_logger
 from modelscope.utils.registry import default_group
 
-logger = get_logger(log_level=logging.WARNING)
 p = Path(__file__)
 
 # get the path of package 'modelscope'
@@ -56,6 +54,15 @@ MODULE_NAME = 'module_name'
 MODULE_CLS = 'module_cls'
 TEMPLATE_PATH = 'TEMPLATE_PATH'
 TEMPLATE_FILE = 'ast_index_file.py'
+
+
+def get_ast_logger():
+    ast_logger = logging.getLogger('modelscope.ast')
+    ast_logger.setLevel(logging.INFO)
+    return ast_logger
+
+
+logger = get_ast_logger()
 
 
 class AstScanning(object):
@@ -712,7 +719,6 @@ def load_index(
     cache_dir = os.getenv('MODELSCOPE_CACHE', indexer_file_dir)
     index_file = os.getenv('MODELSCOPE_INDEX_FILE', indexer_file)
     file_path = os.path.join(cache_dir, index_file)
-    logger.info(f'Loading ast index from {file_path}')
     index = None
 
     if force_rebuild:
@@ -722,6 +728,7 @@ def load_index(
 
     # when developing, we need to generator as need.
     if __is_develop_model():
+        logger.info(f'Loading ast index from {file_path}')
         if os.path.exists(file_path):  # already exist, check it's latest
             wrapped_index = _load_index(file_path)
             md5, files_mtime = file_scanner.files_mtime_md5(

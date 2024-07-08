@@ -76,6 +76,8 @@ class CVTasks(object):
     image_local_feature_matching = 'image-local-feature-matching'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
 
+    human_normal_estimation = 'human-normal-estimation'
+
     crowd_counting = 'crowd-counting'
 
     # image editing

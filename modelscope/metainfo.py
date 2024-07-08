@@ -58,6 +58,7 @@ class Models(object):
     s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
     raft_dense_optical_flow_estimation = 'raft-dense-optical-flow-estimation'
+    human_normal_estimation = "human-normal-estimation"
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
     fer = 'fer'
@@ -480,6 +481,7 @@ class Pipelines(object):
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
     self_supervised_depth_completion = 'self-supervised-depth-completion'
+    human_normal_estimation = 'human-normal-estimation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -814,6 +816,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_normal_estimation:
     (Pipelines.image_normal_estimation,
      'Damo_XR_Lab/cv_omnidata_image-normal-estimation_normal'),
+    Tasks.human_normal_estimation:
+    (Pipelines.human_normal_estimation,
+    'Damo_XR_Lab/cv_human_monocular-normal-estimation'),
     Tasks.indoor_layout_estimation:
     (Pipelines.indoor_layout_estimation,
      'damo/cv_panovit_indoor-layout-estimation'),

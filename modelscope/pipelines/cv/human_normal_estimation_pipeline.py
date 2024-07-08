@@ -1,16 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
-import cv2
 import numpy as np
-import torch
 from PIL import Image
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input, Model, Pipeline
+from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 

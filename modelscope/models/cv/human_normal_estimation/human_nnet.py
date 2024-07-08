@@ -1,18 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 
-import cv2
 import numpy as np
 import torch
 import torchvision.transforms as T
-
-from PIL import Image
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.models.cv.human_normal_estimation.networks import nnet, config
 
 
@@ -23,9 +20,8 @@ class HumanNormalEstimation(TorchModel):
     def __init__(self, model_dir: str, **kwargs):
         super().__init__(model_dir, **kwargs)
         config_file = os.path.join(model_dir, 'config.txt')
-        args = config.get_args(test=True, txt_file=config_file)
+        args = config.get_args(txt_file=config_file)
         args.encoder_path = os.path.join(model_dir, args.encoder_path)
-        print('+++ get args from ', config_file, args.encoder_path)
 
         self.device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
         self.nnet = nnet.NormalNet(args=args).to(self.device)
@@ -58,8 +54,8 @@ class HumanNormalEstimation(TorchModel):
         cy = (img_w / 2.0) - 0.5
 
         intrins = torch.tensor([
-            [fx, 0, cx],
-            [0, fy, cy],
+            [fx, 0, cx + 0.5],
+            [0, fy, cy + 0.5],
             [0, 0, 1]
         ], dtype=torch.float32, device=self.device).unsqueeze(0)
 

@@ -8,9 +8,9 @@ import torchvision.transforms as T
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.models.cv.human_normal_estimation.networks import nnet, config
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import Tasks
-from modelscope.models.cv.human_normal_estimation.networks import nnet, config
 
 
 @MODELS.register_module(

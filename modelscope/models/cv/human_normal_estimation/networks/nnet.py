@@ -3,8 +3,9 @@ import sys
 import torch
 import torch.nn as nn
 
-from .submodules import Encoder, UpSampleBN, UpSampleGN, upsample_via_bilinear, upsample_via_mask, \
-    get_prediction_head, normal_activation, get_pixel_coords
+from .submodules import Encoder, get_pixel_coords, get_prediction_head, normal_activation, \
+    UpSampleBN, UpSampleGN, upsample_via_bilinear, upsample_via_mask
+
 
 PROJECT_DIR = os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
 sys.path.append(PROJECT_DIR)

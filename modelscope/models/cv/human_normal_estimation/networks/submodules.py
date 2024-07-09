@@ -1,9 +1,10 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import geffnet
 
-import numpy as np
 
 INPUT_CHANNELS_DICT = {
     0: [1280, 112, 40, 24, 16],
@@ -112,7 +113,8 @@ def upsample_via_bilinear(out, up_mask=None, downsample_ratio=None):
 
 
 def upsample_via_mask(out, up_mask, downsample_ratio, padding='zero'):
-    """ convex upsampling
+    """
+    convex upsampling
     """
     # out: low-resolution output (B, o_dim, H, W)
     # up_mask: (B, 9*k*k, H, W)

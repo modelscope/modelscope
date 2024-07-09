@@ -86,7 +86,7 @@ class HumanNormalEstimationPipeline(Pipeline):
         normals = results[OutputKeys.NORMALS]
 
         normals_vis = (((normals + 1) * 0.5) * 255).astype(np.uint8)
-        normals_vis = normals_vis[...,[2,1,0]]
+        normals_vis = normals_vis[..., [2, 1, 0]]
         outputs = {
             OutputKeys.NORMALS: normals,
             OutputKeys.NORMALS_COLOR: normals_vis

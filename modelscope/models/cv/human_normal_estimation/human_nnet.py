@@ -23,7 +23,7 @@ class HumanNormalEstimation(TorchModel):
         args = config.get_args(txt_file=config_file)
         args.encoder_path = os.path.join(model_dir, args.encoder_path)
 
-        self.device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        self.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
         self.nnet = nnet.NormalNet(args=args).to(self.device)
         self.nnet_path = os.path.join(model_dir, 'ckpt/best_nnet.pt')
         if os.path.exists(self.nnet_path):

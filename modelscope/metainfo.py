@@ -58,7 +58,7 @@ class Models(object):
     s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
     raft_dense_optical_flow_estimation = 'raft-dense-optical-flow-estimation'
-    human_normal_estimation = "human-normal-estimation"
+    human_normal_estimation = 'human-normal-estimation'
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
     fer = 'fer'
@@ -818,7 +818,7 @@ DEFAULT_MODEL_FOR_PIPELINE = {
      'Damo_XR_Lab/cv_omnidata_image-normal-estimation_normal'),
     Tasks.human_normal_estimation:
     (Pipelines.human_normal_estimation,
-    'Damo_XR_Lab/cv_human_monocular-normal-estimation'),
+     'Damo_XR_Lab/cv_human_monocular-normal-estimation'),
     Tasks.indoor_layout_estimation:
     (Pipelines.indoor_layout_estimation,
      'damo/cv_panovit_indoor-layout-estimation'),

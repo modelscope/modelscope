@@ -1,8 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import os.path
 import unittest
 
-import os
 import cv2
 
 from modelscope.outputs import OutputKeys

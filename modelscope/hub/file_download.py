@@ -79,7 +79,7 @@ def model_file_download(
             if some parameter value is invalid
     """
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
-        model_id, local_dir, cache_dir)
+        model_id, local_dir, cache_dir, get_model_cache_root())
 
     # if local_files_only is `True` and the file already exists in cached_path
     # return the cached path
@@ -163,14 +163,15 @@ def model_file_download(
 
 
 def create_temporary_directory_and_cache(model_id: str, local_dir: str,
-                                         cache_dir: str):
+                                         cache_dir: str,
+                                         default_cache_root: str):
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     if local_dir is not None:
         temporary_cache_dir = os.path.join(local_dir, TEMPORARY_FOLDER_NAME)
         cache = ModelFileSystemCache(local_dir)
     else:
         if cache_dir is None:
-            cache_dir = get_model_cache_root()
+            cache_dir = default_cache_root
         if isinstance(cache_dir, Path):
             cache_dir = str(cache_dir)
         temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,
@@ -269,6 +270,7 @@ def parallel_download(
     PART_SIZE = 160 * 1024 * 1024  # every part is 160M
     tasks = []
     file_path = os.path.join(local_dir, file_name)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     for idx in range(int(file_size / PART_SIZE)):
         start = idx * PART_SIZE
         end = (idx + 1) * PART_SIZE - 1
@@ -323,6 +325,7 @@ def http_get_model_file(
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     temp_file_path = os.path.join(local_dir, file_name)
+    os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
     logger.debug('downloading %s to %s', url, temp_file_path)
     # retry sleep 0.5s, 1s, 2s, 4s
     retry = Retry(
@@ -349,7 +352,7 @@ def http_get_model_file(
                 break
             get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
                                                     file_size - 1)
-            with open(temp_file_path, 'ab') as f:
+            with open(temp_file_path, 'ab+') as f:
                 r = requests.get(
                     url,
                     stream=True,

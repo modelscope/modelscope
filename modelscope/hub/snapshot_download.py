@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
+from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
 from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
                         MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
@@ -71,7 +72,7 @@ def snapshot_download(
         if some parameter value is invalid
     """
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
-        model_id, local_dir, cache_dir)
+        model_id, local_dir, cache_dir, get_model_cache_root())
 
     if local_files_only:
         if len(cache.cached_files) == 0:

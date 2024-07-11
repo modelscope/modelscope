@@ -5,6 +5,8 @@ import enum
 class Fields(object):
     """ Names for different application fields
     """
+    hub = 'hub'
+    datasets = 'datasets'
     framework = 'framework'
     cv = 'cv'
     nlp = 'nlp'

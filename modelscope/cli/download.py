@@ -3,6 +3,8 @@
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.hub.dataset_download import (dataset_file_download,
+                                             dataset_snapshot_download)
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.snapshot_download import snapshot_download
 
@@ -24,11 +26,17 @@ class DownloadCMD(CLICommand):
         """ define args for download command.
         """
         parser: ArgumentParser = parsers.add_parser(DownloadCMD.name)
-        parser.add_argument(
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument(
             '--model',
             type=str,
-            required=True,
-            help='The model id to be downloaded.')
+            help='The model id to be downloaded, model or dataset must provide.'
+        )
+        group.add_argument(
+            '--dataset',
+            type=str,
+            help=
+            'The dataset id to be downloaded, model or dataset must provide.')
         parser.add_argument(
             '--revision',
             type=str,
@@ -69,27 +77,55 @@ class DownloadCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        if len(self.args.files) == 1:  # download single file
-            model_file_download(
-                self.args.model,
-                self.args.files[0],
-                cache_dir=self.args.cache_dir,
-                local_dir=self.args.local_dir,
-                revision=self.args.revision)
-        elif len(self.args.files) > 1:  # download specified multiple files.
-            snapshot_download(
-                self.args.model,
-                revision=self.args.revision,
-                cache_dir=self.args.cache_dir,
-                local_dir=self.args.local_dir,
-                allow_file_pattern=self.args.files,
-            )
-        else:  # download repo
-            snapshot_download(
-                self.args.model,
-                revision=self.args.revision,
-                cache_dir=self.args.cache_dir,
-                local_dir=self.args.local_dir,
-                allow_file_pattern=self.args.include,
-                ignore_file_pattern=self.args.exclude,
-            )
+        if self.args.model is not None:
+            if len(self.args.files) == 1:  # download single file
+                model_file_download(
+                    self.args.model,
+                    self.args.files[0],
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    revision=self.args.revision)
+            elif len(
+                    self.args.files) > 1:  # download specified multiple files.
+                snapshot_download(
+                    self.args.model,
+                    revision=self.args.revision,
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    allow_file_pattern=self.args.files,
+                )
+            else:  # download repo
+                snapshot_download(
+                    self.args.model,
+                    revision=self.args.revision,
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    allow_file_pattern=self.args.include,
+                    ignore_file_pattern=self.args.exclude,
+                )
+        else:
+            if len(self.args.files) == 1:  # download single file
+                dataset_file_download(
+                    self.args.dataset,
+                    self.args.files[0],
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    revision=self.args.revision)
+            elif len(
+                    self.args.files) > 1:  # download specified multiple files.
+                dataset_snapshot_download(
+                    self.args.dataset,
+                    revision=self.args.revision,
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    allow_file_pattern=self.args.files,
+                )
+            else:  # download repo
+                dataset_snapshot_download(
+                    self.args.dataset,
+                    revision=self.args.revision,
+                    cache_dir=self.args.cache_dir,
+                    local_dir=self.args.local_dir,
+                    allow_file_pattern=self.args.include,
+                    ignore_file_pattern=self.args.exclude,
+                )

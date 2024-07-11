@@ -53,9 +53,33 @@ def get_model_cache_root() -> str:
     """Get model cache root path.
 
     Returns:
-        str: the modelscope cache root.
+        str: the model cache root.
     """
     return os.path.join(get_modelscope_cache_dir(), 'hub')
+
+
+def get_dataset_cache_root() -> str:
+    """Get dataset raw file cache root path.
+
+    Returns:
+        str: the dataset raw file cache root.
+    """
+    return os.path.join(get_modelscope_cache_dir(), 'datasets')
+
+
+def get_dataset_cache_dir(dataset_id: str) -> str:
+    """Get the dataset_id's path.
+       dataset_cache_root/dataset_id.
+
+    Args:
+        dataset_id (str): The dataset id.
+
+    Returns:
+        str: The dataset_id's cache root path.
+    """
+    dataset_root = get_dataset_cache_root()
+    return dataset_root if dataset_id is None else os.path.join(
+        dataset_root, dataset_id + '/')
 
 
 def get_model_cache_dir(model_id: str) -> str:

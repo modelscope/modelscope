@@ -153,9 +153,9 @@ def datahub_raise_on_error(url, rsp, http_response: requests.Response):
     if rsp.get('Code') == HTTPStatus.OK:
         return True
     else:
-        request_id = get_request_id(http_response)
+        request_id = rsp['RequestId']
         raise RequestError(
-            f"Url = {url}, Request id={request_id} Message = {rsp.get('Message')},\
+            f"Url = {url}, Request id={request_id} Code = {rsp['Code']} Message = {rsp['Message']},\
                 Please specify correct dataset_name and namespace.")
 
 

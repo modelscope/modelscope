@@ -53,7 +53,7 @@ def get_model_cache_root() -> str:
     """Get model cache root path.
 
     Returns:
-        str: the model cache root.
+        str: the modelscope model cache root.
     """
     return os.path.join(get_modelscope_cache_dir(), 'hub')
 
@@ -62,7 +62,7 @@ def get_dataset_cache_root() -> str:
     """Get dataset raw file cache root path.
 
     Returns:
-        str: the dataset raw file cache root.
+        str: the modelscope dataset raw file cache root.
     """
     return os.path.join(get_modelscope_cache_dir(), 'datasets')
 

@@ -109,3 +109,61 @@ class DownloadDatasetTest(unittest.TestCase):
             file_modify_time2 = os.path.getmtime(
                 os.path.join(dataset_cache_path2, file_path))
             assert file_modify_time == file_modify_time2
+
+        #  test download with wild pattern, ignore_file_pattern
+        with tempfile.TemporaryDirectory() as temp_cache_dir:
+            #  first download to cache.
+            dataset_cache_path = dataset_snapshot_download(
+                dataset_id=dataset_id,
+                cache_dir=temp_cache_dir,
+                ignore_file_pattern='*.jpeg')
+            assert dataset_cache_path == os.path.join(temp_cache_dir,
+                                                      dataset_id)
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, deep_file_path))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, '111/shijian.jpeg'))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id,
+                             '111/222/shijian.jpeg'))
+            assert os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, file_path))
+
+        #  test download with wild pattern, allow_file_pattern
+        with tempfile.TemporaryDirectory() as temp_cache_dir:
+            #  first download to cache.
+            dataset_cache_path = dataset_snapshot_download(
+                dataset_id=dataset_id,
+                cache_dir=temp_cache_dir,
+                allow_file_pattern='*.jpeg')
+            assert dataset_cache_path == os.path.join(temp_cache_dir,
+                                                      dataset_id)
+            assert os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, deep_file_path))
+            assert os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, '111/shijian.jpeg'))
+            assert os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id,
+                             '111/222/shijian.jpeg'))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, file_path))
+
+        # test download with wild pattern, allow_file_pattern and ignore file pattern.
+        with tempfile.TemporaryDirectory() as temp_cache_dir:
+            #  first download to cache.
+            dataset_cache_path = dataset_snapshot_download(
+                dataset_id=dataset_id,
+                cache_dir=temp_cache_dir,
+                ignore_file_pattern='*.jpeg',
+                allow_file_pattern='*.xxx')
+            assert dataset_cache_path == os.path.join(temp_cache_dir,
+                                                      dataset_id)
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, deep_file_path))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, '111/shijian.jpeg'))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id,
+                             '111/222/shijian.jpeg'))
+            assert not os.path.exists(
+                os.path.join(temp_cache_dir, dataset_id, file_path))

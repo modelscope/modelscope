@@ -30,13 +30,13 @@ class DownloadCMD(CLICommand):
         group.add_argument(
             '--model',
             type=str,
-            help='The model id to be downloaded, model or dataset must provide.'
-        )
+            help='The id of the model to be downloaded. For download, '
+            'the id of either a model or dataset must be provided.')
         group.add_argument(
             '--dataset',
             type=str,
-            help=
-            'The dataset id to be downloaded, model or dataset must provide.')
+            help='The id of the dataset to be downloaded. For download, '
+            'the id of either a model or dataset must be provided.')
         parser.add_argument(
             '--revision',
             type=str,
@@ -77,7 +77,7 @@ class DownloadCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        if self.args.model is not None:
+        if self.args.model:
             if len(self.args.files) == 1:  # download single file
                 model_file_download(
                     self.args.model,
@@ -103,7 +103,7 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
                 )
-        else:
+        elif self.args.dataset:
             if len(self.args.files) == 1:  # download single file
                 dataset_file_download(
                     self.args.dataset,
@@ -129,3 +129,5 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
                 )
+        else:
+            pass  # noop

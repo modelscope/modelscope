@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from .hub.api import HubApi
     from .hub.check_model import check_local_model_is_latest, check_model_is_id
     from .hub.push_to_hub import push_to_hub, push_to_hub_async
-    from .hub.snapshot_download import snapshot_download
+    from .hub.snapshot_download import snapshot_download, dataset_snapshot_download
+    from .hub.file_download import model_file_download, dataset_file_download
+
     from .metrics import (
         AccuracyMetric, AudioNoiseMetric, BleuMetric, ImageColorEnhanceMetric,
         ImageColorizationMetric, ImageDenoiseMetric, ImageInpaintingMetric,
@@ -59,7 +61,9 @@ else:
             'TorchModelExporter',
         ],
         'hub.api': ['HubApi'],
-        'hub.snapshot_download': ['snapshot_download'],
+        'hub.snapshot_download':
+        ['snapshot_download', 'dataset_snapshot_download'],
+        'hub.file_download': ['model_file_download', 'dataset_file_download'],
         'hub.push_to_hub': ['push_to_hub', 'push_to_hub_async'],
         'hub.check_model':
         ['check_model_is_id', 'check_local_model_is_latest'],

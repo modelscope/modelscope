@@ -196,7 +196,7 @@ if __name__ == '__main__':
     # add framework dependencies to every field
     for field, requires in extra_requires.items():
         if field not in [
-                'server', 'framework'
+                'server', 'framework', 'hub', 'datasets'
         ]:  # server need install model's field dependencies before.
             extra_requires[field] = framework_requires + extra_requires[field]
     extra_requires['all'] = all_requires

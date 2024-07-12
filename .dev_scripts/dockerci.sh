@@ -14,6 +14,7 @@ echo "PR modified files: $PR_CHANGED_FILES"
 PR_CHANGED_FILES=${PR_CHANGED_FILES//[ ]/#}
 echo "PR_CHANGED_FILES: $PR_CHANGED_FILES"
 idx=0
+sleep 65
 for gpu in $gpus
 do
   exec {lock_fd}>"/tmp/gpu$gpu" || exit 1

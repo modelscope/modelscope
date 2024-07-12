@@ -3,10 +3,10 @@
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
-from modelscope.hub.dataset_download import (dataset_file_download,
-                                             dataset_snapshot_download)
-from modelscope.hub.file_download import model_file_download
-from modelscope.hub.snapshot_download import snapshot_download
+from modelscope.hub.file_download import (dataset_file_download,
+                                          model_file_download)
+from modelscope.hub.snapshot_download import (dataset_snapshot_download,
+                                              snapshot_download)
 
 
 def subparser_func(args):

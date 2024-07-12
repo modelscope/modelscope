@@ -258,7 +258,6 @@ def _snapshot_download(
             ]
 
         for repo_file in repo_files:
-            print(repo_file)
             if repo_file['Type'] == 'tree' or \
                     any([fnmatch.fnmatch(repo_file['Path'], pattern) for pattern in ignore_file_pattern]) or \
                     any([re.search(pattern, repo_file['Name']) is not None for pattern in ignore_regex_pattern]):  # noqa E501

@@ -119,6 +119,7 @@ def dataset_snapshot_download(
         cookies (CookieJar, optional): The cookie of the request, default None.
         ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
             Any file pattern to be ignored in downloading, like exact file names or file extensions.
+            Use regression is deprecated.
         allow_file_pattern (`str` or `List`, *optional*, default to `None`):
             Any file pattern to be downloading, like exact file names or file extensions.
     Raises:
@@ -241,6 +242,12 @@ def _snapshot_download(
             item if not item.endswith('/') else item + '*'
             for item in ignore_file_pattern
         ]
+        ignore_regex_pattern = []
+        for file_pattern in ignore_file_pattern:
+            if file_pattern.startswith('*'):
+                ignore_regex_pattern.append('.' + file_pattern)
+            else:
+                ignore_regex_pattern.append(file_pattern)
 
         if allow_file_pattern is not None:
             if isinstance(allow_file_pattern, str):
@@ -251,9 +258,10 @@ def _snapshot_download(
             ]
 
         for repo_file in repo_files:
+            print(repo_file)
             if repo_file['Type'] == 'tree' or \
-                    any(fnmatch.fnmatch(repo_file['Path'], pattern) for pattern in ignore_file_pattern) or \
-                    any([re.search(re.escape(pattern), repo_file['Name']) is not None for pattern in ignore_file_pattern]):  # noqa E501
+                    any([fnmatch.fnmatch(repo_file['Path'], pattern) for pattern in ignore_file_pattern]) or \
+                    any([re.search(pattern, repo_file['Name']) is not None for pattern in ignore_regex_pattern]):  # noqa E501
                 continue
 
             if allow_file_pattern is not None and allow_file_pattern:

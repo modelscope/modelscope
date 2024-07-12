@@ -76,6 +76,7 @@ class HubApi:
             connect=2,
             backoff_factor=1,
             status_forcelist=(500, 502, 503, 504),
+            respect_retry_after_header=False,
         )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)

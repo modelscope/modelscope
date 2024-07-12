@@ -12,7 +12,7 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import http_get_model_file
 
 
-class HubOperationTest(unittest.TestCase):
+class HubRetryTest(unittest.TestCase):
 
     def setUp(self):
         self.api = HubApi()
@@ -56,6 +56,8 @@ class HubOperationTest(unittest.TestCase):
         rsp.msg = HTTPMessage()
         rsp.read = get_content
         rsp.chunked = False
+        rsp.length_remaining = 0
+        rsp.headers = {}
         # retry 2 times and success.
         getconn_mock.return_value.getresponse.side_effect = [
             Mock(status=500, msg=HTTPMessage()),
@@ -88,16 +90,18 @@ class HubOperationTest(unittest.TestCase):
         success_rsp = HTTPResponse(getconn_mock)
         success_rsp.status = 200
         success_rsp.msg = HTTPMessage()
-        success_rsp.msg.add_header('Content-Length', '2957783')
         success_rsp.read = get_content
         success_rsp.chunked = True
+        success_rsp.length_remaining = 0
+        success_rsp.headers = {'Content-Length': '2957783'}
 
         failed_rsp = HTTPResponse(getconn_mock)
         failed_rsp.status = 502
         failed_rsp.msg = HTTPMessage()
-        failed_rsp.msg.add_header('Content-Length', '2957783')
         failed_rsp.read = get_content
         failed_rsp.chunked = True
+        success_rsp.length_remaining = 2957783
+        success_rsp.headers = {'Content-Length': '2957783'}
 
         # retry 5 times and success.
         getconn_mock.return_value.getresponse.side_effect = [

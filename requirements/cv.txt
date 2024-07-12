@@ -25,6 +25,7 @@ imgaug>=0.4.0
 kornia>=0.5.0
 lmdb
 lpips
+matplotlib>=3.8.0
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0,<=2.28.2

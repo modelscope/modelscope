@@ -11,12 +11,8 @@ from modelscope.hub.errors import NotExistError
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 from modelscope.utils.file_utils import get_dataset_cache_root
 from modelscope.utils.logger import get_logger
-from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
-                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
-from .file_download import (create_temporary_directory_and_cache,
-                            http_get_model_file, parallel_download)
-from .utils.utils import (file_integrity_validation,
-                          model_id_to_group_owner_name)
+from .file_download import create_temporary_directory_and_cache, download_file
+from .utils.utils import model_id_to_group_owner_name
 
 logger = get_logger()
 
@@ -138,32 +134,8 @@ def dataset_file_download(
             namespace=group_or_owner,
             revision=revision)
 
-        if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta_to_download[
-                'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
-            parallel_download(
-                url,
-                temporary_cache_dir,
-                file_meta_to_download['Name'],  # TODO use Path
-                headers=headers,
-                cookies=None if cookies is None else cookies.get_dict(),
-                file_size=file_meta_to_download['Size'])
-        else:
-            http_get_model_file(
-                url,
-                temporary_cache_dir,
-                file_meta_to_download['Name'],
-                file_size=file_meta_to_download['Size'],
-                headers=headers,
-                cookies=cookies)
-
-        # check file integrity
-        temp_file = os.path.join(temporary_cache_dir,
-                                 file_meta_to_download['Name'])
-        if FILE_HASH in file_meta_to_download:
-            file_integrity_validation(temp_file,
-                                      file_meta_to_download[FILE_HASH])
-        # put file into to cache
-        return cache.put_file(file_meta_to_download, temp_file)
+        return download_file(url, file_meta_to_download, temporary_cache_dir,
+                             cache, headers, cookies)
 
 
 def dataset_snapshot_download(
@@ -299,30 +271,8 @@ def dataset_snapshot_download(
                 namespace=group_or_owner,
                 revision=revision)
 
-            if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
-                    'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
-                parallel_download(
-                    url,
-                    temporary_cache_dir,
-                    file_meta['Name'],  # TODO use Path
-                    headers=headers,
-                    cookies=None if cookies is None else cookies.get_dict(),
-                    file_size=file_meta['Size'])
-            else:
-                http_get_model_file(
-                    url,
-                    temporary_cache_dir,
-                    file_meta['Name'],
-                    file_size=file_meta['Size'],
-                    headers=headers,
-                    cookies=cookies)
-
-            # check file integrity
-            temp_file = os.path.join(temporary_cache_dir, file_meta['Name'])
-            if FILE_HASH in file_meta:
-                file_integrity_validation(temp_file, file_meta[FILE_HASH])
-            # put file into to cache
-            cache.put_file(file_meta, temp_file)
+            download_file(url, file_meta, temporary_cache_dir, cache, headers,
+                          cookies)
 
         cache.save_model_version(revision_info=revision)
         return os.path.join(cache.get_root_location())

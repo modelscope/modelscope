@@ -11,12 +11,8 @@ from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.file_utils import get_model_cache_root
 from modelscope.utils.logger import get_logger
-from .constants import (FILE_HASH, MODELSCOPE_DOWNLOAD_PARALLELS,
-                        MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB)
 from .file_download import (create_temporary_directory_and_cache,
-                            get_file_download_url, http_get_model_file,
-                            parallel_download)
-from .utils.utils import file_integrity_validation
+                            download_file, get_file_download_url)
 
 logger = get_logger()
 
@@ -157,30 +153,8 @@ def snapshot_download(
                 file_path=model_file['Path'],
                 revision=revision)
 
-            if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < model_file[
-                    'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:
-                parallel_download(
-                    url,
-                    temporary_cache_dir,
-                    model_file['Name'],
-                    headers=headers,
-                    cookies=None if cookies is None else cookies.get_dict(),
-                    file_size=model_file['Size'])
-            else:
-                http_get_model_file(
-                    url,
-                    temporary_cache_dir,
-                    model_file['Name'],
-                    file_size=model_file['Size'],
-                    headers=headers,
-                    cookies=cookies)
-
-            # check file integrity
-            temp_file = os.path.join(temporary_cache_dir, model_file['Name'])
-            if FILE_HASH in model_file:
-                file_integrity_validation(temp_file, model_file[FILE_HASH])
-            # put file into to cache
-            cache.put_file(model_file, temp_file)
+            download_file(url, model_file, temporary_cache_dir, cache, headers,
+                          cookies)
 
         cache.save_model_version(revision_info=revision_detail)
         return os.path.join(cache.get_root_location())

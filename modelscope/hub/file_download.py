@@ -134,32 +134,8 @@ def model_file_download(
 
     # we need to download again
     url_to_download = get_file_download_url(model_id, file_path, revision)
-
-    if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_to_download_info[
-            'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:
-        parallel_download(
-            url_to_download,
-            temporary_cache_dir,
-            file_path,
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict(),
-            file_size=file_to_download_info['Size'])
-    else:
-        http_get_model_file(
-            url_to_download,
-            temporary_cache_dir,
-            file_path,
-            file_size=file_to_download_info['Size'],
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict())
-
-    temp_file_path = os.path.join(temporary_cache_dir, file_path)
-    # for download with commit we can't get Sha256
-    if file_to_download_info[FILE_HASH] is not None:
-        file_integrity_validation(temp_file_path,
-                                  file_to_download_info[FILE_HASH])
-    return cache.put_file(file_to_download_info,
-                          os.path.join(temporary_cache_dir, file_path))
+    return download_file(url_to_download, file_to_download_info,
+                         temporary_cache_dir, cache, headers, cookies)
 
 
 def create_temporary_directory_and_cache(model_id: str, local_dir: str,
@@ -454,3 +430,31 @@ def http_get_file(
         logger.error(msg)
         raise FileDownloadError(msg)
     os.replace(temp_file.name, os.path.join(local_dir, file_name))
+
+
+def download_file(url, file_meta, temporary_cache_dir, cache, headers,
+                  cookies):
+    if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
+            'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
+        parallel_download(
+            url,
+            temporary_cache_dir,
+            file_meta['Path'],
+            headers=headers,
+            cookies=None if cookies is None else cookies.get_dict(),
+            file_size=file_meta['Size'])
+    else:
+        http_get_model_file(
+            url,
+            temporary_cache_dir,
+            file_meta['Path'],
+            file_size=file_meta['Size'],
+            headers=headers,
+            cookies=cookies)
+
+    # check file integrity
+    temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
+    if FILE_HASH in file_meta:
+        file_integrity_validation(temp_file, file_meta[FILE_HASH])
+    # put file into to cache
+    return cache.put_file(file_meta, temp_file)

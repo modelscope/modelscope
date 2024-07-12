@@ -14,8 +14,6 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
-from modelscope.utils.file_utils import (get_dataset_cache_root,
-                                         get_model_cache_root)
 from modelscope.utils.logger import get_logger
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)

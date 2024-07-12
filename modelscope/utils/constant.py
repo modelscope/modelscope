@@ -493,6 +493,9 @@ class Frameworks(object):
     kaldi = 'kaldi'
 
 
+REPO_TYPE_MODEL = 'model'
+REPO_TYPE_DATASET = 'dataset'
+REPO_TYPE_SUPPORT = [REPO_TYPE_MODEL, REPO_TYPE_DATASET]
 DEFAULT_MODEL_REVISION = None
 MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'

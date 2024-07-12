@@ -5,8 +5,8 @@ import tempfile
 import time
 import unittest
 
-from modelscope.hub.dataset_download import (dataset_file_download,
-                                             dataset_snapshot_download)
+from modelscope.hub.file_download import dataset_file_download
+from modelscope.hub.snapshot_download import dataset_snapshot_download
 
 
 class DownloadDatasetTest(unittest.TestCase):

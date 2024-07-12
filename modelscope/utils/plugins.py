@@ -395,7 +395,8 @@ def import_module_from_model_dir(model_dir):
     ]
     create_module_from_files(relative_file_dirs, model_dir, module_name)
     for file in relative_file_dirs:
-        submodule = module_name + '.' + file.replace('.py', '').replace(os.sep, '.')
+        submodule = module_name + '.' + file.replace('.py', '').replace(
+            os.sep, '.')
         importlib.import_module(submodule)
 
 

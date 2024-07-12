@@ -9,5 +9,4 @@ scipy
 setuptools==69.5.1
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
-transformers
 urllib3>=1.26

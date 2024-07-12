@@ -25,6 +25,7 @@ imgaug>=0.4.0
 kornia>=0.5.0
 lmdb
 lpips
+matplotlib>=3.8.0
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0,<=2.28.2
@@ -44,10 +45,11 @@ opencv-python
 paint_ldm
 pandas
 panopticapi
+Pillow>=6.2.0
 plyfile>=0.7.4
 psutil
 pyclipper
-PyMCubes
+PyMCubes<=0.1.4
 pytorch-lightning
 regex
 # <0.20.0 for compatible python3.7 python3.8

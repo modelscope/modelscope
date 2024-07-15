@@ -177,7 +177,7 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 >>> trainer.train()
 ```
 
-# 为什么要用ModelScope library
+# 为什么要用ModelScope Library
 
 1. 针对不同任务、不同模型抽象了统一简洁的用户接口，3行代码完成推理，10行代码完成模型训练，方便用户使用ModelScope社区中多个领域的不同模型，开箱即用，便于AI入门和教学。
 

@@ -40,7 +40,7 @@ from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_SUPPORTS_METADATA,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
-from datasets.utils import _datasets_server, file_utils
+from datasets.utils import file_utils
 from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        _raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
@@ -1260,8 +1260,9 @@ class DatasetsWrapperHF:
                                 path,
                                 download_config=download_config,
                                 revision=dataset_info.sha).get_module()
-                        except _datasets_server.DatasetsServerError:
-                            pass
+                        except Exception as e:
+                            logger.error(e)
+
                     # Otherwise we must use the dataset script if the user trusts it
                     return HubDatasetModuleFactoryWithScript(
                         path,

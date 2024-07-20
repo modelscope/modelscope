@@ -268,17 +268,15 @@ class MsDataset:
             return dataset_inst
         # Load from the huggingface hub
         elif hub == Hubs.huggingface:
-            dataset_inst = RemoteDataLoaderManager(
-                dataset_context_config).load_dataset(
-                    RemoteDataLoaderType.HF_DATA_LOADER)
-            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
-            if isinstance(dataset_inst, MsDataset):
-                dataset_inst._dataset_context_config = dataset_context_config
-                if custom_cfg:
-                    dataset_inst.to_custom_dataset(
-                        custom_cfg=custom_cfg, **config_kwargs)
-                    dataset_inst.is_custom = True
-            return dataset_inst
+            from datasets import load_dataset
+            return load_dataset(
+                dataset_name,
+                name=subset_name,
+                split=split,
+                streaming=use_streaming,
+                download_mode=download_mode.value,
+                **config_kwargs)
+
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
 

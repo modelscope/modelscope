@@ -36,6 +36,26 @@ class DataDownloadManager(DownloadManager):
             return cached_path(
                 url_or_filename, download_config=download_config)
 
+    def _download_single(self, url_or_filename: str,
+                         download_config: DataDownloadConfig) -> str:
+        # Note: _download_single is adapted to the datasets>=2.19.0
+
+        url_or_filename = str(url_or_filename)
+
+        oss_utilities = OssUtilities(
+            oss_config=download_config.oss_config,
+            dataset_name=download_config.dataset_name,
+            namespace=download_config.namespace,
+            revision=download_config.version)
+
+        if is_relative_path(url_or_filename):
+            # fetch oss files
+            return oss_utilities.download(
+                url_or_filename, download_config=download_config)
+        else:
+            return cached_path(
+                url_or_filename, download_config=download_config)
+
 
 class DataStreamingDownloadManager(StreamingDownloadManager):
     """The data streaming download manager."""
@@ -48,6 +68,24 @@ class DataStreamingDownloadManager(StreamingDownloadManager):
             base_path=download_config.cache_dir)
 
     def _download(self, url_or_filename: str) -> str:
+        url_or_filename = str(url_or_filename)
+        oss_utilities = OssUtilities(
+            oss_config=self.download_config.oss_config,
+            dataset_name=self.download_config.dataset_name,
+            namespace=self.download_config.namespace,
+            revision=self.download_config.version)
+
+        if is_relative_path(url_or_filename):
+            # fetch oss files
+            return oss_utilities.download(
+                url_or_filename, download_config=self.download_config)
+        else:
+            return cached_path(
+                url_or_filename, download_config=self.download_config)
+
+    def _download_single(self, url_or_filename: str) -> str:
+        # Note: _download_single is adapted to the datasets>=2.19.0
+
         url_or_filename = str(url_or_filename)
         oss_utilities = OssUtilities(
             oss_config=self.download_config.oss_config,

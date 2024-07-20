@@ -18,3 +18,6 @@ class DataDownloadConfig(DownloadConfig):
     oss_config: Optional[dict] = {}
     meta_args_map: Optional[dict] = {}
     num_proc: int = 4
+
+    def copy(self) -> 'DataDownloadConfig':
+        return self

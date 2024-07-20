@@ -98,6 +98,19 @@ class GeneralMsDatasetTest(unittest.TestCase):
         print(next(iter(ds)))
         assert next(iter(ds))
 
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_youku_mplug_dataset(self):
+        # To test the Youku-AliceMind dataset with new sdk version
+        ds = MsDataset.load(
+            'modelscope/Youku-AliceMind',
+            subset_name='classification',
+            split='validation',  # Options: train, test, validation
+            use_streaming=True)
+
+        print(next(iter(ds)))
+        assert next(iter(ds))
+
 
 if __name__ == '__main__':
     unittest.main()

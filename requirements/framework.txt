@@ -3,6 +3,7 @@ attrs
 datasets>=2.18.0,<2.21.0
 einops
 oss2
+Pillow
 python-dateutil>=2.1
 scipy
 # latest version has some compatible issue.

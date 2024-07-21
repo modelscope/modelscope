@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import os
 import unittest
 
 from modelscope import MsDataset
@@ -101,7 +102,10 @@ class GeneralMsDatasetTest(unittest.TestCase):
             use_streaming=True)
 
         logger.info(next(iter(ds)))
-        assert next(iter(ds))
+        data_sample = next(iter(ds))
+
+        assert data_sample['video_id']
+        assert os.path.exists(data_sample['video_id:FILE'])
 
 
 if __name__ == '__main__':

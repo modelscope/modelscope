@@ -7,7 +7,7 @@ import os
 import warnings
 from functools import partial
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union, Tuple, Literal
 
 from urllib.parse import urlencode
 
@@ -68,6 +68,26 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
+ExpandDatasetProperty_T = Literal[
+    'author',
+    'cardData',
+    'citation',
+    'createdAt',
+    'disabled',
+    'description',
+    'downloads',
+    'downloadsAllTime',
+    'gated',
+    'lastModified',
+    'likes',
+    'paperswithcode_id',
+    'private',
+    'siblings',
+    'sha',
+    'tags',
+]
+
+
 def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) -> str:
     url_or_filename = str(url_or_filename)
     # for temp val
@@ -97,6 +117,7 @@ def _dataset_info(
     timeout: Optional[float] = None,
     files_metadata: bool = False,
     token: Optional[Union[bool, str]] = None,
+    expand: Optional[List[ExpandDatasetProperty_T]] = None,
 ) -> HfDatasetInfo:
     """
     Get info on one specific dataset on huggingface.co.

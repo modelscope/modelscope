@@ -303,6 +303,7 @@ class MsDataset:
                         token=token,
                         streaming=use_streaming,
                         dataset_info_only=dataset_info_only,
+                        trust_remote_code=True,
                         **config_kwargs) as dataset_res:
 
                     return dataset_res

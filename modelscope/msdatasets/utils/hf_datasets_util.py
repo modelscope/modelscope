@@ -1362,5 +1362,3 @@ def load_dataset_with_ctx(*args, **kwargs):
         data_files.resolve_pattern = resolve_pattern_origin
         HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
         HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
-
-        logger.info('Context manager of ms-dataset exited.')

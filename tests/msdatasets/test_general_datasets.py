@@ -104,8 +104,8 @@ class GeneralMsDatasetTest(unittest.TestCase):
         logger.info(next(iter(ds)))
         data_sample = next(iter(ds))
 
-        assert data_sample['video_id']
-        assert os.path.exists(data_sample['video_id:FILE'])
+        assert data_sample['video_id'][0]
+        assert os.path.exists(data_sample['video_id:FILE'][0])
 
 
 if __name__ == '__main__':

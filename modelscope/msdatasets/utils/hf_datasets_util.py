@@ -1315,7 +1315,11 @@ class DatasetsWrapperHF:
 def load_dataset_with_ctx(*args, **kwargs):
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
-    _download_origin = DownloadManager._download
+
+    # To adapt to the version of datasets 2.18.0 or older
+    _download_origin = DownloadManager._download if hasattr(DownloadManager, '_download') \
+        else DownloadManager._download_single
+
     dataset_info_origin = HfApi.dataset_info
     list_repo_tree_origin = HfApi.list_repo_tree
     get_paths_info_origin = HfApi.get_paths_info
@@ -1325,7 +1329,13 @@ def load_dataset_with_ctx(*args, **kwargs):
 
     config.HF_ENDPOINT = get_endpoint()
     file_utils.get_from_cache = get_from_cache_ms
-    DownloadManager._download = _download_ms
+
+    # To adapt to the version of datasets 2.18.0 or older
+    if hasattr(DownloadManager, '_download'):
+        DownloadManager._download = _download_ms
+    else:
+        DownloadManager._download_single = _download_ms
+
     HfApi.dataset_info = _dataset_info
     HfApi.list_repo_tree = _list_repo_tree
     HfApi.get_paths_info = _get_paths_info
@@ -1339,7 +1349,13 @@ def load_dataset_with_ctx(*args, **kwargs):
     finally:
         config.HF_ENDPOINT = hf_endpoint_origin
         file_utils.get_from_cache = get_from_cache_origin
-        DownloadManager._download = _download_origin
+
+        # To adapt to the version of datasets 2.18.0 or older
+        if hasattr(DownloadManager, '_download'):
+            DownloadManager._download = _download_origin
+        else:
+            DownloadManager._download_single = _download_origin
+
         HfApi.dataset_info = dataset_info_origin
         HfApi.list_repo_tree = list_repo_tree_origin
         HfApi.get_paths_info = get_paths_info_origin

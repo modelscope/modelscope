@@ -1337,7 +1337,7 @@ def load_dataset_with_ctx(*args, **kwargs):
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
 
-    # To adapt to the version of datasets 2.18.0 or older
+    # Compatible with datasets 2.18.0
     _download_origin = DownloadManager._download if hasattr(DownloadManager, '_download') \
         else DownloadManager._download_single
 
@@ -1351,7 +1351,7 @@ def load_dataset_with_ctx(*args, **kwargs):
     config.HF_ENDPOINT = get_endpoint()
     file_utils.get_from_cache = get_from_cache_ms
 
-    # To adapt to the version of datasets 2.18.0 or older
+    # Compatible with datasets 2.18.0
     if hasattr(DownloadManager, '_download'):
         DownloadManager._download = _download_ms
     else:
@@ -1371,7 +1371,7 @@ def load_dataset_with_ctx(*args, **kwargs):
         config.HF_ENDPOINT = hf_endpoint_origin
         file_utils.get_from_cache = get_from_cache_origin
 
-        # To adapt to the version of datasets 2.18.0 or older
+        # Compatible with datasets 2.18.0
         if hasattr(DownloadManager, '_download'):
             DownloadManager._download = _download_origin
         else:

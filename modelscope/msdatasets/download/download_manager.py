@@ -38,7 +38,7 @@ class DataDownloadManager(DownloadManager):
 
     def _download_single(self, url_or_filename: str,
                          download_config: DataDownloadConfig) -> str:
-        # Note: _download_single is adapted to the datasets>=2.19.0
+        # Note: _download_single function is available for datasets>=2.19.0
 
         url_or_filename = str(url_or_filename)
 
@@ -84,7 +84,7 @@ class DataStreamingDownloadManager(StreamingDownloadManager):
                 url_or_filename, download_config=self.download_config)
 
     def _download_single(self, url_or_filename: str) -> str:
-        # Note: _download_single is adapted to the datasets>=2.19.0
+        # Note: _download_single function is available for datasets>=2.19.0
 
         url_or_filename = str(url_or_filename)
         oss_utilities = OssUtilities(

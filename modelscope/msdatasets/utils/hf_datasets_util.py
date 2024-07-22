@@ -749,19 +749,6 @@ def _download_additional_modules(
 
 
 def get_module_with_script(self) -> DatasetModule:
-    # if config.HF_DATASETS_TRUST_REMOTE_CODE and self.trust_remote_code is None:
-    #     warnings.warn(
-    #         f'The repository for {self.name} contains custom code which must be executed to correctly '
-    #         f'load the dataset. You can inspect the repository content at https://hf.co/datasets/{self.name}\n'
-    #         f'You can avoid this message in future by passing the argument `trust_remote_code=True`.\n'
-    #         f'Passing `trust_remote_code=True` will be mandatory '
-    #         f'to load this dataset from the next major release of `datasets`.',
-    #         FutureWarning,
-    #     )
-    # get script and other files
-    # local_path = self.download_loading_script()
-    # dataset_infos_path = self.download_dataset_infos_file()
-    # dataset_readme_path = self.download_dataset_readme_file()
 
     _api = HubApi()
     _dataset_name: str = self.name.split('/')[-1]

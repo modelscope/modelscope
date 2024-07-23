@@ -330,6 +330,7 @@ class IterableDatasetBuilder(csv.Csv):
 
         super().__init__(
             cache_dir=self.cache_build_dir,
+            dataset_name=self.dataset_name,
             config_name=self.namespace,
             hash=sub_dir_hash,
             data_files=None,  # TODO: self.meta_data_files,

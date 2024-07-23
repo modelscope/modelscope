@@ -17,7 +17,7 @@ class Human3DAnimationTest(unittest.TestCase):
         human3d = pipeline(self.task, model=self.model_id)
         input = {
             'dataset_id': 'damo/3DHuman_synthetic_dataset',
-            'case_id': '3f2a7538253e42a8',
+            'case_id': '000146',  # 3f2a7538253e42a8
             'action_dataset': 'damo/3DHuman_action_dataset',
             'action': 'SwingDancing',
             'save_dir': 'outputs',

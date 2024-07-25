@@ -19,7 +19,7 @@ def run_cmd():
     parser = argparse.ArgumentParser(
         'ModelScope Command Line tool', usage='modelscope <command> [<args>]')
     parser.add_argument(
-        '--token', default=None, help='Specify modelscope token.')
+        '--token', default=None, help='Specify ModelScope SDK token.')
     subparsers = parser.add_subparsers(help='modelscope commands helpers')
 
     DownloadCMD.define_args(subparsers)

@@ -62,8 +62,10 @@ def snapshot_download(
         local_dir (str, optional): Specific local directory path to which the file will be downloaded.
         allow_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, only files matching at least one pattern are downloaded, priority over allow_file_pattern.
+            For hugging-face compatibility.
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
+            For hugging-face compatibility.
     Raises:
         ValueError: the value details.
 
@@ -138,8 +140,10 @@ def dataset_snapshot_download(
             Any file pattern to be downloading, like exact file names or file extensions.
         allow_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, only files matching at least one pattern are downloaded, priority over allow_file_pattern.
+            For hugging-face compatibility.
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
+            For hugging-face compatibility.
     Raises:
         ValueError: the value details.
 
@@ -211,7 +215,7 @@ def _snapshot_download(
             ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
         }
         if 'CI_TEST' not in os.environ:
-            headers['snapshot_identifier'] = str(uuid.uuid4())
+            headers['snapshot-identifier'] = str(uuid.uuid4())
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()

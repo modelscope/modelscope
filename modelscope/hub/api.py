@@ -735,7 +735,9 @@ class HubApi:
                        namespace: str,
                        revision: str,
                        root_path: str,
-                       recursive: bool = True):
+                       recursive: bool = True,
+                       page_number: int = 1,
+                       page_size: int = 100):
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace)
@@ -743,7 +745,8 @@ class HubApi:
         recursive = 'True' if recursive else 'False'
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
         params = {'Revision': revision if revision else 'master',
-                  'Root': root_path if root_path else '/', 'Recursive': recursive}
+                  'Root': root_path if root_path else '/', 'Recursive': recursive,
+                  'PageNumber': page_number, 'PageSize': page_size}
         cookies = ModelScopeConfig.get_cookies()
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)

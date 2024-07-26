@@ -196,10 +196,10 @@ def _repo_file_download(
     if cookies is None:
         cookies = ModelScopeConfig.get_cookies()
     repo_files = []
+    file_to_download_meta = None
     if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(
             repo_id, revision=revision, cookies=cookies)
-        file_to_download_meta = None
         # we need to confirm the version is up-to-date
         # we need to get the file list to check if the latest version is cached, if so return, otherwise download
         repo_files = _api.get_model_files(
@@ -207,38 +207,60 @@ def _repo_file_download(
             revision=revision,
             recursive=True,
             use_cookies=False if cookies is None else cookies)
+        for repo_file in repo_files:
+            if repo_file['Type'] == 'tree':
+                continue
+
+            if repo_file['Path'] == file_path:
+                if cache.exists(repo_file):
+                    logger.debug(
+                        f'File {repo_file["Name"]} already in cache, skip downloading!'
+                    )
+                    return cache.get_file_by_info(repo_file)
+                else:
+                    file_to_download_meta = repo_file
+                break
     elif repo_type == REPO_TYPE_DATASET:
         group_or_owner, name = model_id_to_group_owner_name(repo_id)
         if not revision:
             revision = DEFAULT_DATASET_REVISION
-        files_list_tree = _api.list_repo_tree(
-            dataset_name=name,
-            namespace=group_or_owner,
-            revision=revision,
-            root_path='/',
-            recursive=True)
-        if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
-            print(
-                'Get dataset: %s file list failed, request_id: %s, message: %s'
-                % (repo_id, files_list_tree['RequestId'],
-                   files_list_tree['Message']))
-            return None
-        repo_files = files_list_tree['Data']['Files']
+        page_number = 1
+        page_size = 100
+        while True:
+            files_list_tree = _api.list_repo_tree(
+                dataset_name=name,
+                namespace=group_or_owner,
+                revision=revision,
+                root_path='/',
+                recursive=True,
+                page_number=page_number,
+                page_size=page_size)
+            if not ('Code' in files_list_tree
+                    and files_list_tree['Code'] == 200):
+                print(
+                    'Get dataset: %s file list failed, request_id: %s, message: %s'
+                    % (repo_id, files_list_tree['RequestId'],
+                       files_list_tree['Message']))
+                return None
+            repo_files = files_list_tree['Data']['Files']
+            is_exist = False
+            for repo_file in repo_files:
+                if repo_file['Type'] == 'tree':
+                    continue
 
-    file_to_download_meta = None
-    for repo_file in repo_files:
-        if repo_file['Type'] == 'tree':
-            continue
-
-        if repo_file['Path'] == file_path:
-            if cache.exists(repo_file):
-                logger.debug(
-                    f'File {repo_file["Name"]} already in cache, skip downloading!'
-                )
-                return cache.get_file_by_info(repo_file)
-            else:
-                file_to_download_meta = repo_file
-            break
+                if repo_file['Path'] == file_path:
+                    if cache.exists(repo_file):
+                        logger.debug(
+                            f'File {repo_file["Name"]} already in cache, skip downloading!'
+                        )
+                        return cache.get_file_by_info(repo_file)
+                    else:
+                        file_to_download_meta = repo_file
+                        is_exist = True
+                    break
+            if len(repo_files) < page_size or is_exist:
+                break
+            page_number += 1
 
     if file_to_download_meta is None:
         raise NotExistError('The file path: %s not exist in: %s' %

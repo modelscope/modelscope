@@ -9,6 +9,7 @@ from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
 from modelscope.cli.server import ServerCMD
+from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
@@ -17,6 +18,8 @@ logger = get_logger(log_level=logging.WARNING)
 def run_cmd():
     parser = argparse.ArgumentParser(
         'ModelScope Command Line tool', usage='modelscope <command> [<args>]')
+    parser.add_argument(
+        '--token', default=None, help='Specify ModelScope SDK token.')
     subparsers = parser.add_subparsers(help='modelscope commands helpers')
 
     DownloadCMD.define_args(subparsers)
@@ -31,7 +34,9 @@ def run_cmd():
     if not hasattr(args, 'func'):
         parser.print_help()
         exit(1)
-
+    if args.token is not None:
+        api = HubApi()
+        api.login(args.token)
     cmd = args.func(args)
     cmd.execute()
 

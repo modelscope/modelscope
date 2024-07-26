@@ -255,6 +255,7 @@ def _snapshot_download(
                 cookies=cookies,
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern)
+
         elif repo_type == REPO_TYPE_DATASET:
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             if not revision:
@@ -298,6 +299,9 @@ def _snapshot_download(
                 if len(repo_files) < page_size:
                     break
                 page_number += 1
+
+        cache.save_model_version(revision_info=revision_detail)
+        return os.path.join(cache.get_root_location())
 
 
 def _download_file_lists(
@@ -372,6 +376,3 @@ def _download_file_lists(
 
         download_file(url, repo_file, temporary_cache_dir, cache, headers,
                       cookies)
-
-    cache.save_model_version(revision_info=revision_detail)
-    return os.path.join(cache.get_root_location())

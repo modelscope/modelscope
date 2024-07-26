@@ -95,9 +95,7 @@ def snapshot_download(
         cookies=cookies,
         ignore_file_pattern=ignore_file_pattern,
         allow_file_pattern=allow_file_pattern,
-        local_dir=local_dir,
-        allow_patterns=allow_patterns,
-        ignore_patterns=ignore_patterns)
+        local_dir=local_dir)
 
 
 def dataset_snapshot_download(

@@ -301,9 +301,11 @@ We  provide additional documentations including:
 This project is licensed under the [Apache License (Version 2.0)](https://github.com/modelscope/modelscope/blob/master/LICENSE).
 
 # Citation
+```
 @Misc{modelscope,
   title = {ModelScope: bring the notion of Model-as-a-Service to life.},
   author = {The ModelScope Team},
   howpublished = {\url{https://github.com/modelscope/modelscope}},
   year = {2023}
 }
+```

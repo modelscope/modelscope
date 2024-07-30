@@ -9,7 +9,8 @@ def convert_arg_line_to_args(arg_line):
 
 
 def get_args(txt_file=None):
-    parser = argparse.ArgumentParser(fromfile_prefix_chars='@', conflict_handler='resolve')
+    parser = argparse.ArgumentParser(
+        fromfile_prefix_chars='@', conflict_handler='resolve')
     parser.convert_arg_line_to_args = convert_arg_line_to_args
 
     # checkpoint (only needed when testing the model)
@@ -28,7 +29,8 @@ def get_args(txt_file=None):
     parser.add_argument('--decoder_NF', type=int, default=2048)
     parser.add_argument('--decoder_BN', default=False, action='store_true')
     parser.add_argument('--decoder_down', type=int, default=2)
-    parser.add_argument('--learned_upsampling', default=False, action='store_true')
+    parser.add_argument(
+        '--learned_upsampling', default=False, action='store_true')
 
     # read arguments from txt file
     if txt_file:

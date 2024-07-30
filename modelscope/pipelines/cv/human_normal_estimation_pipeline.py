@@ -61,19 +61,20 @@ class HumanNormalEstimationPipeline(Pipeline):
         H, W = 1024, 1024
         scale_factor = min(W / img_w, H / img_h)
         img = Image.fromarray(img)
-        img = img.resize((int(img_w * scale_factor), int(img_h * scale_factor)), Image.LANCZOS)
+        img = img.resize(
+            (int(img_w * scale_factor), int(img_h * scale_factor)),
+            Image.LANCZOS)
 
         new_img = Image.new('RGBA', (W, H), color=(0, 0, 0, 0))
         paste_pos_w = (W - img.width) // 2
         paste_pos_h = (H - img.height) // 2
         new_img.paste(img, (paste_pos_w, paste_pos_h))
 
-        bbox = (paste_pos_w, paste_pos_h, paste_pos_w + img.width, paste_pos_h + img.height)
+        bbox = (paste_pos_w, paste_pos_h, paste_pos_w + img.width,
+                paste_pos_h + img.height)
         img = np.array(new_img)
 
-        data = {'img': img[:, :, 0:3],
-                'msk': img[:, :, -1],
-                'bbox': bbox}
+        data = {'img': img[:, :, 0:3], 'msk': img[:, :, -1], 'bbox': bbox}
 
         return data
 

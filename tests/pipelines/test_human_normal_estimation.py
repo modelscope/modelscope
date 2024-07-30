@@ -19,7 +19,8 @@ class HumanNormalEstimationTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_image_normal_estimation(self):
-        cur_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        cur_dir = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         input_location = f'{cur_dir}/data/test/images/human_normal_estimation.png'
         estimator = pipeline(
             Tasks.human_normal_estimation, model=self.model_id)
@@ -27,7 +28,8 @@ class HumanNormalEstimationTest(unittest.TestCase):
         normals_vis = result[OutputKeys.NORMALS_COLOR]
 
         input_img = cv2.imread(input_location)
-        normals_vis = cv2.resize(normals_vis, dsize=(input_img.shape[1], input_img.shape[0]))
+        normals_vis = cv2.resize(
+            normals_vis, dsize=(input_img.shape[1], input_img.shape[0]))
         cv2.imwrite('result.jpg', normals_vis)
 
 

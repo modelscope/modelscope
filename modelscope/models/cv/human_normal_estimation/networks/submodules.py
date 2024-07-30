@@ -1,11 +1,8 @@
-import numpy as np
-
 import geffnet
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 
 INPUT_CHANNELS_DICT = {
     0: [1280, 112, 40, 24, 16],
@@ -20,12 +17,17 @@ INPUT_CHANNELS_DICT = {
 
 
 class Encoder(nn.Module):
+
     def __init__(self, B=5, pretrained=True, ckpt=None):
         super(Encoder, self).__init__()
         if ckpt:
-            basemodel = geffnet.create_model('tf_efficientnet_b%s_ap' % B, pretrained=pretrained, checkpoint_path=ckpt)
+            basemodel = geffnet.create_model(
+                'tf_efficientnet_b%s_ap' % B,
+                pretrained=pretrained,
+                checkpoint_path=ckpt)
         else:
-            basemodel = geffnet.create_model('tf_efficientnet_b%s_ap' % B, pretrained=pretrained)
+            basemodel = geffnet.create_model(
+                'tf_efficientnet_b%s_ap' % B, pretrained=pretrained)
 
         basemodel.global_pool = nn.Identity()
         basemodel.classifier = nn.Identity()
@@ -43,12 +45,16 @@ class Encoder(nn.Module):
 
 
 class ConvGRU(nn.Module):
+
     def __init__(self, hidden_dim, input_dim, ks=3):
         super().__init__()
         p = (ks - 1) // 2
-        self.convz = nn.Conv2d(hidden_dim + input_dim, hidden_dim, ks, padding=p)
-        self.convr = nn.Conv2d(hidden_dim + input_dim, hidden_dim, ks, padding=p)
-        self.convq = nn.Conv2d(hidden_dim + input_dim, hidden_dim, ks, padding=p)
+        self.convz = nn.Conv2d(
+            hidden_dim + input_dim, hidden_dim, ks, padding=p)
+        self.convr = nn.Conv2d(
+            hidden_dim + input_dim, hidden_dim, ks, padding=p)
+        self.convq = nn.Conv2d(
+            hidden_dim + input_dim, hidden_dim, ks, padding=p)
 
     def forward(self, h, x):
         hx = torch.cat([h, x], dim=1)
@@ -60,57 +66,100 @@ class ConvGRU(nn.Module):
 
 
 class UpSampleBN(nn.Module):
+
     def __init__(self, skip_input, output_features, align_corners=True):
         super(UpSampleBN, self).__init__()
-        self._net = nn.Sequential(nn.Conv2d(skip_input, output_features, kernel_size=3, stride=1, padding=1),
-                                  nn.BatchNorm2d(output_features),
-                                  nn.LeakyReLU(),
-                                  nn.Conv2d(output_features, output_features, kernel_size=3, stride=1, padding=1),
-                                  nn.BatchNorm2d(output_features),
-                                  nn.LeakyReLU())
+        self._net = nn.Sequential(
+            nn.Conv2d(
+                skip_input,
+                output_features,
+                kernel_size=3,
+                stride=1,
+                padding=1), nn.BatchNorm2d(output_features), nn.LeakyReLU(),
+            nn.Conv2d(
+                output_features,
+                output_features,
+                kernel_size=3,
+                stride=1,
+                padding=1), nn.BatchNorm2d(output_features), nn.LeakyReLU())
         self.align_corners = align_corners
 
     def forward(self, x, concat_with):
-        up_x = F.interpolate(x, size=[concat_with.size(2), concat_with.size(3)], mode='bilinear',
-                             align_corners=self.align_corners)
+        up_x = F.interpolate(
+            x,
+            size=[concat_with.size(2),
+                  concat_with.size(3)],
+            mode='bilinear',
+            align_corners=self.align_corners)
         f = torch.cat([up_x, concat_with], dim=1)
         return self._net(f)
 
 
 class Conv2d_WS(nn.Conv2d):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1,
-                 padding=0, dilation=1, groups=1, bias=True):
-        super(Conv2d_WS, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True):
+        super(Conv2d_WS,
+              self).__init__(in_channels, out_channels, kernel_size, stride,
+                             padding, dilation, groups, bias)
 
     def forward(self, x):
         weight = self.weight
-        weight_mean = weight.mean(dim=1, keepdim=True).mean(dim=2, keepdim=True).mean(dim=3, keepdim=True)
+        weight_mean = weight.mean(
+            dim=1, keepdim=True).mean(
+                dim=2, keepdim=True).mean(
+                    dim=3, keepdim=True)
         weight = weight - weight_mean
-        std = weight.view(weight.size(0), -1).std(dim=1).view(-1, 1, 1, 1) + 1e-5
+        std = weight.view(weight.size(0), -1).std(dim=1).view(-1, 1, 1,
+                                                              1) + 1e-5
         weight = weight / std.expand_as(weight)
-        return F.conv2d(x, weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        return F.conv2d(x, weight, self.bias, self.stride, self.padding,
+                        self.dilation, self.groups)
 
 
 class UpSampleGN(nn.Module):
+
     def __init__(self, skip_input, output_features, align_corners=True):
         super(UpSampleGN, self).__init__()
-        self._net = nn.Sequential(Conv2d_WS(skip_input, output_features, kernel_size=3, stride=1, padding=1),
-                                  nn.GroupNorm(8, output_features),
-                                  nn.LeakyReLU(),
-                                  Conv2d_WS(output_features, output_features, kernel_size=3, stride=1, padding=1),
-                                  nn.GroupNorm(8, output_features),
-                                  nn.LeakyReLU())
+        self._net = nn.Sequential(
+            Conv2d_WS(
+                skip_input,
+                output_features,
+                kernel_size=3,
+                stride=1,
+                padding=1), nn.GroupNorm(8, output_features), nn.LeakyReLU(),
+            Conv2d_WS(
+                output_features,
+                output_features,
+                kernel_size=3,
+                stride=1,
+                padding=1), nn.GroupNorm(8, output_features), nn.LeakyReLU())
         self.align_corners = align_corners
 
     def forward(self, x, concat_with):
-        up_x = F.interpolate(x, size=[concat_with.size(2), concat_with.size(3)], mode='bilinear',
-                             align_corners=self.align_corners)
+        up_x = F.interpolate(
+            x,
+            size=[concat_with.size(2),
+                  concat_with.size(3)],
+            mode='bilinear',
+            align_corners=self.align_corners)
         f = torch.cat([up_x, concat_with], dim=1)
         return self._net(f)
 
 
 def upsample_via_bilinear(out, up_mask=None, downsample_ratio=None):
-    return F.interpolate(out, scale_factor=downsample_ratio, mode='bilinear', align_corners=False)
+    return F.interpolate(
+        out,
+        scale_factor=downsample_ratio,
+        mode='bilinear',
+        align_corners=False)
 
 
 def upsample_via_mask(out, up_mask, downsample_ratio, padding='zero'):
@@ -142,12 +191,9 @@ def upsample_via_mask(out, up_mask, downsample_ratio, padding='zero'):
 
 def get_prediction_head(input_dim, hidden_dim, output_dim):
     return nn.Sequential(
-        nn.Conv2d(input_dim, hidden_dim, 3, padding=1),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(hidden_dim, hidden_dim, 1),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(hidden_dim, output_dim, 1)
-    )
+        nn.Conv2d(input_dim, hidden_dim, 3, padding=1), nn.ReLU(inplace=True),
+        nn.Conv2d(hidden_dim, hidden_dim, 1), nn.ReLU(inplace=True),
+        nn.Conv2d(hidden_dim, output_dim, 1))
 
 
 # submodules copy from DSINE

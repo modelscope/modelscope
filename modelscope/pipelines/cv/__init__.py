@@ -313,9 +313,7 @@ else:
         'self_supervised_depth_completion_pipeline': [
             'SelfSupervisedDepthCompletionPipeline'
         ],
-        'human_normal_estimation_pipeline': [
-            'HumanNormalEstimationPipeline'
-        ],
+        'human_normal_estimation_pipeline': ['HumanNormalEstimationPipeline'],
     }
 
     import sys

@@ -851,9 +851,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_to_image_generation:
     (Pipelines.image_to_image_generation,
      'damo/cv_latent_diffusion_image2image_generate'),
-    Tasks.image_classification:
-    (Pipelines.daily_image_classification,
-     'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_classification: (
+        Pipelines.daily_image_classification,
+        'damo/cv_vit-base_image-classification_Dailylife-labels'),
     Tasks.image_object_detection: (
         Pipelines.image_object_detection_auto,
         'damo/cv_yolox_image-object-detection-auto'),

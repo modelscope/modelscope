@@ -164,9 +164,12 @@ class ModelFileSystemCache(FileSystemCache):
         model_version_file_path = os.path.join(
             self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
         with open(model_version_file_path, 'w') as f:
-            version_info_str = 'Revision:%s,CreatedAt:%s' % (
-                revision_info['Revision'], revision_info['CreatedAt'])
-            f.write(version_info_str)
+            if isinstance(revision_info, dict):
+                version_info_str = 'Revision:%s,CreatedAt:%s' % (
+                    revision_info['Revision'], revision_info['CreatedAt'])
+                f.write(version_info_str)
+            else:
+                f.write(revision_info)
 
     def get_model_id(self):
         return self.model_meta[FileSystemCache.MODEL_META_MODEL_ID]

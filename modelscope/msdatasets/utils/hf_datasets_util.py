@@ -7,7 +7,7 @@ import os
 import warnings
 from functools import partial
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Union, Tuple, Literal
 
 from urllib.parse import urlencode
 
@@ -40,7 +40,7 @@ from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_SUPPORTS_METADATA,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
-from datasets.utils import _datasets_server, file_utils
+from datasets.utils import file_utils
 from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        _raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
@@ -66,6 +66,26 @@ from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+
+ExpandDatasetProperty_T = Literal[
+    'author',
+    'cardData',
+    'citation',
+    'createdAt',
+    'disabled',
+    'description',
+    'downloads',
+    'downloadsAllTime',
+    'gated',
+    'lastModified',
+    'likes',
+    'paperswithcode_id',
+    'private',
+    'siblings',
+    'sha',
+    'tags',
+]
 
 
 def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) -> str:
@@ -97,6 +117,7 @@ def _dataset_info(
     timeout: Optional[float] = None,
     files_metadata: bool = False,
     token: Optional[Union[bool, str]] = None,
+    expand: Optional[List[ExpandDatasetProperty_T]] = None,
 ) -> HfDatasetInfo:
     """
     Get info on one specific dataset on huggingface.co.
@@ -728,19 +749,6 @@ def _download_additional_modules(
 
 
 def get_module_with_script(self) -> DatasetModule:
-    if config.HF_DATASETS_TRUST_REMOTE_CODE and self.trust_remote_code is None:
-        warnings.warn(
-            f'The repository for {self.name} contains custom code which must be executed to correctly '
-            f'load the dataset. You can inspect the repository content at https://hf.co/datasets/{self.name}\n'
-            f'You can avoid this message in future by passing the argument `trust_remote_code=True`.\n'
-            f'Passing `trust_remote_code=True` will be mandatory '
-            f'to load this dataset from the next major release of `datasets`.',
-            FutureWarning,
-        )
-    # get script and other files
-    # local_path = self.download_loading_script()
-    # dataset_infos_path = self.download_dataset_infos_file()
-    # dataset_readme_path = self.download_dataset_readme_file()
 
     _api = HubApi()
     _dataset_name: str = self.name.split('/')[-1]
@@ -1260,8 +1268,9 @@ class DatasetsWrapperHF:
                                 path,
                                 download_config=download_config,
                                 revision=dataset_info.sha).get_module()
-                        except _datasets_server.DatasetsServerError:
-                            pass
+                        except Exception as e:
+                            logger.error(e)
+
                     # Otherwise we must use the dataset script if the user trusts it
                     return HubDatasetModuleFactoryWithScript(
                         path,
@@ -1314,7 +1323,11 @@ class DatasetsWrapperHF:
 def load_dataset_with_ctx(*args, **kwargs):
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
-    _download_origin = DownloadManager._download
+
+    # Compatible with datasets 2.18.0
+    _download_origin = DownloadManager._download if hasattr(DownloadManager, '_download') \
+        else DownloadManager._download_single
+
     dataset_info_origin = HfApi.dataset_info
     list_repo_tree_origin = HfApi.list_repo_tree
     get_paths_info_origin = HfApi.get_paths_info
@@ -1324,7 +1337,13 @@ def load_dataset_with_ctx(*args, **kwargs):
 
     config.HF_ENDPOINT = get_endpoint()
     file_utils.get_from_cache = get_from_cache_ms
-    DownloadManager._download = _download_ms
+
+    # Compatible with datasets 2.18.0
+    if hasattr(DownloadManager, '_download'):
+        DownloadManager._download = _download_ms
+    else:
+        DownloadManager._download_single = _download_ms
+
     HfApi.dataset_info = _dataset_info
     HfApi.list_repo_tree = _list_repo_tree
     HfApi.get_paths_info = _get_paths_info
@@ -1338,12 +1357,16 @@ def load_dataset_with_ctx(*args, **kwargs):
     finally:
         config.HF_ENDPOINT = hf_endpoint_origin
         file_utils.get_from_cache = get_from_cache_origin
-        DownloadManager._download = _download_origin
+
+        # Compatible with datasets 2.18.0
+        if hasattr(DownloadManager, '_download'):
+            DownloadManager._download = _download_origin
+        else:
+            DownloadManager._download_single = _download_origin
+
         HfApi.dataset_info = dataset_info_origin
         HfApi.list_repo_tree = list_repo_tree_origin
         HfApi.get_paths_info = get_paths_info_origin
         data_files.resolve_pattern = resolve_pattern_origin
         HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
         HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
-
-        logger.info('Context manager of ms-dataset exited.')

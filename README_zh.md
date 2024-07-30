@@ -17,6 +17,7 @@
 
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/modelscope/modelscope.svg)](https://GitHub.com/modelscope/modelscope/graphs/contributors/) -->
 <!-- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) -->
+[Discord](https://discord.gg/FMupRv4jUR)
 
 <h4 align="center">
 <a href="https://trendshift.io/repositories/4784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4784" alt="modelscope%2Fmodelscope | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -176,7 +177,7 @@ ModelScope开源了数百个(当前700+)模型，涵盖自然语言处理、计�
 >>> trainer.train()
 ```
 
-# 为什么要用ModelScope library
+# 为什么要用ModelScope Library
 
 1. 针对不同任务、不同模型抽象了统一简洁的用户接口，3行代码完成推理，10行代码完成模型训练，方便用户使用ModelScope社区中多个领域的不同模型，开箱即用，便于AI入门和教学。
 

@@ -3,7 +3,9 @@
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from matplotlib.cm import get_cmap
+#  from matplotlib.cm import get_cmap
+#  compatible with matplotlib 3.9.0
+from matplotlib.pyplot import get_cmap
 
 from modelscope.models.cv.video_depth_estimation.utils.image import (
     flip_lr, gradient_x, gradient_y, interpolate_image, load_image)

@@ -17,6 +17,7 @@
 
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/modelscope/modelscope.svg)](https://GitHub.com/modelscope/modelscope/graphs/contributors/) -->
 <!-- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) -->
+[Discord](https://discord.gg/FMupRv4jUR)
 
 <h4 align="center">
 <a href="https://trendshift.io/repositories/4784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4784" alt="modelscope%2Fmodelscope | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -298,3 +299,13 @@ We  provide additional documentations including:
 # License
 
 This project is licensed under the [Apache License (Version 2.0)](https://github.com/modelscope/modelscope/blob/master/LICENSE).
+
+# Citation
+```
+@Misc{modelscope,
+  title = {ModelScope: bring the notion of Model-as-a-Service to life.},
+  author = {The ModelScope Team},
+  howpublished = {\url{https://github.com/modelscope/modelscope}},
+  year = {2023}
+}
+```

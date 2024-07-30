@@ -6,6 +6,7 @@ from typing import Any, Optional
 from modelscope.metainfo import Tasks
 from modelscope.utils.ast_utils import INDEX_KEY
 from modelscope.utils.import_utils import (LazyImportModule,
+                                           is_torch_available,
                                            is_transformers_available)
 
 
@@ -36,7 +37,7 @@ def post_init(self, *args, **kwargs):
 
 
 def fix_transformers_upgrade():
-    if is_transformers_available():
+    if is_transformers_available() and is_torch_available():
         # from 4.35.0, transformers changes its arguments of _set_gradient_checkpointing
         import transformers
         from transformers import PreTrainedModel

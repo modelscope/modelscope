@@ -36,6 +36,11 @@ class DataDownloadManager(DownloadManager):
             return cached_path(
                 url_or_filename, download_config=download_config)
 
+    def _download_single(self, url_or_filename: str,
+                         download_config: DataDownloadConfig) -> str:
+        # Note: _download_single function is available for datasets>=2.19.0
+        return self._download(url_or_filename, download_config)
+
 
 class DataStreamingDownloadManager(StreamingDownloadManager):
     """The data streaming download manager."""
@@ -62,3 +67,7 @@ class DataStreamingDownloadManager(StreamingDownloadManager):
         else:
             return cached_path(
                 url_or_filename, download_config=self.download_config)
+
+    def _download_single(self, url_or_filename: str) -> str:
+        # Note: _download_single function is available for datasets>=2.19.0
+        return self._download(url_or_filename)

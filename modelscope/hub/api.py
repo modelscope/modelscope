@@ -76,6 +76,7 @@ class HubApi:
             connect=2,
             backoff_factor=1,
             status_forcelist=(500, 502, 503, 504),
+            respect_retry_after_header=False,
         )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
@@ -734,14 +735,18 @@ class HubApi:
                        namespace: str,
                        revision: str,
                        root_path: str,
-                       recursive: bool = True):
+                       recursive: bool = True,
+                       page_number: int = 1,
+                       page_size: int = 100):
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace)
 
         recursive = 'True' if recursive else 'False'
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-        params = {'Revision': revision, 'Root': root_path, 'Recursive': recursive}
+        params = {'Revision': revision if revision else 'master',
+                  'Root': root_path if root_path else '/', 'Recursive': recursive,
+                  'PageNumber': page_number, 'PageSize': page_size}
         cookies = ModelScopeConfig.get_cookies()
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
@@ -771,8 +776,10 @@ class HubApi:
     @staticmethod
     def dump_datatype_file(dataset_type: int, meta_cache_dir: str):
         """
-        Dump the data_type as a local file, in order to get the dataset formation without calling the datahub.
-        More details, please refer to the class `modelscope.utils.constant.DatasetFormations`.
+        Dump the data_type as a local file, in order to get the dataset
+         formation without calling the datahub.
+        More details, please refer to the class
+        `modelscope.utils.constant.DatasetFormations`.
         """
         dataset_type_file_path = os.path.join(meta_cache_dir,
                                               f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
@@ -874,13 +881,14 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION,
+            view: Optional[bool] = False,
             extension_filter: Optional[bool] = True):
 
         if not file_name or not dataset_name or not namespace:
             raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
 
         # Note: make sure the FilePath is the last parameter in the url
-        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': file_name}
+        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': file_name, 'View': view}
         params: str = urlencode(params)
         file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?{params}'
 
@@ -1113,7 +1121,8 @@ class ModelScopeConfig:
                         ModelScopeConfig.cookie_expired_warning = True
                         logger.warning(
                             'Authentication has expired, '
-                            'please re-login if you need to access private models or datasets.')
+                            'please re-login with modelscope login --token "YOUR_SDK_TOKEN" '
+                            'if you need to access private models or datasets.')
                         return None
                 return cookies
         return None

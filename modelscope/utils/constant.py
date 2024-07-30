@@ -5,6 +5,8 @@ import enum
 class Fields(object):
     """ Names for different application fields
     """
+    hub = 'hub'
+    datasets = 'datasets'
     framework = 'framework'
     cv = 'cv'
     nlp = 'nlp'
@@ -493,6 +495,9 @@ class Frameworks(object):
     kaldi = 'kaldi'
 
 
+REPO_TYPE_MODEL = 'model'
+REPO_TYPE_DATASET = 'dataset'
+REPO_TYPE_SUPPORT = [REPO_TYPE_MODEL, REPO_TYPE_DATASET]
 DEFAULT_MODEL_REVISION = None
 MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'

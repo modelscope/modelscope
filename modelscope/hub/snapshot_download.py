@@ -81,10 +81,6 @@ def snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-    if allow_patterns:
-        allow_file_pattern = allow_patterns
-    if ignore_patterns:
-        ignore_file_pattern = ignore_patterns
     return _snapshot_download(
         model_id,
         repo_type=REPO_TYPE_MODEL,
@@ -159,10 +155,6 @@ def dataset_snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-    if allow_patterns:
-        allow_file_pattern = allow_patterns
-    if ignore_patterns:
-        ignore_file_pattern = ignore_patterns
     return _snapshot_download(
         dataset_id,
         repo_type=REPO_TYPE_DATASET,

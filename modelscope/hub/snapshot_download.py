@@ -356,7 +356,7 @@ def _download_file_lists(
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
     ignore_file_pattern = _normalize_patterns(ignore_file_pattern)
-    allow_file_pattern = _normalize_patterns(ignore_file_pattern)
+    allow_file_pattern = _normalize_patterns(allow_file_pattern)
     # to compatible regex usage.
     ignore_regex_pattern = _get_valid_regex_pattern(ignore_file_pattern)
 

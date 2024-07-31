@@ -514,6 +514,11 @@ class HubApi:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
             logger.info('Development mode use revision: %s' % revision)
         else:
+            if revision is not None and revision in all_branches:
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+                logger.warning('Using branch: %s as version is unstable, use with caution' % revision)
+                return revision_detail
+
             if len(all_tags_detail) == 0:  # use no revision use master as default.
                 if revision is None or revision == MASTER_MODEL_BRANCH:
                     revision = MASTER_MODEL_BRANCH

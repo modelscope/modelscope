@@ -229,29 +229,38 @@ def _list_repo_tree(
     else:
         raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-    data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
-                                     namespace=_namespace,
-                                     revision=revision or 'master',
-                                     root_path=path_in_repo or None,
-                                     recursive=True,
-                                     )
-    # Parse data
-    # Type: 'tree' or 'blob'
-    data_d: dict = data['Data']
-    data_file_list: list = data_d['Files']
-    # commit_info: dict = data_d['LatestCommitter']
+    page_number = 1
+    page_size = 100
+    total_data_list = []
+    while True:
+        data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
+                                         namespace=_namespace,
+                                         revision=revision or 'master',
+                                         root_path=path_in_repo or None,
+                                         recursive=True,
+                                         page_number=page_number,
+                                         page_size=page_size,
+                                         )
+        if not ('Code' in data and data['Code'] == 200):
+            logger.error(f'Get dataset: {repo_id} file list failed, message: {data["Message"]}')
+            return None
 
-    for file_info_d in data_file_list:
-        path_info = {}
-        path_info[
-            'type'] = 'directory' if file_info_d['Type'] == 'tree' else 'file'
-        path_info['path'] = file_info_d['Path']
-        path_info['size'] = file_info_d['Size']
-        path_info['oid'] = file_info_d['Sha256']
+        # Parse data (Type: 'tree' or 'blob')
+        data_file_list: list = data['Data']['Files']
+        total_data_list.extend(data_file_list)
 
-        yield RepoFile(
-            **path_info) if path_info['type'] == 'file' else RepoFolder(
-                **path_info)
+        for file_info_d in data_file_list:
+            path_info = {}
+            path_info['type'] = 'directory' if file_info_d['Type'] == 'tree' else 'file'
+            path_info['path'] = file_info_d['Path']
+            path_info['size'] = file_info_d['Size']
+            path_info['oid'] = file_info_d['Sha256']
+
+            yield RepoFile(**path_info) if path_info['type'] == 'file' else RepoFolder(**path_info)
+
+        if len(data_file_list) < page_size:
+            break
+        page_number += 1
 
 
 def _get_paths_info(

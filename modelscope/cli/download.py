@@ -38,7 +38,13 @@ class DownloadCMD(CLICommand):
             help='The id of the dataset to be downloaded. For download, '
             'the id of either a model or dataset must be provided.')
         parser.add_argument(
-            'repo_id', type=str, help='ID of the repo to download.')
+            'repo_id',
+            type=str,
+            nargs='?',
+            default=None,
+            help='Optional, '
+            'ID of the repo to download, It can also be set by --model or --dataset.'
+        )
         parser.add_argument(
             '--repo-type',
             choices=['model', 'dataset'],
@@ -93,6 +99,8 @@ class DownloadCMD(CLICommand):
             else:
                 raise Exception('Not support repo-type: %s'
                                 % self.args.repo_type)
+        if not self.args.model and not self.args.dataset:
+            raise Exception('Model or dataset must be set.')
         if self.args.model:
             if len(self.args.files) == 1:  # download single file
                 model_file_download(

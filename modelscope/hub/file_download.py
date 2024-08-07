@@ -168,8 +168,8 @@ def _repo_file_download(
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
     if repo_type not in REPO_TYPE_SUPPORT:
-        raise InvalidParameter('Invalid repo type: %s, only support: %s' (
-            repo_type, REPO_TYPE_SUPPORT))
+        raise InvalidParameter('Invalid repo type: %s, only support: %s' %
+                               (repo_type, REPO_TYPE_SUPPORT))
 
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
@@ -471,8 +471,9 @@ def http_get_model_file(
                 with open(temp_file_path, 'rb') as f:
                     partial_length = f.seek(0, io.SEEK_END)
                     progress.update(partial_length)
-            if partial_length > file_size:
+            if partial_length >= file_size:
                 break
+            # closed range[], from 0.
             get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
                                                     file_size - 1)
             with open(temp_file_path, 'ab+') as f:

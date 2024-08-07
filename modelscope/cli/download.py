@@ -26,7 +26,7 @@ class DownloadCMD(CLICommand):
         """ define args for download command.
         """
         parser: ArgumentParser = parsers.add_parser(DownloadCMD.name)
-        group = parser.add_mutually_exclusive_group(required=True)
+        group = parser.add_mutually_exclusive_group()
         group.add_argument(
             '--model',
             type=str,
@@ -37,6 +37,20 @@ class DownloadCMD(CLICommand):
             type=str,
             help='The id of the dataset to be downloaded. For download, '
             'the id of either a model or dataset must be provided.')
+        parser.add_argument(
+            'repo_id',
+            type=str,
+            nargs='?',
+            default=None,
+            help='Optional, '
+            'ID of the repo to download, It can also be set by --model or --dataset.'
+        )
+        parser.add_argument(
+            '--repo-type',
+            choices=['model', 'dataset'],
+            default='model',
+            help="Type of repo to download from (defaults to 'model').",
+        )
         parser.add_argument(
             '--revision',
             type=str,
@@ -77,6 +91,16 @@ class DownloadCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
+        if self.args.repo_id is not None:
+            if self.args.repo_type == 'model':
+                self.args.model = self.args.repo_id
+            elif self.args.repo_type == 'dataset':
+                self.args.dataset = self.args.repo_id
+            else:
+                raise Exception('Not support repo-type: %s'
+                                % self.args.repo_type)
+        if not self.args.model and not self.args.dataset:
+            raise Exception('Model or dataset must be set.')
         if self.args.model:
             if len(self.args.files) == 1:  # download single file
                 model_file_download(

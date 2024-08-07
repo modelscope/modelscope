@@ -91,14 +91,22 @@ class DownloadCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        if self.args.repo_id is not None:
-            if self.args.repo_type == 'model':
-                self.args.model = self.args.repo_id
-            elif self.args.repo_type == 'dataset':
-                self.args.dataset = self.args.repo_id
-            else:
-                raise Exception('Not support repo-type: %s'
-                                % self.args.repo_type)
+        if self.args.model or self.args.dataset:
+            # the position argument of files will be put to repo_id.
+            if self.args.repo_id is not None:
+                if self.args.files:
+                    self.args.files.insert(0, self.args.repo_id)
+                else:
+                    self.args.files = [self.args.repo_id]
+        else:
+            if self.args.repo_id is not None:
+                if self.args.repo_type == 'model':
+                    self.args.model = self.args.repo_id
+                elif self.args.repo_type == 'dataset':
+                    self.args.dataset = self.args.repo_id
+                else:
+                    raise Exception('Not support repo-type: %s'
+                                    % self.args.repo_type)
         if not self.args.model and not self.args.dataset:
             raise Exception('Model or dataset must be set.')
         if self.args.model:

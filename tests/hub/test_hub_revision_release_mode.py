@@ -93,6 +93,7 @@ class HubRevisionTest(unittest.TestCase):
             self.prepare_repo_data()  # no tag, default get master
             branch_name = 'test'
             self.add_new_file_and_branch_to_repo(branch_name)
+            time.sleep(5)
             with tempfile.TemporaryDirectory() as temp_cache_dir:
                 snapshot_path = snapshot_download(
                     self.model_id,

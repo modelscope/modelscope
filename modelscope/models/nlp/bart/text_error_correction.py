@@ -82,5 +82,5 @@ class BartForTextErrorCorrection(TorchModel):
         batch_preds = []
         for i in range(batch_size):
             # get 1-best List[Tensor]
-            batch_preds.append(translations[i][0]['tokens'])
+            batch_preds.append(translations[i][0]['tokens'].tolist())
         return TextErrorCorrectionOutput(predictions=batch_preds)

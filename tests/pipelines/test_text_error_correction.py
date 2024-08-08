@@ -41,12 +41,13 @@ class TextErrorCorrectionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name_batch(self):
-        run_kwargs = {'batch_size': 2}
         pipeline_ins = pipeline(
             task=Tasks.text_error_correction, model=self.model_id)
-        print(
-            'batch: ',
-            pipeline_ins([self.input, self.input_2, self.input_3], run_kwargs))
+        sents = [self.input, self.input_2, self.input_3, self.input_4, self.input_law]
+        rs1 = pipeline_ins(sents, batch_size=2)
+        rs2 = pipeline_ins(sents)
+        print('batch: ',rs1, rs2)
+        self.assertEqual(rs1, rs2)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_from_modelhub(self):

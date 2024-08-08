@@ -17,6 +17,7 @@ LOGGER_NAME = 'ModelScopeHub'
 DEFAULT_CREDENTIALS_PATH = Path.home().joinpath('.modelscope', 'credentials')
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
 API_HTTP_CLIENT_TIMEOUT = 60
+API_HTTP_CLIENT_MAX_RETRIES = 2
 API_RESPONSE_FIELD_DATA = 'Data'
 API_FILE_DOWNLOAD_RETRY_TIMES = 5
 API_FILE_DOWNLOAD_TIMEOUT = 60

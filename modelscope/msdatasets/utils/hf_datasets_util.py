@@ -218,7 +218,7 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
-    _api = HubApi()
+    _api = HubApi(timeout=3 * 60, max_retries=3)
 
     if is_relative_path(repo_id) and repo_id.count('/') == 1:
         _namespace, _dataset_name = repo_id.split('/')
@@ -231,7 +231,6 @@ def _list_repo_tree(
 
     page_number = 1
     page_size = 100
-    total_data_list = []
     while True:
         data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
                                          namespace=_namespace,
@@ -247,7 +246,6 @@ def _list_repo_tree(
 
         # Parse data (Type: 'tree' or 'blob')
         data_file_list: list = data['Data']['Files']
-        total_data_list.extend(data_file_list)
 
         for file_info_d in data_file_list:
             path_info = {}
@@ -398,7 +396,10 @@ def _resolve_pattern(
         # 10 times faster glob with detail=True (ignores costly info like lastCommit)
         glob_kwargs['expand_info'] = False
 
-    tmp_file_paths = fs.glob(pattern, detail=True, **glob_kwargs)
+    try:
+        tmp_file_paths = fs.glob(pattern, detail=True, **glob_kwargs)
+    except FileNotFoundError:
+        raise DataFilesNotFoundError(f"Unable to find '{pattern}'")
 
     matched_paths = [
         filepath if filepath.startswith(protocol_prefix) else protocol_prefix
@@ -857,13 +858,6 @@ def get_module_with_script(self) -> DatasetModule:
     return DatasetModule(module_path, hash, builder_kwargs)
 
 
-def increase_load_count_ms(name: str, resource_type: str):
-    """
-    Placeholder for increasing the load count of a hf resource.
-    """
-    ...
-
-
 class DatasetsWrapperHF:
 
     @staticmethod
@@ -1307,6 +1301,7 @@ class DatasetsWrapperHF:
                     ).get_module()
             except Exception as e1:
                 # All the attempts failed, before raising the error we should check if the module is already cached
+                logger.error(f'>> Error loading {path}: {e1}')
                 try:
                     return CachedDatasetModuleFactory(
                         path,
@@ -1337,7 +1332,6 @@ class DatasetsWrapperHF:
 
 @contextlib.contextmanager
 def load_dataset_with_ctx(*args, **kwargs):
-    from datasets.load import increase_load_count as increase_load_count
 
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
@@ -1345,8 +1339,6 @@ def load_dataset_with_ctx(*args, **kwargs):
     # Compatible with datasets 2.18.0
     _download_origin = DownloadManager._download if hasattr(DownloadManager, '_download') \
         else DownloadManager._download_single
-
-    increase_load_count_origin = increase_load_count
 
     dataset_info_origin = HfApi.dataset_info
     list_repo_tree_origin = HfApi.list_repo_tree
@@ -1370,7 +1362,6 @@ def load_dataset_with_ctx(*args, **kwargs):
     data_files.resolve_pattern = _resolve_pattern
     HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
     HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
-    increase_load_count = increase_load_count_ms
 
     try:
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
@@ -1391,4 +1382,3 @@ def load_dataset_with_ctx(*args, **kwargs):
         data_files.resolve_pattern = resolve_pattern_origin
         HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
         HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
-        increase_load_count = increase_load_count_origin

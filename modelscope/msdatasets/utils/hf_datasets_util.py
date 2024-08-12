@@ -48,7 +48,7 @@ from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
-from datasets.utils.py_utils import get_imports
+from datasets.utils.py_utils import get_imports, map_nested
 from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
@@ -1333,6 +1333,7 @@ class DatasetsWrapperHF:
 @contextlib.contextmanager
 def load_dataset_with_ctx(*args, **kwargs):
 
+    # Keep the original functions
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
 
@@ -1347,15 +1348,14 @@ def load_dataset_with_ctx(*args, **kwargs):
     get_module_without_script_origin = HubDatasetModuleFactoryWithoutScript.get_module
     get_module_with_script_origin = HubDatasetModuleFactoryWithScript.get_module
 
+    # Monkey patching with modelscope functions
     config.HF_ENDPOINT = get_endpoint()
     file_utils.get_from_cache = get_from_cache_ms
-
     # Compatible with datasets 2.18.0
     if hasattr(DownloadManager, '_download'):
         DownloadManager._download = _download_ms
     else:
         DownloadManager._download_single = _download_ms
-
     HfApi.dataset_info = _dataset_info
     HfApi.list_repo_tree = _list_repo_tree
     HfApi.get_paths_info = _get_paths_info
@@ -1367,6 +1367,7 @@ def load_dataset_with_ctx(*args, **kwargs):
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
         yield dataset_res
     finally:
+        # Restore the original functions
         config.HF_ENDPOINT = hf_endpoint_origin
         file_utils.get_from_cache = get_from_cache_origin
 

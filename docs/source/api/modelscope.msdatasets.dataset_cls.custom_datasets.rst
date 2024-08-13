@@ -13,17 +13,14 @@ modelscope.msdatasets.dataset_cls.custom_datasets
 
     EasyCVBaseDataset
     TorchCustomDataset
-    MovieSceneSegmentationDataset
     ImageInstanceSegmentationCocoDataset
     GoproImageDeblurringDataset
-    LanguageGuidedVideoSummarizationDataset
     MGeoRankingDataset
     RedsImageDeblurringDataset
     TextRankingDataset
     VecoDataset
     VideoSummarizationDataset
     BadImageDetectingDataset
-    ImageInpaintingDataset
     ImagePortraitEnhancementDataset
     ImageQualityAssessmentDegradationDataset
     ImageQualityAssessmentMosDataset

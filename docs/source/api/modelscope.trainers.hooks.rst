@@ -14,8 +14,6 @@ modelscope.trainers.hooks
     builder.build_hook
     hook.Hook
     priority.Priority
-    checkpoint_hook.CheckpointHook
-    checkpoint_hook.BestCkptSaverHook
     compression.SparsityHook
     evaluation_hook.EvaluationHook
     iter_timer_hook.IterTimerHook

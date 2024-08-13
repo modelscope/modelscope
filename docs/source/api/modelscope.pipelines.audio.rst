@@ -12,7 +12,6 @@ modelscope.pipelines.audio
     :template: classtemplate.rst
 
     ANSPipeline
-    AutomaticSpeechRecognitionPipeline
     InverseTextProcessingPipeline
     KWSFarfieldPipeline
     KeyWordSpottingKwsbpPipeline

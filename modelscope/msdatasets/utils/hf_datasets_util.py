@@ -1360,22 +1360,26 @@ def load_dataset_with_ctx(*args, **kwargs):
     HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
     HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
 
+    streaming = kwargs.get('streaming', False)
+
     try:
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
         yield dataset_res
     finally:
-        config.HF_ENDPOINT = hf_endpoint_origin
-        file_utils.get_from_cache = get_from_cache_origin
+        # Keep the context during the streaming iteration
+        if not streaming:
+            config.HF_ENDPOINT = hf_endpoint_origin
+            file_utils.get_from_cache = get_from_cache_origin
 
-        # Compatible with datasets 2.18.0
-        if hasattr(DownloadManager, '_download'):
-            DownloadManager._download = _download_origin
-        else:
-            DownloadManager._download_single = _download_origin
+            # Compatible with datasets 2.18.0
+            if hasattr(DownloadManager, '_download'):
+                DownloadManager._download = _download_origin
+            else:
+                DownloadManager._download_single = _download_origin
 
-        HfApi.dataset_info = dataset_info_origin
-        HfApi.list_repo_tree = list_repo_tree_origin
-        HfApi.get_paths_info = get_paths_info_origin
-        data_files.resolve_pattern = resolve_pattern_origin
-        HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
-        HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
+            HfApi.dataset_info = dataset_info_origin
+            HfApi.list_repo_tree = list_repo_tree_origin
+            HfApi.get_paths_info = get_paths_info_origin
+            data_files.resolve_pattern = resolve_pattern_origin
+            HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
+            HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin

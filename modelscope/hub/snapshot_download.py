@@ -211,6 +211,7 @@ def _snapshot_download(
             ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
         }
         if 'CI_TEST' not in os.environ:
+            # To count the download statistics, to add the snapshot-identifier as a header.
             headers['snapshot-identifier'] = str(uuid.uuid4())
         _api = HubApi()
         if cookies is None:
@@ -259,7 +260,6 @@ def _snapshot_download(
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             if not revision:
                 revision = DEFAULT_DATASET_REVISION
-            _api.dataset_download_statistics(name, group_or_owner)
             revision_detail = revision
             page_number = 1
             page_size = 100
@@ -412,6 +412,10 @@ def _download_file_lists(
                 dataset_name=name,
                 namespace=group_or_owner,
                 revision=revision)
+        else:
+            raise InvalidParameter(
+                f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
+            )
 
         download_file(url, repo_file, temporary_cache_dir, cache, headers,
                       cookies)

@@ -48,7 +48,7 @@ from datasets.utils.file_utils import (OfflineModeIsEnabled,
                                        relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
-from datasets.utils.py_utils import get_imports
+from datasets.utils.py_utils import get_imports, map_nested
 from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
@@ -218,7 +218,7 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
-    _api = HubApi()
+    _api = HubApi(timeout=3 * 60, max_retries=3)
 
     if is_relative_path(repo_id) and repo_id.count('/') == 1:
         _namespace, _dataset_name = repo_id.split('/')
@@ -231,7 +231,6 @@ def _list_repo_tree(
 
     page_number = 1
     page_size = 100
-    total_data_list = []
     while True:
         data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
                                          namespace=_namespace,
@@ -247,7 +246,6 @@ def _list_repo_tree(
 
         # Parse data (Type: 'tree' or 'blob')
         data_file_list: list = data['Data']['Files']
-        total_data_list.extend(data_file_list)
 
         for file_info_d in data_file_list:
             path_info = {}
@@ -398,7 +396,10 @@ def _resolve_pattern(
         # 10 times faster glob with detail=True (ignores costly info like lastCommit)
         glob_kwargs['expand_info'] = False
 
-    tmp_file_paths = fs.glob(pattern, detail=True, **glob_kwargs)
+    try:
+        tmp_file_paths = fs.glob(pattern, detail=True, **glob_kwargs)
+    except FileNotFoundError:
+        raise DataFilesNotFoundError(f"Unable to find '{pattern}'")
 
     matched_paths = [
         filepath if filepath.startswith(protocol_prefix) else protocol_prefix
@@ -1300,6 +1301,7 @@ class DatasetsWrapperHF:
                     ).get_module()
             except Exception as e1:
                 # All the attempts failed, before raising the error we should check if the module is already cached
+                logger.error(f'>> Error loading {path}: {e1}')
                 try:
                     return CachedDatasetModuleFactory(
                         path,
@@ -1330,6 +1332,8 @@ class DatasetsWrapperHF:
 
 @contextlib.contextmanager
 def load_dataset_with_ctx(*args, **kwargs):
+
+    # Keep the original functions
     hf_endpoint_origin = config.HF_ENDPOINT
     get_from_cache_origin = file_utils.get_from_cache
 
@@ -1344,15 +1348,14 @@ def load_dataset_with_ctx(*args, **kwargs):
     get_module_without_script_origin = HubDatasetModuleFactoryWithoutScript.get_module
     get_module_with_script_origin = HubDatasetModuleFactoryWithScript.get_module
 
+    # Monkey patching with modelscope functions
     config.HF_ENDPOINT = get_endpoint()
     file_utils.get_from_cache = get_from_cache_ms
-
     # Compatible with datasets 2.18.0
     if hasattr(DownloadManager, '_download'):
         DownloadManager._download = _download_ms
     else:
         DownloadManager._download_single = _download_ms
-
     HfApi.dataset_info = _dataset_info
     HfApi.list_repo_tree = _list_repo_tree
     HfApi.get_paths_info = _get_paths_info
@@ -1366,6 +1369,9 @@ def load_dataset_with_ctx(*args, **kwargs):
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
         yield dataset_res
     finally:
+        # Restore the original functions
+        config.HF_ENDPOINT = hf_endpoint_origin
+        file_utils.get_from_cache = get_from_cache_origin
         # Keep the context during the streaming iteration
         if not streaming:
             config.HF_ENDPOINT = hf_endpoint_origin

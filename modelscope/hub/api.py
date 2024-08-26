@@ -22,7 +22,8 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
+from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
+                                      API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
@@ -61,7 +62,10 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
-    def __init__(self, endpoint: Optional[str] = None, timeout=API_HTTP_CLIENT_TIMEOUT):
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 timeout=API_HTTP_CLIENT_TIMEOUT,
+                 max_retries=API_HTTP_CLIENT_MAX_RETRIES):
         """The ModelScope HubApi。
 
         Args:
@@ -71,7 +75,7 @@ class HubApi:
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
         retry = Retry(
-            total=2,
+            total=max_retries,
             read=2,
             connect=2,
             backoff_factor=1,

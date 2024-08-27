@@ -2,6 +2,7 @@
 
 import importlib.util as iutil
 import logging
+import os
 from typing import Optional
 
 init_loggers = {}
@@ -9,9 +10,11 @@ init_loggers = {}
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+default_log_level = int(os.getenv('MODELSCOPE_LOG_LEVEL', str(logging.INFO)))
+
 
 def get_logger(log_file: Optional[str] = None,
-               log_level: int = logging.INFO,
+               log_level: int = default_log_level,
                file_mode: str = 'w'):
     """ Get logging logger
 

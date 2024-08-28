@@ -388,7 +388,7 @@ def parallel_download(
         unit_divisor=1024,
         total=file_size,
         initial=0,
-        desc='Downloading',
+        desc='Downloading [' + file_name + ']',
     )
     PART_SIZE = 160 * 1024 * 1024  # every part is 160M
     tasks = []
@@ -463,7 +463,7 @@ def http_get_model_file(
                 unit_divisor=1024,
                 total=file_size,
                 initial=0,
-                desc='Downloading',
+                desc='Downloading [' + file_name + ']',
             )
             partial_length = 0
             if os.path.exists(
@@ -555,7 +555,7 @@ def http_get_file(
                     unit_divisor=1024,
                     total=total,
                     initial=downloaded_size,
-                    desc='Downloading',
+                    desc='Downloading [' + file_name + ']',
                 )
                 for chunk in r.iter_content(
                         chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):

@@ -34,54 +34,6 @@ def user_agent(invoked_by=None):
     return uagent
 
 
-def patch_tokenizer_base():
-    """ Monkey patch PreTrainedTokenizerBase.from_pretrained to adapt to modelscope hub.
-    """
-    ori_from_pretrained = PreTrainedTokenizerBase.from_pretrained.__func__
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-    PreTrainedTokenizerBase.from_pretrained = from_pretrained
-
-
-def patch_model_base():
-    """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
-    """
-    ori_from_pretrained = PreTrainedModel.from_pretrained.__func__
-
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-    PreTrainedModel.from_pretrained = from_pretrained
-
-
-patch_tokenizer_base()
-patch_model_base()
-
-
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
     """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
     Args:

@@ -1,37 +1,49 @@
-import os
-import sys
-import cv2
-import math
 import copy
 import hashlib
+import math
+import os
+import sys
+
+import cv2
 import imageio
 import numpy as np
 import pandas as pd
-from scipy import interpolate
-from PIL import Image, ImageEnhance, ImageFile
-
 import torch
 import torch.nn.functional as F
+from PIL import Image, ImageEnhance, ImageFile
+from scipy import interpolate
 from torch.utils.data import Dataset
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 from .encoder import get_encoder
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class AlignmentDataset(Dataset):
 
-    def __init__(self, tsv_flie, image_dir="", transform=None,
-                 width=256, height=256, channels=3,
-                 means=(127.5, 127.5, 127.5), scale=1 / 127.5,
-                 classes_num=None, crop_op=True, aug_prob=0.0, edge_info=None, flip_mapping=None, is_train=True,
-                 encoder_type='default',
-                 ):
+    def __init__(
+        self,
+        tsv_flie,
+        image_dir='',
+        transform=None,
+        width=256,
+        height=256,
+        channels=3,
+        means=(127.5, 127.5, 127.5),
+        scale=1 / 127.5,
+        classes_num=None,
+        crop_op=True,
+        aug_prob=0.0,
+        edge_info=None,
+        flip_mapping=None,
+        is_train=True,
+        encoder_type='default',
+    ):
         super(AlignmentDataset, self).__init__()
         self.use_AAM = True
         self.encoder_type = encoder_type
         self.encoder = get_encoder(height, width, encoder_type=encoder_type)
-        self.items = pd.read_csv(tsv_flie, sep="\t")
+        self.items = pd.read_csv(tsv_flie, sep='\t')
         self.image_dir = image_dir
         self.landmark_num = classes_num[0]
         self.transform = transform
@@ -48,11 +60,9 @@ class AlignmentDataset(Dataset):
         self.edge_info = edge_info
         self.is_train = is_train
         std_lmk_5pts = np.array([
-            196.0, 226.0,
-            316.0, 226.0,
-            256.0, 286.0,
-            220.0, 360.4,
-            292.0, 360.4], np.float32) / 256.0 - 1.0
+            196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0,
+            360.4
+        ], np.float32) / 256.0 - 1.0
         std_lmk_5pts = np.reshape(std_lmk_5pts, (5, 2))  # [-1 1]
         target_face_scale = 1.0 if crop_op else 1.25
 
@@ -79,8 +89,8 @@ class AlignmentDataset(Dataset):
         tmp_size = sigma * 3
         ul = [int(pt[0] - tmp_size), int(pt[1] - tmp_size)]
         br = [int(pt[0] + tmp_size + 1), int(pt[1] + tmp_size + 1)]
-        if (ul[0] > img.shape[1] - 1 or ul[1] > img.shape[0] - 1 or
-                br[0] - 1 < 0 or br[1] - 1 < 0):
+        if (ul[0] > img.shape[1] - 1 or ul[1] > img.shape[0] - 1
+                or br[0] - 1 < 0 or br[1] - 1 < 0):
             # If not, just return the image as is
             return img
 
@@ -91,9 +101,9 @@ class AlignmentDataset(Dataset):
         x0 = y0 = size // 2
         # The gaussian is not normalized, we want the center value to equal 1
         if label_type == 'Gaussian':
-            g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
+            g = np.exp(-((x - x0)**2 + (y - y0)**2) / (2 * sigma**2))
         else:
-            g = sigma / (((x - x0) ** 2 + (y - y0) ** 2 + sigma ** 2) ** 1.5)
+            g = sigma / (((x - x0)**2 + (y - y0)**2 + sigma**2)**1.5)
 
         # Usable gaussian range
         g_x = max(0, -ul[0]), min(br[0], img.shape[1]) - ul[0]
@@ -102,15 +112,25 @@ class AlignmentDataset(Dataset):
         img_x = max(0, ul[0]), min(br[0], img.shape[1])
         img_y = max(0, ul[1]), min(br[1], img.shape[0])
 
-        img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = 255 * g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+        img[img_y[0]:img_y[1],
+            img_x[0]:img_x[1]] = 255 * g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
         return img
 
-    def _polylines(self, img, lmks, is_closed, color=255, thickness=1, draw_mode=cv2.LINE_AA,
-                   interpolate_mode=cv2.INTER_AREA, scale=4):
+    def _polylines(self,
+                   img,
+                   lmks,
+                   is_closed,
+                   color=255,
+                   thickness=1,
+                   draw_mode=cv2.LINE_AA,
+                   interpolate_mode=cv2.INTER_AREA,
+                   scale=4):
         h, w = img.shape
-        img_scale = cv2.resize(img, (w * scale, h * scale), interpolation=interpolate_mode)
+        img_scale = cv2.resize(
+            img, (w * scale, h * scale), interpolation=interpolate_mode)
         lmks_scale = (lmks * scale + 0.5).astype(np.int32)
-        cv2.polylines(img_scale, [lmks_scale], is_closed, color, thickness * scale, draw_mode)
+        cv2.polylines(img_scale, [lmks_scale], is_closed, color,
+                      thickness * scale, draw_mode)
         img = cv2.resize(img_scale, (w, h), interpolation=interpolate_mode)
         return img
 
@@ -130,8 +150,11 @@ class AlignmentDataset(Dataset):
             edgemaps.append(edgemap)
         edgemaps = np.stack(edgemaps, axis=0) / 255.0
         edgemaps = torch.from_numpy(edgemaps).float().unsqueeze(0)
-        edgemaps = F.interpolate(edgemaps, size=(int(w * scale), int(h * scale)), mode='bilinear',
-                                 align_corners=False).squeeze()
+        edgemaps = F.interpolate(
+            edgemaps,
+            size=(int(w * scale), int(h * scale)),
+            mode='bilinear',
+            align_corners=False).squeeze()
         return edgemaps
 
     def _fit_curve(self, lmks, is_closed=False, density=5):
@@ -146,7 +169,9 @@ class AlignmentDataset(Dataset):
             # lmk_x, lmk_y = interpolate.splev(np.linspace(0, 1, bins), f)
             intervals = np.array([])
             for i in range(len(u) - 1):
-                intervals = np.concatenate((intervals, np.linspace(u[i], u[i + 1], density, endpoint=False)))
+                intervals = np.concatenate(
+                    (intervals,
+                     np.linspace(u[i], u[i + 1], density, endpoint=False)))
             if not is_closed:
                 intervals = np.concatenate((intervals, [u[-1]]))
             lmk_x, lmk_y = interpolate.splev(intervals, tck, der=0)
@@ -156,13 +181,13 @@ class AlignmentDataset(Dataset):
             # origin_indices = np.arange(0, curve_lmks.shape[0], density)
 
             return curve_lmks
-        except:
+        except Exception:
             return lmks
 
     def _image_id(self, image_path):
         if not os.path.exists(image_path):
             image_path = os.path.join(self.image_dir, image_path)
-        return hashlib.md5(open(image_path, "rb").read()).hexdigest()
+        return hashlib.md5(open(image_path, 'rb').read()).hexdigest()
 
     def _load_image(self, image_path):
         if not os.path.exists(image_path):
@@ -171,23 +196,28 @@ class AlignmentDataset(Dataset):
         try:
             # img = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)#HWC, BGR, [0-255]
             img = cv2.imread(image_path, cv2.IMREAD_COLOR)  # HWC, BGR, [0-255]
-            assert img is not None and len(img.shape) == 3 and img.shape[2] == 3
-        except:
+            assert img is not None and len(
+                img.shape) == 3 and img.shape[2] == 3
+        except Exception:
             try:
                 img = imageio.imread(image_path)  # HWC, RGB, [0-255]
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  # HWC, BGR, [0-255]
-                assert img is not None and len(img.shape) == 3 and img.shape[2] == 3
-            except:
+                assert img is not None and len(
+                    img.shape) == 3 and img.shape[2] == 3
+            except Exception:
                 try:
                     gifImg = imageio.mimread(image_path)  # BHWC, RGB, [0-255]
                     img = gifImg[0]  # HWC, RGB, [0-255]
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  # HWC, BGR, [0-255]
-                    assert img is not None and len(img.shape) == 3 and img.shape[2] == 3
-                except:
+                    img = cv2.cvtColor(img,
+                                       cv2.COLOR_RGB2BGR)  # HWC, BGR, [0-255]
+                    assert img is not None and len(
+                        img.shape) == 3 and img.shape[2] == 3
+                except Exception:
                     img = None
         return img
 
-    def _compose_rotate_and_scale(self, angle, scale, shift_xy, from_center, to_center):
+    def _compose_rotate_and_scale(self, angle, scale, shift_xy, from_center,
+                                  to_center):
         cosv = math.cos(angle)
         sinv = math.sin(angle)
 
@@ -205,11 +235,8 @@ class AlignmentDataset(Dataset):
         b1 = acos
         b2 = ty - asin * fx - acos * fy + shift_xy[1]
 
-        rot_scale_m = np.array([
-            [a0, a1, a2],
-            [b0, b1, b2],
-            [0.0, 0.0, 1.0]
-        ], np.float32)
+        rot_scale_m = np.array([[a0, a1, a2], [b0, b1, b2], [0.0, 0.0, 1.0]],
+                               np.float32)
         return rot_scale_m
 
     def _transformPoints2D(self, points, matrix):
@@ -229,27 +256,34 @@ class AlignmentDataset(Dataset):
         image, matrix3x3 -> transformed_image
         """
         return cv2.warpPerspective(
-            image, matrix,
+            image,
+            matrix,
             dsize=(target_shape[1], target_shape[0]),
-            flags=cv2.INTER_LINEAR, borderValue=0)
+            flags=cv2.INTER_LINEAR,
+            borderValue=0)
 
     def _norm_points(self, points, h, w, align_corners=False):
         if align_corners:
             # [0, SIZE-1] -> [-1, +1]
-            des_points = points / torch.tensor([w - 1, h - 1]).to(points).view(1, 2) * 2 - 1
+            des_points = points / torch.tensor([w - 1, h - 1]).to(points).view(
+                1, 2) * 2 - 1
         else:
             # [-0.5, SIZE-0.5] -> [-1, +1]
-            des_points = (points * 2 + 1) / torch.tensor([w, h]).to(points).view(1, 2) - 1
+            des_points = (points * 2 + 1) / torch.tensor(
+                [w, h]).to(points).view(1, 2) - 1
         des_points = torch.clamp(des_points, -1, 1)
         return des_points
 
     def _denorm_points(self, points, h, w, align_corners=False):
         if align_corners:
             # [-1, +1] -> [0, SIZE-1]
-            des_points = (points + 1) / 2 * torch.tensor([w - 1, h - 1]).to(points).view(1, 1, 2)
+            des_points = (points + 1) / 2 * torch.tensor(
+                [w - 1, h - 1]).to(points).view(1, 1, 2)
         else:
             # [-1, +1] -> [-0.5, SIZE-0.5]
-            des_points = ((points + 1) * torch.tensor([w, h]).to(points).view(1, 1, 2) - 1) / 2
+            des_points = (
+                (points + 1) * torch.tensor([w, h]).to(points).view(1, 1, 2)
+                - 1) / 2
         return des_points
 
     def __len__(self):
@@ -260,14 +294,21 @@ class AlignmentDataset(Dataset):
 
         image_path = self.items.iloc[index, 0]
         landmarks_5pts = self.items.iloc[index, 1]
-        landmarks_5pts = np.array(list(map(float, landmarks_5pts.split(","))), dtype=np.float32).reshape(5, 2)
+        landmarks_5pts = np.array(
+            list(map(float, landmarks_5pts.split(','))),
+            dtype=np.float32).reshape(5, 2)
         landmarks_target = self.items.iloc[index, 2]
-        landmarks_target = np.array(list(map(float, landmarks_target.split(","))), dtype=np.float32).reshape(
-            self.landmark_num, 2)
+        landmarks_target = np.array(
+            list(map(float, landmarks_target.split(','))),
+            dtype=np.float32).reshape(self.landmark_num, 2)
         scale = float(self.items.iloc[index, 3])
-        center_w, center_h = float(self.items.iloc[index, 4]), float(self.items.iloc[index, 5])
+        center_w, center_h = float(self.items.iloc[index, 4]), float(
+            self.items.iloc[index, 5])
         if len(self.items.iloc[index]) > 6:
-            tags = np.array(list(map(lambda x: int(float(x)), self.items.iloc[index, 6].split(","))))
+            tags = np.array(
+                list(
+                    map(lambda x: int(float(x)),
+                        self.items.iloc[index, 6].split(','))))
         else:
             tags = np.array([])
 
@@ -275,13 +316,14 @@ class AlignmentDataset(Dataset):
         image_path = image_path.replace('\\', '/')
         # wflw testset
         image_path = image_path.replace(
-            '//msr-facestore/Workspace/MSRA_EP_Allergan/users/yanghuan/training_data/wflw/rawImages/', '')
+            '//msr-facestore/Workspace/MSRA_EP_Allergan/users/yanghuan/training_data/wflw/rawImages/',
+            '')
         # trainset
         image_path = image_path.replace('./rawImages/', '')
         image_path = os.path.join(self.image_dir, image_path)
 
         # image path
-        sample["image_path"] = image_path
+        sample['image_path'] = image_path
 
         img = self._load_image(image_path)  # HWC, BGR, [0, 255]
         assert img is not None
@@ -291,14 +333,18 @@ class AlignmentDataset(Dataset):
         img, landmarks_target, matrix = \
             self.augmentation.process(img, landmarks_target, landmarks_5pts, scale, center_w, center_h)
 
-        landmarks = self._norm_points(torch.from_numpy(landmarks_target), self.image_height, self.image_width)
+        landmarks = self._norm_points(
+            torch.from_numpy(landmarks_target), self.image_height,
+            self.image_width)
 
-        sample["label"] = [landmarks, ]
+        sample['label'] = [
+            landmarks,
+        ]
 
         if self.use_AAM:
             pointmap = self.encoder.generate_heatmap(landmarks_target)
             edgemap = self._generate_edgemap(landmarks_target)
-            sample["label"] += [pointmap, edgemap]
+            sample['label'] += [pointmap, edgemap]
 
         sample['matrix'] = matrix
 
@@ -307,8 +353,8 @@ class AlignmentDataset(Dataset):
         img[0, :, :] = (img[0, :, :] - self.means[0]) * self.scale
         img[1, :, :] = (img[1, :, :] - self.means[1]) * self.scale
         img[2, :, :] = (img[2, :, :] - self.means[2]) * self.scale
-        sample["data"] = torch.from_numpy(img)  # CHW, BGR, [-1, 1]
+        sample['data'] = torch.from_numpy(img)  # CHW, BGR, [-1, 1]
 
-        sample["tags"] = tags
+        sample['tags'] = tags
 
         return sample

@@ -2,6 +2,7 @@ import torch
 
 
 class decoder_default:
+
     def __init__(self, weight=1, use_weight_map=False):
         self.weight = weight
         self.use_weight_map = use_weight_map

@@ -39,7 +39,7 @@ class Models(object):
     body_3d_keypoints_hdformer = 'hdformer'
     crowd_counting = 'HRNetCrowdCounting'
     face_2d_keypoints = 'face-2d-keypoints'
-    star_68ldk_detection = 'star-68ldk-detection' 
+    star_68ldk_detection = 'star-68ldk-detection'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     r50_panoptic_segmentation = 'r50-panoptic-segmentation'
     image_reid_person = 'passvitb'

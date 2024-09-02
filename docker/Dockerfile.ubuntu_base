@@ -142,11 +142,11 @@ RUN set -eux; \
 ARG USE_GPU=True
 
 # install pytorch
-ARG TORCH_VERSION=2.4.0
+ARG TORCH_VERSION=2.3.0
 ARG CUDATOOLKIT_VERSION=cu121
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-       pip install --no-cache-dir "torch==2.4.0" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+       pip install --no-cache-dir "torch==2.3.0" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
        pip install --no-cache-dir torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \

@@ -46,10 +46,10 @@ class HFUtilTest(unittest.TestCase):
 
     def test_transformer_patch(self):
         tokenizer = AutoTokenizer.from_pretrained(
-            'skyline2006/llama-7b', revision='v1.0.1')
+            'iic/nlp_structbert_sentiment-classification_chinese-base')
         self.assertIsNotNone(tokenizer)
         model = AutoModelForCausalLM.from_pretrained(
-            'skyline2006/llama-7b', revision='v1.0.1')
+            'iic/nlp_structbert_sentiment-classification_chinese-base')
         self.assertIsNotNone(model)
 
 

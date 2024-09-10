@@ -591,7 +591,7 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             headers=headers,
             cookies=None if cookies is None else cookies.get_dict(),
             file_size=file_meta['Size'])
-    else:
+    elif file_meta['Size'] > 0:
         http_get_model_file(
             url,
             temporary_cache_dir,
@@ -599,6 +599,10 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             file_size=file_meta['Size'],
             headers=headers,
             cookies=cookies)
+    else:
+        with open(os.path.join(temporary_cache_dir, file_meta['Path']),
+                  'w') as f:
+            f.write('')
 
     # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])

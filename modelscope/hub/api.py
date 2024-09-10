@@ -834,7 +834,7 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        from tqdm import tqdm
+        from tqdm.auto import tqdm
         import pandas as pd
 
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())

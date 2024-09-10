@@ -14,7 +14,7 @@ from typing import Dict, Optional, Union
 
 import requests
 from requests.adapters import Retry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (

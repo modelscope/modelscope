@@ -471,7 +471,7 @@ def http_get_model_file(
                 with open(temp_file_path, 'rb') as f:
                     partial_length = f.seek(0, io.SEEK_END)
                     progress.update(partial_length)
-            if partial_length >= file_size:
+            if partial_length >= file_size > 0:
                 break
             # closed range[], from 0.
             get_headers['Range'] = 'bytes=%s-%s' % (partial_length,

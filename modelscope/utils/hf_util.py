@@ -5,7 +5,7 @@ from pathlib import Path
 from types import MethodType
 from typing import Dict, Literal, Optional, Union
 
-from transformers import AutoConfig as AutoConfigHF, PreTrainedTokenizerBase, PreTrainedModel, PretrainedConfig
+from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
@@ -18,6 +18,8 @@ from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BatchFeature as BatchFeatureHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
+from transformers import (PretrainedConfig, PreTrainedModel,
+                          PreTrainedTokenizerBase)
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
@@ -38,13 +40,14 @@ def user_agent(invoked_by=None):
 
 
 def file_exists_ms(
-        self,
-        repo_id: str,
-        filename: str,
-        *,
-        repo_type: Optional[str] = None,
-        revision: Optional[str] = None,
-        token: Union[str, bool, None] = None, ):
+    self,
+    repo_id: str,
+    filename: str,
+    *,
+    repo_type: Optional[str] = None,
+    revision: Optional[str] = None,
+    token: Union[str, bool, None] = None,
+):
     from modelscope.hub.api import HubApi
     api = HubApi()
     if token is None:
@@ -57,29 +60,29 @@ def file_exists_ms(
 
 
 def ms_hub_download(
-        repo_id: str,
-        filename: str,
-        *,
-        subfolder: Optional[str] = None,
-        repo_type: Optional[str] = None,
-        revision: Optional[str] = None,
-        library_name: Optional[str] = None,
-        library_version: Optional[str] = None,
-        cache_dir: Union[str, Path, None] = None,
-        local_dir: Union[str, Path, None] = None,
-        user_agent: Union[Dict, str, None] = None,
-        force_download: bool = False,
-        proxies: Optional[Dict] = None,
-        etag_timeout: float = 10,
-        token: Union[bool, str, None] = None,
-        local_files_only: bool = False,
-        headers: Optional[Dict[str, str]] = None,
-        endpoint: Optional[str] = None,
-        # Deprecated args
-        legacy_cache_layout: bool = False,
-        resume_download: Optional[bool] = None,
-        force_filename: Optional[str] = None,
-        local_dir_use_symlinks: Union[bool, Literal["auto"]] = "auto",
+    repo_id: str,
+    filename: str,
+    *,
+    subfolder: Optional[str] = None,
+    repo_type: Optional[str] = None,
+    revision: Optional[str] = None,
+    library_name: Optional[str] = None,
+    library_version: Optional[str] = None,
+    cache_dir: Union[str, Path, None] = None,
+    local_dir: Union[str, Path, None] = None,
+    user_agent: Union[Dict, str, None] = None,
+    force_download: bool = False,
+    proxies: Optional[Dict] = None,
+    etag_timeout: float = 10,
+    token: Union[bool, str, None] = None,
+    local_files_only: bool = False,
+    headers: Optional[Dict[str, str]] = None,
+    endpoint: Optional[str] = None,
+    # Deprecated args
+    legacy_cache_layout: bool = False,
+    resume_download: Optional[bool] = None,
+    force_filename: Optional[str] = None,
+    local_dir_use_symlinks: Union[bool, Literal['auto']] = 'auto',
 ):
     need_bin_files = '.safetensors' in filename or '.bin' in filename
     if not need_bin_files:
@@ -94,12 +97,13 @@ def ms_hub_download(
         api = HubApi()
         api.login(token)
 
-    model_dir = snapshot_download(repo_id,
-                                  cache_dir=cache_dir,
-                                  local_dir=local_dir,
-                                  local_files_only=local_files_only,
-                                  revision=revision,
-                                  ignore_file_pattern=ignore_file_pattern)
+    model_dir = snapshot_download(
+        repo_id,
+        cache_dir=cache_dir,
+        local_dir=local_dir,
+        local_files_only=local_files_only,
+        revision=revision,
+        ignore_file_pattern=ignore_file_pattern)
     for dirs, _, files in os.walk(model_dir):
         if filename in files:
             return os.path.join(model_dir, dirs, filename)
@@ -108,8 +112,8 @@ def ms_hub_download(
 
 def patch_pretrained_class():
 
-
-    def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs):
+    def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
+                      **kwargs):
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
@@ -129,7 +133,8 @@ def patch_pretrained_class():
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
             ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
         PreTrainedTokenizerBase.from_pretrained = from_pretrained
@@ -144,13 +149,15 @@ def patch_pretrained_class():
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
             ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
         @classmethod
         def get_config_dict(cls, pretrained_model_name_or_path, **kwargs):
             ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
             return ori_get_config_dict(cls, model_dir, **kwargs)
 
         PretrainedConfig.get_config_dict = get_config_dict
@@ -163,7 +170,8 @@ def patch_pretrained_class():
         @classmethod
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
-            model_dir = get_model_dir(pretrained_model_name_or_path, None, **kwargs)
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
         PreTrainedModel.from_pretrained = from_pretrained

@@ -49,9 +49,10 @@ def file_exists_ms(
     api = HubApi()
     if token is None:
         token = os.environ.get('MODELSCOPE_API_TOKEN')
-    assert token, 'Please input a token or set by `MODELSCOPE_API_TOKEN`'
-    api.login(token)
+    if token:
+        api.login(token)
     files = api.get_model_files(repo_id, revision=revision)
+    files = [file['Name'] for file in files]
     return filename in files
 
 
@@ -106,6 +107,19 @@ def ms_hub_download(
 
 
 def patch_pretrained_class():
+
+
+    def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs):
+        if not os.path.exists(pretrained_model_name_or_path):
+            revision = kwargs.pop('revision', None)
+            model_dir = snapshot_download(
+                pretrained_model_name_or_path,
+                revision=revision,
+                ignore_file_pattern=ignore_file_pattern)
+        else:
+            model_dir = pretrained_model_name_or_path
+        return model_dir
+
     def patch_tokenizer_base():
         """ Monkey patch PreTrainedTokenizerBase.from_pretrained to adapt to modelscope hub.
         """
@@ -115,14 +129,7 @@ def patch_pretrained_class():
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
             ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-            if not os.path.exists(pretrained_model_name_or_path):
-                revision = kwargs.pop('revision', None)
-                model_dir = snapshot_download(
-                    pretrained_model_name_or_path,
-                    revision=revision,
-                    ignore_file_pattern=ignore_file_pattern)
-            else:
-                model_dir = pretrained_model_name_or_path
+            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
         PreTrainedTokenizerBase.from_pretrained = from_pretrained
@@ -131,22 +138,22 @@ def patch_pretrained_class():
         """ Monkey patch PretrainedConfig.from_pretrained to adapt to modelscope hub.
         """
         ori_from_pretrained = PretrainedConfig.from_pretrained.__func__
+        ori_get_config_dict = PretrainedConfig.get_config_dict.__func__
 
         @classmethod
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
             ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
-            if not os.path.exists(pretrained_model_name_or_path):
-                revision = kwargs.pop('revision', None)
-                model_dir = snapshot_download(
-                    pretrained_model_name_or_path,
-                    revision=revision,
-                    ignore_file_pattern=ignore_file_pattern)
-            else:
-                model_dir = pretrained_model_name_or_path
+            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
-        PreTrainedTokenizerBase.from_pretrained = from_pretrained
+        @classmethod
+        def get_config_dict(cls, pretrained_model_name_or_path, **kwargs):
+            ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
+            model_dir = get_model_dir(pretrained_model_name_or_path, ignore_file_pattern, **kwargs)
+            return ori_get_config_dict(cls, model_dir, **kwargs)
+
+        PretrainedConfig.get_config_dict = get_config_dict
 
     def patch_model_base():
         """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
@@ -156,13 +163,7 @@ def patch_pretrained_class():
         @classmethod
         def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
                             **kwargs):
-            if not os.path.exists(pretrained_model_name_or_path):
-                revision = kwargs.pop('revision', None)
-                model_dir = snapshot_download(
-                    pretrained_model_name_or_path,
-                    revision=revision)
-            else:
-                model_dir = pretrained_model_name_or_path
+            model_dir = get_model_dir(pretrained_model_name_or_path, None, **kwargs)
             return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
 
         PreTrainedModel.from_pretrained = from_pretrained
@@ -174,7 +175,8 @@ def patch_pretrained_class():
 
 def patch_hub():
     import huggingface_hub
-    from huggingface_hub import hf_api, api
+    from huggingface_hub import hf_api
+    from huggingface_hub.hf_api import api
 
     huggingface_hub.hf_hub_download = ms_hub_download
     huggingface_hub.file_download.hf_hub_download = ms_hub_download

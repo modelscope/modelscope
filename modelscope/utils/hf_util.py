@@ -39,7 +39,7 @@ def user_agent(invoked_by=None):
     return uagent
 
 
-def file_exists_ms(
+def file_exists(
     self,
     repo_id: str,
     filename: str,
@@ -189,7 +189,7 @@ def patch_hub():
     huggingface_hub.hf_hub_download = ms_hub_download
     huggingface_hub.file_download.hf_hub_download = ms_hub_download
 
-    hf_api.file_exists = MethodType(file_exists_ms, api)
+    hf_api.file_exists = MethodType(file_exists, api)
     huggingface_hub.file_exists = hf_api.file_exists
     huggingface_hub.hf_api.file_exists = hf_api.file_exists
 

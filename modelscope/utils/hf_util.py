@@ -51,6 +51,7 @@ def _file_exists(
     revision: Optional[str] = None,
     token: Union[str, bool, None] = None,
 ):
+    """Patch huggingface_hub.file_exists"""
     logger.warning(
         'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
     )
@@ -89,6 +90,7 @@ def _file_download(
     force_filename: Optional[str] = None,
     local_dir_use_symlinks: Union[bool, Literal['auto']] = 'auto',
 ):
+    """Patch huggingface_hub.hf_hub_download"""
     logger.warning(
         'The passed in library_name,library_version,user_agent,force_download,proxies'
         'etag_timeout,headers,endpoint '
@@ -187,6 +189,8 @@ def _patch_pretrained_class():
 
 
 def patch_hub():
+    """Patch hf hub, which to make users can download models from modelscope to speed up.
+    """
     import huggingface_hub
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api

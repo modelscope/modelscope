@@ -23,6 +23,7 @@ from transformers import (PretrainedConfig, PreTrainedModel,
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
+from .logger import get_logger
 
 try:
     from transformers import GPTQConfig as GPTQConfigHF
@@ -30,6 +31,8 @@ try:
 except ImportError:
     GPTQConfigHF = None
     AwqConfigHF = None
+
+logger = get_logger()
 
 
 def user_agent(invoked_by=None):
@@ -39,7 +42,7 @@ def user_agent(invoked_by=None):
     return uagent
 
 
-def file_exists(
+def _file_exists(
     self,
     repo_id: str,
     filename: str,
@@ -48,18 +51,20 @@ def file_exists(
     revision: Optional[str] = None,
     token: Union[str, bool, None] = None,
 ):
+    logger.warning(
+        'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
+    )
     from modelscope.hub.api import HubApi
     api = HubApi()
     if token is None:
         token = os.environ.get('MODELSCOPE_API_TOKEN')
     if token:
         api.login(token)
-    files = api.get_model_files(repo_id, revision=revision)
-    files = [file['Name'] for file in files]
-    return filename in files
+
+    return api.file_exists(repo_id, filename, revision=revision)
 
 
-def ms_hub_download(
+def _file_download(
     repo_id: str,
     filename: str,
     *,
@@ -84,33 +89,33 @@ def ms_hub_download(
     force_filename: Optional[str] = None,
     local_dir_use_symlinks: Union[bool, Literal['auto']] = 'auto',
 ):
-    need_bin_files = '.safetensors' in filename or '.bin' in filename
-    if not need_bin_files:
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
+    logger.warning(
+        'The passed in library_name,library_version,user_agent,force_download,proxies'
+        'etag_timeout,headers,endpoint '
+        'will not be used in modelscope.')
+    assert repo_type in (
+        None, 'model',
+        'dataset'), f'repo_type={repo_type} is not supported in ModelScope'
+    if repo_type in (None, 'model'):
+        from modelscope.hub.file_download import model_file_download as file_download
     else:
-        ignore_file_pattern = None
-
+        from modelscope.hub.file_download import dataset_file_download as file_download
     if token is None:
         token = os.environ.get('MODELSCOPE_API_TOKEN')
     if token:
         from modelscope.hub.api import HubApi
         api = HubApi()
         api.login(token)
-
-    model_dir = snapshot_download(
+    return file_download(
         repo_id,
+        file_path=os.path.join(subfolder, filename) if subfolder else filename,
         cache_dir=cache_dir,
         local_dir=local_dir,
         local_files_only=local_files_only,
-        revision=revision,
-        ignore_file_pattern=ignore_file_pattern)
-    for dirs, _, files in os.walk(model_dir):
-        if filename in files:
-            return os.path.join(model_dir, dirs, filename)
-    return None
+        revision=revision)
 
 
-def patch_pretrained_class():
+def _patch_pretrained_class():
 
     def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
                       **kwargs):
@@ -186,22 +191,14 @@ def patch_hub():
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api
 
-    huggingface_hub.hf_hub_download = ms_hub_download
-    huggingface_hub.file_download.hf_hub_download = ms_hub_download
+    huggingface_hub.hf_hub_download = _file_download
+    huggingface_hub.file_download.hf_hub_download = _file_download
 
-    hf_api.file_exists = MethodType(file_exists, api)
+    hf_api.file_exists = MethodType(_file_exists, api)
     huggingface_hub.file_exists = hf_api.file_exists
     huggingface_hub.hf_api.file_exists = hf_api.file_exists
 
-    patch_pretrained_class()
-
-    if importlib.util.find_spec('vllm') is not None:
-        try:
-            from vllm.transformers_utils import config
-            config.file_exists = hf_api.file_exists
-            config.hf_hub_download = ms_hub_download
-        except (ImportError, AttributeError, ModuleNotFoundError):
-            pass
+    _patch_pretrained_class()
 
 
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):

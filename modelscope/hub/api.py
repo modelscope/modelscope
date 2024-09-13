@@ -661,6 +661,26 @@ class HubApi:
             files.append(file)
         return files
 
+    def file_exists(
+            self,
+            repo_id: str,
+            filename: str,
+            *,
+            revision: Optional[str] = None,
+    ):
+        """Get if the specified file exists
+
+        Args:
+            repo_id (`str`): The repo id to use
+            filename (`str`): The queried filename
+            revision (`Optional[str]`): The repo revision
+        Returns:
+            The query result in bool value
+        """
+        files = self.get_model_files(repo_id, revision=revision)
+        files = [file['Name'] for file in files]
+        return filename in files
+
     def create_dataset(self,
                        dataset_name: str,
                        namespace: str,

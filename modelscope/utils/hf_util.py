@@ -42,6 +42,15 @@ def user_agent(invoked_by=None):
     return uagent
 
 
+def _try_login(token: Optional[str] = None):
+    from modelscope.hub.api import HubApi
+    api = HubApi()
+    if token is None:
+        token = os.environ.get('MODELSCOPE_API_TOKEN')
+    if token:
+        api.login(token)
+
+
 def _file_exists(
     self,
     repo_id: str,
@@ -52,49 +61,33 @@ def _file_exists(
     token: Union[str, bool, None] = None,
 ):
     """Patch huggingface_hub.file_exists"""
-    logger.warning(
-        'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
-    )
+    if repo_type is not None:
+        logger.warning(
+            'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
+        )
+    _try_login(token)
     from modelscope.hub.api import HubApi
     api = HubApi()
-    if token is None:
-        token = os.environ.get('MODELSCOPE_API_TOKEN')
-    if token:
-        api.login(token)
-
     return api.file_exists(repo_id, filename, revision=revision)
 
 
-def _file_download(
-    repo_id: str,
-    filename: str,
-    *,
-    subfolder: Optional[str] = None,
-    repo_type: Optional[str] = None,
-    revision: Optional[str] = None,
-    library_name: Optional[str] = None,
-    library_version: Optional[str] = None,
-    cache_dir: Union[str, Path, None] = None,
-    local_dir: Union[str, Path, None] = None,
-    user_agent: Union[Dict, str, None] = None,
-    force_download: bool = False,
-    proxies: Optional[Dict] = None,
-    etag_timeout: float = 10,
-    token: Union[bool, str, None] = None,
-    local_files_only: bool = False,
-    headers: Optional[Dict[str, str]] = None,
-    endpoint: Optional[str] = None,
-    # Deprecated args
-    legacy_cache_layout: bool = False,
-    resume_download: Optional[bool] = None,
-    force_filename: Optional[str] = None,
-    local_dir_use_symlinks: Union[bool, Literal['auto']] = 'auto',
-):
+def _file_download(repo_id: str,
+                   filename: str,
+                   *,
+                   subfolder: Optional[str] = None,
+                   repo_type: Optional[str] = None,
+                   revision: Optional[str] = None,
+                   cache_dir: Union[str, Path, None] = None,
+                   local_dir: Union[str, Path, None] = None,
+                   token: Union[bool, str, None] = None,
+                   local_files_only: bool = False,
+                   **kwargs):
     """Patch huggingface_hub.hf_hub_download"""
-    logger.warning(
-        'The passed in library_name,library_version,user_agent,force_download,proxies'
-        'etag_timeout,headers,endpoint '
-        'will not be used in modelscope.')
+    if len(kwargs) > 0:
+        logger.warning(
+            'The passed in library_name,library_version,user_agent,force_download,proxies'
+            'etag_timeout,headers,endpoint '
+            'will not be used in modelscope.')
     assert repo_type in (
         None, 'model',
         'dataset'), f'repo_type={repo_type} is not supported in ModelScope'
@@ -102,12 +95,7 @@ def _file_download(
         from modelscope.hub.file_download import model_file_download as file_download
     else:
         from modelscope.hub.file_download import dataset_file_download as file_download
-    if token is None:
-        token = os.environ.get('MODELSCOPE_API_TOKEN')
-    if token:
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        api.login(token)
+    _try_login(token)
     return file_download(
         repo_id,
         file_path=os.path.join(subfolder, filename) if subfolder else filename,

@@ -24,7 +24,7 @@ def verify_device(device_name):
     eles = device_name.split(':')
     assert len(eles) <= 2, err_msg
     assert device_name is not None
-    assert eles[0] in ['cpu', 'cuda', 'gpu'], err_msg
+    assert eles[0] in ['cpu', 'cuda', 'gpu', 'mps'], err_msg # 增加对MAC设备的支持
     device_type = eles[0]
     device_id = None
     if len(eles) > 1:

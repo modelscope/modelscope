@@ -661,6 +661,26 @@ class HubApi:
             files.append(file)
         return files
 
+    def file_exists(
+            self,
+            repo_id: str,
+            filename: str,
+            *,
+            revision: Optional[str] = None,
+    ):
+        """Get if the specified file exists
+
+        Args:
+            repo_id (`str`): The repo id to use
+            filename (`str`): The queried filename
+            revision (`Optional[str]`): The repo revision
+        Returns:
+            The query result in bool value
+        """
+        files = self.get_model_files(repo_id, revision=revision)
+        files = [file['Name'] for file in files]
+        return filename in files
+
     def create_dataset(self,
                        dataset_name: str,
                        namespace: str,
@@ -834,7 +854,7 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        from tqdm import tqdm
+        from tqdm.auto import tqdm
         import pandas as pd
 
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())

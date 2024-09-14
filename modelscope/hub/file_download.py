@@ -466,6 +466,7 @@ def http_get_model_file(
                 desc='Downloading [' + file_name + ']',
             )
             if file_size == 0:
+                # Avoid empty file server request
                 with open(temp_file_path, 'w'):
                     progress.update(1)
                     progress.close()

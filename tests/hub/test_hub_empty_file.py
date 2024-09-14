@@ -17,7 +17,7 @@ class HubEmptyFile(unittest.TestCase):
         shutil.rmtree(self.work_dir, ignore_errors=True)
 
     def test_download_empty_file(self):
-        model_dir = snapshot_download('AI-ModelScope/GroundingDINO', cache_dir=self.work_dir)
+        model_dir = snapshot_download('tastelikefeet/test_empty_download', cache_dir=self.work_dir)
         self.assertTrue(model_dir is not None)
         self.assertTrue(os.path.exists(os.path.join(model_dir, '1.txt')))
         self.assertTrue(os.path.exists(os.path.join(model_dir, 'configuration.json')))

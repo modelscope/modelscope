@@ -461,17 +461,22 @@ def http_get_model_file(
                 unit='B',
                 unit_scale=True,
                 unit_divisor=1024,
-                total=file_size,
+                total=file_size if file_size > 0 else 1,
                 initial=0,
                 desc='Downloading [' + file_name + ']',
             )
+            if file_size == 0:
+                with open(temp_file_path, 'w'):
+                    progress.update(1)
+                    progress.close()
+                    break
             partial_length = 0
             if os.path.exists(
                     temp_file_path):  # download partial, continue download
                 with open(temp_file_path, 'rb') as f:
                     partial_length = f.seek(0, io.SEEK_END)
                     progress.update(partial_length)
-            if partial_length >= file_size > 0:
+            if partial_length >= file_size:
                 break
             # closed range[], from 0.
             get_headers['Range'] = 'bytes=%s-%s' % (partial_length,

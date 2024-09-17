@@ -789,7 +789,7 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
         if key not in task_outputs:
             import torch
             if isinstance(value, torch.Tensor):
-                v = np.array(value).tolist()
+                v = np.array(value.cpu()).tolist()
             else:
                 v = value
             json_serializable_output[key] = v

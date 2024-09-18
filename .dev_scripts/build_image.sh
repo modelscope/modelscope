@@ -159,7 +159,7 @@ docker_file_content=`cat docker/Dockerfile.ubuntu`
 
 BUILD_HASH_ID=$(git rev-parse HEAD)
 # install thrid part library
-docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv &&  pip install --no-cache-dir -U git+https://github.com/modelscope/ms-swift.git@release/2.4 'decord' 'qwen_vl_utils' 'pyav' 'librosa' 'funasr' 'timm>0.9.5' 'accelerate' 'gradio' 'peft' 'optimum' 'trl' 'transformers'"
+docker_file_content="${docker_file_content} \nRUN export COMMIT_ID=$BUILD_HASH_ID && pip install --no-cache-dir -U adaseq pai-easycv &&  pip install --no-cache-dir -U git+https://github.com/modelscope/ms-swift.git@release/2.4 'decord' 'qwen_vl_utils' 'pyav' 'librosa' 'funasr' 'timm>0.9.5' 'accelerate' 'gradio' 'peft' 'optimum' 'trl' && pip install git+https://github.com/huggingface/transformers.git"
 
 docker_file_content="${docker_file_content} \nRUN pip uninstall modelscope -y && export COMMIT_ID=$BUILD_HASH_ID && cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $build_branch  --single-branch $REPO_URL && cd modelscope && pip install . && cd / && rm -fr /tmp/modelscope && pip cache purge;"
 
@@ -170,7 +170,7 @@ else
     echo "Building dsw image will need set ModelScope lib cache location."
     docker_file_content="${docker_file_content} \nENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope"
     # pre compile extension
-    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()' && pip --no-cache-dir install -U torch torchvision torchaudio"
+    docker_file_content="${docker_file_content} \nRUN pip uninstall -y tb-nightly tensorboard && pip install --no-cache-dir -U tensorboard && TORCH_CUDA_ARCH_LIST='6.0 6.1 7.0 7.5 8.0 8.9 9.0 8.6+PTX' python -c 'from modelscope.utils.pre_compile import pre_compile_all;pre_compile_all()' && pip --no-cache-dir install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0"
 fi
 
 

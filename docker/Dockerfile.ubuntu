@@ -58,7 +58,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     pip install --no-cache-dir -U 'xformers<0.0.27' --index-url https://download.pytorch.org/whl/cu121 && \
     pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip uninstall -y torch-scatter && TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5;8.0;8.6;8.9;9.0" pip install --no-cache-dir -U torch-scatter && \
-    pip install --no-cache-dir -U triton https://modelscope.oss-cn-beijing.aliyuncs.com/packages/lmdeploy-0.5.0-cp310-cp310-linux_x86_64.whl \
+    pip install --no-cache-dir -U triton https://modelscope.oss-cn-beijing.aliyuncs.com/packages/lmdeploy-0.5.0-cp310-cp310-linux_x86_64.whl && \
     pip install --no-cache-dir 'vllm==0.6.0'; \
     else \
         echo 'cpu unsupport vllm auto-gptq'; \

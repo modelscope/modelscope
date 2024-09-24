@@ -42,7 +42,6 @@ def get_from_cache_ms(
     ignore_url_params=False,
     storage_options=None,
     download_desc=None,
-    disable_tqdm=False,
 ) -> str:
     """
     Given a URL, look for the corresponding file in the local cache.
@@ -88,6 +87,8 @@ def get_from_cache_ms(
     # if we don't ask for 'force_download' then we spare a request
     filename = hash_url_to_filename(cached_url, etag=None)
     cache_path = os.path.join(cache_dir, filename)
+    if download_desc is None:
+        download_desc = 'Downloading [' + filename + ']'
 
     if os.path.exists(cache_path) and not force_download and not use_etag:
         return cache_path
@@ -211,42 +212,10 @@ def get_from_cache_ms(
             if scheme == 'ftp':
                 ftp_get(url, temp_file)
             elif scheme not in ('http', 'https'):
-                fsspec_get_sig = inspect.signature(fsspec_get)
-                if 'disable_tqdm' in fsspec_get_sig.parameters:
-                    fsspec_get(url,
-                               temp_file,
-                               storage_options=storage_options,
-                               desc=download_desc,
-                               disable_tqdm=disable_tqdm
-                               )
-                else:
-                    fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
+                fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
             else:
-                http_get_sig = inspect.signature(http_get)
-
-                if 'disable_tqdm' in http_get_sig.parameters:
-                    http_get(
-                        url,
-                        temp_file=temp_file,
-                        proxies=proxies,
-                        resume_size=resume_size,
-                        headers=headers,
-                        cookies=cookies,
-                        max_retries=max_retries,
-                        desc=download_desc,
-                        disable_tqdm=disable_tqdm,
-                    )
-                else:
-                    http_get(
-                        url,
-                        temp_file=temp_file,
-                        proxies=proxies,
-                        resume_size=resume_size,
-                        headers=headers,
-                        cookies=cookies,
-                        max_retries=max_retries,
-                        desc=download_desc,
-                    )
+                http_get(url, temp_file=temp_file, proxies=proxies, resume_size=resume_size,
+                         headers=headers, cookies=cookies, max_retries=max_retries, desc=download_desc)
 
         logger.info(f'storing {url} in cache at {cache_path}')
         shutil.move(temp_file.name, cache_path)

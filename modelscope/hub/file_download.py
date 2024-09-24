@@ -461,10 +461,16 @@ def http_get_model_file(
                 unit='B',
                 unit_scale=True,
                 unit_divisor=1024,
-                total=file_size,
+                total=file_size if file_size > 0 else 1,
                 initial=0,
                 desc='Downloading [' + file_name + ']',
             )
+            if file_size == 0:
+                # Avoid empty file server request
+                with open(temp_file_path, 'w+'):
+                    progress.update(1)
+                    progress.close()
+                    break
             partial_length = 0
             if os.path.exists(
                     temp_file_path):  # download partial, continue download

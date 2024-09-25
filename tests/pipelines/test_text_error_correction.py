@@ -46,7 +46,7 @@ class TextErrorCorrectionTest(unittest.TestCase):
         sents = [self.input, self.input_2, self.input_3, self.input_4, self.input_law]
         rs1 = pipeline_ins(sents, batch_size=2)
         rs2 = pipeline_ins(sents)
-        print('batch: ',rs1, rs2)
+        print('batch: ', rs1, rs2)
         self.assertEqual(rs1, rs2)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')

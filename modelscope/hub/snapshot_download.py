@@ -245,8 +245,9 @@ def _snapshot_download(
                 use_cookies=False if cookies is None else cookies,
                 headers=snapshot_header,
             )
+            print('>>>verbose in snapshot_download:', verbose)
             if verbose:
-                logger.info(
+                print(
                     f'Time cost of get_model_files: {time.time() - time_start_get_model_files}'
                 )
 
@@ -422,7 +423,7 @@ def _download_file_lists(
                 file_path=repo_file['Path'],
                 revision=revision)
             if verbose:
-                logger.info(
+                print(
                     f"Time cost of get_file_download_url for {repo_file['Name']}: "
                     f'{time.time() - time_start_get_file_download_url}')
 

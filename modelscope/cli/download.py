@@ -97,6 +97,9 @@ class DownloadCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
+
+        print('>>Verbose:', self.args.verbose)
+
         if self.args.model or self.args.dataset:
             # the position argument of files will be put to repo_id.
             if self.args.repo_id is not None:

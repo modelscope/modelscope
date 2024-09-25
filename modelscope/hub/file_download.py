@@ -606,9 +606,8 @@ def download_file(url,
             cookies=None if cookies is None else cookies.get_dict(),
             file_size=file_meta['Size'])
         if verbose:
-            logger.info(
-                f"Time cost of parallel_download for {file_meta['Path']}: "
-                f'{time.time() - time_start_parallel_download}')
+            print(f"Time cost of parallel_download for {file_meta['Path']}: "
+                  f'{time.time() - time_start_parallel_download}')
     else:
         time_start_http_get_model_file = time.time()
         http_get_model_file(
@@ -619,9 +618,8 @@ def download_file(url,
             headers=headers,
             cookies=cookies)
         if verbose:
-            logger.info(
-                f"Time cost of http_get_model_file for {file_meta['Path']}: "
-                f'{time.time() - time_start_http_get_model_file}')
+            print(f"Time cost of http_get_model_file for {file_meta['Path']}: "
+                  f'{time.time() - time_start_http_get_model_file}')
 
     # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
@@ -631,7 +629,7 @@ def download_file(url,
     time_start_put_file = time.time()
     res = cache.put_file(file_meta, temp_file)
     if verbose:
-        logger.info(f"Time cost of put_file for {file_meta['Path']}: "
-                    f'{time.time() - time_start_put_file}')
+        print(f"Time cost of put_file for {file_meta['Path']}: "
+              f'{time.time() - time_start_put_file}')
 
     return res

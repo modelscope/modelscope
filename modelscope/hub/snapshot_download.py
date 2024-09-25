@@ -3,6 +3,7 @@
 import fnmatch
 import os
 import re
+import time
 import uuid
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -35,6 +36,7 @@ def snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    verbose: Optional[bool] = False,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -93,7 +95,9 @@ def snapshot_download(
         allow_file_pattern=allow_file_pattern,
         local_dir=local_dir,
         ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns)
+        allow_patterns=allow_patterns,
+        verbose=verbose,
+    )
 
 
 def dataset_snapshot_download(
@@ -184,6 +188,7 @@ def _snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    verbose: Optional[bool] = False,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -232,6 +237,7 @@ def _snapshot_download(
                 snapshot_header[
                     'cached_model_revision'] = cache.cached_model_revision
 
+            time_start_get_model_files = time.time()
             repo_files = _api.get_model_files(
                 model_id=repo_id,
                 revision=revision,
@@ -239,6 +245,11 @@ def _snapshot_download(
                 use_cookies=False if cookies is None else cookies,
                 headers=snapshot_header,
             )
+            if verbose:
+                logger.info(
+                    f'Time cost of get_model_files: {time.time() - time_start_get_model_files}'
+                )
+
             _download_file_lists(
                 repo_files,
                 cache,
@@ -254,7 +265,9 @@ def _snapshot_download(
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern,
                 ignore_patterns=ignore_patterns,
-                allow_patterns=allow_patterns)
+                allow_patterns=allow_patterns,
+                verbose=verbose,
+            )
 
         elif repo_type == REPO_TYPE_DATASET:
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
@@ -349,6 +362,7 @@ def _download_file_lists(
     allow_file_pattern: Optional[Union[str, List[str]]] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    verbose: Optional[bool] = False,
 ):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
@@ -402,10 +416,16 @@ def _download_file_lists(
             continue
         if repo_type == REPO_TYPE_MODEL:
             # get download url
+            time_start_get_file_download_url = time.time()
             url = get_file_download_url(
                 model_id=repo_id,
                 file_path=repo_file['Path'],
                 revision=revision)
+            if verbose:
+                logger.info(
+                    f"Time cost of get_file_download_url for {repo_file['Name']}: "
+                    f'{time.time() - time_start_get_file_download_url}')
+
         elif repo_type == REPO_TYPE_DATASET:
             url = api.get_dataset_file_url(
                 file_name=repo_file['Path'],
@@ -417,5 +437,11 @@ def _download_file_lists(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
 
-        download_file(url, repo_file, temporary_cache_dir, cache, headers,
-                      cookies)
+        download_file(
+            url,
+            repo_file,
+            temporary_cache_dir,
+            cache,
+            headers,
+            cookies,
+            verbose=verbose)

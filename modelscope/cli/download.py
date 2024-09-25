@@ -88,6 +88,12 @@ class DownloadCMD(CLICommand):
             default=None,
             help='Glob patterns to exclude from files to download.'
             'Ignored if file is specified')
+        parser.add_argument(
+            '--verbose',
+            help='Print verbose information.',
+            action='store_true',
+            default=False)
+
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
@@ -134,6 +140,7 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
+                    verbose=self.args.verbose,
                 )
         elif self.args.dataset:
             if len(self.args.files) == 1:  # download single file

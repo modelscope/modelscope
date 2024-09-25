@@ -4,6 +4,7 @@ import copy
 import io
 import os
 import tempfile
+import time
 import urllib
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -586,10 +587,17 @@ def http_get_file(
     os.replace(temp_file.name, os.path.join(local_dir, file_name))
 
 
-def download_file(url, file_meta, temporary_cache_dir, cache, headers,
-                  cookies):
+def download_file(url,
+                  file_meta,
+                  temporary_cache_dir,
+                  cache,
+                  headers,
+                  cookies,
+                  verbose=False):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
+
+        time_start_parallel_download = time.time()
         parallel_download(
             url,
             temporary_cache_dir,
@@ -597,7 +605,12 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             headers=headers,
             cookies=None if cookies is None else cookies.get_dict(),
             file_size=file_meta['Size'])
+        if verbose:
+            logger.info(
+                f"Time cost of parallel_download for {file_meta['Path']}: "
+                f'{time.time() - time_start_parallel_download}')
     else:
+        time_start_http_get_model_file = time.time()
         http_get_model_file(
             url,
             temporary_cache_dir,
@@ -605,10 +618,20 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             file_size=file_meta['Size'],
             headers=headers,
             cookies=cookies)
+        if verbose:
+            logger.info(
+                f"Time cost of http_get_model_file for {file_meta['Path']}: "
+                f'{time.time() - time_start_http_get_model_file}')
 
     # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
     if FILE_HASH in file_meta:
         file_integrity_validation(temp_file, file_meta[FILE_HASH])
     # put file into to cache
-    return cache.put_file(file_meta, temp_file)
+    time_start_put_file = time.time()
+    res = cache.put_file(file_meta, temp_file)
+    if verbose:
+        logger.info(f"Time cost of put_file for {file_meta['Path']}: "
+                    f'{time.time() - time_start_put_file}')
+
+    return res

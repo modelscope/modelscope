@@ -84,6 +84,11 @@ class TestToOllama(unittest.TestCase):
         ollama = TemplateLoader.to_ollama(
             'AI-ModelScope/gemma2-2b-instruct-GGUF')
         self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            'LLM-Research/Phi-3-128k-instruct-GGUF')
+        self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(template_name='phi3')
+        self.assertTrue(ollama is not None)
 
 
 if __name__ == '__main__':

@@ -287,7 +287,7 @@ class TemplateLoader:
         Returns:
             The template instance
         """
-        return get_template(template_name, **kwargs)
+        return get_template(template_name, tokenizer=kwargs.pop('tokenizer', None), **kwargs)
 
     @staticmethod
     def replace_and_concat(template: Template, template_list: List,

@@ -555,7 +555,7 @@ def get_module_without_script(self) -> DatasetModule:
 
     download_config = self.download_config.copy()
     if download_config.download_desc is None:
-        download_config.download_desc = 'Downloading readme'
+        download_config.download_desc = 'Downloading [README.md]'
     try:
         url_or_filename = _ms_api.get_dataset_file_url(
             file_name='README.md',

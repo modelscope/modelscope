@@ -3,7 +3,6 @@
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
 
 import json
-import multiprocessing
 import os
 import re
 import copy
@@ -20,8 +19,7 @@ import requests
 
 from datasets import config
 from datasets.utils.file_utils import hash_url_to_filename, \
-    get_authentication_headers_for_url, \
-    fsspec_head, fsspec_get, hf_tqdm
+    get_authentication_headers_for_url, fsspec_head, fsspec_get
 from filelock import FileLock
 
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
@@ -43,8 +41,8 @@ def get_datasets_user_agent_ms(user_agent: Optional[Union[str, dict]] = None) ->
         ua += f'; tensorflow/{config.TF_VERSION}'
     if config.JAX_AVAILABLE:
         ua += f'; jax/{config.JAX_VERSION}'
-    if config.BEAM_AVAILABLE:
-        ua += f'; apache_beam/{config.BEAM_VERSION}'
+    # if config.BEAM_AVAILABLE:
+    #     ua += f'; apache_beam/{config.BEAM_VERSION}'
     if isinstance(user_agent, dict):
         ua += f"; {'; '.join(f'{k}/{v}' for k, v in user_agent.items())}"
     elif isinstance(user_agent, str):
@@ -109,7 +107,7 @@ def http_head_ms(
     return response
 
 
-def http_get(
+def http_get_ms(
     url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=100.0, max_retries=0, desc=None
 ) -> Optional[requests.Response]:
     headers = dict(headers) if headers is not None else {}
@@ -132,20 +130,14 @@ def http_get(
         return
     content_length = response.headers.get('Content-Length')
     total = resume_size + int(content_length) if content_length is not None else None
-    with hf_tqdm(
-        unit='B',
-        unit_scale=True,
-        total=total,
-        initial=resume_size,
-        desc=desc or 'Downloading',
-        position=multiprocessing.current_process()._identity[-1]  # contains the ranks of subprocesses
-        if os.environ.get('HF_DATASETS_STACK_MULTIPROCESSING_DOWNLOAD_PROGRESS_BARS') == '1'
-        and multiprocessing.current_process()._identity
-        else None,
-    ) as progress:
-        for chunk in response.iter_content(chunk_size=1024):
-            progress.update(len(chunk))
-            temp_file.write(chunk)
+
+    from tqdm import tqdm
+    progress = tqdm(total=total, initial=resume_size, unit_scale=True, unit='B', desc=desc or 'Downloading')
+    for chunk in response.iter_content(chunk_size=1024):
+        progress.update(len(chunk))
+        temp_file.write(chunk)
+
+    progress.close()
 
 
 def get_from_cache_ms(
@@ -339,10 +331,10 @@ def get_from_cache_ms(
                 else:
                     fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
             else:
-                http_get_sig = inspect.signature(http_get)
+                http_get_sig = inspect.signature(http_get_ms)
 
                 if 'disable_tqdm' in http_get_sig.parameters:
-                    http_get(
+                    http_get_ms(
                         url,
                         temp_file=temp_file,
                         proxies=proxies,
@@ -354,7 +346,7 @@ def get_from_cache_ms(
                         disable_tqdm=disable_tqdm,
                     )
                 else:
-                    http_get(
+                    http_get_ms(
                         url,
                         temp_file=temp_file,
                         proxies=proxies,

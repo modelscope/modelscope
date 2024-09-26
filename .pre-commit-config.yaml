@@ -1,3 +1,5 @@
+exclude: 'modelscope/preprocessors/templates/'
+
 repos:
   - repo: https://github.com/pycqa/flake8.git
     rev: 4.0.0
@@ -7,7 +9,6 @@ repos:
             (?x)^(
                 thirdparty/|
                 examples/|
-                modelscope/preprocessors/templates/|
                 modelscope/utils/ast_index_file.py|
                 modelscope/fileio/format/jsonplus.py
             )$
@@ -18,7 +19,6 @@ repos:
         exclude: |
             (?x)^(
                 examples/|
-                modelscope/preprocessors/templates/|
                 modelscope/utils/ast_index_file.py|
                 modelscope/fileio/format/jsonplus.py
             )$
@@ -30,7 +30,6 @@ repos:
             (?x)^(
                 thirdparty/|
                 examples/|
-                modelscope/preprocessors/templates/|
                 modelscope/utils/ast_index_file.py|
                 modelscope/fileio/format/jsonplus.py
             )$

@@ -60,7 +60,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.llama,
         template_regex=
-        f'{cases("llama", "llama-2", "mistral", "codestral", "mixtral")}{no_multi_modal()}.*{chat_suffix}.*'
+        f'{cases("llama", "llama-2-", "mistral", "codestral", "mixtral")}{no_multi_modal()}.*{chat_suffix}.*'
     ),
 
     # qwen
@@ -76,14 +76,17 @@ template_info = [
         template_regex=
         f'.*{cases("codeqwen1.5", "codeqwen-1.5-")}.*{chat_suffix}.*',
         modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3.modelfile',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codeqwen1.5.modelfile',
     ),
 
     # chatml
     TemplateInfo(
         template=TemplateType.chatml,
         template_regex=
-        f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*{chat_suffix}.*'),
+        f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*{chat_suffix}.*',
+        modelfile_link=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5.modelfile',
+    ),
 
     # chatml
     TemplateInfo(
@@ -111,7 +114,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.baichuan,
         template_regex=
-        f'.*{cases("baichuan")}.*{no_multi_modal()}.*{chat_suffix}.*'),
+        f'.*{cases("baichuan")}{no_multi_modal()}.*{chat_suffix}.*'),
 
     # codegeex
     TemplateInfo(

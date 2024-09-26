@@ -11,64 +11,78 @@ class TestToOllama(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_load_template(self):
-        template = TemplateLoader.load_by_model_id("LLM-Research/Meta-Llama-3-8B-Instruct")
+        template = TemplateLoader.load_by_model_id(
+            'LLM-Research/Meta-Llama-3-8B-Instruct')
         self.assertTrue(template.template_type == TemplateType.llama3)
 
-        template = TemplateLoader.load_by_model_id("swift/Meta-Llama-3-70B-Instruct-AWQ")
+        template = TemplateLoader.load_by_model_id(
+            'swift/Meta-Llama-3-70B-Instruct-AWQ')
         self.assertTrue(template.template_type == TemplateType.llama3)
 
-        template = TemplateLoader.load_by_model_id("deepseek-ai/DeepSeek-V2-Lite-Chat")
+        template = TemplateLoader.load_by_model_id(
+            'deepseek-ai/DeepSeek-V2-Lite-Chat')
         self.assertTrue(template.template_type == TemplateType.deepseek2)
 
-        template = TemplateLoader.load_by_model_id("deepseek-ai/DeepSeek-V2.5")
+        template = TemplateLoader.load_by_model_id('deepseek-ai/DeepSeek-V2.5')
         self.assertTrue(template.template_type == TemplateType.deepseek2_5)
 
-        template = TemplateLoader.load_by_model_id("deepseek-ai/deepseek-coder-1.3b-instruct")
+        template = TemplateLoader.load_by_model_id(
+            'deepseek-ai/deepseek-coder-1.3b-instruct')
         self.assertTrue(template.template_type == TemplateType.deepseek_coder)
 
-        template = TemplateLoader.load_by_model_id("OpenBuddy/openbuddy-deepseek-67b-v15.2")
+        template = TemplateLoader.load_by_model_id(
+            'OpenBuddy/openbuddy-deepseek-67b-v15.2')
         self.assertTrue(template is None)
 
-        template = TemplateLoader.load_by_model_id("deepseek-ai/deepseek-llm-67b-chat")
+        template = TemplateLoader.load_by_model_id(
+            'deepseek-ai/deepseek-llm-67b-chat')
         self.assertTrue(template.template_type == TemplateType.deepseek)
 
-        template = TemplateLoader.load_by_model_id("deepseek-ai/DeepSeek-Coder-V2-Instruct")
+        template = TemplateLoader.load_by_model_id(
+            'deepseek-ai/DeepSeek-Coder-V2-Instruct')
         self.assertTrue(template.template_type == TemplateType.deepseek2)
 
-        template = TemplateLoader.load_by_model_id("01ai/Yi-1.5-9B-Chat")
+        template = TemplateLoader.load_by_model_id('01ai/Yi-1.5-9B-Chat')
         self.assertTrue(template.template_type == TemplateType.chatml)
 
-        template = TemplateLoader.load_by_model_id("01ai/Yi-Coder-9B-Chat")
+        template = TemplateLoader.load_by_model_id('01ai/Yi-Coder-9B-Chat')
         self.assertTrue(template.template_type == TemplateType.yi_coder)
 
-        template = TemplateLoader.load_by_model_id("LLM-Research/gemma-2-27b-it")
+        template = TemplateLoader.load_by_model_id(
+            'LLM-Research/gemma-2-27b-it')
         self.assertTrue(template.template_type == TemplateType.gemma)
 
-        template = TemplateLoader.load_by_model_id("AI-ModelScope/gemma-2b")
+        template = TemplateLoader.load_by_model_id('AI-ModelScope/gemma-2b')
         self.assertTrue(template is None)
 
-        template = TemplateLoader.load_by_model_id("AI-ModelScope/gemma-2b-instruct")
+        template = TemplateLoader.load_by_model_id(
+            'AI-ModelScope/gemma-2b-instruct')
         self.assertTrue(template is None)
 
-        template = TemplateLoader.load_by_model_id("AI-ModelScope/gemma2-2b-instruct")
+        template = TemplateLoader.load_by_model_id(
+            'AI-ModelScope/gemma2-2b-instruct')
         self.assertTrue(template.template_type == TemplateType.gemma)
 
-        template = TemplateLoader.load_by_model_id("AI-ModelScope/paligemma-3b-mix-224")
+        template = TemplateLoader.load_by_model_id(
+            'AI-ModelScope/paligemma-3b-mix-224')
         self.assertTrue(template is None)
 
-        template = TemplateLoader.load_by_model_id("LLM-Research/Phi-3-vision-128k-instruct")
+        template = TemplateLoader.load_by_model_id(
+            'LLM-Research/Phi-3-vision-128k-instruct')
         self.assertTrue(template is None)
 
-        template = TemplateLoader.load_by_model_id("LLM-Research/Phi-3-128k-instruct")
+        template = TemplateLoader.load_by_model_id(
+            'LLM-Research/Phi-3-128k-instruct')
         self.assertTrue(template.template_type == TemplateType.phi3)
 
-        template = TemplateLoader.load_by_model_id("LLM-Research/Phi-3-128k-instruct-GGUF")
+        template = TemplateLoader.load_by_model_id(
+            'LLM-Research/Phi-3-128k-instruct-GGUF')
         self.assertTrue(template.template_type == TemplateType.phi3)
-
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_load_ollama(self):
-        ollama = TemplateLoader.to_ollama("AI-ModelScope/gemma2-2b-instruct-GGUF")
+        ollama = TemplateLoader.to_ollama(
+            'AI-ModelScope/gemma2-2b-instruct-GGUF')
         self.assertTrue(ollama is not None)
 
 

@@ -368,4 +368,4 @@ class TemplateLoader:
         response = requests.get(url)
         response.raise_for_status()
         content = response.content
-        return content
+        return content.decode('utf-8')

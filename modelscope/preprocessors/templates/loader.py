@@ -53,14 +53,14 @@ template_info = [
     TemplateInfo(
         template=TemplateType.llama3,
         template_regex=
-        f'.*{cases("llama3", "llama-3-")}{no_multi_modal()}.*{chat_suffix}.*',
+        f'.*{cases("llama3", "llama-3")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-3.modelfile',
     ),
     TemplateInfo(
         template=TemplateType.llama,
         template_regex=
-        f'{cases("llama", "llama-2-", "mistral", "codestral", "mixtral")}{no_multi_modal()}.*{chat_suffix}.*'
+        f'.*{cases("llama2", "llama-2", "mistral", "codestral", "mixtral")}{no_multi_modal()}.*{chat_suffix}.*'
     ),
 
     # qwen
@@ -74,7 +74,7 @@ template_info = [
     # codeqwen1.5
     TemplateInfo(
         template_regex=
-        f'.*{cases("codeqwen1.5", "codeqwen-1.5-")}.*{chat_suffix}.*',
+        f'.*{cases("codeqwen1.5", "codeqwen-1.5")}.*{chat_suffix}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codeqwen1.5.modelfile',
     ),
@@ -217,7 +217,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.gemma,
         template_regex=
-        f'{no("pali")}.*{cases("gemma2", "gemma-2-")}.*{chat_suffix}.*',
+        f'{no("pali")}.*{cases("gemma2", "gemma-2")}.*{chat_suffix}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2.modelfile',
     ),
@@ -226,7 +226,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.phi3,
         template_regex=
-        f'.*{cases("phi3", "phi-3-")}{no_multi_modal()}.*{chat_suffix}.*',
+        f'.*{cases("phi3", "phi-3")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3.modelfile',
     ),

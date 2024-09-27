@@ -82,6 +82,14 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_load_ollama(self):
         ollama = TemplateLoader.to_ollama(
+            'LLM-Research/Meta-Llama-3.1-8B-Instruct-GGUF')
+        self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            'QuantFactory/Gemma-2-Ataraxy-9B-Chat-GGUF')
+        self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama('Xorbits/Llama-2-7b-Chat-GGUF')
+        self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
             'AI-ModelScope/gemma2-2b-instruct-GGUF')
         self.assertTrue(ollama is not None)
         ollama = TemplateLoader.to_ollama(

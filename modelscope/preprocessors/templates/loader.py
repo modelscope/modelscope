@@ -129,7 +129,8 @@ template_info = [
     # mistral-nemo
     TemplateInfo(
         template=TemplateType.mistral_nemo,
-        template_regex=f'.*{cases("Mistral-Nemo")}{no_multi_modal()}.*'),
+        template_regex=f'.*{cases("Mistral-Nemo")}{no_multi_modal()}.*',
+        modelfile_link='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-nemo.modelfile'),
 
     # internlm
     TemplateInfo(
@@ -349,7 +350,7 @@ class TemplateLoader:
         content += 'FROM {{gguf_file}}\n'
         content += (
             f'TEMPLATE """{{{{ if .System }}}}'
-            f'{TemplateLoader.replace_and_concat(template, template.system_prefix, "{{SYSTEM}}", "{{ .System }}")}'
+            f'{TemplateLoader.replace_and_concat(template, template.system_prefix or [], "{{SYSTEM}}", "{{ .System }}")}'
             f'{{{{ else }}}}{TemplateLoader.replace_and_concat(template, template.prefix, "", "")}'
             f'{{{{ end }}}}')
         content += (

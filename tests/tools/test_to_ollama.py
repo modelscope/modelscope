@@ -89,6 +89,9 @@ class TestToOllama(unittest.TestCase):
         self.assertTrue(ollama is not None)
         ollama = TemplateLoader.to_ollama(template_name='phi3')
         self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            'QuantFactory/Mistral-Nemo-Japanese-Instruct-2408-GGUF')
+        self.assertTrue(ollama is not None)
 
 
 if __name__ == '__main__':

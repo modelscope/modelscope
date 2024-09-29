@@ -217,7 +217,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.gemma,
         template_regex=
-        f'{no("pali")}.*{cases("gemma2", "gemma-2")}.*{chat_suffix}.*',
+        f'{no("pali")}.*{cases("gemma2", "gemma-2")}\\b.*{chat_suffix}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2.modelfile',
     ),

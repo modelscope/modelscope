@@ -44,6 +44,15 @@ class TestStreamLoad(unittest.TestCase):
 
         assert sample['question'], f'Failed to load sample from {repo_id}'
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_stream_swift_jsonl(self):
+        repo_id: str = 'iic/MSAgent-MultiRole'
+        ds = MsDataset.load(repo_id, split='train', use_streaming=True)
+        sample = next(iter(ds))
+        logger.info(sample)
+
+        assert sample['id'], f'Failed to load sample from {repo_id}'
+
 
 if __name__ == '__main__':
     unittest.main()

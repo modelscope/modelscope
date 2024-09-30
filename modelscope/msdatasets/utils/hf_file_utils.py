@@ -41,8 +41,6 @@ def get_datasets_user_agent_ms(user_agent: Optional[Union[str, dict]] = None) ->
         ua += f'; tensorflow/{config.TF_VERSION}'
     if config.JAX_AVAILABLE:
         ua += f'; jax/{config.JAX_VERSION}'
-    # if config.BEAM_AVAILABLE:
-    #     ua += f'; apache_beam/{config.BEAM_VERSION}'
     if isinstance(user_agent, dict):
         ua += f"; {'; '.join(f'{k}/{v}' for k, v in user_agent.items())}"
     elif isinstance(user_agent, str):
@@ -320,10 +318,8 @@ def get_from_cache_ms(
 
             # GET file object
             if scheme not in ('http', 'https'):
-                # fsspec_get_sig = inspect.signature(fsspec_get)
                 fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
             else:
-                # http_get_sig = inspect.signature(http_get_ms)
                 http_get_ms(
                     url,
                     temp_file=temp_file,

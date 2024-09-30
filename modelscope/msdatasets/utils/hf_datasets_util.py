@@ -989,7 +989,6 @@ class DatasetsWrapperHF:
             download_config=download_config,
             download_mode=download_mode,
             verification_mode=verification_mode,
-            # try_from_hf_gcs=False,
             num_proc=num_proc,
             storage_options=storage_options,
             # base_path=builder_instance.base_path,

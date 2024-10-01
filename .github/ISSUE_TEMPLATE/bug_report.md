@@ -3,7 +3,7 @@ name: Bug report
 about: Create a bug report to help us improve
 title: ''
 labels: ''
-assignees: Firmament-cyou, tastelikefeet, wangxingjun778, wenmengzhou, zzclynn
+assignees: tastelikefeet, wangxingjun778, yingdachen
 
 ---
 
@@ -36,14 +36,14 @@ A clear and concise description of what the bug is.
 
 Please @ corresponding people according to your problem:
 
-Model related: @wenmengzhou @tastelikefeet
+Model related:  @tastelikefeet
 
-Model hub related: @liuyhwangyh
+Model hub related: @liuyhwangyh @tastelikefeet @wangxingjun778
 
 Dataset releated: @wangxingjun778
 
 Finetune related: @tastelikefeet  @Jintao-Huang
 
-Pipeline related: @Firmament-cyou @wenmengzhou
+Pipeline related: @tastelikefeet @wangxingjun778
 
-Contribute your model: @zzclynn
+Contribute your model: @yingdachen

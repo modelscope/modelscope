@@ -40,7 +40,7 @@ class ClearCacheCMD(CLICommand):
             '--dataset',
             type=str,
             help=
-            'The id of the dataset whose cache will be cleared. For clear-cahe, '
+            'The id of the dataset whose cache will be cleared. For clear-cache, '
             'if neither model or dataset id is provided, entire cache will be cleared.'
         )
 

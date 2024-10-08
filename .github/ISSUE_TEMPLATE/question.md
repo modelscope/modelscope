@@ -3,7 +3,7 @@ name: Question
 about: Describe this issue template's purpose here.
 title: ''
 labels: ''
-assignees: zzclynn,wenmengzhou
+assignees: tastelikefeet, wangxingjun778, yingdachen
 
 ---
 
@@ -18,7 +18,7 @@ Before asking a question, make sure you have:
 
 Please @ corresponding people according to your problem:
 
-Model related: @wenmengzhou @tastelikefeet
+Model related:  @tastelikefeet
 
 Model hub related: @liuyhwangyh
 
@@ -26,6 +26,6 @@ Dataset releated: @wangxingjun778
 
 Finetune related: @tastelikefeet  @Jintao-Huang
 
-Pipeline related: @Firmament-cyou @wenmengzhou
+Pipeline related: @tastelikefeet @wangxingjun778
 
-Contribute your model: @zzclynn
+Contribute your model: @yingdachen

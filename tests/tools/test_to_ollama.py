@@ -105,6 +105,9 @@ class TestToOllama(unittest.TestCase):
         ollama = TemplateLoader.to_ollama(
             'AI-ModelScope/llava-llama-3-8b-v1_1-gguf')
         self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            '01ai/Yi-1.5-9B-Chat', ignore_oss_model_file=True)
+        self.assertTrue(ollama is not None)
 
 
 if __name__ == '__main__':

@@ -83,7 +83,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.chatml,
         template_regex=
-        f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*{chat_suffix}.*',
+        f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*',
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5.modelfile',
     ),
@@ -109,6 +109,10 @@ template_info = [
         modelfile_link=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/glm4.modelfile',
     ),
+
+    TemplateInfo(
+        template_regex=f'.*{cases("llava-llama-3")}.*',
+        modelfile_link='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-llama-3.modelfile'),
 
     # baichuan
     TemplateInfo(

@@ -100,6 +100,11 @@ class TestToOllama(unittest.TestCase):
         ollama = TemplateLoader.to_ollama(
             'QuantFactory/Mistral-Nemo-Japanese-Instruct-2408-GGUF')
         self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama('AI-ModelScope/Yi-1.5-9B-32K-GGUF')
+        self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            'AI-ModelScope/llava-llama-3-8b-v1_1-gguf')
+        self.assertTrue(ollama is not None)
 
 
 if __name__ == '__main__':

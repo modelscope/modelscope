@@ -105,6 +105,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
         download_mode_val = self.dataset_context_config.download_mode.value
         use_streaming = self.dataset_context_config.use_streaming
         input_config_kwargs = self.dataset_context_config.config_kwargs
+        trust_remote_code = self.dataset_context_config.trust_remote_code
 
         # To use the huggingface data loader
         if data_loader_type == RemoteDataLoaderType.HF_DATA_LOADER:
@@ -118,6 +119,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
                 download_mode=download_mode_val,
                 streaming=use_streaming,
                 ignore_verifications=True,
+                trust_remote_code=trust_remote_code,
                 **input_config_kwargs)
             # download statistics
             self.api.dataset_download_statistics(

@@ -824,7 +824,7 @@ def get_module_with_script(self) -> DatasetModule:
         name=self.name,
     )
     if not os.path.exists(importable_file_path):
-        trust_remote_code = resolve_trust_remote_code(self.trust_remote_code, self.name)
+        trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
             _create_importable_file(
                 local_path=local_script_path,
@@ -884,7 +884,7 @@ class DatasetsWrapperHF:
         streaming: bool = False,
         num_proc: Optional[int] = None,
         storage_options: Optional[Dict] = None,
-        trust_remote_code: bool = None,
+        trust_remote_code: bool = True,
         dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset,

@@ -1,18 +1,18 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--base_image', type=str)
+parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--torch_version', type=str)
-parser.add_argument('--torchvision_version', type=str)
-parser.add_argument('--cuda_version', type=str)
-parser.add_argument('--torchaudio_version', type=str)
-parser.add_argument('--tf_version', type=str)
-parser.add_argument('--vllm_version', type=str)
-parser.add_argument('--lmdeploy_version', type=str)
-parser.add_argument('--autogptq_version', type=str)
-parser.add_argument('--modelscope_branch', type=str)
-parser.add_argument('--swift_branch', type=str)
+parser.add_argument('--torch_version', type=str, default=None)
+parser.add_argument('--torchvision_version', type=str, default=None)
+parser.add_argument('--cuda_version', type=str, default=None)
+parser.add_argument('--torchaudio_version', type=str, default=None)
+parser.add_argument('--tf_version', type=str, default=None)
+parser.add_argument('--vllm_version', type=str, default=None)
+parser.add_argument('--lmdeploy_version', type=str, default=None)
+parser.add_argument('--autogptq_version', type=str, default=None)
+parser.add_argument('--modelscope_branch', type=str, default='master')
+parser.add_argument('--swift_branch', type=str, default='main')
 
 
 args = parser.parse_args()
@@ -26,8 +26,6 @@ pip install pai-easycv
 """
 
 if args.image_type == 'cpu':
-    if not args.base_image:
-        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch{args.torch_version}-base'
     if not args.torch_version:
         args.torch_version = '2.3.0'
         args.torchaudio_version = '2.3.0'
@@ -35,11 +33,14 @@ if args.image_type == 'cpu':
     if not args.cuda_version:
         args.cuda_version = '12.1.0'
     args.tf_version = None
+    args.vllm_version = None
+    args.lmdeploy_version = None
+    args.autogptq_version = None
     meta_file = '../docker/install_cpu.sh'
     version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.modelscope_branch} {args.swift_branch}'
-elif args.image_type == 'gpu':
     if not args.base_image:
-        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda{args.cuda_version}-py310-torch{args.torch_version}-tf{args.tf_version}-base'
+        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch{args.torch_version}-base'
+elif args.image_type == 'gpu':
     if not args.torch_version:
         args.torch_version = '2.3.0'
         args.torchaudio_version = '2.3.0'
@@ -48,8 +49,16 @@ elif args.image_type == 'gpu':
         args.tf_version = '1.15.5'
     if not args.cuda_version:
         args.cuda_version = '12.1.0'
+    if not args.vllm_version:
+        args.vllm_version = '0.5.1'
+    if not args.lmdeploy_version:
+        args.lmdeploy_version = '0.5.0'
+    if not args.autogptq_version:
+        args.autogptq_version = '0.7.1'
     meta_file = '../docker/install.sh'
     version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.vllm_version} {args.lmdeploy_version} {args.autogptq_version} {args.modelscope_branch} {args.swift_branch}'
+    if not args.base_image:
+        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda{args.cuda_version}-py310-torch{args.torch_version}-tf{args.tf_version}-base'
 elif args.image_type == 'llm':
     if not args.base_image:
         args.base_image = 'pytorch/pytorch:2.4.0-cuda12.4-cudnn9-devel'
@@ -59,6 +68,12 @@ elif args.image_type == 'llm':
         args.torchvision_version = '0.19.0'
     if not args.cuda_version:
         args.cuda_version = '12.4.0'
+    if not args.vllm_version:
+        args.vllm_version = '0.6.0'
+    if not args.lmdeploy_version:
+        args.lmdeploy_version = '0.6.1'
+    if not args.autogptq_version:
+        args.autogptq_version = '0.7.1'
     args.tf_version = None
     meta_file = '../docker/install.sh'
     extra_content = ''

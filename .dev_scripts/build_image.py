@@ -21,8 +21,8 @@ assert args.modelscope_branch
 assert args.swift_branch
 
 extra_content = """
-pip install adaseq
-pip install pai-easycv
+RUN pip install adaseq
+RUN pip install pai-easycv
 """
 
 if args.image_type == 'cpu':

@@ -150,6 +150,37 @@ class SpeechSignalProcessTest(unittest.TestCase):
                     w.write(pcm)
                     audio = f.read(block_size)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_zipenhancer_ans(self):
+        model_id = 'damo/speech_zipenhancer_ans_multiloss_16k_base'
+        ans = pipeline(Tasks.acoustic_noise_suppression, model=model_id)
+        output_path = os.path.abspath('output.wav')
+        ans(os.path.join(os.getcwd(), NOISE_SPEECH_FILE),
+            output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_zipenhancer_ans_url(self):
+        model_id = 'damo/speech_zipenhancer_ans_multiloss_16k_base'
+        ans = pipeline(Tasks.acoustic_noise_suppression, model=model_id)
+        output_path = os.path.abspath('output.wav')
+        ans(NOISE_SPEECH_URL, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_zipenhancer_ans_bytes(self):
+        model_id = 'damo/speech_zipenhancer_ans_multiloss_16k_base'
+        ans = pipeline(
+            Tasks.acoustic_noise_suppression,
+            model=model_id,
+            pipeline_name=Pipelines.speech_zipenhancer_ans_multiloss_16k_base)
+        output_path = os.path.abspath('output.wav')
+        with open(os.path.join(os.getcwd(), NOISE_SPEECH_FILE), 'rb') as f:
+            data = f.read()
+            ans(data, output_path=output_path)
+        print(f'Processed audio saved to {output_path}')
+
+
 
 if __name__ == '__main__':
     unittest.main()

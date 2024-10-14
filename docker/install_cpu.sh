@@ -3,8 +3,8 @@
 torch_version=${1:-2.4.0}
 torchvision_version=${2:-0.19.0}
 torchaudio_version=${3:-2.4.0}
-modelscope_branch=${4:master}
-swift_branch=${5:main}
+modelscope_branch=${4:-master}
+swift_branch=${5:-main}
 
 pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
@@ -22,7 +22,7 @@ pip uninstall torch torchvision torchaudio
 
 pip install --no-cache-dir -U torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version --index-url https://download.pytorch.org/whl/cpu
 
-pip uninstall ms-swift modelscope
+pip uninstall ms-swift modelscope -y
 
 cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $modelscope_branch  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install .[all] && cd / && rm -fr /tmp/modelscope && pip cache purge;
 

@@ -112,5 +112,5 @@ ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
 """
 
-with open('../Dockerfile', 'w') as f:
+with open('./Dockerfile', 'w') as f:
     f.write(content)

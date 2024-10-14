@@ -36,7 +36,7 @@ if args.image_type == 'cpu':
     args.vllm_version = None
     args.lmdeploy_version = None
     args.autogptq_version = None
-    meta_file = '../docker/install_cpu.sh'
+    meta_file = './docker/install_cpu.sh'
     version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.modelscope_branch} {args.swift_branch}'
     if not args.base_image:
         args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch{args.torch_version}-base'
@@ -55,7 +55,7 @@ elif args.image_type == 'gpu':
         args.lmdeploy_version = '0.5.0'
     if not args.autogptq_version:
         args.autogptq_version = '0.7.1'
-    meta_file = '../docker/install.sh'
+    meta_file = './docker/install.sh'
     version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.vllm_version} {args.lmdeploy_version} {args.autogptq_version} {args.modelscope_branch} {args.swift_branch}'
     if not args.base_image:
         args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda{args.cuda_version}-py310-torch{args.torch_version}-tf{args.tf_version}-base'
@@ -75,7 +75,7 @@ elif args.image_type == 'llm':
     if not args.autogptq_version:
         args.autogptq_version = '0.7.1'
     args.tf_version = None
-    meta_file = '../docker/install.sh'
+    meta_file = './docker/install.sh'
     extra_content = ''
     version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.vllm_version} {args.lmdeploy_version} {args.autogptq_version} {args.modelscope_branch} {args.swift_branch}'
 else:

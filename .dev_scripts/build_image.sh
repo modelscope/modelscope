@@ -11,7 +11,7 @@ python_version=3.7.13
 torch_version=1.11.0
 cudatoolkit_version=11.7
 tensorflow_version=1.15.5
-modelscope_version=None
+modelscope_version=1.20.0
 cuda_version=11.7.1
 is_dsw=False
 is_cpu=False
@@ -178,27 +178,7 @@ docker_file_content="${docker_file_content} \n RUN pip config set global.index-u
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list "
 
+echo $docker_file_content
+
 printf "$docker_file_content" > Dockerfile
 
-while true
-do
-  docker build --progress=plain -t $IMAGE_TO_BUILD  \
-             --build-arg USE_GPU \
-             --build-arg BASE_IMAGE \
-             --build-arg PYTHON_VERSION \
-             --build-arg TORCH_VERSION \
-             --build-arg CUDATOOLKIT_VERSION \
-             --build-arg TENSORFLOW_VERSION \
-             -f Dockerfile .
-  if [ $? -eq 0 ]; then
-    echo "Image build done"
-    break
-  else
-    echo "Running docker build command error, we will retry"
-  fi
-done
-
-if [ "$is_push" == "True" ]; then
-    echo "Pushing image: $IMAGE_TO_BUILD"
-    docker push $IMAGE_TO_BUILD
-fi

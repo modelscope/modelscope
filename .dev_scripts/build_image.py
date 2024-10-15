@@ -65,7 +65,8 @@ RUN pip install pai-easycv
         args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda{args.cuda_version}-py310-torch{args.torch_version}-tf{args.tf_version}-base'
 elif args.image_type == 'llm':
     if not args.base_image:
-        args.base_image = 'pytorch/pytorch:2.4.0-cuda12.4-cudnn9-devel'
+        # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
+        args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04_accelerated'
     if not args.torch_version:
         args.torch_version = '2.4.0'
         args.torchaudio_version = '2.4.0'
@@ -158,8 +159,6 @@ RUN set -eux; \
                 "LDFLAGS=${{LDFLAGS:-}}" \
                 "PROFILE_TASK=${{PROFILE_TASK:-}}" \
         ; \
-# https://github.com/docker-library/python/issues/784
-# prevent accidental usage of a system installed libpython of the same version
         rm python; \
         make -j "$nproc" \
                 "EXTRA_CFLAGS=${{EXTRA_CFLAGS:-}}" \
@@ -169,7 +168,6 @@ RUN set -eux; \
         ; \
         make install; \
         \
-# enable GDB to load debugging data: https://github.com/docker-library/python/pull/701
         bin="$(readlink -ve /usr/local/bin/python3)"; \
         dir="$(dirname "$bin")"; \
         mkdir -p "/usr/share/gdb/auto-load/$dir"; \

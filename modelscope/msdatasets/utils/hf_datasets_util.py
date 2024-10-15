@@ -874,7 +874,6 @@ class DatasetsWrapperHF:
         download_config: Optional[DownloadConfig] = None,
         download_mode: Optional[Union[DownloadMode, str]] = None,
         verification_mode: Optional[Union[VerificationMode, str]] = None,
-        ignore_verifications='deprecated',
         keep_in_memory: Optional[bool] = None,
         save_infos: bool = False,
         revision: Optional[Union[str, Version]] = None,
@@ -897,14 +896,6 @@ class DatasetsWrapperHF:
                 FutureWarning,
             )
             token = use_auth_token
-        if ignore_verifications != 'deprecated':
-            verification_mode = VerificationMode.NO_CHECKS if ignore_verifications else VerificationMode.ALL_CHECKS
-            warnings.warn(
-                "'ignore_verifications' was deprecated in favor of 'verification_mode' "
-                'in version 2.9.1 and will be removed in 3.0.0.\n'
-                f"You can remove this warning by passing 'verification_mode={verification_mode.value}' instead.",
-                FutureWarning,
-            )
         if task != 'deprecated':
             warnings.warn(
                 "'task' was deprecated in version 2.13.0 and will be removed in 3.0.0.\n",

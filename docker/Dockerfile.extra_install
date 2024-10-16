@@ -1,92 +1,7 @@
-import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--base_image', type=str, default=None)
-parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.10.14')
-parser.add_argument('--torch_version', type=str, default=None)
-parser.add_argument('--torchvision_version', type=str, default=None)
-parser.add_argument('--cuda_version', type=str, default=None)
-parser.add_argument('--torchaudio_version', type=str, default=None)
-parser.add_argument('--tf_version', type=str, default=None)
-parser.add_argument('--vllm_version', type=str, default=None)
-parser.add_argument('--lmdeploy_version', type=str, default=None)
-parser.add_argument('--autogptq_version', type=str, default=None)
-parser.add_argument('--modelscope_branch', type=str, default='master')
-parser.add_argument('--swift_branch', type=str, default='main')
-
-
-args = parser.parse_args()
-
-assert args.modelscope_branch
-assert args.swift_branch
-
-if args.image_type == 'cpu':
-    if not args.torch_version:
-        args.torch_version = '2.3.0'
-        args.torchaudio_version = '2.3.0'
-        args.torchvision_version = '0.18.0'
-    if not args.cuda_version:
-        args.cuda_version = '12.1.0'
-    args.tf_version = None
-    args.vllm_version = None
-    args.lmdeploy_version = None
-    args.autogptq_version = None
-    meta_file = './docker/install_cpu.sh'
-    version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.modelscope_branch} {args.swift_branch}'
-    extra_content = """
-RUN pip install adaseq
-RUN pip install pai-easycv
-"""
-    if not args.base_image:
-        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-py310-torch{args.torch_version}-base'
-elif args.image_type == 'gpu':
-    if not args.torch_version:
-        args.torch_version = '2.3.0'
-        args.torchaudio_version = '2.3.0'
-        args.torchvision_version = '0.18.0'
-    if not args.tf_version:
-        args.tf_version = '1.15.5'
-    if not args.cuda_version:
-        args.cuda_version = '12.1.0'
-    if not args.vllm_version:
-        args.vllm_version = '0.5.1'
-    if not args.lmdeploy_version:
-        args.lmdeploy_version = '0.5.0'
-    if not args.autogptq_version:
-        args.autogptq_version = '0.7.1'
-    meta_file = './docker/install.sh'
-    extra_content = """
-RUN pip install adaseq
-RUN pip install pai-easycv
-"""
-    version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.vllm_version} {args.lmdeploy_version} {args.autogptq_version} {args.modelscope_branch} {args.swift_branch}'
-    if not args.base_image:
-        args.base_image = f'reg.docker.alibaba-inc.com/modelscope/modelscope:ubuntu22.04-cuda{args.cuda_version}-py310-torch{args.torch_version}-tf{args.tf_version}-base'
-elif args.image_type == 'llm':
-    if not args.base_image:
-        # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-        args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04_accelerated'
-    if not args.torch_version:
-        args.torch_version = '2.4.0'
-        args.torchaudio_version = '2.4.0'
-        args.torchvision_version = '0.19.0'
-    if not args.cuda_version:
-        args.cuda_version = '12.4.0'
-    if not args.vllm_version:
-        args.vllm_version = '0.6.0'
-    if not args.lmdeploy_version:
-        args.lmdeploy_version = '0.6.1'
-    if not args.autogptq_version:
-        args.autogptq_version = '0.7.1'
-    args.tf_version = None
-    meta_file = './docker/install.sh'
-    extra_content = f"""  
 ENV TZ=Asia/Shanghai
 ENV arch=x86_64
 SHELL ["/bin/bash", "-c"]
 COPY docker/rcfiles /tmp/resources
-COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-certificates && \
     apt-get install -y make apt-utils openssh-server locales wget git strace gdb sox libopenmpi-dev curl \
     iputils-ping net-tools iproute2 autoconf automake gperf libre2-dev libssl-dev \
@@ -115,16 +30,16 @@ RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
-ARG PYTHON_VERSION={args.python_version}
+ARG PYTHON_VERSION={python}
 ENV PATH /usr/local/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-ENV PYTHON_VERSION {args.python_version}
+ENV PYTHON_VERSION {python}
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
-ARG PYTHON_VERSION={args.python_version}
+ARG PYTHON_VERSION={python}
 ENV PATH /usr/local/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-ENV PYTHON_VERSION {args.python_version}
+ENV PYTHON_VERSION {python}
 
 RUN set -eux; \
         \
@@ -222,34 +137,3 @@ RUN set -eux; \
         \
         pip --version
 # end of install python
-    """
-    version_args = f'{args.torch_version} {args.torchvision_version} {args.torchaudio_version} {args.vllm_version} {args.lmdeploy_version} {args.autogptq_version} {args.modelscope_branch} {args.swift_branch}'
-else:
-    raise ValueError(f'Image type not supported: {args.image_type}')
-
-content = f"""
-FROM {args.base_image}
-
-RUN apt-get update && \
-    apt-get install -y libsox-dev unzip libaio-dev zip iputils-ping telnet sudo git net-tools && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-{extra_content}
-
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set install.trusted-host mirrors.aliyun.com && \
-    cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list 
-
-COPY {meta_file} /tmp/install.sh
-
-RUN sh install.sh {version_args}
-
-ENV SETUPTOOLS_USE_DISTUTILS=stdlib
-ENV VLLM_USE_MODELSCOPE=True
-ENV LMDEPLOY_USE_MODELSCOPE=True 
-ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
-"""
-
-with open('./Dockerfile', 'w') as f:
-    f.write(content)

@@ -30,21 +30,21 @@ RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
-ARG PYTHON_VERSION={python}
+ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-ENV PYTHON_VERSION {python}
+ENV PYTHON_VERSION {python_version}
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
-ARG PYTHON_VERSION={python}
+ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-ENV PYTHON_VERSION {python}
+ENV PYTHON_VERSION {python_version}
 
 RUN set -eux; \
         \
-        wget -O python.tar.xz "https://www.python.org/ftp/python/${{PYTHON_VERSION%%[a-z]*}}/Python-$PYTHON_VERSION.tar.xz"; \
-        wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${{PYTHON_VERSION%%[a-z]*}}/Python-$PYTHON_VERSION.tar.xz.asc"; \
+        wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
+        wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
         GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
         gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
         gpg --batch --verify python.tar.xz.asc python.tar.xz; \
@@ -70,15 +70,15 @@ RUN set -eux; \
         EXTRA_CFLAGS="$(dpkg-buildflags --get CFLAGS)"; \
         LDFLAGS="$(dpkg-buildflags --get LDFLAGS)"; \
         make -j "$nproc" \
-                "EXTRA_CFLAGS=${{EXTRA_CFLAGS:-}}" \
-                "LDFLAGS=${{LDFLAGS:-}}" \
-                "PROFILE_TASK=${{PROFILE_TASK:-}}" \
+                "EXTRA_CFLAGS=${EXTRA_CFLAGS:-}" \
+                "LDFLAGS=${LDFLAGS:-}" \
+                "PROFILE_TASK=${PROFILE_TASK:-}" \
         ; \
         rm python; \
         make -j "$nproc" \
-                "EXTRA_CFLAGS=${{EXTRA_CFLAGS:-}}" \
-                "LDFLAGS=${{LDFLAGS:--Wl}},-rpath='\$\$ORIGIN/../lib'" \
-                "PROFILE_TASK=${{PROFILE_TASK:-}}" \
+                "EXTRA_CFLAGS=${EXTRA_CFLAGS:-}" \
+                "LDFLAGS=${LDFLAGS:--Wl},-rpath='\$\$ORIGIN/../lib'" \
+                "PROFILE_TASK=${PROFILE_TASK:-}" \
                 python \
         ; \
         make install; \
@@ -95,7 +95,7 @@ RUN set -eux; \
                 \( \
                         \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
                         -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
-                \) -exec rm -rf '{{}}' + \
+                \) -exec rm -rf '{}' + \
         ; \
         \
         ldconfig; \

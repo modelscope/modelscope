@@ -31,7 +31,7 @@ class Builder:
         return args
 
     def _generate_cudatoolkit_version(self, cuda_version: str) -> str:
-        return 'cuda' + cuda_version.replace('.', '')[:3]
+        return 'cu' + cuda_version.replace('.', '')[:3]
 
     def generate_dockerfile(self) -> str:
         raise NotImplementedError
@@ -64,7 +64,14 @@ class BaseCPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         with open('docker/Dockerfile.ubuntu_base', 'r') as f:
-            return f.read()
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{use_gpu}', 'False')
+        content = content.replace('{python_version}', self.args.python_version)
+        content = content.replace('{torch_version}', self.args.torch_version)
+        content = content.replace('{cudatoolkit_version}', self.args.cudatoolkit_version)
+        content = content.replace('{tf_version}', self.args.tf_version)
+        return content
 
     def build(self):
         image_tag = f'reg.docker.alibaba-inc.com/modelscope/modelscope/ubuntu{self.args.ubuntu_version}-torch{self.args.torch_version}-base'
@@ -81,7 +88,14 @@ class BaseGPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         with open('docker/Dockerfile.ubuntu_base', 'r') as f:
-            return f.read()
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{use_gpu}', 'True')
+        content = content.replace('{python_version}', self.args.python_version)
+        content = content.replace('{torch_version}', self.args.torch_version)
+        content = content.replace('{cudatoolkit_version}', self.args.cudatoolkit_version)
+        content = content.replace('{tf_version}', self.args.tf_version)
+        return content
 
     def build(self) -> int:
         image_tag = f'reg.docker.alibaba-inc.com/modelscope/modelscope/ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-torch{self.args.torch_version}-tf{self.args.tf_version}-base'
@@ -161,12 +175,13 @@ class LLMImageBuilder(Builder):
             args.lmdeploy_version = '0.6.1'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
+        return args
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
             extra_content = f.read()
-            extra_content = extra_content.replace('{python}', self.args.python_version)
+            extra_content = extra_content.replace('{python_version}', self.args.python_version)
         version_args = f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} {self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} {self.args.modelscope_branch} {self.args.swift_branch}'
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -205,10 +220,6 @@ parser.add_argument('--dry_run', type=int, default=0)
 
 
 args = parser.parse_args()
-
-assert args.image_type in ('base_cpu', 'base_gpu', 'cpu', 'gpu', 'llm')
-assert args.modelscope_branch
-assert args.swift_branch
 
 if args.image_type.lower() == 'base_cpu':
     builder_cls = BaseCPUImageBuilder

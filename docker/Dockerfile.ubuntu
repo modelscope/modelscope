@@ -12,9 +12,11 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
+RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
+
 COPY {meta_file} /tmp/install.sh
 
-RUN sh install.sh {version_args}
+RUN sh /tmp/install.sh {version_args}
 
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True

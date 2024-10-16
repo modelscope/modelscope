@@ -181,4 +181,3 @@ docker_file_content="${docker_file_content} \n RUN pip config set global.index-u
 echo $docker_file_content
 
 printf "$docker_file_content" > Dockerfile
-

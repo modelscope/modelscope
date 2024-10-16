@@ -121,7 +121,8 @@ class GeneralMsDatasetTest(unittest.TestCase):
                                                    f'please check the url: {py_script_url}'
 
             # Load the dataset
-            ds = MsDataset.load(py_script_file, subset_name='cola', split='train')
+            ds = MsDataset.load(
+                py_script_file, subset_name='cola', split='train')
             sample = next(iter(ds))
             logger.info(f'>>output of test_local_py_script:\n {sample}')
             assert sample

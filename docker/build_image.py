@@ -17,7 +17,7 @@ class Builder:
     def init_args(self, args: Any) -> Any:
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04_accelerated'
+            args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
             args.torch_version = '2.3.0'
             args.torchaudio_version = '2.3.0'
@@ -167,7 +167,7 @@ class LLMImageBuilder(Builder):
     def init_args(self, args) -> Any:
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04_accelerated'
+            args.base_image = 'modelscope-image-registry.cn-wulanchabu.cr.aliyuncs.com/modelscope/mirror:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
             args.torch_version = '2.4.0'
             args.torchaudio_version = '2.4.0'

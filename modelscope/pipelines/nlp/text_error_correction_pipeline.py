@@ -80,7 +80,8 @@ class TextErrorCorrectionPipeline(Pipeline):
 
         sc_tensor = inputs['predictions']
         if isinstance(sc_tensor, list):
-            sc_tensor = sc_tensor[0]
+            if isinstance(sc_tensor[0], list):
+                sc_tensor = sc_tensor[0]
         sc_sent = self.vocab.string(
             sc_tensor, extra_symbols_to_ignore={self.vocab.pad()})
         sc_sent = (sc_sent + ' ').replace('##', '').rstrip()

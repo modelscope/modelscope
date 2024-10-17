@@ -86,7 +86,7 @@ class BaseCPUImageBuilder(Builder):
         image_tag = f'{docker_registry}:ubuntu{self.args.ubuntu_version}-torch{self.args.torch_version}-base'
         return os.system(f'DOCKER_BUILDKIT=0 docker build -t {image_tag} -f Dockerfile .')
 
-    def build_and_push(self):
+    def push(self):
         image_tag = f'{docker_registry}:ubuntu{self.args.ubuntu_version}-torch{self.args.torch_version}-base'
         return os.system(f'docker push {image_tag}')
 

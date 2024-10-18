@@ -1,5 +1,9 @@
 FROM {base_image}
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+ENV arch=x86_64
+
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
 RUN apt-get update && \
     apt-get install -y libsox-dev unzip libaio-dev zip iputils-ping telnet sudo git net-tools && \

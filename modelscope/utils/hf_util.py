@@ -181,7 +181,7 @@ def _patch_pretrained_class():
         PreTrainedModel.from_pretrained = from_pretrained
 
     def patch_image_processor_base():
-        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """ Monkey patch AutoImageProcessorHF.from_pretrained to adapt to modelscope hub.
         """
         ori_from_pretrained = AutoImageProcessorHF.from_pretrained.__func__
 
@@ -195,7 +195,7 @@ def _patch_pretrained_class():
         AutoImageProcessorHF.from_pretrained = from_pretrained
 
     def patch_auto_processor_base():
-        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """ Monkey patch AutoProcessorHF.from_pretrained to adapt to modelscope hub.
         """
         ori_from_pretrained = AutoProcessorHF.from_pretrained.__func__
 
@@ -209,7 +209,7 @@ def _patch_pretrained_class():
         AutoProcessorHF.from_pretrained = from_pretrained
 
     def patch_feature_extractor_base():
-        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """ Monkey patch AutoFeatureExtractorHF.from_pretrained to adapt to modelscope hub.
         """
         ori_from_pretrained = AutoFeatureExtractorHF.from_pretrained.__func__
 

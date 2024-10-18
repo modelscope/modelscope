@@ -6,6 +6,7 @@ from types import MethodType
 from typing import Dict, Literal, Optional, Union
 
 from transformers import AutoConfig as AutoConfigHF
+from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
@@ -14,6 +15,7 @@ from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
+from transformers import AutoProcessor as AutoProcessorHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BatchFeature as BatchFeatureHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
@@ -161,6 +163,7 @@ def _patch_pretrained_class():
                                       ignore_file_pattern, **kwargs)
             return ori_get_config_dict(cls, model_dir, **kwargs)
 
+        PretrainedConfig.from_pretrained = from_pretrained
         PretrainedConfig.get_config_dict = get_config_dict
 
     def patch_model_base():
@@ -177,9 +180,54 @@ def _patch_pretrained_class():
 
         PreTrainedModel.from_pretrained = from_pretrained
 
+    def patch_image_processor_base():
+        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoImageProcessorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoImageProcessorHF.from_pretrained = from_pretrained
+
+    def patch_auto_processor_base():
+        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoProcessorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoProcessorHF.from_pretrained = from_pretrained
+
+    def patch_feature_extractor_base():
+        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoFeatureExtractorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoFeatureExtractorHF.from_pretrained = from_pretrained
+
     patch_tokenizer_base()
     patch_config_base()
     patch_model_base()
+    patch_image_processor_base()
+    patch_auto_processor_base()
+    patch_feature_extractor_base()
 
 
 def patch_hub():

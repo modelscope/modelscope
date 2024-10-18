@@ -23,7 +23,7 @@ class Builder:
             args.torchaudio_version = '2.3.0'
             args.torchvision_version = '0.18.0'
         if not args.tf_version:
-            args.tf_version = '1.15.5'
+            args.tf_version = '2.16.1'
         if not args.cuda_version:
             args.cuda_version = '12.1.0'
         if not args.vllm_version:

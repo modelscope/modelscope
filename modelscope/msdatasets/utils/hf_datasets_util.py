@@ -824,7 +824,7 @@ def get_module_with_script(self) -> DatasetModule:
         name=self.name,
     )
     if not os.path.exists(importable_file_path):
-        trust_remote_code = resolve_trust_remote_code(self.trust_remote_code, self.name)
+        trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
             _create_importable_file(
                 local_path=local_script_path,
@@ -874,7 +874,6 @@ class DatasetsWrapperHF:
         download_config: Optional[DownloadConfig] = None,
         download_mode: Optional[Union[DownloadMode, str]] = None,
         verification_mode: Optional[Union[VerificationMode, str]] = None,
-        ignore_verifications='deprecated',
         keep_in_memory: Optional[bool] = None,
         save_infos: bool = False,
         revision: Optional[Union[str, Version]] = None,
@@ -884,7 +883,7 @@ class DatasetsWrapperHF:
         streaming: bool = False,
         num_proc: Optional[int] = None,
         storage_options: Optional[Dict] = None,
-        trust_remote_code: bool = None,
+        trust_remote_code: bool = True,
         dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset,
@@ -897,14 +896,6 @@ class DatasetsWrapperHF:
                 FutureWarning,
             )
             token = use_auth_token
-        if ignore_verifications != 'deprecated':
-            verification_mode = VerificationMode.NO_CHECKS if ignore_verifications else VerificationMode.ALL_CHECKS
-            warnings.warn(
-                "'ignore_verifications' was deprecated in favor of 'verification_mode' "
-                'in version 2.9.1 and will be removed in 3.0.0.\n'
-                f"You can remove this warning by passing 'verification_mode={verification_mode.value}' instead.",
-                FutureWarning,
-            )
         if task != 'deprecated':
             warnings.warn(
                 "'task' was deprecated in version 2.13.0 and will be removed in 3.0.0.\n",

@@ -53,4 +53,7 @@ jobs:
         ref: ${{ github.event.inputs.modelscope_branch }}
 
     - name: Build Docker Image
-      run: python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --torch_version ${{ github.event.inputs.torch_version }} --torchvision_version ${{ github.event.inputs.torchvision_version }} --cuda_version ${{ github.event.inputs.cuda_version }} --torchaudio_version ${{ github.event.inputs.torchaudio_version }} --vllm_version ${{ github.event.inputs.vllm_version }}  --lmdeploy_version ${{ github.event.inputs.lmdeploy_version }}
+      run: |
+        set -e
+        source ~/.bashrc
+        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --torch_version ${{ github.event.inputs.torch_version }} --torchvision_version ${{ github.event.inputs.torchvision_version }} --cuda_version ${{ github.event.inputs.cuda_version }} --torchaudio_version ${{ github.event.inputs.torchaudio_version }} --vllm_version ${{ github.event.inputs.vllm_version }}  --lmdeploy_version ${{ github.event.inputs.lmdeploy_version }}

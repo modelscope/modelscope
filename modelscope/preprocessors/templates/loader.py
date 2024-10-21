@@ -1,4 +1,5 @@
 import re
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
@@ -355,27 +356,28 @@ class TemplateLoader:
         if template is None:
             return None
 
-        content = ''
-        content += 'FROM {gguf_file}\n'
+        # template
+        template_lines = ''
         _prefix = TemplateLoader.replace_and_concat(template, template.prefix, "", "")
         if _prefix:
-            content += (
-                f'TEMPLATE """{{{{ if .System }}}}'
+            template_lines += (
+                f'{{{{ if .System }}}}'
                 f'{TemplateLoader.replace_and_concat(template, template.system_prefix or [], "{{SYSTEM}}", "{{ .System }}")}'
                 f'{{{{ else }}}}{_prefix}'
                 f'{{{{ end }}}}')
         else:
-            content += (
-                f'TEMPLATE """{{{{ if .System }}}}'
+            template_lines += (
+                f'{{{{ if .System }}}}'
                 f'{TemplateLoader.replace_and_concat(template, template.system_prefix or [], "{{SYSTEM}}", "{{ .System }}")}'
                 f'{{{{ end }}}}')
-        content += (
+        template_lines += (
             f'{{{{ if .Prompt }}}}'
             f'{TemplateLoader.replace_and_concat(template, template.prompt, "{{QUERY}}", "{{ .Prompt }}")}'
             f'{{{{ end }}}}')
-        content += '{{ .Response }}'
-        content += TemplateLoader.replace_and_concat(template, template.suffix,
-                                                     '', '') + '"""\n'
+        template_lines += '{{ .Response }}'
+        template_lines += TemplateLoader.replace_and_concat(template, template.suffix,
+                                                     '', '')
+        # stop tokens
         all_eos_tokens = {TemplateLoader.replace_and_concat(template, template.suffix, "", "")}
         if getattr(template, 'tokenizer', None):
             eos_token = TemplateLoader.replace_and_concat(template, [["eos_token_id"]], "", "")
@@ -384,6 +386,17 @@ class TemplateLoader:
                 eos_token_id = template.config.eos_token_id
                 eos_token = TemplateLoader.replace_and_concat(template, [[eos_token_id]], "", "")
                 all_eos_tokens.add(eos_token)
+
+        if kwargs.get('split_param_tmpl', False):
+            stop_tokens = list()
+            for eos_token in all_eos_tokens:
+                stop_tokens.append(eos_token)
+            params = {'stop': stop_tokens}
+            return {'params': json.dumps(params), 'template': template_lines}
+
+        content = ''
+        content += 'FROM {gguf_file}\n'
+        content += ('TEMPLATE """' + template_lines + '"""\n')
         for eos_token in all_eos_tokens:
             content += f'PARAMETER stop "{eos_token}"\n'
         return content

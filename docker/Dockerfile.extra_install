@@ -1,6 +1,3 @@
-ARG BASE_IMAGE={base_image}
-FROM $BASE_IMAGE
-ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 ENV arch=x86_64
 SHELL ["/bin/bash", "-c"]
@@ -31,6 +28,12 @@ RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release
     cd /tmp && tar xzf boost.tar.gz  && \
     mv /tmp/boost_1_80_0/boost /usr/include/boost && \
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
+
+#install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
+ARG PYTHON_VERSION={python_version}
+ENV PATH /usr/local/bin:$PATH
+ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV PYTHON_VERSION {python_version}
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
 ARG PYTHON_VERSION={python_version}
@@ -71,8 +74,6 @@ RUN set -eux; \
                 "LDFLAGS=${LDFLAGS:-}" \
                 "PROFILE_TASK=${PROFILE_TASK:-}" \
         ; \
-# https://github.com/docker-library/python/issues/784
-# prevent accidental usage of a system installed libpython of the same version
         rm python; \
         make -j "$nproc" \
                 "EXTRA_CFLAGS=${EXTRA_CFLAGS:-}" \
@@ -82,7 +83,6 @@ RUN set -eux; \
         ; \
         make install; \
         \
-# enable GDB to load debugging data: https://github.com/docker-library/python/pull/701
         bin="$(readlink -ve /usr/local/bin/python3)"; \
         dir="$(dirname "$bin")"; \
         mkdir -p "/usr/share/gdb/auto-load/$dir"; \
@@ -138,69 +138,4 @@ RUN set -eux; \
         pip --version
 # end of install python
 
-ARG USE_GPU={use_gpu}
-
-# install pytorch
-ARG TORCH_VERSION={torch_version}
-ARG CUDATOOLKIT_VERSION={cudatoolkit_version}
-
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio; \
-    else \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
-    fi
-
-
-# default shell bash
-ENV SHELL=/bin/bash
-# install special package
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install  dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
-    else \
-        pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    fi
-
-# copy install scripts
-COPY docker/scripts/install_unifold.sh docker/scripts/install_colmap.sh docker/scripts/install_pytorch3d_nvdiffrast.sh docker/scripts/install_tiny_cuda_nn.sh docker/scripts/install_apex.sh /tmp/
-
-# 3d supports
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_colmap.sh; \
-    else \
-     echo 'cpu unsupport colmap'; \
-    fi
-# install pytorch3d
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_pytorch3d_nvdiffrast.sh; \
-    else \
-     echo 'cpu unsupport pytorch3d nvdiffrast'; \
-    fi
-
-# for uniford
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_unifold.sh; \
-    else \
-     echo 'cpu unsupport uniford'; \
-    fi
-
-RUN if [ "$USE_GPU" = "True" ] ; then \
-       export TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" && pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
-    else \
-     echo 'cpu unsupport Pointnet2'; \
-    fi
-
-
-ARG TENSORFLOW_VERSION={tf_version}
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-        else \
-            echo 'cpu not install tensorflow'; \
-    fi
-
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 python setup.py bdist_wheel && cd / && rm -fr /tmp/mmcv && pip cache purge; \
-        else \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 python setup.py bdist_wheel && cd / && rm -fr /tmp/mmcv && pip cache purge; \
-    fi
-
-ENTRYPOINT []
+pip install tf-keras -i https://mirrors.aliyun.com/pypi/simple

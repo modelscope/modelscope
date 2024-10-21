@@ -15,12 +15,6 @@ on:
       swift_branch:
         description: 'SWIFT branch to use'
         required: true
-      python_version:
-        description: 'PYTHON version to use'
-        required: false
-      ubuntu_version:
-        description: 'Ubuntu version to use'
-        required: false
       torch_version:
         description: 'Torch version to use'
         required: false
@@ -33,17 +27,11 @@ on:
       torchaudio_version:
         description: 'TorchAudio version to use'
         required: false
-      tf_version:
-        description: 'Tensorflow version to use'
-        required: false
       vllm_version:
         description: 'VLLM version to use'
         required: false
       lmdeploy_version:
         description: 'LMDeploy version to use'
-        required: false
-      autogptq_version:
-        description: 'AutoGPTQ version to use'
         required: false
 
 jobs:
@@ -57,4 +45,4 @@ jobs:
         ref: ${{ github.event.inputs.modelscope_branch }}
 
     - name: Build Docker Image
-      run: python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --python_version ${{ github.event.inputs.python_version }} --ubuntu_version ${{ github.event.inputs.ubuntu_version }} --torch_version ${{ github.event.inputs.torch_version }} --torchvision_version ${{ github.event.inputs.torchvision_version }} --cuda_version ${{ github.event.inputs.cuda_version }} --torchaudio_version ${{ github.event.inputs.torchaudio_version }}  --tf_version ${{ github.event.inputs.tf_version }}  --vllm_version ${{ github.event.inputs.vllm_version }}  --lmdeploy_version ${{ github.event.inputs.lmdeploy_version }}   --autogptq_version ${{ github.event.inputs.autogptq_version }}
+      run: python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --torch_version ${{ github.event.inputs.torch_version }} --torchvision_version ${{ github.event.inputs.torchvision_version }} --cuda_version ${{ github.event.inputs.cuda_version }} --torchaudio_version ${{ github.event.inputs.torchaudio_version }} --vllm_version ${{ github.event.inputs.vllm_version }}  --lmdeploy_version ${{ github.event.inputs.lmdeploy_version }}

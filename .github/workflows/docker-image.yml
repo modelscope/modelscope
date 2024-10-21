@@ -15,23 +15,8 @@ on:
       swift_branch:
         description: 'SWIFT branch to use'
         required: true
-      torch_version:
-        description: 'Torch version to use'
-        required: false
-      torchvision_version:
-        description: 'Torchvision version to use'
-        required: false
-      cuda_version:
-        description: 'CUDA version to use'
-        required: false
-      torchaudio_version:
-        description: 'TorchAudio version to use'
-        required: false
-      vllm_version:
-        description: 'VLLM version to use'
-        required: false
-      lmdeploy_version:
-        description: 'LMDeploy version to use'
+      other_params:
+        description: 'Other params in --xxx xxx'
         required: false
 
 jobs:
@@ -56,4 +41,4 @@ jobs:
       run: |
         set -e
         source ~/.bashrc
-        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --torch_version ${{ github.event.inputs.torch_version }} --torchvision_version ${{ github.event.inputs.torchvision_version }} --cuda_version ${{ github.event.inputs.cuda_version }} --torchaudio_version ${{ github.event.inputs.torchaudio_version }} --vllm_version ${{ github.event.inputs.vllm_version }}  --lmdeploy_version ${{ github.event.inputs.lmdeploy_version }}
+        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} ${{ github.event.inputs.other_params }}

@@ -365,7 +365,7 @@ class TemplateLoader:
                     if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
                         template_lines = TemplateLoader._read_content_from_url(
                             _info.modelfile_prefix + '.template')
-                        params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
+                        params = json.loads(TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params'))
                         return TemplateLoader._format_return(template_lines, params, split)
         if template_name:
             template = TemplateLoader.load_by_template_name(

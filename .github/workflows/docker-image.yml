@@ -1,0 +1,31 @@
+name: Build Docker Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: true
+        default: 'master'
+      image_type:
+        description: 'The image type to build'
+        required: true
+      modelscope_version:
+        description: 'ModelScope version to use'
+        required: true  
+      swift_branch:
+        description: 'SWIFT branch to use'
+        required: true  
+      
+jobs:
+  build:
+    runs-on: modelscope-ci-ecs-us0
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+
+    - name: Build Docker Image
+      run: python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }}

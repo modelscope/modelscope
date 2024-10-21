@@ -375,7 +375,7 @@ class TemplateLoader:
                 model_id, **kwargs)
 
         if template is None:
-            TemplateLoader._format_return(None, None, split)
+            return TemplateLoader._format_return(None, None, split)
             
         # template
         template_lines = ''

@@ -107,6 +107,43 @@ class GeneralMsDatasetTest(unittest.TestCase):
         assert data_sample['video_id'][0]
         assert os.path.exists(data_sample['video_id:FILE'][0])
 
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_local_py_script(self):
+        # Download the dataset files to temp directory
+        from tempfile import TemporaryDirectory
+        py_script_url = 'https://modelscope.cn/datasets/wangxingjun778/glue_test/resolve/master/glue_test.py'
+        with TemporaryDirectory() as tmp_dir:
+            os.makedirs(tmp_dir, exist_ok=True)
+            os.system(f'wget -P {tmp_dir} {py_script_url}')
+            py_script_file = os.path.join(tmp_dir, 'glue_test.py')
+            assert os.path.exists(py_script_file), f'File not found: {py_script_file}, ' \
+                                                   f'please check the url: {py_script_url}'
+
+            # Load the dataset
+            ds = MsDataset.load(
+                py_script_file, subset_name='cola', split='train')
+            sample = next(iter(ds))
+            logger.info(f'>>output of test_local_py_script:\n {sample}')
+            assert sample
+
+    @unittest.skipUnless(test_level() >= TEST_INNER_LEVEL,
+                         'skip test in current test level')
+    def test_local_img_folder(self):
+        # Download the dataset files to temp directory
+        from tempfile import TemporaryDirectory
+        img_url = 'https://modelscope.cn/datasets/wangxingjun778/test_img_dataset/resolve/master/data/train/' \
+                  '000000573258.jpg'
+        with TemporaryDirectory() as tmp_dir:
+            os.makedirs(tmp_dir, exist_ok=True)
+            os.system(f'wget -P {tmp_dir} {img_url}')
+
+            # Load the local image folder
+            ds = MsDataset.load('imagefolder', data_dir=tmp_dir)
+            sample = next(iter(ds))
+            logger.info(f'>>output of test_local_img_folder:\n {sample}')
+            assert sample
+
 
 if __name__ == '__main__':
     unittest.main()

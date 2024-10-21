@@ -6,17 +6,12 @@ import copy
 from typing import List, Optional, Tuple, Union
 
 import torch
-from .scaling import (
-    FloatLike,
-    ScheduledFloat,
-    convert_num_channels,
-)
 from torch import Tensor, nn
 
-from .zipformer import SimpleDownsample, SimpleUpsample, CompactRelPositionalEncoding, BypassModule
-from .zipformer import Zipformer2EncoderLayer
-
-
+from .scaling import FloatLike, ScheduledFloat, convert_num_channels
+from .zipformer import (BypassModule, CompactRelPositionalEncoding,
+                        SimpleDownsample, SimpleUpsample,
+                        Zipformer2EncoderLayer)
 
 
 class DualPathZipformer2Encoder(nn.Module):
@@ -55,18 +50,14 @@ class DualPathZipformer2Encoder(nn.Module):
         """
         super().__init__()
         self.encoder_pos = CompactRelPositionalEncoding(
-            pos_dim, dropout_rate=0.15, length_factor=1.0
-        )
+            pos_dim, dropout_rate=0.15, length_factor=1.0)
 
         self.f_layers = nn.ModuleList(
-            [copy.deepcopy(encoder_layer) for i in range(num_layers)]
-        )
+            [copy.deepcopy(encoder_layer) for i in range(num_layers)])
         self.t_layers = nn.ModuleList(
-            [copy.deepcopy(encoder_layer) for i in range(num_layers)]
-        )
+            [copy.deepcopy(encoder_layer) for i in range(num_layers)])
         self.bypass_layers = nn.ModuleList(
-            [bypass_layer for i in range(num_layers * 2)]
-        )
+            [bypass_layer for i in range(num_layers * 2)])
         self.num_layers = num_layers
 
         assert 0 <= warmup_begin <= warmup_end, (warmup_begin, warmup_end)
@@ -98,7 +89,8 @@ class DualPathZipformer2Encoder(nn.Module):
         r"""Pass the input through the encoder layers in a dual-path manner, processing both temporal and frequency dimensions.
 
         Args:
-            src: the dual-path sequence to the encoder (required): shape (batch_size, embedding_dim, seq_len, frequency_len).
+            src: the dual-path sequence to the encoder (required):
+                shape (batch_size, embedding_dim, seq_len, frequency_len).
             chunk_size: the number of frames per chunk, of >= 0; if -1, no chunking. No used.
             feature_mask: something that broadcasts with src, that we'll multiply `src`
                by at every layer: if a Tensor, likely of shape (seq_len, batch_size, embedding_dim)
@@ -126,7 +118,8 @@ class DualPathZipformer2Encoder(nn.Module):
         for i in range(len(self.f_layers)):
             # output_org = output
             # (b, c, t, f)
-            output_f_org = output.permute(3, 2, 0, 1).contiguous() # (f, t, b, c)
+            output_f_org = output.permute(3, 2, 0,
+                                          1).contiguous()  # (f, t, b, c)
             output_f = output_f_org.view(f, t * b, c)
             # (f, t * b, c)
             output_f = self.f_layers[i](
@@ -146,7 +139,8 @@ class DualPathZipformer2Encoder(nn.Module):
 
             # output_org = output
 
-            output_t_org = output.permute(2, 3, 0, 1).contiguous() # (t, f, b, c)
+            output_t_org = output.permute(2, 3, 0,
+                                          1).contiguous()  # (t, f, b, c)
             output_t = output_t_org.view(t, f * b, c)
             output_t = self.t_layers[i](
                 output_t,
@@ -166,7 +160,6 @@ class DualPathZipformer2Encoder(nn.Module):
             if not torch.jit.is_scripting() and not torch.jit.is_tracing():
                 output = output * feature_mask
 
-
         return output
 
 
@@ -179,9 +172,8 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
 
     """
 
-    def __init__(
-        self, encoder: nn.Module, dim: int, t_downsample: int, f_downsample: int, dropout: FloatLike
-    ):
+    def __init__(self, encoder: nn.Module, dim: int, t_downsample: int,
+                 f_downsample: int, dropout: FloatLike):
         """
         Initialize the DualPathDownsampledZipformer2Encoder module with the specified
         encoder, dimension, temporal and frequency downsampling factors r, and dropout rate.
@@ -200,7 +192,6 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
 
         # self.num_layers = encoder.num_layers
         self.encoder = encoder
-
 
         self.out_combiner = BypassModule(dim, straight_through_rate=0)
 
@@ -226,7 +217,7 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
         b, c, t, f = src.size()
         # print(src.size())
 
-        src_orig = src.permute(2, 3, 0, 1) # (t, f, b, c)
+        src_orig = src.permute(2, 3, 0, 1)  # (t, f, b, c)
 
         # (b, c, t, f)
         src = src.permute(2, 0, 3, 1).contiguous().view(t, b * f, c)
@@ -235,7 +226,9 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
             src = self.downsample_t(src)
         # (t//ds + 1, b * f, c)
         downsample_t = src.size(0)
-        src = src.view(downsample_t, b, f, c).permute(2, 1, 0, 3).contiguous().view(f, b * downsample_t, c)
+        src = src.view(downsample_t, b, f,
+                       c).permute(2, 1, 0,
+                                  3).contiguous().view(f, b * downsample_t, c)
         # src = self.upsample_f(src)
         if self.f_downsample_factor != 1:
             src = self.downsample_f(src)
@@ -244,7 +237,6 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
         src = src.view(downsample_f, b, downsample_t, c).permute(1, 3, 2, 0)
         # (b, c, downsample_t, downsample_f)
         # print(src.size())
-
 
         # ds = self.downsample_factor
         # if attn_mask is not None:
@@ -259,16 +251,20 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
         )
 
         # (b, c, downsample_t, downsample_f)
-        src = src.permute(3, 0, 2, 1).contiguous().view(downsample_f, b * downsample_t, c)
+        src = src.permute(3, 0, 2,
+                          1).contiguous().view(downsample_f, b * downsample_t,
+                                               c)
         if self.f_downsample_factor != 1:
             src = self.upsample_f(src)
         # (f, b * downsample_t, c)
-        src = src[: f].view(f, b, downsample_t, c).permute(2, 1, 0, 3).contiguous().view(downsample_t, b * f, c)
+        src = src[:f].view(f, b, downsample_t,
+                           c).permute(2, 1, 0, 3).contiguous().view(
+                               downsample_t, b * f, c)
         # (downsample_t, b * f, c)
         if self.t_downsample_factor != 1:
             src = self.upsample_t(src)
         # (t, b * f, c)
-        src = src[: t].view(t, b, f, c).permute(0, 2, 1, 3).contiguous()
+        src = src[:t].view(t, b, f, c).permute(0, 2, 1, 3).contiguous()
         # (t, f, b, c)
         out = self.out_combiner(src_orig, src)
         # (t, f, b, c)
@@ -283,9 +279,8 @@ class DualPathDownsampledZipformer2Encoder(nn.Module):
         return out
 
 
-
-
 class Zipformer2DualPathEncoder(nn.Module):
+
     def __init__(
         self,
         output_downsampling_factor: int = 2,
@@ -312,7 +307,8 @@ class Zipformer2DualPathEncoder(nn.Module):
         Zipformer2DualPathEncoder processes the hidden features of the noisy speech using dual-path modeling.
         It has two kinds of blocks: DualPathZipformer2Encoder and DualPathDownsampledZipformer2Encoder.
         DualPathZipformer2Encoder processes the 4D features with the shape of [B, C, T, F].
-        DualPathDownsampledZipformer2Encoder first downsamples the hidden features and processes features using dual-path modeling like DualPathZipformer2Encoder.
+        DualPathDownsampledZipformer2Encoder first downsamples the hidden features
+        and processes features using dual-path modeling like DualPathZipformer2Encoder.
 
         Args:
         Various hyperparameters and settings for the encoder.
@@ -326,11 +322,12 @@ class Zipformer2DualPathEncoder(nn.Module):
             """Converts a single int or a 1-tuple of an int to a tuple with the same length
             as downsampling_factor"""
             if isinstance(x, int):
-                x = (x,)
+                x = (x, )
             if len(x) == 1:
                 x = x * len(downsampling_factor)
             else:
-                assert len(x) == len(downsampling_factor) and isinstance(x[0], int)
+                assert len(x) == len(downsampling_factor) and isinstance(
+                    x[0], int)
             return x
 
         self.output_downsampling_factor = output_downsampling_factor  # int
@@ -342,8 +339,7 @@ class Zipformer2DualPathEncoder(nn.Module):
 
         self.encoder_dim = encoder_dim = _to_tuple(encoder_dim)  # tuple
         self.encoder_unmasked_dim = encoder_unmasked_dim = _to_tuple(
-            encoder_unmasked_dim
-        )  # tuple
+            encoder_unmasked_dim)  # tuple
         num_encoder_layers = _to_tuple(num_encoder_layers)
         self.num_encoder_layers = num_encoder_layers
         self.query_head_dim = query_head_dim = _to_tuple(query_head_dim)
@@ -351,7 +347,8 @@ class Zipformer2DualPathEncoder(nn.Module):
         pos_head_dim = _to_tuple(pos_head_dim)
         self.num_heads = num_heads = _to_tuple(num_heads)
         feedforward_dim = _to_tuple(feedforward_dim)
-        self.cnn_module_kernel = cnn_module_kernel = _to_tuple(cnn_module_kernel)
+        self.cnn_module_kernel = cnn_module_kernel = _to_tuple(
+            cnn_module_kernel)
 
         self.causal = causal
         self.chunk_size = chunk_size
@@ -389,8 +386,9 @@ class Zipformer2DualPathEncoder(nn.Module):
                 dropout=dropout,
                 warmup_begin=warmup_batches * (i + 1) / (num_encoders + 1),
                 warmup_end=warmup_batches * (i + 2) / (num_encoders + 1),
-                final_layerdrop_rate=0.035 * (downsampling_factor[i] ** 0.5),
-                bypass_layer=BypassModule(encoder_dim[i], straight_through_rate=0),
+                final_layerdrop_rate=0.035 * (downsampling_factor[i]**0.5),
+                bypass_layer=BypassModule(
+                    encoder_dim[i], straight_through_rate=0),
             )
 
             if downsampling_factor[i] != 1 or f_downsampling_factor[i] != 1:
@@ -407,8 +405,9 @@ class Zipformer2DualPathEncoder(nn.Module):
         self.encoders = nn.ModuleList(encoders)
 
         self.downsample_output = SimpleDownsample(
-            max(encoder_dim), downsample=output_downsampling_factor, dropout=dropout
-        )
+            max(encoder_dim),
+            downsample=output_downsampling_factor,
+            dropout=dropout)
 
     def forward(self, x):
         """
@@ -425,11 +424,12 @@ class Zipformer2DualPathEncoder(nn.Module):
         # if torch.jit.is_scripting() or torch.jit.is_tracing():
         #     feature_masks = [1.0] * len(self.encoder_dim)
         # else:
-            # feature_masks = self.get_feature_masks(x)
+        # feature_masks = self.get_feature_masks(x)
         feature_masks = [1.0] * len(self.encoder_dim)
         attn_mask = None
 
-        chunk_size, left_context_chunks = -1, -1
+        chunk_size = -1
+        # left_context_chunks = -1
 
         for i, module in enumerate(self.encoders):
 
@@ -448,19 +448,19 @@ class Zipformer2DualPathEncoder(nn.Module):
         return x
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     # {2,2,2,2,2,2} {192,256,256,256,256,256} {512,768,768,768,768,768}
     downsampling_factor = (1, 2, 4, 3)  #
     encoder_dim = (16, 32, 64, 64)
     pos_dim = 48  # zipformer base设置
     num_heads = (4, 4, 4, 4)  # "4,4,4,8,4,4"
-    query_head_dim = (16,) * len(downsampling_factor)  # 32
-    pos_head_dim = (4,) * len(downsampling_factor)  # 4
-    value_head_dim = (12,) * len(downsampling_factor)  # 12
+    query_head_dim = (16, ) * len(downsampling_factor)  # 32
+    pos_head_dim = (4, ) * len(downsampling_factor)  # 4
+    value_head_dim = (12, ) * len(downsampling_factor)  # 12
     feedforward_dim = (32, 64, 128, 128)  #
     dropout = ScheduledFloat((0.0, 0.3), (20000.0, 0.1))
-    cnn_module_kernel = (15,) * len(downsampling_factor)  # 31,31,15,15,15,31
+    cnn_module_kernel = (15, ) * len(downsampling_factor)  # 31,31,15,15,15,31
     causal = False
     encoder_unmasked_dim = (16, ) * len(downsampling_factor)
 
@@ -468,7 +468,7 @@ if __name__ == "__main__":
     warmup_batches = 4000.0
 
     net = Zipformer2DualPathEncoder(
-        output_downsampling_factor = 1,
+        output_downsampling_factor=1,
         downsampling_factor=downsampling_factor,
         num_encoder_layers=num_encoder_layers,
         encoder_dim=encoder_dim,
@@ -493,8 +493,6 @@ if __name__ == "__main__":
     t = 321
     f = 101
     c = 64
-
-
 
     # x = torch.randn((101, 2, 128))
     x = torch.randn((b, c, t, f))

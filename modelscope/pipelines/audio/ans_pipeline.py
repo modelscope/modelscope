@@ -124,12 +124,10 @@ class ANSPipeline(Pipeline):
         return inputs
 
 
-
-
 @PIPELINES.register_module(
     Tasks.acoustic_noise_suppression,
     module_name=Pipelines.speech_zipenhancer_ans_multiloss_16k_base)
-class ANSPipeline(Pipeline):
+class ANSZipEnhancerPipeline(Pipeline):
     r"""ANS (Acoustic Noise Suppression) Inference Pipeline .
 
     When invoke the class with pipeline.__call__(), it accept only one parameter:
@@ -175,13 +173,13 @@ class ANSPipeline(Pipeline):
             ndarray = ndarray.cpu().numpy()
         nsamples = inputs['nsamples']
         decode_do_segement = False
-        window = 16000 * 2 # 2s
+        window = 16000 * 2  # 2s
         stride = int(window * 0.75)
         print('inputs:{}'.format(ndarray.shape))
         b, t = ndarray.shape  # size()
-        if t > window * 5: # 10s
+        if t > window * 5:  # 10s
             decode_do_segement = True
-            print("decode_do_segement")
+            print('decode_do_segement')
 
         if t < window:
             ndarray = np.concatenate(
@@ -197,7 +195,8 @@ class ANSPipeline(Pipeline):
                     padding = t - (t - window) // stride * stride
                     print('padding: {}'.format(padding))
                     ndarray = np.concatenate(
-                        [ndarray, np.zeros((ndarray.shape[0], padding))], 1)
+                        [ndarray,
+                         np.zeros((ndarray.shape[0], padding))], 1)
         # else:
         #     if (t - window) % stride != 0:
         #         padding = t - (t - window) // stride * stride

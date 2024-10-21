@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import logging
 import math
 import random
@@ -85,7 +84,7 @@ class PiecewiseLinear(object):
 
     def __str__(self):
         # e.g. 'PiecewiseLinear((0., 10.), (100., 0.))'
-        return f"PiecewiseLinear({str(self.pairs)[1:-1]})"
+        return f'PiecewiseLinear({str(self.pairs)[1:-1]})'
 
     def __call__(self, x):
         if x <= self.pairs[0][0]:
@@ -97,7 +96,8 @@ class PiecewiseLinear(object):
             for i in range(1, len(self.pairs)):
                 next_x, next_y = self.pairs[i]
                 if x >= cur_x and x <= next_x:
-                    return cur_y + (next_y - cur_y) * (x - cur_x) / (next_x - cur_x)
+                    return cur_y + (next_y - cur_y) * (x - cur_x) / (
+                        next_x - cur_x)
                 cur_x, cur_y = next_x, next_y
             assert False
 
@@ -108,30 +108,29 @@ class PiecewiseLinear(object):
         if isinstance(x, (float, int)):
             return PiecewiseLinear(*[(p[0], p[1] + x) for p in self.pairs])
         s, x = self.get_common_basis(x)
-        return PiecewiseLinear(
-            *[(sp[0], sp[1] + xp[1]) for sp, xp in zip(s.pairs, x.pairs)]
-        )
+        return PiecewiseLinear(*[(sp[0], sp[1] + xp[1])
+                                 for sp, xp in zip(s.pairs, x.pairs)])
 
     def max(self, x):
         if isinstance(x, (float, int)):
             x = PiecewiseLinear((0, x))
         s, x = self.get_common_basis(x, include_crossings=True)
-        return PiecewiseLinear(
-            *[(sp[0], max(sp[1], xp[1])) for sp, xp in zip(s.pairs, x.pairs)]
-        )
+        return PiecewiseLinear(*[(sp[0], max(sp[1], xp[1]))
+                                 for sp, xp in zip(s.pairs, x.pairs)])
 
     def min(self, x):
         if isinstance(x, float) or isinstance(x, int):
             x = PiecewiseLinear((0, x))
         s, x = self.get_common_basis(x, include_crossings=True)
-        return PiecewiseLinear(
-            *[(sp[0], min(sp[1], xp[1])) for sp, xp in zip(s.pairs, x.pairs)]
-        )
+        return PiecewiseLinear(*[(sp[0], min(sp[1], xp[1]))
+                                 for sp, xp in zip(s.pairs, x.pairs)])
 
     def __eq__(self, other):
         return self.pairs == other.pairs
 
-    def get_common_basis(self, p: "PiecewiseLinear", include_crossings: bool = False):
+    def get_common_basis(self,
+                         p: 'PiecewiseLinear',
+                         include_crossings: bool = False):
         """
         Returns (self_mod, p_mod) which are equivalent piecewise linear
         functions to self and p, but with the same x values.
@@ -143,15 +142,20 @@ class PiecewiseLinear(object):
         assert isinstance(p, PiecewiseLinear), type(p)
 
         # get sorted x-values without repetition.
-        x_vals = sorted(set([x for x, _ in self.pairs] + [x for x, _ in p.pairs]))
+        x_vals = sorted(
+            set([x for x, _ in self.pairs] + [x for x, _ in p.pairs]))
         y_vals1 = [self(x) for x in x_vals]
         y_vals2 = [p(x) for x in x_vals]
 
         if include_crossings:
             extra_x_vals = []
             for i in range(len(x_vals) - 1):
-                if (y_vals1[i] > y_vals2[i]) != (y_vals1[i + 1] > y_vals2[i + 1]):
-                    # if the two lines in this subsegment potentially cross each other..
+                _compare_results1 = (y_vals1[i] > y_vals2[i])
+                _compare_results2 = (y_vals1[i + 1] > y_vals2[i + 1])
+                if _compare_results1 != _compare_results2:
+                    # if ((y_vals1[i] > y_vals2[i]) !=
+                    #     (y_vals1[i + 1] > y_vals2[i + 1])):
+                    # if the two lines in this subsegment potentially cross each other.
                     diff_cur = abs(y_vals1[i] - y_vals2[i])
                     diff_next = abs(y_vals1[i + 1] - y_vals2[i + 1])
                     # `pos`, between 0 and 1, gives the relative x position,
@@ -197,23 +201,19 @@ class ScheduledFloat(torch.nn.Module):
 
     def extra_repr(self) -> str:
         return (
-            f"batch_count={self.batch_count}, schedule={str(self.schedule.pairs[1:-1])}"
+            f'batch_count={self.batch_count}, schedule={str(self.schedule.pairs[1:-1])}'
         )
 
     def __float__(self):
         batch_count = self.batch_count
-        if (
-            batch_count is None
-            or not self.training
-            or torch.jit.is_scripting()
-            or torch.jit.is_tracing()
-        ):
+        if (batch_count is None or not self.training
+                or torch.jit.is_scripting() or torch.jit.is_tracing()):
             return float(self.default)
         else:
             ans = self.schedule(self.batch_count)
             if random.random() < 0.0002:
                 logging.info(
-                    f"ScheduledFloat: name={self.name}, batch_count={self.batch_count}, ans={ans}"
+                    f'ScheduledFloat: name={self.name}, batch_count={self.batch_count}, ans={ans}'
                 )
             return ans
 
@@ -222,16 +222,15 @@ class ScheduledFloat(torch.nn.Module):
             return ScheduledFloat(self.schedule + x, default=self.default)
         else:
             return ScheduledFloat(
-                self.schedule + x.schedule, default=self.default + x.default
-            )
+                self.schedule + x.schedule, default=self.default + x.default)
 
     def max(self, x):
         if isinstance(x, float) or isinstance(x, int):
             return ScheduledFloat(self.schedule.max(x), default=self.default)
         else:
             return ScheduledFloat(
-                self.schedule.max(x.schedule), default=max(self.default, x.default)
-            )
+                self.schedule.max(x.schedule),
+                default=max(self.default, x.default))
 
 
 FloatLike = Union[float, ScheduledFloat]
@@ -258,7 +257,7 @@ class SoftmaxFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, ans_grad: Tensor):
-        (ans,) = ctx.saved_tensors
+        (ans, ) = ctx.saved_tensors
         with torch.cuda.amp.autocast(enabled=False):
             ans_grad = ans_grad.to(torch.float32)
             ans = ans.to(torch.float32)
@@ -281,10 +280,8 @@ def inplace_softmax(tensor, dim):
     # # Compute the exponential of each element, and store the results in-place.
     # tensor.exp_()
 
-
     # Compute the exponential of each element, and store the results in-place.
     tensor.exp_()
-
 
     # Compute the sum along the specified dimension, and store the result in-place.
     sum_exp = tensor.sum(dim=dim, keepdim=True)
@@ -295,8 +292,10 @@ def inplace_softmax(tensor, dim):
 
     return tensor
 
+
 def softmax(x: Tensor, dim: int):
-    if not x.requires_grad or torch.jit.is_scripting() or torch.jit.is_tracing():
+    if not x.requires_grad or torch.jit.is_scripting() or torch.jit.is_tracing(
+    ):
         return x.softmax(dim=dim)
         # inplace operator
         # return inplace_softmax(x, dim)
@@ -327,9 +326,9 @@ class BiasNormFunction(torch.autograd.Function):
         ctx.channel_dim = channel_dim
         for _ in range(channel_dim + 1, x.ndim):
             bias = bias.unsqueeze(-1)
-        scales = (
-            torch.mean((x - bias) ** 2, dim=channel_dim, keepdim=True) ** -0.5
-        ) * log_scale.exp()
+        _x_bias_square = torch.mean(
+            (x - bias)**2, dim=channel_dim, keepdim=True)
+        scales = (_x_bias_square**-0.5) * log_scale.exp()
         ans = x * scales
         ctx.save_for_backward(
             ans.detach() if store_output_for_backprop else x,
@@ -352,9 +351,9 @@ class BiasNormFunction(torch.autograd.Function):
         log_scale.requires_grad = True
         with torch.enable_grad():
             # recompute scales from x, bias and log_scale.
-            scales = (
-                torch.mean((x - bias) ** 2, dim=ctx.channel_dim, keepdim=True) ** -0.5
-            ) * log_scale.exp()
+            _x_bias_square = torch.mean(
+                (x - bias)**2, dim=ctx.channel_dim, keepdim=True)
+            scales = (_x_bias_square**-0.5) * log_scale.exp()
             ans = x * scales
             ans.backward(gradient=ans_grad)
         return x.grad, bias.grad.flatten(), log_scale.grad, None, None
@@ -404,7 +403,8 @@ class BiasNorm(torch.nn.Module):
         self.num_channels = num_channels
         self.channel_dim = channel_dim
         self.log_scale = nn.Parameter(torch.tensor(log_scale))
-        self.bias = nn.Parameter(torch.empty(num_channels).normal_(mean=0, std=1e-4))
+        self.bias = nn.Parameter(
+            torch.empty(num_channels).normal_(mean=0, std=1e-4))
 
         self.log_scale_min = log_scale_min
         self.log_scale_max = log_scale_max
@@ -421,9 +421,9 @@ class BiasNorm(torch.nn.Module):
             bias = self.bias
             for _ in range(channel_dim + 1, x.ndim):
                 bias = bias.unsqueeze(-1)
-            scales = (
-                torch.mean((x - bias) ** 2, dim=channel_dim, keepdim=True) ** -0.5
-            ) * self.log_scale.exp()
+            _x_bias_square = torch.mean(
+                (x - bias)**2, dim=channel_dim, keepdim=True)
+            scales = (_x_bias_square**-0.5) * self.log_scale.exp()
             return x * scales
 
         log_scale = limit_param_value(
@@ -433,9 +433,9 @@ class BiasNorm(torch.nn.Module):
             training=self.training,
         )
 
-        return BiasNormFunction.apply(
-            x, self.bias, log_scale, self.channel_dim, self.store_output_for_backprop
-        )
+        return BiasNormFunction.apply(x, self.bias, log_scale,
+                                      self.channel_dim,
+                                      self.store_output_for_backprop)
 
 
 def ScaledLinear(*args, initial_scale: float = 1.0, **kwargs) -> nn.Linear:
@@ -457,10 +457,9 @@ def ScaledLinear(*args, initial_scale: float = 1.0, **kwargs) -> nn.Linear:
     with torch.no_grad():
         ans.weight[:] *= initial_scale
         if ans.bias is not None:
-            torch.nn.init.uniform_(ans.bias, -0.1 * initial_scale, 0.1 * initial_scale)
+            torch.nn.init.uniform_(ans.bias, -0.1 * initial_scale,
+                                   0.1 * initial_scale)
     return ans
-
-
 
 
 class ChunkCausalDepthwiseConv1d(torch.nn.Module):
@@ -521,16 +520,17 @@ class ChunkCausalDepthwiseConv1d(torch.nn.Module):
         # first row is correction factors added to the scale near the left edge of the chunk,
         # second row is correction factors added to the scale near the right edge of the chunk,
         # both of these are added to a default scale of 1.0.
-        self.chunkwise_conv_scale = nn.Parameter(torch.zeros(2, channels, kernel_size))
+        self.chunkwise_conv_scale = nn.Parameter(
+            torch.zeros(2, channels, kernel_size))
         self.kernel_size = kernel_size
 
         with torch.no_grad():
             self.causal_conv.weight[:] *= initial_scale
             self.chunkwise_conv.weight[:] *= initial_scale
             if bias:
-                torch.nn.init.uniform_(
-                    self.causal_conv.bias, -0.1 * initial_scale, 0.1 * initial_scale
-                )
+                torch.nn.init.uniform_(self.causal_conv.bias,
+                                       -0.1 * initial_scale,
+                                       0.1 * initial_scale)
 
     def forward(self, x: Tensor, chunk_size: int = -1) -> Tensor:
         """Forward function.
@@ -553,26 +553,24 @@ class ChunkCausalDepthwiseConv1d(torch.nn.Module):
 
         x = torch.nn.functional.pad(x, (left_pad, right_pad))
 
-        x_causal = self.causal_conv(x[..., : left_pad + seq_len])
+        x_causal = self.causal_conv(x[..., :left_pad + seq_len])
         assert x_causal.shape == (batch_size, num_channels, seq_len)
 
         x_chunk = x[..., left_pad:]
         num_chunks = x_chunk.shape[2] // chunk_size
-        x_chunk = x_chunk.reshape(batch_size, num_channels, num_chunks, chunk_size)
-        x_chunk = x_chunk.permute(0, 2, 1, 3).reshape(
-            batch_size * num_chunks, num_channels, chunk_size
-        )
+        x_chunk = x_chunk.reshape(batch_size, num_channels, num_chunks,
+                                  chunk_size)
+        x_chunk = x_chunk.permute(0, 2, 1, 3).reshape(batch_size * num_chunks,
+                                                      num_channels, chunk_size)
         x_chunk = self.chunkwise_conv(x_chunk)  # does not change shape
 
         chunk_scale = self._get_chunk_scale(chunk_size)
 
         x_chunk = x_chunk * chunk_scale
-        x_chunk = x_chunk.reshape(
-            batch_size, num_chunks, num_channels, chunk_size
-        ).permute(0, 2, 1, 3)
-        x_chunk = x_chunk.reshape(batch_size, num_channels, num_chunks * chunk_size)[
-            ..., :seq_len
-        ]
+        x_chunk = x_chunk.reshape(batch_size, num_chunks, num_channels,
+                                  chunk_size).permute(0, 2, 1, 3)
+        x_chunk = x_chunk.reshape(batch_size, num_channels,
+                                  num_chunks * chunk_size)[..., :seq_len]
 
         return x_chunk + x_causal
 
@@ -588,8 +586,7 @@ class ChunkCausalDepthwiseConv1d(torch.nn.Module):
             t = chunk_size - self.kernel_size
             channels = left_edge.shape[0]
             pad = torch.zeros(
-                channels, t, device=left_edge.device, dtype=left_edge.dtype
-            )
+                channels, t, device=left_edge.device, dtype=left_edge.dtype)
             left_edge = torch.cat((left_edge, pad), dim=-1)
             right_edge = torch.cat((pad, right_edge), dim=-1)
         return 1.0 + (left_edge + right_edge)
@@ -630,9 +627,10 @@ class ChunkCausalDepthwiseConv1d(torch.nn.Module):
         return x_chunk + x_causal, cache
 
 
-def penalize_abs_values_gt(
-    x: Tensor, limit: float, penalty: float, name: str = None
-) -> Tensor:
+def penalize_abs_values_gt(x: Tensor,
+                           limit: float,
+                           penalty: float,
+                           name: str = None) -> Tensor:
     """
     Returns x unmodified, but in backprop will put a penalty for the excess of
     the absolute values of elements of x over the limit "limit".  E.g. if
@@ -663,19 +661,21 @@ def penalize_abs_values_gt(
 
 
 class WithLoss(torch.autograd.Function):
+
     @staticmethod
     def forward(ctx, x: Tensor, y: Tensor, name: str):
         ctx.y_shape = y.shape
         if random.random() < 0.002 and name is not None:
             loss_sum = y.sum().item()
-            logging.info(f"WithLoss: name={name}, loss-sum={loss_sum:.3e}")
+            logging.info(f'WithLoss: name={name}, loss-sum={loss_sum:.3e}')
         return x
 
     @staticmethod
     def backward(ctx, ans_grad: Tensor):
         return (
             ans_grad,
-            torch.ones(ctx.y_shape, dtype=ans_grad.dtype, device=ans_grad.device),
+            torch.ones(
+                ctx.y_shape, dtype=ans_grad.dtype, device=ans_grad.device),
             None,
         )
 
@@ -685,9 +685,8 @@ def with_loss(x, y, name):
     return WithLoss.apply(x, y, name)
 
 
-
-
 class LimitParamValue(torch.autograd.Function):
+
     @staticmethod
     def forward(ctx, x: Tensor, min: float, max: float):
         ctx.save_for_backward(x)
@@ -698,21 +697,23 @@ class LimitParamValue(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, x_grad: Tensor):
-        (x,) = ctx.saved_tensors
+        (x, ) = ctx.saved_tensors
         # where x < ctx.min, ensure all grads are negative (this will tend to make
         # x more positive).
         x_grad = x_grad * torch.where(
-            torch.logical_and(x_grad > 0, x < ctx.min), -1.0, 1.0
-        )
+            torch.logical_and(x_grad > 0, x < ctx.min), -1.0, 1.0)
         # where x > ctx.max, ensure all grads are positive (this will tend to make
         # x more negative).
-        x_grad *= torch.where(torch.logical_and(x_grad < 0, x > ctx.max), -1.0, 1.0)
+        x_grad *= torch.where(
+            torch.logical_and(x_grad < 0, x > ctx.max), -1.0, 1.0)
         return x_grad, None, None
 
 
-def limit_param_value(
-    x: Tensor, min: float, max: float, prob: float = 0.6, training: bool = True
-):
+def limit_param_value(x: Tensor,
+                      min: float,
+                      max: float,
+                      prob: float = 0.6,
+                      training: bool = True):
     # You apply this to (typically) an nn.Parameter during training to ensure that its
     # (elements mostly) stays within a supplied range.  This is done by modifying the
     # gradients in backprop.
@@ -734,6 +735,7 @@ def _no_op(x: Tensor) -> Tensor:
 
 
 class Identity(torch.nn.Module):
+
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -741,17 +743,16 @@ class Identity(torch.nn.Module):
         return _no_op(x)
 
 
-
 # Dropout2 is just like normal dropout, except it supports schedules on the dropout rates.
 class Dropout2(nn.Module):
+
     def __init__(self, p: FloatLike):
         super().__init__()
         self.p = p
 
     def forward(self, x: Tensor) -> Tensor:
-        return torch.nn.functional.dropout(x, p=float(self.p), training=self.training)
-
-
+        return torch.nn.functional.dropout(
+            x, p=float(self.p), training=self.training)
 
 
 class SwooshLFunction(torch.autograd.Function):
@@ -769,7 +770,7 @@ class SwooshLFunction(torch.autograd.Function):
 
         coeff = -0.08
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with (torch.cuda.amp.autocast(enabled=False)):
             with torch.enable_grad():
                 x = x.detach()
                 x.requires_grad = True
@@ -783,11 +784,9 @@ class SwooshLFunction(torch.autograd.Function):
                 grad = x.grad
                 floor = coeff
                 ceil = 1.0 + coeff + 0.005
-
-                d_scaled = (grad - floor) * (255.0 / (ceil - floor)) + torch.rand_like(
-                    grad
-                )
-                if __name__ == "__main__":
+                _diff = (grad - floor) * (255.0 / (ceil - floor))
+                d_scaled = _diff + torch.rand_like(grad)
+                if __name__ == '__main__':
                     # for self-testing only.
                     assert d_scaled.min() >= 0.0
                     assert d_scaled.max() < 256.0
@@ -800,7 +799,7 @@ class SwooshLFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, y_grad: Tensor) -> Tensor:
-        (d,) = ctx.saved_tensors
+        (d, ) = ctx.saved_tensors
         # the same constants as used in forward pass.
 
         coeff = -0.08
@@ -811,6 +810,7 @@ class SwooshLFunction(torch.autograd.Function):
 
 
 class SwooshL(torch.nn.Module):
+
     def forward(self, x: Tensor) -> Tensor:
         """Return Swoosh-L activation."""
         if torch.jit.is_scripting() or torch.jit.is_tracing():
@@ -824,6 +824,7 @@ class SwooshL(torch.nn.Module):
 
 
 class SwooshLOnnx(torch.nn.Module):
+
     def forward(self, x: Tensor) -> Tensor:
         """Return Swoosh-L activation."""
         zero = torch.tensor(0.0, dtype=x.dtype, device=x.device)
@@ -860,10 +861,9 @@ class SwooshRFunction(torch.autograd.Function):
                 floor = -0.08
                 ceil = 0.925
 
-                d_scaled = (grad - floor) * (255.0 / (ceil - floor)) + torch.rand_like(
-                    grad
-                )
-                if __name__ == "__main__":
+                _diff = (grad - floor) * (255.0 / (ceil - floor))
+                d_scaled = _diff + torch.rand_like(grad)
+                if __name__ == '__main__':
                     # for self-testing only.
                     assert d_scaled.min() >= 0.0
                     assert d_scaled.max() < 256.0
@@ -876,7 +876,7 @@ class SwooshRFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, y_grad: Tensor) -> Tensor:
-        (d,) = ctx.saved_tensors
+        (d, ) = ctx.saved_tensors
         # the same constants as used in forward pass.
         floor = -0.08
         ceil = 0.925
@@ -885,6 +885,7 @@ class SwooshRFunction(torch.autograd.Function):
 
 
 class SwooshR(torch.nn.Module):
+
     def forward(self, x: Tensor) -> Tensor:
         """Return Swoosh-R activation."""
         if torch.jit.is_scripting() or torch.jit.is_tracing():
@@ -898,6 +899,7 @@ class SwooshR(torch.nn.Module):
 
 
 class SwooshROnnx(torch.nn.Module):
+
     def forward(self, x: Tensor) -> Tensor:
         """Return Swoosh-R activation."""
         zero = torch.tensor(0.0, dtype=x.dtype, device=x.device)
@@ -909,8 +911,9 @@ class SwooshROnnx(torch.nn.Module):
 def SwooshLForward(x: Tensor):
     x_offset = x - 4.0
     log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
-    log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
+    log_sum = torch.where(log_sum == float('inf'), x_offset, log_sum)
     return log_sum - 0.08 * x - 0.035
+
 
 def SwooshLForwardAndDeriv(x: Tensor):
     """
@@ -920,19 +923,21 @@ def SwooshLForwardAndDeriv(x: Tensor):
     """
     x_offset = x - 4.0
     log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
-    log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
+    log_sum = torch.where(log_sum == float('inf'), x_offset, log_sum)
 
     deriv = 0.92 - 1 / (1 + x_offset.exp())
 
     return log_sum - 0.08 * x - 0.035, deriv
+
 
 # simple version of SwooshR that does not redefine the backprop, used in
 # ActivationDropoutAndLinearFunction.
 def SwooshRForward(x: Tensor):
     x_offset = x - 1.0
     log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
-    log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
+    log_sum = torch.where(log_sum == float('inf'), x_offset, log_sum)
     return log_sum - 0.08 * x - 0.313261687
+
 
 def SwooshRForwardAndDeriv(x: Tensor):
     """
@@ -942,13 +947,11 @@ def SwooshRForwardAndDeriv(x: Tensor):
     """
     x_offset = x - 1.0
     log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
-    log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
+    log_sum = torch.where(log_sum == float('inf'), x_offset, log_sum)
 
     deriv = 0.92 - 1 / (1 + x_offset.exp())
 
     return log_sum - 0.08 * x - 0.313261687, deriv
-
-
 
 
 class ActivationDropoutAndLinear(torch.nn.Module):
@@ -982,7 +985,7 @@ class ActivationDropoutAndLinear(torch.nn.Module):
         in_channels: int,
         out_channels: int,
         bias: bool = True,
-        activation: str = "SwooshL",
+        activation: str = 'SwooshL',
         dropout_p: FloatLike = 0.0,
         dropout_shared_dim: Optional[int] = -1,
         initial_scale: float = 1.0,
@@ -990,16 +993,15 @@ class ActivationDropoutAndLinear(torch.nn.Module):
         super().__init__()
         # create a temporary module of nn.Linear that we'll steal the
         # weights and bias from
-        l = ScaledLinear(
-            in_channels, out_channels, bias=bias, initial_scale=initial_scale
-        )
+        linear_module = ScaledLinear(
+            in_channels, out_channels, bias=bias, initial_scale=initial_scale)
 
-        self.weight = l.weight
+        self.weight = linear_module.weight
         # register_parameter properly handles making it a parameter when l.bias
         # is None. I think there is some reason for doing it this way rather
         # than just setting it to None but I don't know what it is, maybe
         # something to do with exporting the module..
-        self.register_parameter("bias", l.bias)
+        self.register_parameter('bias', linear_module.bias)
 
         self.activation = activation
         self.dropout_p = dropout_p
@@ -1007,11 +1009,12 @@ class ActivationDropoutAndLinear(torch.nn.Module):
 
     def forward(self, x: Tensor):
         # if torch.jit.is_scripting() or torch.jit.is_tracing():
-        if torch.jit.is_scripting() or torch.jit.is_tracing() or (not self.training):
-            if self.activation == "SwooshL":
+        if torch.jit.is_scripting() or torch.jit.is_tracing() or (
+                not self.training):
+            if self.activation == 'SwooshL':
                 x = SwooshLForward(x)
                 # x = k2.swoosh_l_forward(x)
-            elif self.activation == "SwooshR":
+            elif self.activation == 'SwooshR':
                 x = SwooshRForward(x)
                 # x = k2.swoosh_r_forward(x)
             else:
@@ -1046,11 +1049,7 @@ def convert_num_channels(x: Tensor, num_channels: int) -> Tensor:
         return torch.cat((x, zeros), dim=1)
 
 
-
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
-

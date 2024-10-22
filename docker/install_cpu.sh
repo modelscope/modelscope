@@ -20,6 +20,8 @@ pip install --no-cache-dir mpi4py paint_ldm mmcls>=0.21.0 mmdet>=2.25.0 decord>=
 
 pip uninstall torch torchvision torchaudio
 
+pip uninstall -y torch torchvision torchaudio
+
 pip install --no-cache-dir -U torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version --index-url https://download.pytorch.org/whl/cpu
 
 pip uninstall ms-swift modelscope -y

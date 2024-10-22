@@ -48,9 +48,3 @@ pip install --no-cache-dir vllm==$vllm_version -U
 pip install --no-cache-dir -U lmdeploy==$lmdeploy_version --no-deps
 
 pip install --no-cache-dir pynvml shortuuid
-
-pip uninstall ms-swift modelscope -y
-
-cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $modelscope_branch  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install .[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;
-
-cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $swift_branch  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;

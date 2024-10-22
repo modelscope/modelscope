@@ -22,6 +22,12 @@ COPY {meta_file} /tmp/install.sh
 
 RUN sh /tmp/install.sh {version_args}
 
+pip uninstall ms-swift modelscope -y
+
+cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $modelscope_branch  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install .[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;
+
+cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $swift_branch  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;
+
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True

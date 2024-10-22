@@ -22,6 +22,8 @@ COPY {meta_file} /tmp/install.sh
 
 RUN sh /tmp/install.sh {version_args}
 
+RUN pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --force
+
 pip uninstall ms-swift modelscope -y
 
 cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b $modelscope_branch  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install .[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;

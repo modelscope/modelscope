@@ -145,7 +145,7 @@ ARG TORCH_VERSION={torch_version}
 ARG CUDATOOLKIT_VERSION={cudatoolkit_version}
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi

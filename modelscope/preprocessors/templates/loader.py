@@ -321,11 +321,11 @@ class TemplateLoader:
 
     @staticmethod
     def _format_return(template_lines: Optional[str], params: Optional[Dict], split: bool) -> Union[str, Dict]:
+        if not template_lines:
+            return None
 
         if split:
             return {'params': json.dumps(params), 'template': json.dumps(template_lines)}
-        if not template_lines:
-            return None
 
         content = ''
         content += 'FROM {gguf_file}\n'

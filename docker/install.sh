@@ -9,6 +9,10 @@ autogptq_version=${6:-0.7.1}
 modelscope_branch=${7:-master}
 swift_branch=${8:-main}
 
+pip uninstall -y torch torchvision torchaudio
+
+pip install --no-cache-dir -U torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
+
 pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
 curl -fsSL https://ollama.com/install.sh | sh
@@ -42,10 +46,6 @@ pip install vllm==$vllm_version -U
 pip install --no-cache-dir -U lmdeploy==$lmdeploy_version --no-deps
 
 pip install pynvml shortuuid
-
-pip uninstall -y torch torchvision torchaudio
-
-pip install --no-cache-dir -U torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 
 pip uninstall ms-swift modelscope -y
 

@@ -128,8 +128,7 @@ class CPUImageBuilder(Builder):
         meta_file = './docker/install_cpu.sh'
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} '
-            f'{self.args.torchaudio_version} {self.args.modelscope_branch} {self.args.swift_branch}'
-        )
+            f'{self.args.torchaudio_version}')
         base_image = f'{docker_registry}:ubuntu{self.args.ubuntu_version}-torch{self.args.torch_version}-base'
         extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
 
@@ -139,6 +138,9 @@ class CPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
         return content
 
     def build(self) -> int:
@@ -163,8 +165,8 @@ class GPUImageBuilder(Builder):
         extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
-            f'{self.args.modelscope_branch} {self.args.swift_branch}')
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'
+        )
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'torch{self.args.torch_version}-tf{self.args.tf_version}-base')
@@ -174,6 +176,9 @@ class GPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
         return content
 
     def build(self) -> int:
@@ -219,14 +224,17 @@ class LLMImageBuilder(Builder):
                                                   self.args.python_version)
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
-            f'{self.args.modelscope_branch} {self.args.swift_branch}')
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'
+        )
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
         return content
 
     def build(self) -> int:

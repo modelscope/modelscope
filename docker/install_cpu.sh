@@ -3,8 +3,6 @@
 torch_version=${1:-2.4.0}
 torchvision_version=${2:-0.19.0}
 torchaudio_version=${3:-2.4.0}
-modelscope_branch=${4:-master}
-swift_branch=${5:-main}
 
 pip uninstall -y torch torchvision torchaudio
 

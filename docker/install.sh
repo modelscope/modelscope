@@ -6,8 +6,6 @@ torchaudio_version=${3:-2.4.0}
 vllm_version=${4:-0.6.0}
 lmdeploy_version=${5:-0.6.1}
 autogptq_version=${6:-0.7.1}
-modelscope_branch=${7:-master}
-swift_branch=${8:-main}
 
 pip uninstall -y torch torchvision torchaudio
 

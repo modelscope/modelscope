@@ -145,7 +145,7 @@ ARG TORCH_VERSION={torch_version}
 ARG CUDATOOLKIT_VERSION={cudatoolkit_version}
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi
@@ -155,7 +155,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 ENV SHELL=/bin/bash
 # install special package
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install  dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
+        pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
     else \
         pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
     fi

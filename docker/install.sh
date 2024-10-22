@@ -19,7 +19,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 pip install --no-cache-dir -U funasr
 
-pip install --no-cache-dir -U qwen_vl_utils pyav librosa autoawq timm transformers accelerate peft optimum trl safetensors
+pip install --no-cache-dir -U qwen_vl_utils pyav librosa timm transformers accelerate peft optimum trl safetensors
 
 pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 tiktoken transformers_stream_generator bitsandbytes basicsr
 
@@ -48,3 +48,5 @@ pip install --no-cache-dir vllm==$vllm_version -U
 pip install --no-cache-dir -U lmdeploy==$lmdeploy_version --no-deps
 
 pip install --no-cache-dir pynvml shortuuid
+
+pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version

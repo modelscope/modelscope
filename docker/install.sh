@@ -33,7 +33,7 @@ CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0"
 
 # pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl
 # find on: https://github.com/Dao-AILab/flash-attention/releases
-cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
+cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && pip install . && cd / && rm -fr /tmp/flash-attention && pip cache purge;
 
 pip install --no-cache-dir auto-gptq==$autogptq_version
 

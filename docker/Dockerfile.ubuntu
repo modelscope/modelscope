@@ -28,8 +28,6 @@ RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single
 
 RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;
 
-RUN cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge;
-
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True

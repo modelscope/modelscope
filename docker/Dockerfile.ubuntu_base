@@ -210,4 +210,6 @@ ARG TENSORFLOW_VERSION={tf_version}
             echo 'cpu not install tinycudann'; \
     fi
 
+ RUN pip install --no-cache-dir fairseq
+
 ENTRYPOINT []

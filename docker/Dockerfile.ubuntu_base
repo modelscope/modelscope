@@ -198,9 +198,9 @@ ARG TENSORFLOW_VERSION={tf_version}
     fi
 
  RUN if [ "$USE_GPU" = "True" ] ; then \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 python setup.py bdist_wheel && cd / && rm -fr /tmp/mmcv && pip cache purge; \
+            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
         else \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 python setup.py bdist_wheel && cd / && rm -fr /tmp/mmcv && pip cache purge; \
+            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
     fi
 
  # This limits the cuda121 version

@@ -35,8 +35,6 @@ cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flas
 
 pip install --no-cache-dir auto-gptq==$autogptq_version
 
-pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-
 # pip uninstall -y torch-scatter && TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5;8.0;8.6;8.9;9.0" pip install --no-cache-dir -U torch-scatter
 
 pip install --no-cache-dir -U triton

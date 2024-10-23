@@ -1,8 +1,12 @@
-name: Build Docker Images
+name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}
 
 on:
   workflow_dispatch:
     inputs:
+      workflow_name:
+        description: 'The specific name of this build'
+        required: true
+        default: 'build'
       modelscope_branch:
         description: 'ModelScope branch to build from'
         required: true

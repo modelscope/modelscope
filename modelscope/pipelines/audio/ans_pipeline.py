@@ -192,7 +192,9 @@ class ANSZipEnhancerPipeline(Pipeline):
                     [ndarray, np.zeros((ndarray.shape[0], padding))], 1)
             else:
                 if (t - window) % stride != 0:
-                    padding = t - (t - window) // stride * stride
+                    # padding = t - (t - window) // stride * stride
+                    padding = (
+                        (t - window) // stride + 1) * stride + window - t
                     print('padding: {}'.format(padding))
                     ndarray = np.concatenate(
                         [ndarray,
@@ -212,7 +214,11 @@ class ANSZipEnhancerPipeline(Pipeline):
                 give_up_length = (window - stride) // 2
                 current_idx = 0
                 while current_idx + window <= t:
-                    print('current_idx: {}'.format(current_idx))
+                    # print('current_idx: {}'.format(current_idx))
+                    print(
+                        '\rcurrent_idx: {} {:.2f}%'.format(
+                            current_idx, current_idx * 100 / t),
+                        end='')
                     tmp_input = dict(noisy=ndarray[:, current_idx:current_idx
                                                    + window])
                     tmp_output = self.model(
@@ -226,6 +232,7 @@ class ANSZipEnhancerPipeline(Pipeline):
                                 + give_up_length:end_index] = tmp_output[
                                     give_up_length:-give_up_length]
                     current_idx += stride
+                print('\rcurrent_idx: {} {:.2f}%'.format(current_idx, 100))
             else:
                 outputs = self.model(
                     dict(noisy=ndarray))['wav_l2'][0].cpu().numpy()

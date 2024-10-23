@@ -8,16 +8,16 @@ on:
         required: true
         default: 'build'
       modelscope_branch:
-        description: 'ModelScope branch to build from'
+        description: 'ModelScope branch to build from(release/x.xx)'
         required: true
       image_type:
-        description: 'The image type to build'
+        description: 'The image type to build(cpu/gpu/llm)'
         required: true
       modelscope_version:
-        description: 'ModelScope version to use'
+        description: 'ModelScope version to use(x.xx.x)'
         required: true
       swift_branch:
-        description: 'SWIFT branch to use'
+        description: 'SWIFT branch to use(release/x.xx)'
         required: true
       other_params:
         description: 'Other params in --xxx xxx'

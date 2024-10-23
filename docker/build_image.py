@@ -1,9 +1,12 @@
 import argparse
 import os
 from typing import Any
+from datetime import datetime
 
 docker_registry = os.environ['DOCKER_REGISTRY']
 assert docker_registry, 'You must pass a valid DOCKER_REGISTRY'
+timestamp = datetime.now()
+formatted_time = timestamp.strftime('%Y-%m-%d-%H:%M:%S')
 
 
 class Builder:
@@ -155,6 +158,13 @@ class CPUImageBuilder(Builder):
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
             f'torch{self.args.torch_version}-{self.args.modelscope_version}-test'
         )
+        ret = os.system(f'docker push {image_tag}')
+        if ret != 0:
+            return ret
+        image_tag = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
+            f'torch{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
+        )
         return os.system(f'docker push {image_tag}')
 
 
@@ -193,6 +203,13 @@ class GPUImageBuilder(Builder):
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-tf{self.args.tf_version}-'
             f'{self.args.modelscope_version}-test')
+        ret = os.system(f'docker push {image_tag}')
+        if ret != 0:
+            return ret
+        image_tag = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
+            f'{self.args.python_tag}-torch{self.args.torch_version}-tf{self.args.tf_version}-'
+            f'{self.args.modelscope_version}-{formatted_time}-test')
         return os.system(f'docker push {image_tag}')
 
 
@@ -248,6 +265,14 @@ class LLMImageBuilder(Builder):
         image_tag = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-{self.args.modelscope_version}-LLM-test'
+        )
+        ret = os.system(f'docker push {image_tag}')
+        if ret != 0:
+            return ret
+        image_tag = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
+            f'{self.args.python_tag}-torch{self.args.torch_version}-'
+            f'{self.args.modelscope_version}-LLM-{formatted_time}-test'
         )
         return os.system(f'docker push {image_tag}')
 

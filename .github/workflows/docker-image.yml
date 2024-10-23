@@ -1,5 +1,3 @@
-name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}
-
 on:
   workflow_dispatch:
     inputs:
@@ -22,6 +20,8 @@ on:
       other_params:
         description: 'Other params in --xxx xxx'
         required: false
+
+name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}
 
 jobs:
   build:

@@ -167,11 +167,14 @@ class CPUImageBuilder(Builder):
         ret = os.system(f'docker push {image_tag}')
         if ret != 0:
             return ret
-        image_tag = (
+        image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
             f'torch{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
         )
-        return os.system(f'docker push {image_tag}')
+        ret = os.system(f'docker tag {image_tag} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
 
 
 class GPUImageBuilder(Builder):
@@ -212,11 +215,14 @@ class GPUImageBuilder(Builder):
         ret = os.system(f'docker push {image_tag}')
         if ret != 0:
             return ret
-        image_tag = (
+        image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-tf{self.args.tf_version}-'
             f'{self.args.modelscope_version}-{formatted_time}-test')
-        return os.system(f'docker push {image_tag}')
+        ret = os.system(f'docker tag {image_tag} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
 
 
 class LLMImageBuilder(Builder):
@@ -275,11 +281,14 @@ class LLMImageBuilder(Builder):
         ret = os.system(f'docker push {image_tag}')
         if ret != 0:
             return ret
-        image_tag = (
+        image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-'
             f'{self.args.modelscope_version}-LLM-{formatted_time}-test')
-        return os.system(f'docker push {image_tag}')
+        ret = os.system(f'docker tag {image_tag} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
 
 
 parser = argparse.ArgumentParser()

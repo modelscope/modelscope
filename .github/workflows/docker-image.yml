@@ -1,8 +1,12 @@
-name: Build Docker Images
+name: Build Docker Image
 
 on:
   workflow_dispatch:
     inputs:
+      workflow_name:
+        description: 'The specific name of this build'
+        required: true
+        default: 'build'
       modelscope_branch:
         description: 'ModelScope branch to build from'
         required: true
@@ -18,6 +22,8 @@ on:
       other_params:
         description: 'Other params in --xxx xxx'
         required: false
+
+run-name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}-by-@${{ github.actor }}
 
 jobs:
   build:

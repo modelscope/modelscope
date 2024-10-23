@@ -325,7 +325,7 @@ class TemplateLoader:
             return None
 
         if split:
-            return {'params': json.dumps(params), 'template': json.dumps(template_lines)}
+            return {'params': json.dumps(params), 'template': template_lines}
 
         content = ''
         content += 'FROM {gguf_file}\n'

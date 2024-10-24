@@ -6,7 +6,7 @@ from typing import Any
 docker_registry = os.environ['DOCKER_REGISTRY']
 assert docker_registry, 'You must pass a valid DOCKER_REGISTRY'
 timestamp = datetime.now()
-formatted_time = timestamp.strftime('%Y-%m-%d-%H:%M:%S')
+formatted_time = timestamp.strftime('%Y%m%d%H%M%S')
 
 
 class Builder:

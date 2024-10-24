@@ -18,6 +18,8 @@ RUN sh /tmp/install.sh {version_args}
 
 RUN pip uninstall ms-swift modelscope -y
 
+RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
+
 # install dependencies
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

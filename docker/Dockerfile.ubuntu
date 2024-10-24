@@ -25,7 +25,7 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
 # install dependencies
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
-    pip install --no-cache-dir --use-pep517 -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

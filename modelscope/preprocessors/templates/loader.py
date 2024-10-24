@@ -1,6 +1,7 @@
 import re
+import json
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union, Optional
 
 import requests
 
@@ -16,7 +17,7 @@ class TemplateInfo:
 
     template: str = None
     template_regex: str = None
-    modelfile_link: str = None
+    modelfile_prefix: str = None
 
 
 def cases(*names):
@@ -54,8 +55,8 @@ template_info = [
         template=TemplateType.llama3,
         template_regex=
         f'.*{cases("llama3", "llama-3")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-3.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-3',
     ),
     TemplateInfo(
         template=TemplateType.llama,
@@ -67,16 +68,16 @@ template_info = [
     TemplateInfo(
         template=TemplateType.qwen,
         template_regex=f'.*{cases("qwen")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2',
     ),
 
     # codeqwen1.5
     TemplateInfo(
         template_regex=
         f'.*{cases("codeqwen1.5", "codeqwen-1.5")}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codeqwen1.5.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codeqwen1.5',
     ),
 
     # chatml
@@ -84,16 +85,16 @@ template_info = [
         template=TemplateType.chatml,
         template_regex=
         f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5',
     ),
 
     # chatml
     TemplateInfo(
         template=TemplateType.chatml,
         template_regex=f'.*{cases("minicpm")}{no("-v")}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5.modelfile'
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5'
     ),
 
     # chatglm
@@ -106,13 +107,13 @@ template_info = [
     TemplateInfo(
         template=TemplateType.chatglm4,
         template_regex=f'.*{cases("glm4")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/glm4.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/glm4',
     ),
 
     TemplateInfo(
         template_regex=f'.*{cases("llava-llama-3")}.*',
-        modelfile_link='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-llama-3.modelfile'),
+        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-llama-3'),
 
     # baichuan
     TemplateInfo(
@@ -134,7 +135,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.mistral_nemo,
         template_regex=f'.*{cases("Mistral-Nemo")}{no_multi_modal()}.*',
-        modelfile_link='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-nemo.modelfile'),
+        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-nemo'),
 
     # internlm
     TemplateInfo(
@@ -194,8 +195,8 @@ template_info = [
         template=TemplateType.deepseek2,
         template_regex=
         f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2',
     ),
 
     # deepseek_coder
@@ -222,8 +223,8 @@ template_info = [
         template=TemplateType.gemma,
         template_regex=
         f'{no("pali")}.*{cases("gemma2", "gemma-2")}\\b.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2',
     ),
 
     # phi3
@@ -231,8 +232,8 @@ template_info = [
         template=TemplateType.phi3,
         template_regex=
         f'.*{cases("phi3", "phi-3")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_link=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3.modelfile',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3',
     ),
 
     # telechat
@@ -319,11 +320,28 @@ class TemplateLoader:
         return final_str
 
     @staticmethod
+    def _format_return(template_lines: Optional[str], params: Optional[Dict], split: bool) -> Union[str, Dict]:
+        if not template_lines:
+            return None
+
+        if split:
+            return {'params': json.dumps(params), 'template': template_lines}
+
+        content = ''
+        content += 'FROM {gguf_file}\n'
+        content += ('TEMPLATE """' + template_lines + '"""\n')
+        for key, values in params.items():
+            for value in values:
+                content += f'PARAMETER {key} {json.dumps(value)}\n'
+        return content
+
+    @staticmethod
     def to_ollama(model_id: str = None,
                   template_name: str = None,
                   gguf_file: str = None,
                   gguf_meta: Dict[str, Any] = None,
-                  **kwargs) -> str:
+                  split: bool = False,
+                  **kwargs) -> Union[str, Dict]:
         """Export to ollama ModelFile
 
         Args:
@@ -331,9 +349,11 @@ class TemplateLoader:
             template_name: An extra template name to use
             gguf_file: An extra gguf_file path to use in the `FROM` field
             gguf_meta: An gguf extra meta info
+            split: bool. Whether or not to return : The ollama modelfile content will be return if False,  
         Returns:
             The ModelFile content, returns `None` if no template found
         """
+
         if not model_id and not template_name:
             raise ValueError(
                 f'Please make sure you model_id: {model_id} '
@@ -342,9 +362,11 @@ class TemplateLoader:
         if model_id:
             for _info in template_info:
                 if re.fullmatch(_info.template_regex, model_id):
-                    if _info.modelfile_link and not kwargs.get('ignore_oss_model_file', False):
-                        return TemplateLoader._read_content_from_url(
-                            _info.modelfile_link)
+                    if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
+                        template_lines = TemplateLoader._read_content_from_url(
+                            _info.modelfile_prefix + '.template')
+                        params = json.loads(TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params'))
+                        return TemplateLoader._format_return(template_lines, params, split)
         if template_name:
             template = TemplateLoader.load_by_template_name(
                 template_name, **kwargs)
@@ -353,29 +375,30 @@ class TemplateLoader:
                 model_id, **kwargs)
 
         if template is None:
-            return None
-
-        content = ''
-        content += 'FROM {gguf_file}\n'
+            return TemplateLoader._format_return(None, None, split)
+            
+        # template
+        template_lines = ''
         _prefix = TemplateLoader.replace_and_concat(template, template.prefix, "", "")
         if _prefix:
-            content += (
-                f'TEMPLATE """{{{{ if .System }}}}'
+            template_lines += (
+                f'{{{{ if .System }}}}'
                 f'{TemplateLoader.replace_and_concat(template, template.system_prefix or [], "{{SYSTEM}}", "{{ .System }}")}'
                 f'{{{{ else }}}}{_prefix}'
                 f'{{{{ end }}}}')
         else:
-            content += (
-                f'TEMPLATE """{{{{ if .System }}}}'
+            template_lines += (
+                f'{{{{ if .System }}}}'
                 f'{TemplateLoader.replace_and_concat(template, template.system_prefix or [], "{{SYSTEM}}", "{{ .System }}")}'
                 f'{{{{ end }}}}')
-        content += (
+        template_lines += (
             f'{{{{ if .Prompt }}}}'
             f'{TemplateLoader.replace_and_concat(template, template.prompt, "{{QUERY}}", "{{ .Prompt }}")}'
             f'{{{{ end }}}}')
-        content += '{{ .Response }}'
-        content += TemplateLoader.replace_and_concat(template, template.suffix,
-                                                     '', '') + '"""\n'
+        template_lines += '{{ .Response }}'
+        template_lines += TemplateLoader.replace_and_concat(template, template.suffix,
+                                                     '', '')
+        # stop tokens
         all_eos_tokens = {TemplateLoader.replace_and_concat(template, template.suffix, "", "")}
         if getattr(template, 'tokenizer', None):
             eos_token = TemplateLoader.replace_and_concat(template, [["eos_token_id"]], "", "")
@@ -384,9 +407,13 @@ class TemplateLoader:
                 eos_token_id = template.config.eos_token_id
                 eos_token = TemplateLoader.replace_and_concat(template, [[eos_token_id]], "", "")
                 all_eos_tokens.add(eos_token)
+
+        stop_tokens = list()
         for eos_token in all_eos_tokens:
-            content += f'PARAMETER stop "{eos_token}"\n'
-        return content
+            stop_tokens.append(eos_token)
+        params = {'stop': stop_tokens}
+
+        return TemplateLoader._format_return(template_lines, params, split)
 
     @staticmethod
     def _read_content_from_url(url):

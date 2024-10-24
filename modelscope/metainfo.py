@@ -193,6 +193,7 @@ class Models(object):
     # audio models
     sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
     speech_dfsmn_ans = 'speech_dfsmn_ans'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
@@ -551,6 +552,7 @@ class Pipelines(object):
     sambert_hifigan_tts = 'sambert-hifigan-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
     speech_dfsmn_ans_psm_48k_causal = 'speech_dfsmn_ans_psm_48k_causal'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'

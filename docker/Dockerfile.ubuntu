@@ -16,11 +16,23 @@ COPY {meta_file} /tmp/install.sh
 
 RUN sh /tmp/install.sh {version_args}
 
-RUN pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --force
-
 RUN pip uninstall ms-swift modelscope -y
 
-RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install .[all] -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html {resolver} && cd / && rm -fr /tmp/modelscope && pip cache purge;
+# install dependencies
+COPY requirements /var/modelscope
+RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/tests.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir -r /var/modelscope/server.txt && \
+    pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --force && \
+    pip install --no-cache-dir 'scipy<1.13.0' && \
+    pip cache purge
+
+RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;
 
 RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;
 

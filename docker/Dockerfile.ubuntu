@@ -24,7 +24,7 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
 
 RUN pip install --upgrade pip
 
-RUN pip install omegaconf==2.0.6
+RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b v2.0.6  --single-branch https://github.com/omry/omegaconf.git && cd omegaconf && pip install . && cd / && rm -fr /tmp/omegaconf && pip cache purge;
 
 # install dependencies
 COPY requirements /var/modelscope

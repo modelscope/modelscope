@@ -1,7 +1,7 @@
 import re
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Union, Optional, Tuple
 
 import requests
 
@@ -49,52 +49,340 @@ def no_multi_modal():
     return no('audio', 'video', 'vl', 'vision')
 
 
+# Order matters
 template_info = [
     # llama
+    ## "llama3"
+    TemplateInfo(
+        template=TemplateType.llama3,
+        template_regex=
+        f'.*{cases("llama3.2", "llama-3.2")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3.2',
+    ),
+    TemplateInfo(
+        template=TemplateType.llama3,
+        template_regex=
+        f'.*{cases("llama3.1", "llama-3.1")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3.1',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama3", "llama-3")}.*{no_multi_modal()}.*{chat_suffix}.*{cases("gradient")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3-gradient',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama3", "llama-3")}.*{no_multi_modal()}.*{cases("groq")}.*{cases("tool-use", "tool_use")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3-groq-tool-use',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama3", "llama-3")}.*{no_multi_modal()}.*{cases("chatqa")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3-chatqa',
+    ),
+    TemplateInfo(
+        template_regex=f'.*{cases("llava-llama-3")}.*',
+        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-llama-3'),
+    TemplateInfo(
+        template_regex=f'.*{cases("dolphin")}.*{cases("llama3")}.*',
+        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin-llama3'),
     TemplateInfo(
         template=TemplateType.llama3,
         template_regex=
         f'.*{cases("llama3", "llama-3")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-3',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3',
+    ),
+
+    ## "llama"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama2", "llama-2")}{no_multi_modal()}.*{cases("chinese")}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama2-chinese',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("codellama")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codellama',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("tinyllama")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/tinyllama',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama-pro", "llama_pro")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-pro',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama")}.*{cases("guard")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama-guard3',
     ),
     TemplateInfo(
         template=TemplateType.llama,
         template_regex=
-        f'.*{cases("llama2", "llama-2", "mistral", "codestral", "mixtral")}{no_multi_modal()}.*{chat_suffix}.*'
+        f'.*{cases("llama")}{no_multi_modal()}.*{chat_suffix}.*',
+                modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama2',
     ),
 
     # qwen
     TemplateInfo(
         template=TemplateType.qwen,
-        template_regex=f'.*{cases("qwen")}{no_multi_modal()}.*{chat_suffix}.*',
+        template_regex=f'.*{cases("qwen2.5")}.*{cases("coder")}.*{chat_suffix}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2.5-coder',
     ),
-
-    # codeqwen1.5
+    TemplateInfo(
+        template=TemplateType.qwen,
+        template_regex=f'.*{cases("qwen2.5")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2.5',
+    ),
+    TemplateInfo(
+        template_regex=f'.*{cases("qwen2-math")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2-math',
+    ),
     TemplateInfo(
         template_regex=
         f'.*{cases("codeqwen1.5", "codeqwen-1.5")}.*{chat_suffix}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codeqwen1.5',
     ),
+    TemplateInfo(
+        template=TemplateType.qwen,
+        template_regex=f'.*{cases("qwen2", "qwen1.5")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2',
+    ),
+    TemplateInfo(
+        template=TemplateType.qwen,
+        template_regex=f'.*{cases("qwen")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen',
+    ),
 
-    # chatml
+    # gemma
+    TemplateInfo(
+        template=TemplateType.gemma,
+        template_regex=
+        f'{no("pali")}.*{cases("gemma2", "gemma-2")}\\b.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("codegemma")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codegemma',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("shieldgemma")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/shieldgemma',
+    ),
+    TemplateInfo(
+        template=TemplateType.gemma,
+        template_regex=
+        f'.*{cases("gemma")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma',
+    ),
+
+    # "dolphin"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("dolphin")}.*{cases("-mixtral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin-mixtral',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("dolphin")}.*{cases("mistral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin-mistral',
+    ),
+
+    # "phi"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llava-phi3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-phi3',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("phi3.5", "phi-3.5")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3。5',
+    ),
+    TemplateInfo(
+        template=TemplateType.phi3,
+        template_regex=
+        f'.*{cases("phi3", "phi-3")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("phi")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi',
+    ),
+
+    # "mistral"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("yarn")}.*{cases("mistral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yarn-mistral',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("mistral")}.*{cases("large")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-large',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("mistral")}.*{cases("small")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-small',
+    ),
+    TemplateInfo(
+        template=TemplateType.mistral_nemo,
+        template_regex=f'.*{cases("Mistral-Nemo")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-nemo',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("mistral")}.*{cases("openorca")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-openorca',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("mistrallite")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistrallite',
+    ),
+    ## other mistral: set Type.llama
+    TemplateInfo(
+        template=TemplateType.llama,
+        template_regex=
+        f'.*{cases("mistral")}{no_multi_modal()}.*{chat_suffix}.*'
+    ),
+
+    # "mixtral"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("nous-hermes2")}.*{cases("mixtral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes2-mixtral',
+    ),
+    TemplateInfo(
+        template=TemplateType.llama,
+        template_regex=
+        f'.*{cases("mixtral")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mixtral',
+    ),
+
+    # codestral
+    TemplateInfo(
+        template=TemplateType.llama,
+        template_regex=
+        f'.*{cases("codestral")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codestral',
+    ),
+
+    # nous-hermes2
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("nous-hermes2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes2',
+    ),
+
+    # "deepseek"
+    TemplateInfo(
+        template=TemplateType.deepseek2_5,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v2.5")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2.5',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek_coder,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("coder")}.*{cases("v2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder-v2',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek_coder,
+        template_regex=
+        f'.*{cases("deepseek")}{no("v2", "v2.5")}.*{cases("coder")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek2,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek,
+        template_regex=
+        f'.*{cases("deepseek")}{no("v2", "v2.5", "coder")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-llm',
+    ),
+
+    # "yi"
+    TemplateInfo(
+        template=TemplateType.yi_coder,
+        template_regex=f'.*{cases("yi")}.*{cases("coder")}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-coder',
+    ),
     TemplateInfo(
         template=TemplateType.chatml,
         template_regex=
         f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi',
     ),
 
-    # chatml
+    # "minicpm"
+    TemplateInfo(
+        template_regex=f'.*{cases("minicpm-v")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/minicpm-v'
+    ),
     TemplateInfo(
         template=TemplateType.chatml,
         template_regex=f'.*{cases("minicpm")}{no("-v")}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi-1.5'
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi'
     ),
 
     # chatglm
@@ -111,31 +399,92 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/glm4',
     ),
 
-    TemplateInfo(
-        template_regex=f'.*{cases("llava-llama-3")}.*',
-        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava-llama-3'),
-
     # baichuan
     TemplateInfo(
         template=TemplateType.baichuan,
         template_regex=
         f'.*{cases("baichuan")}{no_multi_modal()}.*{chat_suffix}.*'),
 
+    # "command-r"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("command-r-plus")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r-plus',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("command-r")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r',
+    ),
+
     # codegeex
     TemplateInfo(
         template=TemplateType.codegeex4,
-        template_regex=f'.*{cases("codegeex4")}{no_multi_modal()}.*'),
+        template_regex=f'.*{cases("codegeex4")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/codegeex4',
+    ),
+
+    # wizard
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("wizard-vicuna")}.*{cases("uncensored")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizard-vicuna-uncensored',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("wizardlm2", "wizardlm-2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizardlm2',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("wizardcoder")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizardcoder',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("wizard-math", "wizardmath")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizard-math',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("wizardlm")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizardlm',
+    ),
+
+    # vicuna
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("vicuna")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/vicuna',
+    ),
+
+    # "stable"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("stable-code")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/stable-code',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("stablelm2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/stablelm2',
+    ),
 
     # idefics3
     TemplateInfo(
         template=TemplateType.idefics3,
         template_regex=f'.*{cases("idefics3")}{no_multi_modal()}.*'),
-
-    # mistral-nemo
-    TemplateInfo(
-        template=TemplateType.mistral_nemo,
-        template_regex=f'.*{cases("Mistral-Nemo")}{no_multi_modal()}.*',
-        modelfile_prefix='https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-nemo'),
 
     # internlm
     TemplateInfo(
@@ -148,12 +497,10 @@ template_info = [
     TemplateInfo(
         template=TemplateType.internlm2,
         template_regex=
-        f'.*{cases("internlm2")}{no_multi_modal()}.*{chat_suffix}.*'),
-
-    # yi-coder
-    TemplateInfo(
-        template=TemplateType.yi_coder,
-        template_regex=f'.*{cases("yi")}.*{cases("coder")}.*{chat_suffix}.*'),
+        f'.*{cases("internlm2")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/internlm2',
+    ),
 
     # yuan
     TemplateInfo(
@@ -216,24 +563,6 @@ template_info = [
     TemplateInfo(
         template=TemplateType.orion,
         template_regex=f'.*{cases("orion")}{no_multi_modal()}.*{chat_suffix}.*'
-    ),
-
-    # gemma
-    TemplateInfo(
-        template=TemplateType.gemma,
-        template_regex=
-        f'{no("pali")}.*{cases("gemma2", "gemma-2")}\\b.*{chat_suffix}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2',
-    ),
-
-    # phi3
-    TemplateInfo(
-        template=TemplateType.phi3,
-        template_regex=
-        f'.*{cases("phi3", "phi-3")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3',
     ),
 
     # telechat
@@ -320,19 +649,23 @@ class TemplateLoader:
         return final_str
 
     @staticmethod
-    def _format_return(template_lines: Optional[str], params: Optional[Dict], split: bool) -> Union[str, Dict]:
-        if not template_lines:
-            return None
-
+    def _format_return(template_lines: str, params: Dict, split: bool) -> Union[str, Dict]:
         if split:
-            return {'params': json.dumps(params), 'template': template_lines}
+            if params:
+                params = json.dumps(params)
+            return {'params': params, 'template': template_lines}
 
         content = ''
-        content += 'FROM {gguf_file}\n'
+        content += 'FROM {gguf_file}\n\n'
+        if params:
+            for key, values in params.items():
+                if isinstance(values, list):
+                    for value in values:
+                        content += f'PARAMETER {key} {json.dumps(value)}\n'
+                else:
+                    content += f'PARAMETER {key} {json.dumps(values)}\n'
+            content += '\n'
         content += ('TEMPLATE """' + template_lines + '"""\n')
-        for key, values in params.items():
-            for value in values:
-                content += f'PARAMETER {key} {json.dumps(value)}\n'
         return content
 
     @staticmethod
@@ -341,7 +674,8 @@ class TemplateLoader:
                   gguf_file: str = None,
                   gguf_meta: Dict[str, Any] = None,
                   split: bool = False,
-                  **kwargs) -> Union[str, Dict]:
+                  debug: bool = False,
+                  **kwargs) -> Union[str, Dict, Tuple[Dict, TemplateInfo], Tuple[str, TemplateInfo], None]:
         """Export to ollama ModelFile
 
         Args:
@@ -349,24 +683,37 @@ class TemplateLoader:
             template_name: An extra template name to use
             gguf_file: An extra gguf_file path to use in the `FROM` field
             gguf_meta: An gguf extra meta info
-            split: bool. Whether or not to return : The ollama modelfile content will be return if False,  
+            split: bool. Return str modelfile content, or dict of params and template
+            debug: bool. Whether or not to return the matched TemplateInfo
         Returns:
-            The ModelFile content, returns `None` if no template found
+            The ModelFile content, or dictionary of params and template, returns `None` if no template found
         """
 
-        if not model_id and not template_name:
+        if not model_id and not template_name and not gguf_meta:
             raise ValueError(
                 f'Please make sure you model_id: {model_id} '
                 f'and template_name: {template_name} is supported.')
         logger.info('Exporting to ollama:')
-        if model_id:
-            for _info in template_info:
-                if re.fullmatch(_info.template_regex, model_id):
-                    if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
-                        template_lines = TemplateLoader._read_content_from_url(
-                            _info.modelfile_prefix + '.template')
-                        params = json.loads(TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params'))
-                        return TemplateLoader._format_return(template_lines, params, split)
+
+        gguf_header_name = gguf_meta.get("general.name", None)
+        names = [gguf_header_name, model_id]
+        for name in names:
+            if name:
+                for _info in template_info:
+                    if re.fullmatch(_info.template_regex, name):
+                        if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
+                            template_str = TemplateLoader._read_content_from_url(
+                                _info.modelfile_prefix + '.template')
+                            params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
+                            if params:
+                                params = json.loads(params)
+                            else:
+                                logger.info(f'name {name} in has no params file.')
+
+                            format_out = TemplateLoader._format_return(template_str, params, split)
+                            if debug:
+                                return format_out, _info
+                            return format_out
         if template_name:
             template = TemplateLoader.load_by_template_name(
                 template_name, **kwargs)
@@ -374,8 +721,8 @@ class TemplateLoader:
             template = TemplateLoader.load_by_model_id(
                 model_id, **kwargs)
 
-        if template is None:
-            return TemplateLoader._format_return(None, None, split)
+        if not template:
+            return None
             
         # template
         template_lines = ''
@@ -417,7 +764,10 @@ class TemplateLoader:
 
     @staticmethod
     def _read_content_from_url(url):
-        response = requests.get(url)
-        response.raise_for_status()
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            return None
         content = response.content
         return content.decode('utf-8')

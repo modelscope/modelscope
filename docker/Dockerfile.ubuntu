@@ -18,13 +18,13 @@ RUN sh /tmp/install.sh {version_args}
 
 RUN pip uninstall ms-swift modelscope -y
 
-RUN pip install --no-cache-dir 'cython<=0.29.36' kwsbp==0.0.6 versioneer -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+RUN pip --no-cache-dir install pip==23.3.1
+
+RUN pip --no-cache-dir install omegaconf==2.0.6
+
+RUN pip install --no-cache-dir 'cython<=0.29.36' kwsbp==0.0.6 versioneer numpy==1.25.1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
 RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
-
-RUN pip install --upgrade pip
-
-RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b v2.0.6  --single-branch https://github.com/omry/omegaconf.git && cd omegaconf && pip install . && cd / && rm -fr /tmp/omegaconf && pip cache purge;
 
 # install dependencies
 COPY requirements /var/modelscope

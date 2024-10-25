@@ -22,6 +22,8 @@ RUN pip install --no-cache-dir 'cython<=0.29.36' kwsbp==0.0.6 versioneer -f http
 
 RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
 
+RUN pip install --upgrade pip
+
 # install dependencies
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

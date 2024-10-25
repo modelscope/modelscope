@@ -142,7 +142,7 @@ class TestToOllama(unittest.TestCase):
         ollama, info = TemplateLoader.to_ollama(
             'QuantFactory/dolphin-2.9-llama3-70b-GGUF', debug=True)
         assert info.__dict__.get('modelfile_prefix').split(
-            '/')[-1] == 'llama2', info
+            '/')[-1] == 'dolphin-llama3', info
 
 
 if __name__ == '__main__':

@@ -694,26 +694,28 @@ class TemplateLoader:
                 f'Please make sure you model_id: {model_id} '
                 f'and template_name: {template_name} is supported.')
         logger.info('Exporting to ollama:')
-
-        gguf_header_name = gguf_meta.get("general.name", None)
-        names = [gguf_header_name, model_id]
+        names = []
+        if gguf_meta:
+            gguf_header_name = gguf_meta.get("general.name", None)
+            names.append(gguf_header_name)
+        if model_id:
+            names.append(model_id)
         for name in names:
-            if name:
-                for _info in template_info:
-                    if re.fullmatch(_info.template_regex, name):
-                        if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
-                            template_str = TemplateLoader._read_content_from_url(
-                                _info.modelfile_prefix + '.template')
-                            params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
-                            if params:
-                                params = json.loads(params)
-                            else:
-                                logger.info(f'name {name} in has no params file.')
+            for _info in template_info:
+                if re.fullmatch(_info.template_regex, name):
+                    if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
+                        template_str = TemplateLoader._read_content_from_url(
+                            _info.modelfile_prefix + '.template')
+                        params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
+                        if params:
+                            params = json.loads(params)
+                        else:
+                            logger.info(f'name {name} in has no params file.')
 
-                            format_out = TemplateLoader._format_return(template_str, params, split)
-                            if debug:
-                                return format_out, _info
-                            return format_out
+                        format_out = TemplateLoader._format_return(template_str, params, split)
+                        if debug:
+                            return format_out, _info
+                        return format_out
         if template_name:
             template = TemplateLoader.load_by_template_name(
                 template_name, **kwargs)

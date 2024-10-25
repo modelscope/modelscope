@@ -147,8 +147,10 @@ class CPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
-            content = content.replace('{resolver}',
-                                      '--use-deprecated=legacy-resolver')
+            content = content.replace('{torch_version}', self.args.torch_version)
+            content = content.replace('{torchvision_version}', self.args.torchvision_version)
+            content = content.replace('{torchaudio_version}', self.args.torchaudio_version)
+            content = content.replace('{index_url}', '--index-url https://download.pytorch.org/whl/cpu')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
@@ -197,7 +199,10 @@ class GPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
-            content = content.replace('{resolver}', '')
+            content = content.replace('{torch_version}', self.args.torch_version)
+            content = content.replace('{torchvision_version}', self.args.torchvision_version)
+            content = content.replace('{torchaudio_version}', self.args.torchaudio_version)
+            content = content.replace('{index_url}', '')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
@@ -264,7 +269,10 @@ class LLMImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
-            content = content.replace('{resolver}', '')
+            content = content.replace('{torch_version}', self.args.torch_version)
+            content = content.replace('{torchvision_version}', self.args.torchvision_version)
+            content = content.replace('{torchaudio_version}', self.args.torchaudio_version)
+            content = content.replace('{index_url}', '')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)

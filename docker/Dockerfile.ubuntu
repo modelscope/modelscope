@@ -24,8 +24,6 @@ RUN pip --no-cache-dir install omegaconf==2.0.6
 
 RUN pip install --no-cache-dir 'cython<=0.29.36' kwsbp==0.0.6 versioneer numpy==1.25.1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
-RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
-
 # install dependencies
 COPY requirements /var/modelscope
 RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
@@ -40,9 +38,13 @@ RUN pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://model
     pip install --no-cache-dir 'scipy<1.13.0' && \
     pip cache purge
 
+RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
+
 RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;
 
 RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;
+
+pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url}
 
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \

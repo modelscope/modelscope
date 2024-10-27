@@ -326,7 +326,7 @@ class TextErrorCorrectionOutput(ModelOutputBase):
     """The output class for information extraction models.
     """
 
-    predictions: np.ndarray = None
+    predictions: List = None
 
 
 @dataclass

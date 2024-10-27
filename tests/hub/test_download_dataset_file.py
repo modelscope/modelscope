@@ -116,7 +116,7 @@ class DownloadDatasetTest(unittest.TestCase):
             dataset_cache_path = dataset_snapshot_download(
                 dataset_id=dataset_id,
                 cache_dir=temp_cache_dir,
-                ignore_file_pattern='*.jpeg')
+                ignore_file_pattern=['*.jpeg', '.jpg'])
             assert dataset_cache_path == os.path.join(temp_cache_dir,
                                                       dataset_id)
             assert not os.path.exists(

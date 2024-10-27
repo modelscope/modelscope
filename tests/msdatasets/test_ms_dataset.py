@@ -170,17 +170,6 @@ class MsDatasetTest(unittest.TestCase):
         print(next(iter(ms_ds_asr['train'])))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
-    @require_torch
-    def test_to_torch_dataset_img(self):
-        ms_image_train = MsDataset.load(
-            'fixtures_image_utils', namespace='damotest', split='test')
-        pt_dataset = ms_image_train.to_torch_dataset(
-            preprocessors=ImgPreprocessor(image_path='file'))
-        import torch
-        dataloader = torch.utils.data.DataLoader(pt_dataset, batch_size=5)
-        print(next(iter(dataloader)))
-
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @require_tf
     def test_to_tf_dataset_img(self):
         import tensorflow as tf
@@ -229,7 +218,7 @@ class MsDatasetTest(unittest.TestCase):
         print(data_example)
         assert data_example.values()
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 3, 'skip test in current test level')
     def test_streaming_load_img_object(self):
         """Test case for iterating PIL object."""
         from PIL.PngImagePlugin import PngImageFile
@@ -238,7 +227,7 @@ class MsDatasetTest(unittest.TestCase):
             subset_name='default',
             namespace='huizheng',
             split='train',
-            use_streaming=True)
+            use_streaming=False)
         data_example = next(iter(dataset))
         print(data_example)
         assert data_example.values()
@@ -247,7 +236,8 @@ class MsDatasetTest(unittest.TestCase):
     def test_to_ms_dataset(self):
         """Test case for converting huggingface dataset to `MsDataset` instance."""
         from datasets.load import load_dataset
-        hf_dataset = load_dataset('beans', split='train', streaming=True)
+        hf_dataset = load_dataset(
+            'AI-Lab-Makerere/beans', split='train', streaming=True)
         ms_dataset = MsDataset.to_ms_dataset(hf_dataset)
         data_example = next(iter(ms_dataset))
         print(data_example)

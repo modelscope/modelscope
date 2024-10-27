@@ -1,11 +1,10 @@
-ARG BASE_IMAGE=reg.docker.alibaba-inc.com/modelscope/ubuntu:20.04-cuda11.3.0-cudnn8-devel
+ARG BASE_IMAGE={base_image}
 FROM $BASE_IMAGE
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 ENV arch=x86_64
 SHELL ["/bin/bash", "-c"]
 COPY docker/rcfiles /tmp/resources
-COPY docker/jupyter_plugins /tmp/resources/jupyter_plugins
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-certificates && \
     apt-get install -y make apt-utils openssh-server locales wget git strace gdb sox libopenmpi-dev curl \
     iputils-ping net-tools iproute2 autoconf automake gperf libre2-dev libssl-dev \
@@ -34,10 +33,10 @@ RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
-ARG PYTHON_VERSION=3.10.14
+ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-ENV PYTHON_VERSION 3.10.14
+ENV PYTHON_VERSION {python_version}
 
 RUN set -eux; \
         \
@@ -139,15 +138,14 @@ RUN set -eux; \
         pip --version
 # end of install python
 
-ARG USE_GPU=True
+ARG USE_GPU={use_gpu}
 
 # install pytorch
-ARG TORCH_VERSION=2.3.0
-ARG CUDATOOLKIT_VERSION=cu121
+ARG TORCH_VERSION={torch_version}
+ARG CUDATOOLKIT_VERSION={cudatoolkit_version}
 
 RUN if [ "$USE_GPU" = "True" ] ; then \
-       pip install --no-cache-dir "torch==2.3.0" -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
-       pip install --no-cache-dir torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121; \
+        pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio; \
     else \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi
@@ -157,7 +155,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 ENV SHELL=/bin/bash
 # install special package
 RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install  dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
+        pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
     else \
         pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
     fi
@@ -192,7 +190,7 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 
-ARG TENSORFLOW_VERSION=1.15.5
+ARG TENSORFLOW_VERSION={tf_version}
  RUN if [ "$USE_GPU" = "True" ] ; then \
             pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
         else \
@@ -200,9 +198,18 @@ ARG TENSORFLOW_VERSION=1.15.5
     fi
 
  RUN if [ "$USE_GPU" = "True" ] ; then \
-            pip install --no-cache-dir "https://modelscope.oss-cn-beijing.aliyuncs.com/packages/mmcv/mmcv_full-1.7.0-cp310-cp310-linux_x86_64.whl"; \
+            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
         else \
-            pip install --no-cache-dir mmcv_full==1.7.0+cputorch230 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
     fi
+
+ # This limits the cuda121 version
+ RUN if [ "$USE_GPU" = "True" ] ; then \
+            pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+        else \
+            echo 'cpu not install tinycudann'; \
+    fi
+
+ RUN pip install --no-cache-dir fairseq
 
 ENTRYPOINT []

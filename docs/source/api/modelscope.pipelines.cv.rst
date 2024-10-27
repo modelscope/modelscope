@@ -63,7 +63,6 @@ modelscope.pipelines.cv
     ImageSkychangePipeline
     ImageStyleTransferPipeline
     ImageSuperResolutionPipeline
-    LanguageGuidedVideoSummarizationPipeline
     LicensePlateDetectionPipeline
     LiveCategoryPipeline
     MaskDINOInstanceSegmentationPipeline

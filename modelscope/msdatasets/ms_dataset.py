@@ -168,6 +168,7 @@ class MsDataset:
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
         dataset_info_only: Optional[bool] = False,
+        trust_remote_code: Optional[bool] = True,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.
@@ -198,6 +199,7 @@ class MsDataset:
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
                 dataset_info_only (bool, Optional): If set to True, only return the dataset config and info (dict).
+                trust_remote_code (bool, Optional): If set to True, trust the remote code.
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 
             Returns:
@@ -250,6 +252,7 @@ class MsDataset:
             cache_root_dir=cache_dir,
             use_streaming=use_streaming,
             stream_batch_size=stream_batch_size,
+            trust_remote_code=trust_remote_code,
             **config_kwargs)
 
         # Load from local disk
@@ -268,17 +271,16 @@ class MsDataset:
             return dataset_inst
         # Load from the huggingface hub
         elif hub == Hubs.huggingface:
-            dataset_inst = RemoteDataLoaderManager(
-                dataset_context_config).load_dataset(
-                    RemoteDataLoaderType.HF_DATA_LOADER)
-            dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
-            if isinstance(dataset_inst, MsDataset):
-                dataset_inst._dataset_context_config = dataset_context_config
-                if custom_cfg:
-                    dataset_inst.to_custom_dataset(
-                        custom_cfg=custom_cfg, **config_kwargs)
-                    dataset_inst.is_custom = True
-            return dataset_inst
+            from datasets import load_dataset
+            return load_dataset(
+                dataset_name,
+                name=subset_name,
+                split=split,
+                streaming=use_streaming,
+                download_mode=download_mode.value,
+                trust_remote_code=trust_remote_code,
+                **config_kwargs)
+
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
 
@@ -305,6 +307,7 @@ class MsDataset:
                         token=token,
                         streaming=use_streaming,
                         dataset_info_only=dataset_info_only,
+                        trust_remote_code=trust_remote_code,
                         **config_kwargs) as dataset_res:
 
                     return dataset_res

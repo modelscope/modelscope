@@ -123,6 +123,7 @@ if TYPE_CHECKING:
     from .anydoor_pipeline import AnydoorPipeline
     from .image_depth_estimation_marigold_pipeline import ImageDepthEstimationMarigoldPipeline
     from .self_supervised_depth_completion_pipeline import SelfSupervisedDepthCompletionPipeline
+    from .human_normal_estimation_pipeline import HumanNormalEstimationPipeline
 
 else:
     _import_structure = {
@@ -312,6 +313,7 @@ else:
         'self_supervised_depth_completion_pipeline': [
             'SelfSupervisedDepthCompletionPipeline'
         ],
+        'human_normal_estimation_pipeline': ['HumanNormalEstimationPipeline'],
     }
 
     import sys

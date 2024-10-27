@@ -1,7 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import importlib
 import os
+from pathlib import Path
+from types import MethodType
+from typing import Dict, Literal, Optional, Union
 
 from transformers import AutoConfig as AutoConfigHF
+from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
@@ -10,14 +15,17 @@ from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
+from transformers import AutoProcessor as AutoProcessorHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BatchFeature as BatchFeatureHF
 from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import (PretrainedConfig, PreTrainedModel,
+                          PreTrainedTokenizerBase)
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
+from .logger import get_logger
 
 try:
     from transformers import GPTQConfig as GPTQConfigHF
@@ -25,6 +33,8 @@ try:
 except ImportError:
     GPTQConfigHF = None
     AwqConfigHF = None
+
+logger = get_logger()
 
 
 def user_agent(invoked_by=None):
@@ -34,15 +44,73 @@ def user_agent(invoked_by=None):
     return uagent
 
 
-def patch_tokenizer_base():
-    """ Monkey patch PreTrainedTokenizerBase.from_pretrained to adapt to modelscope hub.
-    """
-    ori_from_pretrained = PreTrainedTokenizerBase.from_pretrained.__func__
+def _try_login(token: Optional[str] = None):
+    from modelscope.hub.api import HubApi
+    api = HubApi()
+    if token is None:
+        token = os.environ.get('MODELSCOPE_API_TOKEN')
+    if token:
+        api.login(token)
 
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors']
+
+def _file_exists(
+    self,
+    repo_id: str,
+    filename: str,
+    *,
+    repo_type: Optional[str] = None,
+    revision: Optional[str] = None,
+    token: Union[str, bool, None] = None,
+):
+    """Patch huggingface_hub.file_exists"""
+    if repo_type is not None:
+        logger.warning(
+            'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
+        )
+    _try_login(token)
+    from modelscope.hub.api import HubApi
+    api = HubApi()
+    return api.file_exists(repo_id, filename, revision=revision)
+
+
+def _file_download(repo_id: str,
+                   filename: str,
+                   *,
+                   subfolder: Optional[str] = None,
+                   repo_type: Optional[str] = None,
+                   revision: Optional[str] = None,
+                   cache_dir: Union[str, Path, None] = None,
+                   local_dir: Union[str, Path, None] = None,
+                   token: Union[bool, str, None] = None,
+                   local_files_only: bool = False,
+                   **kwargs):
+    """Patch huggingface_hub.hf_hub_download"""
+    if len(kwargs) > 0:
+        logger.warning(
+            'The passed in library_name,library_version,user_agent,force_download,proxies'
+            'etag_timeout,headers,endpoint '
+            'will not be used in modelscope.')
+    assert repo_type in (
+        None, 'model',
+        'dataset'), f'repo_type={repo_type} is not supported in ModelScope'
+    if repo_type in (None, 'model'):
+        from modelscope.hub.file_download import model_file_download as file_download
+    else:
+        from modelscope.hub.file_download import dataset_file_download as file_download
+    _try_login(token)
+    return file_download(
+        repo_id,
+        file_path=os.path.join(subfolder, filename) if subfolder else filename,
+        cache_dir=cache_dir,
+        local_dir=local_dir,
+        local_files_only=local_files_only,
+        revision=revision)
+
+
+def _patch_pretrained_class():
+
+    def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
+                      **kwargs):
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
@@ -51,35 +119,132 @@ def patch_tokenizer_base():
                 ignore_file_pattern=ignore_file_pattern)
         else:
             model_dir = pretrained_model_name_or_path
-        return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+        return model_dir
 
-    PreTrainedTokenizerBase.from_pretrained = from_pretrained
+    def patch_tokenizer_base():
+        """ Monkey patch PreTrainedTokenizerBase.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = PreTrainedTokenizerBase.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            ignore_file_pattern = [
+                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+            ]
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        PreTrainedTokenizerBase.from_pretrained = from_pretrained
+
+    def patch_config_base():
+        """ Monkey patch PretrainedConfig.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = PretrainedConfig.from_pretrained.__func__
+        ori_get_config_dict = PretrainedConfig.get_config_dict.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            ignore_file_pattern = [
+                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+            ]
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        @classmethod
+        def get_config_dict(cls, pretrained_model_name_or_path, **kwargs):
+            ignore_file_pattern = [
+                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+            ]
+            model_dir = get_model_dir(pretrained_model_name_or_path,
+                                      ignore_file_pattern, **kwargs)
+            return ori_get_config_dict(cls, model_dir, **kwargs)
+
+        PretrainedConfig.from_pretrained = from_pretrained
+        PretrainedConfig.get_config_dict = get_config_dict
+
+    def patch_model_base():
+        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = PreTrainedModel.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        PreTrainedModel.from_pretrained = from_pretrained
+
+    def patch_image_processor_base():
+        """ Monkey patch AutoImageProcessorHF.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoImageProcessorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoImageProcessorHF.from_pretrained = from_pretrained
+
+    def patch_auto_processor_base():
+        """ Monkey patch AutoProcessorHF.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoProcessorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoProcessorHF.from_pretrained = from_pretrained
+
+    def patch_feature_extractor_base():
+        """ Monkey patch AutoFeatureExtractorHF.from_pretrained to adapt to modelscope hub.
+        """
+        ori_from_pretrained = AutoFeatureExtractorHF.from_pretrained.__func__
+
+        @classmethod
+        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                            **kwargs):
+            model_dir = get_model_dir(pretrained_model_name_or_path, None,
+                                      **kwargs)
+            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+
+        AutoFeatureExtractorHF.from_pretrained = from_pretrained
+
+    patch_tokenizer_base()
+    patch_config_base()
+    patch_model_base()
+    patch_image_processor_base()
+    patch_auto_processor_base()
+    patch_feature_extractor_base()
 
 
-def patch_model_base():
-    """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
+def patch_hub():
+    """Patch hf hub, which to make users can download models from modelscope to speed up.
     """
-    ori_from_pretrained = PreTrainedModel.from_pretrained.__func__
+    import huggingface_hub
+    from huggingface_hub import hf_api
+    from huggingface_hub.hf_api import api
 
-    @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                        **kwargs):
-        ignore_file_pattern = [r'\w+\.safetensors']
-        if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            model_dir = snapshot_download(
-                pretrained_model_name_or_path,
-                revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
-        else:
-            model_dir = pretrained_model_name_or_path
-        return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+    huggingface_hub.hf_hub_download = _file_download
+    huggingface_hub.file_download.hf_hub_download = _file_download
 
-    PreTrainedModel.from_pretrained = from_pretrained
+    hf_api.file_exists = MethodType(_file_exists, api)
+    huggingface_hub.file_exists = hf_api.file_exists
+    huggingface_hub.hf_api.file_exists = hf_api.file_exists
 
-
-patch_tokenizer_base()
-patch_model_base()
+    _patch_pretrained_class()
 
 
 def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
@@ -131,11 +296,20 @@ AutoModelForTokenClassification = get_wrapped_class(
     AutoModelForTokenClassificationHF)
 
 AutoTokenizer = get_wrapped_class(
-    AutoTokenizerHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+    AutoTokenizerHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+    ])
 AutoConfig = get_wrapped_class(
-    AutoConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+    AutoConfigHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+    ])
 GenerationConfig = get_wrapped_class(
-    GenerationConfigHF, ignore_file_pattern=[r'\w+\.bin', r'\w+\.safetensors'])
+    GenerationConfigHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+    ])
 GPTQConfig = GPTQConfigHF
 AwqConfig = AwqConfigHF
 BitsAndBytesConfig = BitsAndBytesConfigHF

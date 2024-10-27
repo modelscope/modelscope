@@ -57,6 +57,16 @@ class DownloadCMDTest(unittest.TestCase):
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
 
+    def test_download_with_position_arg(self):
+        cmd = f'python -m modelscope.cli.cli download {self.model_id}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        self.assertEqual(stat, 0)
+
+    def test_download_file(self):
+        cmd = f'python -m modelscope.cli.cli download --model {self.model_id} {download_model_file_name}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        self.assertEqual(stat, 0)
+
     def test_download_with_cache(self):
         cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --cache_dir {self.tmp_dir}'
         stat, output = subprocess.getstatusoutput(cmd)

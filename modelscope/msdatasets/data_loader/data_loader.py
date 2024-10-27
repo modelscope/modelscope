@@ -127,6 +127,7 @@ class OssDownloader(BaseDownloader):
         cache_dir = self.dataset_context_config.cache_root_dir
         download_mode = self.dataset_context_config.download_mode
         input_kwargs = self.dataset_context_config.config_kwargs
+        trust_remote_code = self.dataset_context_config.trust_remote_code
 
         if self.builder is None and not dataset_py_script:
             raise f'meta-file: {dataset_name}.py not found on the modelscope hub.'
@@ -141,7 +142,7 @@ class OssDownloader(BaseDownloader):
                 data_files=data_files,
                 cache_dir=cache_dir,
                 download_mode=download_mode.value,
-                ignore_verifications=True,
+                trust_remote_code=trust_remote_code,
                 **input_kwargs)
         else:
             self.dataset = self.data_files_manager.fetch_data_files(

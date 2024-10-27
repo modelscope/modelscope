@@ -10,5 +10,3 @@ modelscope.pipelines.science
     :toctree: generated
     :nosignatures:
     :template: classtemplate.rst
-
-    ProteinStructurePipeline

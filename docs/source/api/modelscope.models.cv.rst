@@ -11,7 +11,6 @@ modelscope.models.cv
     :nosignatures:
     :template: classtemplate.rst
 
-    easycv_base.EasyCVBaseModel
     image_colorization.ddcolor.ddcolor_for_image_colorization.DDColorForImageColorization
     image_deblur.nafnet_for_image_deblur.NAFNetForImageDeblur
     image_defrcn_fewshot.defrcn_for_fewshot.DeFRCNForFewShot
@@ -19,7 +18,6 @@ modelscope.models.cv
     image_face_fusion.image_face_fusion.ImageFaceFusion
     image_matching.quadtree_attention_model.QuadTreeAttentionForImageMatching
     image_skychange.skychange_model.ImageSkychange
-    language_guided_video_summarization.summarizer.ClipItVideoSummarization
     panorama_depth_estimation.unifuse_model.PanoramaDepthEstimation
     video_stabilization.DUTRAFTStabilizer.DUTRAFTStabilizer
     video_summarization.summarizer.PGLVideoSummarization

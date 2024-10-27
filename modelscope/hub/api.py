@@ -22,7 +22,8 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
+from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
+                                      API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
@@ -61,7 +62,10 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
-    def __init__(self, endpoint: Optional[str] = None, timeout=API_HTTP_CLIENT_TIMEOUT):
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 timeout=API_HTTP_CLIENT_TIMEOUT,
+                 max_retries=API_HTTP_CLIENT_MAX_RETRIES):
         """The ModelScope HubApi。
 
         Args:
@@ -71,7 +75,7 @@ class HubApi:
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
         retry = Retry(
-            total=2,
+            total=max_retries,
             read=2,
             connect=2,
             backoff_factor=1,
@@ -514,6 +518,11 @@ class HubApi:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
             logger.info('Development mode use revision: %s' % revision)
         else:
+            if revision is not None and revision in all_branches:
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+                logger.warning('Using branch: %s as version is unstable, use with caution' % revision)
+                return revision_detail
+
             if len(all_tags_detail) == 0:  # use no revision use master as default.
                 if revision is None or revision == MASTER_MODEL_BRANCH:
                     revision = MASTER_MODEL_BRANCH
@@ -652,6 +661,26 @@ class HubApi:
             files.append(file)
         return files
 
+    def file_exists(
+            self,
+            repo_id: str,
+            filename: str,
+            *,
+            revision: Optional[str] = None,
+    ):
+        """Get if the specified file exists
+
+        Args:
+            repo_id (`str`): The repo id to use
+            filename (`str`): The queried filename
+            revision (`Optional[str]`): The repo revision
+        Returns:
+            The query result in bool value
+        """
+        files = self.get_model_files(repo_id, revision=revision)
+        files = [file['Name'] for file in files]
+        return filename in files
+
     def create_dataset(self,
                        dataset_name: str,
                        namespace: str,
@@ -735,7 +764,9 @@ class HubApi:
                        namespace: str,
                        revision: str,
                        root_path: str,
-                       recursive: bool = True):
+                       recursive: bool = True,
+                       page_number: int = 1,
+                       page_size: int = 100):
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace)
@@ -743,7 +774,8 @@ class HubApi:
         recursive = 'True' if recursive else 'False'
         datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
         params = {'Revision': revision if revision else 'master',
-                  'Root': root_path if root_path else '/', 'Recursive': recursive}
+                  'Root': root_path if root_path else '/', 'Recursive': recursive,
+                  'PageNumber': page_number, 'PageSize': page_size}
         cookies = ModelScopeConfig.get_cookies()
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
@@ -822,7 +854,7 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        from tqdm import tqdm
+        from tqdm.auto import tqdm
         import pandas as pd
 
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())

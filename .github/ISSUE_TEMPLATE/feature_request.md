@@ -3,7 +3,7 @@ name: Feature request
 about: Suggest an idea for this project
 title: ''
 labels: ''
-assignees: tastelikefeet, wangxingjun778, wenmengzhou, yingdachen, zzclynn
+assignees: yingdachen, wangxingjun778, tastelikefeet
 
 ---
 

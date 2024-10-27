@@ -39,6 +39,7 @@ class Models(object):
     body_3d_keypoints_hdformer = 'hdformer'
     crowd_counting = 'HRNetCrowdCounting'
     face_2d_keypoints = 'face-2d-keypoints'
+    star_68ldk_detection = 'star-68ldk-detection'
     panoptic_segmentation = 'swinL-panoptic-segmentation'
     r50_panoptic_segmentation = 'r50-panoptic-segmentation'
     image_reid_person = 'passvitb'
@@ -58,6 +59,7 @@ class Models(object):
     s2net_depth_estimation = 's2net-depth-estimation'
     dro_resnet18_depth_estimation = 'dro-resnet18-depth-estimation'
     raft_dense_optical_flow_estimation = 'raft-dense-optical-flow-estimation'
+    human_normal_estimation = 'human-normal-estimation'
     resnet50_bert = 'resnet50-bert'
     referring_video_object_segmentation = 'swinT-referring-video-object-segmentation'
     fer = 'fer'
@@ -191,6 +193,7 @@ class Models(object):
     # audio models
     sambert_hifigan = 'sambert-hifigan'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
     speech_dfsmn_ans = 'speech_dfsmn_ans'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_dfsmn_kws_char_farfield_iot = 'speech_dfsmn_kws_char_farfield_iot'
@@ -342,6 +345,7 @@ class Pipelines(object):
     tinymog_face_detection = 'manual-face-detection-tinymog'
     facial_expression_recognition = 'vgg19-facial-expression-recognition-fer'
     facial_landmark_confidence = 'manual-facial-landmark-confidence-flcm'
+    facial_68ldk_detection = 'facial-68ldk-detection'
     face_attribute_recognition = 'resnet34-face-attribute-recognition-fairface'
     retina_face_detection = 'resnet50-face-detection-retinaface'
     mog_face_detection = 'resnet101-face-detection-cvpr22papermogface'
@@ -480,6 +484,7 @@ class Pipelines(object):
     anydoor = 'anydoor'
     image_to_3d = 'image-to-3d'
     self_supervised_depth_completion = 'self-supervised-depth-completion'
+    human_normal_estimation = 'human-normal-estimation'
 
     # nlp tasks
     automatic_post_editing = 'automatic-post-editing'
@@ -547,6 +552,7 @@ class Pipelines(object):
     sambert_hifigan_tts = 'sambert-hifigan-tts'
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
+    speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
     speech_dfsmn_ans_psm_48k_causal = 'speech_dfsmn_ans_psm_48k_causal'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'
@@ -814,6 +820,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_normal_estimation:
     (Pipelines.image_normal_estimation,
      'Damo_XR_Lab/cv_omnidata_image-normal-estimation_normal'),
+    Tasks.human_normal_estimation:
+    (Pipelines.human_normal_estimation,
+     'Damo_XR_Lab/cv_human_monocular-normal-estimation'),
     Tasks.indoor_layout_estimation:
     (Pipelines.indoor_layout_estimation,
      'damo/cv_panovit_indoor-layout-estimation'),
@@ -846,9 +855,9 @@ DEFAULT_MODEL_FOR_PIPELINE = {
     Tasks.image_to_image_generation:
     (Pipelines.image_to_image_generation,
      'damo/cv_latent_diffusion_image2image_generate'),
-    Tasks.image_classification:
-    (Pipelines.daily_image_classification,
-     'damo/cv_vit-base_image-classification_Dailylife-labels'),
+    Tasks.image_classification: (
+        Pipelines.daily_image_classification,
+        'damo/cv_vit-base_image-classification_Dailylife-labels'),
     Tasks.image_object_detection: (
         Pipelines.image_object_detection_auto,
         'damo/cv_yolox_image-object-detection-auto'),

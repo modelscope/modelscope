@@ -1,8 +1,9 @@
 addict
 attrs
-datasets>=2.16.0,<2.19.0
+datasets>=3.0.0,<=3.0.1
 einops
 oss2
+Pillow
 python-dateutil>=2.1
 scipy
 # latest version has some compatible issue.

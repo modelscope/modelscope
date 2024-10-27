@@ -1,3 +1,5 @@
+exclude: 'modelscope/preprocessors/templates/'
+
 repos:
   - repo: https://github.com/pycqa/flake8.git
     rev: 4.0.0

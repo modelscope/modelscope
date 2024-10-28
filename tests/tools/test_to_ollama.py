@@ -114,6 +114,10 @@ class TestToOllama(unittest.TestCase):
         ollama = TemplateLoader.to_ollama(
             '01ai/Yi-1.5-9B-Chat', ignore_oss_model_file=True)
         self.assertTrue(ollama is not None)
+        ollama = TemplateLoader.to_ollama(
+            'QuantFactory/Mistral-7B-Instruct-v0.1-GGUF',
+            ignore_oss_model_file=True)
+        self.assertTrue(ollama is not None)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
@@ -181,14 +185,18 @@ class TestToOllama(unittest.TestCase):
                               'mistral-nemo')
         _test_check_tmpl_type('QuantFactory/Mistral-7B-OpenOrca-GGUF',
                               'mistral-openorca')
-        # _test_check_tmpl_type('QuantFactory/Mistral-7B-Instruct-v0.1-GGUF', 'mistral')
-        # _test_check_tmpl_type('QuantFactory/Nous-Hermes-2-Mistral-7B-DPO-GGUF', 'nous-hermes2-mixtral')
+        _test_check_tmpl_type('QuantFactory/Mistral-7B-Instruct-v0.1-GGUF', 'mistral')
+        _test_check_tmpl_type(
+            'second-state/Nous-Hermes-2-Mixtral-8x7B-SFT-GGUF',
+            'nous-hermes2-mixtral')
         _test_check_tmpl_type('AI-ModelScope/Mixtral-8x22B-v0.1-GGUF',
                               'mixtral')
-        #_test_check_tmpl_type('QuantFactory/Nemotron-Mini-4B-Instruct-GGUF', 'nemotron-mini')
-        #_test_check_tmpl_type('AI-ModelScope/Llama-3.1-Nemotron-70B-Instruct-HF', 'nemotron')
-        #_test_check_tmpl_type('TIGER-Lab/Mantis-bakllava-7b', 'bakllava')
-        #_test_check_tmpl_type('fireicewolf/llava-v1.6-34B-gguf', 'llava')
+        _test_check_tmpl_type('QuantFactory/Nemotron-Mini-4B-Instruct-GGUF',
+                              'nemotron-mini')
+        _test_check_tmpl_type('AI-ModelScope/Nemotron-4-340B-Instruct',
+                              'nemotron')
+        _test_check_tmpl_type('TIGER-Lab/Mantis-bakllava-7b', 'bakllava')
+        _test_check_tmpl_type('fireicewolf/llava-v1.6-34B-gguf', 'llava')
         _test_check_tmpl_type(
             'AI-ModelScope/DeepSeek-Coder-V2-Lite-Instruct-GGUF',
             'deepseek-coder-v2')
@@ -238,7 +246,7 @@ class TestToOllama(unittest.TestCase):
         _test_check_tmpl_type('modelscope/zephyr-7b-beta', 'zephyr')
         _test_check_tmpl_type('LLM-Research/snowflake-arctic-embed-m',
                               'snowflake-arctic-embed')
-        #_test_check_tmpl_type('AI-ModelScope/starcoder2-7b', 'starcoder')
+        _test_check_tmpl_type('AI-ModelScope/starcoder2-7b', 'starcoder')
         _test_check_tmpl_type('QuantFactory/granite-8b-code-instruct-4k-GGUF',
                               'granite-code')
         _test_check_tmpl_type('AI-ModelScope/all-MiniLM-L6-v2', 'all-minilm')

@@ -285,7 +285,9 @@ template_info = [
     TemplateInfo(
         template=TemplateType.llama,
         template_regex=
-        f'.*{cases("mistral")}{no_multi_modal()}.*{chat_suffix}.*'
+        f'.*{cases("mistral")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral',
     ),
 
     # "mixtral"
@@ -319,6 +321,10 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes2',
     ),
+        TemplateInfo(
+        template_regex=f'.*{cases("nous-hermes")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes'),
 
     # "deepseek"
     TemplateInfo(
@@ -370,6 +376,34 @@ template_info = [
         f'.*{cases("yi")}{no_multi_modal()}{no("coder")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yi',
+    ),
+
+    # "llava"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("bakllava")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/bakllava',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llava")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llava',
+    ),
+
+    # "nemotron"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("nemotron-mini")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nemotron-mini',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("nemotron")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nemotron',
     ),
 
     # "minicpm"
@@ -644,10 +678,6 @@ template_info = [
         template_regex=f'.*{cases("smollm")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smollm'),
-    TemplateInfo(
-        template_regex=f'.*{cases("nous-hermes")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes'),
     TemplateInfo(
         template_regex=f'.*{cases("sqlcoder")}.*', 
         modelfile_prefix=

@@ -842,11 +842,11 @@ class TemplateLoader:
         return final_str
 
     @staticmethod
-    def _format_return(template_lines: str, params: Dict, split: bool) -> Union[str, Dict]:
+    def _format_return(template_lines: str, params: Dict, split: bool, license: Optional[str] = None) -> Union[str, Dict]:
         if split:
             if params:
                 params = json.dumps(params)
-            return {'params': params, 'template': template_lines}
+            return {'params': params, 'template': template_lines, 'license': license}
 
         content = ''
         content += 'FROM {gguf_file}\n\n'
@@ -907,8 +907,11 @@ class TemplateLoader:
                             params = json.loads(params)
                         else:
                             logger.info(f'{name} has no params file.')
-
-                        format_out = TemplateLoader._format_return(template_str, params, split)
+                        license = TemplateLoader._read_content_from_url(
+                            _info.modelfile_prefix + '.license')
+                        if not template_str:
+                            logger.info(f'{name} has no license file.')
+                        format_out = TemplateLoader._format_return(template_str, params, split, license)
                         if debug:
                             return format_out, _info
                         return format_out

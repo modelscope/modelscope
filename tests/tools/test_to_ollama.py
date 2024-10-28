@@ -185,7 +185,8 @@ class TestToOllama(unittest.TestCase):
                               'mistral-nemo')
         _test_check_tmpl_type('QuantFactory/Mistral-7B-OpenOrca-GGUF',
                               'mistral-openorca')
-        _test_check_tmpl_type('QuantFactory/Mistral-7B-Instruct-v0.1-GGUF', 'mistral')
+        _test_check_tmpl_type('QuantFactory/Mistral-7B-Instruct-v0.1-GGUF',
+                              'mistral')
         _test_check_tmpl_type(
             'second-state/Nous-Hermes-2-Mixtral-8x7B-SFT-GGUF',
             'nous-hermes2-mixtral')

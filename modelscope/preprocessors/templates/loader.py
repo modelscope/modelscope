@@ -609,7 +609,6 @@ template_info = [
         template=TemplateType.telechat_v2,
         template_regex=f'.*{cases("TeleChat")}.*{cases("v2")}.*'),
 
-
     TemplateInfo(
         template_regex=f'.*{cases("nomic-embed-text")}.*', 
         modelfile_prefix=

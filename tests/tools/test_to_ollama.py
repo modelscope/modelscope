@@ -45,7 +45,7 @@ class TestToOllama(unittest.TestCase):
         self.assertTrue(template.template_type == TemplateType.deepseek)
 
         template = TemplateLoader.load_by_model_id(
-            'deepseek-ai/DeepSeek-Coder-V2-Instruct')
+            'deepseek-ai/DeepSeek-V2-Lite-Chat')
         self.assertTrue(template.template_type == TemplateType.deepseek2)
 
         template = TemplateLoader.load_by_model_id('01ai/Yi-1.5-9B-Chat')
@@ -247,7 +247,7 @@ class TestToOllama(unittest.TestCase):
         _test_check_tmpl_type('modelscope/zephyr-7b-beta', 'zephyr')
         _test_check_tmpl_type('LLM-Research/snowflake-arctic-embed-m',
                               'snowflake-arctic-embed')
-        _test_check_tmpl_type('AI-ModelScope/starcoder2-7b', 'starcoder')
+        _test_check_tmpl_type('TabbyML/StarCoder-1B', 'starcoder')
         _test_check_tmpl_type('QuantFactory/granite-8b-code-instruct-4k-GGUF',
                               'granite-code')
         _test_check_tmpl_type('AI-ModelScope/all-MiniLM-L6-v2', 'all-minilm')

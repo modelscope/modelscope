@@ -151,9 +151,9 @@ class ANSZipEnhancerPipeline(Pipeline):
         if isinstance(inputs, bytes):
             data1, fs = sf.read(io.BytesIO(inputs))
         elif isinstance(inputs, str):
-            # file_bytes = File.read(inputs)
-            # data1, fs = sf.read(io.BytesIO(file_bytes))
-            data1, fs = sf.read(inputs)
+            file_bytes = File.read(inputs)
+            data1, fs = sf.read(io.BytesIO(file_bytes))
+            # data1, fs = sf.read(inputs)
         else:
             raise TypeError(f'Unsupported type {type(inputs)}.')
         if len(data1.shape) > 1:

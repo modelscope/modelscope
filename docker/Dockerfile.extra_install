@@ -137,5 +137,3 @@ RUN set -eux; \
         \
         pip --version
 # end of install python
-
-RUN pip install tf-keras -i https://mirrors.aliyun.com/pypi/simple

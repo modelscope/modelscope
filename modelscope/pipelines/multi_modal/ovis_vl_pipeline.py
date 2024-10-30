@@ -32,7 +32,7 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
 
         # ovis
         self.device = 'cuda' if device == 'gpu' else device
-        self.model = AutoModelForCausalLM.from_pretrained("AIDC-AI/Ovis1.6-Gemma2-9B",
+        self.model = AutoModelForCausalLM.from_pretrained(model,
                                                      torch_dtype=torch.bfloat16,
                                                      multimodal_max_length=8192,
                                                      trust_remote_code=True).to(self.device)

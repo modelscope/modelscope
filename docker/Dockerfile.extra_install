@@ -138,4 +138,5 @@ RUN set -eux; \
         pip --version
 # end of install python
 
-RUN pip install tf-keras -i https://mirrors.aliyun.com/pypi/simple
+RUN pip install tensorflow-cpu==2.16.1
+RUN pip install tf-keras==2.16.0 --no-dependencies

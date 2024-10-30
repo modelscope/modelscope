@@ -481,7 +481,10 @@ class DistributedPipeline(Pipeline):
 
     def __del__(self):
         if hasattr(self, 'model_pool') and self.model_pool is not None:
-            self.model_pool.terminate()
+            try:
+                self.model_pool.terminate()
+            except AttributeError:
+                pass
 
     def __getstate__(self):
         self_dict = self.__dict__.copy()

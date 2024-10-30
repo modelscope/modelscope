@@ -1,7 +1,7 @@
 import torch
 from typing import Any, Dict, Union
-from PIL import Image
 
+from modelscope.preprocessors import load_image
 from modelscope import AutoModelForCausalLM
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models.base import Model
@@ -42,8 +42,8 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
 
     def preprocess(self, inputs: Dict[str, Any]):
         text = inputs['text']
-        image = inputs['image']
-        image = Image.open(image)
+        image_path_or_url = inputs['image']
+        image = load_image(image_path_or_url)
         query = f'<image>\n{text}'
         _, input_ids, pixel_values = self.model.preprocess_inputs(query, [image])
         attention_mask = torch.ne(input_ids, self.text_tokenizer.pad_token_id)

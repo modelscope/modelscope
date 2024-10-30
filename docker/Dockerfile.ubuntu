@@ -56,4 +56,4 @@ ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
-SHELL ["/bin/bash", "-c"]
+CMD ["bash"]

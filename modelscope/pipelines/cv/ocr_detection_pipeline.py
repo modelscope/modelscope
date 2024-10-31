@@ -6,7 +6,6 @@ from typing import Any, Dict
 
 import cv2
 import numpy as np
-import tensorflow as tf
 import torch
 
 from modelscope.metainfo import Pipelines
@@ -23,15 +22,6 @@ from .ocr_utils import (SegLinkDetector, boxes_from_bitmap, cal_width,
                         combine_segments_python, decode_segments_links_python,
                         nms_python, polygons_from_bitmap, rboxes_to_polygons)
 
-if tf.__version__ >= '2.0':
-    import tf_slim as slim
-else:
-    from tensorflow.contrib import slim
-
-if tf.__version__ >= '2.0':
-    tf = tf.compat.v1
-tf.compat.v1.disable_eager_execution()
-
 logger = get_logger()
 
 # constant
@@ -39,12 +29,6 @@ RBOX_DIM = 5
 OFFSET_DIM = 6
 WORD_POLYGON_DIM = 8
 OFFSET_VARIANCE = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-
-FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_float('node_threshold', 0.4,
-                          'Confidence threshold for nodes')
-tf.app.flags.DEFINE_float('link_threshold', 0.6,
-                          'Confidence threshold for links')
 
 
 @PIPELINES.register_module(
@@ -99,6 +83,21 @@ class OCRDetectionPipeline(Pipeline):
             logger.info('loading model done')
         else:
             # for model seglink++
+            import tensorflow as tf
+
+            if tf.__version__ >= '2.0':
+                import tf_slim as slim
+            else:
+                from tensorflow.contrib import slim
+
+            if tf.__version__ >= '2.0':
+                tf = tf.compat.v1
+            tf.compat.v1.disable_eager_execution()
+
+            tf.app.flags.DEFINE_float('node_threshold', 0.4,
+                                      'Confidence threshold for nodes')
+            tf.app.flags.DEFINE_float('link_threshold', 0.6,
+                                      'Confidence threshold for links')
             tf.reset_default_graph()
             model_path = osp.join(
                 osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
@@ -198,6 +197,9 @@ class OCRDetectionPipeline(Pipeline):
             result = self.preprocessor(input)
             return result
         else:
+            # for model seglink++
+            import tensorflow as tf
+
             img = LoadImage.convert_to_ndarray(input)
 
             h, w, c = img.shape

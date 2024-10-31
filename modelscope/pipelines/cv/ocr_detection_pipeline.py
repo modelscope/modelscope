@@ -86,11 +86,6 @@ class OCRDetectionPipeline(Pipeline):
             import tensorflow as tf
 
             if tf.__version__ >= '2.0':
-                import tf_slim as slim
-            else:
-                from tensorflow.contrib import slim
-
-            if tf.__version__ >= '2.0':
                 tf = tf.compat.v1
             tf.compat.v1.disable_eager_execution()
 
@@ -199,6 +194,16 @@ class OCRDetectionPipeline(Pipeline):
         else:
             # for model seglink++
             import tensorflow as tf
+
+            if tf.__version__ >= '2.0':
+                tf = tf.compat.v1
+
+            tf.compat.v1.disable_eager_execution()
+
+            tf.app.flags.DEFINE_float('node_threshold', 0.4,
+                                      'Confidence threshold for nodes')
+            tf.app.flags.DEFINE_float('link_threshold', 0.6,
+                                      'Confidence threshold for links')
 
             img = LoadImage.convert_to_ndarray(input)
 

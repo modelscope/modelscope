@@ -18,9 +18,7 @@ from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import device_placement
 from modelscope.utils.logger import get_logger
-from .ocr_utils import (cal_width, combine_segments_python,
-                        decode_segments_links_python, nms_python,
-                        rboxes_to_polygons)
+from .ocr_utils import cal_width, nms_python, rboxes_to_polygons
 
 logger = get_logger()
 
@@ -119,7 +117,7 @@ class OCRDetectionPipeline(Pipeline):
                         variable_averages = tf.train.ExponentialMovingAverage(
                             0.997, global_step)
 
-                        from .ocr_utils import SegLinkDetector
+                        from .ocr_utils import SegLinkDetector, combine_segments_python, decode_segments_links_python
                         # detector
                         detector = SegLinkDetector()
                         all_maps = detector.build_model(

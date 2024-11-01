@@ -47,6 +47,12 @@ class HubUploadTest(unittest.TestCase):
         except Exception:
             pass
 
+    def test_repo_exist(self):
+        res = self.api.repo_exists('Qwen/Qwen2.5-7B-Instruct')
+        self.assertTrue(res)
+        res = self.api.repo_exists('Qwen/not-a-repo')
+        self.assertFalse(res)
+
     def test_upload_exits_repo_master(self):
         logger.info('basic test for upload!')
         self.api.login(TEST_ACCESS_TOKEN1)

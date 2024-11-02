@@ -2,6 +2,7 @@
 
 import logging
 from http import HTTPStatus
+from typing import Optional
 
 import requests
 from requests.exceptions import HTTPError
@@ -86,8 +87,11 @@ def handle_http_post_error(response, url, request_body):
             (url, request_body, message, get_request_id(response))) from error
 
 
-def handle_http_response(response: requests.Response, logger, cookies,
-                         model_id):
+def handle_http_response(response: requests.Response,
+                         logger,
+                         cookies,
+                         model_id,
+                         raise_on_error: Optional[bool] = True) -> int:
     http_error_msg = ''
     if isinstance(response.reason, bytes):
         try:
@@ -113,9 +117,11 @@ def handle_http_response(response: requests.Response, logger, cookies,
     elif 500 <= response.status_code < 600:
         http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s' % (
             response.status_code, reason, request_id, response.url)
-    if http_error_msg:  # there is error.
+    if http_error_msg and raise_on_error:  # there is error.
         logger.error(http_error_msg)
         raise HTTPError(http_error_msg, response=response)
+    else:
+        return response.status_code
 
 
 def raise_on_error(rsp):

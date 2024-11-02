@@ -248,6 +248,48 @@ class HubApi:
         else:
             raise_for_http_status(r)
 
+    def repo_exists(
+        self,
+        repo_id: str,
+        *,
+        repo_type: Optional[str] = None,
+    ) -> bool:
+        """
+        Checks if a repository exists on ModelScope
+
+        Args:
+            repo_id (`str`):
+                A namespace (user or an organization) and a repo name separated
+                by a `/`.
+            repo_type (`str`, *optional*):
+                `None` or `"model"` if getting repository info from a model. Default is `None`.
+                TODO: support dataset and studio
+
+        Returns:
+            True if the repository exists, False otherwise.
+        """
+        if (repo_type is not None) and repo_type.lower != 'model':
+            raise Exception('Not support repo-type: %s' % repo_type)
+        if (repo_id is None) or repo_id.count('/') != 1:
+            raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
+
+        cookies = ModelScopeConfig.get_cookies()
+        owner_or_group, name = model_id_to_group_owner_name(repo_id)
+        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
+
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        code = handle_http_response(r, logger, cookies, repo_id, False)
+        logger.info(f'check repo_exists status code {code}.')
+        if code == 200:
+            return True
+        elif code == 404:
+            return False
+        else:
+            raise Exception(
+                'Failed to check existence of repo: %s, make sure you have access authorization.'
+                % repo_type)
+
     def push_model(self,
                    model_id: str,
                    model_dir: str,

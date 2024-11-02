@@ -22,15 +22,9 @@ def create_model_if_not_exist(
         model_id: str,
         chinese_name: str,
         visibility: Optional[int] = ModelVisibility.PUBLIC,
-        license: Optional[str] = Licenses.APACHE_V2,
-        revision: Optional[str] = DEFAULT_MODEL_REVISION):
-    exists = True
-    try:
-        api.get_model(model_id=model_id, revision=revision)
-    except HTTPError:
-        exists = False
-    if exists:
-        print(f'model {model_id} already exists, skip creation.')
+        license: Optional[str] = Licenses.APACHE_V2):
+    if api.repo_exists(model_id):
+        logger.info(f'model {model_id} already exists, skip creation.')
         return False
     else:
         api.create_model(
@@ -39,7 +33,7 @@ def create_model_if_not_exist(
             license=license,
             chinese_name=chinese_name,
         )
-        print(f'model {model_id} successfully created.')
+        logger.info(f'model {model_id} successfully created.')
         return True
 
 

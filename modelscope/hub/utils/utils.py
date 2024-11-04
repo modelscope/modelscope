@@ -29,6 +29,15 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
+# during model download, the '.' would be converted to '___' to produce
+# actual physical (masked) directory for storage
+def get_model_masked_directory(directory, model_id):
+    parts = directory.rsplit('/', 2)
+    # this is the actual directory the model files are located.
+    masked_directory = os.path.join(parts[0], model_id.replace('.', '___'))
+    return masked_directory
+
+
 def get_cache_dir(model_id: Optional[str] = None):
     """cache dir precedence:
         function parameter > environment > ~/.cache/modelscope/hub

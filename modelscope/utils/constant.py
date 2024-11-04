@@ -293,6 +293,10 @@ class ScienceTasks(object):
     protein_structure = 'protein-structure'
 
 
+class Other(object):
+    other = 'other'
+
+
 class TasksIODescriptions(object):
     image_to_image = 'image_to_image',
     images_to_image = 'images_to_image',
@@ -310,7 +314,8 @@ class TasksIODescriptions(object):
     efficient_diffusion_tuning = 'efficient_diffusion_tuning'
 
 
-class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):
+class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks,
+            Other):
     """ Names for tasks supported by modelscope.
 
     Holds the standard task name to use for identifying different tasks.

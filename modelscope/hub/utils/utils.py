@@ -29,6 +29,30 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
+def convert_readable_size(size_bytes):
+    import math
+    if size_bytes == 0:
+        return '0B'
+    size_name = ('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f'{s} {size_name[i]}'
+
+
+def get_folder_size(folder_path):
+    total_size = 0
+    for path in Path(folder_path).rglob('*'):
+        if path.is_file():
+            total_size += path.stat().st_size
+    return total_size
+
+
+# return a readable string that describe size of for a given folder (MB, GB etc.)
+def get_readable_folder_size(folder_path) -> str:
+    return convert_readable_size(get_folder_size(folder_path=folder_path))
+
+
 def get_cache_dir(model_id: Optional[str] = None):
     """cache dir precedence:
         function parameter > environment > ~/.cache/modelscope/hub

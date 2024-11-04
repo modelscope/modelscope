@@ -63,7 +63,7 @@ class TestToOllama(unittest.TestCase):
 
         template = TemplateLoader.load_by_model_id(
             'AI-ModelScope/gemma-2b-instruct')
-        self.assertTrue(template is None)
+        self.assertTrue(template.template_type == TemplateType.gemma)
 
         template = TemplateLoader.load_by_model_id(
             'AI-ModelScope/gemma2-2b-instruct')

@@ -198,7 +198,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.gemma,
         template_regex=
-        f'.*{cases("gemma")}.*',
+        f'{no("pali")}.*{cases("gemma")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma',
     ),

@@ -11,7 +11,8 @@ from typing import Dict, List, Optional, Union
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import InvalidParameter
 from modelscope.hub.utils.caching import ModelFileSystemCache
-from modelscope.hub.utils.utils import model_id_to_group_owner_name
+from modelscope.hub.utils.utils import (get_model_masked_directory,
+                                        model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
@@ -219,9 +220,9 @@ def _snapshot_download(
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
         repo_files = []
-        directory = os.path.join(system_cache, 'hub', repo_id)
-        print(f'Downloading Model to directory: {directory}')
         if repo_type == REPO_TYPE_MODEL:
+            directory = os.path.join(system_cache, 'hub', repo_id)
+            print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
             revision = revision_detail['Revision']
@@ -259,6 +260,18 @@ def _snapshot_download(
                 allow_file_pattern=allow_file_pattern,
                 ignore_patterns=ignore_patterns,
                 allow_patterns=allow_patterns)
+            if '.' in repo_id:
+                masked_directory = get_model_masked_directory(
+                    directory, repo_id)
+                logger.info(
+                    f'Creating symbolic link {masked_directory} -> {directory}.'
+                )
+                try:
+                    os.symlink(os.path.abspath(masked_directory), directory)
+                except OSError as e:
+                    logger.warning(
+                        f'Failed to create symbolic link {masked_directory} -> {directory}: {e}'
+                    )
 
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.join(system_cache, 'datasets', repo_id)

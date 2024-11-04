@@ -6,6 +6,7 @@ from pathlib import Path
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.constants import TEMPORARY_FOLDER_NAME
+from modelscope.hub.utils.utils import get_model_masked_directory
 
 
 def subparser_func(args):
@@ -99,8 +100,13 @@ class ClearCacheCMD(CLICommand):
     def _remove_directory(self, path):
         if os.path.exists(path):
             try:
-                shutil.rmtree(path)
-                print(f'Cache folder {path} removed.')
+                if os.path.islink(path):
+                    shutil.rmtree(os.readlink(path))
+                    os.remove(path)
+                    print(f'Cache and link for {path} removed.')
+                else:
+                    shutil.rmtree(path)
+                    print(f'Cache folder {path} removed.')
                 return True
             except Exception as e:
                 print(f'An error occurred while clearing cache at {path}: {e}')

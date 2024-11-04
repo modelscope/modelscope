@@ -17,7 +17,7 @@ sacremoses>=0.0.41
 scikit_learn
 sentencepiece
 seqeval
-spacy>=2.3.5
+spacy>=2.3.5,<=3.7.0
 stanza
 subword_nmt>=0.3.8
 termcolor

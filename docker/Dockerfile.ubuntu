@@ -46,6 +46,8 @@ RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branc
 
 RUN pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url}
 
+RUN pip install --no-cache-dir transformers -U huggingface-hub==0.25.0
+
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
@@ -54,3 +56,4 @@ ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
+SHELL ["/bin/bash", "-c"]

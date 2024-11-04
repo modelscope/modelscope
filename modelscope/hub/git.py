@@ -56,11 +56,18 @@ class GitCommandWrapper(metaclass=Singleton):
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            output = 'stdout: %s, stderr: %s' % (
-                response.stdout.decode('utf8'), error.stderr.decode('utf8'))
-            logger.error('Running git command: %s failed, output: %s.' %
-                         (command, output))
-            raise GitError(output)
+            std_out = response.stdout.decode('utf8')
+            std_err = error.stderr.decode('utf8')
+            if 'nothing to commit' in std_out:
+                logger.info(
+                    'Nothing to commit, your local repo is upto date with remote'
+                )
+                return response
+            else:
+                logger.error(
+                    'Running git command: %s failed \n stdout: %s \n stderr: %s'
+                    % (command, std_out, std_err))
+                raise GitError(std_err)
 
     def config_auth_token(self, repo_dir, auth_token):
         url = self.get_repo_remote_url(repo_dir)

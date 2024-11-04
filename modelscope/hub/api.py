@@ -22,6 +22,8 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
+from modelscope import utils
+from modelscope.fileio import io
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
@@ -48,13 +50,14 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
+                                       REPO_TYPE_MODEL, ConfigFields,
                                        DatasetFormations, DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
-                                       DownloadMode, ModelFile,
-                                       VirgoDatasetConfig)
+                                       DownloadMode, Frameworks, ModelFile,
+                                       Tasks, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
-from .utils.utils import (get_endpoint, get_release_datetime,
-                          model_id_to_group_owner_name)
+from .utils.utils import (get_endpoint, get_readable_folder_size,
+                          get_release_datetime, model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -248,6 +251,57 @@ class HubApi:
         else:
             raise_for_http_status(r)
 
+    def repo_exists(
+        self,
+        repo_id: str,
+        *,
+        repo_type: Optional[str] = None,
+    ) -> bool:
+        """
+        Checks if a repository exists on ModelScope
+
+        Args:
+            repo_id (`str`):
+                A namespace (user or an organization) and a repo name separated
+                by a `/`.
+            repo_type (`str`, *optional*):
+                `None` or `"model"` if getting repository info from a model. Default is `None`.
+                TODO: support dataset and studio
+
+        Returns:
+            True if the repository exists, False otherwise.
+        """
+        if (repo_type is not None) and repo_type.lower != REPO_TYPE_MODEL:
+            raise Exception('Not support repo-type: %s' % repo_type)
+        if (repo_id is None) or repo_id.count('/') != 1:
+            raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
+
+        cookies = ModelScopeConfig.get_cookies()
+        owner_or_group, name = model_id_to_group_owner_name(repo_id)
+        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
+
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        code = handle_http_response(r, logger, cookies, repo_id, False)
+        if code == 200:
+            return True
+        elif code == 404:
+            return False
+        else:
+            logger.warn(f'Check repo_exists return status code {code}.')
+            raise Exception(
+                'Failed to check existence of repo: %s, make sure you have access authorization.'
+                % repo_type)
+
+    @staticmethod
+    def _create_default_config(model_dir):
+        cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
+        cfg = {
+            ConfigFields.framework: Frameworks.torch,
+            ConfigFields.task: Tasks.other,
+        }
+        io.dump(cfg, cfg_file)
+
     def push_model(self,
                    model_id: str,
                    model_dir: str,
@@ -315,23 +369,23 @@ class HubApi:
             raise InvalidParameter('model_dir must be a valid directory.')
         cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
         if not os.path.exists(cfg_file):
-            raise ValueError(f'{model_dir} must contain a configuration.json.')
+            logger.warning(
+                f'No {ModelFile.CONFIGURATION} file found in {model_dir}, creating a default one.')
+            HubApi._create_default_config(model_dir)
+
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
+        folder_size = get_readable_folder_size(model_dir)
         if ignore_file_pattern is None:
             ignore_file_pattern = []
         if isinstance(ignore_file_pattern, str):
             ignore_file_pattern = [ignore_file_pattern]
-        try:
-            self.get_model(model_id=model_id)
-        except Exception:
-            if visibility is None or license is None:
-                raise InvalidParameter(
-                    'visibility and license cannot be empty if want to create new repo'
-                )
-            logger.info('Create new model %s' % model_id)
+        if visibility is None or license is None:
+            raise InvalidParameter('Visibility and License cannot be empty for new model.')
+        if not self.repo_exists(model_id):
+            logger.info('Creating new model [%s]' % model_id)
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
@@ -340,11 +394,13 @@ class HubApi:
                 original_model_id=original_model_id)
         tmp_dir = tempfile.mkdtemp()
         git_wrapper = GitCommandWrapper()
+        logger.info(f'Pushing folder {model_dir} as model {model_id}.')
+        logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
             repo = Repository(model_dir=tmp_dir, clone_from=model_id)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
-                logger.info('Create new branch %s' % revision)
+                logger.info('Creating new branch %s' % revision)
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
             files_in_repo = os.listdir(tmp_dir)

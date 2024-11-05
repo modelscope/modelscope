@@ -256,7 +256,7 @@ class LLMImageBuilder(Builder):
         if not args.vllm_version:
             args.vllm_version = '0.6.3.post1'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.6.1'
+            args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         return args

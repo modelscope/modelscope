@@ -147,6 +147,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -204,6 +205,7 @@ class GPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -277,6 +279,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',

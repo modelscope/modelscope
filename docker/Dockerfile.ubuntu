@@ -37,7 +37,7 @@ RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir -r /var/modelscope/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/tests.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/server.txt && \
-    pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --force && \
+    pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --no-dependencies --force && \
     pip install --no-cache-dir 'scipy<1.13.0' && \
     pip cache purge; \
 else \

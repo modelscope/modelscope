@@ -147,6 +147,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -204,6 +205,7 @@ class GPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -256,7 +258,7 @@ class LLMImageBuilder(Builder):
         if not args.vllm_version:
             args.vllm_version = '0.6.3.post1'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.6.1'
+            args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         return args
@@ -277,6 +279,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',

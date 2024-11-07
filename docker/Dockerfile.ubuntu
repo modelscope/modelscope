@@ -14,13 +14,10 @@ RUN apt-get update && \
 
 COPY {meta_file} /tmp/install.sh
 
-RUN pip uninstall ms-swift modelscope -y
-
-RUN pip --no-cache-dir install pip==23.3.1
-
-RUN pip --no-cache-dir install omegaconf==2.0.6
-
-RUN pip install --no-cache-dir 'cython<=0.29.36' versioneer numpy==1.25.1 -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+RUN pip uninstall ms-swift modelscope -y && \
+    pip --no-cache-dir install pip==23.3.1 && \
+    pip --no-cache-dir install omegaconf==2.0.6 && \
+    pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
 ARG INSTALL_MS_DEPS={install_ms_deps}
 
@@ -44,21 +41,18 @@ else \
     pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
 fi
 
-RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
-
-RUN sh /tmp/install.sh {version_args}
-
-RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && cd / && rm -fr /tmp/modelscope && pip cache purge;
-
-RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && cd ms-swift && pip install .[all] && cd / && rm -fr /tmp/ms-swift && pip cache purge;
-
-RUN pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url}
-
-RUN pip install --no-cache-dir transformers -U huggingface-hub==0.25.0
-
-RUN pip install tf-keras==2.16.0 --no-dependencies
-
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
+    sh /tmp/install.sh {version_args} && \
+    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
+    cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    cd / && rm -fr /tmp/modelscope && pip cache purge && \
+    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
+    cd ms-swift && pip install .[all] && \
+    cd / && rm -fr /tmp/ms-swift && pip cache purge && \
+    pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
+    pip install --no-cache-dir transformers -U huggingface-hub==0.25.0 && \
+    pip install tf-keras==2.16.0 --no-dependencies && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 

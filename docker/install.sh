@@ -13,11 +13,7 @@ pip uninstall -y torch torchvision torchaudio
 
 pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 
-curl -fsSL https://ollama.com/install.sh | sh
-
-pip install --no-cache-dir -U qwen_vl_utils pyav librosa timm transformers accelerate peft optimum trl safetensors
-
-pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord
+pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord optimum
 
 # pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl
 # find on: https://github.com/Dao-AILab/flash-attention/releases

@@ -51,6 +51,7 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge && \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
     pip install --no-cache-dir transformers -U huggingface-hub==0.25.0 && \
+    pip install tf-keras==2.16.0 --no-dependencies && \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list

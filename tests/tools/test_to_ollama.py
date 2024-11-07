@@ -121,6 +121,9 @@ class TestToOllama(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
+        _test_check_tmpl_type(
+            'AI-ModelScope/Llama-3.2-11B-Vision-Instruct-GGUF',
+            'llama3.2-vision')
         _test_check_tmpl_type('LLM-Research/Meta-Llama-3.2-8B-Instruct-GGUF',
                               'llama3.2')
         _test_check_tmpl_type('LLM-Research/Meta-Llama-3.1-8B-Instruct-GGUF',

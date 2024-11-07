@@ -17,7 +17,7 @@ COPY {meta_file} /tmp/install.sh
 RUN pip uninstall ms-swift modelscope -y && \
     pip --no-cache-dir install pip==23.3.1 && \
     pip --no-cache-dir install omegaconf==2.0.6 && \
-    pip install --no-cache-dir 'cython<=0.29.36' kwsbp==0.0.6 versioneer 'numpy<2.0' -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+    pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
 ARG INSTALL_MS_DEPS={install_ms_deps}
 

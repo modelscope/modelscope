@@ -47,7 +47,8 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
-    cd ms-swift && pip install .[all] && \
+    cd ms-swift && pip install .[llm] && \
+    pip install .[eval] && pip install xtuner --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge && \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
     pip install --no-cache-dir transformers -U huggingface-hub==0.25.0 && \

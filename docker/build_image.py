@@ -139,7 +139,7 @@ class CPUImageBuilder(Builder):
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}'
             f'-torch{self.args.torch_version}-base')
-        extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
+        extra_content = """\nRUN pip install adaseq pai-easycv"""
 
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -191,7 +191,7 @@ class GPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
-        extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
+        extra_content = """\nRUN pip install adaseq pai-easycv"""
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'

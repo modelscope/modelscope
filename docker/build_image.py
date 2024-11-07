@@ -191,7 +191,15 @@ class GPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
-        extra_content = """\nRUN pip install adaseq pai-easycv"""
+        extra_content = """
+RUN pip install adaseq pai-easycv && \
+    pip install tf-keras==2.16.0 --no-dependencies && \
+    pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
+    pip install --no-cache-dir apex -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
+        pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
+"""
+
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'

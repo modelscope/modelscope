@@ -137,5 +137,3 @@ RUN set -eux; \
         \
         pip --version
 # end of install python
-
-RUN pip install torchmetrics decord

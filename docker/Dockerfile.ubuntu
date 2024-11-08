@@ -56,7 +56,7 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
     pip install .[eval] && pip install evalscope -U --no-dependencies && pip install xtuner --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers huggingface-hub -U && pip cache purge; \
+    pip install --no-cache-dir transformers huggingface-hub==0.25.* -U && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list

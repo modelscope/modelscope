@@ -27,4 +27,4 @@ pip install --no-cache-dir -U triton
 
 pip install --no-cache-dir vllm==$vllm_version -U
 
-pip install --no-cache-dir -U lmdeploy==$lmdeploy_version --no-deps
+pip install --no-cache-dir -U lmdeploy==$lmdeploy_version

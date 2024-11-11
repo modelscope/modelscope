@@ -20,6 +20,7 @@ ARG INSTALL_MS_DEPS={install_ms_deps}
 COPY requirements /var/modelscope
 
 RUN pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.* -U && \
+    pip install --no-cache-dir apex -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip --no-cache-dir install omegaconf==2.0.6 && \
     pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

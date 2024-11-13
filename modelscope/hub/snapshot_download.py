@@ -265,15 +265,17 @@ def _snapshot_download(
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
                     directory, repo_id)
-                logger.info(
-                    f'Creating symbolic link {masked_directory} -> {directory}.'
-                )
-                try:
-                    os.symlink(os.path.abspath(masked_directory), directory)
-                except OSError as e:
-                    logger.warning(
-                        f'Failed to create symbolic link {masked_directory} -> {directory}: {e}'
-                    )
+                if os.path.exists(directory):
+                    logger.info(
+                        'Target directory already exists, skipping creation.')
+                else:
+                    logger.info(f'Creating symbolic link [{directory}].')
+                    try:
+                        os.symlink(
+                            os.path.abspath(masked_directory), directory)
+                    except OSError:
+                        logger.warning(
+                            f'Failed to create symbolic link {directory}.')
 
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(

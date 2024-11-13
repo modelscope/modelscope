@@ -269,9 +269,7 @@ def _snapshot_download(
                     logger.info(
                         'Target directory already exists, skipping creation.')
                 else:
-                    logger.info(
-                        f'Creating symbolic link [{directory}] for [{masked_directory}].'
-                    )
+                    logger.info(f'Creating symbolic link [{directory}].')
                     try:
                         os.symlink(
                             os.path.abspath(masked_directory), directory)

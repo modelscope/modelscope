@@ -22,8 +22,6 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope import utils
-from modelscope.fileio import io
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
@@ -300,7 +298,8 @@ class HubApi:
             ConfigFields.framework: Frameworks.torch,
             ConfigFields.task: Tasks.other,
         }
-        io.dump(cfg, cfg_file)
+        with open(cfg_file, 'w') as file:
+            json.dump(cfg, file)
 
     def push_model(self,
                    model_id: str,

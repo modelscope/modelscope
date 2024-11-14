@@ -1,4 +1,4 @@
+pyyaml
 requests>=2.25
 tqdm>=4.64.0
 urllib3>=1.26
-pyyaml

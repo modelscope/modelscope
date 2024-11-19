@@ -56,11 +56,12 @@ class LlamafileCMD(CLICommand):
         )
 
         group.add_argument(
-            '--execute',
+            '--launch',
             type=str,
             required=False,
             default='True',
-            help='Whether to execute the downloaded llamafile, default to True'
+            help=
+            'Whether to launch model with the downloaded llamafile, default to True.'
         )
 
         group.add_argument(
@@ -122,12 +123,12 @@ class LlamafileCMD(CLICommand):
         if sys.platform.startswith('win'):
             downloaded_file = self._rename_extension(downloaded_file)
 
-        if self.args.execute.lower() == 'true':
+        if self.args.launch.lower() == 'true':
             print('Launching model with llamafile:')
             self._execute_llamafile(downloaded_file)
         else:
             print(
-                f'Llamafile model downloaded to [{downloaded_file}], you may execute it separately.'
+                f'No Launching. Llamafile model downloaded to [{downloaded_file}], you may execute it separately.'
             )
 
     def _execute_llamafile(self, file_path):

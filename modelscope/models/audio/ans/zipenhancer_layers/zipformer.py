@@ -719,8 +719,8 @@ class RelPositionMultiheadAttentionWeights(nn.Module):
                 attn_scores = attn_scores + pos_scores
             else:
                 # inplace operator important
-                # attn_scores.add_(pos_scores)
-                attn_scores = attn_scores + pos_scores
+                attn_scores.add_(pos_scores)
+                # attn_scores = attn_scores + pos_scores
 
         if torch.jit.is_scripting() or torch.jit.is_tracing():
             pass

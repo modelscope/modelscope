@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import (LazyImportModule,
                                            is_transformers_available)
-from .utils.automodel_utils import fix_transformers_upgrade
 
 if TYPE_CHECKING:
     from .exporters import Exporter, TfModelExporter, TorchModelExporter
@@ -110,6 +109,3 @@ else:
         module_spec=__spec__,
         extra_objects={},
     )
-
-if is_transformers_available():
-    fix_transformers_upgrade()

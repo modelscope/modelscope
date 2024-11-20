@@ -379,8 +379,6 @@ def tf_required(func):
 
 class LazyImportModule(ModuleType):
     AST_INDEX = None
-    if AST_INDEX is None:
-        AST_INDEX = load_index()
 
     def __init__(self,
                  name,
@@ -442,8 +440,15 @@ class LazyImportModule(ModuleType):
 
     def _get_module(self, module_name: str):
         try:
-            # check requirements before module import
             module_name_full = self.__name__ + '.' + module_name
+            if any(
+                    module_name_full.startswith(f'modelscope.{prefix}')
+                    for prefix in ['hub', 'utils', 'version', 'fileio']):
+                return importlib.import_module('.' + module_name,
+                                               self.__name__)
+            # check requirements before module import
+            if LazyImportModule.AST_INDEX is None:
+                LazyImportModule.AST_INDEX = load_index()
             if module_name_full in LazyImportModule.AST_INDEX[REQUIREMENT_KEY]:
                 requirements = LazyImportModule.AST_INDEX[REQUIREMENT_KEY][
                     module_name_full]
@@ -465,6 +470,8 @@ class LazyImportModule(ModuleType):
         Args:
             signature (tuple): a tuple of str, (registry_name, registry_group_name, module_name)
         """
+        if LazyImportModule.AST_INDEX is None:
+            LazyImportModule.AST_INDEX = load_index()
         if signature in LazyImportModule.AST_INDEX[INDEX_KEY]:
             mod_index = LazyImportModule.AST_INDEX[INDEX_KEY][signature]
             module_name = mod_index[MODULE_KEY]

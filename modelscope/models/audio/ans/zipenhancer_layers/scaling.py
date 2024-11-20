@@ -296,9 +296,9 @@ def inplace_softmax(tensor, dim):
 def softmax(x: Tensor, dim: int):
     if not x.requires_grad or torch.jit.is_scripting() or torch.jit.is_tracing(
     ):
-        return x.softmax(dim=dim)
+        # return x.softmax(dim=dim)
         # inplace operator
-        # return inplace_softmax(x, dim)
+        return inplace_softmax(x, dim)
 
     return SoftmaxFunction.apply(x, dim)
 

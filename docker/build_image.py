@@ -23,17 +23,17 @@ class Builder:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.1.0-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.3.0'
-            args.torchaudio_version = '2.3.0'
-            args.torchvision_version = '0.18.0'
+            args.torch_version = '2.3.1'
+            args.torchaudio_version = '2.3.1'
+            args.torchvision_version = '0.18.1'
         if not args.tf_version:
             args.tf_version = '2.16.1'
         if not args.cuda_version:
             args.cuda_version = '12.1.0'
         if not args.vllm_version:
-            args.vllm_version = '0.5.1'
+            args.vllm_version = '0.5.3'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.5.0'
+            args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         return args
@@ -139,7 +139,7 @@ class CPUImageBuilder(Builder):
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}'
             f'-torch{self.args.torch_version}-base')
-        extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
+        extra_content = """\nRUN pip install adaseq pai-easycv"""
 
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -191,7 +191,14 @@ class GPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
-        extra_content = """\nRUN pip install adaseq\nRUN pip install pai-easycv"""
+        extra_content = """
+RUN pip install adaseq pai-easycv && \
+    pip install tf-keras==2.16.0 --no-dependencies && \
+    pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
+    CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
+        pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
+"""
+
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'

@@ -221,7 +221,9 @@ def _snapshot_download(
             cookies = ModelScopeConfig.get_cookies()
         repo_files = []
         if repo_type == REPO_TYPE_MODEL:
-            directory = os.path.join(system_cache, 'hub', repo_id)
+            directory = os.path.abspath(
+                local_dir) if local_dir is not None else os.path.join(
+                    system_cache, 'hub', repo_id)
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -263,18 +265,22 @@ def _snapshot_download(
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
                     directory, repo_id)
-                logger.info(
-                    f'Creating symbolic link {masked_directory} -> {directory}.'
-                )
-                try:
-                    os.symlink(os.path.abspath(masked_directory), directory)
-                except OSError as e:
-                    logger.warning(
-                        f'Failed to create symbolic link {masked_directory} -> {directory}: {e}'
-                    )
+                if os.path.exists(directory):
+                    logger.info(
+                        'Target directory already exists, skipping creation.')
+                else:
+                    logger.info(f'Creating symbolic link [{directory}].')
+                    try:
+                        os.symlink(
+                            os.path.abspath(masked_directory), directory)
+                    except OSError:
+                        logger.warning(
+                            f'Failed to create symbolic link {directory}.')
 
         elif repo_type == REPO_TYPE_DATASET:
-            directory = os.path.join(system_cache, 'datasets', repo_id)
+            directory = os.path.abspath(
+                local_dir) if local_dir is not None else os.path.join(
+                    system_cache, 'datasets', repo_id)
             print(f'Downloading Dataset to directory: {directory}')
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             if not revision:

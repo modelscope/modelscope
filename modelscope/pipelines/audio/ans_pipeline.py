@@ -176,7 +176,7 @@ class ANSZipEnhancerPipeline(Pipeline):
         stride = int(window * 0.75)
         print('inputs:{}'.format(ndarray.shape))
         b, t = ndarray.shape  # size()
-        if t > window * 5:  # 10s
+        if t > window * 3:  # 6s
             decode_do_segement = True
             print('decode_do_segement')
 

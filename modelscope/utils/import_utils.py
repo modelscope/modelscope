@@ -26,8 +26,6 @@ else:
 
 logger = get_logger(log_level=logging.WARNING)
 
-AST_INDEX = None
-
 
 def import_modules_from_file(py_file: str):
     """ Import module from a certrain file
@@ -378,7 +376,7 @@ def tf_required(func):
 
 
 class LazyImportModule(ModuleType):
-    AST_INDEX = None
+    _AST_INDEX = None
 
     def __init__(self,
                  name,
@@ -447,11 +445,9 @@ class LazyImportModule(ModuleType):
                 return importlib.import_module('.' + module_name,
                                                self.__name__)
             # check requirements before module import
-            if LazyImportModule.AST_INDEX is None:
-                LazyImportModule.AST_INDEX = load_index()
-            if module_name_full in LazyImportModule.AST_INDEX[REQUIREMENT_KEY]:
-                requirements = LazyImportModule.AST_INDEX[REQUIREMENT_KEY][
-                    module_name_full]
+            ast_index = self.get_ast_index()
+            if module_name_full in ast_index[REQUIREMENT_KEY]:
+                requirements = ast_index[REQUIREMENT_KEY][module_name_full]
                 requires(module_name_full, requirements)
             return importlib.import_module('.' + module_name, self.__name__)
         except Exception as e:
@@ -464,20 +460,27 @@ class LazyImportModule(ModuleType):
                                 self._import_structure)
 
     @staticmethod
+    def get_ast_index():
+        if LazyImportModule._AST_INDEX is None:
+            LazyImportModule._AST_INDEX = load_index()
+        return LazyImportModule._AST_INDEX
+
+    @staticmethod
     def import_module(signature):
         """ import a lazy import module using signature
 
         Args:
             signature (tuple): a tuple of str, (registry_name, registry_group_name, module_name)
         """
-        if LazyImportModule.AST_INDEX is None:
-            LazyImportModule.AST_INDEX = load_index()
-        if signature in LazyImportModule.AST_INDEX[INDEX_KEY]:
-            mod_index = LazyImportModule.AST_INDEX[INDEX_KEY][signature]
+        ast_index = LazyImportModule.get_ast_index()
+        from modelscope import models
+        if ast_index is None:
+            ast_index = load_index()
+        if signature in ast_index[INDEX_KEY]:
+            mod_index = ast_index[INDEX_KEY][signature]
             module_name = mod_index[MODULE_KEY]
-            if module_name in LazyImportModule.AST_INDEX[REQUIREMENT_KEY]:
-                requirements = LazyImportModule.AST_INDEX[REQUIREMENT_KEY][
-                    module_name]
+            if module_name in ast_index[REQUIREMENT_KEY]:
+                requirements = ast_index[REQUIREMENT_KEY][module_name]
                 requires(module_name, requirements)
             importlib.import_module(module_name)
         else:

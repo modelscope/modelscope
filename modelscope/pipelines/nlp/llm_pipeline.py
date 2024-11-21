@@ -90,7 +90,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         if self._is_swift_model(model):
             if self.llm_framework is not None:
                 logger.warning(
-                    f'Cannot swift with llm_framework, ignoring {self.llm_framework}.'
+                    f'Cannot use swift with llm_framework, ignoring {self.llm_framework}.'
                 )
 
             base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
@@ -227,9 +227,6 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                                                                       str]]]],
                             tokenizer: PreTrainedTokenizer,
                             **kwargs) -> Dict[str, torch.Tensor]:
-            # for compatibility, also support input list, but we shall wrap it into Dict
-            if isinstance(messages, list):
-                messages = {'messages': messages}
             inputs, _ = self.template.encode(get_example(messages))
             inputs.pop('labels', None)
             if 'input_ids' in inputs:
@@ -441,6 +438,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                         **kwargs) -> Dict[str, torch.Tensor]:
         # {"messages":[{"role": "system", "content": "You are a helpful assistant."}...]}
         tokens = []
+        # for compatibility, also support input list, but we shall wrap it into Dict
+        if isinstance(messages, list):
+            messages = {'messages': messages}
         for role, content in LLMPipeline._message_iter(messages):
             tokens = LLMPipeline._concat_with_special_tokens(
                 tokens, role, content, tokenizer)

@@ -225,7 +225,7 @@ def get_test_suites_to_run():
     # compatible model info
     for model_id, model_info in iic_models_info.items():
         _, model_name = model_id_to_group_owner_name(model_id)
-        models_info['damo/%s' % model_name] = models_info
+        models_info['damo/%s' % model_name] = model_info
     # model_info key: model_id, value: model info such as framework task etc.
     affected_pipeline_cases = []
     affected_trainer_cases = []

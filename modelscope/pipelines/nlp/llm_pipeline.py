@@ -290,6 +290,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             os.remove(configuration_path)
 
     def _process_single(self, inputs, *args, **kwargs) -> Dict[str, Any]:
+        print('_process_single')
+        print(inputs)
+        print(kwargs)
         preprocess_params = kwargs.get('preprocess_params', {})
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
@@ -369,7 +372,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 yield out
 
     def preprocess(self, inputs: Union[str, Dict], **kwargs):
-        is_messages = kwargs.pop('is_messages')
+        is_messages = True
         print(kwargs)
         if is_messages:
             tokens = self.format_messages(inputs, self.tokenizer, **kwargs)

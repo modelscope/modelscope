@@ -223,8 +223,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 for k, v in MODEL_MAPPING.items()
             }
 
-        def format_messages(messages: Union[List, Dict[str, List[Dict[str,
-                                                                      str]]]],
+        def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,
                             **kwargs) -> Dict[str, torch.Tensor]:
             inputs, _ = self.template.encode(get_example(messages))
@@ -433,7 +432,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             model_dir, trust_remote_code=True)
 
     @staticmethod
-    def format_messages(messages: Dict[str, List[Dict[str, str]]],
+    def format_messages(messages: Union[List, Dict[str, List[Dict[str, str]]]],
                         tokenizer: PreTrainedTokenizer,
                         **kwargs) -> Dict[str, torch.Tensor]:
         # {"messages":[{"role": "system", "content": "You are a helpful assistant."}...]}

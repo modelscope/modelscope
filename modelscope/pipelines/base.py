@@ -193,7 +193,7 @@ class Pipeline(ABC):
         # place model to cpu or gpu
         if (self.model or (self.has_multiple_models and self.models[0])):
             if not self._model_prepare:
-                self.prepare_mode
+                self.prepare_model()
 
         # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)

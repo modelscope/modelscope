@@ -290,9 +290,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             os.remove(configuration_path)
 
     def _process_single(self, inputs, *args, **kwargs) -> Dict[str, Any]:
-        print('_process_single')
-        print(inputs)
-        print(kwargs)
+        # print('_process_single')
+        # print(inputs)
+        # print(kwargs)
         preprocess_params = kwargs.get('preprocess_params', {})
         forward_params = kwargs.get('forward_params', {})
         postprocess_params = kwargs.get('postprocess_params', {})
@@ -372,8 +372,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 yield out
 
     def preprocess(self, inputs: Union[str, Dict], **kwargs):
-        is_messages = True
-        print(kwargs)
+        # is_messages = True
+        # print(kwargs)
+        is_messages = kwargs.pop('is_messages')
         if is_messages:
             tokens = self.format_messages(inputs, self.tokenizer, **kwargs)
         else:
@@ -436,15 +437,15 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             model_dir, trust_remote_code=True)
 
     @staticmethod
-    def format_messages(messages: Union[List, Dict[str, List[Dict[str, str]]]],
+    def format_messages(messages: Dict[str, List[Dict[str, str]]],
                         tokenizer: PreTrainedTokenizer,
                         **kwargs) -> Dict[str, torch.Tensor]:
         # {"messages":[{"role": "system", "content": "You are a helpful assistant."}...]}
         tokens = []
-        # for compatibility, also support input list, but we shall wrap it into Dict
-        if isinstance(messages, list):
-            messages = {'messages': messages}
-            kwargs['is_message'] = True
+        # # for compatibility, also support input list, but we shall wrap it into Dict
+        # if isinstance(messages, list):
+        #     messages = {'messages': messages}
+        #     kwargs['is_message'] = True
         for role, content in LLMPipeline._message_iter(messages):
             tokens = LLMPipeline._concat_with_special_tokens(
                 tokens, role, content, tokenizer)

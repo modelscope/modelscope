@@ -473,9 +473,6 @@ class LazyImportModule(ModuleType):
             signature (tuple): a tuple of str, (registry_name, registry_group_name, module_name)
         """
         ast_index = LazyImportModule.get_ast_index()
-        from modelscope import models
-        if ast_index is None:
-            ast_index = load_index()
         if signature in ast_index[INDEX_KEY]:
             mod_index = ast_index[INDEX_KEY][signature]
             module_name = mod_index[MODULE_KEY]

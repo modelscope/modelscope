@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, Union
 
-
 import numpy as np
 import torch
 import cv2
@@ -14,7 +13,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Model, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
-from modelscope.models.cv.facial_68ldk_detection import infer  
+from modelscope.models.cv.general_face_detection import infer  
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -22,8 +21,8 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 @PIPELINES.register_module(
-    Tasks.facial_68ldk_detection, module_name=Pipelines.facial_68ldk_detection)
-class FaceLandmarkDetectionPipeline(Pipeline):
+    Tasks.general_face_detection, module_name=Pipelines.general_face_detection)
+class GeneralFaceDetectionPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
         """
@@ -33,32 +32,25 @@ class FaceLandmarkDetectionPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
 
-        parser = argparse.ArgumentParser(description="Evaluation script")
-        args = parser.parse_args()
-        args.config_name = 'alignment'
+        model_path = os.path.join(model, 'det_model.pth')
+        # model_path = '/home/gyalex/projects/develop/Pytorch_Retinaface/weights/Resnet50_epoch_50.pth'
+        self.net, self.device, self.args = infer.init_model(model_path)
 
-        device_ids = list()
-        if torch.cuda.is_available():
-            device_ids = [0]
-        else: 
-            device_ids = [-1]
-
-        model_path = os.path.join(model, 'pytorch_model.pkl')
-    
-        self.fld = infer.Alignment(args, model_path, dl_framework="pytorch", device_ids=device_ids)
-
-        logger.info('Face 2d landmark detection model, pipeline init')
+        logger.info('General face detection model, pipeline init')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
         print('start preprocess')
-        # image = cv2.resize(image, (256, 256))
 
         if isinstance(input, str):
-            image = LoadImage.convert_to_ndarray(input)
+            # image = LoadImage.convert_to_ndarray(input)
+            image = cv2.imread(input)
         elif isinstance(input, np.ndarray):
             image = copy.deepcopy(input)
 
         data = {'image': image}
+
+        self.width  = image.shape[1]
+        self.height = image.shape[0]
 
         print('finish preprocess')
         
@@ -68,24 +60,23 @@ class FaceLandmarkDetectionPipeline(Pipeline):
         print('start infer')
         
         image = input['image']
-
-        if torch.cuda.is_available():
-            image_np = image.cpu().numpy()
-        else:
-            image_np = image.numpy()
-
-        x1, y1, x2, y2 = 0, 0, image.shape[1], image.shape[0]
-        scale    = max(x2 - x1, y2 - y1) / 180
-        center_w = (x1 + x2) / 2
-        center_h = (y1 + y2) / 2
-        scale, center_w, center_h = float(scale), float(center_w), float(center_h)
-        
-        results = self.fld.analyze(image_np, scale, center_w, center_h)
+        results = infer.process(self.net, image, self.device, self.args)
         
         print('finish infer')
         
         return results
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        outputs = {'landmarks': inputs}
+        all_faces = inputs[:,0:5]
+        for num in range(all_faces.shape[0]):
+            if all_faces[num,0] < 0:
+                all_faces[num,0] = 0
+            if all_faces[num,1] < 0:
+                all_faces[num,1] = 0
+            if all_faces[num,2] >= self.width:
+                all_faces[num,2] = self.width-1
+            if all_faces[num,3] >= self.height:
+                all_faces[num,3] = self.height-1
+
+        outputs = {'faces': all_faces}
         return outputs

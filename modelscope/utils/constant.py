@@ -33,6 +33,7 @@ class CVTasks(object):
     face_attribute_recognition = 'face-attribute-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
     facial_68ldk_detection = 'facial-68ldk-detection'
+    general_face_detection = 'general-face-detection'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'

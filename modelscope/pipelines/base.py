@@ -197,9 +197,7 @@ class Pipeline(ABC):
 
         # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)
-        print('__call__')
-        print(input)
-        print(kwargs)
+
         # sanitize the parameters
         batch_size = kwargs.pop('batch_size', None)
         preprocess_params, forward_params, postprocess_params = self._sanitize_parameters(
@@ -214,8 +212,6 @@ class Pipeline(ABC):
             input = {'messages': input}
             kwargs['is_message'] = True
 
-        # print('call 2')
-        # print(input)
         if isinstance(input, list):
             if batch_size is None:
                 output = []

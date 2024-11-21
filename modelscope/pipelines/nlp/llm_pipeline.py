@@ -90,7 +90,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         if self._is_swift_model(model):
             if self.llm_framework is not None:
                 logger.warning(
-                    f'Cannot using swift with llm_framework, ignoring {self.llm_framework}.'
+                    f'Cannot swift with llm_framework, ignoring {self.llm_framework}.'
                 )
 
             base_model = self.cfg.safe_get('adapter_cfg.model_id_or_path')
@@ -223,9 +223,13 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 for k, v in MODEL_MAPPING.items()
             }
 
-        def format_messages(messages: Dict[str, List[Dict[str, str]]],
+        def format_messages(messages: Union[List, Dict[str, List[Dict[str,
+                                                                      str]]]],
                             tokenizer: PreTrainedTokenizer,
                             **kwargs) -> Dict[str, torch.Tensor]:
+            # for compatibility, also support input list, but we shall wrap it into Dict
+            if isinstance(messages, list):
+                messages = {'messages': messages}
             inputs, _ = self.template.encode(get_example(messages))
             inputs.pop('labels', None)
             if 'input_ids' in inputs:
@@ -256,7 +260,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             history = list(zip(contents[::2], contents[1::2]))
             return dict(system=system, prompt=prompt, history=history)
 
-        assert model_id in SWIFT_MODEL_ID_MAPPING, 'Swift framework does not support current model!'
+        assert model_id in SWIFT_MODEL_ID_MAPPING,\
+            f'Invalid model id {model_id} or Swift framework does not this model.'
         args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id])
         model, template = prepare_model_template(
             args, device_map=self.device_map)

@@ -30,6 +30,7 @@ from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
 logger = get_logger()
 
 SWIFT_MODEL_ID_MAPPING = {}
+SWIFT_FRAMEWORK = 'swift'
 
 
 class LLMAdapterRegistry:
@@ -155,7 +156,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 return False
 
         self.cfg = Config.from_file(cfg_file)
-        return self.cfg.safe_get('adapter_cfg.tuner_backend') == 'swift'
+        return self.cfg.safe_get(
+            'adapter_cfg.tuner_backend') == SWIFT_FRAMEWORK
 
     def _wrap_infer_framework(self, model_dir, framework='vllm'):
         from modelscope.pipelines.accelerate.base import InferFramework
@@ -184,7 +186,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.torch_dtype = kwargs.pop('torch_dtype', None)
         self.ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
 
-        if llm_framework == 'swift':
+        if llm_framework == SWIFT_FRAMEWORK:
             self._init_swift(kwargs['model'], kwargs.get('device', 'gpu'))
             return
         with self._temp_configuration_file(kwargs):
@@ -254,7 +256,10 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             contents = [message['content'] for message in messages]
             prompt = contents[-1]
             history = list(zip(contents[::2], contents[1::2]))
-            return dict(system=system, prompt=prompt, history=history)
+            if self.llm_framework == SWIFT_FRAMEWORK:
+                return dict(system=system, query=prompt, history=history)
+            else:
+                return dict(system=system, prompt=prompt, history=history)
 
         assert model_id in SWIFT_MODEL_ID_MAPPING,\
             f'Invalid model id {model_id} or Swift framework does not this model.'
@@ -298,7 +303,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             = isinstance(inputs, dict) and 'messages' in inputs
         tokens = self.preprocess(inputs, **preprocess_params)
 
-        if self.llm_framework in (None, 'swift'):
+        if self.llm_framework in (None, SWIFT_FRAMEWORK):
             # pytorch model
             if hasattr(self.model, 'generate'):
                 outputs = self.model.generate(**tokens, **forward_params)
@@ -311,7 +316,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             tokens = [list(tokens['inputs'].flatten().numpy())]
             outputs = self.model(tokens, **forward_params)[0]
 
-        if self.llm_framework is None:
+        if self.llm_framework in (None, SWIFT_FRAMEWORK):
             # pytorch model
             outputs = outputs.tolist()[0][len(tokens['inputs'][0]):]
         response = self.postprocess(outputs, **postprocess_params)

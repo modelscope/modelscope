@@ -56,7 +56,10 @@ class TextGenerationTest(unittest.TestCase):
             first_sequence='sentence',
             second_sequence=None)
         pipeline_ins = pipeline(
-            task=Tasks.text_generation, model=model, preprocessor=preprocessor)
+            task=Tasks.text_generation,
+            model=model,
+            preprocessor=preprocessor,
+            llm_first=False)
         print(pipeline_ins(input))
 
     def run_pipeline_with_model_id(self,
@@ -64,6 +67,7 @@ class TextGenerationTest(unittest.TestCase):
                                    input,
                                    init_kwargs={},
                                    run_kwargs={}):
+        init_kwargs['llm_first'] = False
         pipeline_ins = pipeline(
             task=Tasks.text_generation, model=model_id, **init_kwargs)
         print(pipeline_ins(input, **run_kwargs))
@@ -73,12 +77,14 @@ class TextGenerationTest(unittest.TestCase):
                                              input,
                                              init_kwargs={},
                                              run_kwargs={}):
+        init_kwargs['llm_first'] = False
         pipeline_ins = pipeline(
             task=Tasks.text_generation, model=model_id, **init_kwargs)
 
         # set stream inputs
         assert isinstance(pipeline_ins, StreamingOutputMixin)
-        for output in pipeline_ins.stream_generate(input, **run_kwargs):
+        for output in pipeline_ins.stream_generate(
+                input, **run_kwargs, llm_first=False):
             print(output, end='\r')
         print()
 
@@ -256,7 +262,10 @@ class TextGenerationTest(unittest.TestCase):
                 cache_path, first_sequence='sentence', second_sequence=None)
             pipeline1 = TextGenerationPipeline(model, preprocessor)
             pipeline2 = pipeline(
-                Tasks.text_generation, model=model, preprocessor=preprocessor)
+                Tasks.text_generation,
+                model=model,
+                preprocessor=preprocessor,
+                llm_first=False)
             print(
                 f'pipeline1: {pipeline1(input)}\npipeline2: {pipeline2(input)}'
             )
@@ -272,14 +281,17 @@ class TextGenerationTest(unittest.TestCase):
             second_sequence=None)
         pipeline1 = TextGenerationPipeline(model, preprocessor)
         pipeline2 = pipeline(
-            Tasks.text_generation, model=model, preprocessor=preprocessor)
+            Tasks.text_generation,
+            model=model,
+            preprocessor=preprocessor,
+            llm_first=False)
         print(
             f'pipeline1: {pipeline1(self.gpt3_input)}\npipeline2: {pipeline2(self.gpt3_input)}'
         )
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_default_model(self):
-        pipeline_ins = pipeline(task=Tasks.text_generation)
+        pipeline_ins = pipeline(task=Tasks.text_generation, llm_first=False)
         print(
             pipeline_ins(
                 [self.palm_input_zh, self.palm_input_zh, self.palm_input_zh],
@@ -288,13 +300,17 @@ class TextGenerationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_bloom(self):
         pipe = pipeline(
-            task=Tasks.text_generation, model='langboat/bloom-1b4-zh')
+            task=Tasks.text_generation,
+            model='langboat/bloom-1b4-zh',
+            llm_first=False)
         print(pipe('中国的首都是'))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_gpt_neo(self):
         pipe = pipeline(
-            task=Tasks.text_generation, model='langboat/mengzi-gpt-neo-base')
+            task=Tasks.text_generation,
+            model='langboat/mengzi-gpt-neo-base',
+            llm_first=False)
         print(
             pipe(
                 '我是',
@@ -308,7 +324,8 @@ class TextGenerationTest(unittest.TestCase):
     def test_gpt2(self):
         pipe = pipeline(
             task=Tasks.text_generation,
-            model='damo/nlp_gpt2_text-generation_english-base')
+            model='damo/nlp_gpt2_text-generation_english-base',
+            llm_first=False)
         print(pipe('My name is Teven and I am'))
 
     @unittest.skip('oom error for 7b model')

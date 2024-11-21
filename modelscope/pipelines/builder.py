@@ -110,7 +110,7 @@ def pipeline(task: str = None,
         raise ValueError('task or pipeline_name is required')
     prefer_llm_pipeline = kwargs.get('llm_first')
     if task is not None and task.lower() in [
-            Tasks.text_generation, Tasks.text2text_generation, Tasks.chat
+            Tasks.text_generation, Tasks.chat
     ]:
         # if not specified, prefer llm pipeline for aforementioned tasks
         if prefer_llm_pipeline is None:

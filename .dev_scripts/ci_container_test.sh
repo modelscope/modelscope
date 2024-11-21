@@ -30,9 +30,6 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
 
     # test with install
     pip install .
-
-    # solve the version incompatibility issue between diffusers and huggingface-hub
-    pip install huggingface-hub==0.25.* -U
 else
     echo "Running case in release image, run case directly!"
 fi

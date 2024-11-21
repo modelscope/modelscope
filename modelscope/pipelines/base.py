@@ -193,7 +193,7 @@ class Pipeline(ABC):
         # place model to cpu or gpu
         if (self.model or (self.has_multiple_models and self.models[0])):
             if not self._model_prepare:
-                self.prepare_model()
+                self.prepare_mode
 
         # simple showcase, need to support iterator type for both tensorflow and pytorch
         # input_dict = self._handle_input(input)
@@ -207,6 +207,11 @@ class Pipeline(ABC):
         kwargs['preprocess_params'] = preprocess_params
         kwargs['forward_params'] = forward_params
         kwargs['postprocess_params'] = postprocess_params
+        if isinstance(input, list):
+            input = {'messages': input}
+
+        print('call 2')
+        print(input)
         if isinstance(input, list):
             if batch_size is None:
                 output = []

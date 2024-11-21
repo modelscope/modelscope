@@ -183,8 +183,8 @@ class Re2GModel(nn.Module):
             max_length=self.config['target_sequence_length'],
             early_stopping=True,
             no_repeat_ngram_size=self.config['no_repeat_ngram_size'],
-            return_dict_in_generate=False,
-            output_scores=False)
+            return_dict_in_generate=True,
+            output_scores=True)
         generated_ids = beam_search_output.detach().cpu().numpy()
 
         return generated_ids

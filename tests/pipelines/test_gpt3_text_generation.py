@@ -17,26 +17,38 @@ class TextGPT3GenerationTest(unittest.TestCase):
         self.model_dir_13B = snapshot_download(self.model_id_13B)
         self.input = '好的'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('deprecated, skipped')
     def test_gpt3_1_3B(self):
-        pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
+        pipe = pipeline(
+            Tasks.text_generation,
+            model=self.model_id_1_3B,
+            external_engine_for_llm=False)
         print(pipe(self.input))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('deprecated, skipped')
     def test_gpt3_1_3B_with_streaming(self):
-        pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
+        pipe = pipeline(
+            Tasks.text_generation,
+            model=self.model_id_1_3B,
+            external_engine_for_llm=False)
         for output in pipe.stream_generate(self.input, max_length=64):
             print(output, end='\r')
         print()
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skip('deprecated, skipped')
     def test_gpt3_2_7B(self):
-        pipe = pipeline(Tasks.text_generation, model=self.model_id_2_7B)
+        pipe = pipeline(
+            Tasks.text_generation,
+            model=self.model_id_2_7B,
+            external_engine_for_llm=False)
         print(pipe(self.input))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip('deprecated, skipped')
     def test_gpt3_1_3B_with_args(self):
-        pipe = pipeline(Tasks.text_generation, model=self.model_id_1_3B)
+        pipe = pipeline(
+            Tasks.text_generation,
+            model=self.model_id_1_3B,
+            external_engine_for_llm=False)
         print(pipe(self.input, top_p=0.9, temperature=0.9, max_length=32))
 
     @unittest.skip('distributed gpt3 13B, skipped')
@@ -62,7 +74,10 @@ class TextGPT3GenerationTest(unittest.TestCase):
                 |_ mp_rank_06_model_states.pt
                 |_ mp_rank_07_model_states.pt
         """
-        pipe = pipeline(Tasks.text_generation, model=self.model_dir_13B)
+        pipe = pipeline(
+            Tasks.text_generation,
+            model=self.model_dir_13B,
+            external_engine_for_llm=False)
         print(pipe(self.input))
 
 

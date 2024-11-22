@@ -67,7 +67,9 @@ Todo:
 """
 
 
-def create_pipeline(model_id: str, revision: str, llm_first: bool = True):
+def create_pipeline(model_id: str,
+                    revision: str,
+                    external_engine_for_llm: bool = True):
     model_configuration_file = model_file_download(
         model_id=model_id,
         file_path=ModelFile.CONFIGURATION,
@@ -77,7 +79,7 @@ def create_pipeline(model_id: str, revision: str, llm_first: bool = True):
         task=cfg.task,
         model=model_id,
         model_revision=revision,
-        llm_first=llm_first)
+        external_engine_for_llm=external_engine_for_llm)
 
 
 def get_class_user_attributes(cls):

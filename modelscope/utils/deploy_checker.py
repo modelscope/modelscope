@@ -43,7 +43,7 @@ class DeployChecker:
             task=task,
             model=model_id,
             model_revision=model_revision,
-            llm_first=True)
+            external_engine_for_llm=True)
         pipeline_info = get_pipeline_information_by_pipeline(ppl)
 
         # call pipeline

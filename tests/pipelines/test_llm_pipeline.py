@@ -142,28 +142,36 @@ class LLMPipelineTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm2(self):
         pipe = pipeline(
-            task='chat', model='ZhipuAI/chatglm2-6b', llm_first=True)
+            task='chat',
+            model='ZhipuAI/chatglm2-6b',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm2int4(self):
         pipe = pipeline(
-            task='chat', model='ZhipuAI/chatglm2-6b-int4', llm_first=True)
+            task='chat',
+            model='ZhipuAI/chatglm2-6b-int4',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm232k(self):
         pipe = pipeline(
-            task='chat', model='ZhipuAI/chatglm2-6b-32k', llm_first=True)
+            task='chat',
+            model='ZhipuAI/chatglm2-6b-32k',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_chatglm3(self):
         pipe = pipeline(
-            task='chat', model='ZhipuAI/chatglm3-6b', llm_first=True)
+            task='chat',
+            model='ZhipuAI/chatglm3-6b',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -175,7 +183,7 @@ class LLMPipelineTest(unittest.TestCase):
             torch_dtype=torch.float16,
             device_map='auto',
             ignore_file_pattern=[r'.+\.bin$'],
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
@@ -188,7 +196,7 @@ class LLMPipelineTest(unittest.TestCase):
             torch_dtype=torch.float16,
             device_map='auto',
             ignore_file_pattern=[r'.+\.bin$'],
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
@@ -200,7 +208,7 @@ class LLMPipelineTest(unittest.TestCase):
             torch_dtype=torch.float16,
             device_map='auto',
             ignore_file_pattern=[r'.+\.bin$'],
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_code, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_code, **self.gen_cfg))
 
@@ -211,7 +219,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/baichuan-7B',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -222,7 +230,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan-13B-Base',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -233,7 +241,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan-13B-Chat',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -244,7 +252,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan2-7B-Base',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -255,7 +263,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan2-7B-Chat',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -266,7 +274,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan2-7B-Chat-4bits',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -277,7 +285,7 @@ class LLMPipelineTest(unittest.TestCase):
             model='baichuan-inc/Baichuan2-13B-Chat-4bits',
             device_map='auto',
             torch_dtype=torch.float16,
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -289,7 +297,7 @@ class LLMPipelineTest(unittest.TestCase):
             device_map='auto',
             torch_dtype=torch.float16,
             format_messages='wizardlm',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_en, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
@@ -301,7 +309,7 @@ class LLMPipelineTest(unittest.TestCase):
             device_map='auto',
             torch_dtype=torch.float16,
             format_messages='wizardcode',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.message_wizard_math, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_wizard_math, **self.gen_cfg))
 
@@ -313,7 +321,7 @@ class LLMPipelineTest(unittest.TestCase):
             device_map='auto',
             torch_dtype=torch.float16,
             format_messages='wizardcode',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.message_wizard_code, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_wizard_code, **self.gen_cfg))
 
@@ -329,20 +337,28 @@ class LLMPipelineTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen(self):
-        pipe = pipeline(task='chat', model='qwen/Qwen-7B-Chat', llm_first=True)
+        pipe = pipeline(
+            task='chat',
+            model='qwen/Qwen-7B-Chat',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skip('Need optimum and auto-gptq')
     def test_qwen_int4(self):
         pipe = pipeline(
-            task='chat', model='qwen/Qwen-7B-Chat-Int4', llm_first=True)
+            task='chat',
+            model='qwen/Qwen-7B-Chat-Int4',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_vl(self):
-        pipe = pipeline(task='chat', model='qwen/Qwen-VL-Chat', llm_first=True)
+        pipe = pipeline(
+            task='chat',
+            model='qwen/Qwen-VL-Chat',
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_mm, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -352,13 +368,17 @@ class LLMPipelineTest(unittest.TestCase):
         model_type = ModelTypeHelper.get(model_id)
         assert not LLMAdapterRegistry.contains(model_type)
 
-        pipe = pipeline(task='chat', model=model_id, llm_first=True)
+        pipe = pipeline(
+            task='chat', model=model_id, external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_qwen_stream_gemerate(self):
-        pipe = pipeline(task='chat', model='qwen/Qwen-7B-Chat', llm_first=True)
+        pipe = pipeline(
+            task='chat',
+            model='qwen/Qwen-7B-Chat',
+            external_engine_for_llm=True)
         for stream_output in pipe.stream_generate(self.messages_zh_with_system,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
@@ -366,7 +386,9 @@ class LLMPipelineTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_qwen1_5_stream_gemerate(self):
         pipe = pipeline(
-            task='chat', model='qwen/Qwen1.5-1.8B-Chat', llm_first=True)
+            task='chat',
+            model='qwen/Qwen1.5-1.8B-Chat',
+            external_engine_for_llm=True)
         for stream_output in pipe.stream_generate(self.messages_zh_with_system,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
@@ -377,7 +399,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='baichuan-inc/Baichuan2-13B-Chat',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -387,7 +409,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='baichuan-inc/Baichuan2-13B-Chat',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         for stream_output in pipe.stream_generate(self.messages_zh,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
@@ -398,7 +420,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='01ai/Yi-1.5-6B-Chat',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh_with_system, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -408,7 +430,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='01ai/Yi-1.5-6B-Chat',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         for stream_output in pipe.stream_generate(self.messages_zh,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')
@@ -419,7 +441,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='Shanghai_AI_Laboratory/internlm2-1_8b',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         print('messages: ', pipe(self.messages_zh_one_round, **self.gen_cfg))
         print('prompt: ', pipe(self.prompt_zh, **self.gen_cfg))
 
@@ -429,7 +451,7 @@ class LLMPipelineTest(unittest.TestCase):
             task='chat',
             model='Shanghai_AI_Laboratory/internlm2-1_8b',
             llm_framework='swift',
-            llm_first=True)
+            external_engine_for_llm=True)
         for stream_output in pipe.stream_generate(self.messages_zh_one_round,
                                                   **self.gen_cfg):
             print('messages: ', stream_output, end='\r')

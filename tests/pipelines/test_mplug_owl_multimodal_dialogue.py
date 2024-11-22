@@ -19,7 +19,7 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
         pipeline_multimodal_dialogue = pipeline(
             task=Tasks.multimodal_dialogue,
             model=model,
-        )
+            external_engine_for_llm=False)
         image = 'data/resource/portrait_input.png'
         system_prompt_1 = 'The following is a conversation between a curious human and AI assistant.'
         system_prompt_2 = "The assistant gives helpful, detailed, and polite answers to the user's questions."
@@ -41,14 +41,16 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
                 },
             ]
         }
-        result = pipeline_multimodal_dialogue(messages, max_length=5)
+        result = pipeline_multimodal_dialogue(
+            messages, max_length=5, external_engine_for_llm=False)
         print(result[OutputKeys.TEXT])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_multimodal_dialogue_with_name(self):
         pipeline_multimodal_dialogue = pipeline(
             Tasks.multimodal_dialogue,
-            model='damo/multi-modal_mplug_owl_multimodal-dialogue_7b')
+            model='damo/multi-modal_mplug_owl_multimodal-dialogue_7b',
+            external_engine_for_llm=False)
         image = 'data/resource/portrait_input.png'
         system_prompt_1 = 'The following is a conversation between a curious human and AI assistant.'
         system_prompt_2 = "The assistant gives helpful, detailed, and polite answers to the user's questions."
@@ -77,7 +79,8 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
     def test_run_with_multimodal_dialogue_with_text(self):
         pipeline_multimodal_dialogue = pipeline(
             Tasks.multimodal_dialogue,
-            model='damo/multi-modal_mplug_owl_multimodal-dialogue_7b')
+            model='damo/multi-modal_mplug_owl_multimodal-dialogue_7b',
+            external_engine_for_llm=False)
         system_prompt_1 = 'The following is a conversation between a curious human and AI assistant.'
         system_prompt_2 = "The assistant gives helpful, detailed, and polite answers to the user's questions."
         messages = {

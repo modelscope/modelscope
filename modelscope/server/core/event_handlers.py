@@ -14,9 +14,9 @@ logger = get_logger()
 
 def _startup_model(app: FastAPI) -> None:
     logger.info('download model and create pipeline')
-    app.state.pipeline = create_pipeline(app.state.args.model_id,
-                                         app.state.args.revision,
-                                         app.state.args.llm_first)
+    app.state.pipeline = create_pipeline(
+        app.state.args.model_id, app.state.args.revision,
+        app.state.args.external_engine_for_llm)
     info = {}
     info['task_name'] = app.state.pipeline.group_key
     info['schema'] = get_task_schemas(app.state.pipeline.group_key)

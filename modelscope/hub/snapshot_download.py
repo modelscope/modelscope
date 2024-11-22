@@ -8,6 +8,8 @@ from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+from tqdm.contrib.concurrent import thread_map
+
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import InvalidParameter
 from modelscope.hub.utils.caching import ModelFileSystemCache
@@ -36,6 +38,7 @@ def snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    max_workers: int = 1,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -67,6 +70,7 @@ def snapshot_download(
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
+        max_workers (`int`): The maximum number of workers to download files, default 1.
     Raises:
         ValueError: the value details.
 
@@ -94,7 +98,8 @@ def snapshot_download(
         allow_file_pattern=allow_file_pattern,
         local_dir=local_dir,
         ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns)
+        allow_patterns=allow_patterns,
+        max_workers=max_workers)
 
 
 def dataset_snapshot_download(
@@ -109,6 +114,7 @@ def dataset_snapshot_download(
     allow_file_pattern: Optional[Union[str, List[str]]] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    max_workers: int = 1,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -141,6 +147,7 @@ def dataset_snapshot_download(
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
+        max_workers (`int`): The maximum number of workers to download files, default 1.
     Raises:
         ValueError: the value details.
 
@@ -168,7 +175,8 @@ def dataset_snapshot_download(
         allow_file_pattern=allow_file_pattern,
         local_dir=local_dir,
         ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns)
+        allow_patterns=allow_patterns,
+        max_workers=max_workers)
 
 
 def _snapshot_download(
@@ -185,6 +193,7 @@ def _snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    max_workers: int = 8,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -224,7 +233,7 @@ def _snapshot_download(
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
                     system_cache, 'hub', repo_id)
-            print(f'Downloading Model to directory: {directory}')
+            logger.info(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
             revision = revision_detail['Revision']
@@ -261,7 +270,8 @@ def _snapshot_download(
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern,
                 ignore_patterns=ignore_patterns,
-                allow_patterns=allow_patterns)
+                allow_patterns=allow_patterns,
+                max_workers=max_workers)
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
                     directory, repo_id)
@@ -279,54 +289,77 @@ def _snapshot_download(
 
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
-                local_dir) if local_dir is not None else os.path.join(
+                local_dir) if local_dir else os.path.join(
                     system_cache, 'datasets', repo_id)
-            print(f'Downloading Dataset to directory: {directory}')
-            group_or_owner, name = model_id_to_group_owner_name(repo_id)
-            if not revision:
-                revision = DEFAULT_DATASET_REVISION
-            revision_detail = revision
-            page_number = 1
-            page_size = 100
-            while True:
-                files_list_tree = _api.list_repo_tree(
-                    dataset_name=name,
-                    namespace=group_or_owner,
-                    revision=revision,
-                    root_path='/',
-                    recursive=True,
-                    page_number=page_number,
-                    page_size=page_size)
-                if not ('Code' in files_list_tree
-                        and files_list_tree['Code'] == 200):
-                    print(
-                        'Get dataset: %s file list failed, request_id: %s, message: %s'
-                        % (repo_id, files_list_tree['RequestId'],
-                           files_list_tree['Message']))
-                    return None
-                repo_files = files_list_tree['Data']['Files']
-                _download_file_lists(
-                    repo_files,
-                    cache,
-                    temporary_cache_dir,
-                    repo_id,
-                    _api,
-                    name,
-                    group_or_owner,
-                    headers,
-                    repo_type=repo_type,
-                    revision=revision,
-                    cookies=cookies,
-                    ignore_file_pattern=ignore_file_pattern,
-                    allow_file_pattern=allow_file_pattern,
-                    ignore_patterns=ignore_patterns,
-                    allow_patterns=allow_patterns)
-                if len(repo_files) < page_size:
-                    break
-                page_number += 1
+            logger.info(f'Downloading Dataset to directory: {directory}')
 
-        cache.save_model_version(revision_info=revision_detail)
-        return os.path.join(cache.get_root_location())
+            group_or_owner, name = model_id_to_group_owner_name(repo_id)
+            revision_detail = revision or DEFAULT_DATASET_REVISION
+
+            logger.info('Fetching dataset repo file list...')
+            repo_files = fetch_repo_files(_api, name, group_or_owner,
+                                          revision_detail)
+
+            if repo_files is None:
+                logger.error(
+                    f'Failed to retrieve file list for dataset: {repo_id}')
+                return None
+
+            _download_file_lists(
+                repo_files,
+                cache,
+                temporary_cache_dir,
+                repo_id,
+                _api,
+                name,
+                group_or_owner,
+                headers,
+                repo_type=repo_type,
+                revision=revision,
+                cookies=cookies,
+                ignore_file_pattern=ignore_file_pattern,
+                allow_file_pattern=allow_file_pattern,
+                ignore_patterns=ignore_patterns,
+                allow_patterns=allow_patterns,
+                max_workers=max_workers)
+
+            cache.save_model_version(revision_info=revision_detail)
+            cache_root_path = cache.get_root_location()
+
+            logger.info(f"Download {repo_type} '{repo_id}' successfully.")
+            return cache_root_path
+
+
+def fetch_repo_files(_api, name, group_or_owner, revision):
+    page_number = 1
+    page_size = 150
+    repo_files = []
+
+    while True:
+        files_list_tree = _api.list_repo_tree(
+            dataset_name=name,
+            namespace=group_or_owner,
+            revision=revision,
+            root_path='/',
+            recursive=True,
+            page_number=page_number,
+            page_size=page_size)
+
+        if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
+            logger.error(f'Get dataset file list failed, request_id:  \
+                {files_list_tree["RequestId"]}, message: {files_list_tree["Message"]}'
+                         )
+            return None
+
+        cur_repo_files = files_list_tree['Data']['Files']
+        repo_files.extend(cur_repo_files)
+
+        if len(cur_repo_files) < page_size:
+            break
+
+        page_number += 1
+
+    return repo_files
 
 
 def _is_valid_regex(pattern: str):
@@ -359,22 +392,22 @@ def _get_valid_regex_pattern(patterns: List[str]):
 
 
 def _download_file_lists(
-    repo_files: List[str],
-    cache: ModelFileSystemCache,
-    temporary_cache_dir: str,
-    repo_id: str,
-    api: HubApi,
-    name: str,
-    group_or_owner: str,
-    headers,
-    repo_type: Optional[str] = None,
-    revision: Optional[str] = DEFAULT_MODEL_REVISION,
-    cookies: Optional[CookieJar] = None,
-    ignore_file_pattern: Optional[Union[str, List[str]]] = None,
-    allow_file_pattern: Optional[Union[str, List[str]]] = None,
-    allow_patterns: Optional[Union[List[str], str]] = None,
-    ignore_patterns: Optional[Union[List[str], str]] = None,
-):
+        repo_files: List[str],
+        cache: ModelFileSystemCache,
+        temporary_cache_dir: str,
+        repo_id: str,
+        api: HubApi,
+        name: str,
+        group_or_owner: str,
+        headers,
+        repo_type: Optional[str] = None,
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+        cookies: Optional[CookieJar] = None,
+        ignore_file_pattern: Optional[Union[str, List[str]]] = None,
+        allow_file_pattern: Optional[Union[str, List[str]]] = None,
+        allow_patterns: Optional[Union[List[str], str]] = None,
+        ignore_patterns: Optional[Union[List[str], str]] = None,
+        max_workers: int = 8):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
     ignore_file_pattern = _normalize_patterns(ignore_file_pattern)
@@ -382,6 +415,7 @@ def _download_file_lists(
     # to compatible regex usage.
     ignore_regex_pattern = _get_valid_regex_pattern(ignore_file_pattern)
 
+    filtered_repo_files = []
     for repo_file in repo_files:
         if repo_file['Type'] == 'tree':
             continue
@@ -418,15 +452,18 @@ def _download_file_lists(
                     continue
         except Exception as e:
             logger.warning('The file pattern is invalid : %s' % e)
+        else:
+            filtered_repo_files.append(repo_file)
 
+    def _download_single_file(repo_file):
         # check model_file is exist in cache, if existed, skip download, otherwise download
         if cache.exists(repo_file):
             file_name = os.path.basename(repo_file['Name'])
             logger.debug(
                 f'File {file_name} already in cache, skip downloading!')
-            continue
+            return
+
         if repo_type == REPO_TYPE_MODEL:
-            # get download url
             url = get_file_download_url(
                 model_id=repo_id,
                 file_path=repo_file['Path'],
@@ -441,6 +478,14 @@ def _download_file_lists(
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
-
         download_file(url, repo_file, temporary_cache_dir, cache, headers,
                       cookies)
+
+    # Use thread_map for parallel downloading
+    thread_map(
+        _download_single_file,
+        filtered_repo_files,
+        max_workers=max_workers,
+        desc=f'Fetching {len(filtered_repo_files)} files',
+        leave=False,
+    )

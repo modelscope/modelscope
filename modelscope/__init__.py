@@ -37,7 +37,8 @@ if TYPE_CHECKING:
             AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM,
             AutoModelForSequenceClassification,
             AutoModelForTokenClassification, AutoModelForImageSegmentation,
-            AutoTokenizer, GenerationConfig, AutoImageProcessor, BatchFeature)
+            AutoTokenizer, GenerationConfig, AutoImageProcessor, BatchFeature,
+            T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -96,7 +97,7 @@ else:
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
             'AutoModelForTokenClassification', 'AutoModelForImageSegmentation',
-            'AutoImageProcessor', 'BatchFeature'
+            'AutoImageProcessor', 'BatchFeature', 'T5EncoderModel'
         ]
 
     import sys

@@ -262,7 +262,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 return dict(system=system, prompt=prompt, history=history)
 
         assert model_id in SWIFT_MODEL_ID_MAPPING,\
-            f'Invalid model id {model_id} or Swift framework does support not this model.'
+            f'Invalid model id {model_id} or Swift framework does not support this model.'
         args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id])
         model, template = prepare_model_template(
             args, device_map=self.device_map)

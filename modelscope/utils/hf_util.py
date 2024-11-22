@@ -1,15 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import importlib
 import os
 from pathlib import Path
 from types import MethodType
-from typing import Dict, Literal, Optional, Union
+from typing import Optional, Union
 
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
+from transformers import \
+    AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
 from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
@@ -294,6 +295,8 @@ AutoModelForSequenceClassification = get_wrapped_class(
     AutoModelForSequenceClassificationHF)
 AutoModelForTokenClassification = get_wrapped_class(
     AutoModelForTokenClassificationHF)
+AutoModelForImageSegmentation = get_wrapped_class(
+    AutoModelForImageSegmentationHF)
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,

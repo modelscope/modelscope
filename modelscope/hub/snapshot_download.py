@@ -38,7 +38,7 @@ def snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
-    max_workers: int = 1,
+    max_workers: int = 8,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -70,7 +70,7 @@ def snapshot_download(
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
-        max_workers (`int`): The maximum number of workers to download files, default 1.
+        max_workers (`int`): The maximum number of workers to download files, default 8.
     Raises:
         ValueError: the value details.
 
@@ -114,7 +114,7 @@ def dataset_snapshot_download(
     allow_file_pattern: Optional[Union[str, List[str]]] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
-    max_workers: int = 1,
+    max_workers: int = 8,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -147,7 +147,7 @@ def dataset_snapshot_download(
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
-        max_workers (`int`): The maximum number of workers to download files, default 1.
+        max_workers (`int`): The maximum number of workers to download files, default 8.
     Raises:
         ValueError: the value details.
 

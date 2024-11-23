@@ -21,7 +21,7 @@ class DocumentGroundedDialogGenerateTest(unittest.TestCase):
         # load data
         train_dataset = MsDataset.load(
             'DAMO_ConvAI/FrDoc2BotGeneration',
-            download_mode=DownloadMode.FORCE_REDOWNLOAD)['train']
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)
         test_len = 1
         sub_train_dataset = [x for x in train_dataset][:1]
         sub_train_dataset = [{

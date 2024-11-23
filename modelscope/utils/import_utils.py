@@ -439,16 +439,14 @@ class LazyImportModule(ModuleType):
     def _get_module(self, module_name: str):
         try:
             module_name_full = self.__name__ + '.' + module_name
-            if any(
+            if not any(
                     module_name_full.startswith(f'modelscope.{prefix}')
                     for prefix in ['hub', 'utils', 'version', 'fileio']):
-                return importlib.import_module('.' + module_name,
-                                               self.__name__)
-            # check requirements before module import
-            ast_index = self.get_ast_index()
-            if module_name_full in ast_index[REQUIREMENT_KEY]:
-                requirements = ast_index[REQUIREMENT_KEY][module_name_full]
-                requires(module_name_full, requirements)
+                # check requirements before module import
+                ast_index = self.get_ast_index()
+                if module_name_full in ast_index[REQUIREMENT_KEY]:
+                    requirements = ast_index[REQUIREMENT_KEY][module_name_full]
+                    requires(module_name_full, requirements)
             return importlib.import_module('.' + module_name, self.__name__)
         except Exception as e:
             raise RuntimeError(

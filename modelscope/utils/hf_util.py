@@ -10,10 +10,22 @@ from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
 from transformers import \
+    AutoModelForImageClassification as AutoModelForImageClassificationHF
+from transformers import \
     AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
+from transformers import \
+    AutoModelForImageTextToText as AutoModelForImageTextToTextHF
+from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
+from transformers import AutoModelForMaskedLM as AutoModelForMaskedLMHF
+from transformers import \
+    AutoModelForMaskGeneration as AutoModelForMaskGenerationHF
+from transformers import AutoModelForPreTraining as AutoModelForPreTrainingHF
+from transformers import \
+    AutoModelForQuestionAnswering as AutoModelForQuestionAnsweringHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
 from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
+from transformers import AutoModelForTextEncoding as AutoModelForTextEncodingHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoProcessor as AutoProcessorHF
@@ -315,25 +327,49 @@ AutoModelForTokenClassification = get_wrapped_class(
     AutoModelForTokenClassificationHF)
 AutoModelForImageSegmentation = get_wrapped_class(
     AutoModelForImageSegmentationHF)
+AutoModelForImageClassification = get_wrapped_class(
+    AutoModelForImageClassificationHF)
+AutoModelForImageTextToText = get_wrapped_class(AutoModelForImageTextToTextHF)
+AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
+AutoModelForQuestionAnswering = get_wrapped_class(
+    AutoModelForQuestionAnsweringHF)
+AutoModelForMaskedLM = get_wrapped_class(AutoModelForMaskedLMHF)
+AutoModelForMaskGeneration = get_wrapped_class(AutoModelForMaskGenerationHF)
+AutoModelForPreTraining = get_wrapped_class(AutoModelForPreTrainingHF)
+AutoModelForTextEncoding = get_wrapped_class(AutoModelForTextEncodingHF)
 T5EncoderModel = get_wrapped_class(T5EncoderModelHF)
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+AutoProcessor = get_wrapped_class(
+    AutoProcessorHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
 AutoConfig = get_wrapped_class(
     AutoConfigHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
 GenerationConfig = get_wrapped_class(
     GenerationConfigHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
+BitsAndBytesConfig = get_wrapped_class(
+    BitsAndBytesConfigHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+AutoImageProcessor = AutoImageProcessorHF(
+    BitsAndBytesConfigHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+
 GPTQConfig = GPTQConfigHF
 AwqConfig = AwqConfigHF
-BitsAndBytesConfig = BitsAndBytesConfigHF
-AutoImageProcessor = get_wrapped_class(AutoImageProcessorHF)
 BatchFeature = get_wrapped_class(BatchFeatureHF)

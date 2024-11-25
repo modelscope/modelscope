@@ -36,9 +36,12 @@ if TYPE_CHECKING:
         from .utils.hf_util import (
             AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM,
             AutoModelForSequenceClassification,
-            AutoModelForTokenClassification, AutoModelForImageSegmentation,
-            AutoTokenizer, GenerationConfig, AutoImageProcessor, BatchFeature,
-            T5EncoderModel)
+            AutoModelForTokenClassification, AutoModelForImageClassification,
+            AutoModelForImageTextToText, AutoModelForImageToImage,
+            AutoModelForImageSegmentation, AutoModelForQuestionAnswering,
+            AutoModelForMaskedLM, AutoTokenizer, AutoModelForMaskGeneration,
+            AutoModelForPreTraining, AutoModelForTextEncoding,
+            GenerationConfig, AutoImageProcessor, BatchFeature, T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -96,6 +99,11 @@ else:
             'AwqConfig', 'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
+            'AutoModelForTokenClassification',
+            'AutoModelForImageClassification', 'AutoModelForImageTextToText',
+            'AutoModelForImageToImage', 'AutoModelForQuestionAnswering',
+            'AutoModelForMaskedLM', 'AutoModelForMaskGeneration',
+            'AutoModelForPreTraining', 'AutoModelForTextEncoding',
             'AutoModelForTokenClassification', 'AutoModelForImageSegmentation',
             'AutoImageProcessor', 'BatchFeature', 'T5EncoderModel'
         ]

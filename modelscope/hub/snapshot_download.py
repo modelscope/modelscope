@@ -323,11 +323,11 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 max_workers=max_workers)
 
-            cache.save_model_version(revision_info=revision_detail)
-            cache_root_path = cache.get_root_location()
+        cache.save_model_version(revision_info=revision_detail)
+        cache_root_path = cache.get_root_location()
 
-            logger.info(f"Download {repo_type} '{repo_id}' successfully.")
-            return cache_root_path
+        logger.info(f"Download {repo_type} '{repo_id}' successfully.")
+        return cache_root_path
 
 
 def fetch_repo_files(_api, name, group_or_owner, revision):

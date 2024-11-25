@@ -37,11 +37,11 @@ if TYPE_CHECKING:
             AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM,
             AutoModelForSequenceClassification,
             AutoModelForTokenClassification, AutoModelForImageClassification,
-            AutoModelForImageTextToText, AutoModelForImageToImage,
-            AutoModelForImageSegmentation, AutoModelForQuestionAnswering,
-            AutoModelForMaskedLM, AutoTokenizer, AutoModelForMaskGeneration,
-            AutoModelForPreTraining, AutoModelForTextEncoding,
-            GenerationConfig, AutoImageProcessor, BatchFeature, T5EncoderModel)
+            AutoModelForImageToImage, AutoModelForImageSegmentation,
+            AutoModelForQuestionAnswering, AutoModelForMaskedLM, AutoTokenizer,
+            AutoModelForMaskGeneration, AutoModelForPreTraining,
+            AutoModelForTextEncoding, GenerationConfig, AutoImageProcessor,
+            BatchFeature, T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -100,12 +100,12 @@ else:
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
             'AutoModelForTokenClassification',
-            'AutoModelForImageClassification', 'AutoModelForImageTextToText',
-            'AutoModelForImageToImage', 'AutoModelForQuestionAnswering',
-            'AutoModelForMaskedLM', 'AutoModelForMaskGeneration',
-            'AutoModelForPreTraining', 'AutoModelForTextEncoding',
-            'AutoModelForTokenClassification', 'AutoModelForImageSegmentation',
-            'AutoImageProcessor', 'BatchFeature', 'T5EncoderModel'
+            'AutoModelForImageClassification', 'AutoModelForImageToImage',
+            'AutoModelForQuestionAnswering', 'AutoModelForMaskedLM',
+            'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
+            'AutoModelForTextEncoding', 'AutoModelForTokenClassification',
+            'AutoModelForImageSegmentation', 'AutoImageProcessor',
+            'BatchFeature', 'T5EncoderModel'
         ]
 
     import sys

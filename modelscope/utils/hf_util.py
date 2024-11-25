@@ -13,8 +13,6 @@ from transformers import \
     AutoModelForImageClassification as AutoModelForImageClassificationHF
 from transformers import \
     AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
-from transformers import \
-    AutoModelForImageTextToText as AutoModelForImageTextToTextHF
 from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
 from transformers import AutoModelForMaskedLM as AutoModelForMaskedLMHF
 from transformers import \
@@ -329,7 +327,6 @@ AutoModelForImageSegmentation = get_wrapped_class(
     AutoModelForImageSegmentationHF)
 AutoModelForImageClassification = get_wrapped_class(
     AutoModelForImageClassificationHF)
-AutoModelForImageTextToText = get_wrapped_class(AutoModelForImageTextToTextHF)
 AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
 AutoModelForQuestionAnswering = get_wrapped_class(
     AutoModelForQuestionAnsweringHF)

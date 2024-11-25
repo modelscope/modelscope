@@ -364,8 +364,8 @@ BitsAndBytesConfig = get_wrapped_class(
     ignore_file_pattern=[
         r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
-AutoImageProcessor = AutoImageProcessorHF(
-    BitsAndBytesConfigHF,
+AutoImageProcessor = get_wrapped_class(
+    AutoImageProcessorHF,
     ignore_file_pattern=[
         r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])

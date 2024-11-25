@@ -771,6 +771,10 @@ template_info = [
         template_regex=f'.*{cases("paraphrase-multilingual")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/paraphrase-multilingual'),
+    TemplateInfo(
+        template_regex=f'.*{cases("marco")}.*{cases("o1")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/marco-o1'),
 
 ]
 

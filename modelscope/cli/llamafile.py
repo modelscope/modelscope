@@ -135,7 +135,18 @@ class LlamafileCMD(CLICommand):
         current_mode = os.stat(file_path).st_mode
         new_mode = current_mode | 0o111
         os.chmod(file_path, new_mode)
-        os.system(file_path)
+        execute_cmd = file_path
+        has_gpu = False
+        try:
+            import torch
+            has_gpu = torch.cuda.is_available()
+        except ModuleNotFoundError:
+            # we depend on torch to detect gpu.
+            # if torch is not available, we will just assume gpu cannot be used
+            pass
+        if has_gpu:
+            execute_cmd = f'{execute_cmd}qq'
+        os.system(execute_cmd)
 
     def _rename_extension(self, original_file_name):
         directory, filename = os.path.split(original_file_name)

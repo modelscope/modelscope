@@ -15,7 +15,7 @@ def can_load_by_ms(model_dir: str, task_name: Optional[str],
     if model_type is None or task_name is None:
         return False
     if ('MODELS', task_name,
-            model_type) in LazyImportModule.AST_INDEX[INDEX_KEY]:
+            model_type) in LazyImportModule.get_ast_index()[INDEX_KEY]:
         return True
     ms_wrapper_path = os.path.join(model_dir, 'ms_wrapper.py')
     if os.path.exists(ms_wrapper_path):

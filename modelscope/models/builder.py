@@ -13,7 +13,7 @@ MODELS = Registry('models')
 BACKBONES = MODELS
 HEADS = Registry('heads')
 
-modules = LazyImportModule.AST_INDEX[INDEX_KEY]
+modules = LazyImportModule.get_ast_index()[INDEX_KEY]
 for module_index in list(modules.keys()):
     if module_index[1] == Tasks.backbone and module_index[0] == 'BACKBONES':
         modules[(MODELS.name.upper(), module_index[1],

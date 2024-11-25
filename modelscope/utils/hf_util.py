@@ -284,7 +284,7 @@ def get_wrapped_class(module_class,
             ignore_file_pattern = kwargs.pop('ignore_file_pattern',
                                              default_ignore_file_pattern)
             subfolder = kwargs.pop('subfolder', default_file_filter)
-
+            file_filter = None
             if subfolder:
                 file_filter = f'{subfolder}/*'
             if not os.path.exists(pretrained_model_name_or_path):

@@ -145,7 +145,7 @@ class LlamafileCMD(CLICommand):
             # if torch is not available, we will just assume gpu cannot be used
             pass
         if has_gpu:
-            execute_cmd = f'{execute_cmd} --ngl 999'
+            execute_cmd = f'{execute_cmd} -ngl 999'
         os.system(execute_cmd)
 
     def _rename_extension(self, original_file_name):

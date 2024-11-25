@@ -487,5 +487,5 @@ def _download_file_lists(
         filtered_repo_files,
         max_workers=max_workers,
         desc=f'Fetching {len(filtered_repo_files)} files',
-        leave=False,
-    )
+        leave=True,
+        position=max_workers)

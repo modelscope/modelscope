@@ -1,18 +1,29 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import importlib
 import os
 from pathlib import Path
 from types import MethodType
-from typing import Dict, Literal, Optional, Union
+from typing import Optional, Union
 
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
+from transformers import \
+    AutoModelForImageClassification as AutoModelForImageClassificationHF
+from transformers import \
+    AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
+from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
+from transformers import AutoModelForMaskedLM as AutoModelForMaskedLMHF
+from transformers import \
+    AutoModelForMaskGeneration as AutoModelForMaskGenerationHF
+from transformers import AutoModelForPreTraining as AutoModelForPreTrainingHF
+from transformers import \
+    AutoModelForQuestionAnswering as AutoModelForQuestionAnsweringHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
 from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
+from transformers import AutoModelForTextEncoding as AutoModelForTextEncodingHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
 from transformers import AutoProcessor as AutoProcessorHF
@@ -22,6 +33,7 @@ from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
+from transformers import T5EncoderModel as T5EncoderModelHF
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
@@ -247,7 +259,10 @@ def patch_hub():
     _patch_pretrained_class()
 
 
-def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
+def get_wrapped_class(module_class,
+                      ignore_file_pattern=[],
+                      file_filter=None,
+                      **kwargs):
     """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
     Args:
         module_class: The actual module class
@@ -257,6 +272,7 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
         The wrapper
     """
     default_ignore_file_pattern = ignore_file_pattern
+    default_file_filter = file_filter
 
     class ClassWrapper(module_class):
 
@@ -265,13 +281,26 @@ def get_wrapped_class(module_class, ignore_file_pattern=[], **kwargs):
                             **kwargs):
             ignore_file_pattern = kwargs.pop('ignore_file_pattern',
                                              default_ignore_file_pattern)
+            subfolder = kwargs.pop('subfolder', default_file_filter)
+            file_filter = None
+            if subfolder:
+                file_filter = f'{subfolder}/*'
             if not os.path.exists(pretrained_model_name_or_path):
                 revision = kwargs.pop('revision', DEFAULT_MODEL_REVISION)
-                model_dir = snapshot_download(
-                    pretrained_model_name_or_path,
-                    revision=revision,
-                    ignore_file_pattern=ignore_file_pattern,
-                    user_agent=user_agent())
+                if file_filter is None:
+                    model_dir = snapshot_download(
+                        pretrained_model_name_or_path,
+                        revision=revision,
+                        ignore_file_pattern=ignore_file_pattern,
+                        user_agent=user_agent())
+                else:
+                    model_dir = os.path.join(
+                        snapshot_download(
+                            pretrained_model_name_or_path,
+                            revision=revision,
+                            ignore_file_pattern=ignore_file_pattern,
+                            allow_file_pattern=file_filter,
+                            user_agent=user_agent()), subfolder)
             else:
                 model_dir = pretrained_model_name_or_path
 
@@ -294,24 +323,50 @@ AutoModelForSequenceClassification = get_wrapped_class(
     AutoModelForSequenceClassificationHF)
 AutoModelForTokenClassification = get_wrapped_class(
     AutoModelForTokenClassificationHF)
+AutoModelForImageSegmentation = get_wrapped_class(
+    AutoModelForImageSegmentationHF)
+AutoModelForImageClassification = get_wrapped_class(
+    AutoModelForImageClassificationHF)
+AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
+AutoModelForQuestionAnswering = get_wrapped_class(
+    AutoModelForQuestionAnsweringHF)
+AutoModelForMaskedLM = get_wrapped_class(AutoModelForMaskedLMHF)
+AutoModelForMaskGeneration = get_wrapped_class(AutoModelForMaskGenerationHF)
+AutoModelForPreTraining = get_wrapped_class(AutoModelForPreTrainingHF)
+AutoModelForTextEncoding = get_wrapped_class(AutoModelForTextEncodingHF)
+T5EncoderModel = get_wrapped_class(T5EncoderModelHF)
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+AutoProcessor = get_wrapped_class(
+    AutoProcessorHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
 AutoConfig = get_wrapped_class(
     AutoConfigHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
 GenerationConfig = get_wrapped_class(
     GenerationConfigHF,
     ignore_file_pattern=[
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
     ])
+BitsAndBytesConfig = get_wrapped_class(
+    BitsAndBytesConfigHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+AutoImageProcessor = get_wrapped_class(
+    AutoImageProcessorHF,
+    ignore_file_pattern=[
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5'
+    ])
+
 GPTQConfig = GPTQConfigHF
 AwqConfig = AwqConfigHF
-BitsAndBytesConfig = BitsAndBytesConfigHF
-AutoImageProcessor = get_wrapped_class(AutoImageProcessorHF)
 BatchFeature = get_wrapped_class(BatchFeatureHF)

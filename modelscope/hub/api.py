@@ -1203,7 +1203,7 @@ class ModelScopeConfig:
                 for cookie in cookies:
                     if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
                         ModelScopeConfig.cookie_expired_warning = True
-                        logger.warning(
+                        logger.debug(
                             'Authentication has expired, '
                             'please re-login with modelscope login --token "YOUR_SDK_TOKEN" '
                             'if you need to access private models or datasets.')

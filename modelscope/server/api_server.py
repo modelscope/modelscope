@@ -10,7 +10,7 @@ def add_server_args(parser: argparse.ArgumentParser):
     parser.add_argument('--port', type=int, default=8000, help='Server port')
     parser.add_argument('--debug', default='debug', help='Set debug level.')
     parser.add_argument(
-        '--llm_first',
+        '--external_engine_for_llm',
         type=bool,
         default=True,
         help='Use LLMPipeline first for llm models.')

@@ -205,6 +205,13 @@ class Pipeline(ABC):
         kwargs['preprocess_params'] = preprocess_params
         kwargs['forward_params'] = forward_params
         kwargs['postprocess_params'] = postprocess_params
+
+        # for LLMPipeline, we shall support treating list of roles as a
+        # one single 'messages' input
+        if 'LLMPipeline' in type(self).__name__ and isinstance(input, list):
+            input = {'messages': input}
+            kwargs['is_message'] = True
+
         if isinstance(input, list):
             if batch_size is None:
                 output = []

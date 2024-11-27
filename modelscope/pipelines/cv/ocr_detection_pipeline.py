@@ -27,6 +27,8 @@ RBOX_DIM = 5
 OFFSET_DIM = 6
 WORD_POLYGON_DIM = 8
 OFFSET_VARIANCE = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+TF_NODE_THRESHOLD = 0.4
+TF_LINK_THRESHOLD = 0.6
 
 
 @PIPELINES.register_module(
@@ -39,7 +41,7 @@ class OCRDetectionPipeline(Pipeline):
     ```python
     >>> from modelscope.pipelines import pipeline
 
-    >>> ocr_detection = pipeline('ocr_detection', model='damo/cv_resnet18_ocr-detection-line-level_damo')
+    >>> ocr_detection = pipeline('ocr-detection', model='damo/cv_resnet18_ocr-detection-line-level_damo')
     >>> result = ocr_detection('https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/ocr_detection.jpg')
 
         {'polygons': array([[220,  14, 780,  14, 780,  64, 220,  64],
@@ -87,10 +89,16 @@ class OCRDetectionPipeline(Pipeline):
                 tf = tf.compat.v1
             tf.compat.v1.disable_eager_execution()
 
-            tf.app.flags.DEFINE_float('node_threshold', 0.4,
-                                      'Confidence threshold for nodes')
-            tf.app.flags.DEFINE_float('link_threshold', 0.6,
-                                      'Confidence threshold for links')
+            tf.app.flags.DEFINE_float(
+                'node_threshold',
+                TF_NODE_THRESHOLD,
+                'Confidence threshold for nodes',
+                already_declared_error=False)
+            tf.app.flags.DEFINE_float(
+                'link_threshold',
+                TF_LINK_THRESHOLD,
+                'Confidence threshold for links',
+                already_declared_error=False)
             tf.reset_default_graph()
             model_path = osp.join(
                 osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),
@@ -199,10 +207,16 @@ class OCRDetectionPipeline(Pipeline):
 
             tf.compat.v1.disable_eager_execution()
 
-            tf.app.flags.DEFINE_float('node_threshold', 0.4,
-                                      'Confidence threshold for nodes')
-            tf.app.flags.DEFINE_float('link_threshold', 0.6,
-                                      'Confidence threshold for links')
+            tf.app.flags.DEFINE_float(
+                'node_threshold',
+                TF_NODE_THRESHOLD,
+                'Confidence threshold for nodes',
+                already_declared_error=False)
+            tf.app.flags.DEFINE_float(
+                'link_threshold',
+                TF_LINK_THRESHOLD,
+                'Confidence threshold for links',
+                already_declared_error=False)
 
             img = LoadImage.convert_to_ndarray(input)
 

@@ -200,24 +200,6 @@ class OCRDetectionPipeline(Pipeline):
             return result
         else:
             # for model seglink++
-            import tensorflow as tf
-
-            if tf.__version__ >= '2.0':
-                tf = tf.compat.v1
-
-            tf.compat.v1.disable_eager_execution()
-
-            tf.app.flags.DEFINE_float(
-                'node_threshold',
-                TF_NODE_THRESHOLD,
-                'Confidence threshold for nodes',
-                already_declared_error=False)
-            tf.app.flags.DEFINE_float(
-                'link_threshold',
-                TF_LINK_THRESHOLD,
-                'Confidence threshold for links',
-                already_declared_error=False)
-
             img = LoadImage.convert_to_ndarray(input)
 
             h, w, c = img.shape

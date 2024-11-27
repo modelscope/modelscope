@@ -89,16 +89,10 @@ class OCRDetectionPipeline(Pipeline):
                 tf = tf.compat.v1
             tf.compat.v1.disable_eager_execution()
 
-            tf.app.flags.DEFINE_float(
-                'node_threshold',
-                TF_NODE_THRESHOLD,
-                'Confidence threshold for nodes',
-                already_declared_error=False)
-            tf.app.flags.DEFINE_float(
-                'link_threshold',
-                TF_LINK_THRESHOLD,
-                'Confidence threshold for links',
-                already_declared_error=False)
+            tf.app.flags.DEFINE_float('node_threshold', TF_NODE_THRESHOLD,
+                                      'Confidence threshold for nodes')
+            tf.app.flags.DEFINE_float('link_threshold', TF_LINK_THRESHOLD,
+                                      'Confidence threshold for links')
             tf.reset_default_graph()
             model_path = osp.join(
                 osp.join(self.model, ModelFile.TF_CHECKPOINT_FOLDER),

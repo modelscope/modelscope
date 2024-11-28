@@ -33,6 +33,8 @@ from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
+from transformers import \
+    Qwen2VLForConditionalGeneration as Qwen2VLForConditionalGenerationHF
 from transformers import T5EncoderModel as T5EncoderModelHF
 
 from modelscope import snapshot_download
@@ -335,6 +337,8 @@ AutoModelForMaskGeneration = get_wrapped_class(AutoModelForMaskGenerationHF)
 AutoModelForPreTraining = get_wrapped_class(AutoModelForPreTrainingHF)
 AutoModelForTextEncoding = get_wrapped_class(AutoModelForTextEncodingHF)
 T5EncoderModel = get_wrapped_class(T5EncoderModelHF)
+Qwen2VLForConditionalGeneration = get_wrapped_class(
+    Qwen2VLForConditionalGenerationHF)
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,

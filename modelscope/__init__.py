@@ -40,8 +40,9 @@ if TYPE_CHECKING:
             AutoModelForImageToImage, AutoModelForImageSegmentation,
             AutoModelForQuestionAnswering, AutoModelForMaskedLM, AutoTokenizer,
             AutoModelForMaskGeneration, AutoModelForPreTraining,
-            AutoModelForTextEncoding, GenerationConfig, AutoImageProcessor,
-            BatchFeature, T5EncoderModel)
+            AutoModelForTextEncoding, GenerationConfig,
+            Qwen2VLForConditionalGeneration, AutoImageProcessor, BatchFeature,
+            T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -96,7 +97,8 @@ else:
     if is_transformers_available():
         _import_structure['utils.hf_util'] = [
             'AutoConfig', 'GenerationConfig', 'AutoModel', 'GPTQConfig',
-            'AwqConfig', 'BitsAndBytesConfig', 'AutoModelForCausalLM',
+            'Qwen2VLForConditionalGeneration', 'AwqConfig',
+            'BitsAndBytesConfig', 'AutoModelForCausalLM',
             'AutoModelForSeq2SeqLM', 'AutoTokenizer',
             'AutoModelForSequenceClassification',
             'AutoModelForTokenClassification',

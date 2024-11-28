@@ -32,16 +32,17 @@ if TYPE_CHECKING:
                            build_dataset_from_file)
     from .utils.constant import Tasks
     if is_transformers_available():
-        from .utils.hf_util import AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig
         from .utils.hf_util import (
-            AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+            AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
+            AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig,
+            AutoModelForCausalLM, AutoModelForSeq2SeqLM,
             AutoModelForSequenceClassification,
             AutoModelForTokenClassification, AutoModelForImageClassification,
             AutoModelForImageToImage, AutoModelForImageSegmentation,
             AutoModelForQuestionAnswering, AutoModelForMaskedLM, AutoTokenizer,
             AutoModelForMaskGeneration, AutoModelForPreTraining,
-            AutoModelForTextEncoding, GenerationConfig, AutoImageProcessor,
-            BatchFeature, T5EncoderModel)
+            AutoModelForTextEncoding, AutoImageProcessor, BatchFeature,
+            Qwen2VLForConditionalGeneration, T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -95,17 +96,17 @@ else:
 
     if is_transformers_available():
         _import_structure['utils.hf_util'] = [
-            'AutoConfig', 'GenerationConfig', 'AutoModel', 'GPTQConfig',
-            'AwqConfig', 'BitsAndBytesConfig', 'AutoModelForCausalLM',
-            'AutoModelForSeq2SeqLM', 'AutoTokenizer',
-            'AutoModelForSequenceClassification',
+            'AutoModel', 'AutoProcessor', 'AutoFeatureExtractor',
+            'GenerationConfig', 'AutoConfig', 'GPTQConfig', 'AwqConfig',
+            'BitsAndBytesConfig', 'AutoModelForCausalLM',
+            'AutoModelForSeq2SeqLM', 'AutoModelForSequenceClassification',
             'AutoModelForTokenClassification',
             'AutoModelForImageClassification', 'AutoModelForImageToImage',
-            'AutoModelForQuestionAnswering', 'AutoModelForMaskedLM',
+            'AutoModelForImageSegmentation', 'AutoModelForQuestionAnswering',
+            'AutoModelForMaskedLM', 'AutoTokenizer',
             'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
-            'AutoModelForTextEncoding', 'AutoModelForTokenClassification',
-            'AutoModelForImageSegmentation', 'AutoImageProcessor',
-            'BatchFeature', 'T5EncoderModel'
+            'AutoModelForTextEncoding', 'AutoImageProcessor', 'BatchFeature',
+            'Qwen2VLForConditionalGeneration', 'T5EncoderModel'
         ]
 
     import sys

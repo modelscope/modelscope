@@ -775,6 +775,10 @@ template_info = [
         template_regex=f'.*{cases("marco")}.*{cases("o1")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/marco-o1'),
+    TemplateInfo(
+        template_regex=f'.*{cases("qwq")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwq'),
 
 ]
 

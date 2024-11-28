@@ -299,6 +299,7 @@ class TestToOllama(unittest.TestCase):
             'Ceceliachenen/paraphrase-multilingual-MiniLM-L12-v2',
             'paraphrase-multilingual')
         _test_check_tmpl_type('bartowski/Marco-o1-GGUF', 'marco-o1')
+        _test_check_tmpl_type('Qwen/QwQ-32B-Preview', 'qwq')
 
 
 if __name__ == '__main__':

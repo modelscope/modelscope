@@ -26,6 +26,7 @@ from transformers import \
 from transformers import AutoModelForTextEncoding as AutoModelForTextEncodingHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
+from transformers import AutoModelForVision2Seq as AutoModelForVision2SeqHF
 from transformers import AutoProcessor as AutoProcessorHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BatchFeature as BatchFeatureHF
@@ -321,6 +322,7 @@ def get_wrapped_class(module_class,
 AutoModel = get_wrapped_class(AutoModelHF)
 AutoModelForCausalLM = get_wrapped_class(AutoModelForCausalLMHF)
 AutoModelForSeq2SeqLM = get_wrapped_class(AutoModelForSeq2SeqLMHF)
+AutoModelForVision2Seq = get_wrapped_class(AutoModelForVision2SeqHF)
 AutoModelForSequenceClassification = get_wrapped_class(
     AutoModelForSequenceClassificationHF)
 AutoModelForTokenClassification = get_wrapped_class(

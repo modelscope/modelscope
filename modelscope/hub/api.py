@@ -571,7 +571,7 @@ class HubApi:
             revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
             if revision_detail is None:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
-            logger.info('Development mode use revision: %s' % revision)
+            logger.debug('Development mode use revision: %s' % revision)
         else:
             if revision is not None and revision in all_branches:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)

@@ -139,7 +139,7 @@ class CPUImageBuilder(Builder):
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}'
             f'-torch{self.args.torch_version}-base')
-        extra_content = """\nRUN pip install adaseq pai-easycv"""
+        extra_content = ''
 
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -192,8 +192,7 @@ class GPUImageBuilder(Builder):
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         extra_content = """
-RUN pip install adaseq pai-easycv && \
-    pip install tf-keras==2.16.0 --no-dependencies && \
+RUN pip install tf-keras==2.16.0 --no-dependencies && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
     CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
         pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'

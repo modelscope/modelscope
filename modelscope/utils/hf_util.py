@@ -13,7 +13,6 @@ from transformers import \
     AutoModelForImageClassification as AutoModelForImageClassificationHF
 from transformers import \
     AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
-from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
 from transformers import AutoModelForMaskedLM as AutoModelForMaskedLMHF
 from transformers import \
     AutoModelForMaskGeneration as AutoModelForMaskGenerationHF
@@ -34,8 +33,6 @@ from transformers import BitsAndBytesConfig as BitsAndBytesConfigHF
 from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
-from transformers import \
-    Qwen2VLForConditionalGeneration as Qwen2VLForConditionalGenerationHF
 from transformers import T5EncoderModel as T5EncoderModelHF
 
 from modelscope import snapshot_download
@@ -331,7 +328,12 @@ AutoModelForImageSegmentation = get_wrapped_class(
     AutoModelForImageSegmentationHF)
 AutoModelForImageClassification = get_wrapped_class(
     AutoModelForImageClassificationHF)
-AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
+try:
+    from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
+    AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
+except ImportError:
+    AutoModelForImageToImage = None
+
 AutoModelForQuestionAnswering = get_wrapped_class(
     AutoModelForQuestionAnsweringHF)
 AutoModelForMaskedLM = get_wrapped_class(AutoModelForMaskedLMHF)
@@ -339,8 +341,13 @@ AutoModelForMaskGeneration = get_wrapped_class(AutoModelForMaskGenerationHF)
 AutoModelForPreTraining = get_wrapped_class(AutoModelForPreTrainingHF)
 AutoModelForTextEncoding = get_wrapped_class(AutoModelForTextEncodingHF)
 T5EncoderModel = get_wrapped_class(T5EncoderModelHF)
-Qwen2VLForConditionalGeneration = get_wrapped_class(
-    Qwen2VLForConditionalGenerationHF)
+try:
+    from transformers import \
+        Qwen2VLForConditionalGeneration as Qwen2VLForConditionalGenerationHF
+    Qwen2VLForConditionalGeneration = get_wrapped_class(
+        Qwen2VLForConditionalGenerationHF)
+except ImportError:
+    Qwen2VLForConditionalGeneration = None
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,

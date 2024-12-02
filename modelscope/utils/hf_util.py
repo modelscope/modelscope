@@ -402,8 +402,6 @@ AutoModelForTableQuestionAnswering = get_wrapped_class(
     AutoModelForTableQuestionAnsweringHF)
 AutoModelForVisualQuestionAnswering = get_wrapped_class(
     AutoModelForVisualQuestionAnsweringHF)
-AutoModelForKeypointDetection = get_wrapped_class(
-    AutoModelForKeypointDetectionHF)
 AutoModelForDocumentQuestionAnswering = get_wrapped_class(
     AutoModelForDocumentQuestionAnsweringHF)
 AutoModelForSemanticSegmentation = get_wrapped_class(

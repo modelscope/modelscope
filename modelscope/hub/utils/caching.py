@@ -272,7 +272,8 @@ class ModelFileSystemCache(FileSystemCache):
                     cached_key['Revision'].startswith(key['Revision'])
                     or key['Revision'].startswith(cached_key['Revision'])):
                 expected_hash = model_file_info[FILE_HASH]
-                if expected_hash is not None:
+                if expected_hash is not None and os.path.exists(
+                        cache_file_path):
                     cache_file_sha256 = compute_hash(cache_file_path)
                     if expected_hash == cache_file_sha256:
                         is_exists = True

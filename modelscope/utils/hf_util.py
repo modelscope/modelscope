@@ -8,24 +8,52 @@ from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
 from transformers import AutoModel as AutoModelHF
+from transformers import \
+    AutoModelForAudioClassification as AutoModelForAudioClassificationHF
 from transformers import AutoModelForCausalLM as AutoModelForCausalLMHF
+from transformers import \
+    AutoModelForDocumentQuestionAnswering as \
+    AutoModelForDocumentQuestionAnsweringHF
 from transformers import \
     AutoModelForImageClassification as AutoModelForImageClassificationHF
 from transformers import \
     AutoModelForImageSegmentation as AutoModelForImageSegmentationHF
+from transformers import \
+    AutoModelForInstanceSegmentation as AutoModelForInstanceSegmentationHF
+from transformers import \
+    AutoModelForMaskedImageModeling as AutoModelForMaskedImageModelingHF
 from transformers import AutoModelForMaskedLM as AutoModelForMaskedLMHF
 from transformers import \
     AutoModelForMaskGeneration as AutoModelForMaskGenerationHF
+from transformers import \
+    AutoModelForObjectDetection as AutoModelForObjectDetectionHF
 from transformers import AutoModelForPreTraining as AutoModelForPreTrainingHF
 from transformers import \
     AutoModelForQuestionAnswering as AutoModelForQuestionAnsweringHF
+from transformers import \
+    AutoModelForSemanticSegmentation as AutoModelForSemanticSegmentationHF
 from transformers import AutoModelForSeq2SeqLM as AutoModelForSeq2SeqLMHF
 from transformers import \
     AutoModelForSequenceClassification as AutoModelForSequenceClassificationHF
+from transformers import \
+    AutoModelForSpeechSeq2Seq as AutoModelForSpeechSeq2SeqHF
+from transformers import \
+    AutoModelForTableQuestionAnswering as AutoModelForTableQuestionAnsweringHF
 from transformers import AutoModelForTextEncoding as AutoModelForTextEncodingHF
 from transformers import \
     AutoModelForTokenClassification as AutoModelForTokenClassificationHF
+from transformers import \
+    AutoModelForUniversalSegmentation as AutoModelForUniversalSegmentationHF
 from transformers import AutoModelForVision2Seq as AutoModelForVision2SeqHF
+from transformers import \
+    AutoModelForVisualQuestionAnswering as \
+    AutoModelForVisualQuestionAnsweringHF
+from transformers import \
+    AutoModelForZeroShotImageClassification as \
+    AutoModelForZeroShotImageClassificationHF
+from transformers import \
+    AutoModelForZeroShotObjectDetection as \
+    AutoModelForZeroShotObjectDetectionHF
 from transformers import AutoProcessor as AutoProcessorHF
 from transformers import AutoTokenizer as AutoTokenizerHF
 from transformers import BatchFeature as BatchFeatureHF
@@ -34,6 +62,7 @@ from transformers import GenerationConfig as GenerationConfigHF
 from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
 from transformers import T5EncoderModel as T5EncoderModelHF
+from transformers import __version__ as transformers_version
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
@@ -47,6 +76,15 @@ except ImportError:
     AwqConfigHF = None
 
 logger = get_logger()
+
+
+class DummyUnsupported:
+
+    def __init__(self, name: str):
+        raise ImportError(
+            f'{name} is not supported with your installed Transformers version {transformers_version}, '
+            f'please update your Transformers by "pip install transformers -U".'
+        )
 
 
 def user_agent(invoked_by=None):
@@ -328,14 +366,54 @@ AutoModelForImageSegmentation = get_wrapped_class(
     AutoModelForImageSegmentationHF)
 AutoModelForImageClassification = get_wrapped_class(
     AutoModelForImageClassificationHF)
+AutoModelForZeroShotImageClassification = get_wrapped_class(
+    AutoModelForZeroShotImageClassificationHF)
 try:
     from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
     AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
 except ImportError:
-    AutoModelForImageToImage = None
+    AutoModelForImageToImage = DummyUnsupported('AutoModelForImageToImage')
+
+try:
+    from transformers import AutoModelForImageTextToText as AutoModelForImageTextToTextHF
+    AutoModelForImageTextToText = get_wrapped_class(
+        AutoModelForImageTextToTextHF)
+except ImportError:
+    AutoModelForImageTextToText = DummyUnsupported(
+        'AutoModelForImageTextToText')
+
+try:
+    from transformers import AutoModelForKeypointDetection as AutoModelForKeypointDetectionHF
+    AutoModelForKeypointDetection = get_wrapped_class(
+        AutoModelForKeypointDetectionHF)
+except ImportError:
+    AutoModelForKeypointDetection = DummyUnsupported(
+        'AutoModelForKeypointDetection')
 
 AutoModelForQuestionAnswering = get_wrapped_class(
     AutoModelForQuestionAnsweringHF)
+AutoModelForTableQuestionAnswering = get_wrapped_class(
+    AutoModelForTableQuestionAnsweringHF)
+AutoModelForVisualQuestionAnswering = get_wrapped_class(
+    AutoModelForVisualQuestionAnsweringHF)
+AutoModelForKeypointDetection = get_wrapped_class(
+    AutoModelForKeypointDetectionHF)
+AutoModelForDocumentQuestionAnswering = get_wrapped_class(
+    AutoModelForDocumentQuestionAnsweringHF)
+AutoModelForSemanticSegmentation = get_wrapped_class(
+    AutoModelForSemanticSegmentationHF)
+AutoModelForUniversalSegmentation = get_wrapped_class(
+    AutoModelForUniversalSegmentationHF)
+AutoModelForInstanceSegmentation = get_wrapped_class(
+    AutoModelForInstanceSegmentationHF)
+AutoModelForObjectDetection = get_wrapped_class(AutoModelForObjectDetectionHF)
+AutoModelForZeroShotObjectDetection = get_wrapped_class(
+    AutoModelForZeroShotObjectDetectionHF)
+AutoModelForAudioClassification = get_wrapped_class(
+    AutoModelForAudioClassificationHF)
+AutoModelForSpeechSeq2Seq = get_wrapped_class(AutoModelForSpeechSeq2SeqHF)
+AutoModelForMaskedImageModeling = get_wrapped_class(
+    AutoModelForMaskedImageModelingHF)
 AutoModelForMaskedLM = get_wrapped_class(AutoModelForMaskedLMHF)
 AutoModelForMaskGeneration = get_wrapped_class(AutoModelForMaskGenerationHF)
 AutoModelForPreTraining = get_wrapped_class(AutoModelForPreTrainingHF)
@@ -347,7 +425,8 @@ try:
     Qwen2VLForConditionalGeneration = get_wrapped_class(
         Qwen2VLForConditionalGenerationHF)
 except ImportError:
-    Qwen2VLForConditionalGeneration = None
+    Qwen2VLForConditionalGeneration = DummyUnsupported(
+        'Qwen2VLForConditionalGeneration')
 
 AutoTokenizer = get_wrapped_class(
     AutoTokenizerHF,

@@ -396,7 +396,6 @@ except ImportError:
     AutoModelForKeypointDetection = UnsupportedAutoClass(
         'AutoModelForKeypointDetection')
 
-
 AutoModelForQuestionAnswering = get_wrapped_class(
     AutoModelForQuestionAnsweringHF)
 AutoModelForTableQuestionAnswering = get_wrapped_class(

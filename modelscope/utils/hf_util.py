@@ -78,13 +78,19 @@ except ImportError:
 logger = get_logger()
 
 
-class DummyUnsupported:
+class UnsupportedAutoClass:
 
     def __init__(self, name: str):
-        raise ImportError(
-            f'{name} is not supported with your installed Transformers version {transformers_version}, '
-            f'please update your Transformers by "pip install transformers -U".'
-        )
+        self.error_msg =\
+            f'{name} is not supported with your installed Transformers version {transformers_version}. ' + \
+            'Please update your Transformers by "pip install transformers -U".'
+
+    def from_pretrained(self, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
+        raise ImportError(self.error_msg)
+
+    def from_config(self, cls, config):
+        raise ImportError(self.error_msg)
 
 
 def user_agent(invoked_by=None):
@@ -372,14 +378,14 @@ try:
     from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
     AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
 except ImportError:
-    AutoModelForImageToImage = DummyUnsupported('AutoModelForImageToImage')
+    AutoModelForImageToImage = UnsupportedAutoClass('AutoModelForImageToImage')
 
 try:
     from transformers import AutoModelForImageTextToText as AutoModelForImageTextToTextHF
     AutoModelForImageTextToText = get_wrapped_class(
         AutoModelForImageTextToTextHF)
 except ImportError:
-    AutoModelForImageTextToText = DummyUnsupported(
+    AutoModelForImageTextToText = UnsupportedAutoClass(
         'AutoModelForImageTextToText')
 
 try:
@@ -387,7 +393,7 @@ try:
     AutoModelForKeypointDetection = get_wrapped_class(
         AutoModelForKeypointDetectionHF)
 except ImportError:
-    AutoModelForKeypointDetection = DummyUnsupported(
+    AutoModelForKeypointDetection = UnsupportedAutoClass(
         'AutoModelForKeypointDetection')
 
 AutoModelForQuestionAnswering = get_wrapped_class(
@@ -425,7 +431,7 @@ try:
     Qwen2VLForConditionalGeneration = get_wrapped_class(
         Qwen2VLForConditionalGenerationHF)
 except ImportError:
-    Qwen2VLForConditionalGeneration = DummyUnsupported(
+    Qwen2VLForConditionalGeneration = UnsupportedAutoClass(
         'Qwen2VLForConditionalGeneration')
 
 AutoTokenizer = get_wrapped_class(

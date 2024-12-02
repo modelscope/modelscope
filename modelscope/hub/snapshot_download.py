@@ -468,7 +468,8 @@ def _download_file_lists(
             if cache.exists(repo_file):
                 file_name = os.path.basename(repo_file['Name'])
                 logger.debug(
-                    f'File {file_name} already in cache, skip downloading!')
+                    f'File {file_name} already in cache with identical hash, skip downloading!'
+                )
                 continue
         except Exception as e:
             logger.warning('The file pattern is invalid : %s' % e)

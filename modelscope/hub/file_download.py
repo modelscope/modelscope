@@ -214,7 +214,7 @@ def _repo_file_download(
             if repo_file['Path'] == file_path:
                 if cache.exists(repo_file):
                     logger.debug(
-                        f'File {repo_file["Name"]} already in cache, skip downloading!'
+                        f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
                     )
                     return cache.get_file_by_info(repo_file)
                 else:
@@ -251,7 +251,7 @@ def _repo_file_download(
                 if repo_file['Path'] == file_path:
                     if cache.exists(repo_file):
                         logger.debug(
-                            f'File {repo_file["Name"]} already in cache, skip downloading!'
+                            f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
                         )
                         return cache.get_file_by_info(repo_file)
                     else:

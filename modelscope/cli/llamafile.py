@@ -56,15 +56,6 @@ class LlamafileCMD(CLICommand):
         )
 
         group.add_argument(
-            '--launch',
-            type=str,
-            required=False,
-            default='True',
-            help=
-            'Whether to launch model with the downloaded llamafile, default to True.'
-        )
-
-        group.add_argument(
             '--file',
             type=str,
             required=False,
@@ -78,6 +69,15 @@ class LlamafileCMD(CLICommand):
             default=None,
             help=
             'Directory where the selected llamafile would will be downloaded to.'
+        )
+
+        group.add_argument(
+            '--launch',
+            type=str,
+            required=False,
+            default='True',
+            help=
+            'Whether to launch model with the downloaded llamafile, default to True.'
         )
 
         parser.set_defaults(func=subparser_func)
@@ -106,7 +106,7 @@ class LlamafileCMD(CLICommand):
                 selected_file = f
                 found = True
                 break
-            if self.args.accuracy and self.args.accuracy in f.lower():
+            if self.args.accuracy and self.args.accuracy.lower() in f.lower():
                 selected_file = f
                 found = True
                 break

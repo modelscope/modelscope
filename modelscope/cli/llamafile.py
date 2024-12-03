@@ -124,7 +124,7 @@ class LlamafileCMD(CLICommand):
             downloaded_file = self._rename_extension(downloaded_file)
 
         if self.args.launch.lower() == 'true':
-            print('Launching model with llamafile:')
+            print(f'Launching model with llamafile [{downloaded_file}]:')
             self._execute_llamafile(downloaded_file)
         else:
             print(
@@ -153,7 +153,6 @@ class LlamafileCMD(CLICommand):
     def _rename_extension(self, original_file_name):
         directory, filename = os.path.split(original_file_name)
         base_name, _ = os.path.splitext(filename)
-        new_filename = f'{base_name}.exe'
-        new_file_name = os.path.join(directory, new_filename)
-        os.rename(original_file_name, new_file_name)
+        new_filename = os.path.join(directory, f'{base_name}.exe')
+        os.rename(original_file_name, new_filename)
         return new_filename

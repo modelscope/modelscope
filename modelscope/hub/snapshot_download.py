@@ -21,12 +21,14 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
+from modelscope.utils.ms_tqdm import timing_decorator
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
 
 logger = get_logger()
 
 
+@timing_decorator
 def snapshot_download(
     model_id: str,
     revision: Optional[str] = DEFAULT_MODEL_REVISION,

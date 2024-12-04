@@ -15,6 +15,7 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
+from modelscope.utils.ms_tqdm import timing_decorator
 
 logger = get_logger()
 
@@ -95,6 +96,7 @@ def get_endpoint():
     return MODELSCOPE_URL_SCHEME + modelscope_domain
 
 
+@timing_decorator
 def compute_hash(file_path):
     BUFFER_SIZE = 1024 * 64  # 64k buffer size
     sha256_hash = hashlib.sha256()
@@ -107,6 +109,7 @@ def compute_hash(file_path):
     return sha256_hash.hexdigest()
 
 
+@timing_decorator
 def file_integrity_validation(file_path, expected_sha256):
     """Validate the file hash is expected, if not, delete the file
 

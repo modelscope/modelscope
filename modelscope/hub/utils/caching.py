@@ -10,6 +10,7 @@ from typing import Dict
 from modelscope.hub.constants import FILE_HASH
 from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
+from modelscope.utils.ms_tqdm import timing_decorator
 
 logger = get_logger()
 """Implements caching functionality, used internally only
@@ -253,6 +254,7 @@ class ModelFileSystemCache(FileSystemCache):
         }
         return cache_key
 
+    @timing_decorator
     def exists(self, model_file_info):
         """Check the file is cached or not. Note existence check will also cover digest check
 
@@ -305,6 +307,7 @@ class ModelFileSystemCache(FileSystemCache):
                     os.remove(file_path)
                 break
 
+    @timing_decorator
     def put_file(self, model_file_info, model_file_location):
         """Put model on model_file_location to cache, the model first download to /tmp, and move to cache.
 

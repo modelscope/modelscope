@@ -28,6 +28,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
 from modelscope.utils.file_utils import (get_dataset_cache_root,
                                          get_model_cache_root)
 from modelscope.utils.logger import get_logger
+from modelscope.utils.ms_tqdm import timing_decorator
 from .errors import FileDownloadError, InvalidParameter, NotExistError
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_endpoint,
@@ -372,6 +373,7 @@ def download_part_with_retry(params):
             retry.sleep()
 
 
+@timing_decorator
 def parallel_download(
     url: str,
     local_dir: str,
@@ -418,6 +420,7 @@ def parallel_download(
             os.remove(part_file_name)
 
 
+@timing_decorator
 def http_get_model_file(
     url: str,
     local_dir: str,
@@ -589,6 +592,7 @@ def http_get_file(
     os.replace(temp_file.name, os.path.join(local_dir, file_name))
 
 
+@timing_decorator
 def download_file(url, file_meta, temporary_cache_dir, cache, headers,
                   cookies):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[

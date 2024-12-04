@@ -12,6 +12,10 @@ from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+enable_default_hash_validation = \
+    os.getenv(MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION, 'False').strip().lower() == 'true'
+
 """Implements caching functionality, used internally only
 """
 
@@ -274,7 +278,11 @@ class ModelFileSystemCache(FileSystemCache):
                 expected_hash = model_file_info[FILE_HASH]
                 if expected_hash is not None and os.path.exists(
                         cache_file_path):
-                    cache_file_sha256 = compute_hash(cache_file_path)
+                    # compute hash only when enabled, otherwise just meet expectation by default
+                    if enable_default_hash_validation:
+                        cache_file_sha256 = compute_hash(cache_file_path)
+                    else:
+                        cache_file_sha256 = expected_hash
                     if expected_hash == cache_file_sha256:
                         is_exists = True
                         break

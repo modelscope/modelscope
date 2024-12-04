@@ -125,7 +125,7 @@ def pipeline(task: str = None,
     if pipeline_name is None and prefer_llm_pipeline:
         pipeline_name = external_engine_for_llm_checker(
             model, model_revision, kwargs)
-    else:
+    if pipeline_name is None:
         model = normalize_model_input(
             model,
             model_revision,
@@ -223,15 +223,22 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
                                                  List[Model]],
                                     revision: Optional[str],
                                     kwargs: Dict[str, Any]) -> Optional[str]:
-    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
-
+    from .nlp.llm_pipeline import SWIFT_MODEL_ID_MAPPING, ModelTypeHelper, LLMAdapterRegistry
+    from ..hub.check_model import get_model_id_from_cache
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
         model = model.model_dir
 
     if kwargs.get('llm_framework') == 'swift':
-        return 'llm'
+        # check if swift supports
+        if os.path.exists(model):
+            model_id = get_model_id_from_cache(model)
+        else:
+            model_id = model
+        global SWIFT_MODEL_ID_MAPPING
+        if model_id in SWIFT_MODEL_ID_MAPPING:
+            return 'llm'
     model_type = ModelTypeHelper.get(
         model, revision, with_adapter=True, split='-', use_cache=True)
     if LLMAdapterRegistry.contains(model_type):

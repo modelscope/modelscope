@@ -7,14 +7,14 @@ import tempfile
 from shutil import move, rmtree
 from typing import Dict
 
-from modelscope.hub.constants import FILE_HASH
+from modelscope.hub.constants import FILE_HASH, MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION
 from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
 enable_default_hash_validation = \
-    os.getenv('MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION', 'False').strip().lower() == 'true'
+    os.getenv(MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION, 'False').strip().lower() == 'true'
 """Implements caching functionality, used internally only
 """
 

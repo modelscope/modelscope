@@ -7,7 +7,9 @@ import tempfile
 from shutil import move, rmtree
 from typing import Dict
 
-from modelscope.hub.constants import FILE_HASH, MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION
+from modelscope.hub.constants import (FILE_HASH,
+                                      MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION
+                                      )
 from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 

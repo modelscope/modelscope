@@ -15,7 +15,6 @@ logger = get_logger()
 
 enable_default_hash_validation = \
     os.getenv(MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION, 'False').strip().lower() == 'true'
-
 """Implements caching functionality, used internally only
 """
 

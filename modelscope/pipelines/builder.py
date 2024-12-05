@@ -249,4 +249,5 @@ def clear_llm_info(kwargs: Dict):
     from modelscope.utils.model_type_helper import ModelTypeHelper
 
     kwargs.pop('external_engine_for_llm', None)
+    kwargs.pop('llm_framework', None)
     ModelTypeHelper.clear_cache()

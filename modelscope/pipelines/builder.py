@@ -7,7 +7,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
 from modelscope.utils.config import ConfigDict, check_config
-from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke,
+from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke, Tasks,
                                        ThirdParty)
 from modelscope.utils.hub import read_config
 from modelscope.utils.plugins import (register_modelhub_repo,
@@ -108,12 +108,23 @@ def pipeline(task: str = None,
     """
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
-
+    prefer_llm_pipeline = kwargs.get('external_engine_for_llm')
+    if task is not None and task.lower() in [
+            Tasks.text_generation, Tasks.chat
+    ]:
+        # if not specified, prefer llm pipeline for aforementioned tasks
+        if prefer_llm_pipeline is None:
+            prefer_llm_pipeline = True
+    # for llm pipeline, if llm_framework is not specified, default to swift instead
+    # TODO: port the swift infer based on transformer into ModelScope
+    if prefer_llm_pipeline and kwargs.get('llm_framework') is None:
+        kwargs['llm_framework'] = 'swift'
     third_party = kwargs.get(ThirdParty.KEY)
     if third_party is not None:
         kwargs.pop(ThirdParty.KEY)
-    if pipeline_name is None and kwargs.get('llm_first'):
-        pipeline_name = llm_first_checker(model, model_revision, kwargs)
+    if pipeline_name is None and prefer_llm_pipeline:
+        pipeline_name = external_engine_for_llm_checker(
+            model, model_revision, kwargs)
     else:
         model = normalize_model_input(
             model,
@@ -133,9 +144,9 @@ def pipeline(task: str = None,
                             model[0], revision=model_revision)
                 register_plugins_repo(cfg.safe_get('plugins'))
                 register_modelhub_repo(model, cfg.get('allow_remote', False))
-                pipeline_name = llm_first_checker(
+                pipeline_name = external_engine_for_llm_checker(
                     model, model_revision,
-                    kwargs) if kwargs.get('llm_first') else None
+                    kwargs) if prefer_llm_pipeline else None
                 if pipeline_name is not None:
                     pipeline_props = {'type': pipeline_name}
                 else:
@@ -208,9 +219,10 @@ def get_default_pipeline_info(task):
     return pipeline_name, default_model
 
 
-def llm_first_checker(model: Union[str, List[str], Model,
-                                   List[Model]], revision: Optional[str],
-                      kwargs: Dict[str, Any]) -> Optional[str]:
+def external_engine_for_llm_checker(model: Union[str, List[str], Model,
+                                                 List[Model]],
+                                    revision: Optional[str],
+                                    kwargs: Dict[str, Any]) -> Optional[str]:
     from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
 
     if isinstance(model, list):
@@ -229,5 +241,5 @@ def llm_first_checker(model: Union[str, List[str], Model,
 def clear_llm_info(kwargs: Dict):
     from modelscope.utils.model_type_helper import ModelTypeHelper
 
-    kwargs.pop('llm_first', None)
+    kwargs.pop('external_engine_for_llm', None)
     ModelTypeHelper.clear_cache()

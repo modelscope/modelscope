@@ -17,9 +17,7 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
         model = Model.from_pretrained(
             'damo/multi-modal_mplug_owl_multimodal-dialogue_7b')
         pipeline_multimodal_dialogue = pipeline(
-            task=Tasks.multimodal_dialogue,
-            model=model,
-        )
+            task=Tasks.multimodal_dialogue, model=model)
         image = 'data/resource/portrait_input.png'
         system_prompt_1 = 'The following is a conversation between a curious human and AI assistant.'
         system_prompt_2 = "The assistant gives helpful, detailed, and polite answers to the user's questions."

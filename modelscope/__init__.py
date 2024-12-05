@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from modelscope.utils.import_utils import (LazyImportModule,
                                            is_transformers_available)
-from .utils.automodel_utils import fix_transformers_upgrade
 
 if TYPE_CHECKING:
     from .exporters import Exporter, TfModelExporter, TorchModelExporter
@@ -33,13 +32,29 @@ if TYPE_CHECKING:
                            build_dataset_from_file)
     from .utils.constant import Tasks
     if is_transformers_available():
-        from .utils.hf_util import AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig
-        from .utils.hf_util import (AutoModel, AutoModelForCausalLM,
-                                    AutoModelForSeq2SeqLM,
-                                    AutoModelForSequenceClassification,
-                                    AutoModelForTokenClassification,
-                                    AutoTokenizer, GenerationConfig,
-                                    AutoImageProcessor, BatchFeature)
+        from .utils.hf_util import (
+            AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
+            AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig,
+            AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+            AutoModelForVision2Seq, AutoModelForSequenceClassification,
+            AutoModelForTokenClassification, AutoModelForImageClassification,
+            AutoModelForImageTextToText,
+            AutoModelForZeroShotImageClassification,
+            AutoModelForKeypointDetection,
+            AutoModelForDocumentQuestionAnswering,
+            AutoModelForSemanticSegmentation,
+            AutoModelForUniversalSegmentation,
+            AutoModelForInstanceSegmentation, AutoModelForObjectDetection,
+            AutoModelForZeroShotObjectDetection,
+            AutoModelForAudioClassification, AutoModelForSpeechSeq2Seq,
+            AutoModelForMaskedImageModeling,
+            AutoModelForVisualQuestionAnswering,
+            AutoModelForTableQuestionAnswering, AutoModelForImageToImage,
+            AutoModelForImageSegmentation, AutoModelForQuestionAnswering,
+            AutoModelForMaskedLM, AutoTokenizer, AutoModelForMaskGeneration,
+            AutoModelForPreTraining, AutoModelForTextEncoding,
+            AutoImageProcessor, BatchFeature, Qwen2VLForConditionalGeneration,
+            T5EncoderModel)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'
@@ -93,12 +108,30 @@ else:
 
     if is_transformers_available():
         _import_structure['utils.hf_util'] = [
-            'AutoConfig', 'GenerationConfig', 'AutoModel', 'GPTQConfig',
-            'AwqConfig', 'BitsAndBytesConfig', 'AutoModelForCausalLM',
-            'AutoModelForSeq2SeqLM', 'AutoTokenizer',
+            'AutoModel', 'AutoProcessor', 'AutoFeatureExtractor',
+            'GenerationConfig', 'AutoConfig', 'GPTQConfig', 'AwqConfig',
+            'BitsAndBytesConfig', 'AutoModelForCausalLM',
+            'AutoModelForSeq2SeqLM', 'AutoModelForVision2Seq',
             'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification', 'AutoImageProcessor',
-            'BatchFeature'
+            'AutoModelForTokenClassification',
+            'AutoModelForImageClassification', 'AutoModelForImageToImage',
+            'AutoModelForImageTextToText',
+            'AutoModelForZeroShotImageClassification',
+            'AutoModelForKeypointDetection',
+            'AutoModelForDocumentQuestionAnswering',
+            'AutoModelForSemanticSegmentation',
+            'AutoModelForUniversalSegmentation',
+            'AutoModelForInstanceSegmentation', 'AutoModelForObjectDetection',
+            'AutoModelForZeroShotObjectDetection',
+            'AutoModelForAudioClassification', 'AutoModelForSpeechSeq2Seq',
+            'AutoModelForMaskedImageModeling',
+            'AutoModelForVisualQuestionAnswering',
+            'AutoModelForTableQuestionAnswering',
+            'AutoModelForImageSegmentation', 'AutoModelForQuestionAnswering',
+            'AutoModelForMaskedLM', 'AutoTokenizer',
+            'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
+            'AutoModelForTextEncoding', 'AutoImageProcessor', 'BatchFeature',
+            'Qwen2VLForConditionalGeneration', 'T5EncoderModel'
         ]
 
     import sys
@@ -110,6 +143,3 @@ else:
         module_spec=__spec__,
         extra_objects={},
     )
-
-if is_transformers_available():
-    fix_transformers_upgrade()

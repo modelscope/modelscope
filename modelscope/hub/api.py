@@ -22,8 +22,6 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope import utils
-from modelscope.fileio import io
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
@@ -300,7 +298,8 @@ class HubApi:
             ConfigFields.framework: Frameworks.torch,
             ConfigFields.task: Tasks.other,
         }
-        io.dump(cfg, cfg_file)
+        with open(cfg_file, 'w') as file:
+            json.dump(cfg, file)
 
     def push_model(self,
                    model_id: str,
@@ -572,7 +571,7 @@ class HubApi:
             revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
             if revision_detail is None:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
-            logger.info('Development mode use revision: %s' % revision)
+            logger.debug('Development mode use revision: %s' % revision)
         else:
             if revision is not None and revision in all_branches:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
@@ -1204,7 +1203,7 @@ class ModelScopeConfig:
                 for cookie in cookies:
                     if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
                         ModelScopeConfig.cookie_expired_warning = True
-                        logger.warning(
+                        logger.debug(
                             'Authentication has expired, '
                             'please re-login with modelscope login --token "YOUR_SDK_TOKEN" '
                             'if you need to access private models or datasets.')

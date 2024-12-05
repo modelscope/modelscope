@@ -9,7 +9,6 @@ from modelscope.utils.logger import get_logger
 TYPE_NAME = 'type'
 default_group = 'default'
 logger = get_logger()
-AST_INDEX = None
 
 
 class Registry(object):

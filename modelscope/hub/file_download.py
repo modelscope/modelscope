@@ -214,7 +214,7 @@ def _repo_file_download(
             if repo_file['Path'] == file_path:
                 if cache.exists(repo_file):
                     logger.debug(
-                        f'File {repo_file["Name"]} already in cache, skip downloading!'
+                        f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
                     )
                     return cache.get_file_by_info(repo_file)
                 else:
@@ -251,7 +251,7 @@ def _repo_file_download(
                 if repo_file['Path'] == file_path:
                     if cache.exists(repo_file):
                         logger.debug(
-                            f'File {repo_file["Name"]} already in cache, skip downloading!'
+                            f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
                         )
                         return cache.get_file_by_info(repo_file)
                     else:
@@ -381,33 +381,34 @@ def parallel_download(
     file_size: int = None,
 ):
     # create temp file
+    with tqdm(
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+            total=file_size,
+            initial=0,
+            desc='Downloading [' + file_name + ']',
+            leave=True,
+    ) as progress:
+        PART_SIZE = 160 * 1024 * 1024  # every part is 160M
+        tasks = []
+        file_path = os.path.join(local_dir, file_name)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        for idx in range(int(file_size / PART_SIZE)):
+            start = idx * PART_SIZE
+            end = (idx + 1) * PART_SIZE - 1
+            tasks.append((file_path, progress, start, end, url, file_name,
+                          cookies, headers))
+        if end + 1 < file_size:
+            tasks.append((file_path, progress, end + 1, file_size - 1, url,
+                          file_name, cookies, headers))
+        parallels = MODELSCOPE_DOWNLOAD_PARALLELS if MODELSCOPE_DOWNLOAD_PARALLELS <= 4 else 4
+        # download every part
+        with ThreadPoolExecutor(
+                max_workers=parallels,
+                thread_name_prefix='download') as executor:
+            list(executor.map(download_part_with_retry, tasks))
 
-    progress = tqdm(
-        unit='B',
-        unit_scale=True,
-        unit_divisor=1024,
-        total=file_size,
-        initial=0,
-        desc='Downloading [' + file_name + ']',
-    )
-    PART_SIZE = 160 * 1024 * 1024  # every part is 160M
-    tasks = []
-    file_path = os.path.join(local_dir, file_name)
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    for idx in range(int(file_size / PART_SIZE)):
-        start = idx * PART_SIZE
-        end = (idx + 1) * PART_SIZE - 1
-        tasks.append((file_path, progress, start, end, url, file_name, cookies,
-                      headers))
-    if end + 1 < file_size:
-        tasks.append((file_path, progress, end + 1, file_size - 1, url,
-                      file_name, cookies, headers))
-    parallels = MODELSCOPE_DOWNLOAD_PARALLELS if MODELSCOPE_DOWNLOAD_PARALLELS <= 4 else 4
-    # download every part
-    with ThreadPoolExecutor(
-            max_workers=parallels, thread_name_prefix='download') as executor:
-        list(executor.map(download_part_with_retry, tasks))
-    progress.close()
     # merge parts.
     with open(os.path.join(local_dir, file_name), 'wb') as output_file:
         for task in tasks:
@@ -457,45 +458,47 @@ def http_get_model_file(
         allowed_methods=['GET'])
     while True:
         try:
-            progress = tqdm(
-                unit='B',
-                unit_scale=True,
-                unit_divisor=1024,
-                total=file_size if file_size > 0 else 1,
-                initial=0,
-                desc='Downloading [' + file_name + ']',
-            )
-            if file_size == 0:
-                # Avoid empty file server request
-                with open(temp_file_path, 'w+'):
-                    progress.update(1)
-                    progress.close()
+            with tqdm(
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    total=file_size if file_size > 0 else 1,
+                    initial=0,
+                    desc='Downloading [' + file_name + ']',
+                    leave=True,
+            ) as progress:
+                if file_size == 0:
+                    # Avoid empty file server request
+                    with open(temp_file_path, 'w+'):
+                        progress.update(1)
                     break
-            partial_length = 0
-            if os.path.exists(
-                    temp_file_path):  # download partial, continue download
-                with open(temp_file_path, 'rb') as f:
-                    partial_length = f.seek(0, io.SEEK_END)
-                    progress.update(partial_length)
-            if partial_length >= file_size:
-                break
-            # closed range[], from 0.
-            get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
-                                                    file_size - 1)
-            with open(temp_file_path, 'ab+') as f:
-                r = requests.get(
-                    url,
-                    stream=True,
-                    headers=get_headers,
-                    cookies=cookies,
-                    timeout=API_FILE_DOWNLOAD_TIMEOUT)
-                r.raise_for_status()
-                for chunk in r.iter_content(
-                        chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
-                    if chunk:  # filter out keep-alive new chunks
-                        progress.update(len(chunk))
-                        f.write(chunk)
-            progress.close()
+                # Determine the length of any existing partial download
+                partial_length = 0
+                # download partial, continue download
+                if os.path.exists(temp_file_path):
+                    with open(temp_file_path, 'rb') as f:
+                        partial_length = f.seek(0, io.SEEK_END)
+                        progress.update(partial_length)
+
+                # Check if download is complete
+                if partial_length >= file_size:
+                    break
+                # closed range[], from 0.
+                get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
+                                                        file_size - 1)
+                with open(temp_file_path, 'ab+') as f:
+                    r = requests.get(
+                        url,
+                        stream=True,
+                        headers=get_headers,
+                        cookies=cookies,
+                        timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                    r.raise_for_status()
+                    for chunk in r.iter_content(
+                            chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
+                        if chunk:  # filter out keep-alive new chunks
+                            progress.update(len(chunk))
+                            f.write(chunk)
             break
         except (Exception) as e:  # no matter what happen, we will retry.
             retry = retry.increment('GET', url, error=e)

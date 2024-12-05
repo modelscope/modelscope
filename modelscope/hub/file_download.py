@@ -419,7 +419,7 @@ def parallel_download(
             part_file_name = task[0] + '_%s_%s' % (task[2], task[3])
             with open(part_file_name, 'rb') as part_file:
                 while True:
-                    chunk = part_file.read(8 * API_FILE_DOWNLOAD_CHUNK_SIZE)
+                    chunk = part_file.read(16 * API_FILE_DOWNLOAD_CHUNK_SIZE)
                     if not chunk:
                         break
                     output_file.write(chunk)
@@ -514,10 +514,11 @@ def http_get_model_file(
                             if not has_retry:
                                 hash_sha256.update(chunk)
             break
-        except (Exception) as e:  # no matter what happen, we will retry.
+        except Exception as e:  # no matter what happen, we will retry.
             has_retry = True
             retry = retry.increment('GET', url, error=e)
             retry.sleep()
+    # if anything went wrong, we would discard the real-time computed hash and return None
     return None if has_retry else hash_sha256.hexdigest()
     logger.debug('storing %s in cache at %s', url, local_dir)
 
@@ -634,7 +635,7 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             # if real-time hash mismatched, try to compute it again
             if file_digest != expected_hash:
                 print(
-                    'Mismatched digest from realtime download, will try to recompute lump-sum hash'
+                    'Mismatched real-time digest found, falling back to lump-sum hash computation'
                 )
                 file_integrity_validation(temp_file, expected_hash)
         else:

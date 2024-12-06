@@ -6,7 +6,7 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import numpy as np
-from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict, Features
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
 
@@ -163,6 +163,7 @@ class MsDataset:
         download_mode: Optional[DownloadMode] = DownloadMode.
         REUSE_DATASET_IF_EXISTS,
         cache_dir: Optional[str] = MS_DATASETS_CACHE,
+        features: Optional[Features] = None,
         use_streaming: Optional[bool] = False,
         stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
@@ -300,7 +301,7 @@ class MsDataset:
                         data_files=data_files,
                         split=split,
                         cache_dir=cache_dir,
-                        features=None,
+                        features=features,
                         download_config=None,
                         download_mode=download_mode.value,
                         revision=version,

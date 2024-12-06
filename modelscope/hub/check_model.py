@@ -34,6 +34,7 @@ def check_local_model_is_latest(
         else:  # snapshot_download
             model_cache = ModelFileSystemCache(model_root_path)
             model_id = model_cache.get_model_id()
+        model_id = model_id.replace('___', '.')
 
         # make headers
         headers = {

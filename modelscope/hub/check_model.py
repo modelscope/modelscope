@@ -14,6 +14,22 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
+def get_model_id_from_cache(model_root_path: str, ) -> str:
+    model_cache = None
+    # download with git
+    if os.path.exists(os.path.join(model_root_path, '.git')):
+        git_cmd_wrapper = GitCommandWrapper()
+        git_url = git_cmd_wrapper.get_repo_remote_url(model_root_path)
+        if git_url.endswith('.git'):
+            git_url = git_url[:-4]
+        u_parse = urlparse(git_url)
+        model_id = u_parse.path[1:]
+    else:  # snapshot_download
+        model_cache = ModelFileSystemCache(model_root_path)
+        model_id = model_cache.get_model_id()
+    return model_id
+
+
 def check_local_model_is_latest(
     model_root_path: str,
     user_agent: Optional[Union[Dict, str]] = None,
@@ -22,19 +38,7 @@ def check_local_model_is_latest(
     Check local model repo is same as hub latest version.
     """
     try:
-        model_cache = None
-        # download with git
-        if os.path.exists(os.path.join(model_root_path, '.git')):
-            git_cmd_wrapper = GitCommandWrapper()
-            git_url = git_cmd_wrapper.get_repo_remote_url(model_root_path)
-            if git_url.endswith('.git'):
-                git_url = git_url[:-4]
-            u_parse = urlparse(git_url)
-            model_id = u_parse.path[1:]
-        else:  # snapshot_download
-            model_cache = ModelFileSystemCache(model_root_path)
-            model_id = model_cache.get_model_id()
-
+        model_id = get_model_id_from_cache(model_root_path)
         # make headers
         headers = {
             'user-agent':

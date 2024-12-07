@@ -300,6 +300,8 @@ class TestToOllama(unittest.TestCase):
             'paraphrase-multilingual')
         _test_check_tmpl_type('bartowski/Marco-o1-GGUF', 'marco-o1')
         _test_check_tmpl_type('Qwen/QwQ-32B-Preview', 'qwq')
+        _test_check_tmpl_type('LLM-Research/Llama-3.3-70B-Instruct',
+                              'llama3.3')
 
 
 if __name__ == '__main__':

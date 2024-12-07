@@ -55,6 +55,12 @@ template_info = [
     ## "llama3"
     TemplateInfo(
         template_regex=
+        f'.*{cases("llama3.3", "llama-3.3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3.3',
+    ),
+    TemplateInfo(
+        template_regex=
         f'.*{cases("llama3.2", "llama-3.2")}.*{cases("vision")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3.2-vision',

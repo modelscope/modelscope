@@ -511,8 +511,7 @@ def http_get_model_file(
                         if chunk:  # filter out keep-alive new chunks
                             progress.update(len(chunk))
                             f.write(chunk)
-                            if not has_retry:
-                                hash_sha256.update(chunk)
+                            hash_sha256.update(chunk)
             break
         except Exception as e:  # no matter what happen, we will retry.
             has_retry = True

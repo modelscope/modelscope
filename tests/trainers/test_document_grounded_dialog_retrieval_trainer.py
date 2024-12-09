@@ -21,7 +21,7 @@ class DocumentGroundedDialogRetrievalTest(unittest.TestCase):
         # load data
         train_dataset = MsDataset.load(
             'DAMO_ConvAI/FrDoc2BotRetrieval',
-            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)['train']
         sub_train_dataset = [x for x in train_dataset][:10]
         all_passages = ['阑尾炎', '肠胃炎', '肚脐开始', '肚脐为止']
 

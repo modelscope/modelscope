@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
+import hashlib
 import io
 import os
 import tempfile
@@ -213,8 +214,9 @@ def _repo_file_download(
 
             if repo_file['Path'] == file_path:
                 if cache.exists(repo_file):
+                    file_name = repo_file['Name']
                     logger.debug(
-                        f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
+                        f'File {file_name} already in cache with identical hash, skip downloading!'
                     )
                     return cache.get_file_by_info(repo_file)
                 else:
@@ -250,8 +252,9 @@ def _repo_file_download(
 
                 if repo_file['Path'] == file_path:
                     if cache.exists(repo_file):
+                        file_name = repo_file['Name']
                         logger.debug(
-                            f'File {repo_file["Name"]} already in cache with identical hash, skip downloading!'
+                            f'File {file_name} already in cache with identical hash, skip downloading!'
                         )
                         return cache.get_file_by_info(repo_file)
                     else:
@@ -410,12 +413,19 @@ def parallel_download(
             list(executor.map(download_part_with_retry, tasks))
 
     # merge parts.
+    hash_sha256 = hashlib.sha256()
     with open(os.path.join(local_dir, file_name), 'wb') as output_file:
         for task in tasks:
             part_file_name = task[0] + '_%s_%s' % (task[2], task[3])
             with open(part_file_name, 'rb') as part_file:
-                output_file.write(part_file.read())
+                while True:
+                    chunk = part_file.read(16 * API_FILE_DOWNLOAD_CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    output_file.write(chunk)
+                    hash_sha256.update(chunk)
             os.remove(part_file_name)
+    return hash_sha256.hexdigest()
 
 
 def http_get_model_file(
@@ -452,6 +462,8 @@ def http_get_model_file(
     os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
     logger.debug('downloading %s to %s', url, temp_file_path)
     # retry sleep 0.5s, 1s, 2s, 4s
+    has_retry = False
+    hash_sha256 = hashlib.sha256()
     retry = Retry(
         total=API_FILE_DOWNLOAD_RETRY_TIMES,
         backoff_factor=1,
@@ -499,11 +511,14 @@ def http_get_model_file(
                         if chunk:  # filter out keep-alive new chunks
                             progress.update(len(chunk))
                             f.write(chunk)
+                            hash_sha256.update(chunk)
             break
-        except (Exception) as e:  # no matter what happen, we will retry.
+        except Exception as e:  # no matter what happen, we will retry.
+            has_retry = True
             retry = retry.increment('GET', url, error=e)
             retry.sleep()
-
+    # if anything went wrong, we would discard the real-time computed hash and return None
+    return None if has_retry else hash_sha256.hexdigest()
     logger.debug('storing %s in cache at %s', url, local_dir)
 
 
@@ -591,9 +606,10 @@ def http_get_file(
 
 def download_file(url, file_meta, temporary_cache_dir, cache, headers,
                   cookies):
+    file_digest = None
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
-        parallel_download(
+        file_digest = parallel_download(
             url,
             temporary_cache_dir,
             file_meta['Path'],
@@ -601,7 +617,7 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             cookies=None if cookies is None else cookies.get_dict(),
             file_size=file_meta['Size'])
     else:
-        http_get_model_file(
+        file_digest = http_get_model_file(
             url,
             temporary_cache_dir,
             file_meta['Path'],
@@ -612,6 +628,16 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
     # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
     if FILE_HASH in file_meta:
-        file_integrity_validation(temp_file, file_meta[FILE_HASH])
+        expected_hash = file_meta[FILE_HASH]
+        # if a real-time hash has been computed
+        if file_digest is not None:
+            # if real-time hash mismatched, try to compute it again
+            if file_digest != expected_hash:
+                print(
+                    'Mismatched real-time digest found, falling back to lump-sum hash computation'
+                )
+                file_integrity_validation(temp_file, expected_hash)
+        else:
+            file_integrity_validation(temp_file, expected_hash)
     # put file into to cache
     return cache.put_file(file_meta, temp_file)

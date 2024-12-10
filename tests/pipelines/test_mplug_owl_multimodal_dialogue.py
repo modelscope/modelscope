@@ -68,7 +68,7 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
                 },
             ]
         }
-        result = pipeline_multimodal_dialogue(messages)
+        result = pipeline_multimodal_dialogue(messages, max_new_tokens=512)
         print(result[OutputKeys.TEXT])
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
@@ -90,7 +90,7 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
                 },
             ]
         }
-        result = pipeline_multimodal_dialogue(messages)
+        result = pipeline_multimodal_dialogue(messages, max_new_tokens=512)
         print(result[OutputKeys.TEXT])
 
 

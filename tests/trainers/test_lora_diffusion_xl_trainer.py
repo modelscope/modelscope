@@ -35,7 +35,8 @@ class TestLoraDiffusionXLTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test for oom')
+    # need diffusers==0.24.0, skip in ci
+    @unittest.skip
     def test_lora_diffusion_xl_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-xl-base-1.0'
         model_revision = 'v1.0.2'

@@ -7,8 +7,9 @@ from modelscope.preprocessors.templates.loader import TemplateLoader
 from modelscope.utils.test_utils import test_level
 
 
-def _test_check_tmpl_type(model, tmpl_type):
-    ollama, info = TemplateLoader.to_ollama(model, debug=True)
+def _test_check_tmpl_type(model, tmpl_type, gguf_meta={}):
+    ollama, info = TemplateLoader.to_ollama(
+        model, gguf_meta=gguf_meta, debug=True)
     assert info.__dict__.get('modelfile_prefix').split(
         '/')[-1] == tmpl_type, info
 
@@ -122,6 +123,10 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'LLM-Research/Llama-3.3-70B-Instruct',
+            'llama3.3',
+            gguf_meta={'general.name': 'Llama 3.3 70B Instruct'})
+        _test_check_tmpl_type(
             'AI-ModelScope/Llama-3.2-11B-Vision-Instruct-GGUF',
             'llama3.2-vision')
         _test_check_tmpl_type('LLM-Research/Meta-Llama-3.2-8B-Instruct-GGUF',
@@ -189,6 +194,8 @@ class TestToOllama(unittest.TestCase):
         _test_check_tmpl_type('QuantFactory/Mistral-7B-OpenOrca-GGUF',
                               'mistral-openorca')
         _test_check_tmpl_type('QuantFactory/Mistral-7B-Instruct-v0.1-GGUF',
+                              'mistral')
+        _test_check_tmpl_type('QuantFactory/Ministral-8B-Instruct-2410-GGUF',
                               'mistral')
         _test_check_tmpl_type(
             'second-state/Nous-Hermes-2-Mixtral-8x7B-SFT-GGUF',
@@ -302,6 +309,8 @@ class TestToOllama(unittest.TestCase):
         _test_check_tmpl_type('Qwen/QwQ-32B-Preview', 'qwq')
         _test_check_tmpl_type('LLM-Research/Llama-3.3-70B-Instruct',
                               'llama3.3')
+        _test_check_tmpl_type('bartowski/EXAONE-3.5-7.8B-Instruct-GGUF',
+                              'exaone3.5')
 
 
 if __name__ == '__main__':

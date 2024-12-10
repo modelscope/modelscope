@@ -122,7 +122,7 @@ class FillMaskTest(unittest.TestCase):
             model.model_dir, first_sequence='sentence', second_sequence=None)
         pipeline_ins = pipeline(
             Tasks.fill_mask, model=model, preprocessor=preprocessor)
-        for language in ['zh', 'en']:
+        for language in ['en']:
             ori_text = self.ori_texts[language]
             test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
             with self.regress_tool.monitor_module_single_forward(

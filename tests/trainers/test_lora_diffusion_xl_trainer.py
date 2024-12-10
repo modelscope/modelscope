@@ -68,7 +68,8 @@ class TestLoraDiffusionXLTrainer(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # need diffusers==0.24.0, skip in ci
+    @unittest.skip
     def test_lora_diffusion_xl_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-xl-base-1.0'
         model_revision = 'v1.0.2'

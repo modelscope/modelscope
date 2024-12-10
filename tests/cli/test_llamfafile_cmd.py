@@ -29,6 +29,24 @@ class LlamafileCMDTest(unittest.TestCase):
             in output)
         self.assertTrue('Launching model with llamafile' in output)
 
+        accuracy = 'Q2_K'
+        cmd = f'python -m modelscope.cli.cli {self.cmd} --model {self.model_id} --accuracy {accuracy}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        self.assertEqual(stat, 0)
+        self.assertTrue(
+            'llamafile matching criteria found: [My-Model-14B-Q2_K.llamafile]'
+            in output)
+        self.assertTrue('Launching model with llamafile' in output)
+
+        accuracy = 'q2_k'
+        cmd = f'python -m modelscope.cli.cli {self.cmd} --model {self.model_id} --accuracy {accuracy}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        self.assertEqual(stat, 0)
+        self.assertTrue(
+            'llamafile matching criteria found: [My-Model-14B-Q2_K.llamafile]'
+            in output)
+        self.assertTrue('Launching model with llamafile' in output)
+
     def test_given_file(self):
         file = 'My-Model-14B-FP16.llamafile'
         cmd = f'python -m modelscope.cli.cli {self.cmd} --model {self.model_id} --file {file}'

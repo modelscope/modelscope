@@ -19,6 +19,10 @@ on:
       swift_branch:
         description: 'SWIFT branch to use(release/x.xx)'
         required: true
+      ci_image:
+        description: 'Set as the CI image'
+        default: '0'
+        required: false
       other_params:
         description: 'Other params in --xxx xxx'
         required: false
@@ -47,4 +51,4 @@ jobs:
       run: |
         set -e
         source ~/.bashrc
-        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} ${{ github.event.inputs.other_params }}
+        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --ci_image ${{ github.event.inputs.ci_image }} ${{ github.event.inputs.other_params }}

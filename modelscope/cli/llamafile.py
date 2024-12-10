@@ -56,15 +56,6 @@ class LlamafileCMD(CLICommand):
         )
 
         group.add_argument(
-            '--launch',
-            type=str,
-            required=False,
-            default='True',
-            help=
-            'Whether to launch model with the downloaded llamafile, default to True.'
-        )
-
-        group.add_argument(
             '--file',
             type=str,
             required=False,
@@ -78,6 +69,15 @@ class LlamafileCMD(CLICommand):
             default=None,
             help=
             'Directory where the selected llamafile would will be downloaded to.'
+        )
+
+        group.add_argument(
+            '--launch',
+            type=str,
+            required=False,
+            default='True',
+            help=
+            'Whether to launch model with the downloaded llamafile, default to True.'
         )
 
         parser.set_defaults(func=subparser_func)
@@ -106,7 +106,7 @@ class LlamafileCMD(CLICommand):
                 selected_file = f
                 found = True
                 break
-            if self.args.accuracy and self.args.accuracy in f.lower():
+            if self.args.accuracy and self.args.accuracy.lower() in f.lower():
                 selected_file = f
                 found = True
                 break
@@ -124,7 +124,7 @@ class LlamafileCMD(CLICommand):
             downloaded_file = self._rename_extension(downloaded_file)
 
         if self.args.launch.lower() == 'true':
-            print('Launching model with llamafile:')
+            print(f'Launching model with llamafile [{downloaded_file}]:')
             self._execute_llamafile(downloaded_file)
         else:
             print(
@@ -135,12 +135,24 @@ class LlamafileCMD(CLICommand):
         current_mode = os.stat(file_path).st_mode
         new_mode = current_mode | 0o111
         os.chmod(file_path, new_mode)
-        os.system(file_path)
+        execute_cmd = file_path
+        has_gpu = False
+        try:
+            import torch
+            has_gpu = torch.cuda.is_available()
+        except ModuleNotFoundError:
+            # we depend on torch to detect gpu.
+            # if torch is not available, we will just assume gpu cannot be used
+            pass
+        if has_gpu:
+            print(
+                'GPU detected, launching model with llamafile GPU option >>>')
+            execute_cmd = f'{execute_cmd} -ngl 999'
+        os.system(execute_cmd)
 
     def _rename_extension(self, original_file_name):
         directory, filename = os.path.split(original_file_name)
         base_name, _ = os.path.splitext(filename)
-        new_filename = f'{base_name}.exe'
-        new_file_name = os.path.join(directory, new_filename)
-        os.rename(original_file_name, new_file_name)
+        new_filename = os.path.join(directory, f'{base_name}.exe')
+        os.rename(original_file_name, new_filename)
         return new_filename

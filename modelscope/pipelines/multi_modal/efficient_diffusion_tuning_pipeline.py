@@ -36,8 +36,10 @@ class EfficientDiffusionTuningPipeline(Pipeline):
                 'data/test/images/vision_efficient_tuning_test_1.png')
             >>> print(f'Output: {result}.')
         """
+        logger.warn(
+            '[NOTE]Do not use this pipeline because the dependencies are too old, '
+            'use https://github.com/modelscope/DiffSynth-Studio instead')
         super().__init__(model=model, **kwargs)
-
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model = self.model.to(self.device)
         self.model.eval()

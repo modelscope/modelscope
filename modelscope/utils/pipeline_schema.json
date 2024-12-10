@@ -137,6 +137,27 @@
             }
         }
     },
+    "audio-quantization": {
+        "input": {
+            "type": "object",
+            "properties": {
+                "wav": {
+                    "type": "string",
+                    "description": "Base64 encoded audio file or url string.."
+                }
+            }
+        },
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output_wav": {
+                    "type": "string",
+                    "description": "The base64 encoded WAV."
+                }
+            }
+        }
+    },
     "bad-image-detecting": {
         "input": {
             "type": "object",
@@ -1144,6 +1165,27 @@
             "type": "object"
         }
     },
+    "dense-optical-flow-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
+    "image-normal-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
+    "human-normal-estimation": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
     "image-driving-perception": {
         "input": {
             "type": "object",
@@ -1247,6 +1289,13 @@
         }
     },
     "image-matching": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object"
+        }
+    },
+    "image-local-feature-matching": {
         "input": {},
         "parameters": {},
         "output": {
@@ -3774,6 +3823,19 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        }
+    },
+    "self-supervised-depth-completion": {
+        "input": {},
+        "parameters": {},
+        "output": {
+            "type": "object",
+            "properties": {
+                "output_img": {
+                    "type": "string",
+                    "description":"The base64 encoded image."
                 }
             }
         }

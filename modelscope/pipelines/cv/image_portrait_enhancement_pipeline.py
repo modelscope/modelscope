@@ -173,11 +173,13 @@ class ImagePortraitEnhancementPipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)
 
-        img_sr = img
         if self.use_sr:
             img_sr = self.sr_process(img)
-
             img = cv2.resize(img, img_sr.shape[:2][::-1])
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            img_sr = img.copy()
 
         result = {'img': img, 'img_sr': img_sr}
         return result
@@ -199,6 +201,9 @@ class ImagePortraitEnhancementPipeline(Pipeline):
 
             of, of_112, tfm_inv = warp_and_crop_face(
                 img, facial5points, crop_size=(self.size, self.size))
+
+            of = of[..., ::-1].copy()  # BGR->RGB
+            of_112 = of_112[..., ::-1].copy()  # BGR->RGB
 
             # detect orig face quality
             fq_o, fea_o = self.eqface.get_face_quality(of_112)

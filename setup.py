@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from setuptools import find_packages, setup
 
-from modelscope.utils.ast_utils import generate_ast_template
 from modelscope.utils.constant import Fields
 
 
@@ -171,6 +170,7 @@ def pack_resource():
 
 if __name__ == '__main__':
     # write_version_py()
+    from modelscope.utils.ast_utils import generate_ast_template
     generate_ast_template()
     pack_resource()
     os.chdir('package')
@@ -192,6 +192,13 @@ if __name__ == '__main__':
         filed_name = f'audio_{subfiled}'
         extra_requires[filed_name], _ = parse_requirements(
             f'requirements/audio/{filed_name}.txt')
+    framework_requires = extra_requires['framework']
+    # add framework dependencies to every field
+    for field, requires in extra_requires.items():
+        if field not in [
+                'server', 'framework', 'hub', 'datasets'
+        ]:  # server need install model's field dependencies before.
+            extra_requires[field] = framework_requires + extra_requires[field]
     extra_requires['all'] = all_requires
 
     setup(

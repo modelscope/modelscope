@@ -11,7 +11,6 @@ modelscope.pipelines.nlp
     :nosignatures:
     :template: classtemplate.rst
 
-    AutomaticPostEditingPipeline
     CodeGeeXCodeGenerationPipeline
     CodeGeeXCodeTranslationPipeline
     ConversationalTextToSqlPipeline

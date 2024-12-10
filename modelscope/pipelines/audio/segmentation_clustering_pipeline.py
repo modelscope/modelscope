@@ -179,16 +179,17 @@ class SegmentationClusteringPipeline(Pipeline):
         if not hasattr(self, 'vad_pipeline'):
             self.vad_pipeline = pipeline(
                 task=Tasks.voice_activity_detection,
-                model=self.config['vad_model'])
-        vad_time = self.vad_pipeline(audio, audio_fs=self.fs)
+                model=self.config['vad_model'],
+                model_revision='v2.0.2')
+        vad_time = self.vad_pipeline(
+            audio, fs=self.fs, is_final=True)[0]['value']
         vad_segments = []
-        if isinstance(vad_time['text'], str):
-            vad_time_list = ast.literal_eval(vad_time['text'])
-        elif isinstance(vad_time['text'], list):
-            vad_time_list = vad_time['text']
+        if isinstance(vad_time, str):
+            vad_time_list = ast.literal_eval(vad_time)
+        elif isinstance(vad_time, list):
+            vad_time_list = vad_time
         else:
-            raise ValueError('Incorrect vad result. Get %s' %
-                             (type(vad_time['text'])))
+            raise ValueError('Incorrect vad result. Get %s' % (type(vad_time)))
         for t in vad_time_list:
             st = int(t[0]) / 1000
             ed = int(t[1]) / 1000

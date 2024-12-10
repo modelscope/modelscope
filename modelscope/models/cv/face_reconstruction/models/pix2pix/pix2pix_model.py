@@ -13,7 +13,7 @@ class Pix2PixModel(nn.Module):
     The model training requires '--dataset_mode aligned' dataset.
     By default, it uses a '--netG unet256' U-Net generator,
     a '--netD basic' discriminator (PatchGAN),
-    and a '--gan_mode' vanilla GAN loss (the cross-entropy objective used in the orignal GAN paper).
+    and a '--gan_mode' vanilla GAN loss (the cross-entropy objective used in the original GAN paper).
 
     pix2pix paper: https://arxiv.org/pdf/1611.07004.pdf
     """
@@ -121,5 +121,5 @@ class Pix2PixModel(nn.Module):
         self.set_requires_grad(
             self.netD, False)  # D requires no gradients when optimizing G
         self.optimizer_G.zero_grad()  # set G's gradients to zero
-        self.backward_G()  # calculate graidents for G
-        self.optimizer_G.step()  # udpate G's weights
+        self.backward_G()  # calculate gradients for G
+        self.optimizer_G.step()  # update G's weights

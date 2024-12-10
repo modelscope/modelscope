@@ -2,8 +2,6 @@
 
 import unittest
 
-from transformers import LlamaForCausalLM, LlamaTokenizer
-
 from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
                         AutoTokenizer, GenerationConfig)
 
@@ -47,11 +45,11 @@ class HFUtilTest(unittest.TestCase):
         self.assertEqual(gen_config.assistant_token_id, 196)
 
     def test_transformer_patch(self):
-        tokenizer = LlamaTokenizer.from_pretrained(
-            'skyline2006/llama-7b', revision='v1.0.1')
+        tokenizer = AutoTokenizer.from_pretrained(
+            'iic/nlp_structbert_sentiment-classification_chinese-base')
         self.assertIsNotNone(tokenizer)
-        model = LlamaForCausalLM.from_pretrained(
-            'skyline2006/llama-7b', revision='v1.0.1')
+        model = AutoModelForCausalLM.from_pretrained(
+            'iic/nlp_structbert_sentiment-classification_chinese-base')
         self.assertIsNotNone(model)
 
 

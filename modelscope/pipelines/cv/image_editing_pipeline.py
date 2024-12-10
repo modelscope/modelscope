@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_editing import (
-    MutualSelfAttentionControl, regiter_attention_editor_diffusers)
+    MutualSelfAttentionControl, register_attention_editor_diffusers)
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.multi_modal.diffusers_wrapped.diffusers_pipeline import \
@@ -97,7 +97,7 @@ class ImageEditingPipeline(DiffusersPipeline):
         start_code = start_code.expand(len(prompts), -1, -1, -1)
         STEP, LAYER = 4, 10
         editor = MutualSelfAttentionControl(STEP, LAYER)
-        regiter_attention_editor_diffusers(self.pipeline, editor)
+        register_attention_editor_diffusers(self.pipeline, editor)
 
         # inference the synthesized image
         output = self.pipeline(

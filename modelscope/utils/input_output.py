@@ -8,12 +8,9 @@ from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
 
-import cv2
 import json
 import numpy as np
 
-from modelscope.hub.api import HubApi
-from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
 from modelscope.outputs.outputs import (TASK_OUTPUTS, OutputKeys, OutputTypes,
                                         OutputTypeSchema)
@@ -36,16 +33,18 @@ decodes relevant fields.
 Example:
     # create pipeine instance and pipeline information, save it to app
     pipeline_instance = create_pipeline('damo/cv_gpen_image-portrait-enhancement', 'v1.0.0')
+    # get pipeline information, input,output, request example.
     pipeline_info = get_pipeline_information_by_pipeline(pipeline_instance)
+    # save the pipeline and info to the app for use in subsequent request processing
     app.state.pipeline = pipeline_instance
     app.state.pipeline_info = pipeline_info
 
-    # for service schema request.
-    pipeline_info = request.app.state.pipeline_info
-    return pipeline_info.schema
-
-    # for service call request.
-    def inference(request: Request):
+    # for inference request, use call_pipeline_with_json to decode input and
+    # call pipeline, call pipeline_output_to_service_base64_output
+    # to encode necessary fields, and return the result.
+    # request and response are json format.
+    @router.post('/call')
+    async def inference(request: Request):
         pipeline_service = request.app.state.pipeline
         pipeline_info = request.app.state.pipeline_info
         request_json = await request.json()
@@ -55,19 +54,32 @@ Example:
         # convert output to json, if binary field, we need encoded.
         output = pipeline_output_to_service_base64_output(pipeline_info.task_name, result)
         return output
+
+    # Inference service input and output and sample information can be obtained through the docs interface
+    @router.get('/describe')
+    async def index(request: Request):
+        pipeline_info = request.app.state.pipeline_info
+        return pipeline_info.schema
+
 Todo:
     * Support more service input type, such as form.
 
 """
 
 
-def create_pipeline(model_id: str, revision: str):
+def create_pipeline(model_id: str,
+                    revision: str,
+                    external_engine_for_llm: bool = True):
     model_configuration_file = model_file_download(
         model_id=model_id,
         file_path=ModelFile.CONFIGURATION,
         revision=revision)
     cfg = Config.from_file(model_configuration_file)
-    return pipeline(task=cfg.task, model=model_id, model_revision=revision)
+    return pipeline(
+        task=cfg.task,
+        model=model_id,
+        model_revision=revision,
+        external_engine_for_llm=external_engine_for_llm)
 
 
 def get_class_user_attributes(cls):
@@ -534,6 +546,9 @@ class PipelineInfomation():
             },
         }
 
+    def __getitem__(self, key):
+        return self.__dict__.get('_%s' % key)
+
 
 def is_url(url: str):
     """Check the input url is valid url.
@@ -632,7 +647,7 @@ def call_pipeline_with_json(pipeline_info: PipelineInfomation,
     #     result = pipeline(**pipeline_inputs)
     # else:
     pipeline_inputs, parameters = service_base64_input_to_pipeline_input(
-        pipeline_info.task_name, body)
+        pipeline_info['task_name'], body)
     result = pipeline(pipeline_inputs, **parameters)
 
     return result
@@ -698,6 +713,7 @@ def service_base64_input_to_pipeline_input(task_name, body):
 
 
 def encode_numpy_image_to_base64(image):
+    import cv2
     _, img_encode = cv2.imencode('.png', image)
     bytes_data = img_encode.tobytes()
     base64_str = str(base64.b64encode(bytes_data), 'utf-8')
@@ -773,7 +789,12 @@ def pipeline_output_to_service_base64_output(task_name, pipeline_output):
         pipeline_output = pipeline_output[0]
     for key, value in pipeline_output.items():
         if key not in task_outputs:
-            json_serializable_output[key] = value
+            import torch
+            if isinstance(value, torch.Tensor):
+                v = np.array(value.cpu()).tolist()
+            else:
+                v = value
+            json_serializable_output[key] = v
             continue  # skip the output not defined.
         if key in [
                 OutputKeys.OUTPUT_IMG, OutputKeys.OUTPUT_IMGS,

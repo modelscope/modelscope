@@ -15,13 +15,15 @@ from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urlencode
 
-import pandas as pd
+import json
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
-from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
+from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
+                                      API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
@@ -31,7 +33,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_TIMEOUT,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
-                                      REQUESTS_API_HTTP_METHOD, Licenses,
+                                      REQUESTS_API_HTTP_METHOD,
+                                      DatasetVisibility, Licenses,
                                       ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
@@ -45,13 +48,14 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
+                                       REPO_TYPE_MODEL, ConfigFields,
                                        DatasetFormations, DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
-                                       DownloadMode, ModelFile,
-                                       VirgoDatasetConfig)
+                                       DownloadMode, Frameworks, ModelFile,
+                                       Tasks, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
-from .utils.utils import (get_endpoint, get_release_datetime,
-                          model_id_to_group_owner_name)
+from .utils.utils import (get_endpoint, get_readable_folder_size,
+                          get_release_datetime, model_id_to_group_owner_name)
 
 logger = get_logger()
 
@@ -59,7 +63,10 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
-    def __init__(self, endpoint: Optional[str] = None):
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 timeout=API_HTTP_CLIENT_TIMEOUT,
+                 max_retries=API_HTTP_CLIENT_MAX_RETRIES):
         """The ModelScope HubApi。
 
         Args:
@@ -69,11 +76,12 @@ class HubApi:
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
         retry = Retry(
-            total=2,
+            total=max_retries,
             read=2,
             connect=2,
             backoff_factor=1,
             status_forcelist=(500, 502, 503, 504),
+            respect_retry_after_header=False,
         )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
@@ -84,12 +92,12 @@ class HubApi:
                 self.session, method,
                 functools.partial(
                     getattr(self.session, method),
-                    timeout=API_HTTP_CLIENT_TIMEOUT))
+                    timeout=timeout))
 
     def login(
         self,
         access_token: str,
-    ) -> tuple():
+    ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.
 
@@ -241,6 +249,58 @@ class HubApi:
         else:
             raise_for_http_status(r)
 
+    def repo_exists(
+        self,
+        repo_id: str,
+        *,
+        repo_type: Optional[str] = None,
+    ) -> bool:
+        """
+        Checks if a repository exists on ModelScope
+
+        Args:
+            repo_id (`str`):
+                A namespace (user or an organization) and a repo name separated
+                by a `/`.
+            repo_type (`str`, *optional*):
+                `None` or `"model"` if getting repository info from a model. Default is `None`.
+                TODO: support dataset and studio
+
+        Returns:
+            True if the repository exists, False otherwise.
+        """
+        if (repo_type is not None) and repo_type.lower != REPO_TYPE_MODEL:
+            raise Exception('Not support repo-type: %s' % repo_type)
+        if (repo_id is None) or repo_id.count('/') != 1:
+            raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
+
+        cookies = ModelScopeConfig.get_cookies()
+        owner_or_group, name = model_id_to_group_owner_name(repo_id)
+        path = f'{self.endpoint}/api/v1/models/{owner_or_group}/{name}'
+
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        code = handle_http_response(r, logger, cookies, repo_id, False)
+        if code == 200:
+            return True
+        elif code == 404:
+            return False
+        else:
+            logger.warn(f'Check repo_exists return status code {code}.')
+            raise Exception(
+                'Failed to check existence of repo: %s, make sure you have access authorization.'
+                % repo_type)
+
+    @staticmethod
+    def _create_default_config(model_dir):
+        cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
+        cfg = {
+            ConfigFields.framework: Frameworks.torch,
+            ConfigFields.task: Tasks.other,
+        }
+        with open(cfg_file, 'w') as file:
+            json.dump(cfg, file)
+
     def push_model(self,
                    model_id: str,
                    model_dir: str,
@@ -263,6 +323,8 @@ class HubApi:
 
         This function must be called before calling HubApi's login with a valid token
         which can be obtained from ModelScope's website.
+
+        If any error, please upload via git commands.
 
         Args:
             model_id (str):
@@ -306,23 +368,23 @@ class HubApi:
             raise InvalidParameter('model_dir must be a valid directory.')
         cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
         if not os.path.exists(cfg_file):
-            raise ValueError(f'{model_dir} must contain a configuration.json.')
+            logger.warning(
+                f'No {ModelFile.CONFIGURATION} file found in {model_dir}, creating a default one.')
+            HubApi._create_default_config(model_dir)
+
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
+        folder_size = get_readable_folder_size(model_dir)
         if ignore_file_pattern is None:
             ignore_file_pattern = []
         if isinstance(ignore_file_pattern, str):
             ignore_file_pattern = [ignore_file_pattern]
-        try:
-            self.get_model(model_id=model_id)
-        except Exception:
-            if visibility is None or license is None:
-                raise InvalidParameter(
-                    'visibility and license cannot be empty if want to create new repo'
-                )
-            logger.info('Create new model %s' % model_id)
+        if visibility is None or license is None:
+            raise InvalidParameter('Visibility and License cannot be empty for new model.')
+        if not self.repo_exists(model_id):
+            logger.info('Creating new model [%s]' % model_id)
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
@@ -331,11 +393,13 @@ class HubApi:
                 original_model_id=original_model_id)
         tmp_dir = tempfile.mkdtemp()
         git_wrapper = GitCommandWrapper()
+        logger.info(f'Pushing folder {model_dir} as model {model_id}.')
+        logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
             repo = Repository(model_dir=tmp_dir, clone_from=model_id)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
-                logger.info('Create new branch %s' % revision)
+                logger.info('Creating new branch %s' % revision)
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
             files_in_repo = os.listdir(tmp_dir)
@@ -399,7 +463,7 @@ class HubApi:
             (owner_or_group, page_number, page_size),
             cookies=cookies,
             headers=self.builder_headers(self.headers))
-        handle_http_response(r, logger, cookies, 'list_model')
+        handle_http_response(r, logger, cookies, owner_or_group)
         if r.status_code == HTTPStatus.OK:
             if is_ok(r.json()):
                 data = r.json()[API_RESPONSE_FIELD_DATA]
@@ -439,6 +503,30 @@ class HubApi:
         Returns:
             Tuple[List[str], List[str]]: Return list of branch name and tags
         """
+        tags_details = self.list_model_revisions_detail(model_id=model_id,
+                                                        cutoff_timestamp=cutoff_timestamp,
+                                                        use_cookies=use_cookies)
+        tags = [x['Revision'] for x in tags_details
+                ] if tags_details else []
+        return tags
+
+    def list_model_revisions_detail(
+            self,
+            model_id: str,
+            cutoff_timestamp: Optional[int] = None,
+            use_cookies: Union[bool, CookieJar] = False) -> List[str]:
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            cutoff_timestamp (int): Tags created before the cutoff will be included.
+                                    The timestamp is represented by the seconds elapsed from the epoch time.
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
+                        will load cookie from local. Defaults to False.
+
+        Returns:
+            Tuple[List[str], List[str]]: Return list of branch name and tags
+        """
         cookies = self._check_cookie(use_cookies)
         if cutoff_timestamp is None:
             cutoff_timestamp = get_release_datetime()
@@ -450,65 +538,89 @@ class HubApi:
         raise_on_error(d)
         info = d[API_RESPONSE_FIELD_DATA]
         # tags returned from backend are guaranteed to be ordered by create-time
-        tags = [x['Revision'] for x in info['RevisionMap']['Tags']
-                ] if info['RevisionMap']['Tags'] else []
-        return tags
+        return info['RevisionMap']['Tags']
 
-    def get_valid_revision(self,
-                           model_id: str,
-                           revision=None,
-                           cookies: Optional[CookieJar] = None):
+    def get_branch_tag_detail(self, details, name):
+        for item in details:
+            if item['Revision'] == name:
+                return item
+        return None
+
+    def get_valid_revision_detail(self,
+                                  model_id: str,
+                                  revision=None,
+                                  cookies: Optional[CookieJar] = None):
         release_timestamp = get_release_datetime()
         current_timestamp = int(round(datetime.datetime.now().timestamp()))
         # for active development in library codes (non-release-branches), release_timestamp
         # is set to be a far-away-time-in-the-future, to ensure that we shall
         # get the master-HEAD version from model repo by default (when no revision is provided)
+        all_branches_detail, all_tags_detail = self.get_model_branches_and_tags_details(
+            model_id, use_cookies=False if cookies is None else cookies)
+        all_branches = [x['Revision'] for x in all_branches_detail] if all_branches_detail else []
+        all_tags = [x['Revision'] for x in all_tags_detail] if all_tags_detail else []
         if release_timestamp > current_timestamp + ONE_YEAR_SECONDS:
-            branches, tags = self.get_model_branches_and_tags(
-                model_id, use_cookies=False if cookies is None else cookies)
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
                     'Model revision not specified, use default: %s in development mode'
                     % revision)
-            if revision not in branches and revision not in tags:
+            if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
-            logger.info('Development mode use revision: %s' % revision)
+
+            revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
+            if revision_detail is None:
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+            logger.debug('Development mode use revision: %s' % revision)
         else:
-            all_revisions = self.list_model_revisions(
-                model_id,
-                cutoff_timestamp=current_timestamp,
-                use_cookies=False if cookies is None else cookies)
-            if len(all_revisions) == 0:
+            if revision is not None and revision in all_branches:
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+                logger.warning('Using branch: %s as version is unstable, use with caution' % revision)
+                return revision_detail
+
+            if len(all_tags_detail) == 0:  # use no revision use master as default.
                 if revision is None or revision == MASTER_MODEL_BRANCH:
                     revision = MASTER_MODEL_BRANCH
                 else:
                     raise NotExistError('The model: %s has no revision: %s !' % (model_id, revision))
+                revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
             else:
                 if revision is None:  # user not specified revision, use latest revision before release time
-                    revisions = self.list_model_revisions(
-                        model_id,
-                        cutoff_timestamp=release_timestamp,
-                        use_cookies=False if cookies is None else cookies)
-                    if len(revisions) > 0:
-                        revision = revisions[0]  # use latest revision before release time.
+                    revisions_detail = [x for x in
+                                        all_tags_detail if x['CreatedAt'] <= release_timestamp] if all_tags_detail else [] # noqa E501
+                    if len(revisions_detail) > 0:
+                        revision = revisions_detail[0]['Revision']  # use latest revision before release time.
+                        revision_detail = revisions_detail[0]
                     else:
-                        vl = '[%s]' % ','.join(all_revisions)
-                        raise NoValidRevisionError('Model revision should be specified from revisions: %s' % (vl))
+                        revision = MASTER_MODEL_BRANCH
+                        revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
+                        vl = '[%s]' % ','.join(all_tags)
+                        logger.warning('Model revision should be specified from revisions: %s' % (vl))
                     logger.warning('Model revision not specified, use revision: %s' % revision)
                 else:
                     # use user-specified revision
-                    if revision not in all_revisions:
+                    if revision not in all_tags:
                         if revision == MASTER_MODEL_BRANCH:
                             logger.warning('Using the master branch is fragile, please use it with caution!')
+                            revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
                         else:
-                            vl = '[%s]' % ','.join(all_revisions)
+                            vl = '[%s]' % ','.join(all_tags)
                             raise NotExistError('The model: %s has no revision: %s valid are: %s!' %
                                                 (model_id, revision, vl))
+                    else:
+                        revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
                     logger.info('Use user-specified model revision: %s' % revision)
-        return revision
+        return revision_detail
 
-    def get_model_branches_and_tags(
+    def get_valid_revision(self,
+                           model_id: str,
+                           revision=None,
+                           cookies: Optional[CookieJar] = None):
+        return self.get_valid_revision_detail(model_id=model_id,
+                                              revision=revision,
+                                              cookies=cookies)['Revision']
+
+    def get_model_branches_and_tags_details(
         self,
         model_id: str,
         use_cookies: Union[bool, CookieJar] = False,
@@ -532,10 +644,29 @@ class HubApi:
         d = r.json()
         raise_on_error(d)
         info = d[API_RESPONSE_FIELD_DATA]
-        branches = [x['Revision'] for x in info['RevisionMap']['Branches']
-                    ] if info['RevisionMap']['Branches'] else []
-        tags = [x['Revision'] for x in info['RevisionMap']['Tags']
-                ] if info['RevisionMap']['Tags'] else []
+        return info['RevisionMap']['Branches'], info['RevisionMap']['Tags']
+
+    def get_model_branches_and_tags(
+        self,
+        model_id: str,
+        use_cookies: Union[bool, CookieJar] = False,
+    ) -> Tuple[List[str], List[str]]:
+        """Get model branch and tags.
+
+        Args:
+            model_id (str): The model id
+            use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
+                        will load cookie from local. Defaults to False.
+
+        Returns:
+            Tuple[List[str], List[str]]: Return list of branch name and tags
+        """
+        branches_detail, tags_detail = self.get_model_branches_and_tags_details(model_id=model_id,
+                                                                                use_cookies=use_cookies)
+        branches = [x['Revision'] for x in branches_detail
+                    ] if branches_detail else []
+        tags = [x['Revision'] for x in tags_detail
+                ] if tags_detail else []
         return branches, tags
 
     def get_model_files(self,
@@ -585,6 +716,64 @@ class HubApi:
             files.append(file)
         return files
 
+    def file_exists(
+            self,
+            repo_id: str,
+            filename: str,
+            *,
+            revision: Optional[str] = None,
+    ):
+        """Get if the specified file exists
+
+        Args:
+            repo_id (`str`): The repo id to use
+            filename (`str`): The queried filename
+            revision (`Optional[str]`): The repo revision
+        Returns:
+            The query result in bool value
+        """
+        files = self.get_model_files(repo_id, revision=revision)
+        files = [file['Name'] for file in files]
+        return filename in files
+
+    def create_dataset(self,
+                       dataset_name: str,
+                       namespace: str,
+                       chinese_name: Optional[str] = '',
+                       license: Optional[str] = Licenses.APACHE_V2,
+                       visibility: Optional[int] = DatasetVisibility.PUBLIC,
+                       description: Optional[str] = '') -> str:
+
+        if dataset_name is None or namespace is None:
+            raise InvalidParameter('dataset_name and namespace are required!')
+
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        path = f'{self.endpoint}/api/v1/datasets'
+        files = {
+            'Name': (None, dataset_name),
+            'ChineseName': (None, chinese_name),
+            'Owner': (None, namespace),
+            'License': (None, license),
+            'Visibility': (None, visibility),
+            'Description': (None, description)
+        }
+
+        r = self.session.post(
+            path,
+            files=files,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers),
+        )
+
+        handle_http_post_error(r, path, files)
+        raise_on_error(r.json())
+        dataset_repo_url = f'{self.endpoint}/datasets/{namespace}/{dataset_name}'
+        logger.info(f'Create dataset success: {dataset_repo_url}')
+        return dataset_repo_url
+
     def list_datasets(self):
         path = f'{self.endpoint}/api/v1/datasets'
         params = {}
@@ -600,10 +789,55 @@ class HubApi:
         cookies = ModelScopeConfig.get_cookies()
         r = self.session.get(datahub_url, cookies=cookies)
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp)
+        datahub_raise_on_error(datahub_url, resp, r)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
+
+    def get_dataset_infos(self,
+                          dataset_hub_id: str,
+                          revision: str,
+                          files_metadata: bool = False,
+                          timeout: float = 100,
+                          recursive: str = 'True'):
+        """
+        Get dataset infos.
+        """
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision, 'Root': None, 'Recursive': recursive}
+        cookies = ModelScopeConfig.get_cookies()
+        if files_metadata:
+            params['blobs'] = True
+        r = self.session.get(datahub_url, params=params, cookies=cookies, timeout=timeout)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
+
+    def list_repo_tree(self,
+                       dataset_name: str,
+                       namespace: str,
+                       revision: str,
+                       root_path: str,
+                       recursive: bool = True,
+                       page_number: int = 1,
+                       page_size: int = 100):
+
+        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
+            dataset_name=dataset_name, namespace=namespace)
+
+        recursive = 'True' if recursive else 'False'
+        datahub_url = f'{self.endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {'Revision': revision if revision else 'master',
+                  'Root': root_path if root_path else '/', 'Recursive': recursive,
+                  'PageNumber': page_number, 'PageSize': page_size}
+        cookies = ModelScopeConfig.get_cookies()
+
+        r = self.session.get(datahub_url, params=params, cookies=cookies)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str, dataset_id: str, revision: str):
         """ Get the meta file-list of the dataset. """
@@ -613,7 +847,7 @@ class HubApi:
                              cookies=cookies,
                              headers=self.builder_headers(self.headers))
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp)
+        datahub_raise_on_error(datahub_url, resp, r)
         file_list = resp['Data']
         if file_list is None:
             raise NotExistError(
@@ -626,8 +860,10 @@ class HubApi:
     @staticmethod
     def dump_datatype_file(dataset_type: int, meta_cache_dir: str):
         """
-        Dump the data_type as a local file, in order to get the dataset formation without calling the datahub.
-        More details, please refer to the class `modelscope.utils.constant.DatasetFormations`.
+        Dump the data_type as a local file, in order to get the dataset
+         formation without calling the datahub.
+        More details, please refer to the class
+        `modelscope.utils.constant.DatasetFormations`.
         """
         dataset_type_file_path = os.path.join(meta_cache_dir,
                                               f'{str(dataset_type)}{DatasetFormations.formation_mark_ext.value}')
@@ -673,8 +909,9 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        import json
-        from tqdm import tqdm
+        from tqdm.auto import tqdm
+        import pandas as pd
+
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
             os.remove(out_path)
@@ -712,7 +949,7 @@ class HubApi:
                     else:
                         with_header = False
                     chunk_df = pd.DataFrame(chunk)
-                    chunk_df.to_csv(f, index=False, header=with_header)
+                    chunk_df.to_csv(f, index=False, header=with_header, escapechar='\\')
                     iter_num += 1
                 else:
                     # csv or others
@@ -723,6 +960,35 @@ class HubApi:
         return out_path
 
     def get_dataset_file_url(
+            self,
+            file_name: str,
+            dataset_name: str,
+            namespace: str,
+            revision: Optional[str] = DEFAULT_DATASET_REVISION,
+            view: Optional[bool] = False,
+            extension_filter: Optional[bool] = True):
+
+        if not file_name or not dataset_name or not namespace:
+            raise ValueError('Args (file_name, dataset_name, namespace) cannot be empty!')
+
+        # Note: make sure the FilePath is the last parameter in the url
+        params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': file_name, 'View': view}
+        params: str = urlencode(params)
+        file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?{params}'
+
+        return file_url
+
+        # if extension_filter:
+        #     if os.path.splitext(file_name)[-1] in META_FILES_FORMAT:
+        #         file_url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'\
+        #                    f'Revision={revision}&FilePath={file_name}'
+        #     else:
+        #         file_url = file_name
+        #     return file_url
+        # else:
+        #     return file_url
+
+    def get_dataset_file_url_origin(
             self,
             file_name: str,
             dataset_name: str,
@@ -866,10 +1132,10 @@ class HubApi:
             cookies=cookies,
             headers={'user-agent': ModelScopeConfig.get_user_agent()})
         resp = r.json()
-        datahub_raise_on_error(url, resp)
+        datahub_raise_on_error(url, resp, r)
         return resp['Data']
 
-    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool) -> None:
+    def dataset_download_statistics(self, dataset_name: str, namespace: str, use_streaming: bool = False) -> None:
         is_ci_test = os.getenv('CI_TEST') == 'True'
         if dataset_name and namespace and not is_ci_test and not use_streaming:
             try:
@@ -902,6 +1168,10 @@ class HubApi:
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
 
+    def get_file_base_path(self, namespace: str, dataset_name: str) -> str:
+        return f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
+        # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
@@ -909,6 +1179,7 @@ class ModelScopeConfig:
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'
     USER_SESSION_ID_FILE_NAME = 'session'
+    cookie_expired_warning = False
 
     @staticmethod
     def make_sure_credential_path_exist():
@@ -930,10 +1201,12 @@ class ModelScopeConfig:
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
-                    if cookie.is_expired():
-                        logger.warning(
+                    if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
+                        ModelScopeConfig.cookie_expired_warning = True
+                        logger.debug(
                             'Authentication has expired, '
-                            'please re-login if you need to access private models or datasets.')
+                            'please re-login with modelscope login --token "YOUR_SDK_TOKEN" '
+                            'if you need to access private models or datasets.')
                         return None
                 return cookies
         return None

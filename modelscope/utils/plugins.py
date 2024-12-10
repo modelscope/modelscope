@@ -17,17 +17,17 @@ from typing import Any, Iterable, List, Optional, Set, Union
 import json
 import pkg_resources
 
+from modelscope import snapshot_download
 from modelscope.fileio.file import LocalStorage
 from modelscope.utils.ast_utils import FilesAstScanning
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
-from modelscope.utils.file_utils import get_default_cache_dir
-from modelscope.utils.hub import read_config, snapshot_download
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 storage = LocalStorage()
 
-MODELSCOPE_FILE_DIR = get_default_cache_dir()
+MODELSCOPE_FILE_DIR = get_modelscope_cache_dir()
 MODELSCOPE_DYNAMIC_MODULE = 'modelscope_modules'
 BASE_MODULE_DIR = os.path.join(MODELSCOPE_FILE_DIR, MODELSCOPE_DYNAMIC_MODULE)
 
@@ -395,8 +395,8 @@ def import_module_from_model_dir(model_dir):
     ]
     create_module_from_files(relative_file_dirs, model_dir, module_name)
     for file in relative_file_dirs:
-        submodule = module_name + '.' + file.replace(os.sep, '.').replace(
-            '.py', '')
+        submodule = module_name + '.' + file.replace('.py', '').replace(
+            os.sep, '.')
         importlib.import_module(submodule)
 
 
@@ -1140,6 +1140,7 @@ class EnvsManager(object):
         cache_dir = os.getenv('MODELSCOPE_CACHE', cache_dir)
         self.env_dir = os.path.join(cache_dir, EnvsManager.name, model_id)
         model_dir = snapshot_download(model_id, revision=model_revision)
+        from modelscope.utils.hub import read_config
         cfg = read_config(model_dir)
         self.plugins = cfg.get('plugins', [])
         self.allow_remote = cfg.get('allow_remote', False)

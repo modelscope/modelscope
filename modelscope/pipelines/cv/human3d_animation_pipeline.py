@@ -72,7 +72,7 @@ class Human3DAnimationPipeline(Pipeline):
                                      (case_name, action_name))
         exec_path = os.path.join(self.model_dir, 'skinning.py')
 
-        cmd = f'blender -b -P {exec_path}  -- --input {self.case_dir}' \
+        cmd = f'{self.blender} -b -P {exec_path}  -- --input {self.case_dir}' \
               f' --gltf_path {gltf_path} --action {self.action}'
         os.system(cmd)
         return gltf_path
@@ -83,9 +83,6 @@ class Human3DAnimationPipeline(Pipeline):
         mesh = read_obj(mesh_path)
         tex = cv2.imread(tex_path)
         vertices = mesh['vertices']
-        cent = (vertices.max(axis=0) + vertices.min(axis=0)) / 2
-        new_cent = (0, 1.8 / 2, 0)
-        vertices -= (cent - new_cent)
         mesh['vertices'] = vertices
         mesh['texture_map'] = tex
         write_obj(mesh_path, mesh)
@@ -107,6 +104,11 @@ class Human3DAnimationPipeline(Pipeline):
             save_dir = input['save_dir']
         else:
             save_dir = None
+
+        if 'blender' in input:
+            self.blender = input['blender']
+        else:
+            self.blender = 'blender'
 
         if case_id.endswith('.obj'):
             mesh_path = case_id

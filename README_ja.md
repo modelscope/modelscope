@@ -17,6 +17,11 @@
 
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/modelscope/modelscope.svg)](https://GitHub.com/modelscope/modelscope/graphs/contributors/) -->
 <!-- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) -->
+[Discord](https://discord.gg/FMupRv4jUR)
+
+<h4 align="center">
+<a href="https://trendshift.io/repositories/4784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4784" alt="modelscope%2Fmodelscope | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</h4>
 
 <h4 align="center">
     <p>
@@ -51,33 +56,36 @@ ModelScope ライブラリは、様々なモデルの実装を保持するだけ
 
 代表的な例をいくつか挙げると:
 
-NLP:
+大きなモデル:
 
-* [nlp_gpt3_text-generation_2.7B](https://modelscope.cn/models/damo/nlp_gpt3_text-generation_2.7B)
+* [Yi-1.5-34B-Chat](https://modelscope.cn/models/01ai/Yi-1.5-34B-Chat/summary)
 
-* [ChatYuan-large](https://modelscope.cn/models/ClueAI/ChatYuan-large)
+* [Qwen1.5-110B-Chat](https://modelscope.cn/models/qwen/Qwen1.5-110B-Chat/summary)
 
-* [mengzi-t5-base](https://modelscope.cn/models/langboat/mengzi-t5-base)
+* [DeepSeek-V2-Chat](https://modelscope.cn/models/deepseek-ai/DeepSeek-V2-Chat/summary)
 
-* [nlp_csanmt_translation_en2zh](https://modelscope.cn/models/damo/nlp_csanmt_translation_en2zh)
+* [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
 
-* [nlp_raner_named-entity-recognition_chinese-base-news](https://modelscope.cn/models/damo/nlp_raner_named-entity-recognition_chinese-base-news)
+* [Meta-Llama-3-8B-Instruct](https://modelscope.cn/models/LLM-Research/Meta-Llama-3-8B-Instruct/summary)
 
-* [nlp_structbert_word-segmentation_chinese-base](https://modelscope.cn/models/damo/nlp_structbert_word-segmentation_chinese-base)
+* [Phi-3-mini-128k-instruct](https://modelscope.cn/models/LLM-Research/Phi-3-mini-128k-instruct/summary)
 
-* [Erlangshen-RoBERTa-330M-Sentiment](https://modelscope.cn/models/fengshenbang/Erlangshen-RoBERTa-330M-Sentiment)
-
-* [nlp_convai_text2sql_pretrain_cn](https://modelscope.cn/models/damo/nlp_convai_text2sql_pretrain_cn)
 
 マルチモーダル:
 
-* [multi-modal_clip-vit-base-patch16_zh](https://modelscope.cn/models/damo/multi-modal_clip-vit-base-patch16_zh)
+* [Qwen-VL-Chat](https://modelscope.cn/models/qwen/Qwen-VL-Chat/summary)
 
-* [ofa_pretrain_base_zh](https://modelscope.cn/models/damo/ofa_pretrain_base_zh)
+* [Yi-VL-6B](https://modelscope.cn/models/01ai/Yi-VL-6B/summary)
 
-* [Taiyi-Stable-Diffusion-1B-Chinese-v0.1](https://modelscope.cn/models/fengshenbang/Taiyi-Stable-Diffusion-1B-Chinese-v0.1)
+* [InternVL-Chat-V1-5](https://modelscope.cn/models/AI-ModelScope/InternVL-Chat-V1-5/summary)
 
-* [mplug_visual-question-answering_coco_large_en](https://modelscope.cn/models/damo/mplug_visual-question-answering_coco_large_en)
+* [deepseek-vl-7b-chat](https://modelscope.cn/models/deepseek-ai/deepseek-vl-7b-chat/summary)
+
+* [OpenSoraPlan](https://modelscope.cn/models/AI-ModelScope/Open-Sora-Plan-v1.0.0/summary)
+
+* [OpenSora](https://modelscope.cn/models/luchentech/OpenSora-STDiT-v1-HQ-16x512x512/summary)
+
+* [I2VGen-XL](https://modelscope.cn/models/iic/i2vgen-xl/summary)
 
 CV:
 

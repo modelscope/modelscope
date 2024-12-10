@@ -1,11 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import numpy as np
-
-from . import jsonplus
 from .base import FormatHandler
 
 
 def set_default(obj):
+    import numpy as np
     """Set default json values for non-serializable values.
 
     It helps convert ``set``, ``range`` and ``np.ndarray`` data types to list.
@@ -25,10 +23,13 @@ class JsonHandler(FormatHandler):
     """Use jsonplus, serialization of Python types to JSON that "just works"."""
 
     def load(self, file):
+        from . import jsonplus
         return jsonplus.loads(file.read())
 
     def dump(self, obj, file, **kwargs):
+        from . import jsonplus
         file.write(self.dumps(obj, **kwargs))
 
     def dumps(self, obj, **kwargs):
+        from . import jsonplus
         return jsonplus.dumps(obj, **kwargs)

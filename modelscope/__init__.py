@@ -1,15 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import TYPE_CHECKING
 
-from modelscope.utils.import_utils import LazyImportModule
-from .utils.automodel_utils import fix_transformers_upgrade
+from modelscope.utils.import_utils import (LazyImportModule,
+                                           is_transformers_available)
 
 if TYPE_CHECKING:
     from .exporters import Exporter, TfModelExporter, TorchModelExporter
     from .hub.api import HubApi
     from .hub.check_model import check_local_model_is_latest, check_model_is_id
     from .hub.push_to_hub import push_to_hub, push_to_hub_async
-    from .hub.snapshot_download import snapshot_download
+    from .hub.snapshot_download import snapshot_download, dataset_snapshot_download
+    from .hub.file_download import model_file_download, dataset_file_download
+
     from .metrics import (
         AccuracyMetric, AudioNoiseMetric, BleuMetric, ImageColorEnhanceMetric,
         ImageColorizationMetric, ImageDenoiseMetric, ImageInpaintingMetric,
@@ -29,13 +31,34 @@ if TYPE_CHECKING:
     from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
                            build_dataset_from_file)
     from .utils.constant import Tasks
-    from .utils.hf_util import AutoConfig, GPTQConfig, BitsAndBytesConfig
-    from .utils.hf_util import (AutoModel, AutoModelForCausalLM,
-                                AutoModelForSeq2SeqLM,
-                                AutoModelForSequenceClassification,
-                                AutoModelForTokenClassification, AutoTokenizer,
-                                GenerationConfig, AutoImageProcessor,
-                                BatchFeature)
+    if is_transformers_available():
+        from .utils.hf_util import (
+            AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
+            AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig,
+            AutoModelForCausalLM, AutoModelForSeq2SeqLM,
+            AutoModelForVision2Seq, AutoModelForSequenceClassification,
+            AutoModelForTokenClassification, AutoModelForImageClassification,
+            AutoModelForImageTextToText,
+            AutoModelForZeroShotImageClassification,
+            AutoModelForKeypointDetection,
+            AutoModelForDocumentQuestionAnswering,
+            AutoModelForSemanticSegmentation,
+            AutoModelForUniversalSegmentation,
+            AutoModelForInstanceSegmentation, AutoModelForObjectDetection,
+            AutoModelForZeroShotObjectDetection,
+            AutoModelForAudioClassification, AutoModelForSpeechSeq2Seq,
+            AutoModelForMaskedImageModeling,
+            AutoModelForVisualQuestionAnswering,
+            AutoModelForTableQuestionAnswering, AutoModelForImageToImage,
+            AutoModelForImageSegmentation, AutoModelForQuestionAnswering,
+            AutoModelForMaskedLM, AutoTokenizer, AutoModelForMaskGeneration,
+            AutoModelForPreTraining, AutoModelForTextEncoding,
+            AutoImageProcessor, BatchFeature, Qwen2VLForConditionalGeneration,
+            T5EncoderModel)
+    else:
+        print(
+            'transformer is not installed, please install it if you want to use related modules'
+        )
     from .utils.hub import create_model_if_not_exist, read_config
     from .utils.logger import get_logger
     from .version import __release_datetime__, __version__
@@ -53,7 +76,9 @@ else:
             'TorchModelExporter',
         ],
         'hub.api': ['HubApi'],
-        'hub.snapshot_download': ['snapshot_download'],
+        'hub.snapshot_download':
+        ['snapshot_download', 'dataset_snapshot_download'],
+        'hub.file_download': ['model_file_download', 'dataset_file_download'],
         'hub.push_to_hub': ['push_to_hub', 'push_to_hub_async'],
         'hub.check_model':
         ['check_model_is_id', 'check_local_model_is_latest'],
@@ -78,16 +103,36 @@ else:
         'utils.hub': ['read_config', 'create_model_if_not_exist'],
         'utils.logger': ['get_logger'],
         'utils.constant': ['Tasks'],
-        'utils.hf_util': [
-            'AutoConfig', 'GenerationConfig', 'AutoModel', 'GPTQConfig',
-            'BitsAndBytesConfig', 'AutoModelForCausalLM',
-            'AutoModelForSeq2SeqLM', 'AutoTokenizer',
-            'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification', 'AutoImageProcessor',
-            'BatchFeature'
-        ],
         'msdatasets': ['MsDataset']
     }
+
+    if is_transformers_available():
+        _import_structure['utils.hf_util'] = [
+            'AutoModel', 'AutoProcessor', 'AutoFeatureExtractor',
+            'GenerationConfig', 'AutoConfig', 'GPTQConfig', 'AwqConfig',
+            'BitsAndBytesConfig', 'AutoModelForCausalLM',
+            'AutoModelForSeq2SeqLM', 'AutoModelForVision2Seq',
+            'AutoModelForSequenceClassification',
+            'AutoModelForTokenClassification',
+            'AutoModelForImageClassification', 'AutoModelForImageToImage',
+            'AutoModelForImageTextToText',
+            'AutoModelForZeroShotImageClassification',
+            'AutoModelForKeypointDetection',
+            'AutoModelForDocumentQuestionAnswering',
+            'AutoModelForSemanticSegmentation',
+            'AutoModelForUniversalSegmentation',
+            'AutoModelForInstanceSegmentation', 'AutoModelForObjectDetection',
+            'AutoModelForZeroShotObjectDetection',
+            'AutoModelForAudioClassification', 'AutoModelForSpeechSeq2Seq',
+            'AutoModelForMaskedImageModeling',
+            'AutoModelForVisualQuestionAnswering',
+            'AutoModelForTableQuestionAnswering',
+            'AutoModelForImageSegmentation', 'AutoModelForQuestionAnswering',
+            'AutoModelForMaskedLM', 'AutoTokenizer',
+            'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
+            'AutoModelForTextEncoding', 'AutoImageProcessor', 'BatchFeature',
+            'Qwen2VLForConditionalGeneration', 'T5EncoderModel'
+        ]
 
     import sys
 
@@ -98,5 +143,3 @@ else:
         module_spec=__spec__,
         extra_objects={},
     )
-
-fix_transformers_upgrade()

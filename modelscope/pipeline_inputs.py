@@ -247,8 +247,10 @@ TASK_INPUTS = {
     InputType.VIDEO,
 
     # image generation task result for a single image
-    Tasks.image_to_image_generation:
-    InputType.IMAGE,
+    Tasks.image_to_image_generation: [
+        InputType.IMAGE,
+        (InputType.IMAGE, InputType.IMAGE, InputType.IMAGE, InputType.IMAGE)
+    ],
     Tasks.image_to_image_translation:
     InputType.IMAGE,
     Tasks.image_style_transfer: {
@@ -435,6 +437,8 @@ TASK_INPUTS = {
     },
     Tasks.machine_reading_comprehension:
     InputType.TEXT,
+
+    Tasks.siamese_uie: InputType.TEXT,
 
     # ============ audio tasks ===================
     Tasks.auto_speech_recognition:  # input can be audio, or audio and text.

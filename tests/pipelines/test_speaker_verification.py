@@ -19,9 +19,11 @@ SD_EXAMPLE_WAV = 'data/test/audios/2speakers_example.wav'
 
 
 class SpeakerVerificationTest(unittest.TestCase):
+    tdnn_voxceleb_16k_model_id = 'iic/speech_tdnn_sv_en_voxceleb_16k'
     ecapatdnn_voxceleb_16k_model_id = 'damo/speech_ecapa-tdnn_sv_en_voxceleb_16k'
     campplus_voxceleb_16k_model_id = 'damo/speech_campplus_sv_en_voxceleb_16k'
     rdino_voxceleb_16k_model_id = 'damo/speech_rdino_ecapa_tdnn_sv_en_voxceleb_16k'
+    sdpn_voxceleb_16k_model_id = 'iic/speech_sdpn_ecapa_tdnn_sv_en_voxceleb_16k'
     speaker_change_locating_cn_model_id = 'damo/speech_campplus-transformer_scl_zh-cn_16k-common'
     speaker_change_lcoating_xvector_cn_model_id = 'damo/speech_xvector_transformer_scl_zh-cn_16k-common'
     eres2net_voxceleb_16k_model_id = 'damo/speech_eres2net_sv_en_voxceleb_16k'
@@ -31,13 +33,14 @@ class SpeakerVerificationTest(unittest.TestCase):
     lre_eres2net_base_en_cn_16k_model_id = 'damo/speech_eres2net_base_lre_en-cn_16k'
     lre_eres2net_large_en_cn_16k_model_id = 'damo/speech_eres2net_large_lre_en-cn_16k'
     eres2net_aug_zh_cn_16k_common_model_id = 'damo/speech_eres2net_sv_zh-cn_16k-common'
+    eres2netv2_zh_cn_16k_common_model_id = 'iic/speech_eres2netv2_sv_zh-cn_16k-common'
+    eres2netv2ep4_zh_cn_16k_common_model_id = 'iic/speech_eres2netv2w24s4ep4_sv_zh-cn_16k-common'
     rdino_3dspeaker_16k_model_id = 'damo/speech_rdino_ecapa_tdnn_sv_zh-cn_3dspeaker_16k'
     eres2net_base_3dspeaker_16k_model_id = 'damo/speech_eres2net_base_sv_zh-cn_3dspeaker_16k'
     eres2net_large_3dspeaker_16k_model_id = 'damo/speech_eres2net_large_sv_zh-cn_3dspeaker_16k'
+    resnet_3dspeaker_16k_model_id = 'iic/speech_resnet34_sv_zh-cn_3dspeaker_16k'
+    res2net_3dspeaker_16k_model_id = 'iic/speech_res2net_sv_zh-cn_3dspeaker_16k'
     lre_eres2net_large_five_lang_8k_model_id = 'damo/speech_eres2net_large_five_lre_8k'
-
-    def setUp(self) -> None:
-        self.task = Tasks.speaker_verification
 
     def run_pipeline(self,
                      model_id: str,
@@ -46,16 +49,28 @@ class SpeakerVerificationTest(unittest.TestCase):
                      model_revision=None) -> Dict[str, Any]:
         if task is not None:
             self.task = task
+        else:
+            self.task = Tasks.speaker_verification
         p = pipeline(
             task=self.task, model=model_id, model_revision=model_revision)
         result = p(audios)
         return result
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_tdnn_voxceleb_16k(self):
+        logger.info(
+            'Run speaker verification for ecapatdnn_voxceleb_16k model')
+        result = self.run_pipeline(
+            model_id=self.tdnn_voxceleb_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV],
+            model_revision='v1.0.0')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_verification_ecapatdnn_voxceleb_16k(self):
         logger.info(
             'Run speaker verification for ecapatdnn_voxceleb_16k model')
-
         result = self.run_pipeline(
             model_id=self.ecapatdnn_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV])
@@ -65,7 +80,6 @@ class SpeakerVerificationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_speaker_verification_campplus_voxceleb_16k(self):
         logger.info('Run speaker verification for campplus_voxceleb_16k model')
-
         result = self.run_pipeline(
             model_id=self.campplus_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER2_A_EN_16K_WAV])
@@ -79,6 +93,16 @@ class SpeakerVerificationTest(unittest.TestCase):
             model_id=self.rdino_voxceleb_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
             model_revision='v1.0.1')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_sdpn_voxceleb_16k(self):
+        logger.info('Run speaker verification for sdpn_voxceleb_16k model')
+        result = self.run_pipeline(
+            model_id=self.sdpn_voxceleb_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.0')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 
@@ -99,6 +123,26 @@ class SpeakerVerificationTest(unittest.TestCase):
             'Run speaker verification for eres2net_large_3dspeaker_16k model')
         result = self.run_pipeline(
             model_id=self.eres2net_large_3dspeaker_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.0')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_resnet_3dspeaker_16k(self):
+        logger.info('Run speaker verification for resnet_3dspeaker_16k model')
+        result = self.run_pipeline(
+            model_id=self.resnet_3dspeaker_16k_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.0')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_res2net_3dspeaker_16k(self):
+        logger.info('Run speaker verification for res2net_3dspeaker_16k model')
+        result = self.run_pipeline(
+            model_id=self.res2net_3dspeaker_16k_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
             model_revision='v1.0.0')
         print(result)
@@ -154,6 +198,30 @@ class SpeakerVerificationTest(unittest.TestCase):
             model_id=self.eres2net_aug_zh_cn_16k_common_model_id,
             audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
             model_revision='v1.0.5')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_eres2netv2_zh_cn_common_16k(self):
+        logger.info(
+            'Run speaker verification for eres2netv2_zh_cn_common_16k model')
+        result = self.run_pipeline(
+            model_id=self.eres2netv2_zh_cn_16k_common_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.2')
+        print(result)
+        self.assertTrue(OutputKeys.SCORE in result)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_run_with_speaker_verification_eres2netv2ep4w24s4_zh_cn_common_16k(
+            self):
+        logger.info(
+            'Run speaker verification for eres2netv2ep4_zh_cn_common_16k model'
+        )
+        result = self.run_pipeline(
+            model_id=self.eres2netv2ep4_zh_cn_16k_common_model_id,
+            audios=[SPEAKER1_A_EN_16K_WAV, SPEAKER1_B_EN_16K_WAV],
+            model_revision='v1.0.1')
         print(result)
         self.assertTrue(OutputKeys.SCORE in result)
 

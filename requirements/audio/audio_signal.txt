@@ -1,6 +1,6 @@
 hdbscan
 hyperpyyaml
-librosa==0.9.2
+librosa==0.10.1
 MinDAEC
 mir_eval>=0.7
 rotary_embedding_torch>=0.1.5

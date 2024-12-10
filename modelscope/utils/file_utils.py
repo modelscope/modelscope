@@ -31,12 +31,70 @@ def func_receive_dict_inputs(func):
     return False
 
 
-def get_default_cache_dir():
+def get_default_modelscope_cache_dir():
     """
     default base dir: '~/.cache/modelscope'
     """
     default_cache_dir = Path.home().joinpath('.cache', 'modelscope')
     return default_cache_dir
+
+
+def get_modelscope_cache_dir() -> str:
+    """Get modelscope cache dir, default location or
+       setting with MODELSCOPE_CACHE
+
+    Returns:
+        str: the modelscope cache root.
+    """
+    return os.getenv('MODELSCOPE_CACHE', get_default_modelscope_cache_dir())
+
+
+def get_model_cache_root() -> str:
+    """Get model cache root path.
+
+    Returns:
+        str: the modelscope model cache root.
+    """
+    return os.path.join(get_modelscope_cache_dir(), 'hub')
+
+
+def get_dataset_cache_root() -> str:
+    """Get dataset raw file cache root path.
+
+    Returns:
+        str: the modelscope dataset raw file cache root.
+    """
+    return os.path.join(get_modelscope_cache_dir(), 'datasets')
+
+
+def get_dataset_cache_dir(dataset_id: str) -> str:
+    """Get the dataset_id's path.
+       dataset_cache_root/dataset_id.
+
+    Args:
+        dataset_id (str): The dataset id.
+
+    Returns:
+        str: The dataset_id's cache root path.
+    """
+    dataset_root = get_dataset_cache_root()
+    return dataset_root if dataset_id is None else os.path.join(
+        dataset_root, dataset_id + '/')
+
+
+def get_model_cache_dir(model_id: str) -> str:
+    """cache dir precedence:
+        function parameter > environment > ~/.cache/modelscope/hub/model_id
+
+    Args:
+        model_id (str, optional): The model id.
+
+    Returns:
+        str: the model_id dir if model_id not None, otherwise cache root dir.
+    """
+    root_path = get_model_cache_root()
+    return root_path if model_id is None else os.path.join(
+        root_path, model_id + '/')
 
 
 def read_file(path):

@@ -149,6 +149,7 @@ class NativeIterableDataset(IterableDataset):
                         if isinstance(ex_cache_path, str):
                             ex_cache_path = [ex_cache_path]
                         ret[k] = ex_cache_path
+                        ret[k.strip(':FILE')] = v
 
             except Exception as e:
                 logger.error(e)

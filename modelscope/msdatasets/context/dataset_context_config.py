@@ -17,7 +17,8 @@ class DatasetContextConfig:
                  data_files: Union[str, Sequence[str],
                                    Mapping[str, Union[str, Sequence[str]]]],
                  download_mode: DownloadMode, cache_root_dir: str,
-                 use_streaming: bool, stream_batch_size: int, **kwargs):
+                 use_streaming: bool, stream_batch_size: int,
+                 trust_remote_code: bool, **kwargs):
 
         self._download_config = None
         self._data_meta_config = None
@@ -44,6 +45,7 @@ class DatasetContextConfig:
         self.use_streaming = use_streaming
         self.stream_batch_size = stream_batch_size
         self.download_virgo_files: bool = False
+        self.trust_remote_code: bool = trust_remote_code
 
     @property
     def config_kwargs(self) -> dict:

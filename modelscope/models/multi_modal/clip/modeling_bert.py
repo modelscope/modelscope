@@ -485,7 +485,7 @@ class BertModel(BertPreTrainedModel):
                 head_mask = head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(
                     -1)  # We can specify head_mask for each layer
             head_mask = head_mask.to(dtype=next(self.parameters(
-            )).dtype)  # switch to fload if need + fp16 compatibility
+            )).dtype)  # switch to float if need + fp16 compatibility
         else:
             head_mask = [None] * self.config.num_hidden_layers
 

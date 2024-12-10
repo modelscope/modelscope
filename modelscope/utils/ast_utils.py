@@ -2,34 +2,33 @@
 
 import ast
 import hashlib
+import logging
 import os
 import os.path as osp
 import time
 import traceback
+from datetime import datetime
 from functools import reduce
 from pathlib import Path
 from typing import Union
 
-import gast
 import json
 
-from modelscope.fileio.file import LocalStorage
+from modelscope import version
+# do not delete
 from modelscope.metainfo import (CustomDatasets, Heads, Hooks, LR_Schedulers,
                                  Metrics, Models, Optimizers, Pipelines,
                                  Preprocessors, TaskModels, Trainers)
 from modelscope.utils.constant import Fields, Tasks
-from modelscope.utils.file_utils import get_default_cache_dir
-from modelscope.utils.logger import get_logger
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.registry import default_group
 
-logger = get_logger()
-storage = LocalStorage()
 p = Path(__file__)
 
 # get the path of package 'modelscope'
 SKIP_FUNCTION_SCANNING = True
 MODELSCOPE_PATH = p.resolve().parents[1]
-INDEXER_FILE_DIR = get_default_cache_dir()
+INDEXER_FILE_DIR = get_modelscope_cache_dir()
 REGISTER_MODULE = 'register_module'
 IGNORED_PACKAGES = ['modelscope', '.']
 SCAN_SUB_FOLDERS = [
@@ -55,6 +54,15 @@ MODULE_NAME = 'module_name'
 MODULE_CLS = 'module_cls'
 TEMPLATE_PATH = 'TEMPLATE_PATH'
 TEMPLATE_FILE = 'ast_index_file.py'
+
+
+def get_ast_logger():
+    ast_logger = logging.getLogger('modelscope.ast')
+    ast_logger.setLevel(logging.INFO)
+    return ast_logger
+
+
+logger = get_ast_logger()
 
 
 class AstScanning(object):
@@ -360,8 +368,7 @@ class AstScanning(object):
         with open(file, 'r', encoding='utf8') as code:
             data = code.readlines()
         data = ''.join(data)
-
-        node = gast.parse(data)
+        node = ast.parse(data)
         output = self.scan_import(node, show_offsets=False)
         output[DECORATOR_KEY] = self.parse_decorators(output[DECORATOR_KEY])
         output[EXPRESS_KEY] = self.parse_decorators(output[EXPRESS_KEY])
@@ -573,6 +580,25 @@ class FilesAstScanning(object):
 file_scanner = FilesAstScanning()
 
 
+def ensure_write(obj: bytes, filepath: Union[str, Path]) -> None:
+    """Write data to a given ``filepath`` with 'wb' mode.
+
+    Note:
+        ``write`` will create a directory if the directory of ``filepath``
+        does not exist.
+
+    Args:
+        obj (bytes): Data to be written.
+        filepath (str or Path): Path to write data.
+    """
+    dirname = os.path.dirname(filepath)
+    if dirname and not os.path.exists(dirname):
+        os.makedirs(dirname, exist_ok=True)
+
+    with open(filepath, 'wb') as f:
+        f.write(obj)
+
+
 def _save_index(index, file_path, file_list=None, with_template=False):
     # convert tuple key to str key
     index[INDEX_KEY] = {str(k): v for k, v in index[INDEX_KEY].items()}
@@ -585,7 +611,7 @@ def _save_index(index, file_path, file_list=None, with_template=False):
     if with_template:
         json_index = json_index.replace(MODELSCOPE_PATH.as_posix(),
                                         TEMPLATE_PATH)
-    storage.write(json_index.encode(), file_path)
+    ensure_write(json_index.encode(), file_path)
     index[INDEX_KEY] = {
         ast.literal_eval(k): v
         for k, v in index[INDEX_KEY].items()
@@ -593,7 +619,8 @@ def _save_index(index, file_path, file_list=None, with_template=False):
 
 
 def _load_index(file_path, with_template=False):
-    bytes_index = storage.read(file_path)
+    with open(file_path, 'rb') as f:
+        bytes_index = f.read()
     if with_template:
         bytes_index = bytes_index.decode().replace(TEMPLATE_PATH,
                                                    MODELSCOPE_PATH.as_posix())
@@ -640,6 +667,19 @@ def _update_index(index, files_mtime):
     index[REQUIREMENT_KEY].update(updated_index[REQUIREMENT_KEY])
 
 
+def __is_develop_model():
+    # use the trick of release time check is in development
+    release_timestamp = int(
+        round(
+            datetime.strptime(version.__release_datetime__,
+                              '%Y-%m-%d %H:%M:%S').timestamp()))
+    SECONDS_PER_YEAR = 24 * 365 * 60 * 60
+    current_timestamp = int(round(datetime.now().timestamp()))
+    if release_timestamp > current_timestamp + SECONDS_PER_YEAR:
+        return True
+    return False
+
+
 def load_index(
     file_list=None,
     force_rebuild=False,
@@ -679,53 +719,45 @@ def load_index(
     cache_dir = os.getenv('MODELSCOPE_CACHE', indexer_file_dir)
     index_file = os.getenv('MODELSCOPE_INDEX_FILE', indexer_file)
     file_path = os.path.join(cache_dir, index_file)
-    logger.info(f'Loading ast index from {file_path}')
     index = None
-    local_changed = False
-    if not force_rebuild and os.path.exists(file_path):
-        wrapped_index = _load_index(file_path)
-        md5, files_mtime = file_scanner.files_mtime_md5(file_list=file_list)
-        from modelscope.version import __version__
-        if (wrapped_index[VERSION_KEY] == __version__):
+
+    if force_rebuild:
+        logger.info('Force rebuilding ast index from scanning every file!')
+        index = file_scanner.get_files_scan_results(file_list)
+        return index
+
+    # when developing, we need to generator as need.
+    if __is_develop_model():
+        logger.info(f'Loading ast index from {file_path}')
+        if os.path.exists(file_path):  # already exist, check it's latest
+            wrapped_index = _load_index(file_path)
+            md5, files_mtime = file_scanner.files_mtime_md5(
+                file_list=file_list)
             index = wrapped_index
-            if (wrapped_index[MD5_KEY] != md5):
-                local_changed = True
-    full_index_flag = False
-
-    if index is None:
-        full_index_flag = True
-    elif index and local_changed and FILES_MTIME_KEY not in index:
-        full_index_flag = True
-    elif index and local_changed and MODELSCOPE_PATH_KEY not in index:
-        full_index_flag = True
-    elif index and local_changed and index[
-            MODELSCOPE_PATH_KEY] != MODELSCOPE_PATH.as_posix():
-        full_index_flag = True
-
-    if full_index_flag:
-        if force_rebuild:
-            logger.info('Force rebuilding ast index from scanning every file!')
-            index = file_scanner.get_files_scan_results(file_list)
+            from modelscope.version import __version__
+            if (wrapped_index[VERSION_KEY] == __version__
+                    and wrapped_index[MD5_KEY] != md5) or \
+                    wrapped_index[VERSION_KEY] != __version__:
+                logger.info(
+                    'Updating the files for the changes of local files, '
+                    'first time updating will take longer time! Please wait till updating done!'
+                )
+                _update_index(index, files_mtime)
+                _save_index(index, file_path, file_list)
         else:
             logger.info(
-                f'No valid ast index found from {file_path}, generating ast index from prebuilt!'
+                f'No valid ast index found from {file_path}, generating ast index from scratch!'
             )
-            index = load_from_prebuilt()
-            if index is None:
-                index = file_scanner.get_files_scan_results(file_list)
-        _save_index(index, file_path, file_list)
-    elif local_changed and not full_index_flag:
+            index = file_scanner.get_files_scan_results(
+                file_list)  # generate new
+            _save_index(index, file_path, file_list)  # save to generate path.
         logger.info(
-            'Updating the files for the changes of local files, '
-            'first time updating will take longer time! Please wait till updating done!'
-        )
-        _update_index(index, files_mtime)
-        _save_index(index, file_path, file_list)
+            f'Loading done! Current index file version is {index[VERSION_KEY]}, '
+            f'with md5 {index[MD5_KEY]} and a total number of '
+            f'{len(index[INDEX_KEY])} components indexed')
+    else:  # just load the prebuild index file.
+        index = load_from_prebuilt()
 
-    logger.info(
-        f'Loading done! Current index file version is {index[VERSION_KEY]}, '
-        f'with md5 {index[MD5_KEY]} and a total number of '
-        f'{len(index[INDEX_KEY])} components indexed')
     return index
 
 

@@ -24,6 +24,7 @@ class Llama2TextGenerationPipelineTest(unittest.TestCase):
                                    input,
                                    init_kwargs={},
                                    run_kwargs={}):
+        init_kwargs['external_engine_for_llm'] = False
         pipeline_ins = pipeline(task=Tasks.chat, model=model_id, **init_kwargs)
         pipeline_ins._model_prepare = True
         result = pipeline_ins(input, **run_kwargs)
@@ -36,6 +37,7 @@ class Llama2TextGenerationPipelineTest(unittest.TestCase):
             self.llama2_model_id_7B_chat_ms,
             self.llama2_input_chat_ch,
             init_kwargs={
+                'external_engine_for_llm': False,
                 'device_map': 'auto',
                 'torch_dtype': torch.float16,
                 'model_revision': 'v1.0.5',

@@ -1,7 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import importlib
+import importlib.util as iutil
 import logging
+import os
 from typing import Optional
 
 init_loggers = {}
@@ -9,9 +10,11 @@ init_loggers = {}
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+default_log_level = int(os.getenv('MODELSCOPE_LOG_LEVEL', str(logging.INFO)))
+
 
 def get_logger(log_file: Optional[str] = None,
-               log_level: int = logging.INFO,
+               log_level: int = default_log_level,
                file_mode: str = 'w'):
     """ Get logging logger
 
@@ -28,6 +31,8 @@ def get_logger(log_file: Optional[str] = None,
     logger.propagate = False
     if logger_name in init_loggers:
         add_file_handler_if_needed(logger, log_file, file_mode, log_level)
+        if logger.level != log_level:
+            logger.setLevel(log_level)
         return logger
 
     # handle duplicate logs to the console
@@ -39,7 +44,7 @@ def get_logger(log_file: Optional[str] = None,
     # at the ERROR level.
     torch_dist = False
     is_worker0 = True
-    if importlib.util.find_spec('torch') is not None:
+    if iutil.find_spec('torch') is not None:
         from modelscope.utils.torch_utils import is_dist, is_master
         torch_dist = is_dist()
         is_worker0 = is_master()
@@ -76,7 +81,7 @@ def add_file_handler_if_needed(logger, log_file, file_mode, log_level):
         if isinstance(handler, logging.FileHandler):
             return
 
-    if importlib.util.find_spec('torch') is not None:
+    if iutil.find_spec('torch') is not None:
         from modelscope.utils.torch_utils import is_master
         is_worker0 = is_master()
     else:

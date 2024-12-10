@@ -316,7 +316,9 @@ class OfaTasksTest(unittest.TestCase):
         result[OutputKeys.OUTPUT_IMG].save('result.png')
         print(f'Output written to {osp.abspath("result.png")}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        test_level() >= 1,
+        'skip test in current test level, model has no text2phone_dict.txt')
     def test_run_with_asr_with_name(self):
         model = 'damo/ofa_mmspeech_pretrain_base_zh'
         ofa_pipe = pipeline(Tasks.auto_speech_recognition, model=model)

@@ -5,11 +5,15 @@ import enum
 class Fields(object):
     """ Names for different application fields
     """
+    hub = 'hub'
+    datasets = 'datasets'
+    framework = 'framework'
     cv = 'cv'
     nlp = 'nlp'
     audio = 'audio'
     multi_modal = 'multi-modal'
     science = 'science'
+    server = 'server'
 
 
 class CVTasks(object):
@@ -32,6 +36,7 @@ class CVTasks(object):
     face_processing_base = 'face-processing-base'
     face_attribute_recognition = 'face-attribute-recognition'
     face_2d_keypoints = 'face-2d-keypoints'
+    facial_68ldk_detection = 'facial-68ldk-detection'
     human_detection = 'human-detection'
     human_object_interaction = 'human-object-interaction'
     face_image_generation = 'face-image-generation'
@@ -57,6 +62,8 @@ class CVTasks(object):
     semantic_segmentation = 'semantic-segmentation'
     image_driving_perception = 'image-driving-perception'
     image_depth_estimation = 'image-depth-estimation'
+    dense_optical_flow_estimation = 'dense-optical-flow-estimation'
+    image_normal_estimation = 'image-normal-estimation'
     indoor_layout_estimation = 'indoor-layout-estimation'
     video_depth_estimation = 'video-depth-estimation'
     panorama_depth_estimation = 'panorama-depth-estimation'
@@ -69,7 +76,10 @@ class CVTasks(object):
     face_emotion = 'face-emotion'
     product_segmentation = 'product-segmentation'
     image_matching = 'image-matching'
+    image_local_feature_matching = 'image-local-feature-matching'
     image_quality_assessment_degradation = 'image-quality-assessment-degradation'
+
+    human_normal_estimation = 'human-normal-estimation'
 
     crowd_counting = 'crowd-counting'
 
@@ -168,6 +178,10 @@ class CVTasks(object):
     human3d_render = 'human3d-render'
     human3d_animation = 'human3d-animation'
     image_control_3d_portrait = 'image-control-3d-portrait'
+    self_supervised_depth_completion = 'self-supervised-depth-completion'
+
+    # 3d generation
+    image_to_3d = 'image-to-3d'
 
     # vision efficient tuning
     vision_efficient_tuning = 'vision-efficient-tuning'
@@ -242,11 +256,13 @@ class AudioTasks(object):
     speaker_verification = 'speaker-verification'
     speech_language_recognition = 'speech-language-recognition'
     speaker_diarization = 'speaker-diarization'
+    audio_quantization = 'audio-quantization'
     voice_activity_detection = 'voice-activity-detection'
     language_score_prediction = 'language-score-prediction'
     speech_timestamp = 'speech-timestamp'
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
+    emotion_recognition = 'emotion-recognition'
 
 
 class MultiModalTasks(object):
@@ -277,6 +293,10 @@ class ScienceTasks(object):
     protein_structure = 'protein-structure'
 
 
+class Other(object):
+    other = 'other'
+
+
 class TasksIODescriptions(object):
     image_to_image = 'image_to_image',
     images_to_image = 'images_to_image',
@@ -294,7 +314,8 @@ class TasksIODescriptions(object):
     efficient_diffusion_tuning = 'efficient_diffusion_tuning'
 
 
-class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks):
+class Tasks(CVTasks, NLPTasks, AudioTasks, MultiModalTasks, ScienceTasks,
+            Other):
     """ Names for tasks supported by modelscope.
 
     Holds the standard task name to use for identifying different tasks.
@@ -385,9 +406,14 @@ class DatasetFormations(enum.Enum):
     # formation that is compatible with official huggingface dataset, which
     # organizes whole dataset into one single (zip) file.
     hf_compatible = 1
+
     # native modelscope formation that supports, among other things,
     # multiple files in a dataset
     native = 2
+
+    # general formation for datasets
+    general = 4
+
     # for local meta cache mark
     formation_mark_ext = '.formation_mark'
 
@@ -395,6 +421,7 @@ class DatasetFormations(enum.Enum):
 DatasetMetaFormats = {
     DatasetFormations.native: ['.json'],
     DatasetFormations.hf_compatible: ['.py'],
+    DatasetFormations.general: ['.py'],
 }
 
 
@@ -474,6 +501,9 @@ class Frameworks(object):
     kaldi = 'kaldi'
 
 
+REPO_TYPE_MODEL = 'model'
+REPO_TYPE_DATASET = 'dataset'
+REPO_TYPE_SUPPORT = [REPO_TYPE_MODEL, REPO_TYPE_DATASET]
 DEFAULT_MODEL_REVISION = None
 MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'

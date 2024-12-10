@@ -19,6 +19,7 @@ from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel
 from modelscope.models.audio.sv.fusion import AFF
 from modelscope.utils.constant import Tasks
+from modelscope.utils.device import create_device
 
 
 class ReLU(nn.Hardtanh):
@@ -54,11 +55,11 @@ def conv3x3(in_planes, out_planes, stride=1):
         bias=False)
 
 
-class BasicBlockRes2Net(nn.Module):
+class BasicBlockERes2Net(nn.Module):
     expansion = 2
 
     def __init__(self, in_planes, planes, stride=1, baseWidth=32, scale=2):
-        super(BasicBlockRes2Net, self).__init__()
+        super(BasicBlockERes2Net, self).__init__()
         width = int(math.floor(planes * (baseWidth / 64.0)))
         self.conv1 = conv1x1(in_planes, width * scale, stride)
         self.bn1 = nn.BatchNorm2d(width * scale)
@@ -117,11 +118,11 @@ class BasicBlockRes2Net(nn.Module):
         return out
 
 
-class BasicBlockRes2Net_diff_AFF(nn.Module):
+class BasicBlockERes2Net_AFF(nn.Module):
     expansion = 2
 
     def __init__(self, in_planes, planes, stride=1, baseWidth=32, scale=2):
-        super(BasicBlockRes2Net_diff_AFF, self).__init__()
+        super(BasicBlockERes2Net_AFF, self).__init__()
         width = int(math.floor(planes * (baseWidth / 64.0)))
         self.conv1 = conv1x1(in_planes, width * scale, stride)
         self.bn1 = nn.BatchNorm2d(width * scale)
@@ -189,8 +190,8 @@ class BasicBlockRes2Net_diff_AFF(nn.Module):
 class ERes2Net(nn.Module):
 
     def __init__(self,
-                 block=BasicBlockRes2Net,
-                 block_fuse=BasicBlockRes2Net_diff_AFF,
+                 block=BasicBlockERes2Net,
+                 block_fuse=BasicBlockERes2Net_AFF,
                  num_blocks=[3, 4, 6, 3],
                  m_channels=32,
                  feat_dim=80,
@@ -314,6 +315,7 @@ class SpeakerVerificationERes2Net(TorchModel):
         self.m_channels = self.model_config['channels']
         self.other_config = kwargs
         self.feature_dim = 80
+        self.device = create_device(self.other_config['device'])
 
         self.embedding_model = ERes2Net(
             embed_dim=self.embed_dim, m_channels=self.m_channels)
@@ -321,6 +323,7 @@ class SpeakerVerificationERes2Net(TorchModel):
         pretrained_model_name = kwargs['pretrained_model']
         self.__load_check_point(pretrained_model_name)
 
+        self.embedding_model.to(self.device)
         self.embedding_model.eval()
 
     def forward(self, audio):
@@ -333,7 +336,7 @@ class SpeakerVerificationERes2Net(TorchModel):
         ) == 2, 'modelscope error: the shape of input audio to model needs to be [N, T]'
         # audio shape: [N, T]
         feature = self.__extract_feature(audio)
-        embedding = self.embedding_model(feature)
+        embedding = self.embedding_model(feature.to(self.device))
 
         return embedding.detach().cpu()
 

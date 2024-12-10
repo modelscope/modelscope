@@ -3,12 +3,15 @@ import inspect
 import os
 import random
 import re
+import tarfile
 
 import gradio as gr
+import requests
 from challenges.ch1 import challenge1
 from challenges.ch2 import challenge2
 from challenges.ch3 import challenge3
 from challenges.ch4 import challenge4
+from challenges.ch5 import challenge5
 from llm import create_model
 from PIL import Image, ImageDraw, ImageFont
 
@@ -20,6 +23,7 @@ challenges = [
     challenge2,
     challenge3,
     challenge4,
+    challenge5,
 ]
 
 CONGRATS_STR = '所有挑战完成！👏🏻👏🏻👏🏻👏🏻👏🏻👏🏻'
@@ -156,6 +160,49 @@ def generate_share_image(state):
     return gr.Image.update(visible=True, value=img_pil)
 
 
+def download_resource(url, extract_path='.'):
+    """
+    下载资源文件，解压到指定路径。
+
+    Args:
+      url: 要下载的文件的URL
+      extract_path: 解压文件的目标路径
+    """
+    try:
+        # 定义文件名
+        filename = url.split('/')[-1]
+
+        # 下载文件
+        print(f'Downloading the file from {url}...')
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        else:
+            print(
+                f'Error: Unable to download file. Status code: {response.status_code}'
+            )
+            return
+
+        # 解压文件
+        print(f'Extracting the file to {extract_path}...')
+        if tarfile.is_tarfile(filename):
+            with tarfile.open(filename, 'r:*') as tar:
+                tar.extractall(path=extract_path)
+        else:
+            print('Error: The downloaded file is not a tar file.')
+
+        # 删除临时文件
+        print(f'Removing the temporary file {filename}...')
+        os.remove(filename)
+        print(
+            'File downloaded, extracted, and temporary file removed successfully.'
+        )
+    except Exception as e:
+        print(f'An error occurred: {e}')
+
+
 def create_app():
     # Gradio界面构建
     block = gr.Blocks()
@@ -220,4 +267,8 @@ def create_app():
 
 
 if __name__ == '__main__':
+    if not os.path.exists('assets'):
+        download_resource(
+            'https://modelscope.oss-cn-beijing.aliyuncs.com/resource/llm_riddles_assets.tar'
+        )
     create_app()

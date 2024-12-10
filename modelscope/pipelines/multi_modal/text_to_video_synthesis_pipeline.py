@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 import cv2
 import torch
+import torchvision
 from einops import rearrange
 
 from modelscope.metainfo import Pipelines
@@ -75,14 +76,17 @@ class TextToVideoSynthesisPipeline(Pipeline):
             output_video_path = tempfile.NamedTemporaryFile(suffix='.mp4').name
             temp_video_file = True
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        h, w, c = video[0].shape
-        video_writer = cv2.VideoWriter(
-            output_video_path, fourcc, fps=8, frameSize=(w, h))
-        for i in range(len(video)):
-            img = cv2.cvtColor(video[i], cv2.COLOR_RGB2BGR)
-            video_writer.write(img)
-        video_writer.release()
+        # Ensure video is a list of frames with shape (h, w, c)
+        frames = [torch.from_numpy(frame) for frame in video]
+        # Stack frames along a new dimension to create a 4D tensor (T, H, W, C)
+        imgs_tensor = torch.stack(frames, dim=0)
+
+        torchvision.io.write_video(
+            output_video_path,
+            imgs_tensor,
+            fps=8,
+            video_codec='h264',
+            options={'crf': '10'})
         if temp_video_file:
             video_file_content = b''
             with open(output_video_path, 'rb') as f:

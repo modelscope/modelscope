@@ -17,6 +17,11 @@
 
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/modelscope/modelscope.svg)](https://GitHub.com/modelscope/modelscope/graphs/contributors/) -->
 <!-- [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) -->
+[Discord](https://discord.gg/FMupRv4jUR)
+
+<h4 align="center">
+<a href="https://trendshift.io/repositories/4784" target="_blank"><img src="https://trendshift.io/api/badge/repositories/4784" alt="modelscope%2Fmodelscope | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</h4>
 
 <h4 align="center">
     <p>
@@ -51,35 +56,36 @@ Hundreds of models are made publicly available on [ModelScope]( https://www.mode
 
 Some representative examples include:
 
-NLP:
+LLM:
 
-* [ChatGLM3-6B](https://modelscope.cn/models/ZhipuAI/chatglm3-6b/summary)
+* [Yi-1.5-34B-Chat](https://modelscope.cn/models/01ai/Yi-1.5-34B-Chat/summary)
 
-* [Qwen-14B-Chat](https://modelscope.cn/models/qwen/Qwen-14B-Chat/summary)
+* [Qwen1.5-110B-Chat](https://modelscope.cn/models/qwen/Qwen1.5-110B-Chat/summary)
 
-* [Baichuan2-13B-Chat](https://modelscope.cn/models/baichuan-inc/Baichuan2-13B-Chat/summary)
+* [DeepSeek-V2-Chat](https://modelscope.cn/models/deepseek-ai/DeepSeek-V2-Chat/summary)
 
 * [Ziya2-13B-Chat](https://modelscope.cn/models/Fengshenbang/Ziya2-13B-Chat/summary)
 
-* [Internlm-chat-20b](https://modelscope.cn/models/Shanghai_AI_Laboratory/internlm-chat-20b/summary)
+* [Meta-Llama-3-8B-Instruct](https://modelscope.cn/models/LLM-Research/Meta-Llama-3-8B-Instruct/summary)
 
-* [Udever Multilingual Universal Text Representation Model 1b1](https://modelscope.cn/models/damo/udever-bloom-1b1/summary)
+* [Phi-3-mini-128k-instruct](https://modelscope.cn/models/LLM-Research/Phi-3-mini-128k-instruct/summary)
 
-* [CoROM Text Vector - Chinese - E-commerce Domain - Base](https://modelscope.cn/models/damo/nlp_corom_sentence-embedding_chinese-base-ecom/summary)
-
-* [MGeo Address Similarity Matching Entity Alignment - Chinese - Address Field - Base](https://modelscope.cn/models/damo/mgeo_geographic_entity_alignment_chinese_base/summary)
 
 Multi-Modal:
 
 * [Qwen-VL-Chat](https://modelscope.cn/models/qwen/Qwen-VL-Chat/summary)
 
-* [CogVLM](https://modelscope.cn/models/ZhipuAI/CogVLM/summary)
+* [Yi-VL-6B](https://modelscope.cn/models/01ai/Yi-VL-6B/summary)
 
-* [Text-to-Video Synthesis Large Model - English - General Domain](https://modelscope.cn/models/damo/text-to-video-synthesis/summary)
+* [InternVL-Chat-V1-5](https://modelscope.cn/models/AI-ModelScope/InternVL-Chat-V1-5/summary)
 
-* [I2VGen-XL High Definition Image to Video Large Model](https://modelscope.cn/models/damo/Image-to-Video/summary)
+* [deepseek-vl-7b-chat](https://modelscope.cn/models/deepseek-ai/deepseek-vl-7b-chat/summary)
 
-* [I2VGen-XL High Definition Video to Video Large Model](https://modelscope.cn/models/damo/Video-to-Video/summary)
+* [OpenSoraPlan](https://modelscope.cn/models/AI-ModelScope/Open-Sora-Plan-v1.0.0/summary)
+
+* [OpenSora](https://modelscope.cn/models/luchentech/OpenSora-STDiT-v1-HQ-16x512x512/summary)
+
+* [I2VGen-XL](https://modelscope.cn/models/iic/i2vgen-xl/summary)
 
 CV:
 
@@ -293,3 +299,13 @@ We  provide additional documentations including:
 # License
 
 This project is licensed under the [Apache License (Version 2.0)](https://github.com/modelscope/modelscope/blob/master/LICENSE).
+
+# Citation
+```
+@Misc{modelscope,
+  title = {ModelScope: bring the notion of Model-as-a-Service to life.},
+  author = {The ModelScope Team},
+  howpublished = {\url{https://github.com/modelscope/modelscope}},
+  year = {2023}
+}
+```

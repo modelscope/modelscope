@@ -25,6 +25,10 @@ class OutputKeys(object):
     MASKS = 'masks'
     DEPTHS = 'depths'
     DEPTHS_COLOR = 'depths_color'
+    FLOWS = 'flows'
+    FLOWS_COLOR = 'flows_color'
+    NORMALS = 'normals'
+    NORMALS_COLOR = 'normals_color'
     LAYOUT = 'layout'
     TEXT = 'text'
     POLYGONS = 'polygons'
@@ -69,6 +73,7 @@ class OutputKeys(object):
     PCD12 = 'pcd12'
     PCD12_ALIGN = 'pcd12_align'
     TBOUNDS = 'tbounds'
+    MV_IMGS = 'MViews'
 
 
 OutputTypes = {
@@ -132,6 +137,7 @@ OutputTypes = {
     OutputKeys.PCD12: np.ndarray,
     OutputKeys.PCD12_ALIGN: np.ndarray,
     OutputKeys.TBOUNDS: Dict,
+    OutputKeys.MV_IMGS: List[np.ndarray],
 }
 
 OutputTypeSchema = {
@@ -425,6 +431,15 @@ OutputTypeSchema = {
     },
     OutputKeys.TBOUNDS: {
         'type': 'object'
+    },
+    OutputKeys.MV_IMGS: {
+        'type': 'array',
+        'items': {
+            'type': 'array',
+            'items': {
+                'type': 'number'
+            }
+        }
     },
 }
 
@@ -761,6 +776,7 @@ TASK_OUTPUTS = {
     Tasks.surface_recon_common: [OutputKeys.OUTPUT],
     Tasks.video_colorization: [OutputKeys.OUTPUT_VIDEO],
     Tasks.image_control_3d_portrait: [OutputKeys.OUTPUT],
+    Tasks.self_supervised_depth_completion: [OutputKeys.OUTPUT_IMG],
 
     # image quality assessment degradation result for single image
     # {
@@ -1632,6 +1648,8 @@ TASK_OUTPUTS = {
     #    "output_imgs": np.ndarray list with shape [[height, width, 3], ...]
     # }
     Tasks.image_view_transform: [OutputKeys.OUTPUT_IMGS],
+    Tasks.image_to_3d: [OutputKeys.MV_IMGS],
+    Tasks.siamese_uie: [OutputKeys.OUTPUT],
 }
 
 

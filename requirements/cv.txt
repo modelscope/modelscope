@@ -17,21 +17,22 @@ ffmpeg>=1.4
 ffmpeg-python>=0.2.0
 ftfy
 fvcore
-healpy
+# remove for windows support
+# healpy
 imageio>=2.9.0
 imageio-ffmpeg>=0.4.2
 imgaug>=0.4.0
 kornia>=0.5.0
-lap
 lmdb
 lpips
+matplotlib>=3.8.0
 ml_collections
 mmcls>=0.21.0
 mmdet>=2.25.0,<=2.28.2
 # mmdet3d-1.0.0rc6 remove networkx and numba version restriction
 mmdet3d==1.0.0a1
 mmsegmentation<=0.30.0
-moviepy>=1.0.3
+moviepy==1.0.3
 nerfacc==0.2.2
 networkx
 numba
@@ -44,15 +45,16 @@ opencv-python
 paint_ldm
 pandas
 panopticapi
+Pillow>=6.2.0
 plyfile>=0.7.4
 psutil
 pyclipper
-PyMCubes
+PyMCubes<=0.1.4
 pytorch-lightning
 regex
 # <0.20.0 for compatible python3.7 python3.8
-scikit-image>=0.19.3,<0.20.0
-scikit-learn>=0.20.1
+scikit-image
+scikit-learn
 shapely
 shotdetect_scenedetect_lgss>=0.0.4
 smplx

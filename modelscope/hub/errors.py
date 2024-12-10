@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import logging
 from http import HTTPStatus
+from typing import Optional
 
 import requests
 from requests.exceptions import HTTPError
@@ -8,7 +10,7 @@ from requests.exceptions import HTTPError
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger
 
-logger = get_logger()
+logger = get_logger(log_level=logging.WARNING)
 
 
 class NotSupportError(Exception):
@@ -85,18 +87,41 @@ def handle_http_post_error(response, url, request_body):
             (url, request_body, message, get_request_id(response))) from error
 
 
-def handle_http_response(response: requests.Response, logger, cookies,
-                         model_id):
-    try:
-        response.raise_for_status()
-    except HTTPError as error:
-        if cookies is None:  # code in [403] and
-            logger.error(
-                f'Authentication token does not exist, failed to access model {model_id} which may not exist or may be \
-                private. Please login first.')
-        message = _decode_response_error(response)
-        raise HTTPError('Response details: %s, Request id: %s' %
-                        (message, get_request_id(response))) from error
+def handle_http_response(response: requests.Response,
+                         logger,
+                         cookies,
+                         model_id,
+                         raise_on_error: Optional[bool] = True) -> int:
+    http_error_msg = ''
+    if isinstance(response.reason, bytes):
+        try:
+            reason = response.reason.decode('utf-8')
+        except UnicodeDecodeError:
+            reason = response.reason.decode('iso-8859-1')
+    else:
+        reason = response.reason
+    request_id = get_request_id(response)
+    if 404 == response.status_code:
+        http_error_msg = 'The request model: %s does not exist!' % (model_id)
+    elif 403 == response.status_code:
+        if cookies is None:
+            http_error_msg = 'Authentication token does not exist, '
+            'failed to access model {model_id} which may not exist or may be '
+            'private. Please login first.'
+        else:
+            http_error_msg = 'The authentication token is invalid, failed to access model {model_id}.'
+    elif 400 <= response.status_code < 500:
+        http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s' % (
+            response.status_code, reason, request_id, response.url)
+
+    elif 500 <= response.status_code < 600:
+        http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s' % (
+            response.status_code, reason, request_id, response.url)
+    if http_error_msg and raise_on_error:  # there is error.
+        logger.error(http_error_msg)
+        raise HTTPError(http_error_msg, response=response)
+    else:
+        return response.status_code
 
 
 def raise_on_error(rsp):
@@ -117,12 +142,13 @@ def raise_on_error(rsp):
         raise RequestError(rsp['Message'])
 
 
-def datahub_raise_on_error(url, rsp):
+def datahub_raise_on_error(url, rsp, http_response: requests.Response):
     """If response error, raise exception
 
     Args:
         url (str): The request url
         rsp (HTTPResponse): The server response.
+        http_response: the origin http response.
 
     Raises:
         RequestError: the http request error.
@@ -133,9 +159,9 @@ def datahub_raise_on_error(url, rsp):
     if rsp.get('Code') == HTTPStatus.OK:
         return True
     else:
-        request_id = get_request_id(rsp)
+        request_id = rsp['RequestId']
         raise RequestError(
-            f"Url = {url}, Request id={request_id} Message = {rsp.get('Message')},\
+            f"Url = {url}, Request id={request_id} Code = {rsp['Code']} Message = {rsp['Message']},\
                 Please specify correct dataset_name and namespace.")
 
 
@@ -159,7 +185,12 @@ def raise_for_http_status(rsp):
     else:
         reason = rsp.reason
     request_id = get_request_id(rsp)
-    if 400 <= rsp.status_code < 500:
+    if 404 == rsp.status_code:
+        http_error_msg = 'The request resource(model or dataset) does not exist!,'
+        'url: %s, reason: %s' % (rsp.url, reason)
+    elif 403 == rsp.status_code:
+        http_error_msg = 'Authentication token does not exist or invalid.'
+    elif 400 <= rsp.status_code < 500:
         http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s' % (
             rsp.status_code, reason, request_id, rsp.url)
 

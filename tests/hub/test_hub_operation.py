@@ -1,8 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import shutil
 import tempfile
 import unittest
 import uuid
+from pathlib import Path
 from shutil import rmtree
 
 import requests
@@ -13,6 +15,7 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.file_utils import get_model_cache_dir
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_CHINESE_NAME,
                                          TEST_MODEL_ORG)
@@ -147,6 +150,51 @@ class HubOperationTest(unittest.TestCase):
     def test_list_model(self):
         data = self.api.list_models(TEST_MODEL_ORG)
         assert len(data['Models']) >= 1
+
+    def test_snapshot_download_location(self):
+        self.prepare_case()
+        snapshot_download_path = snapshot_download(
+            model_id=self.model_id, revision=self.revision)
+        assert os.path.exists(snapshot_download_path)
+        assert '/hub/' in snapshot_download_path
+        print(snapshot_download_path)
+        shutil.rmtree(snapshot_download_path)
+        # download with cache_dir
+        cache_dir = '/tmp/snapshot_download_cache_test'
+        snapshot_download_path = snapshot_download(
+            self.model_id, revision=self.revision, cache_dir=cache_dir)
+        expect_path = os.path.join(cache_dir, self.model_id)
+        assert snapshot_download_path == expect_path
+        assert os.path.exists(
+            os.path.join(snapshot_download_path, ModelFile.README))
+        shutil.rmtree(cache_dir)
+        # download with local_dir
+        local_dir = '/tmp/snapshot_download_local_dir'
+        snapshot_download_path = snapshot_download(
+            self.model_id, revision=self.revision, local_dir=local_dir)
+        assert snapshot_download_path == local_dir
+        assert os.path.exists(os.path.join(local_dir, ModelFile.README))
+        shutil.rmtree(local_dir)
+        # download with local_dir and cache dir, with local first.
+        local_dir = '/tmp/snapshot_download_local_dir'
+        snapshot_download_path = snapshot_download(
+            self.model_id,
+            revision=self.revision,
+            cache_dir=cache_dir,
+            local_dir=local_dir)
+        assert snapshot_download_path == local_dir
+        assert os.path.exists(os.path.join(local_dir, ModelFile.README))
+
+    def test_snapshot_download_ignore_file_pattern_test(self):
+        self.prepare_case()
+        snapshot_download_path = snapshot_download(
+            model_id=self.model_id,
+            revision=self.revision,
+            ignore_file_pattern=['.*.pt', '.*.safetensors', '.*.bin'])
+        for _, _, files in os.walk(snapshot_download_path):
+            for file in files:
+                assert not file.endswith('pt') and not file.endswith(
+                    'safetensors') and not file.endswith('bin')
 
 
 if __name__ == '__main__':

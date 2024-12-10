@@ -9,7 +9,7 @@ from .bvh_writer import WriterWrapper
 from .utils import matrix_to_axis_angle, rotation_6d_to_matrix
 
 
-def laod_smpl_params(pose_fname):
+def load_smpl_params(pose_fname):
     with open(pose_fname, 'rb') as f:
         data = pickle.load(f)
         pose = torch.from_numpy(data['pose'])
@@ -132,7 +132,7 @@ def gen_skeleton_bvh(model_dir, action_dir, case_dir, action, mode='move'):
     device = torch.device('cpu')
     assets_dir = os.path.join(model_dir, '3D-assets')
     pkl_path = os.path.join(assets_dir, 'smpl.pkl')
-    poses, shapes, trans, joints = laod_smpl_params(pkl_path)
+    poses, shapes, trans, joints = load_smpl_params(pkl_path)
     if action.endswith('.npy'):
         skeleton_path = os.path.join(assets_dir, 'skeleton_nohand.npy')
     else:

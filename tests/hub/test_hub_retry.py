@@ -9,10 +9,10 @@ import requests
 from urllib3.exceptions import MaxRetryError
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.file_download import http_get_file
+from modelscope.hub.file_download import http_get_model_file
 
 
-class HubOperationTest(unittest.TestCase):
+class HubRetryTest(unittest.TestCase):
 
     def setUp(self):
         self.api = HubApi()
@@ -56,6 +56,8 @@ class HubOperationTest(unittest.TestCase):
         rsp.msg = HTTPMessage()
         rsp.read = get_content
         rsp.chunked = False
+        rsp.length_remaining = 0
+        rsp.headers = {}
         # retry 2 times and success.
         getconn_mock.return_value.getresponse.side_effect = [
             Mock(status=500, msg=HTTPMessage()),
@@ -88,16 +90,18 @@ class HubOperationTest(unittest.TestCase):
         success_rsp = HTTPResponse(getconn_mock)
         success_rsp.status = 200
         success_rsp.msg = HTTPMessage()
-        success_rsp.msg.add_header('Content-Length', '2957783')
         success_rsp.read = get_content
         success_rsp.chunked = True
+        success_rsp.length_remaining = 0
+        success_rsp.headers = {'Content-Length': '2957783'}
 
         failed_rsp = HTTPResponse(getconn_mock)
         failed_rsp.status = 502
         failed_rsp.msg = HTTPMessage()
-        failed_rsp.msg.add_header('Content-Length', '2957783')
         failed_rsp.read = get_content
         failed_rsp.chunked = True
+        success_rsp.length_remaining = 2957783
+        success_rsp.headers = {'Content-Length': '2957783'}
 
         # retry 5 times and success.
         getconn_mock.return_value.getresponse.side_effect = [
@@ -109,10 +113,11 @@ class HubOperationTest(unittest.TestCase):
             success_rsp,
         ]
         url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
-        http_get_file(
+        http_get_model_file(
             url=url,
             local_dir='./',
             file_name=test_file_name,
+            file_size=2957783,
             headers={},
             cookies=None)
 
@@ -150,14 +155,15 @@ class HubOperationTest(unittest.TestCase):
         ]
         url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
         with self.assertRaises(MaxRetryError):
-            http_get_file(
+            http_get_model_file(
                 url=url,
                 local_dir='./',
                 file_name=test_file_name,
+                file_size=2957783,
                 headers={},
                 cookies=None)
 
-        assert not os.path.exists('./%s' % test_file_name)
+        assert os.stat('./%s' % test_file_name).st_size == 0
 
 
 if __name__ == '__main__':

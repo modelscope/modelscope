@@ -1,3 +1,5 @@
+exclude: 'modelscope/preprocessors/templates/'
+
 repos:
   - repo: /home/admin/pre-commit/flake8
     rev: 4.0.0

@@ -2,7 +2,6 @@
 
 import os
 import subprocess
-import sys
 from fnmatch import fnmatch
 
 from trainers.model_trainer_map import model_trainer_map
@@ -12,11 +11,11 @@ from utils.source_file_analyzer import (get_all_register_modules,
                                         get_import_map)
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import model_file_download
-from modelscope.hub.utils.utils import get_cache_dir
+from modelscope.hub.utils.utils import model_id_to_group_owner_name
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.file_utils import get_model_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -27,18 +26,21 @@ def get_models_info(groups: list) -> dict:
     api = HubApi()
     for group in groups:
         page = 1
+        total_count = 0
         while True:
             query_result = api.list_models(group, page, 100)
-            models.extend(query_result['Models'])
-            if len(models) >= query_result['TotalCount']:
+            if query_result['Models'] is not None:
+                models.extend(query_result['Models'])
+            elif total_count != 0:
+                total_count = query_result['TotalCount']
+            if len(models) >= total_count:
                 break
             page += 1
-    cache_root = get_cache_dir()
     models_info = {}  # key model id, value model info
     for model_info in models:
         model_id = '%s/%s' % (group, model_info['Name'])
-        configuration_file = os.path.join(cache_root, model_id,
-                                          ModelFile.CONFIGURATION)
+        configuration_file = os.path.join(
+            get_model_cache_dir(model_id), ModelFile.CONFIGURATION)
         if not os.path.exists(configuration_file):
             try:
                 model_revisions = api.list_model_revisions(model_id=model_id)
@@ -218,7 +220,12 @@ def get_test_suites_to_run():
         all_register_modules)
     # task_pipeline_test_suite_map key: pipeline task, value: case file path
     # trainer_test_suite_map key: trainer_name, value: case file path
-    models_info = get_models_info(['damo'])
+    iic_models_info = get_models_info(['iic'])
+    models_info = {}
+    # compatible model info
+    for model_id, model_info in iic_models_info.items():
+        _, model_name = model_id_to_group_owner_name(model_id)
+        models_info['damo/%s' % model_name] = models_info
     # model_info key: model_id, value: model info such as framework task etc.
     affected_pipeline_cases = []
     affected_trainer_cases = []
@@ -255,8 +262,10 @@ def get_test_suites_to_run():
             # ["PREPROCESSORS", "cv", "object_detection_scrfd", "SCRFDPreprocessor"]
             # ["PREPROCESSORS", domain, preprocessor_name, class_name]
             for model_id, model_info in models_info.items():
-                if model_info['preprocessor_type'] is not None and model_info[
-                        'preprocessor_type'] == affected_register_module[2]:
+                if ('preprocessor_type' in model_info
+                        and model_info['preprocessor_type'] is not None
+                        and model_info['preprocessor_type']
+                        == affected_register_module[2]):
                     task = model_info['task']
                     if task in task_pipeline_test_suite_map:
                         affected_pipeline_cases.extend(

@@ -5,17 +5,26 @@ import os
 import pickle
 import tempfile
 from shutil import move, rmtree
+from typing import Dict
 
-from modelscope.hub.constants import MODEL_META_FILE_NAME, MODEL_META_MODEL_ID
+from modelscope.hub.constants import (  # noqa
+    FILE_HASH, MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION)
+from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+enable_default_hash_validation = \
+    os.getenv(MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION, 'False').strip().lower() == 'true'
 """Implements caching functionality, used internally only
 """
 
 
 class FileSystemCache(object):
     KEY_FILE_NAME = '.msc'
+    MODEL_META_FILE_NAME = '.mdl'
+    MODEL_META_MODEL_ID = 'id'
+    MODEL_VERSION_FILE_NAME = '.mv'
     """Local file cache.
     """
 
@@ -133,24 +142,47 @@ class ModelFileSystemCache(FileSystemCache):
             self.load_model_meta()
         else:
             super().__init__(os.path.join(cache_root, owner, name))
-            self.model_meta = {MODEL_META_MODEL_ID: '%s/%s' % (owner, name)}
+            self.model_meta = {
+                FileSystemCache.MODEL_META_MODEL_ID: '%s/%s' % (owner, name)
+            }
             self.save_model_meta()
+        self.cached_model_revision = self.load_model_version()
 
     def load_model_meta(self):
         meta_file_path = os.path.join(self.cache_root_location,
-                                      MODEL_META_FILE_NAME)
+                                      FileSystemCache.MODEL_META_FILE_NAME)
         if os.path.exists(meta_file_path):
             with open(meta_file_path, 'rb') as f:
                 self.model_meta = pickle.load(f)
         else:
-            self.model_meta = {MODEL_META_MODEL_ID: 'unknown'}
+            self.model_meta = {FileSystemCache.MODEL_META_MODEL_ID: 'unknown'}
+
+    def load_model_version(self):
+        model_version_file_path = os.path.join(
+            self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
+        if os.path.exists(model_version_file_path):
+            with open(model_version_file_path, 'r') as f:
+                return f.read().strip()
+        else:
+            return None
+
+    def save_model_version(self, revision_info: Dict):
+        model_version_file_path = os.path.join(
+            self.cache_root_location, FileSystemCache.MODEL_VERSION_FILE_NAME)
+        with open(model_version_file_path, 'w') as f:
+            if isinstance(revision_info, dict):
+                version_info_str = 'Revision:%s,CreatedAt:%s' % (
+                    revision_info['Revision'], revision_info['CreatedAt'])
+                f.write(version_info_str)
+            else:
+                f.write(revision_info)
 
     def get_model_id(self):
-        return self.model_meta[MODEL_META_MODEL_ID]
+        return self.model_meta[FileSystemCache.MODEL_META_MODEL_ID]
 
     def save_model_meta(self):
         meta_file_path = os.path.join(self.cache_root_location,
-                                      MODEL_META_FILE_NAME)
+                                      FileSystemCache.MODEL_META_FILE_NAME)
         with open(meta_file_path, 'wb') as f:
             pickle.dump(self.model_meta, f)
 
@@ -226,26 +258,40 @@ class ModelFileSystemCache(FileSystemCache):
         return cache_key
 
     def exists(self, model_file_info):
-        """Check the file is cached or not.
+        """Check the file is cached or not. Note existence check will also cover digest check
 
         Args:
             model_file_info (CachedFileInfo): The cached file info
 
         Returns:
-            bool: If exists return True otherwise False
+            bool: If exists and has the same hash, return True otherwise False
         """
         key = self.__get_cache_key(model_file_info)
         is_exists = False
+        file_path = key['Path']
+        cache_file_path = os.path.join(self.cache_root_location,
+                                       model_file_info['Path'])
         for cached_key in self.cached_files:
-            if cached_key['Path'] == key['Path'] and (
+            if cached_key['Path'] == file_path and (
                     cached_key['Revision'].startswith(key['Revision'])
                     or key['Revision'].startswith(cached_key['Revision'])):
-                is_exists = True
-                break
-        file_path = os.path.join(self.cache_root_location,
-                                 model_file_info['Path'])
+                expected_hash = model_file_info[FILE_HASH]
+                if expected_hash is not None and os.path.exists(
+                        cache_file_path):
+                    # compute hash only when enabled, otherwise just meet expectation by default
+                    if enable_default_hash_validation:
+                        cache_file_sha256 = compute_hash(cache_file_path)
+                    else:
+                        cache_file_sha256 = expected_hash
+                    if expected_hash == cache_file_sha256:
+                        is_exists = True
+                        break
+                    else:
+                        logger.info(
+                            f'File [{file_path}] exists in cache but with a mismatched hash, will re-download.'
+                        )
         if is_exists:
-            if os.path.exists(file_path):
+            if os.path.exists(cache_file_path):
                 return True
             else:
                 self.remove_key(

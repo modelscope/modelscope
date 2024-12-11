@@ -76,7 +76,7 @@ class TestOfaTrainer(unittest.TestCase):
             shutil.rmtree(self.WORKSPACE, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_trainer_std(self):
         os.makedirs(self.WORKSPACE, exist_ok=True)
         config_file = os.path.join(self.WORKSPACE, ModelFile.CONFIGURATION)

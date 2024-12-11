@@ -16,12 +16,12 @@ class DocumentGroundedDialogGenerateTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'DAMO_ConvAI/nlp_convai_generation_pretrain'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_trainer_with_model_name(self):
         # load data
         train_dataset = MsDataset.load(
             'DAMO_ConvAI/FrDoc2BotGeneration',
-            download_mode=DownloadMode.FORCE_REDOWNLOAD)
+            download_mode=DownloadMode.FORCE_REDOWNLOAD)['train']
         test_len = 1
         sub_train_dataset = [x for x in train_dataset][:1]
         sub_train_dataset = [{

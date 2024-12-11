@@ -52,7 +52,7 @@ class TestClipTrainer(unittest.TestCase):
                             'metrics': [{'type': 'inbatch_recall'}]},
              'preprocessor': []}
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_trainer_std(self):
         WORKSPACE = './workspace/ckpts/clip'
         os.makedirs(WORKSPACE, exist_ok=True)

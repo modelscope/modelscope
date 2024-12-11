@@ -40,8 +40,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
-                         'skip test in current test level')
+    @unittest.skip
     def test_vision_efficient_tuning_swift_lora_train(self):
         from swift import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'

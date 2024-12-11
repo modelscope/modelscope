@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .inverse_text_processing_pipeline import InverseTextProcessingPipeline
     from .separation_pipeline import SeparationPipeline
     from .speaker_verification_pipeline import SpeakerVerificationPipeline
+    from .voice_conversion_pipeline import VCPipeline
 else:
     _import_structure = {
         'ans_dfsmn_pipeline': ['ANSDFSMNPipeline'],
@@ -25,7 +26,8 @@ else:
         'itn_inference_pipeline': ['InverseTextProcessingPipeline'],
         'inverse_text_processing_pipeline': ['InverseTextProcessingPipeline'],
         'separation_pipeline': ['SeparationPipeline'],
-        'speaker_verification_pipeline': ['SpeakerVerificationPipeline']
+        'speaker_verification_pipeline': ['SpeakerVerificationPipeline'],
+        'voice_conversion_pipeline':['VCPipeline'],
     }
 
     import sys

@@ -563,7 +563,7 @@ class HubApi:
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
-                    'Model revision not specified, use default: %s in development mode'
+                    'Model revision not specified, using default: [%s] version.'
                     % revision)
             if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))

@@ -488,6 +488,8 @@ def http_get_model_file(
                 partial_length = 0
                 # download partial, continue download
                 if os.path.exists(temp_file_path):
+                    # resuming from interrupted download is also considered as retry
+                    has_retry = True
                     with open(temp_file_path, 'rb') as f:
                         partial_length = f.seek(0, io.SEEK_END)
                         progress.update(partial_length)
@@ -511,7 +513,9 @@ def http_get_model_file(
                         if chunk:  # filter out keep-alive new chunks
                             progress.update(len(chunk))
                             f.write(chunk)
-                            hash_sha256.update(chunk)
+                            # hash would be discarded in retry case anyway
+                            if not has_retry:
+                                hash_sha256.update(chunk)
             break
         except Exception as e:  # no matter what happen, we will retry.
             has_retry = True
@@ -519,7 +523,6 @@ def http_get_model_file(
             retry.sleep()
     # if anything went wrong, we would discard the real-time computed hash and return None
     return None if has_retry else hash_sha256.hexdigest()
-    logger.debug('storing %s in cache at %s', url, local_dir)
 
 
 def http_get_file(

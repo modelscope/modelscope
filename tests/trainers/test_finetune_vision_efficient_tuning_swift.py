@@ -40,7 +40,8 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skip
+    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
+                         'skip test in current test level')
     def test_vision_efficient_tuning_swift_lora_train(self):
         from swift import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
@@ -50,13 +51,14 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             cfg.model.finetune = True
             cfg.train.max_epochs = self.max_epochs
             cfg.train.lr_scheduler.T_max = self.max_epochs
+            cfg.train.dataloader.workers_per_gpu = 0
+            cfg.evaluation.dataloader.workers_per_gpu = 0
             cfg.model.backbone.lora_length = 0
             return cfg
 
         lora_config = LoRAConfig(
             r=self.tune_length,
             target_modules=['qkv'],
-            merge_weights=False,
             use_merged_linear=True,
             enable_lora=[True])
 

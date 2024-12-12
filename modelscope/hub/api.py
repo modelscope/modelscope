@@ -432,7 +432,7 @@ class HubApi:
                 remote_branch=revision)
             if tag is not None:
                 repo.tag_and_push(tag, tag)
-            logger.info(f'Successfully push folder {model_dir} to remote {model_id}.')
+            logger.info(f'Successfully push folder {model_dir} to remote repo [{model_id}].')
         except Exception:
             raise
         finally:

@@ -41,8 +41,7 @@ from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
 from datasets.utils import file_utils
-from datasets.utils.file_utils import (OfflineModeIsEnabled,
-                                       _raise_if_offline_mode_is_enabled,
+from datasets.utils.file_utils import (_raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
                                        is_relative_path,
                                        relative_to_absolute_path)

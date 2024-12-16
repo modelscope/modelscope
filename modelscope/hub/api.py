@@ -11,14 +11,17 @@ import shutil
 import tempfile
 import uuid
 from collections import defaultdict
+from concurrent.futures import Future
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
-from typing import Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union, BinaryIO
 from urllib.parse import urlencode
 
 import json
 import requests
+from huggingface_hub import CommitInfo, CommitOperationAdd
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
@@ -1171,6 +1174,41 @@ class HubApi:
     def get_file_base_path(self, namespace: str, dataset_name: str) -> str:
         return f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
         # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
+
+    def upload_file(
+            self,
+            *,
+            path_or_fileobj: Union[str, Path, bytes, BinaryIO],
+            path_in_repo: str,
+            repo_id: str,
+            token: Union[str, bool, None] = None,
+            repo_type: Optional[str] = None,
+            revision: Optional[str] = None,
+            commit_message: Optional[str] = None,
+            commit_description: Optional[str] = None,
+            create_pr: Optional[bool] = None,
+            parent_commit: Optional[str] = None,
+            run_as_future: bool = False,
+    ) -> Union[CommitInfo, Future[CommitInfo]]:
+
+        from modelscope.utils.constant import REPO_TYPE_SUPPORT
+
+        repo_type = repo_type if repo_type else REPO_TYPE_MODEL
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        commit_message = (
+            commit_message if commit_message is not None else f"Upload {path_in_repo} to ModelScope hub"
+        )
+        operation = CommitOperationAdd(
+            path_or_fileobj=path_or_fileobj,
+            path_in_repo=path_in_repo,
+        )
+
+
+        print(f'>>opt: {operation}')
+
+        return None
 
 
 class ModelScopeConfig:

@@ -10,7 +10,6 @@ import re
 import shutil
 import uuid
 from collections import defaultdict
-from concurrent.futures import Future
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
@@ -20,7 +19,6 @@ from urllib.parse import urlencode
 
 import json
 import requests
-from huggingface_hub import CommitInfo, CommitOperationAdd
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 
@@ -54,7 +52,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DatasetFormations, DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
                                        DownloadMode, Frameworks, ModelFile,
-                                       Tasks, VirgoDatasetConfig)
+                                       Tasks, VirgoDatasetConfig, REPO_TYPE_SUPPORT)
+from modelscope.utils.thread_utils import thread_executor
+from modelscope.utils.repo_utils import CommitInfo, RepoUtils, DEFAULT_IGNORE_PATTERNS
 from modelscope.utils.logger import get_logger
 from .utils.utils import (get_endpoint, get_readable_folder_size,
                           get_release_datetime, model_id_to_group_owner_name)
@@ -1182,17 +1182,12 @@ class HubApi:
             path_or_fileobj: Union[str, Path, bytes, BinaryIO],
             path_in_repo: str,
             repo_id: str,
-            token: Union[str, bool, None] = None,
+            token: Union[str, None] = None,
             repo_type: Optional[str] = None,
             revision: Optional[str] = None,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
-            create_pr: Optional[bool] = None,
-            parent_commit: Optional[str] = None,
-            run_as_future: bool = False,
-    ) -> Union[CommitInfo, Future[CommitInfo]]:
-
-        from modelscope.utils.constant import REPO_TYPE_SUPPORT
+    ) -> CommitInfo:
 
         repo_type = repo_type if repo_type else REPO_TYPE_MODEL
         if repo_type not in REPO_TYPE_SUPPORT:
@@ -1204,28 +1199,120 @@ class HubApi:
         commit_message = (
             commit_message if commit_message is not None else f"Upload {path_in_repo} to ModelScope hub"
         )
-        # operation = CommitOperationAdd(
-        #     path_or_fileobj=path_or_fileobj,
-        #     path_in_repo=path_in_repo,
-        # )
 
-        files = ('Files', (path_in_repo, path_or_fileobj))
-        upload_resp: dict = self._upload_file(
+        files = (path_in_repo, path_or_fileobj)
+        self._upload_file(
             repo_id=repo_id,
             files=files,
             commit_msg=commit_message)
-
-        logger.info(f'Uploaded file to {repo_id} and got response: {upload_resp}')
+        logger.info(f'Uploaded file to {repo_id} successfully')
 
         # Construct commit info
-        # TODO: to be constructed
+        revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
+        # TODO: to be constructed commit info
+        # TODO: to be implemented commit api
+        commit_url = f"{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}"
         return CommitInfo(
-            commit_url='www.modelscope.cn/v1/commit/xxx',
+            commit_url=commit_url,
             commit_message=commit_message,
             commit_description=commit_description if commit_description else '',
             oid='')
 
-    def _upload_file(self, repo_id: str, files: Union[tuple, list], commit_msg: str) -> dict:
+    def upload_folder(
+            self,
+            *,
+            repo_id: str,
+            folder_path: Union[str, Path],
+            path_in_repo: Optional[str] = None,
+            commit_message: Optional[str] = None,
+            commit_description: Optional[str] = None,
+            token: Union[str, None] = None,
+            repo_type: Optional[str] = None,
+            revision: Optional[str] = None,
+            allow_patterns: Optional[Union[List[str], str]] = None,
+            ignore_patterns: Optional[Union[List[str], str]] = None,
+            max_workers: int = min(32, os.cpu_count()),
+    ) -> CommitInfo:
+
+        repo_type = repo_type if repo_type else REPO_TYPE_MODEL
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        # By default, upload folder to the root directory in repo.
+        if path_in_repo is None:
+            path_in_repo = ""
+
+        # Ignore .git folder
+        if ignore_patterns is None:
+            ignore_patterns = []
+        elif isinstance(ignore_patterns, str):
+            ignore_patterns = [ignore_patterns]
+        ignore_patterns += DEFAULT_IGNORE_PATTERNS
+
+        if token:
+            self.login(access_token=token)
+
+        commit_message = (
+            commit_message if commit_message is not None else f"Upload folder to {repo_id} on ModelScope hub"
+        )
+
+        prepared_repo_objects = HubApi._prepare_upload_folder(
+            folder_path=folder_path,
+            path_in_repo=path_in_repo,
+            allow_patterns=allow_patterns,
+            ignore_patterns=ignore_patterns,
+        )
+
+        # TODO: to be supported on server side
+        # self._upload_file_parallel(
+        #     repo_id=repo_id,
+        #     file_or_obj_list=prepared_repo_objects,
+        #     commit_msg=commit_message,
+        #     max_workers=max_workers,
+        # )
+
+        from tqdm import tqdm
+        for item in tqdm(prepared_repo_objects, total=len(prepared_repo_objects), desc='[Uploading]'):
+            self._upload_file(
+                repo_id=repo_id,
+                files=item,
+                commit_msg=commit_message)
+
+        logger.info(f'Uploaded folder to {repo_id} successfully')
+
+        # Construct commit info
+        revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
+        # TODO: to be constructed commit info
+        # TODO: to be implemented commit api
+        commit_url = f"{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}"
+        return CommitInfo(
+            commit_url=commit_url,
+            commit_message=commit_message,
+            commit_description=commit_description if commit_description else '',
+            oid='')
+
+    def _upload_file_parallel(
+            self,
+            repo_id: str,
+            file_or_obj_list: List[Union[tuple, list]],
+            commit_msg: str,
+            max_workers: int,
+    ) -> None:
+
+
+        upload_file_fn = functools.partial(
+            self._upload_file,
+            repo_id=repo_id,
+            commit_msg=commit_msg)
+
+        @thread_executor(max_workers=max_workers)
+        def _upload_file_parallel(item: Union[tuple, list]):
+            return upload_file_fn(item)
+
+        _upload_file_parallel(file_or_obj_list)
+
+
+    def _upload_file(self, repo_id: str, files: Union[tuple, list], commit_msg: str) -> None:
         # TODO: add support for multiple repo-types
 
         url = f'{self.endpoint}/api/v1/datasets/{repo_id}/repo/multi/upload'
@@ -1236,14 +1323,50 @@ class HubApi:
         cookies = ModelScopeConfig.get_cookies()
         response = requests.post(url,
                                  headers=self.builder_headers(self.headers),
-                                 files=[files],
+                                 files=[('Files', files)],
                                  data=data,
                                  cookies=cookies)
 
         # Response
         resp = response.json()
         datahub_raise_on_error(url, resp, response)
-        return resp
+
+    @staticmethod
+    def _prepare_upload_folder(
+        folder_path: Union[str, Path],
+        path_in_repo: str,
+        allow_patterns: Optional[Union[List[str], str]] = None,
+        ignore_patterns: Optional[Union[List[str], str]] = None,
+    ) -> List[Union[tuple, list]]:
+
+        folder_path = Path(folder_path).expanduser().resolve()
+        if not folder_path.is_dir():
+            raise ValueError(f"Provided path: '{folder_path}' is not a directory")
+
+        # List files from folder
+        relpath_to_abspath = {
+            path.relative_to(folder_path).as_posix(): path
+            for path in sorted(folder_path.glob("**/*"))  # sorted to be deterministic
+            if path.is_file()
+        }
+
+        # Filter files
+        filtered_repo_objects = list(
+            RepoUtils.filter_repo_objects(
+                relpath_to_abspath.keys(), allow_patterns=allow_patterns, ignore_patterns=ignore_patterns
+            )
+        )
+
+        prefix = f"{path_in_repo.strip('/')}/" if path_in_repo else ""
+
+        # TODO: add limitation warning on number of files
+
+        prepared_repo_objects = [
+            (prefix + relpath, str(relpath_to_abspath[relpath]))
+            for relpath in filtered_repo_objects
+        ]
+
+        return prepared_repo_objects
 
 
 class ModelScopeConfig:

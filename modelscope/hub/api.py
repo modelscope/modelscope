@@ -782,7 +782,6 @@ class HubApi:
         params = {}
         r = self.session.get(path, params=params,
                              headers=self.builder_headers(self.headers))
-        print(f'>>resp: {r.json()}')
         raise_for_http_status(r)
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]

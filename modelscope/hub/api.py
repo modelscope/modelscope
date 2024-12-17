@@ -782,6 +782,7 @@ class HubApi:
         params = {}
         r = self.session.get(path, params=params,
                              headers=self.builder_headers(self.headers))
+        print(f'>>resp: {r.json()}')
         raise_for_http_status(r)
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
@@ -1197,18 +1198,52 @@ class HubApi:
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
+        if token:
+            self.login(access_token=token)
+
         commit_message = (
             commit_message if commit_message is not None else f"Upload {path_in_repo} to ModelScope hub"
         )
-        operation = CommitOperationAdd(
-            path_or_fileobj=path_or_fileobj,
-            path_in_repo=path_in_repo,
-        )
+        # operation = CommitOperationAdd(
+        #     path_or_fileobj=path_or_fileobj,
+        #     path_in_repo=path_in_repo,
+        # )
 
+        files = ('Files', (path_in_repo, path_or_fileobj))
+        upload_resp: dict = self._upload_file(
+            repo_id=repo_id,
+            files=files,
+            commit_msg=commit_message)
 
-        print(f'>>opt: {operation}')
+        logger.info(f'Uploaded file to {repo_id} and got response: {upload_resp}')
 
-        return None
+        # Construct commit info
+        # TODO: to be constructed
+        return CommitInfo(
+            commit_url='www.modelscope.cn/v1/commit/xxx',
+            commit_message=commit_message,
+            commit_description=commit_description if commit_description else '',
+            oid='')
+
+    def _upload_file(self, repo_id: str, files: Union[tuple, list], commit_msg: str) -> dict:
+        # TODO: add support for multiple repo-types
+
+        url = f'{self.endpoint}/api/v1/datasets/{repo_id}/repo/multi/upload'
+        data = {
+            'CommitMessage': commit_msg
+        }
+
+        cookies = ModelScopeConfig.get_cookies()
+        response = requests.post(url,
+                                 headers=self.builder_headers(self.headers),
+                                 files=[files],
+                                 data=data,
+                                 cookies=cookies)
+
+        # Response
+        resp = response.json()
+        datahub_raise_on_error(url, resp, response)
+        return resp
 
 
 class ModelScopeConfig:

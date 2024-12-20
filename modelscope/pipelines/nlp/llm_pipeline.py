@@ -269,7 +269,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
         assert model_id.lower() in SWIFT_MODEL_ID_MAPPING,\
             f'Invalid model id {model_id} or Swift framework does not support this model.'
-        args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id.lower()])
+        args = InferArguments(
+            model_type=SWIFT_MODEL_ID_MAPPING[model_id.lower()])
         model, template = prepare_model_template(
             args, device_map=self.device_map)
         self.model = add_stream_generate(model)

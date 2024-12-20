@@ -178,7 +178,8 @@ class PretrainedModelStreamingOutputMixin(StreamingOutputMixin):
         if version.parse(transformers.__version__) >= version.parse('4.43.0'):
             greedy_search_name = 'stream_greedy_search'
             sample_name = '_sample'
-        elif version.parse(transformers.__version__) >= version.parse('4.39.0'):
+        elif version.parse(
+                transformers.__version__) >= version.parse('4.39.0'):
             greedy_search_name = '_greedy_search'
             sample_name = '_sample'
         else:
@@ -452,7 +453,8 @@ class PretrainedModelStreamingOutputMixin(StreamingOutputMixin):
                     break
 
             # prepare model inputs
-            model_kwargs = self._get_initial_cache_position(input_ids, model_kwargs)
+            model_kwargs = self._get_initial_cache_position(
+                input_ids, model_kwargs)
             model_inputs = self.prepare_inputs_for_generation(
                 input_ids, **model_kwargs)
 

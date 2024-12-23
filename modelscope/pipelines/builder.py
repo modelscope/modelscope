@@ -170,7 +170,7 @@ def pipeline(task: str = None,
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
 
-    clear_llm_info(kwargs)
+    clear_llm_info(kwargs, pipeline_name)
     if kwargs:
         cfg.update(kwargs)
 
@@ -223,7 +223,7 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
                                                  List[Model]],
                                     revision: Optional[str],
                                     kwargs: Dict[str, Any]) -> Optional[str]:
-    from .nlp.llm_pipeline import SWIFT_MODEL_ID_MAPPING, ModelTypeHelper, LLMAdapterRegistry
+    from .nlp.llm_pipeline import SWIFT_MODEL_ID_MAPPING, init_swift_model_mapping, ModelTypeHelper, LLMAdapterRegistry
     from ..hub.check_model import get_model_id_from_cache
     if isinstance(model, list):
         model = model[0]
@@ -236,8 +236,9 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
             model_id = get_model_id_from_cache(model)
         else:
             model_id = model
-        global SWIFT_MODEL_ID_MAPPING
-        if model_id in SWIFT_MODEL_ID_MAPPING:
+
+        init_swift_model_mapping()
+        if model_id.lower() in SWIFT_MODEL_ID_MAPPING:
             return 'llm'
     model_type = ModelTypeHelper.get(
         model, revision, with_adapter=True, split='-', use_cache=True)
@@ -245,9 +246,10 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
         return 'llm'
 
 
-def clear_llm_info(kwargs: Dict):
+def clear_llm_info(kwargs: Dict, pipeline_name: str):
     from modelscope.utils.model_type_helper import ModelTypeHelper
 
     kwargs.pop('external_engine_for_llm', None)
-    kwargs.pop('llm_framework', None)
+    if pipeline_name != 'llm':
+        kwargs.pop('llm_framework', None)
     ModelTypeHelper.clear_cache()

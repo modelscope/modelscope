@@ -31,6 +31,7 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     python -m spacy download en_core_web_sm
     pip install faiss-gpu
     pip install healpy
+    pip install huggingface-hub==0.25.2
     # test with install
     pip install .
 else

@@ -33,6 +33,17 @@ SWIFT_MODEL_ID_MAPPING = {}
 SWIFT_FRAMEWORK = 'swift'
 
 
+def init_swift_model_mapping():
+    from swift.llm.utils import MODEL_MAPPING
+
+    global SWIFT_MODEL_ID_MAPPING
+    if not SWIFT_MODEL_ID_MAPPING:
+        SWIFT_MODEL_ID_MAPPING = {
+            v['model_id_or_path'].lower(): k
+            for k, v in MODEL_MAPPING.items()
+        }
+
+
 class LLMAdapterRegistry:
 
     llm_format_map = {'qwen': [None, None, None]}
@@ -216,14 +227,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def _init_swift(self, model_id, device) -> None:
         from swift.llm import prepare_model_template
-        from swift.llm.utils import MODEL_MAPPING, InferArguments
-
-        global SWIFT_MODEL_ID_MAPPING
-        if not SWIFT_MODEL_ID_MAPPING:
-            SWIFT_MODEL_ID_MAPPING = {
-                v['model_id_or_path']: k
-                for k, v in MODEL_MAPPING.items()
-            }
+        from swift.llm.utils import InferArguments
 
         def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,
@@ -261,9 +265,12 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             else:
                 return dict(system=system, prompt=prompt, history=history)
 
-        assert model_id in SWIFT_MODEL_ID_MAPPING,\
+        init_swift_model_mapping()
+
+        assert model_id.lower() in SWIFT_MODEL_ID_MAPPING,\
             f'Invalid model id {model_id} or Swift framework does not support this model.'
-        args = InferArguments(model_type=SWIFT_MODEL_ID_MAPPING[model_id])
+        args = InferArguments(
+            model_type=SWIFT_MODEL_ID_MAPPING[model_id.lower()])
         model, template = prepare_model_template(
             args, device_map=self.device_map)
         self.model = add_stream_generate(model)

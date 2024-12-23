@@ -1192,6 +1192,10 @@ class HubApi:
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
+        if not path_or_fileobj:
+            raise ValueError('Path or file object cannot be empty!')
+        path_in_repo = '' if path_in_repo is None else path_in_repo
+
         if token:
             self.login(access_token=token)
 
@@ -1230,7 +1234,7 @@ class HubApi:
             revision: Optional[str] = None,
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
-            max_workers: int = min(32, os.cpu_count()),
+            max_workers: int = min(8, os.cpu_count()),
     ) -> CommitInfo:
 
         repo_type = repo_type if repo_type else REPO_TYPE_MODEL
@@ -1238,8 +1242,7 @@ class HubApi:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         # By default, upload folder to the root directory in repo.
-        if path_in_repo is None:
-            path_in_repo = ""
+        path_in_repo = '' if path_in_repo is None else path_in_repo
 
         # Ignore .git folder
         if ignore_patterns is None:

@@ -5,13 +5,13 @@ import logging
 
 from modelscope.cli.clearcache import ClearCacheCMD
 from modelscope.cli.download import DownloadCMD
-from modelscope.cli.upload import UploadCMD
 from modelscope.cli.llamafile import LlamafileCMD
 from modelscope.cli.login import LoginCMD
 from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
 from modelscope.cli.server import ServerCMD
+from modelscope.cli.upload import UploadCMD
 from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 

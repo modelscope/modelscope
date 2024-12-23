@@ -6,7 +6,8 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import numpy as np
-from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict, Features
+from datasets import (Dataset, DatasetDict, Features, IterableDataset,
+                      IterableDatasetDict)
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
 

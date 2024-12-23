@@ -14,7 +14,7 @@ from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, BinaryIO
+from typing import BinaryIO, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import json
@@ -48,14 +48,16 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
-                                       REPO_TYPE_MODEL, ConfigFields,
-                                       DatasetFormations, DatasetMetaFormats,
+                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT,
+                                       ConfigFields, DatasetFormations,
+                                       DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
                                        DownloadMode, Frameworks, ModelFile,
-                                       Tasks, VirgoDatasetConfig, REPO_TYPE_SUPPORT)
-from modelscope.utils.thread_utils import thread_executor
-from modelscope.utils.repo_utils import CommitInfo, RepoUtils, DEFAULT_IGNORE_PATTERNS
+                                       Tasks, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
+from modelscope.utils.repo_utils import (DEFAULT_IGNORE_PATTERNS, CommitInfo,
+                                         RepoUtils)
+from modelscope.utils.thread_utils import thread_executor
 from .utils.utils import (get_endpoint, get_readable_folder_size,
                           get_release_datetime, model_id_to_group_owner_name)
 
@@ -1200,7 +1202,7 @@ class HubApi:
             self.login(access_token=token)
 
         commit_message = (
-            commit_message if commit_message is not None else f"Upload {path_in_repo} to ModelScope hub"
+            commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
         )
 
         files = (path_in_repo, path_or_fileobj)
@@ -1214,7 +1216,7 @@ class HubApi:
         revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
         # TODO: to be constructed commit info
         # TODO: to be implemented commit api
-        commit_url = f"{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}"
+        commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}'
         return CommitInfo(
             commit_url=commit_url,
             commit_message=commit_message,
@@ -1255,7 +1257,7 @@ class HubApi:
             self.login(access_token=token)
 
         commit_message = (
-            commit_message if commit_message is not None else f"Upload folder to {repo_id} on ModelScope hub"
+            commit_message if commit_message is not None else f'Upload folder to {repo_id} on ModelScope hub'
         )
 
         prepared_repo_objects = HubApi._prepare_upload_folder(
@@ -1286,7 +1288,7 @@ class HubApi:
         revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
         # TODO: to be constructed commit info
         # TODO: to be implemented commit api
-        commit_url = f"{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}"
+        commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}'
         return CommitInfo(
             commit_url=commit_url,
             commit_message=commit_message,
@@ -1301,7 +1303,6 @@ class HubApi:
             max_workers: int,
     ) -> None:
 
-
         upload_file_fn = functools.partial(
             self._upload_file,
             repo_id=repo_id,
@@ -1312,7 +1313,6 @@ class HubApi:
             return upload_file_fn(item)
 
         _upload_file_parallel(file_or_obj_list)
-
 
     def _upload_file(self, repo_id: str, files: Union[tuple, list], commit_msg: str) -> None:
         # TODO: add support for multiple repo-types
@@ -1348,7 +1348,7 @@ class HubApi:
         # List files from folder
         relpath_to_abspath = {
             path.relative_to(folder_path).as_posix(): path
-            for path in sorted(folder_path.glob("**/*"))  # sorted to be deterministic
+            for path in sorted(folder_path.glob('**/*'))  # sorted to be deterministic
             if path.is_file()
         }
 
@@ -1359,7 +1359,7 @@ class HubApi:
             )
         )
 
-        prefix = f"{path_in_repo.strip('/')}/" if path_in_repo else ""
+        prefix = f"{path_in_repo.strip('/')}/" if path_in_repo else ''
 
         # TODO: add limitation warning on number of files
 

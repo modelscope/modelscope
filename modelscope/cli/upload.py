@@ -3,8 +3,9 @@ import os
 from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
-from modelscope.utils.constant import REPO_TYPE_SUPPORT, REPO_TYPE_MODEL, REPO_TYPE_DATASET
 from modelscope.hub.api import HubApi
+from modelscope.utils.constant import (REPO_TYPE_DATASET, REPO_TYPE_MODEL,
+                                       REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -31,15 +32,14 @@ class UploadCMD(CLICommand):
         parser.add_argument(
             'repo_id',
             type=str,
-            help='The ID of the repo to upload to (e.g. `username/repo-name`)'
-        )
+            help='The ID of the repo to upload to (e.g. `username/repo-name`)')
         parser.add_argument(
             'local_path',
             type=str,
             nargs='?',
             default=None,
             help='Optional, '
-                 'Local path to the file or folder to upload. Defaults to current directory.'
+            'Local path to the file or folder to upload. Defaults to current directory.'
         )
         parser.add_argument(
             'path_in_repo',
@@ -47,64 +47,61 @@ class UploadCMD(CLICommand):
             nargs='?',
             default=None,
             help='Optional, '
-                 'Path of the file or folder in the repo. Defaults to the relative path of the file or folder.'
+            'Path of the file or folder in the repo. Defaults to the relative path of the file or folder.'
         )
         parser.add_argument(
             '--repo-type',
             choices=REPO_TYPE_SUPPORT,
             default=REPO_TYPE_MODEL,
-            help="Type of the repo to upload to (e.g. `dataset`, `model`, `studio`).",
+            help=
+            'Type of the repo to upload to (e.g. `dataset`, `model`, `studio`).',
         )
         parser.add_argument(
             '--revision',
             type=str,
-            help=(
-                'An optional Git revision to push to.'
-            ),
+            help=('An optional Git revision to push to.'),
         )
         parser.add_argument(
-            "--include",
-            nargs="*",
+            '--include',
+            nargs='*',
             type=str,
-            help="Glob patterns to match files to upload."
-        )
+            help='Glob patterns to match files to upload.')
         parser.add_argument(
-            "--exclude",
-            nargs="*",
+            '--exclude',
+            nargs='*',
             type=str,
-            help="Glob patterns to exclude from files to upload."
-        )
+            help='Glob patterns to exclude from files to upload.')
         parser.add_argument(
-            "--commit-message",
+            '--commit-message',
             type=str,
             default=None,
-            help="The message of commit."
-        )
+            help='The message of commit.')
         parser.add_argument(
-            "--commit-description",
+            '--commit-description',
             type=str,
             default=None,
-            help="The description of the generated commit.")
+            help='The description of the generated commit.')
         parser.add_argument(
-            "--token",
+            '--token',
             type=str,
             default=None,
-            help="A User Access Token generated from https://modelscope.cn/my/myaccesstoken"
+            help=
+            'A User Access Token generated from https://modelscope.cn/my/myaccesstoken'
         )
         parser.add_argument(
-            "--max-workers",
+            '--max-workers',
             type=int,
-            default=min(8, os.cpu_count() + 4),
-            help="The number of workers to use for uploading files."
-        )
+            default=min(8,
+                        os.cpu_count() + 4),
+            help='The number of workers to use for uploading files.')
 
         parser.set_defaults(func=subparser_func)
-
 
     def execute(self):
 
         assert self.args.repo_id, '`repo_id` is required'
-        assert self.args.repo_id.count('/') == 1, 'repo_id should be in format of username/repo-name'
+        assert self.args.repo_id.count(
+            '/') == 1, 'repo_id should be in format of username/repo-name'
         repo_name: str = self.args.repo_id.split('/')[-1]
         self.repo_id = self.args.repo_id
 
@@ -121,8 +118,11 @@ class UploadCMD(CLICommand):
         elif self.args.local_path is None:
             # Case 3: user provided only a repo_id that does not match a local file or folder
             # => the user must explicitly provide a local_path => raise exception
-            raise ValueError(f"'{repo_name}' is not a local file or folder. Please set `local_path` explicitly.")
-        elif self.args.path_in_repo is None and os.path.isfile(self.args.local_path):
+            raise ValueError(
+                f"'{repo_name}' is not a local file or folder. Please set `local_path` explicitly."
+            )
+        elif self.args.path_in_repo is None and os.path.isfile(
+                self.args.local_path):
             # Case 4: modelscope upload owner_name/test_repo /path/to/your_file.csv
             # => upload it to remote root path with same name
             self.local_path = self.args.local_path
@@ -137,15 +137,16 @@ class UploadCMD(CLICommand):
             self.local_path = self.args.local_path
             self.path_in_repo = self.args.path_in_repo
 
-
         # Check token and login
         # The cookies will be reused if the user has logged in before.
         api = HubApi()
         if not self.args.token:
-            logger.warning('`token` is not provided! '
-                           'You can pass the `--token` argument, '
-                           'or use api.login(access_token=`your_sdk_token`). '
-                           'To get the token, refer to https://modelscope.cn/my/myaccesstoken')
+            logger.warning(
+                '`token` is not provided! '
+                'You can pass the `--token` argument, '
+                'or use api.login(access_token=`your_sdk_token`). '
+                'To get the token, refer to https://modelscope.cn/my/myaccesstoken'
+            )
         else:
             api.login(self.args.token)
 

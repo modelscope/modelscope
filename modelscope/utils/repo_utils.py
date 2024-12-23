@@ -3,23 +3,23 @@
 
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
-from typing import Callable, Generator, Iterable, List, Optional, TypeVar, Union
+from typing import (Callable, Generator, Iterable, List, Optional, TypeVar,
+                    Union)
 
-
-T = TypeVar("T")
+T = TypeVar('T')
 # Always ignore `.git` and `.cache/huggingface` folders in commits
 DEFAULT_IGNORE_PATTERNS = [
-    ".git",
-    ".git/*",
-    "*/.git",
-    "**/.git/**",
-    ".cache/modelscope",
-    ".cache/modelscope/*",
-    "*/.cache/modelscope",
-    "**/.cache/modelscope/**",
+    '.git',
+    '.git/*',
+    '*/.git',
+    '**/.git/**',
+    '.cache/modelscope',
+    '.cache/modelscope/*',
+    '*/.cache/modelscope',
+    '**/.cache/modelscope/**',
 ]
 # Forbidden to commit these folders
-FORBIDDEN_FOLDERS = [".git", ".cache"]
+FORBIDDEN_FOLDERS = ['.git', '.cache']
 
 
 class RepoUtils:
@@ -79,9 +79,15 @@ class RepoUtils:
             ignore_patterns = [ignore_patterns]
 
         if allow_patterns is not None:
-            allow_patterns = [RepoUtils._add_wildcard_to_directories(p) for p in allow_patterns]
+            allow_patterns = [
+                RepoUtils._add_wildcard_to_directories(p)
+                for p in allow_patterns
+            ]
         if ignore_patterns is not None:
-            ignore_patterns = [RepoUtils._add_wildcard_to_directories(p) for p in ignore_patterns]
+            ignore_patterns = [
+                RepoUtils._add_wildcard_to_directories(p)
+                for p in ignore_patterns
+            ]
 
         if key is None:
 
@@ -90,7 +96,9 @@ class RepoUtils:
                     return item
                 if isinstance(item, Path):
                     return str(item)
-                raise ValueError(f"Please provide `key` argument in `filter_repo_objects`: `{item}` is not a string.")
+                raise ValueError(
+                    f'Please provide `key` argument in `filter_repo_objects`: `{item}` is not a string.'
+                )
 
             key = _identity  # Items must be `str` or `Path`, otherwise raise ValueError
 
@@ -98,19 +106,21 @@ class RepoUtils:
             path = key(item)
 
             # Skip if there's an allowlist and path doesn't match any
-            if allow_patterns is not None and not any(fnmatch(path, r) for r in allow_patterns):
+            if allow_patterns is not None and not any(
+                    fnmatch(path, r) for r in allow_patterns):
                 continue
 
             # Skip if there's a denylist and path matches any
-            if ignore_patterns is not None and any(fnmatch(path, r) for r in ignore_patterns):
+            if ignore_patterns is not None and any(
+                    fnmatch(path, r) for r in ignore_patterns):
                 continue
 
             yield item
 
     @staticmethod
     def _add_wildcard_to_directories(pattern: str) -> str:
-        if pattern[-1] == "/":
-            return pattern + "*"
+        if pattern[-1] == '/':
+            return pattern + '*'
         return pattern
 
 
@@ -166,8 +176,12 @@ class CommitInfo(str):
     pr_num: Optional[str] = field(init=False)
 
     # legacy url for `str` compatibility (ex: url to uploaded file, url to uploaded folder, url to PR, etc.)
-    _url: str = field(repr=False, default=None)  # type: ignore  # defaults to `commit_url`
+    _url: str = field(
+        repr=False, default=None)  # type: ignore  # defaults to `commit_url`
 
-    def __new__(cls, *args, commit_url: str, _url: Optional[str] = None, **kwargs):
+    def __new__(cls,
+                *args,
+                commit_url: str,
+                _url: Optional[str] = None,
+                **kwargs):
         return str.__new__(cls, _url or commit_url)
-

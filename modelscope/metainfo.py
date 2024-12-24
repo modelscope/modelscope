@@ -225,6 +225,7 @@ class Models(object):
     audio_quantization = 'audio-quantization'
     laura_codec = 'laura-codec'
     funasr = 'funasr'
+    unetvc_16k='unetvc_16k'
 
     # multi-modal models
     ofa = 'ofa'
@@ -581,7 +582,7 @@ class Pipelines(object):
     audio_quantization = 'audio-quantization'
     audio_quantization_inference = 'audio-quantization-inference'
     laura_codec_tts_inference = 'laura-codec-tts-inference'
-
+    voice_conversion='voice-conversion'
     # multi-modal tasks
     image_captioning = 'image-captioning'
     multi_modal_embedding = 'multi-modal-embedding'

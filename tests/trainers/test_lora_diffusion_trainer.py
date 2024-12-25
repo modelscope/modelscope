@@ -35,7 +35,8 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # need diffusers==0.24.0, skip in ci
+    @unittest.skip
     def test_lora_diffusion_train(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
         model_revision = 'v1.0.9'
@@ -67,7 +68,8 @@ class TestLoraDiffusionTrainer(unittest.TestCase):
         results_files = os.listdir(self.tmp_dir)
         self.assertIn(f'{trainer.timestamp}.log.json', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    # need diffusers==0.24.0, skip in ci
+    @unittest.skip
     def test_lora_diffusion_eval(self):
         model_id = 'AI-ModelScope/stable-diffusion-v1-5'
         model_revision = 'v1.0.9'

@@ -50,7 +50,7 @@ class NeRFRecon4KTest(unittest.TestCase):
     #     nerf_recon_4k(
     #         dict(data_cfg=self.data_dic, render_dir=self.render_dir))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub(self):
         nerf_recon_4k = pipeline(

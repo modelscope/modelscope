@@ -206,7 +206,7 @@ def _snapshot_download(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
     system_cache = cache_dir if cache_dir is not None else os.getenv(
         'MODELSCOPE_CACHE',
-        Path.home().joinpath('.cache', 'modelscope'))
+        Path.home().joinpath('.cache', 'modelscope', 'hub'))
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -233,7 +233,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, 'hub', repo_id)
+                    system_cache, repo_id)
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -283,10 +283,13 @@ def _snapshot_download(
                     logger.info(f'Creating symbolic link [{directory}].')
                     try:
                         os.symlink(
-                            os.path.abspath(masked_directory), directory)
+                            os.path.abspath(masked_directory),
+                            directory,
+                            target_is_directory=True)
                     except OSError:
                         logger.warning(
-                            f'Failed to create symbolic link {directory}.')
+                            f'Failed to create symbolic link {directory} for {os.path.abspath(masked_directory)}.'
+                        )
 
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(

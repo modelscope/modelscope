@@ -213,9 +213,14 @@ class FillMaskPoNetPreprocessor(FillMaskPreprocessorBase):
             osp.join(model_dir, ModelFile.CONFIGURATION))
         self.language = self.cfg.model.get('language', 'en')
         if self.language == 'en':
+            import nltk
             from nltk.tokenize import sent_tokenize
-            import_external_nltk_data(
-                osp.join(model_dir, 'nltk_data'), 'tokenizers/punkt')
+            from packaging import version
+            if version.parse(nltk.__version__) >= version.parse('3.8.2'):
+                nltk.download('punkt_tab')
+            else:
+                import_external_nltk_data(
+                    osp.join(model_dir, 'nltk_data'), 'tokenizers/punkt_tab')
         elif self.language in ['zh', 'cn']:
 
             def sent_tokenize(para):

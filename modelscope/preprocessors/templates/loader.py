@@ -30,6 +30,8 @@ def cases(*names):
             else:
                 regex += letter
         ret.append(regex)
+        if '-' in regex:
+            ret.append(regex.replace('-', ' '))
     if len(ret) > 1:
         ret = '|'.join(ret)
         ret = '(' + ret + ')'
@@ -53,6 +55,12 @@ def no_multi_modal():
 template_info = [
     # llama
     ## "llama3"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama3.3", "llama-3.3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama3.3',
+    ),
     TemplateInfo(
         template_regex=
         f'.*{cases("llama3.2", "llama-3.2")}.*{cases("vision")}.*',
@@ -291,7 +299,7 @@ template_info = [
     TemplateInfo(
         template=TemplateType.llama,
         template_regex=
-        f'.*{cases("mistral")}{no_multi_modal()}.*{chat_suffix}.*',
+        f'.*{cases("mistral", "ministral")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral',
     ),
@@ -771,6 +779,18 @@ template_info = [
         template_regex=f'.*{cases("paraphrase-multilingual")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/paraphrase-multilingual'),
+    TemplateInfo(
+        template_regex=f'.*{cases("marco")}.*{cases("o1")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/marco-o1'),
+    TemplateInfo(
+        template_regex=f'.*{cases("qwq")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwq'),
+    TemplateInfo(
+        template_regex=f'.*{cases("exaone")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/exaone3.5'),
 
 ]
 

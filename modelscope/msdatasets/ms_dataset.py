@@ -392,7 +392,10 @@ class MsDataset:
 
         """
         warnings.warn(
-            'upload is deprecated, please use git command line to upload the dataset.',
+            'The function `upload` is deprecated, '
+            'please use git command '
+            'or modelscope.hub.api.HubApi.upload_folder '
+            'or modelscope.hub.api.HubApi.upload_file.',
             DeprecationWarning)
 
         if not object_name:
@@ -443,7 +446,7 @@ class MsDataset:
         """
 
         warnings.warn(
-            'upload is deprecated, please use git command line to upload the dataset.',
+            'The function `clone_meta` is deprecated, please use git command line to clone the repo.',
             DeprecationWarning)
 
         _repo = DatasetRepository(
@@ -484,6 +487,12 @@ class MsDataset:
             None
 
         """
+        warnings.warn(
+            'The function `upload_meta` is deprecated, '
+            'please use git command '
+            'or CLI `modelscope upload owner_name/repo_name ...`.',
+            DeprecationWarning)
+
         _repo = DatasetRepository(
             repo_work_dir=dataset_work_dir,
             dataset_id='',

@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 from types import MethodType
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
@@ -163,6 +163,10 @@ def _file_download(repo_id: str,
         revision=revision)
 
 
+def _whoami(self, token: Union[bool, str, None] = None) -> Dict:
+    return 'unknown'
+
+
 def _patch_pretrained_class():
 
     def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
@@ -299,6 +303,10 @@ def patch_hub():
     hf_api.file_exists = MethodType(_file_exists, api)
     huggingface_hub.file_exists = hf_api.file_exists
     huggingface_hub.hf_api.file_exists = hf_api.file_exists
+
+    hf_api.whoami = MethodType(_whoami, api)
+    huggingface_hub.whoami = hf_api.whoami
+    huggingface_hub.hf_api.whoami = hf_api.whoami
 
     _patch_pretrained_class()
 

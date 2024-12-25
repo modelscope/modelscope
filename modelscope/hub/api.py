@@ -36,8 +36,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       TEMPORARY_FOLDER_NAME, DatasetVisibility,
                                       Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
-                                   NotLoginException, NoValidRevisionError,
-                                   RequestError, datahub_raise_on_error,
+                                   NotLoginException, RequestError,
+                                   datahub_raise_on_error,
                                    handle_http_post_error,
                                    handle_http_response, is_ok,
                                    raise_for_http_status, raise_on_error)
@@ -62,6 +62,7 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
+
     def __init__(self,
                  endpoint: Optional[str] = None,
                  timeout=API_HTTP_CLIENT_TIMEOUT,
@@ -94,14 +95,14 @@ class HubApi:
                     timeout=timeout))
 
     def login(
-        self,
-        access_token: str,
+            self,
+            access_token: Optional[str] = None,
     ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.
 
         Args:
-            access_token (str): user access token on modelscope.
+            access_token (str): user access token on modelscope, set this argument or set `MODELSCOPE_API_TOKEN`.
 
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
@@ -110,6 +111,9 @@ class HubApi:
         Note:
             You only have to login once within 30 days.
         """
+        if access_token is None:
+            access_token = os.environ.get('MODELSCOPE_API_TOKEN')
+        assert access_token is not None, 'Please pass in access_token or set `MODELSCOPE_API_TOKEN`'
         path = f'{self.endpoint}/api/v1/login'
         r = self.session.post(
             path,
@@ -131,6 +135,15 @@ class HubApi:
 
         return d[API_RESPONSE_FIELD_DATA][
             API_RESPONSE_FIELD_GIT_ACCESS_TOKEN], cookies
+
+    def try_login(self, access_token: Optional[str] = None) -> bool:
+        """Wraps the `login` method and returns bool.
+        """
+        try:
+            self.login(access_token)
+            return True
+        except AssertionError:
+            return False
 
     def create_model(self,
                      model_id: str,
@@ -211,9 +224,9 @@ class HubApi:
         return f'{self.endpoint}/api/v1/models/{model_id}.git'
 
     def get_model(
-        self,
-        model_id: str,
-        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            self,
+            model_id: str,
+            revision: Optional[str] = DEFAULT_MODEL_REVISION,
     ) -> str:
         """Get model information at ModelScope
 
@@ -249,10 +262,10 @@ class HubApi:
             raise_for_http_status(r)
 
     def repo_exists(
-        self,
-        repo_id: str,
-        *,
-        repo_type: Optional[str] = None,
+            self,
+            repo_id: str,
+            *,
+            repo_type: Optional[str] = None,
     ) -> bool:
         """
         Checks if a repository exists on ModelScope
@@ -460,7 +473,7 @@ class HubApi:
         r = self.session.put(
             path,
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
-            (owner_or_group, page_number, page_size),
+                 (owner_or_group, page_number, page_size),
             cookies=cookies,
             headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, owner_or_group)
@@ -476,7 +489,7 @@ class HubApi:
 
     def _check_cookie(self,
                       use_cookies: Union[bool,
-                                         CookieJar] = False) -> CookieJar:
+                      CookieJar] = False) -> CookieJar:
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
@@ -587,7 +600,8 @@ class HubApi:
             else:
                 if revision is None:  # user not specified revision, use latest revision before release time
                     revisions_detail = [x for x in
-                                        all_tags_detail if x['CreatedAt'] <= release_timestamp] if all_tags_detail else [] # noqa E501
+                                        all_tags_detail if
+                                        x['CreatedAt'] <= release_timestamp] if all_tags_detail else []  # noqa E501
                     if len(revisions_detail) > 0:
                         revision = revisions_detail[0]['Revision']  # use latest revision before release time.
                         revision_detail = revisions_detail[0]
@@ -621,9 +635,9 @@ class HubApi:
                                               cookies=cookies)['Revision']
 
     def get_model_branches_and_tags_details(
-        self,
-        model_id: str,
-        use_cookies: Union[bool, CookieJar] = False,
+            self,
+            model_id: str,
+            use_cookies: Union[bool, CookieJar] = False,
     ) -> Tuple[List[str], List[str]]:
         """Get model branch and tags.
 
@@ -647,9 +661,9 @@ class HubApi:
         return info['RevisionMap']['Branches'], info['RevisionMap']['Tags']
 
     def get_model_branches_and_tags(
-        self,
-        model_id: str,
-        use_cookies: Union[bool, CookieJar] = False,
+            self,
+            model_id: str,
+            use_cookies: Union[bool, CookieJar] = False,
     ) -> Tuple[List[str], List[str]]:
         """Get model branch and tags.
 
@@ -1087,7 +1101,7 @@ class HubApi:
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
                                  is_recursive, is_filter_dir, revision):
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
-            f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
+              f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
         resp = self.session.get(url=url, cookies=cookies, timeout=1800)
@@ -1116,7 +1130,7 @@ class HubApi:
             raise ValueError('Args cannot be empty!')
 
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
-            f'&Revision={revision}'
+              f'&Revision={revision}'
 
         cookies = ModelScopeConfig.get_cookies()
         resp = self.session.delete(url=url, cookies=cookies)

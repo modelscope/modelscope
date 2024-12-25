@@ -1,9 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import tempfile
+from functools import partial
 from pathlib import Path
 from types import MethodType
-from typing import Optional, Union, Dict
+from typing import Dict, List, Optional, Union
+from urllib.error import HTTPError
 
+from huggingface_hub.hf_api import CommitInfo, future_compatible
 from transformers import AutoConfig as AutoConfigHF
 from transformers import AutoFeatureExtractor as AutoFeatureExtractorHF
 from transformers import AutoImageProcessor as AutoImageProcessorHF
@@ -64,7 +68,7 @@ from transformers import (PretrainedConfig, PreTrainedModel,
 from transformers import T5EncoderModel as T5EncoderModelHF
 from transformers import __version__ as transformers_version
 
-from modelscope import snapshot_download
+from modelscope import push_to_hub, snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 from .logger import get_logger
 
@@ -164,7 +168,8 @@ def _file_download(repo_id: str,
 
 
 def _whoami(self, token: Union[bool, str, None] = None) -> Dict:
-    return 'unknown'
+    from modelscope.hub.api import ModelScopeConfig
+    return {'name': ModelScopeConfig.get_user_info()[0] or 'unknown'}
 
 
 def _patch_pretrained_class():
@@ -307,6 +312,55 @@ def patch_hub():
     hf_api.whoami = MethodType(_whoami, api)
     huggingface_hub.whoami = hf_api.whoami
     huggingface_hub.hf_api.whoami = hf_api.whoami
+
+    def create_repo(repo_id: str,
+                    *,
+                    token: Union[str, bool, None] = None,
+                    private: bool = False,
+                    **kwargs) -> 'RepoUrl':
+        """
+        Create a new repository on the hub.
+
+        Args:
+            repo_id: The ID of the repository to create.
+            token: The authentication token to use.
+            private: Whether the repository should be private.
+            **kwargs: Additional arguments.
+
+        Returns:
+            RepoUrl: The URL of the created repository.
+        """
+        from modelscope.hub.create_model import create_model_repo
+        hub_model_id = create_model_repo(repo_id, token, private)
+        from huggingface_hub import RepoUrl
+        return RepoUrl(url=hub_model_id, )
+
+    @future_compatible
+    def upload_folder(
+        *,
+        repo_id: str,
+        folder_path: Union[str, Path],
+        path_in_repo: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        commit_description: Optional[str] = None,
+        token: Union[str, bool, None] = None,
+        revision: Optional[str] = 'master',
+        ignore_patterns: Optional[Union[List[str], str]] = None,
+        **kwargs,
+    ):
+        from modelscope.hub.push_to_hub import push_model_to_hub
+        push_model_to_hub(repo_id, folder_path, path_in_repo, commit_message,
+                          commit_description, token, True, revision,
+                          ignore_patterns)
+        return CommitInfo(
+            commit_url=f'https://www.modelscope.cn/models/{repo_id}/files',
+            commit_message=commit_message,
+            commit_description=commit_description,
+            oid=None,
+        )
+
+    huggingface_hub.create_repo = create_repo
+    huggingface_hub.upload_folder = partial(upload_folder, api)
 
     _patch_pretrained_class()
 

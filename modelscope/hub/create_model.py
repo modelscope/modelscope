@@ -1,7 +1,7 @@
 import json
 import tempfile
 from typing import Dict, Optional, Any
-from urllib.error import HTTPError
+from requests.exceptions import HTTPError
 
 from modelscope.hub.api import ModelScopeConfig, HubApi
 
@@ -37,8 +37,8 @@ def create_model_repo(repo_id: str,
     if '/' not in repo_id:
         user_name = ModelScopeConfig.get_user_info()[0]
         assert isinstance(user_name, str)
-        hub_model_id = f'{user_name}/{repo_id}'
-        logger.info(f"'/' not in hub_model_id, pushing to personal repo {hub_model_id}")
+        repo_id = f'{user_name}/{repo_id}'
+        logger.info(f"'/' not in hub_model_id, pushing to personal repo {repo_id}")
     try:
         api.create_model(repo_id, visibility)
     except HTTPError:

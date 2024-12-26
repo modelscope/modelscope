@@ -11,12 +11,13 @@ logger = get_logger()
 
 
 # TODO: to be fixed for nested progress bar.
-def thread_executor(max_workers: int = min(8, os.cpu_count() + 4)):
+def thread_executor(max_workers: int = min(8, os.cpu_count() + 4), disable_tqdm=False):
     """
     A decorator to execute a function in a threaded manner using ThreadPoolExecutor.
 
     Args:
         max_workers (int): The maximum number of threads to use.
+        disable_tqdm (bool): disable progress bar.
 
     Returns:
         function: A wrapped function that executes with threading and a progress bar.
@@ -41,8 +42,10 @@ def thread_executor(max_workers: int = min(8, os.cpu_count() + 4)):
             results = []
             # Create a tqdm progress bar with the total number of items to process
             with tqdm(
-                    total=len(iterable),
-                    desc=f'Processing {len(iterable)} items') as pbar:
+                total=len(iterable),
+                desc=f'Processing {len(iterable)} items',
+                disable=disable_tqdm,
+            ) as pbar:
                 # Define a wrapper function to update the progress bar
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     # Submit all tasks

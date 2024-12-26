@@ -331,6 +331,10 @@ class MsDataset:
                 return dataset_inst
 
         elif hub == Hubs.virgo:
+            warnings.warn(
+                'The option `Hubs.virgo` is deprecated, '
+                'will be removed in the future version.',
+                DeprecationWarning)
             from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
             from modelscope.utils.constant import VirgoDatasetConfig
             # Rewrite the namespace, version and cache_dir for virgo dataset.

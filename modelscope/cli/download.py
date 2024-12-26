@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.hub.constants import DEFAULT_MAX_WORKERS
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
@@ -92,8 +93,7 @@ class DownloadCMD(CLICommand):
         parser.add_argument(
             '--max-workers',
             type=int,
-            default=min(8,
-                        os.cpu_count() + 4),
+            default=DEFAULT_MAX_WORKERS,
             help='The maximum number of workers to download files.')
 
         parser.set_defaults(func=subparser_func)

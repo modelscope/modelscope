@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
@@ -89,6 +89,12 @@ class DownloadCMD(CLICommand):
             default=None,
             help='Glob patterns to exclude from files to download.'
             'Ignored if file is specified')
+        parser.add_argument(
+            '--max-workers',
+            type=int,
+            default=min(8, os.cpu_count() + 4),
+            help='The maximum number of workers to download files.')
+
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
@@ -126,6 +132,7 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
+                    max_workers=self.args.max_workers,
                 )
             else:  # download repo
                 snapshot_download(
@@ -135,6 +142,7 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
+                    max_workers=self.args.max_workers,
                 )
         elif self.args.dataset:
             dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
@@ -153,6 +161,7 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
+                    max_workers=self.args.max_workers,
                 )
             else:  # download repo
                 dataset_snapshot_download(
@@ -162,6 +171,7 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
+                    max_workers=self.args.max_workers,
                 )
         else:
             pass  # noop

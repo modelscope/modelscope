@@ -7,6 +7,7 @@ from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
+from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 
 
 def subparser_func(args):
@@ -155,7 +156,7 @@ class DownloadCMD(CLICommand):
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
-                    revision=self.args.revision,
+                    revision=self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,

@@ -20,8 +20,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
+from modelscope.utils.thread_utils import thread_executor
 from modelscope.utils.logger import get_logger
-from .file_download import (create_temporary_directory_and_cache,
+from modelscope.hub.file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
 
 logger = get_logger()
@@ -393,21 +394,6 @@ def _get_valid_regex_pattern(patterns: List[str]):
         return None
 
 
-def thread_download(func, iterable, max_workers, **kwargs):
-    # Create a tqdm progress bar with the total number of files to fetch
-    with tqdm(
-            total=len(iterable),
-            desc=f'Fetching {len(iterable)} files') as pbar:
-        # Define a wrapper function to update the progress bar
-        def progress_wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            pbar.update(1)
-            return result
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            executor.map(progress_wrapper, iterable)
-
-
 def _download_file_lists(
         repo_files: List[str],
         cache: ModelFileSystemCache,
@@ -479,6 +465,7 @@ def _download_file_lists(
         else:
             filtered_repo_files.append(repo_file)
 
+    @thread_executor(max_workers=max_workers, disable_tqdm=False)
     def _download_single_file(repo_file):
         if repo_type == REPO_TYPE_MODEL:
             url = get_file_download_url(
@@ -495,10 +482,17 @@ def _download_file_lists(
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
-        download_file(url, repo_file, temporary_cache_dir, cache, headers,
-                      cookies)
+        download_file(
+            url,
+            repo_file,
+            temporary_cache_dir,
+            cache,
+            headers,
+            cookies,
+            disable_tqdm=True,
+        )
 
     if len(filtered_repo_files) > 0:
-        thread_download(_download_single_file, filtered_repo_files,
-                        max_workers)
+        logger.info(f'Got {len(filtered_repo_files)} files, start to download ...')
+        _download_single_file(filtered_repo_files)
         logger.info(f"Download {repo_type} '{repo_id}' successfully.")

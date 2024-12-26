@@ -92,7 +92,8 @@ class DownloadCMD(CLICommand):
         parser.add_argument(
             '--max-workers',
             type=int,
-            default=min(8, os.cpu_count() + 4),
+            default=min(8,
+                        os.cpu_count() + 4),
             help='The maximum number of workers to download files.')
 
         parser.set_defaults(func=subparser_func)

@@ -313,8 +313,8 @@ def patch_hub():
     huggingface_hub.whoami = hf_api.whoami
     huggingface_hub.hf_api.whoami = hf_api.whoami
 
-    from huggingface_hub.repocard import RepoCard
-    RepoCard.validate = lambda *args, **kwargs: None
+    from huggingface_hub import repocard
+    repocard.RepoCard.validate = lambda *args, **kwargs: None
 
     def create_repo(repo_id: str,
                     *,
@@ -386,6 +386,7 @@ def patch_hub():
     hf_api.upload_file = MethodType(upload_file, api)
     huggingface_hub.upload_file = hf_api.upload_file
     huggingface_hub.hf_api.upload_file = hf_api.upload_file
+    repocard.upload_file = hf_api.upload_file
 
     from transformers.utils import hub
     hub.create_repo = create_repo

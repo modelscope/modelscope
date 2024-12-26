@@ -137,18 +137,19 @@ class DownloadCMD(CLICommand):
                     ignore_file_pattern=self.args.exclude,
                 )
         elif self.args.dataset:
+            dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
             if len(self.args.files) == 1:  # download single file
                 dataset_file_download(
                     self.args.dataset,
                     self.args.files[0],
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
-                    revision=self.args.revision)
+                    revision=dataset_revision)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 dataset_snapshot_download(
                     self.args.dataset,
-                    revision=self.args.revision,
+                    revision=dataset_revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
@@ -156,7 +157,7 @@ class DownloadCMD(CLICommand):
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
-                    revision=self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION,
+                    revision=dataset_revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,

@@ -3,6 +3,7 @@
 import concurrent.futures
 import os
 import shutil
+import tempfile
 from multiprocessing import Manager, Process, Value
 from pathlib import Path
 from typing import List, Optional, Union
@@ -22,6 +23,36 @@ _flags = dict()
 _tasks = dict()
 _manager = None
 
+
+def push_files_to_hub(
+        path_or_fileobj: Union[str, Path],
+        path_in_repo: str,
+        repo_id: str,
+        token: Union[str, bool, None] = None,
+        revision: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        commit_description: Optional[str] = None,
+):
+    if not os.path.exists(path_or_fileobj):
+        return
+
+    from modelscope import HubApi
+    api = HubApi()
+    api.login(token)
+    if not commit_message:
+        commit_message = 'Updating files'
+    if commit_description:
+        commit_message = commit_message + '\n' + commit_description
+    with tempfile.TemporaryDirectory() as temp_cache_dir:
+        from modelscope.hub.repository import Repository
+        repo = Repository(temp_cache_dir, repo_id, revision=revision)
+        sub_folder = os.path.join(temp_cache_dir, path_in_repo)
+        os.makedirs(sub_folder, exist_ok=True)
+        if os.path.isfile(path_or_fileobj):
+            shutil.copyfile(path_or_fileobj, sub_folder)
+        else:
+            shutil.copytree(path_or_fileobj, sub_folder, dirs_exist_ok=True)
+    repo.push(commit_message)
 
 def push_model_to_hub(repo_id: str,
                       folder_path: Union[str, Path],

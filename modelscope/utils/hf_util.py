@@ -4,7 +4,7 @@ import tempfile
 from functools import partial
 from pathlib import Path
 from types import MethodType
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, BinaryIO
 from urllib.error import HTTPError
 
 from huggingface_hub.hf_api import CommitInfo, future_compatible
@@ -313,6 +313,9 @@ def patch_hub():
     huggingface_hub.whoami = hf_api.whoami
     huggingface_hub.hf_api.whoami = hf_api.whoami
 
+    from huggingface_hub.repocard import RepoCard
+    RepoCard.validate = lambda *args, **kwargs: None
+
     def create_repo(repo_id: str,
                     *,
                     token: Union[str, bool, None] = None,
@@ -359,8 +362,33 @@ def patch_hub():
             oid=None,
         )
 
+    @future_compatible
+    def upload_file(
+        self,
+        *,
+        path_or_fileobj: Union[str, Path, bytes, BinaryIO],
+        path_in_repo: str,
+        repo_id: str,
+        token: Union[str, bool, None] = None,
+        revision: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        commit_description: Optional[str] = None,
+        **kwargs,
+    ):
+
+        from modelscope.hub.push_to_hub import push_files_to_hub
+        push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token, revision, commit_message, commit_description)
+
+
     huggingface_hub.create_repo = create_repo
     huggingface_hub.upload_folder = partial(upload_folder, api)
+
+    hf_api.upload_file = MethodType(upload_file, api)
+    huggingface_hub.upload_file = hf_api.upload_file
+    huggingface_hub.hf_api.upload_file = hf_api.upload_file
+
+    from transformers.utils import hub
+    hub.create_repo = create_repo
 
     _patch_pretrained_class()
 

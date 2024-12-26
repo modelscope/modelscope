@@ -4,15 +4,14 @@ import fnmatch
 import os
 import re
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from tqdm.auto import tqdm
-
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import InvalidParameter
+from modelscope.hub.file_download import (create_temporary_directory_and_cache,
+                                          download_file, get_file_download_url)
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
@@ -20,10 +19,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
-from modelscope.utils.thread_utils import thread_executor
 from modelscope.utils.logger import get_logger
-from modelscope.hub.file_download import (create_temporary_directory_and_cache,
-                            download_file, get_file_download_url)
+from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
 
@@ -493,6 +490,7 @@ def _download_file_lists(
         )
 
     if len(filtered_repo_files) > 0:
-        logger.info(f'Got {len(filtered_repo_files)} files, start to download ...')
+        logger.info(
+            f'Got {len(filtered_repo_files)} files, start to download ...')
         _download_single_file(filtered_repo_files)
         logger.info(f"Download {repo_type} '{repo_id}' successfully.")

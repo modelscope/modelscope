@@ -614,13 +614,13 @@ def http_get_file(
 
 
 def download_file(
-        url,
-        file_meta,
-        temporary_cache_dir,
-        cache,
-        headers,
-        cookies,
-        disable_tqdm=False,
+    url,
+    file_meta,
+    temporary_cache_dir,
+    cache,
+    headers,
+    cookies,
+    disable_tqdm=False,
 ):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.

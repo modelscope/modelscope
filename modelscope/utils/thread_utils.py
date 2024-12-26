@@ -2,6 +2,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
+
 from tqdm import tqdm
 
 from modelscope.utils.logger import get_logger
@@ -9,7 +10,9 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 
-def thread_executor(max_workers: int = min(8, os.cpu_count() + 4), disable_tqdm=False):
+def thread_executor(
+        max_workers: int = min(8,
+                               os.cpu_count() + 4), disable_tqdm=False):
     """
     A decorator to execute a function in a threaded manner using ThreadPoolExecutor.
 
@@ -40,9 +43,9 @@ def thread_executor(max_workers: int = min(8, os.cpu_count() + 4), disable_tqdm=
             results = []
             # Create a tqdm progress bar with the total number of items to process
             with tqdm(
-                total=len(iterable),
-                desc=f'Processing {len(iterable)} items',
-                disable=disable_tqdm,
+                    total=len(iterable),
+                    desc=f'Processing {len(iterable)} items',
+                    disable=disable_tqdm,
             ) as pbar:
                 # Define a wrapper function to update the progress bar
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:

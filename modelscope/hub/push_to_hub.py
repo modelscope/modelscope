@@ -25,13 +25,13 @@ _manager = None
 
 
 def push_files_to_hub(
-        path_or_fileobj: Union[str, Path],
-        path_in_repo: str,
-        repo_id: str,
-        token: Union[str, bool, None] = None,
-        revision: Optional[str] = None,
-        commit_message: Optional[str] = None,
-        commit_description: Optional[str] = None,
+    path_or_fileobj: Union[str, Path],
+    path_in_repo: str,
+    repo_id: str,
+    token: Union[str, bool, None] = None,
+    revision: Optional[str] = None,
+    commit_message: Optional[str] = None,
+    commit_description: Optional[str] = None,
 ):
     if not os.path.exists(path_or_fileobj):
         return
@@ -53,6 +53,7 @@ def push_files_to_hub(
         else:
             shutil.copytree(path_or_fileobj, sub_folder, dirs_exist_ok=True)
     repo.push(commit_message)
+
 
 def push_model_to_hub(repo_id: str,
                       folder_path: Union[str, Path],

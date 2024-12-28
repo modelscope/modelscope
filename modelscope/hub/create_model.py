@@ -1,14 +1,13 @@
-import json
 import tempfile
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
+
+import json
 from requests.exceptions import HTTPError
 
-from modelscope.hub.api import ModelScopeConfig, HubApi
-
-from modelscope.hub.constants import (ModelVisibility)
-from .utils.utils import (add_patterns_to_gitattributes,
-                          add_patterns_to_file)
+from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.constants import ModelVisibility
 from modelscope.utils.logger import get_logger
+from .utils.utils import add_patterns_to_file, add_patterns_to_gitattributes
 
 logger = get_logger()
 
@@ -38,7 +37,8 @@ def create_model_repo(repo_id: str,
         user_name = ModelScopeConfig.get_user_info()[0]
         assert isinstance(user_name, str)
         repo_id = f'{user_name}/{repo_id}'
-        logger.info(f"'/' not in hub_model_id, pushing to personal repo {repo_id}")
+        logger.info(
+            f"'/' not in hub_model_id, pushing to personal repo {repo_id}")
     try:
         api.create_model(repo_id, visibility)
     except HTTPError:
@@ -48,8 +48,13 @@ def create_model_repo(repo_id: str,
     with tempfile.TemporaryDirectory() as temp_cache_dir:
         from modelscope.hub.repository import Repository
         repo = Repository(temp_cache_dir, repo_id)
-        add_patterns_to_gitattributes(repo, ['*.safetensors', '*.bin', '*.pt', '*.gguf'])
-        default_config = {"framework": "pytorch", "task": "text-generation", "allow_remote": True}
+        add_patterns_to_gitattributes(
+            repo, ['*.safetensors', '*.bin', '*.pt', '*.gguf'])
+        default_config = {
+            'framework': 'pytorch',
+            'task': 'text-generation',
+            'allow_remote': True
+        }
         if not config_json:
             config_json = {}
         config = {**default_config, **config_json}

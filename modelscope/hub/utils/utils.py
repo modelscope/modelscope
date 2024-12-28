@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union, BinaryIO
+from typing import BinaryIO, List, Optional, Union
 
 import requests
 

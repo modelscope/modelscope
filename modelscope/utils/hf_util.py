@@ -1,11 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import tempfile
 from functools import partial
 from pathlib import Path
 from types import MethodType
-from typing import Dict, List, Optional, Union, BinaryIO
-from urllib.error import HTTPError
+from typing import BinaryIO, Dict, List, Optional, Union
 
 from huggingface_hub.hf_api import CommitInfo, future_compatible
 from transformers import AutoConfig as AutoConfigHF
@@ -68,7 +66,7 @@ from transformers import (PretrainedConfig, PreTrainedModel,
 from transformers import T5EncoderModel as T5EncoderModelHF
 from transformers import __version__ as transformers_version
 
-from modelscope import push_to_hub, snapshot_download
+from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
 from .logger import get_logger
 
@@ -79,13 +77,29 @@ except ImportError:
     GPTQConfigHF = None
     AwqConfigHF = None
 
+try:
+    from peft import (
+        PeftConfig as PeftConfigHF,
+        PeftModel as PeftModelHF,
+        PeftModelForCausalLM as PeftModelForCausalLMHF,
+        PeftModelForSequenceClassification as
+        PeftModelForSequenceClassificationHF,
+        PeftMixedModel as PeftMixedModelHF,
+    )
+except ImportError:
+    PeftConfigHF = None
+    PeftModelHF = None
+    PeftModelForCausalLMHF = None
+    PeftModelForSequenceClassificationHF = None
+    PeftMixedModelHF = None
+
 logger = get_logger()
 
 
 class UnsupportedAutoClass:
 
     def __init__(self, name: str):
-        self.error_msg =\
+        self.error_msg = \
             f'{name} is not supported with your installed Transformers version {transformers_version}. ' + \
             'Please update your Transformers by "pip install transformers -U".'
 
@@ -186,113 +200,56 @@ def _patch_pretrained_class():
             model_dir = pretrained_model_name_or_path
         return model_dir
 
-    def patch_tokenizer_base():
-        """ Monkey patch PreTrainedTokenizerBase.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = PreTrainedTokenizerBase.from_pretrained.__func__
+    ignore_file_pattern = [
+        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
+    ]
 
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            ignore_file_pattern = [
-                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
-            ]
-            model_dir = get_model_dir(pretrained_model_name_or_path,
-                                      ignore_file_pattern, **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
+    def patch_pretrained_model_name_or_path(cls, pretrained_model_name_or_path,
+                                            *model_args, **kwargs):
+        model_dir = get_model_dir(pretrained_model_name_or_path,
+                                  kwargs.pop('ignore_file_pattern', None),
+                                  **kwargs)
+        return kwargs.pop('ori_func')(cls, model_dir, *model_args, **kwargs)
 
-        PreTrainedTokenizerBase.from_pretrained = from_pretrained
+    PreTrainedTokenizerBase.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=PreTrainedTokenizerBase.from_pretrained,
+        ignore_file_pattern=ignore_file_pattern)
+    PretrainedConfig.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=PretrainedConfig.from_pretrained,
+        ignore_file_pattern=ignore_file_pattern)
+    PretrainedConfig.get_config_dict = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=PretrainedConfig.get_config_dict,
+        ignore_file_pattern=ignore_file_pattern)
+    if PeftConfigHF is not None:
+        PeftConfigHF.from_pretrained = partial(
+            patch_pretrained_model_name_or_path,
+            ori_func=PeftConfigHF.from_pretrained,
+            ignore_file_pattern=ignore_file_pattern)
+    PreTrainedModel.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=PreTrainedModel.from_pretrained)
+    AutoImageProcessorHF.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=PreTrainedModel.from_pretrained)
+    AutoProcessorHF.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=AutoProcessorHF.from_pretrained)
+    AutoFeatureExtractorHF.from_pretrained = partial(
+        patch_pretrained_model_name_or_path,
+        ori_func=AutoFeatureExtractorHF.from_pretrained)
 
-    def patch_config_base():
-        """ Monkey patch PretrainedConfig.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = PretrainedConfig.from_pretrained.__func__
-        ori_get_config_dict = PretrainedConfig.get_config_dict.__func__
+    def _get_peft_type(cls, model_id, **kwargs):
+        model_dir = get_model_dir(model_id, ignore_file_pattern, **kwargs)
+        return kwargs.pop('ori_func')(cls, model_dir, **kwargs)
 
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            ignore_file_pattern = [
-                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
-            ]
-            model_dir = get_model_dir(pretrained_model_name_or_path,
-                                      ignore_file_pattern, **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-        @classmethod
-        def get_config_dict(cls, pretrained_model_name_or_path, **kwargs):
-            ignore_file_pattern = [
-                r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
-            ]
-            model_dir = get_model_dir(pretrained_model_name_or_path,
-                                      ignore_file_pattern, **kwargs)
-            return ori_get_config_dict(cls, model_dir, **kwargs)
-
-        PretrainedConfig.from_pretrained = from_pretrained
-        PretrainedConfig.get_config_dict = get_config_dict
-
-    def patch_model_base():
-        """ Monkey patch PreTrainedModel.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = PreTrainedModel.from_pretrained.__func__
-
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            model_dir = get_model_dir(pretrained_model_name_or_path, None,
-                                      **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-        PreTrainedModel.from_pretrained = from_pretrained
-
-    def patch_image_processor_base():
-        """ Monkey patch AutoImageProcessorHF.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = AutoImageProcessorHF.from_pretrained.__func__
-
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            model_dir = get_model_dir(pretrained_model_name_or_path, None,
-                                      **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-        AutoImageProcessorHF.from_pretrained = from_pretrained
-
-    def patch_auto_processor_base():
-        """ Monkey patch AutoProcessorHF.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = AutoProcessorHF.from_pretrained.__func__
-
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            model_dir = get_model_dir(pretrained_model_name_or_path, None,
-                                      **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-        AutoProcessorHF.from_pretrained = from_pretrained
-
-    def patch_feature_extractor_base():
-        """ Monkey patch AutoFeatureExtractorHF.from_pretrained to adapt to modelscope hub.
-        """
-        ori_from_pretrained = AutoFeatureExtractorHF.from_pretrained.__func__
-
-        @classmethod
-        def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            model_dir = get_model_dir(pretrained_model_name_or_path, None,
-                                      **kwargs)
-            return ori_from_pretrained(cls, model_dir, *model_args, **kwargs)
-
-        AutoFeatureExtractorHF.from_pretrained = from_pretrained
-
-    patch_tokenizer_base()
-    patch_config_base()
-    patch_model_base()
-    patch_image_processor_base()
-    patch_auto_processor_base()
-    patch_feature_extractor_base()
+    if PeftConfigHF is not None:
+        PeftConfigHF._get_peft_type = partial(
+            _get_peft_type,
+            ori_func=PeftConfigHF._get_peft_type,
+            ignore_file_pattern=ignore_file_pattern)
 
 
 def patch_hub():
@@ -375,10 +332,9 @@ def patch_hub():
         commit_description: Optional[str] = None,
         **kwargs,
     ):
-
         from modelscope.hub.push_to_hub import push_files_to_hub
-        push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token, revision, commit_message, commit_description)
-
+        push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
+                          revision, commit_message, commit_description)
 
     huggingface_hub.create_repo = create_repo
     huggingface_hub.upload_folder = partial(upload_folder, api)
@@ -467,12 +423,14 @@ AutoModelForZeroShotImageClassification = get_wrapped_class(
     AutoModelForZeroShotImageClassificationHF)
 try:
     from transformers import AutoModelForImageToImage as AutoModelForImageToImageHF
+
     AutoModelForImageToImage = get_wrapped_class(AutoModelForImageToImageHF)
 except ImportError:
     AutoModelForImageToImage = UnsupportedAutoClass('AutoModelForImageToImage')
 
 try:
     from transformers import AutoModelForImageTextToText as AutoModelForImageTextToTextHF
+
     AutoModelForImageTextToText = get_wrapped_class(
         AutoModelForImageTextToTextHF)
 except ImportError:
@@ -481,6 +439,7 @@ except ImportError:
 
 try:
     from transformers import AutoModelForKeypointDetection as AutoModelForKeypointDetectionHF
+
     AutoModelForKeypointDetection = get_wrapped_class(
         AutoModelForKeypointDetectionHF)
 except ImportError:
@@ -517,6 +476,7 @@ T5EncoderModel = get_wrapped_class(T5EncoderModelHF)
 try:
     from transformers import \
         Qwen2VLForConditionalGeneration as Qwen2VLForConditionalGenerationHF
+
     Qwen2VLForConditionalGeneration = get_wrapped_class(
         Qwen2VLForConditionalGenerationHF)
 except ImportError:

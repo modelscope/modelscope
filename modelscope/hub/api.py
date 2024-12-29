@@ -487,9 +487,7 @@ class HubApi:
             raise_for_http_status(r)
         return None
 
-    def _check_cookie(self,
-                      use_cookies: Union[bool,
-                      CookieJar] = False) -> CookieJar:
+    def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar: # noqa
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies

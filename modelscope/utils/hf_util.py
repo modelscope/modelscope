@@ -238,12 +238,12 @@ def _patch_pretrained_class():
         model_dir = get_model_dir(model_id,
                                   kwargs.pop('ignore_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(cls, model, model_dir, *model_args, **kwargs)
+        return kwargs.pop('ori_func')(cls, model, model_dir, *model_args,
+                                      **kwargs)
 
     if PeftModelHF is not None:
         PeftModelHF.from_pretrained = partial(
-            patch_peft_model_id,
-            ori_func=PeftModelHF.from_pretrained)
+            patch_peft_model_id, ori_func=PeftModelHF.from_pretrained)
         PeftModelForCausalLMHF.from_pretrained = partial(
             patch_peft_model_id,
             ori_func=PeftModelForCausalLMHF.from_pretrained)
@@ -251,8 +251,7 @@ def _patch_pretrained_class():
             patch_peft_model_id,
             ori_func=PeftModelForSequenceClassificationHF.from_pretrained)
         PeftMixedModelHF.from_pretrained = partial(
-            patch_peft_model_id,
-            ori_func=PeftMixedModelHF.from_pretrained)
+            patch_peft_model_id, ori_func=PeftMixedModelHF.from_pretrained)
 
     def _get_peft_type(cls, model_id, **kwargs):
         model_dir = get_model_dir(model_id, ignore_file_pattern, **kwargs)

@@ -118,15 +118,6 @@ def user_agent(invoked_by=None):
     return uagent
 
 
-def _try_login(token: Optional[str] = None):
-    from modelscope.hub.api import HubApi
-    api = HubApi()
-    if token is None:
-        token = os.environ.get('MODELSCOPE_API_TOKEN')
-    if token:
-        api.login(token)
-
-
 def _file_exists(
     self,
     repo_id: str,
@@ -141,9 +132,9 @@ def _file_exists(
         logger.warning(
             'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
         )
-    _try_login(token)
     from modelscope.hub.api import HubApi
     api = HubApi()
+    api.try_login(token)
     return api.file_exists(repo_id, filename, revision=revision)
 
 
@@ -171,7 +162,9 @@ def _file_download(repo_id: str,
         from modelscope.hub.file_download import model_file_download as file_download
     else:
         from modelscope.hub.file_download import dataset_file_download as file_download
-    _try_login(token)
+    from modelscope import HubApi
+    api = HubApi()
+    api.try_login(token)
     return file_download(
         repo_id,
         file_path=os.path.join(subfolder, filename) if subfolder else filename,
@@ -223,11 +216,6 @@ def _patch_pretrained_class():
         patch_pretrained_model_name_or_path,
         ori_func=PretrainedConfig.get_config_dict,
         ignore_file_pattern=ignore_file_pattern)
-    if PeftConfigHF is not None:
-        PeftConfigHF.from_pretrained = partial(
-            patch_pretrained_model_name_or_path,
-            ori_func=PeftConfigHF.from_pretrained,
-            ignore_file_pattern=ignore_file_pattern)
     PreTrainedModel.from_pretrained = partial(
         patch_pretrained_model_name_or_path,
         ori_func=PreTrainedModel.from_pretrained)
@@ -240,6 +228,31 @@ def _patch_pretrained_class():
     AutoFeatureExtractorHF.from_pretrained = partial(
         patch_pretrained_model_name_or_path,
         ori_func=AutoFeatureExtractorHF.from_pretrained)
+    if PeftConfigHF is not None:
+        PeftConfigHF.from_pretrained = partial(
+            patch_pretrained_model_name_or_path,
+            ori_func=PeftConfigHF.from_pretrained,
+            ignore_file_pattern=ignore_file_pattern)
+
+    def patch_peft_model_id(cls, model, model_id, *model_args, **kwargs):
+        model_dir = get_model_dir(model_id,
+                                  kwargs.pop('ignore_file_pattern', None),
+                                  **kwargs)
+        return kwargs.pop('ori_func')(cls, model, model_dir, *model_args, **kwargs)
+
+    if PeftModelHF is not None:
+        PeftModelHF.from_pretrained = partial(
+            patch_peft_model_id,
+            ori_func=PeftModelHF.from_pretrained)
+        PeftModelForCausalLMHF.from_pretrained = partial(
+            patch_peft_model_id,
+            ori_func=PeftModelForCausalLMHF.from_pretrained)
+        PeftModelForSequenceClassificationHF.from_pretrained = partial(
+            patch_peft_model_id,
+            ori_func=PeftModelForSequenceClassificationHF.from_pretrained)
+        PeftMixedModelHF.from_pretrained = partial(
+            patch_peft_model_id,
+            ori_func=PeftMixedModelHF.from_pretrained)
 
     def _get_peft_type(cls, model_id, **kwargs):
         model_dir = get_model_dir(model_id, ignore_file_pattern, **kwargs)
@@ -259,21 +272,26 @@ def patch_hub():
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api
 
+    # Patch hf_hub_download
     huggingface_hub.hf_hub_download = _file_download
     huggingface_hub.file_download.hf_hub_download = _file_download
 
+    # Patch file_exists
     hf_api.file_exists = MethodType(_file_exists, api)
     huggingface_hub.file_exists = hf_api.file_exists
     huggingface_hub.hf_api.file_exists = hf_api.file_exists
 
+    # Patch whoami
     hf_api.whoami = MethodType(_whoami, api)
     huggingface_hub.whoami = hf_api.whoami
     huggingface_hub.hf_api.whoami = hf_api.whoami
 
+    # Patch repocard.validate
     from huggingface_hub import repocard
     repocard.RepoCard.validate = lambda *args, **kwargs: None
 
-    def create_repo(repo_id: str,
+    def create_repo(self,
+                    repo_id: str,
                     *,
                     token: Union[str, bool, None] = None,
                     private: bool = False,
@@ -336,16 +354,23 @@ def patch_hub():
         push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
                           revision, commit_message, commit_description)
 
-    huggingface_hub.create_repo = create_repo
-    huggingface_hub.upload_folder = partial(upload_folder, api)
+    # Patch create_repo
+    from transformers.utils import hub
+    hf_api.create_repo = MethodType(create_repo, api)
+    huggingface_hub.create_repo = hf_api.create_repo
+    huggingface_hub.hf_api.create_repo = hf_api.create_repo
+    hub.create_repo = create_repo
 
+    # Patch upload_folder
+    hf_api.upload_folder = MethodType(upload_folder, api)
+    huggingface_hub.upload_folder = hf_api.upload_folder
+    huggingface_hub.hf_api.upload_folder = hf_api.upload_folder
+
+    # Patch upload_file
     hf_api.upload_file = MethodType(upload_file, api)
     huggingface_hub.upload_file = hf_api.upload_file
     huggingface_hub.hf_api.upload_file = hf_api.upload_file
     repocard.upload_file = hf_api.upload_file
-
-    from transformers.utils import hub
-    hub.create_repo = create_repo
 
     _patch_pretrained_class()
 

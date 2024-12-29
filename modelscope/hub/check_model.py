@@ -99,15 +99,12 @@ def check_local_model_is_latest(
         pass  # ignore
 
 
-def check_model_is_id(model_id: str, token=None):
-    if token is None:
-        token = os.environ.get('MODELSCOPE_API_TOKEN')
+def check_model_is_id(model_id: str, token: Optional[str] = None):
     if model_id is None or os.path.exists(model_id):
         return False
     else:
         _api = HubApi()
-        if token is not None:
-            _api.login(token)
+        _api.try_login(token)
         try:
             _api.get_model(model_id=model_id, )
             return True

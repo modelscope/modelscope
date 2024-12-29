@@ -21,7 +21,7 @@ def create_model_repo(repo_id: str,
     Args:
         repo_id(str): The repo id
         token(str, Optional): The access token of the user
-        private(bool): If is a private repo
+        private(bool): If is a private repo, default False
         config_json(Dict[str, Any]): An optional config_json to fill into the configuration.json file,
             If None, the default content will be uploaded:
             ```json
@@ -30,7 +30,7 @@ def create_model_repo(repo_id: str,
             You can manually modify this in the modelhub.
     """
     api = HubApi()
-    assert repo_id is not None, 'Please enter a valid hub_model_id'
+    assert repo_id is not None, 'Please enter a valid repo id'
     api.try_login(token)
     visibility = ModelVisibility.PRIVATE if private else ModelVisibility.PUBLIC
     if '/' not in repo_id:

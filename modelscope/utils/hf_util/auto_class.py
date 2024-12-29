@@ -48,7 +48,7 @@ except ImportError:
     Qwen2VLForConditionalGeneration = UnsupportedAutoClass(
         'Qwen2VLForConditionalGeneration')
 
-    
+
 logger = get_logger()
 
 

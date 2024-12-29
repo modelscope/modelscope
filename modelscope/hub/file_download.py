@@ -163,6 +163,7 @@ def _repo_file_download(
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
+    disable_tqdm: bool = False,
 ) -> Optional[str]:  # pragma: no cover
 
     if not repo_type:
@@ -275,6 +276,9 @@ def _repo_file_download(
             dataset_name=name,
             namespace=group_or_owner,
             revision=revision)
+    else:
+        raise ValueError(f'Invalid repo type {repo_type}')
+
     return download_file(url_to_download, file_to_download_meta,
                          temporary_cache_dir, cache, headers, cookies)
 
@@ -379,6 +383,7 @@ def parallel_download(
     cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
     file_size: int = None,
+    disable_tqdm: bool = False,
 ):
     # create temp file
     with tqdm(
@@ -389,6 +394,7 @@ def parallel_download(
             initial=0,
             desc='Downloading [' + file_name + ']',
             leave=True,
+            disable=disable_tqdm,
     ) as progress:
         PART_SIZE = 160 * 1024 * 1024  # every part is 160M
         tasks = []
@@ -425,6 +431,7 @@ def http_get_model_file(
     file_size: int,
     cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
+    disable_tqdm: bool = False,
 ):
     """Download remote file, will retry 5 times before giving up on errors.
 
@@ -441,6 +448,7 @@ def http_get_model_file(
             cookies used to authentication the user, which is used for downloading private repos
         headers(Dict[str, str], optional):
             http headers to carry necessary info when requesting the remote file
+        disable_tqdm(bool, optional): Disable the progress bar with tqdm.
 
     Raises:
         FileDownloadError: File download failed.
@@ -466,6 +474,7 @@ def http_get_model_file(
                     initial=0,
                     desc='Downloading [' + file_name + ']',
                     leave=True,
+                    disable=disable_tqdm,
             ) as progress:
                 if file_size == 0:
                     # Avoid empty file server request
@@ -589,8 +598,15 @@ def http_get_file(
     os.replace(temp_file.name, os.path.join(local_dir, file_name))
 
 
-def download_file(url, file_meta, temporary_cache_dir, cache, headers,
-                  cookies):
+def download_file(
+    url,
+    file_meta,
+    temporary_cache_dir,
+    cache,
+    headers,
+    cookies,
+    disable_tqdm=False,
+):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
         parallel_download(
@@ -599,7 +615,9 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             file_meta['Path'],
             headers=headers,
             cookies=None if cookies is None else cookies.get_dict(),
-            file_size=file_meta['Size'])
+            file_size=file_meta['Size'],
+            disable_tqdm=disable_tqdm,
+        )
     else:
         http_get_model_file(
             url,
@@ -607,7 +625,9 @@ def download_file(url, file_meta, temporary_cache_dir, cache, headers,
             file_meta['Path'],
             file_size=file_meta['Size'],
             headers=headers,
-            cookies=cookies)
+            cookies=cookies,
+            disable_tqdm=disable_tqdm,
+        )
 
     # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])

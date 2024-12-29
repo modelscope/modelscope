@@ -1,12 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import os
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.hub.constants import DEFAULT_MAX_WORKERS
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
+from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 
 
 def subparser_func(args):
@@ -89,6 +91,11 @@ class DownloadCMD(CLICommand):
             help='Glob patterns to exclude from files to download.'
             'Ignored if file is specified')
         parser.set_defaults(func=subparser_func)
+        parser.add_argument(
+            '--max-workers',
+            type=int,
+            default=DEFAULT_MAX_WORKERS,
+            help='The maximum number of workers to download files.')
 
     def execute(self):
         if self.args.model or self.args.dataset:
@@ -125,6 +132,7 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
+                    max_workers=self.args.max_workers,
                 )
             else:  # download repo
                 snapshot_download(
@@ -134,32 +142,36 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
+                    max_workers=self.args.max_workers,
                 )
         elif self.args.dataset:
+            dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
             if len(self.args.files) == 1:  # download single file
                 dataset_file_download(
                     self.args.dataset,
                     self.args.files[0],
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
-                    revision=self.args.revision)
+                    revision=dataset_revision)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 dataset_snapshot_download(
                     self.args.dataset,
-                    revision=self.args.revision,
+                    revision=dataset_revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
+                    max_workers=self.args.max_workers,
                 )
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
-                    revision=self.args.revision,
+                    revision=dataset_revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.include,
                     ignore_file_pattern=self.args.exclude,
+                    max_workers=self.args.max_workers,
                 )
         else:
             pass  # noop

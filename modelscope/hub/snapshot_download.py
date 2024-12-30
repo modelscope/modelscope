@@ -8,10 +8,10 @@ from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from tqdm.contrib.concurrent import thread_map
-
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import InvalidParameter
+from modelscope.hub.file_download import (create_temporary_directory_and_cache,
+                                          download_file, get_file_download_url)
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
@@ -20,8 +20,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
-from .file_download import (create_temporary_directory_and_cache,
-                            download_file, get_file_download_url)
+from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
 
@@ -205,7 +204,7 @@ def _snapshot_download(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
     system_cache = cache_dir if cache_dir is not None else os.getenv(
         'MODELSCOPE_CACHE',
-        Path.home().joinpath('.cache', 'modelscope'))
+        Path.home().joinpath('.cache', 'modelscope', 'hub'))
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -232,7 +231,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, 'hub', repo_id)
+                    system_cache, repo_id)
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -282,10 +281,13 @@ def _snapshot_download(
                     logger.info(f'Creating symbolic link [{directory}].')
                     try:
                         os.symlink(
-                            os.path.abspath(masked_directory), directory)
+                            os.path.abspath(masked_directory),
+                            directory,
+                            target_is_directory=True)
                     except OSError:
                         logger.warning(
-                            f'Failed to create symbolic link {directory}.')
+                            f'Failed to create symbolic link {directory} for {os.path.abspath(masked_directory)}.'
+                        )
 
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
@@ -325,8 +327,6 @@ def _snapshot_download(
 
         cache.save_model_version(revision_info=revision_detail)
         cache_root_path = cache.get_root_location()
-
-        logger.info(f"Download {repo_type} '{repo_id}' successfully.")
         return cache_root_path
 
 
@@ -450,19 +450,20 @@ def _download_file_lists(
                         fnmatch.fnmatch(repo_file['Path'], pattern)
                         for pattern in allow_file_pattern):
                     continue
+            # check model_file is exist in cache, if existed, skip download
+            if cache.exists(repo_file):
+                file_name = os.path.basename(repo_file['Name'])
+                logger.debug(
+                    f'File {file_name} already in cache with identical hash, skip downloading!'
+                )
+                continue
         except Exception as e:
             logger.warning('The file pattern is invalid : %s' % e)
         else:
             filtered_repo_files.append(repo_file)
 
+    @thread_executor(max_workers=max_workers, disable_tqdm=False)
     def _download_single_file(repo_file):
-        # check model_file is exist in cache, if existed, skip download, otherwise download
-        if cache.exists(repo_file):
-            file_name = os.path.basename(repo_file['Name'])
-            logger.debug(
-                f'File {file_name} already in cache, skip downloading!')
-            return
-
         if repo_type == REPO_TYPE_MODEL:
             url = get_file_download_url(
                 model_id=repo_id,
@@ -478,14 +479,18 @@ def _download_file_lists(
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
-        download_file(url, repo_file, temporary_cache_dir, cache, headers,
-                      cookies)
+        download_file(
+            url,
+            repo_file,
+            temporary_cache_dir,
+            cache,
+            headers,
+            cookies,
+            disable_tqdm=True,
+        )
 
-    # Use thread_map for parallel downloading
-    thread_map(
-        _download_single_file,
-        filtered_repo_files,
-        max_workers=max_workers,
-        desc=f'Fetching {len(filtered_repo_files)} files',
-        leave=True,
-        position=max_workers)
+    if len(filtered_repo_files) > 0:
+        logger.info(
+            f'Got {len(filtered_repo_files)} files, start to download ...')
+        _download_single_file(filtered_repo_files)
+        logger.info(f"Download {repo_type} '{repo_id}' successfully.")

@@ -7,9 +7,15 @@ import tempfile
 from shutil import move, rmtree
 from typing import Dict
 
+from modelscope.hub.constants import (  # noqa
+    FILE_HASH, MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION)
+from modelscope.hub.utils.utils import compute_hash
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+enable_default_hash_validation = \
+    os.getenv(MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION, 'False').strip().lower() == 'true'
 """Implements caching functionality, used internally only
 """
 
@@ -252,26 +258,40 @@ class ModelFileSystemCache(FileSystemCache):
         return cache_key
 
     def exists(self, model_file_info):
-        """Check the file is cached or not.
+        """Check the file is cached or not. Note existence check will also cover digest check
 
         Args:
             model_file_info (CachedFileInfo): The cached file info
 
         Returns:
-            bool: If exists return True otherwise False
+            bool: If exists and has the same hash, return True otherwise False
         """
         key = self.__get_cache_key(model_file_info)
         is_exists = False
+        file_path = key['Path']
+        cache_file_path = os.path.join(self.cache_root_location,
+                                       model_file_info['Path'])
         for cached_key in self.cached_files:
-            if cached_key['Path'] == key['Path'] and (
+            if cached_key['Path'] == file_path and (
                     cached_key['Revision'].startswith(key['Revision'])
                     or key['Revision'].startswith(cached_key['Revision'])):
-                is_exists = True
-                break
-        file_path = os.path.join(self.cache_root_location,
-                                 model_file_info['Path'])
+                expected_hash = model_file_info[FILE_HASH]
+                if expected_hash is not None and os.path.exists(
+                        cache_file_path):
+                    # compute hash only when enabled, otherwise just meet expectation by default
+                    if enable_default_hash_validation:
+                        cache_file_sha256 = compute_hash(cache_file_path)
+                    else:
+                        cache_file_sha256 = expected_hash
+                    if expected_hash == cache_file_sha256:
+                        is_exists = True
+                        break
+                    else:
+                        logger.info(
+                            f'File [{file_path}] exists in cache but with a mismatched hash, will re-download.'
+                        )
         if is_exists:
-            if os.path.exists(file_path):
+            if os.path.exists(cache_file_path):
                 return True
             else:
                 self.remove_key(

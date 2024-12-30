@@ -51,13 +51,14 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
             cfg.model.finetune = True
             cfg.train.max_epochs = self.max_epochs
             cfg.train.lr_scheduler.T_max = self.max_epochs
+            cfg.train.dataloader.workers_per_gpu = 0
+            cfg.evaluation.dataloader.workers_per_gpu = 0
             cfg.model.backbone.lora_length = 0
             return cfg
 
         lora_config = LoRAConfig(
             r=self.tune_length,
             target_modules=['qkv'],
-            merge_weights=False,
             use_merged_linear=True,
             enable_lora=[True])
 

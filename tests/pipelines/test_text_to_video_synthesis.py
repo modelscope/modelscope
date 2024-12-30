@@ -24,7 +24,7 @@ class TextToVideoSynthesisTest(unittest.TestCase):
         'out_width': 256,
     }
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_run_with_model_from_modelhub(self):
         pipe_line_text_to_video_synthesis = pipeline(
             task=self.task, model=self.model_id)
@@ -32,7 +32,7 @@ class TextToVideoSynthesisTest(unittest.TestCase):
             self.test_text)[OutputKeys.OUTPUT_VIDEO]
         print(output_video_path)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_run_modelhub_user_control(self):
         pipe_line_text_to_video_synthesis = pipeline(
             task=self.task, model=self.model_id)

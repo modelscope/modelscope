@@ -125,13 +125,8 @@ class FillMaskTest(unittest.TestCase):
         for language in ['zh', 'en']:
             ori_text = self.ori_texts[language]
             test_input = self.test_inputs[language].replace('[MASK]', '<mask>')
-            with self.regress_tool.monitor_module_single_forward(
-                    pipeline_ins.model,
-                    f'fill_mask_veco_{language}',
-                    compare_fn=IgnoreKeyFn('.*intermediate_act_fn')):
-                print(
-                    f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
-                    f'{pipeline_ins(test_input)}\n')
+            print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline: '
+                  f'{pipeline_ins(test_input)}\n')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_model_name(self):

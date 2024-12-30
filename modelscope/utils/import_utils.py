@@ -3,6 +3,7 @@
 import ast
 import functools
 import importlib
+import inspect
 import logging
 import os
 import os.path as osp
@@ -480,3 +481,23 @@ class LazyImportModule(ModuleType):
             importlib.import_module(module_name)
         else:
             logger.warning(f'{signature} not found in ast index file')
+
+
+def has_attr_in_class(cls, attribute_name) -> bool:
+    """
+    Determine if attribute in specific class.
+
+    Args:
+        cls: target class.
+        attribute_name: the attribute name.
+
+    Returns:
+        The attribute in the class or not.
+    """
+    init_method = cls.__init__
+    signature = inspect.signature(init_method)
+
+    parameters = signature.parameters
+    param_names = list(parameters.keys())
+
+    return attribute_name in param_names

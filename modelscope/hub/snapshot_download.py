@@ -487,7 +487,8 @@ def _download_file_lists(
             cache,
             headers,
             cookies,
-            disable_tqdm=len(filtered_repo_files) > MODELSCOPE_SHOW_PROGRESS_THRESHOLD,
+            disable_tqdm=len(filtered_repo_files) >
+            MODELSCOPE_SHOW_PROGRESS_THRESHOLD,
         )
 
     if len(filtered_repo_files) > 0:

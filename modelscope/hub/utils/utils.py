@@ -2,9 +2,11 @@
 
 import hashlib
 import os
+import shutil
+import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import BinaryIO, List, Optional, Union
 
 import requests
 
@@ -125,3 +127,67 @@ def file_integrity_validation(file_path, expected_sha256):
             file_path, expected_sha256, file_sha256)
         logger.error(msg)
         raise FileIntegrityError(msg)
+
+
+def add_patterns_to_file(repo,
+                         file_name: str,
+                         patterns: List[str],
+                         commit_message: Optional[str] = None,
+                         ignore_push_error=False) -> None:
+    if isinstance(patterns, str):
+        patterns = [patterns]
+    if commit_message is None:
+        commit_message = f'Add `{patterns[0]}` patterns to {file_name}'
+
+    # Get current file content
+    repo_dir = repo.model_dir
+    file_path = os.path.join(repo_dir, file_name)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            current_content = f.read()
+    else:
+        current_content = ''
+    # Add the patterns to file
+    content = current_content
+    for pattern in patterns:
+        if pattern not in content:
+            if len(content) > 0 and not content.endswith('\n'):
+                content += '\n'
+            content += f'{pattern}\n'
+
+    # Write the file if it has changed
+    if content != current_content:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            logger.debug(f'Writing {file_name} file. Content: {content}')
+            f.write(content)
+    try:
+        repo.push(commit_message)
+    except Exception as e:
+        if ignore_push_error:
+            pass
+        else:
+            raise e
+
+
+def add_patterns_to_gitignore(repo,
+                              patterns: List[str],
+                              commit_message: Optional[str] = None) -> None:
+    add_patterns_to_file(
+        repo, '.gitignore', patterns, commit_message, ignore_push_error=True)
+
+
+def add_patterns_to_gitattributes(
+        repo,
+        patterns: List[str],
+        commit_message: Optional[str] = None) -> None:
+    new_patterns = []
+    suffix = 'filter=lfs diff=lfs merge=lfs -text'
+    for pattern in patterns:
+        if suffix not in pattern:
+            pattern = f'{pattern} {suffix}'
+        new_patterns.append(pattern)
+    file_name = '.gitattributes'
+    if commit_message is None:
+        commit_message = f'Add `{patterns[0]}` patterns to {file_name}'
+    add_patterns_to_file(
+        repo, file_name, new_patterns, commit_message, ignore_push_error=True)

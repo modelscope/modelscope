@@ -3,7 +3,12 @@
 import concurrent.futures
 import os
 import shutil
+import tempfile
 from multiprocessing import Manager, Process, Value
+from pathlib import Path
+from typing import List, Optional, Union
+
+import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility
@@ -17,6 +22,83 @@ _queues = dict()
 _flags = dict()
 _tasks = dict()
 _manager = None
+
+
+def push_files_to_hub(
+    path_or_fileobj: Union[str, Path],
+    path_in_repo: str,
+    repo_id: str,
+    token: Union[str, bool, None] = None,
+    revision: Optional[str] = None,
+    commit_message: Optional[str] = None,
+    commit_description: Optional[str] = None,
+):
+    if not os.path.exists(path_or_fileobj):
+        return
+
+    from modelscope import HubApi
+    api = HubApi()
+    api.login(token)
+    if not commit_message:
+        commit_message = 'Updating files'
+    if commit_description:
+        commit_message = commit_message + '\n' + commit_description
+    with tempfile.TemporaryDirectory() as temp_cache_dir:
+        from modelscope.hub.repository import Repository
+        repo = Repository(temp_cache_dir, repo_id, revision=revision)
+        sub_folder = os.path.join(temp_cache_dir, path_in_repo)
+        os.makedirs(sub_folder, exist_ok=True)
+        if os.path.isfile(path_or_fileobj):
+            shutil.copyfile(path_or_fileobj, sub_folder)
+        else:
+            shutil.copytree(path_or_fileobj, sub_folder, dirs_exist_ok=True)
+    repo.push(commit_message)
+
+
+def push_model_to_hub(repo_id: str,
+                      folder_path: Union[str, Path],
+                      path_in_repo: Optional[str] = None,
+                      commit_message: Optional[str] = None,
+                      commit_description: Optional[str] = None,
+                      token: Union[str, bool, None] = None,
+                      private: bool = False,
+                      revision: Optional[str] = 'master',
+                      ignore_patterns: Optional[Union[List[str], str]] = None,
+                      **kwargs):
+    from modelscope.hub.create_model import create_model_repo
+    create_model_repo(repo_id, token, private)
+    from modelscope import push_to_hub
+    commit_message = commit_message or 'Upload folder using api'
+    if commit_description:
+        commit_message = commit_message + '\n' + commit_description
+    if not os.path.exists(os.path.join(folder_path, 'configuration.json')):
+        default_config = {
+            'framework': 'pytorch',
+            'task': 'text-generation',
+            'allow_remote': True
+        }
+        config_json = kwargs.get('config_json') or {}
+        config = {**default_config, **config_json}
+        with open(os.path.join(folder_path, 'configuration.json'), 'w') as f:
+            f.write(json.dumps(config))
+    if ignore_patterns:
+        ignore_patterns = [p for p in ignore_patterns if p != '_*']
+    if path_in_repo:
+        # We don't support part submit for now
+        path_in_repo = os.path.basename(folder_path)
+        folder_path = os.path.dirname(folder_path)
+        ignore_patterns = []
+    if revision is None or revision == 'main':
+        revision = 'master'
+    push_to_hub(
+        repo_id,
+        folder_path,
+        token,
+        private,
+        commit_message=commit_message,
+        ignore_patterns=ignore_patterns,
+        revision=revision,
+        tag=path_in_repo)
 
 
 def _api_push_to_hub(repo_name,

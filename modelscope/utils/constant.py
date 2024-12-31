@@ -558,6 +558,7 @@ class Devices:
     """device used for training and inference"""
     cpu = 'cpu'
     gpu = 'gpu'
+    mps = 'mps' # 增加对mac设备的支持
 
 
 # Supported extensions for text datasets.

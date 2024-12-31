@@ -12,13 +12,15 @@ logger = get_logger()
 
 
 def thread_executor(max_workers: int = DEFAULT_MAX_WORKERS,
-                    disable_tqdm=False):
+                    disable_tqdm: bool = False,
+                    tqdm_desc: str = None):
     """
     A decorator to execute a function in a threaded manner using ThreadPoolExecutor.
 
     Args:
         max_workers (int): The maximum number of threads to use.
         disable_tqdm (bool): disable progress bar.
+        tqdm_desc (str): Desc of tqdm.
 
     Returns:
         function: A wrapped function that executes with threading and a progress bar.
@@ -47,7 +49,7 @@ def thread_executor(max_workers: int = DEFAULT_MAX_WORKERS,
                     unit_divisor=1024,
                     initial=0,
                     total=len(iterable),
-                    desc=f'Processing {len(iterable)} items',
+                    desc=tqdm_desc or f'Processing {len(iterable)} items',
                     disable=disable_tqdm,
             ) as pbar:
                 # Define a wrapper function to update the progress bar

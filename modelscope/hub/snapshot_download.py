@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
-from modelscope.hub.constants import MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD
+from modelscope.hub.constants import \
+    MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD
 from modelscope.hub.errors import InvalidParameter
 from modelscope.hub.file_download import (create_temporary_directory_and_cache,
                                           download_file, get_file_download_url)
@@ -487,8 +488,8 @@ def _download_file_lists(
             cache,
             headers,
             cookies,
-            disable_tqdm=len(filtered_repo_files) >
-                         MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD,
+            disable_tqdm=len(filtered_repo_files) >  # noqa
+            MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD,
         )
 
     if len(filtered_repo_files) > 0:

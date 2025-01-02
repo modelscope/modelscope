@@ -1168,8 +1168,9 @@ class HubApi:
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
 
-    def get_file_base_path(self, namespace: str, dataset_name: str) -> str:
-        return f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?'
+    def get_file_base_path(self, repo_id: str) -> str:
+        _namespace, _dataset_name = repo_id.split('/')
+        return f'{self.endpoint}/api/v1/datasets/{_namespace}/{_dataset_name}/repo?'
         # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
 

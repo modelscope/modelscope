@@ -39,6 +39,7 @@ def check_local_model_is_latest(
     """
     try:
         model_id = get_model_id_from_cache(model_root_path)
+        model_id = model_id.replace('___', '.')
         # make headers
         headers = {
             'user-agent':

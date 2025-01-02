@@ -8,7 +8,6 @@ import pickle
 import platform
 import re
 import shutil
-import tempfile
 import uuid
 from collections import defaultdict
 from http import HTTPStatus
@@ -34,8 +33,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
-                                      DatasetVisibility, Licenses,
-                                      ModelVisibility)
+                                      TEMPORARY_FOLDER_NAME, DatasetVisibility,
+                                      Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
                                    RequestError, datahub_raise_on_error,
@@ -391,7 +390,7 @@ class HubApi:
                 license=license,
                 chinese_name=chinese_name,
                 original_model_id=original_model_id)
-        tmp_dir = tempfile.mkdtemp()
+        tmp_dir = os.path.join(model_dir, TEMPORARY_FOLDER_NAME)  # make temporary folder
         git_wrapper = GitCommandWrapper()
         logger.info(f'Pushing folder {model_dir} as model {model_id}.')
         logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
@@ -433,6 +432,7 @@ class HubApi:
                 remote_branch=revision)
             if tag is not None:
                 repo.tag_and_push(tag, tag)
+            logger.info(f'Successfully push folder {model_dir} to remote repo [{model_id}].')
         except Exception:
             raise
         finally:
@@ -563,7 +563,7 @@ class HubApi:
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
-                    'Model revision not specified, use default: %s in development mode'
+                    'Model revision not specified, using default: [%s] version.'
                     % revision)
             if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))

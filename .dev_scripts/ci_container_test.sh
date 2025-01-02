@@ -28,6 +28,10 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     pip install -r  requirements/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
     pip install -r  requirements/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
 
+    python -m spacy download en_core_web_sm
+    pip install faiss-gpu
+    pip install healpy
+    pip install huggingface-hub==0.25.2
     # test with install
     pip install .
 else

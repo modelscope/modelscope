@@ -43,6 +43,9 @@ def thread_executor(max_workers: int = DEFAULT_MAX_WORKERS,
             results = []
             # Create a tqdm progress bar with the total number of items to process
             with tqdm(
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    initial=0,
                     total=len(iterable),
                     desc=f'Processing {len(iterable)} items',
                     disable=disable_tqdm,

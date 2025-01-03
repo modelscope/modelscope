@@ -24,7 +24,7 @@ options:
 Get access token: [我的页面](https://modelscope.cn/my/myaccesstoken)获取**SDK 令牌**
 
 
-## download model
+## download
 ```bash
 modelscope download --help
 
@@ -36,6 +36,7 @@ modelscope download --help
     options:
       -h, --help            show this help message and exit
       --model MODEL         The model id to be downloaded.
+      --dataset DATASET     The dataset id to be downloaded.
       --revision REVISION   Revision of the model.
       --cache_dir CACHE_DIR
                             Cache directory to save model.

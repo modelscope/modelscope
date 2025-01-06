@@ -185,3 +185,12 @@ class CommitInfo(str):
                 _url: Optional[str] = None,
                 **kwargs):
         return str.__new__(cls, _url or commit_url)
+
+    def to_dict(cls):
+        return {
+            'commit_url': cls.commit_url,
+            'commit_message': cls.commit_message,
+            'commit_description': cls.commit_description,
+            'oid': cls.oid,
+            'pr_url': cls.pr_url,
+        }

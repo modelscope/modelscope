@@ -1178,6 +1178,56 @@ class HubApi:
         return f'{self.endpoint}/api/v1/datasets/{_namespace}/{_dataset_name}/repo?'
         # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
+    def create_commit(
+            self,
+            *,
+            repo_id: str,
+            repo_type: str,
+            path_in_repo: str,
+            sha256_hash: str,
+            size: float,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+            commit_msg: Optional[str] = None,
+            commit_description: Optional[str] = None,
+    ) -> CommitInfo:
+
+        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}"
+        commit_msg = commit_msg or f'Commit to {repo_id}'
+        commit_description = commit_description or ''
+
+        # Construct payload
+        payload = {
+            "commit_message": commit_msg,
+            "actions": [
+                {
+                    "action": "create",
+                    "path": path_in_repo,
+                    "type": "lfs",
+                    "size": size,
+                    "sha256": sha256_hash,
+                    "content": ""
+                },
+            ]
+        }
+
+        # POST
+        cookies = ModelScopeConfig.get_cookies()
+        response = requests.post(
+            url,
+            headers=self.builder_headers(self.headers),
+            data=json.dumps(payload),
+            cookies=cookies
+        )
+
+        # TODO: deal with response and get commit id.
+
+        return CommitInfo(
+            commit_url=url,
+            commit_message=commit_msg,
+            commit_description=commit_description,
+            oid=sha256_hash,
+        )
+
     def upload_file(
             self,
             *,
@@ -1333,6 +1383,94 @@ class HubApi:
         # Response
         resp = response.json()
         datahub_raise_on_error(url, resp, response)
+
+    def upload_blob(
+            self,
+            *,
+            repo_id: str,
+            repo_type: str,
+            sha256: str,
+            size: float,
+            data: Union[bytes, BinaryIO],
+    ) -> dict:
+        # construct URL
+        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/blobs/{sha256}/{size}"
+        res_d: dict = dict(
+            url=url,
+            reuse=False,
+        )
+
+        has_blob: bool = self._validate_blob(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            sha256=sha256,
+            size=size,
+        )
+        if has_blob:
+            logger.info(f'Blob {sha256} has already uploaded.')
+            res_d['reuse'] = True
+            return res_d
+
+        cookies = ModelScopeConfig.get_cookies()
+        response = requests.put(
+            url,
+            headers=self.builder_headers(self.headers),
+            data=data,
+            cookies=cookies
+        )
+
+        # TODO: response handling
+
+        return res_d
+
+    def _validate_blob(
+            self,
+            *,
+            repo_id: str,
+            repo_type: str,
+            sha256: str,
+            size: float,
+    ) -> bool:
+        """
+        Check the blob has already uploaded.
+        True -- uploaded; False -- not uploaded.
+
+        Args:
+            repo_id (str): The repo id ModelScope.
+            repo_type (str): The repo type. `dataset`, `model`, etc.
+            sha256 (str): The sha256 hash value.
+            size (float): The size of the blob.
+
+        Returns:
+            bool: The validation result.
+        """
+
+        # construct URL
+        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch"
+
+        # build payload
+        payload = {
+            "operation": "upload",
+            "objects": [
+                {
+                    "oid": sha256,
+                    "size": size
+                },
+            ]
+        }
+
+        cookies = ModelScopeConfig.get_cookies()
+        response = requests.post(
+            url,
+            headers=self.builder_headers(self.headers),
+            data=json.dumps(payload),
+            cookies=cookies
+        )
+
+        resp = response.json()
+        objects = resp['objects']
+
+        return True if len(objects) == 0 else False
 
     @staticmethod
     def _prepare_upload_folder(

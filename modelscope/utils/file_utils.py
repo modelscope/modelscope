@@ -1,9 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import hashlib
 import inspect
 import os
 from pathlib import Path
 from shutil import Error, copy2, copystat
+from typing import Optional
+
+from tqdm import tqdm
 
 
 # TODO: remove this api, unify to flattened args
@@ -175,3 +178,48 @@ def copytree_py37(src,
     if errors:
         raise Error(errors)
     return dst
+
+
+def get_file_hash(
+        file_path: str,
+        chunk_size_mb: Optional[int] = 1,
+        tqdm_desc: Optional[str] = '[Calculating]',
+        disable_tqdm: Optional[bool] = False,
+) -> dict:
+
+    file_size = os.path.getsize(file_path)
+    chunk_size = chunk_size_mb * 1024 * 1024
+    file_hash = hashlib.sha256()
+    chunk_hash_list = []
+
+    progress = tqdm(
+        total=file_size,
+        initial=0,
+        unit_scale=True,
+        dynamic_ncols=True,
+        unit='B',
+        desc=tqdm_desc,
+        disable=disable_tqdm,
+    )
+
+    with open(file_path, 'rb') as f:
+        while True:
+            byte_chunk = f.read(chunk_size)
+            if not byte_chunk:
+                break
+
+            chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
+            file_hash.update(byte_chunk)
+            progress.update(len(byte_chunk))
+
+    file_hash = file_hash.hexdigest()
+    progress.close()
+
+    return {
+        'file_path': file_path,
+        'file_hash': file_hash,
+        'file_size': file_size,
+        'chunk_size': chunk_size,
+        'chunk_nums': len(chunk_hash_list),
+        'chunk_hash_list': chunk_hash_list,
+    }

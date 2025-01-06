@@ -289,7 +289,7 @@ class LLMImageBuilder(Builder):
                                                   self.args.python_version)
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.lmdeploy_version} {self.args.vllm_version} {self.args.autogptq_version} '
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
             f'{self.args.flashattn_version}'
         )
         with open('docker/Dockerfile.ubuntu', 'r') as f:

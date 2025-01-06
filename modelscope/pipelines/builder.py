@@ -223,8 +223,9 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
                                                  List[Model]],
                                     revision: Optional[str],
                                     kwargs: Dict[str, Any]) -> Optional[str]:
-    from .nlp.llm_pipeline import SWIFT_MODEL_ID_MAPPING, init_swift_model_mapping, ModelTypeHelper, LLMAdapterRegistry
+    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
     from ..hub.check_model import get_model_id_from_cache
+    from swift.llm import get_model_info_meta
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
@@ -237,9 +238,17 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
         else:
             model_id = model
 
-        init_swift_model_mapping()
-        if model_id.lower() in SWIFT_MODEL_ID_MAPPING:
+        try:
+            info = get_model_info_meta(model_id)
+            model_type = info[0].model_type
+        except Exception as e:
+            logger.warning(
+                f'Cannot using llm_framework with {model_id}, '
+                f'ignoring llm_framework={self.llm_framework} : {e}')
+            model_type = None
+        if model_type:
             return 'llm'
+
     model_type = ModelTypeHelper.get(
         model, revision, with_adapter=True, split='-', use_cache=True)
     if LLMAdapterRegistry.contains(model_type):

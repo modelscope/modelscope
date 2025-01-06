@@ -36,6 +36,8 @@ class Builder:
             args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
+        if not args.flashattn_version:
+            args.flashattn_version = '2.7.1.post4'
         return args
 
     def _generate_cudatoolkit_version(self, cuda_version: str) -> str:
@@ -209,7 +211,8 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
 
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}'
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
+            f'{self.args.flashattn_version}'
         )
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-{self.args.python_tag}-'
@@ -274,6 +277,8 @@ class LLMImageBuilder(Builder):
             args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
+        if not args.flashattn_version:
+            args.flashattn_version = '2.7.1.post4'
         return args
 
     def generate_dockerfile(self) -> str:
@@ -284,7 +289,8 @@ class LLMImageBuilder(Builder):
                                                   self.args.python_version)
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.lmdeploy_version} {self.args.vllm_version} {self.args.autogptq_version}'
+            f'{self.args.lmdeploy_version} {self.args.vllm_version} {self.args.autogptq_version} '
+            f'{self.args.flashattn_version}'
         )
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -341,12 +347,12 @@ parser.add_argument('--torchaudio_version', type=str, default=None)
 parser.add_argument('--tf_version', type=str, default=None)
 parser.add_argument('--vllm_version', type=str, default=None)
 parser.add_argument('--lmdeploy_version', type=str, default=None)
+parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--dry_run', type=int, default=0)
-
 args = parser.parse_args()
 
 if args.image_type.lower() == 'base_cpu':

@@ -416,6 +416,8 @@ class TokenClassificationTransformersPreprocessor(
         offset_mapping = []
         tokens = self.nlp_tokenizer.tokenizer.tokenize(text)
         offset = 0
+        if getattr(self.nlp_tokenizer.tokenizer, 'do_lower_case', False):
+            text = text.lower()
         for token in tokens:
             is_start = (token[:2] != '##')
             if is_start:

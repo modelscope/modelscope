@@ -71,6 +71,11 @@ class LocalDataLoaderManager(DataLoaderManager):
         # Select local data loader
         # TODO: more loaders to be supported.
         if data_loader_type == LocalDataLoaderType.HF_DATA_LOADER:
+            if trust_remote_code:
+                logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                               ' and used from the remote repo. Please make sure that'
+                               f' the remote code content is what you need  {dataset_name}.')
+
             # Build huggingface data loader and return dataset.
             return hf_data_loader(
                 dataset_name,
@@ -110,6 +115,10 @@ class RemoteDataLoaderManager(DataLoaderManager):
 
         # To use the huggingface data loader
         if data_loader_type == RemoteDataLoaderType.HF_DATA_LOADER:
+            if trust_remote_code:
+                logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                               ' and used from the remote repo. Please make sure that'
+                               f' the remote code content is what you need  {dataset_name}.')
             dataset_ret = hf_data_loader(
                 dataset_name,
                 name=subset_name,

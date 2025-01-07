@@ -2,7 +2,7 @@ from typing import Any, Dict, Union
 
 import torch
 
-from modelscope import AutoModelForCausalLM
+from modelscope import AutoModelForCausalLM, get_logger
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models.base import Model
 from modelscope.outputs import OutputKeys
@@ -12,7 +12,7 @@ from modelscope.pipelines.multi_modal.visual_question_answering_pipeline import 
     VisualQuestionAnsweringPipeline
 from modelscope.preprocessors import Preprocessor, load_image
 from modelscope.utils.constant import Fields, Frameworks, Tasks
-
+logger = get_logger()
 
 @PIPELINES.register_module(
     Tasks.visual_question_answering, module_name='ovis-vl')
@@ -35,6 +35,9 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
         torch_dtype = kwargs.get('torch_dtype', torch.float16)
         multimodal_max_length = kwargs.get('multimodal_max_length', 8192)
         self.device = 'cuda' if device == 'gpu' else device
+        logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                       ' and used from the remote repo. Please make sure that'
+                       f' the remote code content is what you need  {model}.')
         self.model = AutoModelForCausalLM.from_pretrained(
             model,
             torch_dtype=torch_dtype,

@@ -237,6 +237,11 @@ class MsDataset:
             if not namespace or not dataset_name:
                 raise 'The dataset_name should be in the form of `namespace/dataset_name` or `dataset_name`.'
 
+        if trust_remote_code:
+            logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                           ' and used from the remote repo. Please make sure that'
+                           f' the remote code content is what you need  {dataset_name}.')
+
         # Init context config
         dataset_context_config = DatasetContextConfig(
             dataset_name=dataset_name,

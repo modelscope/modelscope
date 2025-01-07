@@ -936,6 +936,11 @@ class DatasetsWrapperHF:
             verification_mode or VerificationMode.BASIC_CHECKS
         ) if not save_infos else VerificationMode.ALL_CHECKS)
 
+        if trust_remote_code:
+            logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                           ' and used from the remote repo. Please make sure that'
+                           f' the remote code content is what you need  {path}.')
+
         # Create a dataset builder
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
             path=path,
@@ -1063,6 +1068,11 @@ class DatasetsWrapperHF:
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
 
+        if trust_remote_code:
+            logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                           ' and used from the remote repo. Please make sure that'
+                           f' the remote code content is what you need  {path}.')
+
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
             revision=revision,
@@ -1173,6 +1183,10 @@ class DatasetsWrapperHF:
         #   -> the module from the python file in the dataset repository
         # - if path has one "/" and is dataset repository on the HF hub without a python file
         #   -> use a packaged module (csv, text etc.) based on content of the repository
+        if trust_remote_code:
+            logger.warning('Use trust_remote_code=True. The code will be downloaded'
+                           ' and used from the remote repo. Please make sure that'
+                           f' the remote code content is what you need  {path}.')
 
         # Try packaged
         if path in _PACKAGED_DATASETS_MODULES:

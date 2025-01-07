@@ -21,6 +21,7 @@ import json
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
+from tqdm import tqdm
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
@@ -30,12 +31,14 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
+                                      DEFAULT_MAX_WORKERS,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility)
+                                      Licenses, ModelVisibility,
+                                      RepoVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, NoValidRevisionError,
                                    RequestError, datahub_raise_on_error,
@@ -48,9 +51,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
-                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT,
-                                       ConfigFields, DatasetFormations,
-                                       DatasetMetaFormats,
+                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL,
+                                       REPO_TYPE_SUPPORT, ConfigFields,
+                                       DatasetFormations, DatasetMetaFormats,
                                        DatasetVisibilityMap, DownloadChannel,
                                        DownloadMode, Frameworks, ModelFile,
                                        Tasks, VirgoDatasetConfig)
@@ -58,6 +61,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DEFAULT_IGNORE_PATTERNS, CommitInfo,
                                          RepoUtils)
 from modelscope.utils.thread_utils import thread_executor
+from ..utils.file_utils import get_file_hash, get_file_size
 from .utils.utils import (get_endpoint, get_readable_folder_size,
                           get_release_datetime, model_id_to_group_owner_name)
 
@@ -1178,6 +1182,52 @@ class HubApi:
         return f'{self.endpoint}/api/v1/datasets/{_namespace}/{_dataset_name}/repo?'
         # return f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/repo?Revision={revision}&FilePath='
 
+    def create_repo(
+            self,
+            repo_id: str,
+            *,
+            token: Union[str, bool, None] = None,
+            visibility: Optional[str] = 'public',
+            repo_type: Optional[str] = REPO_TYPE_MODEL,
+            chinese_name: Optional[str] = '',
+            license: Optional[str] = Licenses.APACHE_V2,
+    ) -> str:
+
+        # TODO: exist_ok
+
+        if not repo_id:
+            raise ValueError('Repo id cannot be empty!')
+
+        if token:
+            self.login(access_token=token)
+        else:
+            logger.warning('No token provided, will use the cached token.')
+
+        namespace, repo_name = repo_id.split('/')
+        visibility: int = RepoVisibility.get(visibility.lower())
+
+        if repo_type == REPO_TYPE_MODEL:
+            repo_url: str = self.create_model(
+                model_id=repo_id,
+                visibility=visibility,
+                license=license,
+                chinese_name=chinese_name,
+            )
+
+        elif repo_type == REPO_TYPE_DATASET:
+            repo_url: str = self.create_dataset(
+                dataset_name=repo_name,
+                namespace=namespace,
+                chinese_name=chinese_name,
+                license=license,
+                visibility=visibility,
+            )
+
+        else:
+            raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        return repo_url
+
     def create_commit(
             self,
             *,
@@ -1185,27 +1235,27 @@ class HubApi:
             repo_type: str,
             path_in_repo: str,
             sha256_hash: str,
-            size: float,
+            size: int,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             commit_msg: Optional[str] = None,
             commit_description: Optional[str] = None,
     ) -> CommitInfo:
 
-        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}"
+        url = f'{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}'
         commit_msg = commit_msg or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
         # Construct payload
         payload = {
-            "commit_message": commit_msg,
-            "actions": [
+            'commit_message': commit_msg,
+            'actions': [
                 {
-                    "action": "create",
-                    "path": path_in_repo,
-                    "type": "lfs",
-                    "size": size,
-                    "sha256": sha256_hash,
-                    "content": ""
+                    'action': 'create',
+                    'path': path_in_repo,
+                    'type': 'lfs',
+                    'size': size,
+                    'sha256': sha256_hash,
+                    'content': ''
                 },
             ]
         }
@@ -1219,7 +1269,10 @@ class HubApi:
             cookies=cookies
         )
 
-        # TODO: deal with response and get commit id.
+        resp = response.json()
+        if not resp['Success']:
+            commit_msg = resp['Message']
+            logger.error(f'{commit_msg}')
 
         return CommitInfo(
             commit_url=url,
@@ -1235,13 +1288,16 @@ class HubApi:
             path_in_repo: str,
             repo_id: str,
             token: Union[str, None] = None,
-            repo_type: Optional[str] = None,
-            revision: Optional[str] = None,
+            repo_type: Optional[str] = REPO_TYPE_MODEL,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
+            size_to_chunk_mb: Optional[int] = 100,
+            buffer_size_mb: Optional[int] = 1,
+            tqdm_desc: Optional[str] = None,
+            disable_tqdm: Optional[bool] = False,
     ) -> CommitInfo:
 
-        repo_type = repo_type if repo_type else REPO_TYPE_MODEL
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
@@ -1256,46 +1312,69 @@ class HubApi:
             commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
         )
 
-        files = (path_in_repo, path_or_fileobj)
-        self._upload_file(
-            repo_id=repo_id,
-            files=files,
-            commit_msg=commit_message)
-        logger.info(f'Uploaded file to {repo_id} successfully')
+        hash_info_d: dict = get_file_hash(
+            file_path_or_obj=path_or_fileobj,
+            buffer_size_mb=buffer_size_mb,
+        )
+        file_size: int = hash_info_d['file_size']
+        file_hash: str = hash_info_d['file_hash']
 
-        # Construct commit info
-        revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
-        # TODO: to be constructed commit info
-        # TODO: to be implemented commit api
-        commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}'
-        return CommitInfo(
-            commit_url=commit_url,
-            commit_message=commit_message,
-            commit_description=commit_description if commit_description else '',
-            oid='')
+        # TODO: to be implemented
+        # size_to_chunk: int = size_to_chunk_mb * 1024 * 1024
+        # if file_size > size_to_chunk:
+        #     logger.info(f'File size is large than {size_to_chunk_mb}MB, upload file with chunks ...')
+
+        progress = tqdm(
+            total=file_size,
+            initial=0,
+            unit_scale=True,
+            dynamic_ncols=True,
+            unit='B',
+            desc=tqdm_desc or '[Uploading]',
+            disable=disable_tqdm,
+        )
+
+        self._upload_blob(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            sha256=file_hash,
+            size=file_size,
+            data=path_or_fileobj,
+        )
+
+        commit_info: CommitInfo = self.create_commit(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            path_in_repo=path_in_repo,
+            sha256_hash=file_hash,
+            size=file_size,
+            revision=revision,
+            commit_msg=commit_message,
+            commit_description=commit_description,
+        )
+
+        progress.update(file_size)
+
+        return commit_info
 
     def upload_folder(
             self,
             *,
             repo_id: str,
             folder_path: Union[str, Path],
-            path_in_repo: Optional[str] = None,
+            path_in_repo: Optional[str] = '',
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
             token: Union[str, None] = None,
-            repo_type: Optional[str] = None,
-            revision: Optional[str] = None,
+            repo_type: Optional[str] = REPO_TYPE_MODEL,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
-            max_workers: int = min(8, os.cpu_count()),
+            max_workers: int = DEFAULT_MAX_WORKERS,
     ) -> CommitInfo:
 
-        repo_type = repo_type if repo_type else REPO_TYPE_MODEL
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
-
-        # By default, upload folder to the root directory in repo.
-        path_in_repo = '' if path_in_repo is None else path_in_repo
 
         # Ignore .git folder
         if ignore_patterns is None:
@@ -1310,7 +1389,9 @@ class HubApi:
         commit_message = (
             commit_message if commit_message is not None else f'Upload folder to {repo_id} on ModelScope hub'
         )
+        commit_description = commit_description or 'Uploading folder'
 
+        # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
         prepared_repo_objects = HubApi._prepare_upload_folder(
             folder_path=folder_path,
             path_in_repo=path_in_repo,
@@ -1318,86 +1399,57 @@ class HubApi:
             ignore_patterns=ignore_patterns,
         )
 
-        # TODO: to be supported on server side
-        # self._upload_file_parallel(
-        #     repo_id=repo_id,
-        #     file_or_obj_list=prepared_repo_objects,
-        #     commit_msg=commit_message,
-        #     max_workers=max_workers,
-        # )
+        @thread_executor(max_workers=max_workers, disable_tqdm=False)
+        def _upload_items(item_pair, **kwargs):
+            file_path_in_repo, file_path = item_pair
+            file_commit_info = self.upload_file(
+                path_or_fileobj=file_path,
+                path_in_repo=file_path_in_repo,
+                **kwargs
+            )
 
-        from tqdm import tqdm
-        for item in tqdm(prepared_repo_objects, total=len(prepared_repo_objects), desc='[Uploading]'):
-            self._upload_file(
-                repo_id=repo_id,
-                files=item,
-                commit_msg=commit_message)
+            return file_commit_info
 
-        logger.info(f'Uploaded folder to {repo_id} successfully')
+        _upload_items(
+            prepared_repo_objects,
+            repo_id=repo_id,
+            token=token,
+            repo_type=repo_type,
+            revision=revision,
+            commit_message=commit_message,
+            commit_description=commit_description,
+            size_to_chunk_mb=100,
+            buffer_size_mb=1,
+            tqdm_desc='[Uploading]',
+            disable_tqdm=False,
+        )
+
+        logger.info(f'Uploading folder to {repo_id} finished')
 
         # Construct commit info
-        revision: str = revision if revision else DEFAULT_REPOSITORY_REVISION
-        # TODO: to be constructed commit info
-        # TODO: to be implemented commit api
         commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{revision}'
         return CommitInfo(
             commit_url=commit_url,
             commit_message=commit_message,
-            commit_description=commit_description if commit_description else '',
+            commit_description=commit_description,
             oid='')
 
-    def _upload_file_parallel(
-            self,
-            repo_id: str,
-            file_or_obj_list: List[Union[tuple, list]],
-            commit_msg: str,
-            max_workers: int,
-    ) -> None:
-
-        upload_file_fn = functools.partial(
-            self._upload_file,
-            repo_id=repo_id,
-            commit_msg=commit_msg)
-
-        @thread_executor(max_workers=max_workers)
-        def _upload_file_parallel(item: Union[tuple, list]):
-            return upload_file_fn(item)
-
-        _upload_file_parallel(file_or_obj_list)
-
-    def _upload_file(self, repo_id: str, files: Union[tuple, list], commit_msg: str) -> None:
-        # TODO: add support for multiple repo-types
-
-        url = f'{self.endpoint}/api/v1/datasets/{repo_id}/repo/multi/upload'
-        data = {
-            'CommitMessage': commit_msg
-        }
-
-        cookies = ModelScopeConfig.get_cookies()
-        response = requests.post(url,
-                                 headers=self.builder_headers(self.headers),
-                                 files=[('Files', files)],
-                                 data=data,
-                                 cookies=cookies)
-
-        # Response
-        resp = response.json()
-        datahub_raise_on_error(url, resp, response)
-
-    def upload_blob(
+    def _upload_blob(
             self,
             *,
             repo_id: str,
             repo_type: str,
             sha256: str,
-            size: float,
-            data: Union[bytes, BinaryIO],
+            size: int,
+            data: Union[str, Path, bytes, BinaryIO],
     ) -> dict:
         # construct URL
-        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/blobs/{sha256}/{size}"
+        url = f'{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/blobs/{sha256}/{size}'
         res_d: dict = dict(
             url=url,
             reuse=False,
+            status_code=None,
+            status_msg=None,
         )
 
         has_blob: bool = self._validate_blob(
@@ -1407,19 +1459,38 @@ class HubApi:
             size=size,
         )
         if has_blob:
-            logger.info(f'Blob {sha256} has already uploaded.')
+            logger.info(f'Blob {sha256} has already uploaded, reuse it.')
             res_d['reuse'] = True
             return res_d
 
         cookies = ModelScopeConfig.get_cookies()
-        response = requests.put(
-            url,
-            headers=self.builder_headers(self.headers),
-            data=data,
-            cookies=cookies
-        )
 
-        # TODO: response handling
+        if isinstance(data, (str, Path)):
+            with open(data, 'rb') as f:
+                data = f.read()
+                response = requests.put(
+                    url,
+                    headers=self.builder_headers(self.headers),
+                    data=data,
+                    cookies=cookies
+                )
+
+        elif isinstance(data, (bytes, BinaryIO)):
+            response = requests.put(
+                url,
+                headers=self.builder_headers(self.headers),
+                data=data if isinstance(data, bytes) else data.read(),
+                cookies=cookies
+            )
+
+        else:
+            raise ValueError('Invalid data type, only support str, Path, bytes, BinaryIO')
+
+        resp = response.json()
+        raise_on_error(resp)
+
+        res_d['status_code'] = resp['Code']
+        res_d['status_msg'] = resp['Message']
 
         return res_d
 
@@ -1429,7 +1500,7 @@ class HubApi:
             repo_id: str,
             repo_type: str,
             sha256: str,
-            size: float,
+            size: int,
     ) -> bool:
         """
         Check the blob has already uploaded.
@@ -1439,22 +1510,22 @@ class HubApi:
             repo_id (str): The repo id ModelScope.
             repo_type (str): The repo type. `dataset`, `model`, etc.
             sha256 (str): The sha256 hash value.
-            size (float): The size of the blob.
+            size (int): The size of the blob.
 
         Returns:
             bool: The validation result.
         """
 
         # construct URL
-        url = f"{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch"
+        url = f'{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch'
 
         # build payload
         payload = {
-            "operation": "upload",
-            "objects": [
+            'operation': 'upload',
+            'objects': [
                 {
-                    "oid": sha256,
-                    "size": size
+                    'oid': sha256,
+                    'size': size
                 },
             ]
         }
@@ -1468,7 +1539,9 @@ class HubApi:
         )
 
         resp = response.json()
-        objects = resp['objects']
+        raise_on_error(resp)
+
+        objects = resp['Data']['objects']
 
         return True if len(objects) == 0 else False
 

@@ -4,7 +4,7 @@ import inspect
 import os
 from pathlib import Path
 from shutil import Error, copy2, copystat
-from typing import Optional
+from typing import BinaryIO, Optional, Union
 
 from tqdm import tqdm
 
@@ -180,15 +180,32 @@ def copytree_py37(src,
     return dst
 
 
+def get_file_size(file_path_or_obj: Union[str, Path, bytes, BinaryIO]) -> int:
+    if isinstance(file_path_or_obj, (str, Path)):
+        file_path = Path(file_path_or_obj)
+        return file_path.stat().st_size
+    elif isinstance(file_path_or_obj, bytes):
+        return len(file_path_or_obj)
+    elif isinstance(file_path_or_obj, BinaryIO):
+        current_position = file_path_or_obj.tell()
+        file_path_or_obj.seek(0, os.SEEK_END)
+        size = file_path_or_obj.tell()
+        file_path_or_obj.seek(current_position)
+        return size
+    else:
+        raise TypeError(
+            'Unsupported type: must be string, Path, bytes, or BinaryIO')
+
+
 def get_file_hash(
-        file_path: str,
-        chunk_size_mb: Optional[int] = 1,
-        tqdm_desc: Optional[str] = '[Calculating]',
-        disable_tqdm: Optional[bool] = False,
+    file_path_or_obj: Union[str, Path, bytes, BinaryIO],
+    buffer_size_mb: Optional[int] = 1,
+    tqdm_desc: Optional[str] = '[Calculating]',
+    disable_tqdm: Optional[bool] = False,
 ) -> dict:
 
-    file_size = os.path.getsize(file_path)
-    chunk_size = chunk_size_mb * 1024 * 1024
+    file_size = get_file_size(file_path_or_obj)
+    buffer_size = buffer_size_mb * 1024 * 1024
     file_hash = hashlib.sha256()
     chunk_hash_list = []
 
@@ -202,24 +219,41 @@ def get_file_hash(
         disable=disable_tqdm,
     )
 
-    with open(file_path, 'rb') as f:
-        while True:
-            byte_chunk = f.read(chunk_size)
-            if not byte_chunk:
-                break
+    if isinstance(file_path_or_obj, (str, Path)):
+        with open(file_path_or_obj, 'rb') as f:
+            while byte_chunk := f.read(buffer_size):
+                chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
+                file_hash.update(byte_chunk)
+                progress.update(len(byte_chunk))
+        file_hash = file_hash.hexdigest()
+        final_chunk_size = buffer_size
 
+    elif isinstance(file_path_or_obj, bytes):
+        file_hash.update(file_path_or_obj)
+        file_hash = file_hash.hexdigest()
+        chunk_hash_list.append(file_hash)
+        final_chunk_size = len(file_path_or_obj)
+        progress.update(final_chunk_size)
+
+    elif isinstance(file_path_or_obj, BinaryIO):
+        while byte_chunk := file_path_or_obj.read(buffer_size):
             chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
             file_hash.update(byte_chunk)
             progress.update(len(byte_chunk))
+        file_hash = file_hash.hexdigest()
+        final_chunk_size = buffer_size
 
-    file_hash = file_hash.hexdigest()
+    else:
+        progress.close()
+        raise ValueError('Input must be str, Path, bytes or a BinaryIO')
+
     progress.close()
 
     return {
-        'file_path': file_path,
+        'file_path': file_path_or_obj,
         'file_hash': file_hash,
         'file_size': file_size,
-        'chunk_size': chunk_size,
+        'chunk_size': final_chunk_size,
         'chunk_nums': len(chunk_hash_list),
         'chunk_hash_list': chunk_hash_list,
     }

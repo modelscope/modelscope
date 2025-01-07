@@ -835,6 +835,8 @@ def get_module_with_script(self) -> DatasetModule:
     if not os.path.exists(importable_file_path):
         trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
+            logger.warning('Use trust_remote_code=True. The code will be downloaded and used from the remote repo'
+                           f' {repo_id}. Please make sure that the remote code content is what you need.')
             _create_importable_file(
                 local_path=local_script_path,
                 local_imports=local_imports,

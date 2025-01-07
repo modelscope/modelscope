@@ -4,8 +4,8 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.utils.constant import (REPO_TYPE_DATASET, REPO_TYPE_MODEL,
-                                       REPO_TYPE_SUPPORT)
+from modelscope.utils.constant import (DEFAULT_REPOSITORY_REVISION,
+                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -59,6 +59,7 @@ class UploadCMD(CLICommand):
         parser.add_argument(
             '--revision',
             type=str,
+            default=DEFAULT_REPOSITORY_REVISION,
             help=('An optional Git revision to push to.'),
         )
         parser.add_argument(
@@ -94,6 +95,11 @@ class UploadCMD(CLICommand):
             default=min(8,
                         os.cpu_count() + 4),
             help='The number of workers to use for uploading files.')
+        parser.add_argument(
+            '--endpoint',
+            type=str,
+            default='https://www.modelscope.cn',
+            help='The endpoint of the Modelscope API.')
 
         parser.set_defaults(func=subparser_func)
 
@@ -139,7 +145,7 @@ class UploadCMD(CLICommand):
 
         # Check token and login
         # The cookies will be reused if the user has logged in before.
-        api = HubApi()
+        api = HubApi(endpoint=self.args.endpoint)
         if not self.args.token:
             logger.warning(
                 '`token` is not provided! '

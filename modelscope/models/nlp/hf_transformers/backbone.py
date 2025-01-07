@@ -99,9 +99,10 @@ class TransformersModel(TorchModel, PreTrainedModel):
             return model
 
         # return the model only
-        logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                       ' and used from the remote repo. Please make sure that'
-                       f' the remote code content is what you need  {model_dir}.')
+        logger.warning(
+            'Use trust_remote_code=True. The code will be downloaded'
+            ' and used from the remote repo. Please make sure that'
+            f' the remote code content is what you need  {model_dir}.')
         config, kwargs = AutoConfig.from_pretrained(
             model_dir,
             return_unused_kwargs=True,

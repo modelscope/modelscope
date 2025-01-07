@@ -451,8 +451,10 @@ def register_plugins_repo(plugins: List[str]) -> None:
 def register_modelhub_repo(model_dir, allow_remote=False) -> None:
     """ Try to install and import remote model from modelhub"""
     if allow_remote:
-        logger.warning('Use allow_remote=True. The code will be downloaded and used from the remote repo.'
-                       f' Please make sure that the remote code content is what you need {model_dir}.')
+        logger.warning(
+            'Use allow_remote=True. The code will be downloaded and used from the remote repo.'
+            f' Please make sure that the remote code content is what you need {model_dir}.'
+        )
         try:
             import_module_from_model_dir(model_dir)
         except KeyError:

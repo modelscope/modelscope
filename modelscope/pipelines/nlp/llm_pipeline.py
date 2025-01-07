@@ -97,9 +97,10 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
             revision = self.cfg.safe_get('adapter_cfg.model_revision',
                                          'master')
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {base_model}.')
+            logger.warning(
+                'Use trust_remote_code=True. The code will be downloaded'
+                ' and used from the remote repo. Please make sure that'
+                f' the remote code content is what you need  {base_model}.')
             base_model = Model.from_pretrained(
                 base_model,
                 revision,
@@ -137,9 +138,10 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                     model) else snapshot_download(model)
                 # TODO: Temporary use of AutoModelForCausalLM
                 # Need to be updated into a universal solution
-                logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                               ' and used from the remote repo. Please make sure that'
-                               f' the remote code content is what you need  {model_dir}.')
+                logger.warning(
+                    'Use trust_remote_code=True. The code will be downloaded'
+                    ' and used from the remote repo. Please make sure that'
+                    f' the remote code content is what you need  {model_dir}.')
                 model = AutoModelForCausalLM.from_pretrained(
                     model_dir,
                     device_map=self.device_map,
@@ -179,9 +181,11 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.llm_framework = llm_framework
 
         if os.path.exists(kwargs['model']):
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {kwargs['model']}.')
+            logger.warning(
+                'Use trust_remote_code=True. The code will be downloaded'
+                ' and used from the remote repo. Please make sure that'
+                f' the remote code content is what you need  {kwargs["model"]}.'
+            )
             config = AutoConfig.from_pretrained(
                 kwargs['model'], trust_remote_code=True)
             q_config = config.__dict__.get('quantization_config', None)
@@ -432,9 +436,10 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             model_dir = self.model.model_dir
         if tokenizer_class is None:
             tokenizer_class = AutoTokenizer
-        logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                       ' and used from the remote repo. Please make sure that'
-                       f' the remote code content is what you need  {model_dir}.')
+        logger.warning(
+            'Use trust_remote_code=True. The code will be downloaded'
+            ' and used from the remote repo. Please make sure that'
+            f' the remote code content is what you need  {model_dir}.')
         return tokenizer_class.from_pretrained(
             model_dir, trust_remote_code=True)
 

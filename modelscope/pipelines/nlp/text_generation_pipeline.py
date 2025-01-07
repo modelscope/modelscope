@@ -269,9 +269,10 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
             if use_bf16:
                 default_torch_dtype = torch.bfloat16
             torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {model_dir}.')
+            logger.warning(
+                'Use trust_remote_code=True. The code will be downloaded'
+                ' and used from the remote repo. Please make sure that'
+                f' the remote code content is what you need  {model_dir}.')
             model = Model.from_pretrained(
                 model_dir,
                 trust_remote_code=True,
@@ -288,9 +289,11 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
         self.model = model
         self.model.eval()
-        logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                       ' and used from the remote repo. Please make sure that'
-                       f' the remote code content is what you need  {self.model.model_dir}.')
+        logger.warning(
+            'Use trust_remote_code=True. The code will be downloaded'
+            ' and used from the remote repo. Please make sure that'
+            f' the remote code content is what you need  {self.model.model_dir}.'
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model.model_dir, trust_remote_code=True)
 
@@ -334,9 +337,10 @@ class QWenChatPipeline(Pipeline):
             bf16 = False
 
         if isinstance(model, str):
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {model}.')
+            logger.warning(
+                'Use trust_remote_code=True. The code will be downloaded'
+                ' and used from the remote repo. Please make sure that'
+                f' the remote code content is what you need  {model}.')
             self.tokenizer = AutoTokenizer.from_pretrained(
                 model, revision=revision, trust_remote_code=True)
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -401,9 +405,10 @@ class QWenTextGenerationPipeline(Pipeline):
             bf16 = False
 
         if isinstance(model, str):
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {model}.')
+            logger.warning(
+                'Use trust_remote_code=True. The code will be downloaded'
+                ' and used from the remote repo. Please make sure that'
+                f' the remote code content is what you need  {model}.')
             self.model = AutoModelForCausalLM.from_pretrained(
                 model,
                 device_map=device_map,

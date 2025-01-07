@@ -1,9 +1,11 @@
 from typing import List, Union
 
+from modelscope import get_logger
 from modelscope.pipelines.accelerate.base import InferFramework
 from modelscope.utils.import_utils import is_vllm_available
-from modelscope import get_logger
+
 logger = get_logger()
+
 
 class Vllm(InferFramework):
 
@@ -28,9 +30,10 @@ class Vllm(InferFramework):
         if not Vllm.check_gpu_compatibility(8) and (dtype
                                                     in ('bfloat16', 'auto')):
             dtype = 'float16'
-        logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                       ' and used from the remote repo. Please make sure that'
-                       f' the remote code content is what you need  {self.model_dir}.')
+        logger.warning(
+            'Use trust_remote_code=True. The code will be downloaded'
+            ' and used from the remote repo. Please make sure that'
+            f' the remote code content is what you need  {self.model_dir}.')
         self.model = LLM(
             self.model_dir,
             dtype=dtype,

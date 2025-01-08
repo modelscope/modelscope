@@ -42,7 +42,7 @@ def snapshot_download(
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
     repo_id: str = None,
-    repo_type: str = REPO_TYPE_MODEL,
+    repo_type: Optional[str] = REPO_TYPE_MODEL,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This

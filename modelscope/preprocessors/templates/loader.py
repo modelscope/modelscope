@@ -591,7 +591,7 @@ template_info = [
         template_regex=
         f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
     ),
 
     # deepseek_coder

@@ -660,6 +660,14 @@ template_info = [
         template_regex=f'.*{cases("granite-embedding")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite-embedding'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3")}.*{cases("2b", "8b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-dense'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3")}.*{cases("1b", "3b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-moe'),
 
     # opencoder
     TemplateInfo(

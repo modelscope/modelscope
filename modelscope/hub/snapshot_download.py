@@ -29,9 +29,7 @@ logger = get_logger()
 
 
 def snapshot_download(
-    repo_id: str = None,
     model_id: str = None,
-    repo_type: str = REPO_TYPE_MODEL,
     revision: Optional[str] = None,
     cache_dir: Union[str, Path, None] = None,
     user_agent: Optional[Union[Dict, str]] = None,
@@ -43,6 +41,8 @@ def snapshot_download(
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
+    repo_id: str = None,
+    repo_type: str = REPO_TYPE_MODEL,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -103,7 +103,8 @@ def snapshot_download(
             f'Invalid repo type: {repo_type}, only support: {REPO_TYPE_SUPPORT}'
         )
 
-    revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
+    if revision is None:
+        revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
 
     return _snapshot_download(
         repo_id,

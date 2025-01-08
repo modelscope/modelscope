@@ -10,8 +10,8 @@ from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import read_config
-from modelscope.utils.streaming_output import StreamingOutputMixin
 from modelscope.utils.logger import get_logger
+from modelscope.utils.streaming_output import StreamingOutputMixin
 
 logger = get_logger()
 
@@ -32,8 +32,7 @@ class PolyLMForTextGeneration(TorchModel, StreamingOutputMixin):
             model_dir, legacy=False, use_fast=False)
         logger.warning(
             f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
-            'that you can trust the external codes.'
-            )
+            'that you can trust the external codes.')
         self.model = AutoModelForCausalLM.from_pretrained(
             model_dir, device_map='auto', trust_remote_code=True)
         self.model.eval()

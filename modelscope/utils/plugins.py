@@ -453,8 +453,7 @@ def register_modelhub_repo(model_dir, allow_remote=False) -> None:
     if allow_remote:
         logger.warning(
             f'Use allow_remote=True. Will invoke codes from {model_dir}. Please make sure '
-            'that you can trust the external codes.'
-        )
+            'that you can trust the external codes.')
         try:
             import_module_from_model_dir(model_dir)
         except KeyError:

@@ -74,8 +74,7 @@ class LocalDataLoaderManager(DataLoaderManager):
             if trust_remote_code:
                 logger.warning(
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
-                    'sure that you can trust the external codes.'
-                )
+                    'sure that you can trust the external codes.')
 
             # Build huggingface data loader and return dataset.
             return hf_data_loader(
@@ -119,8 +118,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
             if trust_remote_code:
                 logger.warning(
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
-                    'sure that you can trust the external codes.'
-                )
+                    'sure that you can trust the external codes.')
             dataset_ret = hf_data_loader(
                 dataset_name,
                 name=subset_name,

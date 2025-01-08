@@ -39,8 +39,7 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
         self.device = 'cuda' if device == 'gpu' else device
         logger.warning(
             f'Use trust_remote_code=True. Will invoke codes from {model}. Please make '
-            'sure that you can trust the external codes.'
-            )
+            'sure that you can trust the external codes.')
         self.model = AutoModelForCausalLM.from_pretrained(
             model,
             torch_dtype=torch_dtype,

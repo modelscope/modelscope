@@ -32,8 +32,7 @@ class Vllm(InferFramework):
             dtype = 'float16'
         logger.warning(
             f'Use trust_remote_code=True. Will invoke codes from {self.model_dir}. Please make '
-            'sure that you can trust the external codes.'
-            )
+            'sure that you can trust the external codes.')
         self.model = LLM(
             self.model_dir,
             dtype=dtype,

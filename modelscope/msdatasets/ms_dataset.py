@@ -240,8 +240,7 @@ class MsDataset:
         if trust_remote_code:
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make sure that '
-                'you can trust the external codes.'
-                )
+                'you can trust the external codes.')
 
         # Init context config
         dataset_context_config = DatasetContextConfig(

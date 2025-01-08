@@ -99,8 +99,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                                          'master')
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {base_model}. Please make sure that you can '
-                'trust the external codes.'
-                )
+                'trust the external codes.')
             base_model = Model.from_pretrained(
                 base_model,
                 revision,
@@ -140,8 +139,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                 # Need to be updated into a universal solution
                 logger.warning(
                     f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
-                    'that you can trust the external codes.'
-                    )
+                    'that you can trust the external codes.')
                 model = AutoModelForCausalLM.from_pretrained(
                     model_dir,
                     device_map=self.device_map,
@@ -183,8 +181,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         if os.path.exists(kwargs['model']):
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {kwargs["model"]}. Please make sure '
-                'that you can trust the external codes.'
-            )
+                'that you can trust the external codes.')
             config = AutoConfig.from_pretrained(
                 kwargs['model'], trust_remote_code=True)
             q_config = config.__dict__.get('quantization_config', None)
@@ -437,8 +434,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             tokenizer_class = AutoTokenizer
         logger.warning(
             f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
-            'that you can trust the external codes.'
-            )
+            'that you can trust the external codes.')
         return tokenizer_class.from_pretrained(
             model_dir, trust_remote_code=True)
 

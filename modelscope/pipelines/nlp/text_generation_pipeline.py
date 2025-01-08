@@ -271,8 +271,7 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
             torch_dtype = kwargs.get('torch_dtype', default_torch_dtype)
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
-                'that you can trust the external codes.'
-                )
+                'that you can trust the external codes.')
             model = Model.from_pretrained(
                 model_dir,
                 trust_remote_code=True,
@@ -291,8 +290,7 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
         self.model.eval()
         logger.warning(
             f'Use trust_remote_code=True. Will invoke codes from {self.model.model_dir}. Please '
-            'make sure that you can trust the external codes.'
-        )
+            'make sure that you can trust the external codes.')
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model.model_dir, trust_remote_code=True)
 
@@ -338,8 +336,7 @@ class QWenChatPipeline(Pipeline):
         if isinstance(model, str):
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {model}. Please make sure '
-                'that you can trust the external codes.'
-                )
+                'that you can trust the external codes.')
             self.tokenizer = AutoTokenizer.from_pretrained(
                 model, revision=revision, trust_remote_code=True)
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -406,8 +403,7 @@ class QWenTextGenerationPipeline(Pipeline):
         if isinstance(model, str):
             logger.warning(
                 f'Use trust_remote_code=True. Will invoke codes from {model}. Please make sure '
-                'that you can trust the external codes.'
-                )
+                'that you can trust the external codes.')
             self.model = AutoModelForCausalLM.from_pretrained(
                 model,
                 device_map=device_map,

@@ -31,9 +31,9 @@ class Vllm(InferFramework):
                                                     in ('bfloat16', 'auto')):
             dtype = 'float16'
         logger.warning(
-            'Use trust_remote_code=True. The code will be downloaded'
-            ' and used from the remote repo. Please make sure that'
-            f' the remote code content is what you need  {self.model_dir}.')
+            f'Use trust_remote_code=True. Will invoke codes from {self.model_dir}. Please make '
+            'sure that you can trust the external codes.'
+            )
         self.model = LLM(
             self.model_dir,
             dtype=dtype,

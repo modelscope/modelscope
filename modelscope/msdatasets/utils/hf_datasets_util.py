@@ -835,8 +835,8 @@ def get_module_with_script(self) -> DatasetModule:
     if not os.path.exists(importable_file_path):
         trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
-            logger.warning('Use trust_remote_code=True. The code will be downloaded and used from the remote repo'
-                           f' {repo_id}. Please make sure that the remote code content is what you need.')
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {repo_id}. Please make sure that '
+                           'you can trust the external codes.')
             _create_importable_file(
                 local_path=local_script_path,
                 local_imports=local_imports,
@@ -937,9 +937,9 @@ class DatasetsWrapperHF:
         ) if not save_infos else VerificationMode.ALL_CHECKS)
 
         if trust_remote_code:
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {path}.')
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Create a dataset builder
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
@@ -1069,9 +1069,9 @@ class DatasetsWrapperHF:
             download_config.storage_options.update(storage_options)
 
         if trust_remote_code:
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {path}.')
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
@@ -1184,9 +1184,9 @@ class DatasetsWrapperHF:
         # - if path has one "/" and is dataset repository on the HF hub without a python file
         #   -> use a packaged module (csv, text etc.) based on content of the repository
         if trust_remote_code:
-            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                           ' and used from the remote repo. Please make sure that'
-                           f' the remote code content is what you need  {path}.')
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Try packaged
         if path in _PACKAGED_DATASETS_MODULES:

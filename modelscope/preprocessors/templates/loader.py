@@ -820,9 +820,9 @@ class TemplateLoader:
                                 model_id,
                                 revision=kwargs.pop('revision', 'master'),
                                 ignore_file_pattern=ignore_file_pattern)
-                            logger.warning('Use trust_remote_code=True. The code will be downloaded'
-                                           ' and used from the remote repo. Please make sure that'
-                                           f' the remote code content is what you need  {model_dir}.')
+                            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {model_dir}.'
+                                           ' Please make sure that you can trust the external codes.'
+                                           )
                             tokenizer = AutoTokenizer.from_pretrained(
                                 model_dir, trust_remote_code=True)
                             config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)

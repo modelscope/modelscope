@@ -11,6 +11,9 @@ from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
 from modelscope.utils.hub import read_config
 from modelscope.utils.streaming_output import StreamingOutputMixin
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 __all__ = ['PolyLMForTextGeneration']
 
@@ -28,9 +31,9 @@ class PolyLMForTextGeneration(TorchModel, StreamingOutputMixin):
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_dir, legacy=False, use_fast=False)
         logger.warning(
-            'Use trust_remote_code=True. The code will be downloaded'
-            ' and used from the remote repo. Please make sure that'
-            f' the remote code content is what you need  {model_dir}.')
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            'that you can trust the external codes.'
+            )
         self.model = AutoModelForCausalLM.from_pretrained(
             model_dir, device_map='auto', trust_remote_code=True)
         self.model.eval()

@@ -95,9 +95,9 @@ def get_hf_automodel_class(model_dir: str,
         return None
     try:
         logger.warning(
-            'Use trust_remote_code=True. The code will be downloaded'
-            ' and used from the remote repo. Please make sure that'
-            f' the remote code content is what you need  {model_dir}.')
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            'that you can trust the external codes.'
+            )
         config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
         if task_name is None:
             automodel_class = get_default_automodel(config)

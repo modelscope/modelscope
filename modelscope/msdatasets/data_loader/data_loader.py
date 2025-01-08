@@ -135,9 +135,8 @@ class OssDownloader(BaseDownloader):
         if dataset_py_script and dataset_formation == DatasetFormations.hf_compatible:
             if trust_remote_code:
                 logger.warning(
-                    'Use trust_remote_code=True. The code will be downloaded'
-                    ' and used from the remote repo. Please make sure that'
-                    f' the remote code content is what you need  {dataset_name}.'
+                    f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
+                    'sure that you can trust the external codes.'
                 )
 
             self.dataset = hf_load_dataset(

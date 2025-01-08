@@ -239,9 +239,9 @@ class MsDataset:
 
         if trust_remote_code:
             logger.warning(
-                'Use trust_remote_code=True. The code will be downloaded'
-                ' and used from the remote repo. Please make sure that'
-                f' the remote code content is what you need  {dataset_name}.')
+                f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make sure that '
+                'you can trust the external codes.'
+                )
 
         # Init context config
         dataset_context_config = DatasetContextConfig(

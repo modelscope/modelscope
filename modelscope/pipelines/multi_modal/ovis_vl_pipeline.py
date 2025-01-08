@@ -38,9 +38,9 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
         multimodal_max_length = kwargs.get('multimodal_max_length', 8192)
         self.device = 'cuda' if device == 'gpu' else device
         logger.warning(
-            'Use trust_remote_code=True. The code will be downloaded'
-            ' and used from the remote repo. Please make sure that'
-            f' the remote code content is what you need  {model}.')
+            f'Use trust_remote_code=True. Will invoke codes from {model}. Please make '
+            'sure that you can trust the external codes.'
+            )
         self.model = AutoModelForCausalLM.from_pretrained(
             model,
             torch_dtype=torch_dtype,

@@ -102,6 +102,8 @@ class HubApi:
                     getattr(self.session, method),
                     timeout=timeout))
 
+        self.upload_checker = UploadingCheck()
+
     def login(
         self,
         access_token: str,
@@ -1305,6 +1307,8 @@ class HubApi:
             raise ValueError('Path or file object cannot be empty!')
         path_in_repo = '' if path_in_repo is None else path_in_repo
 
+        self.upload_checker.check_file(path_or_fileobj)
+
         if token:
             self.login(access_token=token)
 
@@ -1375,6 +1379,8 @@ class HubApi:
 
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        self.upload_checker.check_folder(folder_path)
 
         # Ignore .git folder
         if ignore_patterns is None:
@@ -1725,3 +1731,50 @@ class ModelScopeConfig:
         elif isinstance(user_agent, str):
             ua += '; ' + user_agent
         return ua
+
+
+class UploadingCheck:
+    def __init__(
+            self,
+            max_file_count=100_000,
+            max_file_count_in_dir=10_000,
+            max_file_size=50 * 1024 ** 3
+    ):
+        self.max_file_count = max_file_count
+        self.max_file_count_in_dir = max_file_count_in_dir
+        self.max_file_size = max_file_size
+
+    def check_file(self, file_path_or_obj):
+
+        if isinstance(file_path_or_obj, (str, Path)):
+            if not os.path.exists(file_path_or_obj):
+                raise ValueError(f'File {file_path_or_obj} does not exist')
+
+        file_size: int = get_file_size(file_path_or_obj)
+        if file_size > self.max_file_size:
+            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB')
+
+    def check_folder(self, folder_path: Union[str, Path]):
+        file_count = 0
+        dir_count = 0
+
+        if isinstance(folder_path, str):
+            folder_path = Path(folder_path)
+
+        for item in folder_path.iterdir():
+            if item.is_file():
+                file_count += 1
+            elif item.is_dir():
+                dir_count += 1
+                # Count items in subdirectories recursively
+                sub_file_count, sub_dir_count = self.check_folder(item)
+                if (sub_file_count + sub_dir_count) > self.max_file_count_in_dir:
+                    raise ValueError(f'Directory {item} contains {sub_file_count + sub_dir_count} items '
+                                     f'and exceeds limit: {self.max_file_count_in_dir}')
+                file_count += sub_file_count
+                dir_count += sub_dir_count
+
+        if file_count > self.max_file_count:
+            raise ValueError(f'Total file count {file_count} and exceeds limit: {self.max_file_count}')
+
+        return file_count, dir_count

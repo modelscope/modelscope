@@ -323,9 +323,8 @@ class TestToOllama(unittest.TestCase):
             'QuantFactory/granite-guardian-3.0-2b-GGUF',
             'granite3-guardian',
             gguf_meta={'general.name': 'Models'})
-        _test_check_tmpl_type(
-            'lmstudio-community/OpenCoder-8B-Instruct-GGUF',
-            'opencoder')
+        _test_check_tmpl_type('lmstudio-community/OpenCoder-8B-Instruct-GGUF',
+                              'opencoder')
         _test_check_tmpl_type(
             'QuantFactory/SmolLM2-1.7B-Instruct-GGUF',
             'smollm2',
@@ -334,9 +333,8 @@ class TestToOllama(unittest.TestCase):
             'prithivMLmods/Aya-Expanse-8B-GGUF',
             'aya-expanse',
             gguf_meta={'general.name': 'Aya Expanse 8b'})
-        _test_check_tmpl_type(
-            'lmstudio-community/Falcon3-7B-Instruct-GGUF',
-            'falcon3')
+        _test_check_tmpl_type('lmstudio-community/Falcon3-7B-Instruct-GGUF',
+                              'falcon3')
         _test_check_tmpl_type(
             'lmstudio-community/granite-3.1-8b-instruct-GGUF',
             'granite3.1-dense',
@@ -366,9 +364,7 @@ class TestToOllama(unittest.TestCase):
             'dolphin3',
             gguf_meta={'general.name': 'Dolphin 3.0 Llama 3.1 8B'})
         _test_check_tmpl_type(
-            'AI-ModelScope/phi-4',
-            'phi4',
-            gguf_meta={'general.name': 'Phi 4'})
+            'AI-ModelScope/phi-4', 'phi4', gguf_meta={'general.name': 'Phi 4'})
 
 
 if __name__ == '__main__':

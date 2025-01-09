@@ -231,7 +231,7 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin-mistral',
     ),
     TemplateInfo(
-        template_regex=f'.*{cases("dolphin3")}.*', 
+        template_regex=f'.*{cases("dolphin3", "dolphin-3")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin3'),
 

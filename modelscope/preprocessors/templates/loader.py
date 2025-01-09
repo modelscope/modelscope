@@ -257,6 +257,12 @@ template_info = [
     ),
     TemplateInfo(
         template_regex=
+        f'.*{cases("phi4", "phi-4")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4',
+    ),
+    TemplateInfo(
+        template_regex=
         f'.*{cases("phi")}{no_multi_modal()}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi',

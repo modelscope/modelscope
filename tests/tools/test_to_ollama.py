@@ -365,6 +365,10 @@ class TestToOllama(unittest.TestCase):
             'bartowski/Dolphin3.0-Llama3.1-8B-GGUF',
             'dolphin3',
             gguf_meta={'general.name': 'Dolphin 3.0 Llama 3.1 8B'})
+        _test_check_tmpl_type(
+            'AI-ModelScope/phi-4',
+            'phi4',
+            gguf_meta={'general.name': 'Phi 4'})
 
 
 if __name__ == '__main__':

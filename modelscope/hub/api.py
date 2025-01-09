@@ -1305,7 +1305,14 @@ class HubApi:
 
         if not path_or_fileobj:
             raise ValueError('Path or file object cannot be empty!')
-        path_in_repo = '' if path_in_repo is None else path_in_repo
+
+        if isinstance(path_or_fileobj, (str, Path)):
+            path_or_fileobj = os.path.abspath(os.path.expanduser(path_or_fileobj))
+            path_in_repo = path_in_repo or os.path.basename(path_or_fileobj)
+        else:
+            # If path_or_fileobj is bytes or BinaryIO, then path_in_repo must be provided
+            if not path_in_repo:
+                raise ValueError('Arg `path_in_repo` cannot be empty!')
 
         self.upload_checker.check_file(path_or_fileobj)
 

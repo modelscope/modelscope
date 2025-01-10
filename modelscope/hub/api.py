@@ -1241,7 +1241,7 @@ class HubApi:
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             commit_msg: Optional[str] = None,
             commit_description: Optional[str] = None,
-            lfs_size_limit: Optional[int] = 1 * 1024 * 1024,
+            lfs_size_limit: Optional[int] = 10 * 1024 * 1024,
     ) -> CommitInfo:
 
         url = f'{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}'

@@ -5,7 +5,8 @@ from pathlib import Path
 
 # Cache location
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
-from modelscope.utils.file_utils import get_dataset_cache_root, get_modelscope_cache_dir
+from modelscope.utils.file_utils import (get_dataset_cache_root,
+                                         get_modelscope_cache_dir)
 
 MS_CACHE_HOME = get_modelscope_cache_dir()
 

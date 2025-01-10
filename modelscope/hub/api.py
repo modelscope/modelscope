@@ -1241,11 +1241,13 @@ class HubApi:
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             commit_msg: Optional[str] = None,
             commit_description: Optional[str] = None,
+            lfs_size_limit: Optional[int] = 1 * 1024 * 1024,
     ) -> CommitInfo:
 
         url = f'{self.endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}'
         commit_msg = commit_msg or f'Commit to {repo_id}'
         commit_description = commit_description or ''
+        commit_mode: str = 'lfs' if size > lfs_size_limit else 'normal'
 
         # Construct payload
         payload = {
@@ -1254,7 +1256,7 @@ class HubApi:
                 {
                     'action': 'create',
                     'path': path_in_repo,
-                    'type': 'lfs',
+                    'type': commit_mode,
                     'size': size,
                     'sha256': sha256_hash,
                     'content': ''

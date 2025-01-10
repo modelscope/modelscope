@@ -230,6 +230,10 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin-mistral',
     ),
+    TemplateInfo(
+        template_regex=f'.*{cases("dolphin3", "dolphin-3")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin3'),
 
     # "phi"
     TemplateInfo(
@@ -250,6 +254,12 @@ template_info = [
         f'.*{cases("phi3", "phi-3")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi3',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("phi4", "phi-4")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4',
     ),
     TemplateInfo(
         template_regex=
@@ -591,7 +601,7 @@ template_info = [
         template_regex=
         f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
         modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek_v2',
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
     ),
 
     # deepseek_coder
@@ -623,6 +633,94 @@ template_info = [
         template=TemplateType.telechat_v2,
         template_regex=f'.*{cases("TeleChat")}.*{cases("v2")}.*'),
 
+    # tulu3
+    TemplateInfo(
+        template_regex=f'.*{cases("tulu3", "tulu-3")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/tulu3'),
+
+    # athene-v2
+    TemplateInfo(
+        template_regex=f'.*{cases("athene-v2")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/athene-v2'),
+
+    # granite
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-guardian-3")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-guardian'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite")}.*{cases("code")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite-code'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3.1")}.*{cases("2b", "8b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3.1-dense'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3.1")}.*{cases("1b", "3b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3.1-moe'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-embedding")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite-embedding'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3")}.*{cases("2b", "8b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-dense'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-3")}.*{cases("1b", "3b")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-moe'),
+
+    # opencoder
+    TemplateInfo(
+        template_regex=f'.*{cases("opencoder")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/opencoder'),
+
+    # smollm
+    TemplateInfo(
+        template_regex=f'.*{cases("smollm2")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smollm2'),
+    TemplateInfo(
+        template_regex=f'.*{cases("smollm")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smollm'),
+
+    # 'aya'
+    TemplateInfo(
+        template_regex=f'.*{cases("aya-expanse")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/aya-expanse'),
+    TemplateInfo(
+        template_regex=f'.*{cases("aya")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/aya'),
+
+    # falcon
+    TemplateInfo(
+        template_regex=f'.*{cases("falcon3")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/falcon3'),
+    TemplateInfo(
+        template_regex=f'.*{cases("falcon")}.*{cases("-2")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/falcon2'),
+    TemplateInfo(
+        template_regex=f'.*{cases("falcon")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/falcon'),
+
+    # smallthinker
+    TemplateInfo(
+        template_regex=f'.*{cases("smallthinker")}.*', 
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smallthinker'),
+
     TemplateInfo(
         template_regex=f'.*{cases("nomic-embed-text")}.*', 
         modelfile_prefix=
@@ -652,10 +750,6 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/starcoder'),
     TemplateInfo(
-        template_regex=f'.*{cases("granite")}.*{cases("code")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite-code'),
-    TemplateInfo(
         template_regex=f'.*{cases("all-minilm")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/all-minilm'),
@@ -663,10 +757,6 @@ template_info = [
         template_regex=f'.*{cases("openchat")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/openchat'),
-    TemplateInfo(
-        template_regex=f'.*{cases("aya")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/aya'),
     TemplateInfo(
         template_regex=f'.*{cases("openhermes")}.*', 
         modelfile_prefix=
@@ -688,10 +778,6 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/xwinlm'),
     TemplateInfo(
-        template_regex=f'.*{cases("smollm")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smollm'),
-    TemplateInfo(
         template_regex=f'.*{cases("sqlcoder")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/sqlcoder'),
@@ -699,14 +785,6 @@ template_info = [
         template_regex=f'.*{cases("starling-lm")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/starling-lm'),
-    TemplateInfo(
-        template_regex=f'.*{cases("falcon")}.*{cases("-2")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/falcon2'),
-    TemplateInfo(
-        template_regex=f'.*{cases("falcon")}.*', 
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/falcon'),
     TemplateInfo(
         template_regex=f'.*{cases("solar-pro")}.*', 
         modelfile_prefix=

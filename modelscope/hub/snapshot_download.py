@@ -21,6 +21,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
 
@@ -204,9 +205,8 @@ def _snapshot_download(
 
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
-    system_cache = cache_dir if cache_dir is not None else os.getenv(
-        'MODELSCOPE_CACHE',
-        Path.home().joinpath('.cache', 'modelscope', 'hub'))
+    system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir(
+    )
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -233,7 +233,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, repo_id)
+                    system_cache, 'hub', repo_id)
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -294,7 +294,7 @@ def _snapshot_download(
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
                 local_dir) if local_dir else os.path.join(
-                    system_cache, 'datasets', repo_id)
+                    system_cache, 'hub', 'datasets', repo_id)
             print(f'Downloading Dataset to directory: {directory}')
 
             group_or_owner, name = model_id_to_group_owner_name(repo_id)

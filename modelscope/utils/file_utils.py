@@ -64,7 +64,7 @@ def get_dataset_cache_root() -> str:
     Returns:
         str: the modelscope dataset raw file cache root.
     """
-    return os.path.join(get_modelscope_cache_dir(), 'datasets')
+    return os.path.join(get_modelscope_cache_dir(), 'hub', 'datasets')
 
 
 def get_dataset_cache_dir(dataset_id: str) -> str:

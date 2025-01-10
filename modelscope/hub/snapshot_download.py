@@ -294,7 +294,7 @@ def _snapshot_download(
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
                 local_dir) if local_dir else os.path.join(
-                    system_cache, 'datasets', repo_id)
+                    system_cache, 'datasets', *repo_id.split('/'))
             print(f'Downloading Dataset to directory: {directory}')
 
             group_or_owner, name = model_id_to_group_owner_name(repo_id)

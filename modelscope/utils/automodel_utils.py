@@ -3,11 +3,14 @@ import os
 from types import MethodType
 from typing import Any, Optional
 
+from modelscope import get_logger
 from modelscope.metainfo import Tasks
 from modelscope.utils.ast_utils import INDEX_KEY
 from modelscope.utils.import_utils import (LazyImportModule,
                                            is_torch_available,
                                            is_transformers_available)
+
+logger = get_logger()
 
 
 def can_load_by_ms(model_dir: str, task_name: Optional[str],
@@ -91,6 +94,9 @@ def get_hf_automodel_class(model_dir: str,
     if not os.path.exists(config_path):
         return None
     try:
+        logger.warning(
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            'that you can trust the external codes.')
         config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
         if task_name is None:
             automodel_class = get_default_automodel(config)

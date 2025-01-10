@@ -233,7 +233,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, 'hub', repo_id)
+                    system_cache, 'hub', *repo_id.split('/'))
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -294,7 +294,7 @@ def _snapshot_download(
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
                 local_dir) if local_dir else os.path.join(
-                    system_cache, 'hub', 'datasets', repo_id)
+                    system_cache, 'hub', 'datasets', *repo_id.split('/'))
             print(f'Downloading Dataset to directory: {directory}')
 
             group_or_owner, name = model_id_to_group_owner_name(repo_id)

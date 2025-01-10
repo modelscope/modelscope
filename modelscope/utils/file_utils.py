@@ -60,11 +60,16 @@ def get_model_cache_root() -> str:
 
 def get_dataset_cache_root() -> str:
     """Get dataset raw file cache root path.
+    if `MODELSCOPE_CACHE` is set, return `MODELSCOPE_CACHE/datasets`,
+    else return `~/.cache/modelscope/hub/datasets`
 
     Returns:
         str: the modelscope dataset raw file cache root.
     """
-    return os.path.join(get_modelscope_cache_dir(), 'hub', 'datasets')
+    if os.getenv('MODELSCOPE_CACHE'):
+        return os.path.join(get_modelscope_cache_dir(), 'datasets')
+    else:
+        return os.path.join(get_modelscope_cache_dir(), 'hub', 'datasets')
 
 
 def get_dataset_cache_dir(dataset_id: str) -> str:

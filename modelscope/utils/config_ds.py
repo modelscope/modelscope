@@ -10,7 +10,8 @@ from modelscope.utils.file_utils import (get_dataset_cache_root,
 
 MS_CACHE_HOME = get_modelscope_cache_dir()
 
-# NOTE: remove `MS_DATASETS_CACHE` env, default is `{MODELSCOPE_CACHE}/hub/datasets`
+# NOTE: removed `MS_DATASETS_CACHE` env, 
+# default is `~/.cache/modelscope/hub/datasets`
 MS_DATASETS_CACHE = get_dataset_cache_root()
 
 DOWNLOADED_DATASETS_DIR = 'downloads'

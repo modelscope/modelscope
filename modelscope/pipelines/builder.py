@@ -120,7 +120,8 @@ def pipeline(task: str = None,
                         model, str) else read_config(
                             model[0], revision=model_revision)
                 if cfg:
-                    pipeline_name = cfg.safe_get('pipeline', {}).get('type', None)
+                    pipeline_name = cfg.safe_get('pipeline',
+                                                 {}).get('type', None)
 
                 if pipeline_name is None:
                     prefer_llm_pipeline = kwargs.get('external_engine_for_llm')
@@ -150,7 +151,8 @@ def pipeline(task: str = None,
                         ignore_file_pattern=ignore_file_pattern)
 
                     register_plugins_repo(cfg.safe_get('plugins'))
-                    register_modelhub_repo(model, cfg.get('allow_remote', False))
+                    register_modelhub_repo(model,
+                                           cfg.get('allow_remote', False))
 
                 if pipeline_name:
                     pipeline_props = {'type': pipeline_name}

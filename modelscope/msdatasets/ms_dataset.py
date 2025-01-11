@@ -239,6 +239,11 @@ class MsDataset:
             if not namespace or not dataset_name:
                 raise 'The dataset_name should be in the form of `namespace/dataset_name` or `dataset_name`.'
 
+        if trust_remote_code:
+            logger.warning(
+                f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make sure that '
+                'you can trust the external codes.')
+
         # Init context config
         dataset_context_config = DatasetContextConfig(
             dataset_name=dataset_name,

@@ -311,6 +311,60 @@ class TestToOllama(unittest.TestCase):
                               'llama3.3')
         _test_check_tmpl_type('bartowski/EXAONE-3.5-7.8B-Instruct-GGUF',
                               'exaone3.5')
+        _test_check_tmpl_type(
+            'QuantFactory/Tulu-3.1-8B-SuperNova-Smart-GGUF',
+            'tulu3',
+            gguf_meta={'general.name': 'Tulu 3.1 8B SuperNova'})
+        _test_check_tmpl_type(
+            'bartowski/Athene-V2-Chat-GGUF',
+            'athene-v2',
+            gguf_meta={'general.name': 'Athene V2 Chat'})
+        _test_check_tmpl_type(
+            'QuantFactory/granite-guardian-3.0-2b-GGUF',
+            'granite3-guardian',
+            gguf_meta={'general.name': 'Models'})
+        _test_check_tmpl_type('lmstudio-community/OpenCoder-8B-Instruct-GGUF',
+                              'opencoder')
+        _test_check_tmpl_type(
+            'QuantFactory/SmolLM2-1.7B-Instruct-GGUF',
+            'smollm2',
+            gguf_meta={'general.name': 'Smollm2 1.7B 8k Mix7 Ep2 v2'})
+        _test_check_tmpl_type(
+            'prithivMLmods/Aya-Expanse-8B-GGUF',
+            'aya-expanse',
+            gguf_meta={'general.name': 'Aya Expanse 8b'})
+        _test_check_tmpl_type('lmstudio-community/Falcon3-7B-Instruct-GGUF',
+                              'falcon3')
+        _test_check_tmpl_type(
+            'lmstudio-community/granite-3.1-8b-instruct-GGUF',
+            'granite3.1-dense',
+            gguf_meta={'general.name': 'Granite 3.1 8b Instruct'})
+        _test_check_tmpl_type(
+            'lmstudio-community/granite-3.1-2b-instruct-GGUF',
+            'granite3.1-dense',
+            gguf_meta={'general.name': 'Granite 3.1 2b Instruct'})
+        _test_check_tmpl_type(
+            'lmstudio-community/granite-embedding-278m-multilingual-GGUF',
+            'granite-embedding',
+            gguf_meta={'general.name': 'Granite Embedding 278m Multilingual'})
+        _test_check_tmpl_type(
+            'QuantFactory/granite-3.1-3b-a800m-instruct-GGUF',
+            'granite3.1-moe',
+            gguf_meta={'general.name': 'Granite 3.1 3b A800M Base'})
+        _test_check_tmpl_type(
+            'bartowski/granite-3.1-1b-a400m-instruct-GGUF',
+            'granite3.1-moe',
+            gguf_meta={'general.name': 'Granite 3.1 1b A400M Instruct'})
+        _test_check_tmpl_type(
+            'bartowski/SmallThinker-3B-Preview-GGUF',
+            'smallthinker',
+            gguf_meta={'general.name': 'SmallThinker 3B Preview'})
+        _test_check_tmpl_type(
+            'bartowski/Dolphin3.0-Llama3.1-8B-GGUF',
+            'dolphin3',
+            gguf_meta={'general.name': 'Dolphin 3.0 Llama 3.1 8B'})
+        _test_check_tmpl_type(
+            'AI-ModelScope/phi-4', 'phi4', gguf_meta={'general.name': 'Phi 4'})
 
 
 if __name__ == '__main__':

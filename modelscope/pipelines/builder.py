@@ -173,6 +173,8 @@ def pipeline(task: str = None,
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
             model = normalize_model_input(default_model_repo, model_revision)
             pipeline_props = {'type': pipeline_name}
+    else:
+        pipeline_props = {'type': pipeline_name}
 
     pipeline_props['model'] = model
     pipeline_props['device'] = device

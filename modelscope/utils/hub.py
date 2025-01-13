@@ -54,6 +54,8 @@ def read_config(model_id_or_path: str,
         local_path = os.path.join(model_id_or_path, ModelFile.CONFIGURATION)
     elif os.path.isfile(model_id_or_path):
         local_path = model_id_or_path
+    else:
+        return None
 
     return Config.from_file(local_path)
 

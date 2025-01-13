@@ -1,10 +1,19 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2022-present, the HuggingFace Inc. team.
-
+import base64
+import functools
+import hashlib
+import io
+import os
+import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
-from typing import (Callable, Generator, Iterable, List, Optional, TypeVar,
-                    Union)
+from pathlib import Path
+from typing import (BinaryIO, Callable, Generator, Iterable, Iterator, List,
+                    Literal, Optional, TypeVar, Union)
+
+from modelscope.utils.file_utils import get_file_hash
 
 T = TypeVar('T')
 # Always ignore `.git` and `.cache/huggingface` folders in commits
@@ -20,6 +29,8 @@ DEFAULT_IGNORE_PATTERNS = [
 ]
 # Forbidden to commit these folders
 FORBIDDEN_FOLDERS = ['.git', '.cache']
+
+UploadMode = Literal['lfs', 'normal']
 
 
 class RepoUtils:
@@ -73,9 +84,13 @@ class RepoUtils:
         ```
         """
         if isinstance(allow_patterns, str):
+            if not allow_patterns:
+                raise ValueError('allow_patterns cannot be an empty string')
             allow_patterns = [allow_patterns]
 
         if isinstance(ignore_patterns, str):
+            if not ignore_patterns:
+                raise ValueError('ignore_patterns cannot be an empty string')
             ignore_patterns = [ignore_patterns]
 
         if allow_patterns is not None:
@@ -194,3 +209,192 @@ class CommitInfo(str):
             'oid': cls.oid,
             'pr_url': cls.pr_url,
         }
+
+
+def git_hash(data: bytes) -> str:
+    """
+    Computes the git-sha1 hash of the given bytes, using the same algorithm as git.
+
+    This is equivalent to running `git hash-object`. See https://git-scm.com/docs/git-hash-object
+    for more details.
+
+    Note: this method is valid for regular files. For LFS files, the proper git hash is supposed to be computed on the
+          pointer file content, not the actual file content. However, for simplicity, we directly compare the sha256 of
+          the LFS file content when we want to compare LFS files.
+
+    Args:
+        data (`bytes`):
+            The data to compute the git-hash for.
+
+    Returns:
+        `str`: the git-hash of `data` as an hexadecimal string.
+    """
+    _kwargs = {'usedforsecurity': False} if sys.version_info >= (3, 9) else {}
+    sha1 = functools.partial(hashlib.sha1, **_kwargs)
+    sha = sha1()
+    sha.update(b'blob ')
+    sha.update(str(len(data)).encode())
+    sha.update(b'\0')
+    sha.update(data)
+    return sha.hexdigest()
+
+
+@dataclass
+class UploadInfo:
+    """
+    Dataclass holding required information to determine whether a blob
+    should be uploaded to the hub using the LFS protocol or the regular protocol
+
+    Args:
+        sha256 (`str`):
+            SHA256 hash of the blob
+        size (`int`):
+            Size in bytes of the blob
+        sample (`bytes`):
+            First 512 bytes of the blob
+    """
+
+    sha256: str
+    size: int
+    sample: bytes
+
+    @classmethod
+    def from_path(cls, path: str):
+
+        file_hash_info: dict = get_file_hash(path)
+        size = file_hash_info['file_size']
+        sha = file_hash_info['file_hash']
+        sample = open(path, 'rb').read(512)
+
+        return cls(sha256=sha, size=size, sample=sample)
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        sha = get_file_hash(data)['file_hash']
+        return cls(size=len(data), sample=data[:512], sha256=sha)
+
+    @classmethod
+    def from_fileobj(cls, fileobj: BinaryIO):
+        fileobj_info: dict = get_file_hash(fileobj)
+        sample = fileobj.read(512)
+        return cls(
+            sha256=fileobj_info['file_hash'],
+            size=fileobj_info['file_size'],
+            sample=sample)
+
+
+@dataclass
+class CommitOperationAdd:
+    """Data structure containing information about a file to be added to a commit."""
+
+    path_in_repo: str
+    path_or_fileobj: Union[str, Path, bytes, BinaryIO]
+    upload_info: UploadInfo = field(init=False, repr=False)
+
+    # Internal attributes
+
+    # set to "lfs" or "regular" once known
+    _upload_mode: Optional[UploadMode] = field(
+        init=False, repr=False, default=None)
+
+    # set to True if .gitignore rules prevent the file from being uploaded as LFS
+    # (server-side check)
+    _should_ignore: Optional[bool] = field(
+        init=False, repr=False, default=None)
+
+    # set to the remote OID of the file if it has already been uploaded
+    # useful to determine if a commit will be empty or not
+    _remote_oid: Optional[str] = field(init=False, repr=False, default=None)
+
+    # set to True once the file has been uploaded as LFS
+    _is_uploaded: bool = field(init=False, repr=False, default=False)
+
+    # set to True once the file has been committed
+    _is_committed: bool = field(init=False, repr=False, default=False)
+
+    def __post_init__(self) -> None:
+        """Validates `path_or_fileobj` and compute `upload_info`."""
+
+        # Validate `path_or_fileobj` value
+        if isinstance(self.path_or_fileobj, Path):
+            self.path_or_fileobj = str(self.path_or_fileobj)
+        if isinstance(self.path_or_fileobj, str):
+            path_or_fileobj = os.path.normpath(
+                os.path.expanduser(self.path_or_fileobj))
+            if not os.path.isfile(path_or_fileobj):
+                raise ValueError(
+                    f"Provided path: '{path_or_fileobj}' is not a file on the local file system"
+                )
+        elif not isinstance(self.path_or_fileobj, (io.BufferedIOBase, bytes)):
+            raise ValueError(
+                'path_or_fileobj must be either an instance of str, bytes or'
+                ' io.BufferedIOBase. If you passed a file-like object, make sure it is'
+                ' in binary mode.')
+        if isinstance(self.path_or_fileobj, io.BufferedIOBase):
+            try:
+                self.path_or_fileobj.tell()
+                self.path_or_fileobj.seek(0, os.SEEK_CUR)
+            except (OSError, AttributeError) as exc:
+                raise ValueError(
+                    'path_or_fileobj is a file-like object but does not implement seek() and tell()'
+                ) from exc
+
+        # Compute "upload_info" attribute
+        if isinstance(self.path_or_fileobj, str):
+            self.upload_info = UploadInfo.from_path(self.path_or_fileobj)
+        elif isinstance(self.path_or_fileobj, bytes):
+            self.upload_info = UploadInfo.from_bytes(self.path_or_fileobj)
+        else:
+            self.upload_info = UploadInfo.from_fileobj(self.path_or_fileobj)
+
+    @contextmanager
+    def as_file(self) -> Iterator[BinaryIO]:
+        """
+        A context manager that yields a file-like object allowing to read the underlying
+        data behind `path_or_fileobj`.
+        """
+        if isinstance(self.path_or_fileobj, str) or isinstance(
+                self.path_or_fileobj, Path):
+            with open(self.path_or_fileobj, 'rb') as file:
+                yield file
+        elif isinstance(self.path_or_fileobj, bytes):
+            yield io.BytesIO(self.path_or_fileobj)
+        elif isinstance(self.path_or_fileobj, io.BufferedIOBase):
+            prev_pos = self.path_or_fileobj.tell()
+            yield self.path_or_fileobj
+            self.path_or_fileobj.seek(prev_pos, 0)
+
+    def b64content(self) -> bytes:
+        """
+        The base64-encoded content of `path_or_fileobj`
+
+        Returns: `bytes`
+        """
+        with self.as_file() as file:
+            return base64.b64encode(file.read())
+
+    @property
+    def _local_oid(self) -> Optional[str]:
+        """Return the OID of the local file.
+
+        This OID is then compared to `self._remote_oid` to check if the file has changed compared to the remote one.
+        If the file did not change, we won't upload it again to prevent empty commits.
+
+        For LFS files, the OID corresponds to the SHA256 of the file content (used a LFS ref).
+        For regular files, the OID corresponds to the SHA1 of the file content.
+        Note: this is slightly different to git OID computation since the oid of an LFS file is usually the git-SHA1
+            of the pointer file content (not the actual file content). However, using the SHA256 is enough to detect
+            changes and more convenient client-side.
+        """
+        if self._upload_mode is None:
+            return None
+        elif self._upload_mode == 'lfs':
+            return self.upload_info.sha256
+        else:
+            # Regular file => compute sha1
+            # => no need to read by chunk since the file is guaranteed to be <=5MB.
+            with self.as_file() as file:
+                return git_hash(file.read())
+
+
+CommitOperation = Union[CommitOperationAdd, ]

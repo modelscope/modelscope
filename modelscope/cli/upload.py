@@ -4,8 +4,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.utils.constant import (DEFAULT_REPOSITORY_REVISION,
-                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT)
+from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -55,12 +54,6 @@ class UploadCMD(CLICommand):
             default=REPO_TYPE_MODEL,
             help=
             'Type of the repo to upload to (e.g. `dataset`, `model`, `studio`).',
-        )
-        parser.add_argument(
-            '--revision',
-            type=str,
-            default=DEFAULT_REPOSITORY_REVISION,
-            help=('An optional Git revision to push to.'),
         )
         parser.add_argument(
             '--include',
@@ -162,7 +155,6 @@ class UploadCMD(CLICommand):
                 path_in_repo=self.path_in_repo,
                 repo_id=self.repo_id,
                 repo_type=self.args.repo_type,
-                revision=self.args.revision,
                 commit_message=self.args.commit_message,
                 commit_description=self.args.commit_description,
             )
@@ -174,7 +166,6 @@ class UploadCMD(CLICommand):
                 commit_message=self.args.commit_message,
                 commit_description=self.args.commit_description,
                 repo_type=self.args.repo_type,
-                revision=self.args.revision,
                 allow_patterns=self.args.include,
                 ignore_patterns=self.args.exclude,
                 max_workers=self.args.max_workers,

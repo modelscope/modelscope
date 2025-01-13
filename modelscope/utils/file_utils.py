@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import hashlib
 import inspect
+import io
 import os
 from pathlib import Path
 from shutil import Error, copy2, copystat
@@ -191,7 +192,7 @@ def get_file_size(file_path_or_obj: Union[str, Path, bytes, BinaryIO]) -> int:
         return file_path.stat().st_size
     elif isinstance(file_path_or_obj, bytes):
         return len(file_path_or_obj)
-    elif isinstance(file_path_or_obj, BinaryIO):
+    elif isinstance(file_path_or_obj, io.BufferedIOBase):
         current_position = file_path_or_obj.tell()
         file_path_or_obj.seek(0, os.SEEK_END)
         size = file_path_or_obj.tell()
@@ -199,14 +200,15 @@ def get_file_size(file_path_or_obj: Union[str, Path, bytes, BinaryIO]) -> int:
         return size
     else:
         raise TypeError(
-            'Unsupported type: must be string, Path, bytes, or BinaryIO')
+            'Unsupported type: must be string, Path, bytes, or io.BufferedIOBase'
+        )
 
 
 def get_file_hash(
     file_path_or_obj: Union[str, Path, bytes, BinaryIO],
     buffer_size_mb: Optional[int] = 1,
     tqdm_desc: Optional[str] = '[Calculating]',
-    disable_tqdm: Optional[bool] = False,
+    disable_tqdm: Optional[bool] = True,
 ) -> dict:
 
     file_size = get_file_size(file_path_or_obj)
@@ -240,7 +242,7 @@ def get_file_hash(
         final_chunk_size = len(file_path_or_obj)
         progress.update(final_chunk_size)
 
-    elif isinstance(file_path_or_obj, BinaryIO):
+    elif isinstance(file_path_or_obj, io.BufferedIOBase):
         while byte_chunk := file_path_or_obj.read(buffer_size):
             chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
             file_hash.update(byte_chunk)
@@ -250,12 +252,13 @@ def get_file_hash(
 
     else:
         progress.close()
-        raise ValueError('Input must be str, Path, bytes or a BinaryIO')
+        raise ValueError(
+            'Input must be str, Path, bytes or a io.BufferedIOBase')
 
     progress.close()
 
     return {
-        'file_path': file_path_or_obj,
+        'file_path_or_obj': file_path_or_obj,
         'file_hash': file_hash,
         'file_size': file_size,
         'chunk_size': final_chunk_size,

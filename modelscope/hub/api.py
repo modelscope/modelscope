@@ -38,11 +38,10 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility,
-                                      RepoVisibility)
+                                      Licenses, ModelVisibility)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
-                                   NotLoginException, NoValidRevisionError,
-                                   RequestError, datahub_raise_on_error,
+                                   NotLoginException, RequestError,
+                                   datahub_raise_on_error,
                                    handle_http_post_error,
                                    handle_http_response, is_ok,
                                    raise_for_http_status, raise_on_error)
@@ -59,7 +58,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadMode, Frameworks, ModelFile,
                                        Tasks, VirgoDatasetConfig)
 from modelscope.utils.logger import get_logger
-from modelscope.utils.repo_utils import (DEFAULT_IGNORE_PATTERNS, CommitInfo,
+from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
+                                         DEFAULT_IGNORE_PATTERNS,
+                                         MODEL_LFS_SUFFIX, CommitInfo,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
 from modelscope.utils.thread_utils import thread_executor
@@ -1211,9 +1212,13 @@ class HubApi:
         if len(repo_id_list) != 2:
             raise ValueError('Invalid repo id, should be in the format of `owner_name/repo_name`')
         namespace, repo_name = repo_id_list
-        visibility = RepoVisibility.get(visibility.lower())
 
         if repo_type == REPO_TYPE_MODEL:
+            visibilities = {k: v for k, v in ModelVisibility.__dict__.items() if not k.startswith('__')}
+            visibility: int = visibilities.get(visibility.upper())
+            if visibility is None:
+                raise ValueError(f'Invalid visibility: {visibility}, '
+                                 f'supported visibilities: `public`, `private`, `internal`')
             repo_url: str = self.create_model(
                 model_id=repo_id,
                 visibility=visibility,
@@ -1222,6 +1227,11 @@ class HubApi:
             )
 
         elif repo_type == REPO_TYPE_DATASET:
+            visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
+            visibility: int = visibilities.get(visibility.upper())
+            if visibility is None:
+                raise ValueError(f'Invalid visibility: {visibility}, '
+                                 f'supported visibilities: `public`, `private`, `internal`')
             repo_url: str = self.create_dataset(
                 dataset_name=repo_name,
                 namespace=namespace,
@@ -1320,6 +1330,10 @@ class HubApi:
             path_or_fileobj = path_or_fileobj.read()
 
         self.upload_checker.check_file(path_or_fileobj)
+        self.upload_checker.check_normal_files(
+            file_path_list=[path_or_fileobj],
+            repo_type=repo_type,
+        )
 
         if token:
             self.login(access_token=token)
@@ -1353,7 +1367,7 @@ class HubApi:
             path_in_repo=path_in_repo,
             path_or_fileobj=path_or_fileobj,
         )
-        add_operation._upload_mode = 'lfs' if UploadingCheck().is_lfs(path_or_fileobj) else 'normal'
+        add_operation._upload_mode = 'lfs' if self.upload_checker.is_lfs(path_or_fileobj, repo_type) else 'normal'
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
@@ -1414,6 +1428,11 @@ class HubApi:
             ignore_patterns=ignore_patterns,
         )
 
+        self.upload_checker.check_normal_files(
+            file_path_list = [item for _, item in prepared_repo_objects],
+            repo_type=repo_type,
+        )
+
         @thread_executor(max_workers=max_workers, disable_tqdm=False)
         def _upload_items(item_pair, **kwargs):
             file_path_in_repo, file_path = item_pair
@@ -1466,7 +1485,7 @@ class HubApi:
             )
 
             # check normal or lfs
-            opt._upload_mode = 'lfs' if UploadingCheck().is_lfs(prepared_file_path) else 'normal'
+            opt._upload_mode = 'lfs' if self.upload_checker.is_lfs(prepared_file_path, repo_type) else 'normal'
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
@@ -1886,11 +1905,13 @@ class UploadingCheck:
             max_file_count_in_dir: int = 10_000,
             max_file_size: int = 50 * 1024 ** 3,
             lfs_size_limit: int = 5 * 1024 * 1024,
+            normal_file_size_total_limit: int = 512 * 1024 * 1024,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
         self.lfs_size_limit = lfs_size_limit
+        self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):
 
@@ -1927,12 +1948,33 @@ class UploadingCheck:
 
         return file_count, dir_count
 
-    def is_lfs(self, file_path_or_obj: Union[str, Path, bytes, BinaryIO]) -> bool:
+    def is_lfs(self, file_path_or_obj: Union[str, Path, bytes, BinaryIO], repo_type: str) -> bool:
+
+        hit_lfs_suffix = True
 
         if isinstance(file_path_or_obj, (str, Path)):
-            if not os.path.exists(file_path_or_obj):
+            file_path_or_obj = Path(file_path_or_obj)
+            if not file_path_or_obj.exists():
                 raise ValueError(f'File {file_path_or_obj} does not exist')
+
+            if repo_type == REPO_TYPE_MODEL:
+                if file_path_or_obj.suffix not in MODEL_LFS_SUFFIX:
+                    hit_lfs_suffix = False
+            elif repo_type == REPO_TYPE_DATASET:
+                if file_path_or_obj.suffix not in DATASET_LFS_SUFFIX:
+                    hit_lfs_suffix = False
+            else:
+                raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         file_size: int = get_file_size(file_path_or_obj)
 
-        return file_size > self.lfs_size_limit
+        return file_size > self.lfs_size_limit or hit_lfs_suffix
+
+    def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
+
+        normal_file_list = [item for item in file_path_list if not self.is_lfs(item, repo_type)]
+        total_size = sum([get_file_size(item) for item in normal_file_list])
+
+        if total_size > self.normal_file_size_total_limit:
+            raise ValueError(f'Total size of non-lfs files {total_size/(1024 * 1024)}MB '
+                             f'and exceeds limit: {self.normal_file_size_total_limit/(1024 * 1024)}MB')

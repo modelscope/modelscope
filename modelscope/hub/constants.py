@@ -59,10 +59,3 @@ class DatasetVisibility(object):
     PRIVATE = 1
     INTERNAL = 3
     PUBLIC = 5
-
-
-RepoVisibility = dict(
-    private=1,
-    internal=3,
-    public=5,
-)

@@ -7,8 +7,6 @@ from pathlib import Path
 from shutil import Error, copy2, copystat
 from typing import BinaryIO, Optional, Union
 
-from tqdm import tqdm
-
 
 # TODO: remove this api, unify to flattened args
 def func_receive_dict_inputs(func):
@@ -210,6 +208,7 @@ def get_file_hash(
     tqdm_desc: Optional[str] = '[Calculating]',
     disable_tqdm: Optional[bool] = True,
 ) -> dict:
+    from tqdm import tqdm
 
     file_size = get_file_size(file_path_or_obj)
     buffer_size = buffer_size_mb * 1024 * 1024

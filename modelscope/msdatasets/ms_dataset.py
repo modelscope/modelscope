@@ -6,7 +6,8 @@ from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
                     Sequence, Union)
 
 import numpy as np
-from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+from datasets import (Dataset, DatasetDict, Features, IterableDataset,
+                      IterableDatasetDict)
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
 
@@ -163,6 +164,7 @@ class MsDataset:
         download_mode: Optional[DownloadMode] = DownloadMode.
         REUSE_DATASET_IF_EXISTS,
         cache_dir: Optional[str] = MS_DATASETS_CACHE,
+        features: Optional[Features] = None,
         use_streaming: Optional[bool] = False,
         stream_batch_size: Optional[int] = 1,
         custom_cfg: Optional[Config] = Config(),
@@ -305,7 +307,7 @@ class MsDataset:
                         data_files=data_files,
                         split=split,
                         cache_dir=cache_dir,
-                        features=None,
+                        features=features,
                         download_config=None,
                         download_mode=download_mode.value,
                         revision=version,
@@ -334,6 +336,9 @@ class MsDataset:
                 return dataset_inst
 
         elif hub == Hubs.virgo:
+            warnings.warn(
+                'The option `Hubs.virgo` is deprecated, '
+                'will be removed in the future version.', DeprecationWarning)
             from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
             from modelscope.utils.constant import VirgoDatasetConfig
             # Rewrite the namespace, version and cache_dir for virgo dataset.
@@ -395,8 +400,10 @@ class MsDataset:
 
         """
         warnings.warn(
-            'upload is deprecated, please use git command line to upload the dataset.',
-            DeprecationWarning)
+            'The function `upload` is deprecated, '
+            'please use git command '
+            'or modelscope.hub.api.HubApi.upload_folder '
+            'or modelscope.hub.api.HubApi.upload_file.', DeprecationWarning)
 
         if not object_name:
             raise ValueError('object_name cannot be empty!')
@@ -446,7 +453,7 @@ class MsDataset:
         """
 
         warnings.warn(
-            'upload is deprecated, please use git command line to upload the dataset.',
+            'The function `clone_meta` is deprecated, please use git command line to clone the repo.',
             DeprecationWarning)
 
         _repo = DatasetRepository(
@@ -487,6 +494,12 @@ class MsDataset:
             None
 
         """
+        warnings.warn(
+            'The function `upload_meta` is deprecated, '
+            'please use git command '
+            'or CLI `modelscope upload owner_name/repo_name ...`.',
+            DeprecationWarning)
+
         _repo = DatasetRepository(
             repo_work_dir=dataset_work_dir,
             dataset_id='',

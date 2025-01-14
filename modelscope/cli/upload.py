@@ -93,7 +93,7 @@ class UploadCMD(CLICommand):
             '--endpoint',
             type=str,
             default='https://www.modelscope.cn',
-            help='The endpoint of the Modelscope API.')
+            help='Endpoint for Modelscope service.')
 
         parser.set_defaults(func=subparser_func)
 

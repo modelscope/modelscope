@@ -47,6 +47,9 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
+from modelscope.hub.utils.utils import (get_endpoint, get_readable_folder_size,
+                                        get_release_datetime,
+                                        model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
@@ -57,6 +60,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DatasetVisibilityMap, DownloadChannel,
                                        DownloadMode, Frameworks, ModelFile,
                                        Tasks, VirgoDatasetConfig)
+from modelscope.utils.file_utils import get_file_hash, get_file_size
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
@@ -64,9 +68,6 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
 from modelscope.utils.thread_utils import thread_executor
-from ..utils.file_utils import get_file_hash, get_file_size
-from .utils.utils import (get_endpoint, get_readable_folder_size,
-                          get_release_datetime, model_id_to_group_owner_name)
 
 logger = get_logger()
 

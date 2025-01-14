@@ -1272,6 +1272,7 @@ class HubApi:
         )
 
         resp = response.json()
+
         if not resp['Success']:
             commit_message = resp['Message']
             logger.warning(f'{commit_message}')
@@ -1423,7 +1424,7 @@ class HubApi:
             file_size: int = hash_info_d['file_size']
             file_hash: str = hash_info_d['file_hash']
 
-            self._upload_blob(
+            upload_res: dict = self._upload_blob(
                 repo_id=repo_id,
                 repo_type=repo_type,
                 sha256=file_hash,
@@ -1432,14 +1433,19 @@ class HubApi:
                 disable_tqdm=False if file_size > 10 * 1024 * 1024 else True,
             )
 
-        _upload_items(
+            return {
+                'file_path_in_repo': file_path_in_repo,
+                'file_path': file_path,
+                'is_uploaded': upload_res['is_uploaded'],
+            }
+
+        uploaded_items_list = _upload_items(
             prepared_repo_objects,
             repo_id=repo_id,
             token=token,
             repo_type=repo_type,
             commit_message=commit_message,
             commit_description=commit_description,
-            size_to_chunk_mb=100,
             buffer_size_mb=1,
             tqdm_desc='[Uploading]',
             disable_tqdm=False,
@@ -1450,7 +1456,10 @@ class HubApi:
         # Construct commit info and create commit
         operations = []
 
-        for prepared_path_in_repo, prepared_file_path in prepared_repo_objects:
+        for item_d in uploaded_items_list:
+            prepared_path_in_repo: str = item_d['file_path_in_repo']
+            prepared_file_path: str = item_d['file_path']
+            is_uploaded: bool = item_d['is_uploaded']
             opt = CommitOperationAdd(
                 path_in_repo=prepared_path_in_repo,
                 path_or_fileobj=prepared_file_path,
@@ -1458,6 +1467,7 @@ class HubApi:
 
             # check normal or lfs
             opt._upload_mode = 'lfs' if UploadingCheck().is_lfs(prepared_file_path) else 'normal'
+            opt._is_uploaded = is_uploaded
             operations.append(opt)
 
         self.create_commit(
@@ -1495,7 +1505,6 @@ class HubApi:
             is_uploaded=False,
             status_code=None,
             status_msg=None,
-            sha256=sha256,
         )
 
         objects = [{'oid': sha256, 'size': size}]

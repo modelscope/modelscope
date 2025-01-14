@@ -338,8 +338,7 @@ class MsDataset:
         elif hub == Hubs.virgo:
             warnings.warn(
                 'The option `Hubs.virgo` is deprecated, '
-                'will be removed in the future version.',
-                DeprecationWarning)
+                'will be removed in the future version.', DeprecationWarning)
             from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
             from modelscope.utils.constant import VirgoDatasetConfig
             # Rewrite the namespace, version and cache_dir for virgo dataset.
@@ -404,8 +403,7 @@ class MsDataset:
             'The function `upload` is deprecated, '
             'please use git command '
             'or modelscope.hub.api.HubApi.upload_folder '
-            'or modelscope.hub.api.HubApi.upload_file.',
-            DeprecationWarning)
+            'or modelscope.hub.api.HubApi.upload_file.', DeprecationWarning)
 
         if not object_name:
             raise ValueError('object_name cannot be empty!')

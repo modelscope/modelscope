@@ -3,7 +3,7 @@ import os
 from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
-from modelscope.hub.api import HubApi
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
 
@@ -53,7 +53,7 @@ class UploadCMD(CLICommand):
             choices=REPO_TYPE_SUPPORT,
             default=REPO_TYPE_MODEL,
             help=
-            'Type of the repo to upload to (e.g. `dataset`, `model`, `studio`).',
+            'Type of the repo to upload to (e.g. `dataset`, `model`). Defaults to be `model`.',
         )
         parser.add_argument(
             '--include',
@@ -69,12 +69,13 @@ class UploadCMD(CLICommand):
             '--commit-message',
             type=str,
             default=None,
-            help='The message of commit.')
+            help='The message of commit. Default to be `None`.')
         parser.add_argument(
             '--commit-description',
             type=str,
             default=None,
-            help='The description of the generated commit.')
+            help=
+            'The description of the generated commit. Default to be `None`.')
         parser.add_argument(
             '--token',
             type=str,
@@ -139,15 +140,17 @@ class UploadCMD(CLICommand):
         # Check token and login
         # The cookies will be reused if the user has logged in before.
         api = HubApi(endpoint=self.args.endpoint)
-        if not self.args.token:
-            logger.warning(
-                '`token` is not provided! '
+
+        if self.args.token:
+            api.login(access_token=self.args.token)
+        cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError(
+                'The `token` is not provided! '
                 'You can pass the `--token` argument, '
                 'or use api.login(access_token=`your_sdk_token`). '
-                'To get the token, refer to https://modelscope.cn/my/myaccesstoken'
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
             )
-        else:
-            api.login(self.args.token)
 
         if os.path.isfile(self.local_path):
             commit_info = api.upload_file(
@@ -173,4 +176,4 @@ class UploadCMD(CLICommand):
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')
 
-        logger.info(f'Uploaded finished, commit info: {commit_info}')
+        logger.info(f'Upload finished, commit info: {commit_info}')

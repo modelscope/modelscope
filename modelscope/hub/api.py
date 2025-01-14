@@ -1293,9 +1293,8 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
-            size_to_chunk_mb: Optional[int] = 100,
             buffer_size_mb: Optional[int] = 1,
-            tqdm_desc: Optional[str] = None,
+            tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
     ) -> CommitInfo:
 
@@ -1338,27 +1337,14 @@ class HubApi:
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
 
-        # TODO: to be implemented
-        # size_to_chunk: int = size_to_chunk_mb * 1024 * 1024
-        # if file_size > size_to_chunk:
-        #     logger.info(f'File size is large than {size_to_chunk_mb}MB, upload file with chunks ...')
-
-        progress = tqdm(
-            total=file_size,
-            initial=0,
-            unit_scale=True,
-            dynamic_ncols=True,
-            unit='B',
-            desc=tqdm_desc or '[Uploading]',
-            disable=disable_tqdm,
-        )
-
         self._upload_blob(
             repo_id=repo_id,
             repo_type=repo_type,
             sha256=file_hash,
             size=file_size,
             data=path_or_fileobj,
+            disable_tqdm=disable_tqdm,
+            tqdm_desc=tqdm_desc,
         )
 
         # Construct commit info and create commit
@@ -1377,8 +1363,6 @@ class HubApi:
             token=token,
             repo_type=repo_type,
         )
-
-        progress.update(file_size)
 
         return commit_info
 
@@ -1399,6 +1383,9 @@ class HubApi:
 
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        allow_patterns = allow_patterns if allow_patterns else None
+        ignore_patterns = ignore_patterns if ignore_patterns else None
 
         self.upload_checker.check_folder(folder_path)
 
@@ -1441,6 +1428,7 @@ class HubApi:
                 sha256=file_hash,
                 size=file_size,
                 data=file_path,
+                disable_tqdm=False if file_size > 10 * 1024 * 1024 else True,
             )
 
         _upload_items(
@@ -1496,6 +1484,9 @@ class HubApi:
             sha256: str,
             size: int,
             data: Union[str, Path, bytes, BinaryIO],
+            disable_tqdm: Optional[bool] = False,
+            tqdm_desc: Optional[str] = '[Uploading]',
+            buffer_size_mb: Optional[int] = 1,
     ) -> dict:
         res_d: dict = dict(
             url=None,
@@ -1525,32 +1516,49 @@ class HubApi:
             raise ValueError('Token does not exist, please login first.')
 
         self.headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
+        headers = self.builder_headers(self.headers)
 
-        if isinstance(data, (str, Path)):
-            with open(data, 'rb') as f:
-                data = f.read()
+        def read_in_chunks(file_object, pbar, chunk_size=buffer_size_mb * 1024 * 1024):
+            """Lazy function (generator) to read a file piece by piece."""
+            while True:
+                ck = file_object.read(chunk_size)
+                if not ck:
+                    break
+                pbar.update(len(ck))
+                yield ck
+
+        with tqdm(
+                total=size,
+                unit='B',
+                unit_scale=True,
+                desc=tqdm_desc,
+                disable=disable_tqdm
+        ) as pbar:
+
+            if isinstance(data, (str, Path)):
+                with open(data, 'rb') as f:
+                    response = requests.put(
+                        upload_object['url'],
+                        headers=headers,
+                        data=read_in_chunks(f, pbar)
+                    )
+
+            elif isinstance(data, bytes):
                 response = requests.put(
                     upload_object['url'],
-                    headers=self.builder_headers(self.headers),
-                    data=data,
+                    headers=headers,
+                    data=read_in_chunks(io.BytesIO(data), pbar)
                 )
 
-        elif isinstance(data, bytes):
-            response = requests.put(
-                upload_object['url'],
-                headers=self.builder_headers(self.headers),
-                data=data,
-            )
+            elif isinstance(data, io.BufferedIOBase):
+                response = requests.put(
+                    upload_object['url'],
+                    headers=headers,
+                    data=read_in_chunks(data, pbar)
+                )
 
-        elif isinstance(data, io.BufferedIOBase):
-            response = requests.put(
-                upload_object['url'],
-                headers=self.builder_headers(self.headers),
-                data=data.read(),
-            )
-
-        else:
-            raise ValueError('Invalid data type, only support str, Path, bytes, io.BufferedIOBase')
+            else:
+                raise ValueError('Invalid data type to upload')
 
         resp = response.json()
         raise_on_error(resp)

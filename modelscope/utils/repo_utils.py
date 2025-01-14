@@ -16,7 +16,7 @@ from typing import (BinaryIO, Callable, Generator, Iterable, Iterator, List,
 from modelscope.utils.file_utils import get_file_hash
 
 T = TypeVar('T')
-# Always ignore `.git` and `.cache/huggingface` folders in commits
+# Always ignore `.git` and `.cache/modelscope` folders in commits
 DEFAULT_IGNORE_PATTERNS = [
     '.git',
     '.git/*',
@@ -83,14 +83,14 @@ class RepoUtils:
         ["aaa.pdf"]
         ```
         """
+
+        allow_patterns = allow_patterns if allow_patterns else None
+        ignore_patterns = ignore_patterns if ignore_patterns else None
+
         if isinstance(allow_patterns, str):
-            if not allow_patterns:
-                raise ValueError('allow_patterns cannot be an empty string')
             allow_patterns = [allow_patterns]
 
         if isinstance(ignore_patterns, str):
-            if not ignore_patterns:
-                raise ValueError('ignore_patterns cannot be an empty string')
             ignore_patterns = [ignore_patterns]
 
         if allow_patterns is not None:

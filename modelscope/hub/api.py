@@ -1337,7 +1337,7 @@ class HubApi:
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
 
-        self._upload_blob(
+        upload_res: dict = self._upload_blob(
             repo_id=repo_id,
             repo_type=repo_type,
             sha256=file_hash,
@@ -1353,6 +1353,7 @@ class HubApi:
             path_or_fileobj=path_or_fileobj,
         )
         add_operation._upload_mode = 'lfs' if UploadingCheck().is_lfs(path_or_fileobj) else 'normal'
+        add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
         commit_info: CommitInfo = self.create_commit(
@@ -1488,11 +1489,13 @@ class HubApi:
             tqdm_desc: Optional[str] = '[Uploading]',
             buffer_size_mb: Optional[int] = 1,
     ) -> dict:
+
         res_d: dict = dict(
             url=None,
-            reuse=False,
+            is_uploaded=False,
             status_code=None,
             status_msg=None,
+            sha256=sha256,
         )
 
         objects = [{'oid': sha256, 'size': size}]
@@ -1507,7 +1510,7 @@ class HubApi:
 
         if upload_object is None:
             logger.info(f'Blob {sha256} has already uploaded, reuse it.')
-            res_d['reuse'] = True
+            res_d['is_uploaded'] = True
             return res_d
 
         cookies = ModelScopeConfig.get_cookies()
@@ -1676,6 +1679,7 @@ class HubApi:
 
         # 2. Send operations, one per line
         for operation in operations:
+
             # Skip ignored files
             if isinstance(operation, CommitOperationAdd) and operation._should_ignore:
                 logger.debug(f"Skipping file '{operation.path_in_repo}' in commit (ignored by gitignore file).")
@@ -1686,7 +1690,7 @@ class HubApi:
             if isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'normal':
 
                 commit_action = {
-                    'action': 'create',
+                    'action': 'update' if operation._is_uploaded else 'create',
                     'path': operation.path_in_repo,
                     'type': 'normal',
                     'size': operation.upload_info.size,
@@ -1700,7 +1704,7 @@ class HubApi:
             elif isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'lfs':
 
                 commit_action = {
-                    'action': 'create',
+                    'action': 'update' if operation._is_uploaded else 'create',
                     'path': operation.path_in_repo,
                     'type': 'lfs',
                     'size': operation.upload_info.size,

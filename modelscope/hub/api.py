@@ -1451,6 +1451,7 @@ class HubApi:
                 size=file_size,
                 data=file_path,
                 disable_tqdm=False if file_size > 10 * 1024 * 1024 else True,
+                tqdm_desc='[Uploading ' + file_path_in_repo + ' ]',
             )
 
             return {
@@ -1467,7 +1468,6 @@ class HubApi:
             commit_message=commit_message,
             commit_description=commit_description,
             buffer_size_mb=1,
-            tqdm_desc='[Uploading]',
             disable_tqdm=False,
         )
 

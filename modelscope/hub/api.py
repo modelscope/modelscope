@@ -1450,8 +1450,8 @@ class HubApi:
                 sha256=file_hash,
                 size=file_size,
                 data=file_path,
-                disable_tqdm=False if file_size > 10 * 1024 * 1024 else True,
-                tqdm_desc='[Uploading ' + file_path_in_repo + ' ]',
+                disable_tqdm=False if file_size > 5 * 1024 * 1024 else True,
+                tqdm_desc='[Uploading ' + file_path_in_repo + ']',
             )
 
             return {

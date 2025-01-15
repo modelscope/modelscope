@@ -212,8 +212,7 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
-            f'{self.args.flashattn_version}'
-        )
+            f'{self.args.flashattn_version}')
         base_image = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-{self.args.python_tag}-'
             f'torch{self.args.torch_version}-tf{self.args.tf_version}-base')
@@ -290,8 +289,7 @@ class LLMImageBuilder(Builder):
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
-            f'{self.args.flashattn_version}'
-        )
+            f'{self.args.flashattn_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)

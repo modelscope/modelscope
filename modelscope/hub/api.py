@@ -727,13 +727,13 @@ class HubApi:
 
         Args:
             repo_id (`str`): The repo id to use
-            filename (`str`): The queried filename
+            filename (`str`): The queried filename, while in a sub folder, pass a/b
             revision (`Optional[str]`): The repo revision
         Returns:
             The query result in bool value
         """
-        files = self.get_model_files(repo_id, revision=revision)
-        files = [file['Name'] for file in files]
+        files = self.get_model_files(repo_id, recursive=True, revision=revision)
+        files = [file['Path'] for file in files]
         return filename in files
 
     def create_dataset(self,

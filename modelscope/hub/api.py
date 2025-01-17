@@ -1783,9 +1783,10 @@ class ModelScopeConfig:
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
-                    if cookie.is_expired() and not ModelScopeConfig.cookie_expired_warning:
+                    if cookie.name == 'm_session_id' and cookie.is_expired() and \
+                            not ModelScopeConfig.cookie_expired_warning:
                         ModelScopeConfig.cookie_expired_warning = True
-                        logger.debug(
+                        logger.error(
                             'Authentication has expired, '
                             'please re-login with modelscope login --token "YOUR_SDK_TOKEN" '
                             'if you need to access private models or datasets.')

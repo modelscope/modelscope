@@ -11,6 +11,7 @@ from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
 from modelscope.cli.server import ServerCMD
+from modelscope.cli.upload import UploadCMD
 from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 
@@ -25,6 +26,7 @@ def run_cmd():
     subparsers = parser.add_subparsers(help='modelscope commands helpers')
 
     DownloadCMD.define_args(subparsers)
+    UploadCMD.define_args(subparsers)
     ClearCacheCMD.define_args(subparsers)
     PluginsCMD.define_args(subparsers)
     PipelineCMD.define_args(subparsers)

@@ -97,6 +97,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
             revision = self.cfg.safe_get('adapter_cfg.model_revision',
                                          'master')
+            logger.warning(
+                f'Use trust_remote_code=True. Will invoke codes from {base_model}. Please make sure that you can '
+                'trust the external codes.')
             base_model = Model.from_pretrained(
                 base_model,
                 revision,
@@ -134,6 +137,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                     model) else snapshot_download(model)
                 # TODO: Temporary use of AutoModelForCausalLM
                 # Need to be updated into a universal solution
+                logger.warning(
+                    f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+                    'that you can trust the external codes.')
                 model = AutoModelForCausalLM.from_pretrained(
                     model_dir,
                     device_map=self.device_map,
@@ -173,6 +179,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.llm_framework = llm_framework
 
         if os.path.exists(kwargs['model']):
+            logger.warning(
+                f'Use trust_remote_code=True. Will invoke codes from {kwargs["model"]}. Please make sure '
+                'that you can trust the external codes.')
             config = AutoConfig.from_pretrained(
                 kwargs['model'], trust_remote_code=True)
             q_config = config.__dict__.get('quantization_config', None)
@@ -423,6 +432,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             model_dir = self.model.model_dir
         if tokenizer_class is None:
             tokenizer_class = AutoTokenizer
+        logger.warning(
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            'that you can trust the external codes.')
         return tokenizer_class.from_pretrained(
             model_dir, trust_remote_code=True)
 

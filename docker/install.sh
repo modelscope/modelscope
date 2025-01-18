@@ -6,6 +6,7 @@ torchaudio_version=${3:-2.4.0}
 vllm_version=${4:-0.6.0}
 lmdeploy_version=${5:-0.6.1}
 autogptq_version=${6:-0.7.1}
+flashattn_version=${7:-2.7.1.post4}
 
 pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
 
@@ -17,7 +18,8 @@ pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes d
 
 # pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl
 # find on: https://github.com/Dao-AILab/flash-attention/releases
-cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
+# cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
+pip install --no-cache-dir flash_attn==$flashattn_version
 
 pip install --no-cache-dir triton auto-gptq==$autogptq_version vllm==$vllm_version -U && pip cache purge
 

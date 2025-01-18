@@ -835,6 +835,8 @@ def get_module_with_script(self) -> DatasetModule:
     if not os.path.exists(importable_file_path):
         trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {repo_id}. Please make sure that '
+                           'you can trust the external codes.')
             _create_importable_file(
                 local_path=local_script_path,
                 local_imports=local_imports,
@@ -933,6 +935,11 @@ class DatasetsWrapperHF:
         verification_mode = VerificationMode((
             verification_mode or VerificationMode.BASIC_CHECKS
         ) if not save_infos else VerificationMode.ALL_CHECKS)
+
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Create a dataset builder
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
@@ -1061,6 +1068,11 @@ class DatasetsWrapperHF:
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
 
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
+
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
             revision=revision,
@@ -1171,6 +1183,10 @@ class DatasetsWrapperHF:
         #   -> the module from the python file in the dataset repository
         # - if path has one "/" and is dataset repository on the HF hub without a python file
         #   -> use a packaged module (csv, text etc.) based on content of the repository
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Try packaged
         if path in _PACKAGED_DATASETS_MODULES:

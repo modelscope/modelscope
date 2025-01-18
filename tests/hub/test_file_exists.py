@@ -30,8 +30,11 @@ class FileExistsTest(unittest.TestCase):
 
     def test_file_exsists(self):
         api = HubApi()
-        self.assertTrue(api.file_exists('iic/gte_Qwen2-7B-instruct', 'added_tokens.json'))
-        self.assertTrue(api.file_exists('iic/gte_Qwen2-7B-instruct', '1_Pooling/config.json'))
+        self.assertTrue(
+            api.file_exists('iic/gte_Qwen2-7B-instruct', 'added_tokens.json'))
+        self.assertTrue(
+            api.file_exists('iic/gte_Qwen2-7B-instruct',
+                            '1_Pooling/config.json'))
 
 
 if __name__ == '__main__':

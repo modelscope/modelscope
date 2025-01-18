@@ -727,7 +727,8 @@ class HubApi:
 
         Args:
             repo_id (`str`): The repo id to use
-            filename (`str`): The queried filename, while in a sub folder, pass a/b
+            filename (`str`): The queried filename, if the file exists in a sub folder,
+                please pass <sub-folder-name>/<file-name>
             revision (`Optional[str]`): The repo revision
         Returns:
             The query result in bool value

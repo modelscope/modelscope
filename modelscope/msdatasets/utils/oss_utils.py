@@ -4,7 +4,6 @@ from __future__ import print_function
 import multiprocessing
 import os
 
-import oss2
 from datasets.utils.file_utils import hash_url_to_filename
 
 from modelscope.hub.api import HubApi
@@ -40,6 +39,7 @@ class OssUtilities:
         self.multipart_threshold = 50 * 1024 * 1024
         self.max_retries = 3
 
+        import oss2
         self.resumable_store_download = oss2.ResumableDownloadStore(
             root=self.resumable_store_root_path)
         self.resumable_store_upload = oss2.ResumableStore(
@@ -47,6 +47,8 @@ class OssUtilities:
         self.api = HubApi()
 
     def _do_init(self, oss_config):
+        import oss2
+
         self.key = oss_config[ACCESS_ID]
         self.secret = oss_config[ACCESS_SECRET]
         self.token = oss_config[SECURITY_TOKEN]
@@ -78,6 +80,7 @@ class OssUtilities:
 
     def download(self, oss_file_name: str,
                  download_config: DataDownloadConfig):
+        import oss2
         cache_dir = download_config.cache_dir
         candidate_key = os.path.join(self.oss_dir, oss_file_name)
         candidate_key_backup = os.path.join(self.oss_backup_dir, oss_file_name)
@@ -126,6 +129,7 @@ class OssUtilities:
     def upload(self, oss_object_name: str, local_file_path: str,
                indicate_individual_progress: bool,
                upload_mode: UploadMode) -> str:
+        import oss2
         retry_count = 0
         object_key = os.path.join(self.oss_dir, oss_object_name)
 

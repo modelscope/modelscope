@@ -41,19 +41,19 @@ from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
 from datasets.utils import file_utils
-from datasets.utils.file_utils import (OfflineModeIsEnabled,
-                                       _raise_if_offline_mode_is_enabled,
+from datasets.utils.file_utils import (_raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
                                        is_relative_path,
                                        relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
-from datasets.utils.py_utils import get_imports, map_nested
+from datasets.utils.py_utils import get_imports
 from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
 from huggingface_hub import (DatasetCard, DatasetCardData)
+from huggingface_hub.errors import OfflineModeIsEnabled
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from packaging import version
@@ -62,7 +62,8 @@ from modelscope import HubApi
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
-from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DEFAULT_DATASET_REVISION
+from modelscope.utils.import_utils import has_attr_in_class
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -97,7 +98,7 @@ def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) ->
     if is_relative_path(url_or_filename):
         # append the relative path to the base_path
         # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
-        revision = revision or 'master'
+        revision = revision or DEFAULT_DATASET_REVISION
         # Note: make sure the FilePath is the last param
         params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': url_or_filename}
         params: str = urlencode(params)
@@ -162,7 +163,7 @@ def _dataset_info(
     dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)
 
-    revision: str = revision or 'master'
+    revision: str = revision or DEFAULT_DATASET_REVISION
     data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
                                   revision=revision,
                                   files_metadata=files_metadata,
@@ -234,7 +235,7 @@ def _list_repo_tree(
     while True:
         data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
                                          namespace=_namespace,
-                                         revision=revision or 'master',
+                                         revision=revision or DEFAULT_DATASET_REVISION,
                                          root_path=path_in_repo or None,
                                          recursive=True,
                                          page_number=page_number,
@@ -277,7 +278,7 @@ def _get_paths_info(
     dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
         dataset_name=_dataset_name, namespace=_namespace)
 
-    revision: str = revision or 'master'
+    revision: str = revision or DEFAULT_DATASET_REVISION
     data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
                                   revision=revision,
                                   files_metadata=False,
@@ -294,6 +295,29 @@ def _get_paths_info(
                  security=None
                  ) for item_d in data_file_list if item_d['Name'] == 'README.md'
     ]
+
+
+def _download_repo_file(repo_id: str, path_in_repo: str, download_config: DownloadConfig, revision: str):
+    _api = HubApi()
+    _namespace, _dataset_name = repo_id.split('/')
+
+    if download_config and download_config.download_desc is None:
+        download_config.download_desc = f'Downloading [{path_in_repo}]'
+    try:
+        url_or_filename = _api.get_dataset_file_url(
+            file_name=path_in_repo,
+            dataset_name=_dataset_name,
+            namespace=_namespace,
+            revision=revision,
+            extension_filter=False,
+        )
+        repo_file_path = cached_path(
+            url_or_filename=url_or_filename, download_config=download_config)
+    except FileNotFoundError as e:
+        repo_file_path = ''
+        logger.error(e)
+
+    return repo_file_path
 
 
 def get_fs_token_paths(
@@ -536,9 +560,6 @@ def _get_data_patterns(
 
 
 def get_module_without_script(self) -> DatasetModule:
-    _ms_api = HubApi()
-    _repo_id: str = self.name
-    _namespace, _dataset_name = _repo_id.split('/')
 
     # hfh_dataset_info = HfApi(config.HF_ENDPOINT).dataset_info(
     #     self.name,
@@ -549,28 +570,20 @@ def get_module_without_script(self) -> DatasetModule:
     # even if metadata_configs is not None (which means that we will resolve files for each config later)
     # we cannot skip resolving all files because we need to infer module name by files extensions
     # revision = hfh_dataset_info.sha  # fix the revision in case there are new commits in the meantime
-    revision = self.revision or 'master'
+    revision = self.download_config.storage_options.get('revision', None) or DEFAULT_DATASET_REVISION
     base_path = f"hf://datasets/{self.name}@{revision}/{self.data_dir or ''}".rstrip(
         '/')
 
+    repo_id: str = self.name
     download_config = self.download_config.copy()
-    if download_config.download_desc is None:
-        download_config.download_desc = 'Downloading [README.md]'
-    try:
-        url_or_filename = _ms_api.get_dataset_file_url(
-            file_name='README.md',
-            dataset_name=_dataset_name,
-            namespace=_namespace,
-            revision=revision,
-            extension_filter=False,
-        )
 
-        dataset_readme_path = cached_path(
-            url_or_filename=url_or_filename, download_config=download_config)
-        dataset_card_data = DatasetCard.load(Path(dataset_readme_path)).data
-    except FileNotFoundError:
-        dataset_card_data = DatasetCardData()
+    dataset_readme_path = _download_repo_file(
+        repo_id=repo_id,
+        path_in_repo='README.md',
+        download_config=download_config,
+        revision=revision)
 
+    dataset_card_data = DatasetCard.load(Path(dataset_readme_path)).data if dataset_readme_path else DatasetCardData()
     subset_name: str = download_config.storage_options.get('name', None)
 
     metadata_configs = MetadataConfigs.from_dataset_card_data(
@@ -646,10 +659,7 @@ def get_module_without_script(self) -> DatasetModule:
     builder_kwargs = {
         # "base_path": hf_hub_url(self.name, "", revision=revision).rstrip("/"),
         'base_path':
-        _ms_api.get_file_base_path(
-            namespace=_namespace,
-            dataset_name=_dataset_name,
-        ),
+        HubApi().get_file_base_path(repo_id=repo_id),
         'repo_id':
         self.name,
         'dataset_name':
@@ -760,20 +770,22 @@ def _download_additional_modules(
 
 def get_module_with_script(self) -> DatasetModule:
 
-    _api = HubApi()
-    _dataset_name: str = self.name.split('/')[-1]
-    _namespace: str = self.name.split('/')[0]
+    repo_id: str = self.name
+    _namespace, _dataset_name = repo_id.split('/')
+    revision = self.download_config.storage_options.get('revision', None) or DEFAULT_DATASET_REVISION
 
     script_file_name = f'{_dataset_name}.py'
-    script_url: str = _api.get_dataset_file_url(
-        file_name=script_file_name,
-        dataset_name=_dataset_name,
-        namespace=_namespace,
-        revision=self.revision,
-        extension_filter=False,
+    local_script_path = _download_repo_file(
+        repo_id=repo_id,
+        path_in_repo=script_file_name,
+        download_config=self.download_config,
+        revision=revision,
     )
-    local_script_path = cached_path(
-        url_or_filename=script_url, download_config=self.download_config)
+    if not local_script_path:
+        raise FileNotFoundError(
+            f'Cannot find {script_file_name} in {repo_id} at revision {revision}. '
+            f'Please create {script_file_name} in the repo.'
+        )
 
     dataset_infos_path = None
     # try:
@@ -790,22 +802,19 @@ def get_module_with_script(self) -> DatasetModule:
     #     logger.info(f'Cannot find dataset_infos.json: {e}')
     #     dataset_infos_path = None
 
-    dataset_readme_url: str = _api.get_dataset_file_url(
-        file_name='README.md',
-        dataset_name=_dataset_name,
-        namespace=_namespace,
-        revision=self.revision,
-        extension_filter=False,
+    dataset_readme_path = _download_repo_file(
+        repo_id=repo_id,
+        path_in_repo='README.md',
+        download_config=self.download_config,
+        revision=revision
     )
-    dataset_readme_path = cached_path(
-        url_or_filename=dataset_readme_url, download_config=self.download_config)
 
     imports = get_imports(local_script_path)
     local_imports = _download_additional_modules(
-        name=self.name,
+        name=repo_id,
         dataset_name=_dataset_name,
         namespace=_namespace,
-        revision=self.revision,
+        revision=revision,
         imports=imports,
         download_config=self.download_config,
     )
@@ -821,11 +830,13 @@ def get_module_with_script(self) -> DatasetModule:
         dynamic_modules_path=dynamic_modules_path,
         module_namespace='datasets',
         subdirectory_name=hash,
-        name=self.name,
+        name=repo_id,
     )
     if not os.path.exists(importable_file_path):
         trust_remote_code = resolve_trust_remote_code(trust_remote_code=self.trust_remote_code, repo_id=self.name)
         if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {repo_id}. Please make sure that '
+                           'you can trust the external codes.')
             _create_importable_file(
                 local_path=local_script_path,
                 local_imports=local_imports,
@@ -833,12 +844,12 @@ def get_module_with_script(self) -> DatasetModule:
                 dynamic_modules_path=dynamic_modules_path,
                 module_namespace='datasets',
                 subdirectory_name=hash,
-                name=self.name,
+                name=repo_id,
                 download_mode=self.download_mode,
             )
         else:
             raise ValueError(
-                f'Loading {self.name} requires you to execute the dataset script in that'
+                f'Loading {repo_id} requires you to execute the dataset script in that'
                 ' repo on your local machine. Make sure you have read the code there to avoid malicious use, then'
                 ' set the option `trust_remote_code=True` to remove this error.'
             )
@@ -846,14 +857,14 @@ def get_module_with_script(self) -> DatasetModule:
         dynamic_modules_path=dynamic_modules_path,
         module_namespace='datasets',
         subdirectory_name=hash,
-        name=self.name,
+        name=repo_id,
     )
     # make the new module to be noticed by the import system
     importlib.invalidate_caches()
     builder_kwargs = {
         # "base_path": hf_hub_url(self.name, "", revision=self.revision).rstrip("/"),
-        'base_path': _api.get_file_base_path(namespace=_namespace, dataset_name=_dataset_name),
-        'repo_id': self.name,
+        'base_path': HubApi().get_file_base_path(repo_id=repo_id),
+        'repo_id': repo_id,
     }
     return DatasetModule(module_path, hash, builder_kwargs)
 
@@ -924,6 +935,11 @@ class DatasetsWrapperHF:
         verification_mode = VerificationMode((
             verification_mode or VerificationMode.BASIC_CHECKS
         ) if not save_infos else VerificationMode.ALL_CHECKS)
+
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Create a dataset builder
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
@@ -1052,6 +1068,11 @@ class DatasetsWrapperHF:
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
 
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
+
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
             revision=revision,
@@ -1126,9 +1147,11 @@ class DatasetsWrapperHF:
     ) -> DatasetModule:
 
         subset_name: str = download_kwargs.pop('name', None)
+        revision = revision or DEFAULT_DATASET_REVISION
         if download_config is None:
             download_config = DownloadConfig(**download_kwargs)
         download_config.storage_options.update({'name': subset_name})
+        download_config.storage_options.update({'revision': revision})
 
         if download_config and download_config.cache_dir is None:
             download_config.cache_dir = MS_DATASETS_CACHE
@@ -1160,6 +1183,10 @@ class DatasetsWrapperHF:
         #   -> the module from the python file in the dataset repository
         # - if path has one "/" and is dataset repository on the HF hub without a python file
         #   -> use a packaged module (csv, text etc.) based on content of the repository
+        if trust_remote_code:
+            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                           'that you can trust the external codes.'
+                           )
 
         # Try packaged
         if path in _PACKAGED_DATASETS_MODULES:
@@ -1197,7 +1224,7 @@ class DatasetsWrapperHF:
                 data_files=data_files,
                 download_mode=download_mode).get_module()
         # Try remotely
-        elif is_relative_path(path) and path.count('/') <= 1:
+        elif is_relative_path(path) and path.count('/') == 1:
             try:
                 _raise_if_offline_mode_is_enabled()
 
@@ -1236,6 +1263,15 @@ class DatasetsWrapperHF:
                         )
                     else:
                         raise e
+
+                dataset_readme_path = _download_repo_file(
+                    repo_id=path,
+                    path_in_repo='README.md',
+                    download_config=download_config,
+                    revision=revision,
+                )
+                commit_hash = os.path.basename(os.path.dirname(dataset_readme_path))
+
                 if filename in [
                         sibling.rfilename for sibling in dataset_info.siblings
                 ]:  # contains a dataset script
@@ -1264,26 +1300,54 @@ class DatasetsWrapperHF:
                         # This fails when the dataset has multiple configs and a default config and
                         # the user didn't specify a configuration name (_require_default_config_name=True).
                         try:
+                            if has_attr_in_class(HubDatasetModuleFactoryWithParquetExport, 'revision'):
+                                return HubDatasetModuleFactoryWithParquetExport(
+                                    path,
+                                    revision=revision,
+                                    download_config=download_config).get_module()
+
                             return HubDatasetModuleFactoryWithParquetExport(
                                 path,
-                                download_config=download_config,
-                                revision=dataset_info.sha).get_module()
+                                commit_hash=commit_hash,
+                                download_config=download_config).get_module()
                         except Exception as e:
                             logger.error(e)
 
                     # Otherwise we must use the dataset script if the user trusts it
+                    # To be adapted to the old version of datasets
+                    if has_attr_in_class(HubDatasetModuleFactoryWithScript, 'revision'):
+                        return HubDatasetModuleFactoryWithScript(
+                            path,
+                            revision=revision,
+                            download_config=download_config,
+                            download_mode=download_mode,
+                            dynamic_modules_path=dynamic_modules_path,
+                            trust_remote_code=trust_remote_code,
+                        ).get_module()
+
                     return HubDatasetModuleFactoryWithScript(
                         path,
-                        revision=revision,
+                        commit_hash=commit_hash,
                         download_config=download_config,
                         download_mode=download_mode,
                         dynamic_modules_path=dynamic_modules_path,
                         trust_remote_code=trust_remote_code,
                     ).get_module()
                 else:
+                    # To be adapted to the old version of datasets
+                    if has_attr_in_class(HubDatasetModuleFactoryWithoutScript, 'revision'):
+                        return HubDatasetModuleFactoryWithoutScript(
+                            path,
+                            revision=revision,
+                            data_dir=data_dir,
+                            data_files=data_files,
+                            download_config=download_config,
+                            download_mode=download_mode,
+                        ).get_module()
+
                     return HubDatasetModuleFactoryWithoutScript(
                         path,
-                        revision=revision,
+                        commit_hash=commit_hash,
                         data_dir=data_dir,
                         data_files=data_files,
                         download_config=download_config,
@@ -1292,6 +1356,7 @@ class DatasetsWrapperHF:
             except Exception as e1:
                 # All the attempts failed, before raising the error we should check if the module is already cached
                 logger.error(f'>> Error loading {path}: {e1}')
+
                 try:
                     return CachedDatasetModuleFactory(
                         path,

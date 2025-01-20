@@ -29,19 +29,7 @@ from modelscope.utils.streaming_output import (PipelineStreamingOutputMixin,
 
 logger = get_logger()
 
-SWIFT_MODEL_ID_MAPPING = {}
 SWIFT_FRAMEWORK = 'swift'
-
-
-def init_swift_model_mapping():
-    from swift.llm.utils import MODEL_MAPPING
-
-    global SWIFT_MODEL_ID_MAPPING
-    if not SWIFT_MODEL_ID_MAPPING:
-        SWIFT_MODEL_ID_MAPPING = {
-            v['model_id_or_path'].lower(): k
-            for k, v in MODEL_MAPPING.items()
-        }
 
 
 class LLMAdapterRegistry:
@@ -109,6 +97,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             assert base_model is not None, 'Cannot get adapter_cfg.model_id_or_path from configuration.json file.'
             revision = self.cfg.safe_get('adapter_cfg.model_revision',
                                          'master')
+            logger.warning(
+                f'Use trust_remote_code=True. Will invoke codes from {base_model}. Please make sure that you can '
+                'trust the external codes.')
             base_model = Model.from_pretrained(
                 base_model,
                 revision,
@@ -146,6 +137,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
                     model) else snapshot_download(model)
                 # TODO: Temporary use of AutoModelForCausalLM
                 # Need to be updated into a universal solution
+                logger.warning(
+                    f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+                    'that you can trust the external codes.')
                 model = AutoModelForCausalLM.from_pretrained(
                     model_dir,
                     device_map=self.device_map,
@@ -185,6 +179,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
         self.llm_framework = llm_framework
 
         if os.path.exists(kwargs['model']):
+            logger.warning(
+                f'Use trust_remote_code=True. Will invoke codes from {kwargs["model"]}. Please make sure '
+                'that you can trust the external codes.')
             config = AutoConfig.from_pretrained(
                 kwargs['model'], trust_remote_code=True)
             q_config = config.__dict__.get('quantization_config', None)
@@ -227,12 +224,12 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
 
     def _init_swift(self, model_id, device) -> None:
         from swift.llm import prepare_model_template
-        from swift.llm.utils import InferArguments
+        from swift.llm import InferArguments, get_model_info_meta
 
         def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,
                             **kwargs) -> Dict[str, torch.Tensor]:
-            inputs, _ = self.template.encode(get_example(messages))
+            inputs = self.template.encode(messages)
             inputs.pop('labels', None)
             if 'input_ids' in inputs:
                 input_ids = torch.tensor(inputs['input_ids'])[None]
@@ -265,12 +262,7 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             else:
                 return dict(system=system, prompt=prompt, history=history)
 
-        init_swift_model_mapping()
-
-        assert model_id.lower() in SWIFT_MODEL_ID_MAPPING,\
-            f'Invalid model id {model_id} or Swift framework does not support this model.'
-        args = InferArguments(
-            model_type=SWIFT_MODEL_ID_MAPPING[model_id.lower()])
+        args = InferArguments(model=model_id)
         model, template = prepare_model_template(
             args, device_map=self.device_map)
         self.model = add_stream_generate(model)
@@ -440,6 +432,9 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             model_dir = self.model.model_dir
         if tokenizer_class is None:
             tokenizer_class = AutoTokenizer
+        logger.warning(
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            'that you can trust the external codes.')
         return tokenizer_class.from_pretrained(
             model_dir, trust_remote_code=True)
 

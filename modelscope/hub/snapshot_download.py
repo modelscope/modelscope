@@ -4,32 +4,33 @@ import fnmatch
 import os
 import re
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from tqdm.auto import tqdm
-
 from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.constants import \
+    MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD
 from modelscope.hub.errors import InvalidParameter
+from modelscope.hub.file_download import (create_temporary_directory_and_cache,
+                                          download_file, get_file_download_url)
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
+                                       DEFAULT_REPOSITORY_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
-from .file_download import (create_temporary_directory_and_cache,
-                            download_file, get_file_download_url)
+from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
 
 
 def snapshot_download(
-    model_id: str,
-    revision: Optional[str] = DEFAULT_MODEL_REVISION,
+    model_id: str = None,
+    revision: Optional[str] = None,
     cache_dir: Union[str, Path, None] = None,
     user_agent: Optional[Union[Dict, str]] = None,
     local_files_only: Optional[bool] = False,
@@ -40,6 +41,8 @@ def snapshot_download(
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
+    repo_id: str = None,
+    repo_type: Optional[str] = REPO_TYPE_MODEL,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -51,7 +54,10 @@ def snapshot_download(
     user always has git and git-lfs installed, and properly configured.
 
     Args:
-        model_id (str): A user or an organization name and a repo name separated by a `/`.
+        repo_id (str): A user or an organization name and a repo name separated by a `/`.
+        model_id (str): A user or an organization name and a model name separated by a `/`.
+            if `repo_id` is provided, `model_id` will be ignored.
+        repo_type (str, optional): The type of the repo, either 'model' or 'dataset'.
         revision (str, optional): An optional Git revision id which can be a branch name, a tag, or a
             commit hash. NOTE: currently only branch and tag name is supported
         cache_dir (str, Path, optional): Path to the folder where cached files are stored, model will
@@ -87,9 +93,22 @@ def snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
+
+    repo_id = repo_id or model_id
+    if not repo_id:
+        raise ValueError('Please provide a valid model_id or repo_id')
+
+    if repo_type not in REPO_TYPE_SUPPORT:
+        raise ValueError(
+            f'Invalid repo type: {repo_type}, only support: {REPO_TYPE_SUPPORT}'
+        )
+
+    if revision is None:
+        revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
+
     return _snapshot_download(
-        model_id,
-        repo_type=REPO_TYPE_MODEL,
+        repo_id,
+        repo_type=repo_type,
         revision=revision,
         cache_dir=cache_dir,
         user_agent=user_agent,
@@ -233,7 +252,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, repo_id)
+                    system_cache, 'models', *repo_id.split('/'))
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
@@ -294,7 +313,7 @@ def _snapshot_download(
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
                 local_dir) if local_dir else os.path.join(
-                    system_cache, 'datasets', repo_id)
+                    system_cache, 'datasets', *repo_id.split('/'))
             print(f'Downloading Dataset to directory: {directory}')
 
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
@@ -393,21 +412,6 @@ def _get_valid_regex_pattern(patterns: List[str]):
         return None
 
 
-def thread_download(func, iterable, max_workers, **kwargs):
-    # Create a tqdm progress bar with the total number of files to fetch
-    with tqdm(
-            total=len(iterable),
-            desc=f'Fetching {len(iterable)} files') as pbar:
-        # Define a wrapper function to update the progress bar
-        def progress_wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            pbar.update(1)
-            return result
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            executor.map(progress_wrapper, iterable)
-
-
 def _download_file_lists(
         repo_files: List[str],
         cache: ModelFileSystemCache,
@@ -479,6 +483,7 @@ def _download_file_lists(
         else:
             filtered_repo_files.append(repo_file)
 
+    @thread_executor(max_workers=max_workers, disable_tqdm=False)
     def _download_single_file(repo_file):
         if repo_type == REPO_TYPE_MODEL:
             url = get_file_download_url(
@@ -495,10 +500,21 @@ def _download_file_lists(
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
-        download_file(url, repo_file, temporary_cache_dir, cache, headers,
-                      cookies)
+        disable_tqdm = len(
+            filtered_repo_files
+        ) > MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD  # noqa
+        download_file(
+            url,
+            repo_file,
+            temporary_cache_dir,
+            cache,
+            headers,
+            cookies,
+            disable_tqdm=disable_tqdm,
+        )
 
     if len(filtered_repo_files) > 0:
-        thread_download(_download_single_file, filtered_repo_files,
-                        max_workers)
+        logger.info(
+            f'Got {len(filtered_repo_files)} files, start to download ...')
+        _download_single_file(filtered_repo_files)
         logger.info(f"Download {repo_type} '{repo_id}' successfully.")

@@ -16,7 +16,7 @@ def _test_check_tmpl_type(model, tmpl_type, gguf_meta={}):
 
 class TestToOllama(unittest.TestCase):
 
-    @unittest.skip#Unless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_load_template(self):
         template = TemplateLoader.load_by_model_id(
             'LLM-Research/Meta-Llama-3-8B-Instruct')
@@ -86,7 +86,7 @@ class TestToOllama(unittest.TestCase):
             'LLM-Research/Phi-3-128k-instruct-GGUF')
         self.assertTrue(template.template_type == TemplateType.phi3)
 
-    @unittest.skip#Unless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_load_ollama(self):
         ollama = TemplateLoader.to_ollama(
             'LLM-Research/Meta-Llama-3.1-8B-Instruct-GGUF')

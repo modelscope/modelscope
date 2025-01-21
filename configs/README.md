@@ -1,1 +1,0 @@
-Each model should be associated with a configuration.json file hosted on modelscope model-hub, together with the model binaries. This folder serves the purpose of hosting example configuration, for reference.

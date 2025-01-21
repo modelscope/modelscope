@@ -1,1 +1,0 @@
-PYTHONPATH=. python examples/pytorch/auto_speech_recognition/finetune_speech_recognition.py

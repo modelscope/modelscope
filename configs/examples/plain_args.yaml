@@ -1,5 +1,0 @@
-model_dir: path/to/model
-lr: 0.01
-optimizer: Adam
-weight_decay: 1e-6
-save_checkpoint_epochs: 20

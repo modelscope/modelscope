@@ -1,0 +1,56 @@
+exclude: 'modelscope/preprocessors/templates/'
+
+repos:
+  - repo: /home/admin/pre-commit/flake8
+    rev: 4.0.0
+    hooks:
+      - id: flake8
+        exclude: |
+            (?x)^(
+                thirdparty/|
+                examples/|
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
+            )$
+  - repo: /home/admin/pre-commit/isort
+    rev: 4.3.21
+    hooks:
+      - id: isort
+        exclude: |
+            (?x)^(
+                examples/|
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
+            )$
+  - repo: /home/admin/pre-commit/mirrors-yapf
+    rev: v0.30.0
+    hooks:
+      - id: yapf
+        exclude: |
+            (?x)^(
+                thirdparty/|
+                examples/|
+                modelscope/utils/ast_index_file.py|
+                modelscope/fileio/format/jsonplus.py
+            )$
+  - repo: /home/admin/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+      - id: check-yaml
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+      - id: end-of-file-fixer
+        exclude: thirdparty/
+      - id: requirements-txt-fixer
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+      - id: double-quote-string-fixer
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+      - id: check-merge-conflict
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+      - id: fix-encoding-pragma
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+        args: ["--remove"]
+      - id: mixed-line-ending
+        exclude: thirdparty/|modelscope/fileio/format/jsonplus.py
+        args: ["--fix=lf"]

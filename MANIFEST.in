@@ -1,0 +1,3 @@
+recursive-include modelscope/configs *.py *.cu *.h *.cpp
+recursive-include modelscope/cli/template *.tpl
+recursive-include modelscope/utils *.json

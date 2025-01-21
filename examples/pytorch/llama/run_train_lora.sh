@@ -1,0 +1,23 @@
+export PYTHONPATH=$PYTHONPATH:./
+torchrun examples/pytorch/llama/finetune_llama.py \
+    --work_dir './tmp' \
+    --model 'skyline2006/llama-7b' \
+    --train_dataset_name 'alpaca-gpt4-data-zh' \
+    --train_subset_name 'default' \
+    --train_split 'train' \
+    --train_dataset_namespace 'AI-ModelScope' \
+    --per_device_train_batch_size 4 \
+    --per_device_eval_batch_size 4 \
+    --eval_strategy 'by_epoch' \
+    --eval_interval 1 \
+    --eval_metrics 'ppl' \
+    --lr 2e-5 \
+    --save_strategy no \
+    --save_best true \
+    --metric_for_best_model ppl \
+    --metric_rule_for_best_model min \
+    --use_lora 1 \
+    --device_map 'auto' \
+    --task 'text-generation' \
+    --model.type 'llama' \
+    --max_epochs 3 \

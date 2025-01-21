@@ -1,0 +1,14 @@
+PYTHONPATH=. python examples/pytorch/transformers/finetune_transformers_model.py \
+    --model bert-base-uncased \
+    --num_labels 15 \
+    --train_dataset_name clue \
+    --train_subset_name tnews \
+    --train_split train \
+    --val_dataset_name clue \
+    --val_subset_name tnews \
+    --train_split train \
+    --val_split validation \
+    --sentence sentence \
+    --label label \
+    --eval_strategy by_step \
+    --eval_interval 100

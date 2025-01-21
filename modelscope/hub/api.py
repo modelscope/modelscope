@@ -1905,13 +1905,13 @@ class UploadingCheck:
             max_file_count: int = 100_000,
             max_file_count_in_dir: int = 10_000,
             max_file_size: int = 50 * 1024 ** 3,
-            lfs_size_limit: int = 5 * 1024 * 1024,
+            size_threshold_to_enforce_lfs: int = 5 * 1024 * 1024,
             normal_file_size_total_limit: int = 500 * 1024 * 1024,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
-        self.lfs_size_limit = lfs_size_limit
+        self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):
@@ -1922,7 +1922,8 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
         if file_size > self.max_file_size:
-            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB')
+            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
+                             f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
         file_count = 0
@@ -1934,6 +1935,10 @@ class UploadingCheck:
         for item in folder_path.iterdir():
             if item.is_file():
                 file_count += 1
+                item_size: int = get_file_size(item)
+                if item_size > self.max_file_size:
+                    raise ValueError(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
+                                     f'got {round(item_size / (1024 ** 3), 4)} GB')
             elif item.is_dir():
                 dir_count += 1
                 # Count items in subdirectories recursively
@@ -1969,7 +1974,7 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
 
-        return file_size > self.lfs_size_limit or hit_lfs_suffix
+        return file_size > self.size_threshold_to_enforce_lfs or hit_lfs_suffix
 
     def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
 

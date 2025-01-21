@@ -37,7 +37,7 @@ def get_default_modelscope_cache_dir():
     """
     default base dir: '~/.cache/modelscope'
     """
-    default_cache_dir = Path.home().joinpath('.cache', 'modelscope')
+    default_cache_dir = Path.home().joinpath('.cache', 'modelscope', 'hub')
     return default_cache_dir
 
 
@@ -57,7 +57,7 @@ def get_model_cache_root() -> str:
     Returns:
         str: the modelscope model cache root.
     """
-    return os.path.join(get_modelscope_cache_dir(), 'hub')
+    return os.path.join(get_modelscope_cache_dir(), 'models')
 
 
 def get_dataset_cache_root() -> str:
@@ -68,10 +68,7 @@ def get_dataset_cache_root() -> str:
     Returns:
         str: the modelscope dataset raw file cache root.
     """
-    if os.getenv('MODELSCOPE_CACHE'):
-        return os.path.join(get_modelscope_cache_dir(), 'datasets')
-    else:
-        return os.path.join(get_modelscope_cache_dir(), 'hub', 'datasets')
+    return os.path.join(get_modelscope_cache_dir(), 'datasets')
 
 
 def get_dataset_cache_dir(dataset_id: str) -> str:

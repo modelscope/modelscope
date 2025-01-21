@@ -63,6 +63,7 @@ from transformers import (PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase)
 from transformers import T5EncoderModel as T5EncoderModelHF
 from transformers import __version__ as transformers_version
+from transformers import pipeline as hf_pipeline
 
 from modelscope import snapshot_download
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke

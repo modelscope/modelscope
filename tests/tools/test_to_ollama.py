@@ -366,15 +366,26 @@ class TestToOllama(unittest.TestCase):
         _test_check_tmpl_type(
             'AI-ModelScope/phi-4', 'phi4', gguf_meta={'general.name': 'Phi 4'})
         _test_check_tmpl_type(
-            'yasserrmd/DeepSeek-R1-Distill-Qwen-1.5B-gguf', 'deepseek-r1', gguf_meta={'general.name': 'DeepSeek R1 Distill Qwen 1.5B'})
+            'yasserrmd/DeepSeek-R1-Distill-Qwen-1.5B-gguf',
+            'deepseek-r1',
+            gguf_meta={'general.name': 'DeepSeek R1 Distill Qwen 1.5B'})
         _test_check_tmpl_type(
-            'allenai/OLMo-2-1124-7B-Instruct-GGUF', 'olmo2', gguf_meta={'general.name': 'Open_Instruct_Dev'})
+            'allenai/OLMo-2-1124-7B-Instruct-GGUF',
+            'olmo2',
+            gguf_meta={'general.name': 'Open_Instruct_Dev'})
         _test_check_tmpl_type(
-            'bartowski/OLMo-2-1124-7B-Instruct-GGUF', 'olmo2', gguf_meta={'general.name': 'OLMo 2 1124 7B Instruct'})
+            'bartowski/OLMo-2-1124-7B-Instruct-GGUF',
+            'olmo2',
+            gguf_meta={'general.name': 'OLMo 2 1124 7B Instruct'})
         _test_check_tmpl_type(
-            'bartowski/c4ai-command-r7b-12-2024-abliterated-GGUF', 'command-r7b', gguf_meta={'general.name': 'C4Ai Command R7B 12 2024'})
+            'bartowski/c4ai-command-r7b-12-2024-abliterated-GGUF',
+            'command-r7b',
+            gguf_meta={'general.name': 'C4Ai Command R7B 12 2024'})
         _test_check_tmpl_type(
-            'okwinds/DeepSeek-V3-GGUF-V3-LOT', 'deepseek-v3', gguf_meta={'general.name': 'DeepSeek V3 Bf16D'})
+            'okwinds/DeepSeek-V3-GGUF-V3-LOT',
+            'deepseek-v3',
+            gguf_meta={'general.name': 'DeepSeek V3 Bf16D'})
+
 
 if __name__ == '__main__':
     unittest.main()

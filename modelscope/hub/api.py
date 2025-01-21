@@ -1905,13 +1905,13 @@ class UploadingCheck:
             max_file_count: int = 100_000,
             max_file_count_in_dir: int = 10_000,
             max_file_size: int = 50 * 1024 ** 3,
-            normal_or_lfs_size_thres: int = 5 * 1024 * 1024,
+            size_threshold_to_enforce_lfs: int = 5 * 1024 * 1024,
             normal_file_size_total_limit: int = 500 * 1024 * 1024,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
-        self.normal_or_lfs_size_thres = normal_or_lfs_size_thres
+        self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):
@@ -1974,7 +1974,7 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
 
-        return file_size > self.normal_or_lfs_size_thres or hit_lfs_suffix
+        return file_size > self.size_threshold_to_enforce_lfs or hit_lfs_suffix
 
     def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
 

@@ -37,7 +37,8 @@ def get_default_modelscope_cache_dir():
     """
     default base dir: '~/.cache/modelscope'
     """
-    default_cache_dir = Path.home().joinpath('.cache', 'modelscope', 'hub')
+    default_cache_dir = os.path.expanduser(Path.home().joinpath(
+        '.cache', 'modelscope', 'hub'))
     return default_cache_dir
 
 
@@ -48,7 +49,8 @@ def get_modelscope_cache_dir() -> str:
     Returns:
         str: the modelscope cache root.
     """
-    return os.getenv('MODELSCOPE_CACHE', get_default_modelscope_cache_dir())
+    return os.path.expanduser(
+        os.getenv('MODELSCOPE_CACHE', get_default_modelscope_cache_dir()))
 
 
 def get_model_cache_root() -> str:

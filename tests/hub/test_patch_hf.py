@@ -14,6 +14,3 @@ class DownloadDatasetTest(unittest.TestCase):
         from transformers import AutoModel
         model = AutoModel.from_pretrained('AI-ModelScope/bert-base-uncased')
         self.assertTrue(model is not None)
-
-
-

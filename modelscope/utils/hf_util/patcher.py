@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import contextlib
 import importlib
 import inspect
 import os
@@ -8,27 +9,59 @@ from pathlib import Path
 from types import MethodType
 from typing import BinaryIO, Dict, List, Optional, Union
 
-from huggingface_hub.hf_api import CommitInfo, future_compatible
 
-from modelscope import snapshot_download
-from modelscope.utils.logger import get_logger
+def get_all_imported_modules():
+    all_imported_modules = []
+    if importlib.util.find_spec('transformers') is not None:
+        import transformers
+        extra_modules = ['T5']
+        lazy_module = sys.modules['transformers']
+        _import_structure = lazy_module._import_structure
+        for key in _import_structure:
+            values = _import_structure[key]
+            for value in values:
+                # pretrained
+                if 'auto' in value.lower() or any(m in value
+                                                  for m in extra_modules):
+                    try:
+                        module = importlib.import_module(
+                            f'.{key}', transformers.__name__)
+                        value = getattr(module, value)
+                        all_imported_modules.append(value)
+                    except (ImportError, AttributeError):
+                        pass
 
-logger = get_logger()
+    if importlib.util.find_spec('peft') is not None:
+        import peft
+        attributes = dir(peft)
+        imports = [attr for attr in attributes if not attr.startswith('__')]
+        all_imported_modules.extend(
+            [getattr(peft, _import) for _import in imports])
+
+    if importlib.util.find_spec('diffusers') is not None:
+        import diffusers
+        if importlib.util.find_spec('diffusers') is not None:
+            lazy_module = sys.modules['diffusers']
+            _import_structure = lazy_module._import_structure
+            for key in _import_structure:
+                values = _import_structure[key]
+                for value in values:
+                    if 'pipeline' in value.lower():
+                        try:
+                            module = importlib.import_module(
+                                f'.{key}', diffusers.__name__)
+                            value = getattr(module, value)
+                            all_imported_modules.append(value)
+                        except (ImportError, AttributeError):
+                            pass
+    return all_imported_modules
 
 
-extra_modules = ['T5']
-lazy_module = sys.modules['transformers']
-all_modules = lazy_module._modules
-all_imported_modules = []
-for module in all_modules:
-    if 'auto' in module.lower() or any(m in module for m in extra_modules):
-        all_imported_modules.append(importlib.import_module(f'transformers.{module}'))
-
-
-def _patch_pretrained_class():
+def _patch_pretrained_class(all_imported_modules):
 
     def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
                       **kwargs):
+        from modelscope import snapshot_download
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             model_dir = snapshot_download(
@@ -43,94 +76,109 @@ def _patch_pretrained_class():
         r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
     ]
 
-    def patch_pretrained_model_name_or_path(cls, pretrained_model_name_or_path,
+    def patch_pretrained_model_name_or_path(pretrained_model_name_or_path,
                                             *model_args, **kwargs):
         model_dir = get_model_dir(pretrained_model_name_or_path,
                                   kwargs.pop('ignore_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(cls, model_dir, *model_args, **kwargs)
+        return kwargs.pop('ori_func')(model_dir, *model_args, **kwargs)
 
-    def patch_peft_model_id(cls, model, model_id, *model_args, **kwargs):
+    def patch_peft_model_id(model, model_id, *model_args, **kwargs):
         model_dir = get_model_dir(model_id,
                                   kwargs.pop('ignore_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(cls, model, model_dir, *model_args,
-                                      **kwargs)
+        return kwargs.pop('ori_func')(model, model_dir, *model_args, **kwargs)
 
-    def _get_peft_type(cls, model_id, **kwargs):
+    def _get_peft_type(model_id, **kwargs):
         model_dir = get_model_dir(model_id, ignore_file_pattern, **kwargs)
-        return kwargs.pop('ori_func')(cls, model_dir, **kwargs)
+        return kwargs.pop('ori_func')(model_dir, **kwargs)
 
     for var in all_imported_modules:
-        if var is None:
+        if var is None or not hasattr(var, '__name__'):
             continue
         name = var.__name__
-        need_model = 'model' in name.lower() or 'processor' in name.lower() or 'extractor' in name.lower()
+        need_model = 'model' in name.lower() or 'processor' in name.lower(
+        ) or 'extractor' in name.lower()
         if need_model:
             ignore_file_pattern_kwargs = {}
         else:
-            ignore_file_pattern_kwargs = {'ignore_file_pattern': ignore_file_pattern}
+            ignore_file_pattern_kwargs = {
+                'ignore_file_pattern': ignore_file_pattern
+            }
 
-        has_from_pretrained = hasattr(var, 'from_pretrained')
-        has_get_peft_type = hasattr(var, '_get_peft_type')
-        has_get_config_dict = hasattr(var, 'get_config_dict')
-        parameters = inspect.signature(var.from_pretrained).parameters
-        is_peft = 'model' in parameters and 'model_id' in parameters
+        try:
+            has_from_pretrained = hasattr(var, 'from_pretrained')
+            has_get_peft_type = hasattr(var, '_get_peft_type')
+            has_get_config_dict = hasattr(var, 'get_config_dict')
+        except ImportError:
+            continue
         if has_from_pretrained and not hasattr(var, '_from_pretrained_origin'):
+            parameters = inspect.signature(var.from_pretrained).parameters
+            is_peft = 'model' in parameters and 'model_id' in parameters
             var._from_pretrained_origin = var.from_pretrained
             if not is_peft:
-                var.from_pretrained = partial(patch_pretrained_model_name_or_path,
-                                              ori_func=var._from_pretrained_origin,
-                                              **ignore_file_pattern_kwargs)
+                var.from_pretrained = partial(
+                    patch_pretrained_model_name_or_path,
+                    ori_func=var._from_pretrained_origin,
+                    **ignore_file_pattern_kwargs)
             else:
-                var.from_pretrained = partial(patch_peft_model_id,
-                                              ori_func=var._from_pretrained_origin,
-                                              **ignore_file_pattern_kwargs)
-            delattr(var, '_from_pretrained_origin')
+                var.from_pretrained = partial(
+                    patch_peft_model_id,
+                    ori_func=var._from_pretrained_origin,
+                    **ignore_file_pattern_kwargs)
         if has_get_peft_type and not hasattr(var, '_get_peft_type_origin'):
             var._get_peft_type_origin = var._get_peft_type
-            var._get_peft_type = partial(_get_peft_type,
-                                          ori_func=var._get_peft_type_origin,
-                                          **ignore_file_pattern_kwargs)
-            delattr(var, '_get_peft_type_origin')
+            var._get_peft_type = partial(
+                _get_peft_type,
+                ori_func=var._get_peft_type_origin,
+                **ignore_file_pattern_kwargs)
 
         if has_get_config_dict and not hasattr(var, '_get_config_dict_origin'):
             var._get_config_dict_origin = var.get_config_dict
-            var.get_config_dict = partial(patch_pretrained_model_name_or_path,
-                                          ori_func=var._get_config_dict_origin,
-                                          **ignore_file_pattern_kwargs)
-            delattr(var, '_get_config_dict_origin')
+            var.get_config_dict = partial(
+                patch_pretrained_model_name_or_path,
+                ori_func=var._get_config_dict_origin,
+                **ignore_file_pattern_kwargs)
 
 
-def _unpatch_pretrained_class():
+def _unpatch_pretrained_class(all_imported_modules):
     for var in all_imported_modules:
         if var is None:
             continue
 
-        has_from_pretrained = hasattr(var, 'from_pretrained')
-        has_get_peft_type = hasattr(var, '_get_peft_type')
-        has_get_config_dict = hasattr(var, 'get_config_dict')
+        try:
+            has_from_pretrained = hasattr(var, 'from_pretrained')
+            has_get_peft_type = hasattr(var, '_get_peft_type')
+            has_get_config_dict = hasattr(var, 'get_config_dict')
+        except ImportError:
+            continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             var.from_pretrained = var._from_pretrained_origin
+            delattr(var, '_from_pretrained_origin')
         if has_get_peft_type and hasattr(var, '_get_peft_type_origin'):
             var._get_peft_type = var._get_peft_type_origin
+            delattr(var, '_get_peft_type_origin')
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             var.get_config_dict = var._get_config_dict_origin
+            delattr(var, '_get_config_dict_origin')
 
 
 def _patch_hub():
     import huggingface_hub
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api
+    from huggingface_hub.hf_api import CommitInfo, future_compatible
+    from modelscope import get_logger
+    logger = get_logger()
 
     def _file_exists(
-            self,
-            repo_id: str,
-            filename: str,
-            *,
-            repo_type: Optional[str] = None,
-            revision: Optional[str] = None,
-            token: Union[str, bool, None] = None,
+        self,
+        repo_id: str,
+        filename: str,
+        *,
+        repo_type: Optional[str] = None,
+        revision: Optional[str] = None,
+        token: Union[str, bool, None] = None,
     ):
         """Patch huggingface_hub.file_exists"""
         if repo_type is not None:
@@ -171,7 +219,8 @@ def _patch_hub():
         api.try_login(token)
         return file_download(
             repo_id,
-            file_path=os.path.join(subfolder, filename) if subfolder else filename,
+            file_path=os.path.join(subfolder, filename)
+            if subfolder else filename,
             cache_dir=cache_dir,
             local_dir=local_dir,
             local_files_only=local_files_only,
@@ -209,16 +258,16 @@ def _patch_hub():
 
     @future_compatible
     def upload_folder(
-            *,
-            repo_id: str,
-            folder_path: Union[str, Path],
-            path_in_repo: Optional[str] = None,
-            commit_message: Optional[str] = None,
-            commit_description: Optional[str] = None,
-            token: Union[str, bool, None] = None,
-            revision: Optional[str] = 'master',
-            ignore_patterns: Optional[Union[List[str], str]] = None,
-            **kwargs,
+        *,
+        repo_id: str,
+        folder_path: Union[str, Path],
+        path_in_repo: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        commit_description: Optional[str] = None,
+        token: Union[str, bool, None] = None,
+        revision: Optional[str] = 'master',
+        ignore_patterns: Optional[Union[List[str], str]] = None,
+        **kwargs,
     ):
         from modelscope.hub.push_to_hub import push_model_to_hub
         push_model_to_hub(repo_id, folder_path, path_in_repo, commit_message,
@@ -233,16 +282,16 @@ def _patch_hub():
 
     @future_compatible
     def upload_file(
-            self,
-            *,
-            path_or_fileobj: Union[str, Path, bytes, BinaryIO],
-            path_in_repo: str,
-            repo_id: str,
-            token: Union[str, bool, None] = None,
-            revision: Optional[str] = None,
-            commit_message: Optional[str] = None,
-            commit_description: Optional[str] = None,
-            **kwargs,
+        self,
+        *,
+        path_or_fileobj: Union[str, Path, bytes, BinaryIO],
+        path_in_repo: str,
+        repo_id: str,
+        token: Union[str, bool, None] = None,
+        revision: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        commit_description: Optional[str] = None,
+        **kwargs,
     ):
         from modelscope.hub.push_to_hub import push_files_to_hub
         push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
@@ -347,10 +396,19 @@ def _unpatch_hub():
         repocard.upload_file = hf_api.upload_file
         delattr(hf_api, '_upload_file_origin')
 
+
 def patch_hub():
     _patch_hub()
-    _patch_pretrained_class()
+    _patch_pretrained_class(get_all_imported_modules())
 
 
 def unpatch_hub():
-    _unpatch_pretrained_class()
+    _unpatch_pretrained_class(get_all_imported_modules())
+    _unpatch_hub()
+
+
+@contextlib.contextmanager
+def patch_context():
+    patch_hub()
+    yield
+    unpatch_hub()

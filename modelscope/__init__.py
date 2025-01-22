@@ -134,6 +134,14 @@ else:
             'Qwen2VLForConditionalGeneration', 'T5EncoderModel'
         ]
 
+    from modelscope.utils import hf_util
+
+    extra_objects = {}
+    attributes = dir(hf_util)
+    imports = [attr for attr in attributes if not attr.startswith('__')]
+    for _import in imports:
+        extra_objects[_import] = getattr(hf_util, _import)
+
     import sys
 
     sys.modules[__name__] = LazyImportModule(
@@ -141,5 +149,5 @@ else:
         globals()['__file__'],
         _import_structure,
         module_spec=__spec__,
-        extra_objects={},
+        extra_objects=extra_objects,
     )

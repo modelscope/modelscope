@@ -11,18 +11,20 @@ from typing import BinaryIO, Dict, List, Optional, Union
 
 
 def get_all_imported_modules():
+    """Find all modules in transformers/peft/diffusers"""
     all_imported_modules = []
+    transformers_include_names = ['Auto', 'T5', 'BitsAndBytes', 'GenerationConfig',
+                                  'Quant', 'Awq', 'GPTQ', 'BatchFeature', 'Qwen2']
+    diffusers_include_names = ['Pipeline']
     if importlib.util.find_spec('transformers') is not None:
         import transformers
-        extra_modules = ['T5']
         lazy_module = sys.modules['transformers']
         _import_structure = lazy_module._import_structure
         for key in _import_structure:
             values = _import_structure[key]
             for value in values:
                 # pretrained
-                if 'auto' in value.lower() or any(m in value
-                                                  for m in extra_modules):
+                if any([name in value for name in transformers_include_names]):
                     try:
                         module = importlib.import_module(
                             f'.{key}', transformers.__name__)
@@ -46,7 +48,7 @@ def get_all_imported_modules():
             for key in _import_structure:
                 values = _import_structure[key]
                 for value in values:
-                    if 'pipeline' in value.lower():
+                    if any([name in value for name in diffusers_include_names]):
                         try:
                             module = importlib.import_module(
                                 f'.{key}', diffusers.__name__)
@@ -57,9 +59,11 @@ def get_all_imported_modules():
     return all_imported_modules
 
 
-def _patch_pretrained_class(all_imported_modules):
+def _patch_pretrained_class(all_imported_modules, wrap=False):
 
-    def get_model_dir(pretrained_model_name_or_path, ignore_file_pattern,
+    def get_model_dir(pretrained_model_name_or_path,
+                      ignore_file_pattern=None,
+                      allow_file_pattern=None,
                       **kwargs):
         from modelscope import snapshot_download
         if not os.path.exists(pretrained_model_name_or_path):
@@ -67,14 +71,13 @@ def _patch_pretrained_class(all_imported_modules):
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
                 revision=revision,
-                ignore_file_pattern=ignore_file_pattern)
+                ignore_file_pattern=ignore_file_pattern,
+                allow_file_pattern=allow_file_pattern)
         else:
             model_dir = pretrained_model_name_or_path
         return model_dir
 
-    ignore_file_pattern = [
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt'
-    ]
+    ignore_file_pattern = [r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5']
 
     def patch_pretrained_model_name_or_path(pretrained_model_name_or_path,
                                             *model_args, **kwargs):
@@ -93,6 +96,88 @@ def _patch_pretrained_class(all_imported_modules):
         model_dir = get_model_dir(model_id, ignore_file_pattern, **kwargs)
         return kwargs.pop('ori_func')(model_dir, **kwargs)
 
+    def get_wrapped_class(module_class: 'PreTrainedModel',
+                          ignore_file_pattern: Optional[Union[str, List[str]]] = None,
+                          allow_file_pattern: Optional[Union[str, List[str]]] = None,
+                          **kwargs):
+        """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
+        Args:
+            module_class (`PreTrainedModel`): The actual module class
+            ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
+                Any file pattern to be ignored, like exact file names or file extensions.
+            allow_file_pattern (`str` or `List`, *optional*, default to `None`):
+                Any file pattern to be included, like exact file names or file extensions.
+        Returns:
+            The wrapper
+        """
+
+        def from_pretrained(model, model_id, *model_args, **kwargs):
+            model_dir = get_model_dir(model_id,
+                                      ignore_file_pattern=ignore_file_pattern,
+                                      allow_file_pattern=allow_file_pattern,
+                                      **kwargs)
+
+            module_obj = module_class.from_pretrained(
+                model, model_dir, *model_args, **kwargs)
+
+            return module_obj
+
+        class ClassWrapper(module_class):
+
+            @classmethod
+            def from_pretrained(cls, pretrained_model_name_or_path,
+                                *model_args, **kwargs):
+                model_dir = get_model_dir(pretrained_model_name_or_path,
+                                          ignore_file_pattern=ignore_file_pattern,
+                                          allow_file_pattern=allow_file_pattern,
+                                          **kwargs)
+
+                module_obj = module_class.from_pretrained(
+                    model_dir, *model_args, **kwargs)
+
+                if module_class.__name__.startswith('AutoModel'):
+                    module_obj.model_dir = model_dir
+                return module_obj
+
+            @classmethod
+            def _get_peft_type(cls, model_id, **kwargs):
+                model_dir = get_model_dir(model_id,
+                                          kwargs.pop('ignore_file_pattern', None),
+                                          **kwargs)
+
+                module_obj = module_class._get_peft_type(
+                    model_dir, **kwargs)
+                return module_obj
+
+            @classmethod
+            def get_config_dict(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+                model_dir = get_model_dir(pretrained_model_name_or_path,
+                                          kwargs.pop('ignore_file_pattern', None),
+                                          **kwargs)
+
+                module_obj = module_class.get_config_dict(
+                    model_dir, *model_args, **kwargs)
+                return module_obj
+
+        if not hasattr(module_class, 'from_pretrained'):
+            del ClassWrapper.from_pretrained
+        else:
+            parameters = inspect.signature(var.from_pretrained).parameters
+            if 'model' in parameters and 'model_id' in parameters:
+                # peft
+                ClassWrapper.from_pretrained = from_pretrained
+
+        if not hasattr(module_class, '_get_peft_type'):
+            del ClassWrapper._get_peft_type
+
+        if not hasattr(module_class, 'get_config_dict'):
+            del ClassWrapper.get_config_dict
+
+        ClassWrapper.__name__ = module_class.__name__
+        ClassWrapper.__qualname__ = module_class.__qualname__
+        return ClassWrapper
+
+    all_available_modules = []
     for var in all_imported_modules:
         if var is None or not hasattr(var, '__name__'):
             continue
@@ -107,38 +192,53 @@ def _patch_pretrained_class(all_imported_modules):
             }
 
         try:
+            # some TFxxx classes has import errors
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
         except ImportError:
             continue
-        if has_from_pretrained and not hasattr(var, '_from_pretrained_origin'):
-            parameters = inspect.signature(var.from_pretrained).parameters
-            is_peft = 'model' in parameters and 'model_id' in parameters
-            var._from_pretrained_origin = var.from_pretrained
-            if not is_peft:
-                var.from_pretrained = partial(
-                    patch_pretrained_model_name_or_path,
-                    ori_func=var._from_pretrained_origin,
-                    **ignore_file_pattern_kwargs)
-            else:
-                var.from_pretrained = partial(
-                    patch_peft_model_id,
-                    ori_func=var._from_pretrained_origin,
-                    **ignore_file_pattern_kwargs)
-        if has_get_peft_type and not hasattr(var, '_get_peft_type_origin'):
-            var._get_peft_type_origin = var._get_peft_type
-            var._get_peft_type = partial(
-                _get_peft_type,
-                ori_func=var._get_peft_type_origin,
-                **ignore_file_pattern_kwargs)
 
-        if has_get_config_dict and not hasattr(var, '_get_config_dict_origin'):
-            var._get_config_dict_origin = var.get_config_dict
-            var.get_config_dict = partial(
-                patch_pretrained_model_name_or_path,
-                ori_func=var._get_config_dict_origin,
-                **ignore_file_pattern_kwargs)
+        if wrap:
+            try:
+                if not has_from_pretrained and not has_get_config_dict and not has_get_peft_type:
+                    all_available_modules.append(var)
+                else:
+                    all_available_modules.append(get_wrapped_class(var, ignore_file_pattern))
+            except Exception:
+                all_available_modules.append(var)
+        else:
+            if has_from_pretrained and not hasattr(var, '_from_pretrained_origin'):
+                parameters = inspect.signature(var.from_pretrained).parameters
+                # different argument names
+                is_peft = 'model' in parameters and 'model_id' in parameters
+                var._from_pretrained_origin = var.from_pretrained
+                if not is_peft:
+                    var.from_pretrained = partial(
+                        patch_pretrained_model_name_or_path,
+                        ori_func=var._from_pretrained_origin,
+                        **ignore_file_pattern_kwargs)
+                else:
+                    var.from_pretrained = partial(
+                        patch_peft_model_id,
+                        ori_func=var._from_pretrained_origin,
+                        **ignore_file_pattern_kwargs)
+            if has_get_peft_type and not hasattr(var, '_get_peft_type_origin'):
+                var._get_peft_type_origin = var._get_peft_type
+                var._get_peft_type = partial(
+                    _get_peft_type,
+                    ori_func=var._get_peft_type_origin,
+                    **ignore_file_pattern_kwargs)
+
+            if has_get_config_dict and not hasattr(var, '_get_config_dict_origin'):
+                var._get_config_dict_origin = var.get_config_dict
+                var.get_config_dict = partial(
+                    patch_pretrained_model_name_or_path,
+                    ori_func=var._get_config_dict_origin,
+                    **ignore_file_pattern_kwargs)
+
+            all_available_modules.append(var)
+    return all_available_modules
 
 
 def _unpatch_pretrained_class(all_imported_modules):
@@ -167,7 +267,7 @@ def _patch_hub():
     import huggingface_hub
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api
-    from huggingface_hub.hf_api import CommitInfo, future_compatible
+    from huggingface_hub.hf_api import future_compatible
     from modelscope import get_logger
     logger = get_logger()
 
@@ -258,6 +358,7 @@ def _patch_hub():
 
     @future_compatible
     def upload_folder(
+        self,
         *,
         repo_id: str,
         folder_path: Union[str, Path],
@@ -269,16 +370,24 @@ def _patch_hub():
         ignore_patterns: Optional[Union[List[str], str]] = None,
         **kwargs,
     ):
-        from modelscope.hub.push_to_hub import push_model_to_hub
-        push_model_to_hub(repo_id, folder_path, path_in_repo, commit_message,
-                          commit_description, token, True, revision,
-                          ignore_patterns)
+        from modelscope.hub.push_to_hub import push_files_to_hub
+        push_files_to_hub(
+            path_or_fileobj=folder_path,
+            path_in_repo=path_in_repo,
+            repo_id=repo_id,
+            commit_message=commit_message,
+            commit_description=commit_description,
+            revision=revision,
+            token=token)
+        from modelscope.utils.repo_utils import CommitInfo
         return CommitInfo(
             commit_url=f'https://www.modelscope.cn/models/{repo_id}/files',
             commit_message=commit_message,
             commit_description=commit_description,
             oid=None,
         )
+
+    from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
 
     @future_compatible
     def upload_file(
@@ -288,7 +397,7 @@ def _patch_hub():
         path_in_repo: str,
         repo_id: str,
         token: Union[str, bool, None] = None,
-        revision: Optional[str] = None,
+        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
         commit_message: Optional[str] = None,
         commit_description: Optional[str] = None,
         **kwargs,

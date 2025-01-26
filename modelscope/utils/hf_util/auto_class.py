@@ -5,6 +5,44 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from transformers import __version__ as transformers_version
+
+    from transformers import AutoConfig
+    from transformers import AutoFeatureExtractor
+    from transformers import AutoImageProcessor
+    from transformers import AutoModel
+    from transformers import AutoModelForAudioClassification
+    from transformers import AutoModelForCausalLM
+    from transformers import AutoModelForDocumentQuestionAnswering
+    from transformers import AutoModelForImageClassification
+    from transformers import AutoModelForImageSegmentation
+    from transformers import AutoModelForInstanceSegmentation
+    from transformers import AutoModelForMaskedImageModeling
+    from transformers import AutoModelForMaskedLM
+    from transformers import AutoModelForMaskGeneration
+    from transformers import AutoModelForObjectDetection
+    from transformers import AutoModelForPreTraining
+    from transformers import AutoModelForQuestionAnswering
+    from transformers import AutoModelForSemanticSegmentation
+    from transformers import AutoModelForSeq2SeqLM
+    from transformers import AutoModelForSequenceClassification
+    from transformers import AutoModelForSpeechSeq2Seq
+    from transformers import AutoModelForTableQuestionAnswering
+    from transformers import AutoModelForTextEncoding
+    from transformers import AutoModelForTokenClassification
+    from transformers import AutoModelForUniversalSegmentation
+    from transformers import AutoModelForVision2Seq
+    from transformers import AutoModelForVisualQuestionAnswering
+    from transformers import AutoModelForZeroShotImageClassification
+    from transformers import AutoModelForZeroShotObjectDetection
+    from transformers import AutoProcessor
+    from transformers import AutoTokenizer
+    from transformers import BatchFeature
+    from transformers import BitsAndBytesConfig
+    from transformers import GenerationConfig
+    from transformers import (PretrainedConfig, PreTrainedModel,
+                              PreTrainedTokenizerBase)
+    from transformers import T5EncoderModel
+
     try:
         from transformers import Qwen2VLForConditionalGeneration
     except ImportError:
@@ -55,89 +93,10 @@ else:
         uagent = '%s/%s' % (Invoke.KEY, invoked_by)
         return uagent
 
-    def get_wrapped_class(module_class,
-                          ignore_file_pattern=[],
-                          file_filter=None,
-                          **kwargs):
-        """Get a custom wrapper class for  auto classes to download the models from the ModelScope hub
-        Args:
-            module_class: The actual module class
-            ignore_file_pattern (`str` or `List`, *optional*, default to `None`):
-                Any file pattern to be ignored in downloading, like exact file names or file extensions.
-        Returns:
-            The wrapper
-        """
-        default_ignore_file_pattern = ignore_file_pattern
-        default_file_filter = file_filter
+    from .patcher import get_all_imported_modules, _patch_pretrained_class
 
-        class ClassWrapper(module_class):
-
-            @classmethod
-            def from_pretrained(cls, pretrained_model_name_or_path,
-                                *model_args, **kwargs):
-
-                from modelscope import snapshot_download
-                from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke
-
-                ignore_file_pattern = kwargs.pop('ignore_file_pattern',
-                                                 default_ignore_file_pattern)
-                subfolder = kwargs.pop('subfolder', default_file_filter)
-                file_filter = None
-                if subfolder:
-                    file_filter = f'{subfolder}/*'
-                if not os.path.exists(pretrained_model_name_or_path):
-                    revision = kwargs.pop('revision', DEFAULT_MODEL_REVISION)
-                    if file_filter is None:
-                        model_dir = snapshot_download(
-                            pretrained_model_name_or_path,
-                            revision=revision,
-                            ignore_file_pattern=ignore_file_pattern,
-                            user_agent=user_agent())
-                    else:
-                        model_dir = os.path.join(
-                            snapshot_download(
-                                pretrained_model_name_or_path,
-                                revision=revision,
-                                ignore_file_pattern=ignore_file_pattern,
-                                allow_file_pattern=file_filter,
-                                user_agent=user_agent()), subfolder)
-                else:
-                    model_dir = pretrained_model_name_or_path
-
-                module_obj = module_class.from_pretrained(
-                    model_dir, *model_args, **kwargs)
-
-                if module_class.__name__.startswith('AutoModel'):
-                    module_obj.model_dir = model_dir
-                return module_obj
-
-        ClassWrapper.__name__ = module_class.__name__
-        ClassWrapper.__qualname__ = module_class.__qualname__
-        return ClassWrapper
-
-    from .patcher import get_all_imported_modules
     all_imported_modules = get_all_imported_modules()
-    all_available_modules = []
-    large_file_free = ['config', 'tokenizer']
-    for module in all_imported_modules:
-        try:
-            if (hasattr(module, 'from_pretrained')
-                    and 'pretrained_model_name_or_path' in inspect.signature(
-                        module.from_pretrained).parameters):
-                if any(lf in module.__name__.lower()
-                       for lf in large_file_free):
-                    ignore_file_patterns = {
-                        'ignore_file_pattern': [
-                            r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth',
-                            r'\w+\.pt', r'\w+\.h5'
-                        ]
-                    }
-                else:
-                    ignore_file_patterns = {}
-                all_available_modules.append(
-                    get_wrapped_class(module, **ignore_file_patterns))
-        except (ImportError, AttributeError):
-            pass
+    all_available_modules = _patch_pretrained_class(all_imported_modules, wrap=True)
 
     for module in all_available_modules:
         globals()[module.__name__] = module

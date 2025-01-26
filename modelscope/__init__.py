@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
                            build_dataset_from_file)
     from .utils.constant import Tasks
+    from .utils.hf_util import patch_hub, patch_context, unpatch_hub
     if is_transformers_available():
         from .utils.hf_util import (
             AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
@@ -105,34 +106,6 @@ else:
         'utils.constant': ['Tasks'],
         'msdatasets': ['MsDataset']
     }
-
-    if is_transformers_available():
-        _import_structure['utils.hf_util'] = [
-            'AutoModel', 'AutoProcessor', 'AutoFeatureExtractor',
-            'GenerationConfig', 'AutoConfig', 'GPTQConfig', 'AwqConfig',
-            'BitsAndBytesConfig', 'AutoModelForCausalLM',
-            'AutoModelForSeq2SeqLM', 'AutoModelForVision2Seq',
-            'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification',
-            'AutoModelForImageClassification', 'AutoModelForImageToImage',
-            'AutoModelForImageTextToText',
-            'AutoModelForZeroShotImageClassification',
-            'AutoModelForKeypointDetection',
-            'AutoModelForDocumentQuestionAnswering',
-            'AutoModelForSemanticSegmentation',
-            'AutoModelForUniversalSegmentation',
-            'AutoModelForInstanceSegmentation', 'AutoModelForObjectDetection',
-            'AutoModelForZeroShotObjectDetection',
-            'AutoModelForAudioClassification', 'AutoModelForSpeechSeq2Seq',
-            'AutoModelForMaskedImageModeling',
-            'AutoModelForVisualQuestionAnswering',
-            'AutoModelForTableQuestionAnswering',
-            'AutoModelForImageSegmentation', 'AutoModelForQuestionAnswering',
-            'AutoModelForMaskedLM', 'AutoTokenizer',
-            'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
-            'AutoModelForTextEncoding', 'AutoImageProcessor', 'BatchFeature',
-            'Qwen2VLForConditionalGeneration', 'T5EncoderModel'
-        ]
 
     from modelscope.utils import hf_util
 

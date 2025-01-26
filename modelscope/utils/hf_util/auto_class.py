@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import inspect
-import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -71,32 +69,9 @@ if TYPE_CHECKING:
 
 else:
 
-    class UnsupportedAutoClass:
-
-        def __init__(self, name: str):
-            self.error_msg =\
-                f'{name} is not supported with your installed Transformers version {transformers_version}. ' + \
-                'Please update your Transformers by "pip install transformers -U".'
-
-        def from_pretrained(self, pretrained_model_name_or_path, *model_args,
-                            **kwargs):
-            raise ImportError(self.error_msg)
-
-        def from_config(self, cls, config):
-            raise ImportError(self.error_msg)
-
-    def user_agent(invoked_by=None):
-        from modelscope.utils.constant import Invoke
-
-        if invoked_by is None:
-            invoked_by = Invoke.PRETRAINED
-        uagent = '%s/%s' % (Invoke.KEY, invoked_by)
-        return uagent
-
     from .patcher import get_all_imported_modules, _patch_pretrained_class
-
-    all_imported_modules = get_all_imported_modules()
-    all_available_modules = _patch_pretrained_class(all_imported_modules, wrap=True)
+    all_available_modules = _patch_pretrained_class(
+        get_all_imported_modules(), wrap=True)
 
     for module in all_available_modules:
         globals()[module.__name__] = module

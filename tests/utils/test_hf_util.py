@@ -152,8 +152,12 @@ class HFUtilTest(unittest.TestCase):
 
     def test_patch_peft(self):
         with patch_context():
+            from transformers import AutoModelForCausalLM
             from peft import PeftModel
-            self.assertTrue(hasattr(PeftModel, '_from_pretrained_origin'))
+            model = AutoModelForCausalLM.from_pretrained('OpenBMB/MiniCPM3-4B')
+            model = PeftModel.from_pretrained(model,
+                                              'OpenBMB/MiniCPM3-RAG-LoRA')
+            self.assertTrue(model is not None)
         self.assertFalse(hasattr(PeftModel, '_from_pretrained_origin'))
 
     def test_patch_file_exists(self):

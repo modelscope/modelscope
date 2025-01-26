@@ -150,6 +150,11 @@ class HFUtilTest(unittest.TestCase):
         else:
             self.assertTrue(False)
 
+        from modelscope import StableDiffusionPipeline
+        pipe = StableDiffusionPipeline.from_pretrained(
+            'AI-ModelScope/stable-diffusion-v1-5')
+        self.assertTrue(pipe is not None)
+
     def test_patch_peft(self):
         with patch_context():
             from transformers import AutoModelForCausalLM

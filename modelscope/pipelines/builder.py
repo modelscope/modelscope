@@ -76,7 +76,7 @@ def pipeline(task: str = None,
              config_file: str = None,
              pipeline_name: str = None,
              framework: str = None,
-             device: str = 'gpu',
+             device: str = None,
              model_revision: Optional[str] = DEFAULT_MODEL_REVISION,
              ignore_file_pattern: List[str] = None,
              **kwargs) -> Pipeline:
@@ -174,9 +174,13 @@ def pipeline(task: str = None,
             if not hasattr(first_model, 'pipeline'):
                 # model is instantiated by user, we should parse config again
                 cfg = read_config(first_model.model_dir)
-                check_config(cfg)
-                first_model.pipeline = cfg.pipeline
-            pipeline_props = first_model.pipeline
+                try:
+                    check_config(cfg)
+                    first_model.pipeline = cfg.pipeline
+                except AssertionError as e:
+                    logger.info(str(e))
+            if first_model.__dict__.get('pipeline'):
+                pipeline_props = first_model.pipeline
         else:
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
             model = normalize_model_input(default_model_repo, model_revision)
@@ -192,6 +196,8 @@ def pipeline(task: str = None,
              device=device,
              **kwargs)
 
+    if not device:
+        device = 'gpu'
     pipeline_props['model'] = model
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)

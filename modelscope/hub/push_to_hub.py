@@ -24,7 +24,7 @@ _tasks = dict()
 _manager = None
 
 
-def push_files_to_hub(
+def _push_files_to_hub(
     path_or_fileobj: Union[str, Path],
     path_in_repo: str,
     repo_id: str,
@@ -33,6 +33,11 @@ def push_files_to_hub(
     commit_message: Optional[str] = None,
     commit_description: Optional[str] = None,
 ):
+    """Push files to model hub incrementally
+
+    This function if used for patch_hub, user is not recommended to call this.
+    This function will be merged to push_to_hub in later sprints.
+    """
     if not os.path.exists(path_or_fileobj):
         return
 

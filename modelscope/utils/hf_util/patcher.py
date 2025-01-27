@@ -383,8 +383,12 @@ def _patch_hub():
         Returns:
             RepoUrl: The URL of the created repository.
         """
-        from modelscope.hub.create_model import create_model_repo
-        hub_model_id = create_model_repo(repo_id, token, private)
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        from modelscope.hub.constants import ModelVisibility
+        visibility = ModelVisibility.PRIVATE if private else ModelVisibility.PUBLIC
+        hub_model_id = api.create_repo(
+            repo_id, token=token, visibility=visibility, **kwargs)
         from huggingface_hub import RepoUrl
         return RepoUrl(url=hub_model_id, )
 
@@ -402,8 +406,8 @@ def _patch_hub():
         ignore_patterns: Optional[Union[List[str], str]] = None,
         **kwargs,
     ):
-        from modelscope.hub.push_to_hub import push_files_to_hub
-        push_files_to_hub(
+        from modelscope.hub.push_to_hub import _push_files_to_hub
+        _push_files_to_hub(
             path_or_fileobj=folder_path,
             path_in_repo=path_in_repo,
             repo_id=repo_id,
@@ -434,9 +438,9 @@ def _patch_hub():
         commit_description: Optional[str] = None,
         **kwargs,
     ):
-        from modelscope.hub.push_to_hub import push_files_to_hub
-        push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
-                          revision, commit_message, commit_description)
+        from modelscope.hub.push_to_hub import _push_files_to_hub
+        _push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
+                           revision, commit_message, commit_description)
 
     # Patch repocard.validate
     from huggingface_hub import repocard

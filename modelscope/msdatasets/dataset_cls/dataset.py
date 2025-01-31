@@ -8,7 +8,7 @@ from itertools import islice
 import datasets
 import pandas as pd
 from datasets import IterableDataset
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from modelscope.msdatasets.utils.maxcompute_utils import MaxComputeUtil
 from modelscope.utils.constant import (DEFAULT_MAXCOMPUTE_ENDPOINT,

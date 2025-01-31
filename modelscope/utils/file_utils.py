@@ -215,7 +215,9 @@ def get_file_hash(
         disable_tqdm = False
         name = 'Large File'
         if isinstance(file_path_or_obj, (str, Path)):
-            name = file_path_or_obj
+            path = file_path_or_obj if isinstance(
+                file_path_or_obj, Path) else Path(file_path_or_obj)
+            name = path.name
         tqdm_desc = f'[Validating Hash for {name}]'
 
     buffer_size = buffer_size_mb * 1024 * 1024

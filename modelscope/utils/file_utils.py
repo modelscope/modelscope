@@ -208,9 +208,16 @@ def get_file_hash(
     tqdm_desc: Optional[str] = '[Calculating]',
     disable_tqdm: Optional[bool] = True,
 ) -> dict:
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
     file_size = get_file_size(file_path_or_obj)
+    if file_size > 1024 * 1024 * 1024:  # 1GB
+        disable_tqdm = False
+        name = 'Large File'
+        if isinstance(file_path_or_obj, (str, Path)):
+            name = file_path_or_obj
+        tqdm_desc = f'[Validating Hash for {name}]'
+
     buffer_size = buffer_size_mb * 1024 * 1024
     file_hash = hashlib.sha256()
     chunk_hash_list = []

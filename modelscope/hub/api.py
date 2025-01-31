@@ -22,7 +22,7 @@ import json
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,

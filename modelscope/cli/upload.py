@@ -153,7 +153,7 @@ class UploadCMD(CLICommand):
             )
 
         if os.path.isfile(self.local_path):
-            commit_info = api.upload_file(
+            api.upload_file(
                 path_or_fileobj=self.local_path,
                 path_in_repo=self.path_in_repo,
                 repo_id=self.repo_id,
@@ -162,7 +162,7 @@ class UploadCMD(CLICommand):
                 commit_description=self.args.commit_description,
             )
         elif os.path.isdir(self.local_path):
-            commit_info = api.upload_folder(
+            api.upload_folder(
                 repo_id=self.repo_id,
                 folder_path=self.local_path,
                 path_in_repo=self.path_in_repo,
@@ -176,4 +176,4 @@ class UploadCMD(CLICommand):
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')
 
-        logger.info(f'Upload finished, commit info: {commit_info}')
+        logger.info(f'Finished uploading to {self.repo_id}')

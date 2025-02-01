@@ -22,6 +22,10 @@ DEFAULT_IGNORE_PATTERNS = [
     '.git/*',
     '*/.git',
     '**/.git/**',
+    '.cache',
+    '.cache/*',
+    '*/.cache',
+    '**/.cache/**',
     '.cache/modelscope',
     '.cache/modelscope/*',
     '*/.cache/modelscope',
@@ -338,9 +342,8 @@ class UploadInfo:
     sample: bytes
 
     @classmethod
-    def from_path(cls, path: str):
-
-        file_hash_info: dict = get_file_hash(path)
+    def from_path(cls, path: str, file_hash_info: dict = None):
+        file_hash_info = file_hash_info or get_file_hash(path)
         size = file_hash_info['file_size']
         sha = file_hash_info['file_hash']
         sample = open(path, 'rb').read(512)
@@ -348,17 +351,18 @@ class UploadInfo:
         return cls(sha256=sha, size=size, sample=sample)
 
     @classmethod
-    def from_bytes(cls, data: bytes):
-        sha = get_file_hash(data)['file_hash']
+    def from_bytes(cls, data: bytes, file_hash_info: dict = None):
+        file_hash_info = file_hash_info or get_file_hash(data)
+        sha = file_hash_info['file_hash']
         return cls(size=len(data), sample=data[:512], sha256=sha)
 
     @classmethod
-    def from_fileobj(cls, fileobj: BinaryIO):
-        fileobj_info: dict = get_file_hash(fileobj)
+    def from_fileobj(cls, fileobj: BinaryIO, file_hash_info: dict = None):
+        file_hash_info: dict = file_hash_info or get_file_hash(fileobj)
         sample = fileobj.read(512)
         return cls(
-            sha256=fileobj_info['file_hash'],
-            size=fileobj_info['file_size'],
+            sha256=file_hash_info['file_hash'],
+            size=file_hash_info['file_size'],
             sample=sample)
 
 
@@ -369,6 +373,7 @@ class CommitOperationAdd:
     path_in_repo: str
     path_or_fileobj: Union[str, Path, bytes, BinaryIO]
     upload_info: UploadInfo = field(init=False, repr=False)
+    file_hash_info: dict = field(default_factory=dict)
 
     # Internal attributes
 
@@ -393,6 +398,8 @@ class CommitOperationAdd:
 
     def __post_init__(self) -> None:
         """Validates `path_or_fileobj` and compute `upload_info`."""
+
+        self.path_in_repo = _validate_path_in_repo(self.path_in_repo)
 
         # Validate `path_or_fileobj` value
         if isinstance(self.path_or_fileobj, Path):
@@ -420,11 +427,14 @@ class CommitOperationAdd:
 
         # Compute "upload_info" attribute
         if isinstance(self.path_or_fileobj, str):
-            self.upload_info = UploadInfo.from_path(self.path_or_fileobj)
+            self.upload_info = UploadInfo.from_path(self.path_or_fileobj,
+                                                    self.file_hash_info)
         elif isinstance(self.path_or_fileobj, bytes):
-            self.upload_info = UploadInfo.from_bytes(self.path_or_fileobj)
+            self.upload_info = UploadInfo.from_bytes(self.path_or_fileobj,
+                                                     self.file_hash_info)
         else:
-            self.upload_info = UploadInfo.from_fileobj(self.path_or_fileobj)
+            self.upload_info = UploadInfo.from_fileobj(self.path_or_fileobj,
+                                                       self.file_hash_info)
 
     @contextmanager
     def as_file(self) -> Iterator[BinaryIO]:
@@ -474,6 +484,24 @@ class CommitOperationAdd:
             # => no need to read by chunk since the file is guaranteed to be <=5MB.
             with self.as_file() as file:
                 return git_hash(file.read())
+
+
+def _validate_path_in_repo(path_in_repo: str) -> str:
+    # Validate `path_in_repo` value to prevent a server-side issue
+    if path_in_repo.startswith('/'):
+        path_in_repo = path_in_repo[1:]
+    if path_in_repo == '.' or path_in_repo == '..' or path_in_repo.startswith(
+            '../'):
+        raise ValueError(
+            f"Invalid `path_in_repo` in CommitOperation: '{path_in_repo}'")
+    if path_in_repo.startswith('./'):
+        path_in_repo = path_in_repo[2:]
+    for forbidden in FORBIDDEN_FOLDERS:
+        if any(part == forbidden for part in path_in_repo.split('/')):
+            raise ValueError(
+                f"Invalid `path_in_repo` in CommitOperation: cannot update files under a '{forbidden}/' folder (path:"
+                f" '{path_in_repo}').")
+    return path_in_repo
 
 
 CommitOperation = Union[CommitOperationAdd, ]

@@ -1463,7 +1463,6 @@ class HubApi:
                 'is_uploaded': upload_res['is_uploaded'],
                 'file_hash_info': hash_info_d,
             }
-        print('>> start _upload_items')
 
         uploaded_items_list = _upload_items(
             prepared_repo_objects,
@@ -1504,7 +1503,6 @@ class HubApi:
             token=token,
             repo_type=repo_type,
         )
-        print(f'>> finish commit_info: {commit_info}')
 
         return commit_info
 
@@ -1539,7 +1537,7 @@ class HubApi:
         upload_object = upload_objects[0] if len(upload_objects) == 1 else None
 
         if upload_object is None:
-            logger.info(f'Blob {sha256} has already uploaded, reuse it.')
+            logger.info(f'Blob {sha256[:8]} has already uploaded, reuse it.')
             res_d['is_uploaded'] = True
             return res_d
 

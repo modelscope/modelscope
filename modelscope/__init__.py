@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
                            build_dataset_from_file)
     from .utils.constant import Tasks
+    from .utils.hf_util import patch_hub, patch_context, unpatch_hub
     if is_transformers_available():
         from .utils.hf_util import (
             AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
@@ -106,34 +107,13 @@ else:
         'msdatasets': ['MsDataset']
     }
 
-    if is_transformers_available():
-        _import_structure['utils.hf_util'] = [
-            'AutoModel', 'AutoProcessor', 'AutoFeatureExtractor',
-            'GenerationConfig', 'AutoConfig', 'GPTQConfig', 'AwqConfig',
-            'BitsAndBytesConfig', 'AutoModelForCausalLM',
-            'AutoModelForSeq2SeqLM', 'AutoModelForVision2Seq',
-            'AutoModelForSequenceClassification',
-            'AutoModelForTokenClassification',
-            'AutoModelForImageClassification', 'AutoModelForImageToImage',
-            'AutoModelForImageTextToText',
-            'AutoModelForZeroShotImageClassification',
-            'AutoModelForKeypointDetection',
-            'AutoModelForDocumentQuestionAnswering',
-            'AutoModelForSemanticSegmentation',
-            'AutoModelForUniversalSegmentation',
-            'AutoModelForInstanceSegmentation', 'AutoModelForObjectDetection',
-            'AutoModelForZeroShotObjectDetection',
-            'AutoModelForAudioClassification', 'AutoModelForSpeechSeq2Seq',
-            'AutoModelForMaskedImageModeling',
-            'AutoModelForVisualQuestionAnswering',
-            'AutoModelForTableQuestionAnswering',
-            'AutoModelForImageSegmentation', 'AutoModelForQuestionAnswering',
-            'AutoModelForMaskedLM', 'AutoTokenizer',
-            'AutoModelForMaskGeneration', 'AutoModelForPreTraining',
-            'AutoModelForTextEncoding', 'AutoImageProcessor', 'BatchFeature',
-            'Qwen2VLForConditionalGeneration', 'T5EncoderModel',
-            'hf_pipeline'
-        ]
+    from modelscope.utils import hf_util
+
+    extra_objects = {}
+    attributes = dir(hf_util)
+    imports = [attr for attr in attributes if not attr.startswith('__')]
+    for _import in imports:
+        extra_objects[_import] = getattr(hf_util, _import)
 
     import sys
 
@@ -142,5 +122,5 @@ else:
         globals()['__file__'],
         _import_structure,
         module_spec=__spec__,
-        extra_objects={},
+        extra_objects=extra_objects,
     )

@@ -22,6 +22,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
+from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
 
@@ -223,9 +224,8 @@ def _snapshot_download(
 
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
-    system_cache = cache_dir if cache_dir is not None else os.getenv(
-        'MODELSCOPE_CACHE',
-        Path.home().joinpath('.cache', 'modelscope', 'hub'))
+    system_cache = cache_dir if cache_dir is not None else get_default_modelscope_cache_dir(
+    )
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -252,7 +252,7 @@ def _snapshot_download(
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
-                    system_cache, *repo_id.split('/'))
+                    system_cache, 'models', *repo_id.split('/'))
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)

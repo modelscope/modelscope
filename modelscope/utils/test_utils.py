@@ -29,7 +29,7 @@ TEST_ACCESS_TOKEN1 = os.environ.get('TEST_ACCESS_TOKEN_CITEST', None)
 TEST_ACCESS_TOKEN2 = os.environ.get('TEST_ACCESS_TOKEN_SDKDEV', None)
 
 TEST_MODEL_CHINESE_NAME = '内部测试模型'
-TEST_MODEL_ORG = 'citest'
+TEST_MODEL_ORG = os.environ.get('TEST_MODEL_ORG', 'citest')
 
 
 def delete_credential():

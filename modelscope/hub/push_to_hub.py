@@ -3,7 +3,12 @@
 import concurrent.futures
 import os
 import shutil
+import tempfile
 from multiprocessing import Manager, Process, Value
+from pathlib import Path
+from typing import List, Optional, Union
+
+import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility
@@ -17,6 +22,44 @@ _queues = dict()
 _flags = dict()
 _tasks = dict()
 _manager = None
+
+
+def _push_files_to_hub(
+    path_or_fileobj: Union[str, Path],
+    path_in_repo: str,
+    repo_id: str,
+    token: Union[str, bool, None] = None,
+    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+    commit_message: Optional[str] = None,
+    commit_description: Optional[str] = None,
+):
+    """Push files to model hub incrementally
+
+    This function if used for patch_hub, user is not recommended to call this.
+    This function will be merged to push_to_hub in later sprints.
+    """
+    if not os.path.exists(path_or_fileobj):
+        return
+
+    from modelscope import HubApi
+    api = HubApi()
+    api.login(token)
+    if not commit_message:
+        commit_message = 'Updating files'
+    if commit_description:
+        commit_message = commit_message + '\n' + commit_description
+    with tempfile.TemporaryDirectory() as temp_cache_dir:
+        from modelscope.hub.repository import Repository
+        repo = Repository(temp_cache_dir, repo_id, revision=revision)
+        sub_folder = os.path.join(temp_cache_dir, path_in_repo)
+        os.makedirs(sub_folder, exist_ok=True)
+        if os.path.isfile(path_or_fileobj):
+            dest_file = os.path.join(sub_folder,
+                                     os.path.basename(path_or_fileobj))
+            shutil.copyfile(path_or_fileobj, dest_file)
+        else:
+            shutil.copytree(path_or_fileobj, sub_folder, dirs_exist_ok=True)
+        repo.push(commit_message)
 
 
 def _api_push_to_hub(repo_name,

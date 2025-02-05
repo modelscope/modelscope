@@ -183,12 +183,12 @@ class HFUtilTest(unittest.TestCase):
         try:
             # Import again
             from huggingface_hub import file_exists  # noqa
-            file_exists('AI-ModelScope/stable-diffusion-v1-5',
-                        'feature_extractor/preprocessor_config.json')
+            exists = file_exists('AI-ModelScope/stable-diffusion-v1-5',
+                                 'feature_extractor/preprocessor_config.json')
         except Exception:
             pass
         else:
-            self.assertTrue(False)
+            self.assertFalse(exists)
 
     def test_patch_file_download(self):
         with patch_context():

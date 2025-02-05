@@ -496,6 +496,8 @@ def _patch_hub():
     if not hasattr(repocard.RepoCard, '_validate_origin'):
         repocard.RepoCard._validate_origin = repocard.RepoCard.validate
         repocard.RepoCard.validate = lambda *args, **kwargs: None
+        repocard.RepoCard._load_origin = repocard.RepoCard.load
+        repocard.RepoCard.load = lambda *args, **kwargs: None
 
     if not hasattr(hf_api, '_hf_hub_download_origin'):
         # Patch hf_hub_download
@@ -559,6 +561,9 @@ def _unpatch_hub():
     if hasattr(repocard.RepoCard, '_validate_origin'):
         repocard.RepoCard.validate = repocard.RepoCard._validate_origin
         delattr(repocard.RepoCard, '_validate_origin')
+    if hasattr(repocard.RepoCard, '_load_origin'):
+        repocard.RepoCard.load = repocard.RepoCard._load_origin
+        delattr(repocard.RepoCard, '_load_origin')
 
     if hasattr(hf_api, '_hf_hub_download_origin'):
         huggingface_hub.file_download.hf_hub_download = hf_api._hf_hub_download_origin

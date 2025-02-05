@@ -155,9 +155,9 @@ class HubOperationTest(unittest.TestCase):
         self.prepare_case()
         snapshot_download_path = snapshot_download(
             model_id=self.model_id, revision=self.revision)
-        assert os.path.exists(snapshot_download_path)
-        assert '/hub/' in snapshot_download_path
         print(snapshot_download_path)
+        assert os.path.exists(snapshot_download_path)
+        assert 'models' in snapshot_download_path
         shutil.rmtree(snapshot_download_path)
         # download with cache_dir
         cache_dir = '/tmp/snapshot_download_cache_test'

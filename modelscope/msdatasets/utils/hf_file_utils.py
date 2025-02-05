@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Optional, Union
 from urllib.parse import urljoin, urlparse
 import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from datasets import config
 from datasets.utils.file_utils import hash_url_to_filename, \

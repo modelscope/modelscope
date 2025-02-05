@@ -5,9 +5,6 @@ from argparse import ArgumentParser, _SubParsersAction
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
-from modelscope.utils.logger import get_logger
-
-logger = get_logger()
 
 
 def subparser_func(args):
@@ -176,4 +173,4 @@ class UploadCMD(CLICommand):
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')
 
-        logger.info(f'Finished uploading to {self.repo_id}')
+        print(f'Finished uploading to {self.repo_id}')

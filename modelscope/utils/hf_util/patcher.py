@@ -465,7 +465,6 @@ def _patch_hub():
             raise ValueError(
                 'ModelScope create_commit only support Add operation for now.')
         ms_operations = []
-        ignore_file_pattern
         for op in operations:
             _op = CommitOperationAdd(
                 path_in_repo=op.path_in_repo,

@@ -120,6 +120,7 @@ class HubApi:
 
         Args:
             access_token (str): user access token on modelscope, set this argument or set `MODELSCOPE_API_TOKEN`.
+            If neither of the tokens exist, login will directly return.
 
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
@@ -1211,9 +1212,14 @@ class HubApi:
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
 
-        self.login(token)
+        if token:
+            self.login(access_token=token)
+        else:
+            logger.warning('No token provided, will use the cached token.')
 
         repo_id_list = repo_id.split('/')
+        if len(repo_id_list) != 2:
+            raise ValueError('Invalid repo id, should be in the format of `owner_name/repo_name`')
         namespace, repo_name = repo_id_list
 
         if repo_type == REPO_TYPE_MODEL:

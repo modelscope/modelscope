@@ -26,10 +26,6 @@ DEFAULT_IGNORE_PATTERNS = [
     '.cache/*',
     '*/.cache',
     '**/.cache/**',
-    '.cache/modelscope',
-    '.cache/modelscope/*',
-    '*/.cache/modelscope',
-    '**/.cache/modelscope/**',
 ]
 # Forbidden to commit these folders
 FORBIDDEN_FOLDERS = ['.git', '.cache']

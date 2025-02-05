@@ -1375,7 +1375,7 @@ class HubApi:
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
-        logger.info(f'Committing file to {repo_id} ...')
+        print(f'Committing file to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
@@ -1495,7 +1495,7 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        logger.info(f'Committing folder to {repo_id} ...')
+        print(f'Committing folder to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,

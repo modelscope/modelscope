@@ -11,6 +11,7 @@ from pathlib import Path
 from types import MethodType
 from typing import BinaryIO, Dict, Iterable, List, Optional, Union
 
+from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
 from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
                                          CommitOperationAdd)
 
@@ -421,7 +422,8 @@ def _patch_hub():
             token=token)
         from modelscope.utils.repo_utils import CommitInfo
         return CommitInfo(
-            commit_url=f'https://www.modelscope.cn/models/{repo_id}/files',
+            commit_url=
+            f'{DEFAULT_MODELSCOPE_DATA_ENDPOINT}/models/{repo_id}/files',
             commit_message=commit_message,
             commit_description=commit_description,
             oid=None,

@@ -85,10 +85,10 @@ class HFUtilTest(unittest.TestCase):
         with patch_context():
             from transformers import AutoTokenizer, AutoModelForCausalLM
             tokenizer = AutoTokenizer.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-base')
+                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
             self.assertIsNotNone(tokenizer)
             model = AutoModelForCausalLM.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-base')
+                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
             self.assertIsNotNone(model)
 
     def test_patch_model(self):

@@ -263,7 +263,8 @@ class AudioTasks(object):
     speaker_diarization_dialogue_detection = 'speaker-diarization-dialogue-detection'
     speaker_diarization_semantic_speaker_turn_detection = 'speaker-diarization-semantic-speaker-turn-detection'
     emotion_recognition = 'emotion-recognition'
-
+    speech_super_resolution = 'speech-super-resolution'
+    voice_conversion = 'voice-conversion'
 
 class MultiModalTasks(object):
     # multi-modal tasks

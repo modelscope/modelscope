@@ -105,7 +105,7 @@ def check_model_is_id(model_id: str, token: Optional[str] = None):
         return False
     else:
         _api = HubApi()
-        _api.try_login(token)
+        _api.login(token)
         try:
             _api.get_model(model_id=model_id, )
             return True

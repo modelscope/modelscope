@@ -48,9 +48,8 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
-from modelscope.hub.utils.utils import (add_patterns_to_file,
-                                        add_patterns_to_gitattributes,
-                                        get_endpoint, get_readable_folder_size,
+from modelscope.hub.utils.utils import (add_content_to_file, get_endpoint,
+                                        get_readable_folder_size,
                                         get_release_datetime,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
@@ -131,7 +130,8 @@ class HubApi:
         """
         if access_token is None:
             access_token = os.environ.get('MODELSCOPE_API_TOKEN')
-        assert access_token is not None, 'Please pass in access_token or set `MODELSCOPE_API_TOKEN`'
+        if not access_token:
+            return None, None
         path = f'{self.endpoint}/api/v1/login'
         r = self.session.post(
             path,
@@ -153,16 +153,6 @@ class HubApi:
 
         return d[API_RESPONSE_FIELD_DATA][
             API_RESPONSE_FIELD_GIT_ACCESS_TOKEN], cookies
-
-    def try_login(self, access_token: Optional[str] = None) -> bool:
-        """Wraps the `login` method and returns bool.
-        """
-        try:
-            self.login(access_token)
-            return True
-        except AssertionError:
-            logger.warning('Login failed.')
-            return False
 
     def create_model(self,
                      model_id: str,
@@ -1221,13 +1211,7 @@ class HubApi:
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
 
-        self.try_login(token)
-        if '/' not in repo_id:
-            user_name = ModelScopeConfig.get_user_info()[0]
-            assert isinstance(user_name, str)
-            repo_id = f'{user_name}/{repo_id}'
-            logger.info(
-                f"'/' not in hub_model_id, pushing to personal repo {repo_id}")
+        self.login(token)
 
         repo_id_list = repo_id.split('/')
         namespace, repo_name = repo_id_list
@@ -1248,8 +1232,6 @@ class HubApi:
             with tempfile.TemporaryDirectory() as temp_cache_dir:
                 from modelscope.hub.repository import Repository
                 repo = Repository(temp_cache_dir, repo_id)
-                add_patterns_to_gitattributes(
-                    repo, ['*.safetensors', '*.bin', '*.pt', '*.gguf'])
                 default_config = {
                     'framework': 'pytorch',
                     'task': 'text-generation',
@@ -1259,7 +1241,7 @@ class HubApi:
                 if not config_json:
                     config_json = {}
                 config = {**default_config, **config_json}
-                add_patterns_to_file(
+                add_content_to_file(
                     repo,
                     'configuration.json', [json.dumps(config)],
                     ignore_push_error=True)

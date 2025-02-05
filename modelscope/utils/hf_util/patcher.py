@@ -3,11 +3,21 @@ import contextlib
 import importlib
 import inspect
 import os
+import re
 import sys
+from asyncio import Future
 from functools import partial
 from pathlib import Path
 from types import MethodType
-from typing import BinaryIO, Dict, List, Optional, Union
+from typing import BinaryIO, Dict, Iterable, List, Optional, Union
+
+from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
+                                         CommitOperationAdd)
+
+ignore_file_pattern = [
+    r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5',
+    r'\w+\.ckpt'
+]
 
 
 def get_all_imported_modules():
@@ -15,7 +25,7 @@ def get_all_imported_modules():
     all_imported_modules = []
     transformers_include_names = [
         'Auto', 'T5', 'BitsAndBytes', 'GenerationConfig', 'Quant', 'Awq',
-        'GPTQ', 'BatchFeature', 'Qwen2'
+        'GPTQ', 'BatchFeature', 'Qwen', 'Llama'
     ]
     diffusers_include_names = ['Pipeline']
     if importlib.util.find_spec('transformers') is not None:
@@ -87,11 +97,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         else:
             model_dir = pretrained_model_name_or_path
         return model_dir
-
-    ignore_file_pattern = [
-        r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5',
-        r'\w+\.ckpt'
-    ]
 
     def patch_pretrained_model_name_or_path(pretrained_model_name_or_path,
                                             *model_args, **kwargs):
@@ -319,7 +324,7 @@ def _patch_hub():
             )
         from modelscope.hub.api import HubApi
         api = HubApi()
-        api.try_login(token)
+        api.login(token)
         return api.file_exists(repo_id, filename, revision=revision)
 
     def _file_download(repo_id: str,
@@ -348,7 +353,7 @@ def _patch_hub():
             from modelscope.hub.file_download import dataset_file_download as file_download
         from modelscope import HubApi
         api = HubApi()
-        api.try_login(token)
+        api.login(token)
         return file_download(
             repo_id,
             file_path=os.path.join(subfolder, filename)
@@ -362,7 +367,7 @@ def _patch_hub():
         from modelscope.hub.api import ModelScopeConfig
         from modelscope.hub.api import HubApi
         api = HubApi()
-        api.try_login(token)
+        api.login(token)
         return {'name': ModelScopeConfig.get_user_info()[0] or 'unknown'}
 
     def create_repo(self,
@@ -385,12 +390,11 @@ def _patch_hub():
         """
         from modelscope.hub.api import HubApi
         api = HubApi()
-        from modelscope.hub.constants import ModelVisibility
-        visibility = ModelVisibility.PRIVATE if private else ModelVisibility.PUBLIC
-        hub_model_id = api.create_repo(
+        visibility = 'private' if private else 'public'
+        repo_url = api.create_repo(
             repo_id, token=token, visibility=visibility, **kwargs)
-        from huggingface_hub import RepoUrl
-        return RepoUrl(url=hub_model_id, )
+        from modelscope.utils.repo_utils import RepoUrl
+        return RepoUrl(url=repo_url, repo_type='model', repo_id=repo_id)
 
     @future_compatible
     def upload_folder(
@@ -442,6 +446,50 @@ def _patch_hub():
         _push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
                            revision, commit_message, commit_description)
 
+    @future_compatible
+    def create_commit(
+        self,
+        repo_id: str,
+        operations: Iterable[CommitOperation],
+        *,
+        commit_message: str,
+        commit_description: Optional[str] = None,
+        token: Union[str, bool, None] = None,
+        repo_type: Optional[str] = None,
+        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+        **kwargs,
+    ) -> Union[CommitInfo, Future[CommitInfo]]:
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        if any(['Add' not in op.__class__.__name__ for op in operations]):
+            raise ValueError(
+                'ModelScope create_commit only support Add operation for now.')
+        ms_operations = []
+        ignore_file_pattern
+        for op in operations:
+            _op = CommitOperationAdd(
+                path_in_repo=op.path_in_repo,
+                path_or_fileobj=op.path_or_fileobj)
+            _op._upload_mode = op._upload_mode
+            if any([
+                    re.search(pattern, _op.path_in_repo or _op.path_or_fileobj)
+                    is not None for pattern in ignore_file_pattern
+            ]):
+                _op._upload_mode = 'lfs'
+            else:
+                _op._upload_mode = 'normal'
+            ms_operations.append(_op)
+        operations = ms_operations
+        return api.create_commit(
+            repo_id,
+            operations,
+            commit_message=commit_message,
+            commit_description=commit_description,
+            token=token,
+            repo_type=repo_type,
+            revision=revision,
+        )
+
     # Patch repocard.validate
     from huggingface_hub import repocard
     if not hasattr(repocard.RepoCard, '_validate_origin'):
@@ -492,6 +540,15 @@ def _patch_hub():
         huggingface_hub.hf_api.upload_file = hf_api.upload_file
         repocard.upload_file = hf_api.upload_file
 
+    if not hasattr(hf_api, '_create_commit_origin'):
+        # Patch upload_file
+        hf_api._create_commit_origin = hf_api.create_commit
+        hf_api.create_commit = MethodType(create_commit, api)
+        huggingface_hub.create_commit = hf_api.create_commit
+        huggingface_hub.hf_api.create_commit = hf_api.create_commit
+        from transformers.utils import hub
+        hub.create_commit = hf_api.create_commit
+
 
 def _unpatch_hub():
     import huggingface_hub
@@ -540,6 +597,14 @@ def _unpatch_hub():
         huggingface_hub.hf_api.upload_file = hf_api.upload_file
         repocard.upload_file = hf_api.upload_file
         delattr(hf_api, '_upload_file_origin')
+
+    if hasattr(hf_api, '_create_commit_origin'):
+        hf_api.create_commit = hf_api._create_commit_origin
+        huggingface_hub.create_commit = hf_api.create_commit
+        huggingface_hub.hf_api.create_commit = hf_api.create_commit
+        from transformers.utils import hub
+        hub.create_commit = hf_api.create_commit
+        delattr(hf_api, '_create_commit_origin')
 
 
 def patch_hub():

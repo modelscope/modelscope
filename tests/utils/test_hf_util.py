@@ -5,12 +5,13 @@ import tempfile
 import unittest
 import uuid
 
+import torch
 from huggingface_hub import CommitInfo, RepoUrl
 
 from modelscope import HubApi
 from modelscope.utils.hf_util.patcher import patch_context
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import TEST_MODEL_ORG
+from modelscope.utils.test_utils import TEST_MODEL_ORG, test_level
 
 logger = get_logger()
 
@@ -136,6 +137,7 @@ class HFUtilTest(unittest.TestCase):
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
             self.assertTrue(config is not None)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_patch_diffusers(self):
         with patch_context():
             from diffusers import StableDiffusionPipeline
@@ -155,14 +157,20 @@ class HFUtilTest(unittest.TestCase):
             'AI-ModelScope/stable-diffusion-v1-5')
         self.assertTrue(pipe is not None)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_patch_peft(self):
         with patch_context():
             from transformers import AutoModelForCausalLM
             from peft import PeftModel
             model = AutoModelForCausalLM.from_pretrained(
-                'OpenBMB/MiniCPM3-4B', trust_remote_code=True)
+                'Qwen/Qwen1.5-0.5B-Chat',
+                trust_remote_code=True,
+                torch_dtype=torch.float32)
             model = PeftModel.from_pretrained(
-                model, 'OpenBMB/MiniCPM3-RAG-LoRA', trust_remote_code=True)
+                model,
+                'tastelikefeet/test_lora',
+                trust_remote_code=True,
+                torch_dtype=torch.float32)
             self.assertTrue(model is not None)
         self.assertFalse(hasattr(PeftModel, '_from_pretrained_origin'))
 
@@ -218,6 +226,13 @@ class HFUtilTest(unittest.TestCase):
         with patch_context():
             from huggingface_hub import whoami
             self.assertTrue(whoami()['name'] == self.user)
+
+    def test_push_to_hub(self):
+        with patch_context():
+            from transformers import AutoModelForCausalLM
+            model = AutoModelForCausalLM.from_pretrained(
+                'Qwen/Qwen1.5-0.5B-Chat', trust_remote_code=True)
+            model.push_to_hub(self.create_model_name)
 
 
 if __name__ == '__main__':

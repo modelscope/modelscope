@@ -10,9 +10,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import (BinaryIO, Callable, Generator, Iterable, Iterator, List,
-                    Literal, Optional, TypeVar, Union)
+from typing import (Any, BinaryIO, Callable, Generator, Iterable, Iterator,
+                    List, Literal, Optional, TypeVar, Union)
 
+from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
 from modelscope.utils.file_utils import get_file_hash
 
 T = TypeVar('T')
@@ -288,6 +289,20 @@ class CommitInfo(str):
             'oid': cls.oid,
             'pr_url': cls.pr_url,
         }
+
+
+@dataclass
+class RepoUrl:
+
+    url: Optional[str] = None
+    namespace: Optional[str] = None
+    repo_name: Optional[str] = None
+    repo_id: Optional[str] = None
+    repo_type: Optional[str] = None
+    endpoint: Optional[str] = DEFAULT_MODELSCOPE_DATA_ENDPOINT
+
+    def __repr__(self) -> str:
+        return f"RepoUrl('{self}', endpoint='{self.endpoint}', repo_type='{self.repo_type}', repo_id='{self.repo_id}')"
 
 
 def git_hash(data: bytes) -> str:

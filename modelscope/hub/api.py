@@ -1368,11 +1368,13 @@ class HubApi:
         add_operation: CommitOperationAdd = CommitOperationAdd(
             path_in_repo=path_in_repo,
             path_or_fileobj=path_or_fileobj,
+            file_hash_info=hash_info_d,
         )
         add_operation._upload_mode = 'lfs' if self.upload_checker.is_lfs(path_or_fileobj, repo_type) else 'normal'
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
+        print(f'Committing file to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
@@ -1459,6 +1461,7 @@ class HubApi:
                 'file_path_in_repo': file_path_in_repo,
                 'file_path': file_path,
                 'is_uploaded': upload_res['is_uploaded'],
+                'file_hash_info': hash_info_d,
             }
 
         uploaded_items_list = _upload_items(
@@ -1472,8 +1475,6 @@ class HubApi:
             disable_tqdm=False,
         )
 
-        logger.info(f'Uploading folder to {repo_id} finished')
-
         # Construct commit info and create commit
         operations = []
 
@@ -1481,9 +1482,11 @@ class HubApi:
             prepared_path_in_repo: str = item_d['file_path_in_repo']
             prepared_file_path: str = item_d['file_path']
             is_uploaded: bool = item_d['is_uploaded']
+            file_hash_info: dict = item_d['file_hash_info']
             opt = CommitOperationAdd(
                 path_in_repo=prepared_path_in_repo,
                 path_or_fileobj=prepared_file_path,
+                file_hash_info=file_hash_info,
             )
 
             # check normal or lfs
@@ -1491,7 +1494,8 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        self.create_commit(
+        print(f'Committing folder to {repo_id} ...')
+        commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
             commit_message=commit_message,
@@ -1500,13 +1504,7 @@ class HubApi:
             repo_type=repo_type,
         )
 
-        # Construct commit info
-        commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{DEFAULT_REPOSITORY_REVISION}'
-        return CommitInfo(
-            commit_url=commit_url,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            oid='')
+        return commit_info
 
     def _upload_blob(
             self,
@@ -1539,7 +1537,7 @@ class HubApi:
         upload_object = upload_objects[0] if len(upload_objects) == 1 else None
 
         if upload_object is None:
-            logger.info(f'Blob {sha256} has already uploaded, reuse it.')
+            logger.info(f'Blob {sha256[:8]} has already uploaded, reuse it.')
             res_d['is_uploaded'] = True
             return res_d
 

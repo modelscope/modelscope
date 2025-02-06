@@ -1287,8 +1287,7 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         # Construct payload
         payload = self._prepare_commit_payload(

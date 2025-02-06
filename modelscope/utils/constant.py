@@ -266,6 +266,7 @@ class AudioTasks(object):
     speech_super_resolution = 'speech-super-resolution'
     voice_conversion = 'voice-conversion'
 
+
 class MultiModalTasks(object):
     # multi-modal tasks
     image_captioning = 'image-captioning'

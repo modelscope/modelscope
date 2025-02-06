@@ -44,7 +44,7 @@ class UpSample(nn.Module):
         elif self.layer_type == 'half':
             return F.interpolate(x, scale_factor=2, mode='nearest')
         else:
-            raise 
+            raise f'unknown upsample type: {self.layer_type}'
 
 
 class ResBlk(nn.Module):

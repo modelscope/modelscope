@@ -17,7 +17,7 @@ from modelscope.utils.constant import Tasks
 class SSRPipeline(Pipeline):
     r"""ANS (Acoustic Noise Suppression) Inference Pipeline .
 
-    When invoke the class with pipeline.__call__(), it accept only one 
+    When invoke the class with pipeline.__call__(), it accept only one
     parameter:
         inputs(str): the path of wav file
     """

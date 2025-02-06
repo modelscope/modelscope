@@ -131,7 +131,7 @@ class CAMPPlus(nn.Module):
 
 class SpeakerVerificationCamplus:
     r"""Enhanced Res2Net_aug architecture with local and global feature fusion.
-    ERes2Net_aug is an upgraded version of ERes2Net that uses a larger number of
+    ERes2Net_aug is an upgraded version of ERes2Net that uses a larger
     parameters to achieve better recognition performance.
     Args:
         model_dir: A model dir.
@@ -162,7 +162,7 @@ class SpeakerVerificationCamplus:
             audio = audio.squeeze(1)
         assert len(
             audio.shape
-        ) == 2, 'modelscope error: the shape of input audio to model needs to be [N, T]'
+        ) == 2, 'modelscope error: the shape of input audio to model needs to'
         # audio shape: [N, T]
         feature = self.__extract_feature(audio)
         embedding = self.embedding_model(feature.to(self.device))
@@ -187,7 +187,7 @@ class SpeakerVerificationCamplus:
             feature,
             torch.zeros([2, self.feature_dim], device=feature.device)
         ],
-                            dim=0)
+            dim=0)
         feature = feature.reshape([B, -1, self.feature_dim])
         return feature
 

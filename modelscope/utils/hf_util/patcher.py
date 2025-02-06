@@ -466,30 +466,16 @@ def _patch_hub():
         if any(['Add' not in op.__class__.__name__ for op in operations]):
             raise ValueError(
                 'ModelScope create_commit only support Add operation for now.')
-        ms_operations = []
-        for op in operations:
-            _op = CommitOperationAdd(
-                path_in_repo=op.path_in_repo,
-                path_or_fileobj=op.path_or_fileobj)
-            _op._upload_mode = op._upload_mode
-            if any([
-                    re.search(pattern, _op.path_in_repo or _op.path_or_fileobj)
-                    is not None for pattern in ignore_file_pattern
-            ]):
-                _op._upload_mode = 'lfs'
-            else:
-                _op._upload_mode = 'normal'
-            ms_operations.append(_op)
-        operations = ms_operations
-        return api.create_commit(
-            repo_id,
-            operations,
+
+        all_files = [op.path_or_fileobj for op in operations]
+        api.upload_folder(
+            repo_id=repo_id,
+            folder_path=all_files,
             commit_message=commit_message,
             commit_description=commit_description,
             token=token,
-            repo_type=repo_type,
             revision=revision,
-        )
+            repo_type=repo_type or 'model')
 
     # Patch repocard.validate
     from huggingface_hub import repocard

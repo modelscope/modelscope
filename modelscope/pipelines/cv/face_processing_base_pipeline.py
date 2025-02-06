@@ -103,7 +103,7 @@ class FaceProcessingBasePipeline(Pipeline):
                 scores, bboxes, face_lmks = rtn
                 face_lmks = face_lmks.reshape(5, 2)
                 align_img, _ = align_face(img, (112, 112), face_lmks)
-    
+
                 result = {}
                 result['img'] = np.ascontiguousarray(align_img)
                 result['scores'] = [scores]

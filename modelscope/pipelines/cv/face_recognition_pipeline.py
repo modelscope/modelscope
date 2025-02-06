@@ -14,10 +14,11 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.cv.face_processing_base_pipeline import \
+    FaceProcessingBasePipeline
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from modelscope.pipelines.cv.face_processing_base_pipeline import FaceProcessingBasePipeline
 
 logger = get_logger()
 

@@ -1,25 +1,41 @@
 from collections import OrderedDict
 
 import librosa
-from .layers import DenseLayer, StatsPool, TDNNLayer, CAMDenseTDNNBlock, TransitLayer, BasicResBlock, get_nonlinear
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
-import numpy as np
+
+from .layers import (BasicResBlock, CAMDenseTDNNBlock, DenseLayer, StatsPool,
+                     TDNNLayer, TransitLayer, get_nonlinear)
 
 
 class FCM(nn.Module):
-    def __init__(self, block=BasicResBlock, num_blocks=[2, 2], m_channels=32, feat_dim=80):
+
+    def __init__(self,
+                 block=BasicResBlock,
+                 num_blocks=[2, 2],
+                 m_channels=32,
+                 feat_dim=80):
         super(FCM, self).__init__()
         self.in_planes = m_channels
-        self.conv1 = nn.Conv2d(1, m_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            1, m_channels, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(m_channels)
 
-        self.layer1 = self._make_layer(block, m_channels, num_blocks[0], stride=2)
-        self.layer2 = self._make_layer(block, m_channels, num_blocks[0], stride=2)
+        self.layer1 = self._make_layer(
+            block, m_channels, num_blocks[0], stride=2)
+        self.layer2 = self._make_layer(
+            block, m_channels, num_blocks[0], stride=2)
 
-        self.conv2 = nn.Conv2d(m_channels, m_channels, kernel_size=3, stride=(2, 1), padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            m_channels,
+            m_channels,
+            kernel_size=3,
+            stride=(2, 1),
+            padding=1,
+            bias=False)
         self.bn2 = nn.BatchNorm2d(m_channels)
         self.out_channels = m_channels * (feat_dim // 8)
 
@@ -44,21 +60,35 @@ class FCM(nn.Module):
 
 
 class CAMPPlus(nn.Module):
-    def __init__(self, feat_dim=80, embedding_size=512, growth_rate=32, bn_size=4, init_channels=128, config_str="batchnorm-relu", memory_efficient=True):
+
+    def __init__(self,
+                 feat_dim=80,
+                 embedding_size=512,
+                 growth_rate=32,
+                 bn_size=4,
+                 init_channels=128,
+                 config_str='batchnorm-relu',
+                 memory_efficient=True):
         super(CAMPPlus, self).__init__()
 
         self.head = FCM(feat_dim=feat_dim)
         channels = self.head.out_channels
 
         self.xvector = nn.Sequential(
-            OrderedDict(
-                [
-                    ("tdnn", TDNNLayer(channels, init_channels, 5, stride=2, dilation=1, padding=-1, config_str=config_str)),
-                ]
-            )
-        )
+            OrderedDict([
+                ('tdnn',
+                 TDNNLayer(
+                     channels,
+                     init_channels,
+                     5,
+                     stride=2,
+                     dilation=1,
+                     padding=-1,
+                     config_str=config_str)),
+            ]))
         channels = init_channels
-        for i, (num_layers, kernel_size, dilation) in enumerate(zip((12, 24, 16), (3, 3, 3), (1, 2, 2))):
+        for i, (num_layers, kernel_size, dilation) in enumerate(
+                zip((12, 24, 16), (3, 3, 3), (1, 2, 2))):
             block = CAMDenseTDNNBlock(
                 num_layers=num_layers,
                 in_channels=channels,
@@ -69,15 +99,22 @@ class CAMPPlus(nn.Module):
                 config_str=config_str,
                 memory_efficient=memory_efficient,
             )
-            self.xvector.add_module("block%d" % (i + 1), block)
+            self.xvector.add_module('block%d' % (i + 1), block)
             channels = channels + num_layers * growth_rate
-            self.xvector.add_module("transit%d" % (i + 1), TransitLayer(channels, channels // 2, bias=False, config_str=config_str))
+            self.xvector.add_module(
+                'transit%d' % (i + 1),
+                TransitLayer(
+                    channels, channels // 2, bias=False,
+                    config_str=config_str))
             channels //= 2
 
-        self.xvector.add_module("out_nonlinear", get_nonlinear(config_str, channels))
+        self.xvector.add_module('out_nonlinear',
+                                get_nonlinear(config_str, channels))
 
-        self.xvector.add_module("stats", StatsPool())
-        self.xvector.add_module("dense", DenseLayer(channels * 2, embedding_size, config_str="batchnorm_"))
+        self.xvector.add_module('stats', StatsPool())
+        self.xvector.add_module(
+            'dense',
+            DenseLayer(channels * 2, embedding_size, config_str='batchnorm_'))
 
         for m in self.modules():
             if isinstance(m, (nn.Conv1d, nn.Linear)):
@@ -101,7 +138,7 @@ class SpeakerVerificationCamplus:
         model_config: The model config.
     """
 
-    def __init__(self, pretrained_model_name, device="cpu", *args, **kwargs):
+    def __init__(self, pretrained_model_name, device='cpu', *args, **kwargs):
         super().__init__()
 
         self.feature_dim = 80
@@ -123,7 +160,9 @@ class SpeakerVerificationCamplus:
             audio = audio.unsqueeze(0)
         elif len(audio.shape) == 3:
             audio = audio.squeeze(1)
-        assert len(audio.shape) == 2, "modelscope error: the shape of input audio to model needs to be [N, T]"
+        assert len(
+            audio.shape
+        ) == 2, 'modelscope error: the shape of input audio to model needs to be [N, T]'
         # audio shape: [N, T]
         feature = self.__extract_feature(audio)
         embedding = self.embedding_model(feature.to(self.device))
@@ -139,15 +178,22 @@ class SpeakerVerificationCamplus:
     def __extract_feature(self, audio):
         B = audio.size(0)
 
-        feature = Kaldi.fbank(audio.flatten().unsqueeze(0), num_mel_bins=self.feature_dim)
+        feature = Kaldi.fbank(
+            audio.flatten().unsqueeze(0), num_mel_bins=self.feature_dim)
         # print(feature.shape)
 
         feature = feature - feature.mean(dim=0, keepdim=True)
-        feature = torch.cat([feature, torch.zeros([2, self.feature_dim], device=feature.device)], dim=0)
+        feature = torch.cat([
+            feature,
+            torch.zeros([2, self.feature_dim], device=feature.device)
+        ],
+                            dim=0)
         feature = feature.reshape([B, -1, self.feature_dim])
         return feature
 
     def __load_check_point(self, pretrained_model_name, device=None):
         if not device:
-            device = torch.device("cpu")
-        self.embedding_model.load_state_dict(torch.load(pretrained_model_name, map_location=device), strict=True)
+            device = torch.device('cpu')
+        self.embedding_model.load_state_dict(
+            torch.load(pretrained_model_name, map_location=device),
+            strict=True)

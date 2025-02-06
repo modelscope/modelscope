@@ -7,11 +7,10 @@ http://creativecommons.org/licenses/by-nc/4.0/ or send a letter to
 Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 """
 
-import os
-import os.path as osp
-
 import copy
 import math
+import os
+import os.path as osp
 
 import numpy as np
 import torch
@@ -20,39 +19,52 @@ import torch.nn.functional as F
 
 
 class DownSample(nn.Module):
+
     def __init__(self, layer_type):
         super().__init__()
         self.layer_type = layer_type
 
     def forward(self, x):
-        if self.layer_type == "none":
+        if self.layer_type == 'none':
             return x
-        elif self.layer_type == "timepreserve":
+        elif self.layer_type == 'timepreserve':
             return F.avg_pool2d(x, (2, 1))
-        elif self.layer_type == "half":
+        elif self.layer_type == 'half':
             return F.avg_pool2d(x, 2)
         else:
-            raise RuntimeError("Got unexpected donwsampletype %s, expected is [none, timepreserve, half]" % self.layer_type)
+            raise RuntimeError(
+                'Got unexpected donwsampletype %s, expected is [none, timepreserve, half]'
+                % self.layer_type)
 
 
 class UpSample(nn.Module):
+
     def __init__(self, layer_type):
         super().__init__()
         self.layer_type = layer_type
 
     def forward(self, x):
-        if self.layer_type == "none":
+        if self.layer_type == 'none':
             return x
-        elif self.layer_type == "timepreserve":
-            return F.interpolate(x, scale_factor=(2, 1), mode="nearest")
-        elif self.layer_type == "half":
-            return F.interpolate(x, scale_factor=2, mode="nearest")
+        elif self.layer_type == 'timepreserve':
+            return F.interpolate(x, scale_factor=(2, 1), mode='nearest')
+        elif self.layer_type == 'half':
+            return F.interpolate(x, scale_factor=2, mode='nearest')
         else:
-            raise RuntimeError("Got unexpected upsampletype %s, expected is [none, timepreserve, half]" % self.layer_type)
+            raise RuntimeError(
+                'Got unexpected upsampletype %s, expected is [none, timepreserve, half]'
+                % self.layer_type)
 
 
 class ResBlk(nn.Module):
-    def __init__(self, dim_in, dim_out, actv=nn.LeakyReLU(0.2), normalize=False, out_for_onnx=False, downsample="none"):
+
+    def __init__(self,
+                 dim_in,
+                 dim_out,
+                 actv=nn.LeakyReLU(0.2),
+                 normalize=False,
+                 out_for_onnx=False,
+                 downsample='none'):
         super().__init__()
         self.actv = actv
         self.normalize = normalize
@@ -96,7 +108,12 @@ class ResBlk(nn.Module):
 
 
 class AdaIN(nn.Module):
-    def __init__(self, style_dim, num_features, out_for_onnx=False, device=None):
+
+    def __init__(self,
+                 style_dim,
+                 num_features,
+                 out_for_onnx=False,
+                 device=None):
         super().__init__()
 
         self.norm = nn.InstanceNorm2d(num_features)
@@ -121,7 +138,15 @@ class AdaIN(nn.Module):
 
 
 class AdainResBlk(nn.Module):
-    def __init__(self, dim_in, dim_out, style_dim=64, w_hpf=0, actv=nn.LeakyReLU(0.2), upsample="none", out_for_onnx=False):
+
+    def __init__(self,
+                 dim_in,
+                 dim_out,
+                 style_dim=64,
+                 w_hpf=0,
+                 actv=nn.LeakyReLU(0.2),
+                 upsample='none',
+                 out_for_onnx=False):
         super().__init__()
         self.w_hpf = w_hpf
         self.actv = actv
@@ -159,23 +184,33 @@ class AdainResBlk(nn.Module):
 
 
 class HighPass(nn.Module):
+
     def __init__(self, w_hpf):
         super(HighPass, self).__init__()
-        self.filter = torch.tensor([[-1, -1, -1], [-1, 8.0, -1], [-1, -1, -1]]) / w_hpf
+        self.filter = torch.tensor([[-1, -1, -1], [-1, 8.0, -1], [-1, -1, -1]
+                                    ]) / w_hpf
 
     def forward(self, x):
-        filter = self.filter.unsqueeze(0).unsqueeze(1).repeat(x.size(1), 1, 1, 1)
+        filter = self.filter.unsqueeze(0).unsqueeze(1).repeat(
+            x.size(1), 1, 1, 1)
         return F.conv2d(x, filter, padding=1, groups=x.size(1))
 
 
 class Generator(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, max_conv_dim=48 * 8, out_for_onnx=False):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 max_conv_dim=48 * 8,
+                 out_for_onnx=False):
         super().__init__()
         self.out_for_onnx = out_for_onnx
         self.stem = nn.Conv2d(1, dim_in, 3, 1, 1)
         self.encode = nn.ModuleList()
         self.decode = nn.ModuleList()
-        self.to_out = nn.Sequential(nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2), nn.Conv2d(dim_in, 1, 1, 1, 0))
+        self.to_out = nn.Sequential(
+            nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2),
+            nn.Conv2d(dim_in, 1, 1, 1, 0))
         if out_for_onnx:
             for m in self.to_out.modules():
                 if isinstance(m, torch.nn.InstanceNorm2d):
@@ -188,22 +223,47 @@ class Generator(nn.Module):
 
         for lid in range(repeat_num):
             if lid in [1, 3]:
-                _downtype = "timepreserve"
+                _downtype = 'timepreserve'
             else:
-                _downtype = "half"
+                _downtype = 'half'
 
             dim_out = min(dim_in * 2, max_conv_dim)
-            self.encode.append(ResBlk(dim_in, dim_out, normalize=True, downsample=_downtype, out_for_onnx=out_for_onnx))
-            self.decode.insert(0, AdainResBlk(dim_out, dim_in, style_dim, w_hpf=1, upsample=_downtype, out_for_onnx=out_for_onnx))  # stack-like
+            self.encode.append(
+                ResBlk(
+                    dim_in,
+                    dim_out,
+                    normalize=True,
+                    downsample=_downtype,
+                    out_for_onnx=out_for_onnx))
+            self.decode.insert(0,
+                               AdainResBlk(
+                                   dim_out,
+                                   dim_in,
+                                   style_dim,
+                                   w_hpf=1,
+                                   upsample=_downtype,
+                                   out_for_onnx=out_for_onnx))  # stack-like
             dim_in = dim_out
 
         # bottleneck blocks (encoder)
         for _ in range(2):
-            self.encode.append(ResBlk(dim_out, dim_out, normalize=True, out_for_onnx=out_for_onnx))
+            self.encode.append(
+                ResBlk(
+                    dim_out,
+                    dim_out,
+                    normalize=True,
+                    out_for_onnx=out_for_onnx))
 
         # bottleneck blocks (decoder)
         for _ in range(2):
-            self.decode.insert(0, AdainResBlk(dim_out, dim_out, style_dim, w_hpf=1, out_for_onnx=out_for_onnx))
+            self.decode.insert(
+                0,
+                AdainResBlk(
+                    dim_out,
+                    dim_out,
+                    style_dim,
+                    w_hpf=1,
+                    out_for_onnx=out_for_onnx))
 
     def forward(self, x: torch.Tensor, c):
 
@@ -222,13 +282,23 @@ class Generator(nn.Module):
 
 
 class Generator2(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, max_conv_dim=48 * 8, num_spk=1883, w_hpf=1, F0_channel=0, out_for_onnx=False):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 max_conv_dim=48 * 8,
+                 num_spk=1883,
+                 w_hpf=1,
+                 F0_channel=0,
+                 out_for_onnx=False):
         super().__init__()
         self.out_for_onnx = out_for_onnx
         self.stem = nn.Conv2d(1, dim_in, 3, 1, 1)
         self.encode = nn.ModuleList()
         self.decode = nn.ModuleList()
-        self.to_out = nn.Sequential(nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2), nn.Conv2d(dim_in, 1, 1, 1, 0))
+        self.to_out = nn.Sequential(
+            nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2),
+            nn.Conv2d(dim_in, 1, 1, 1, 0))
         self.F0_channel = F0_channel
         # down/up-sampling blocks
         self.spk_embedding = torch.nn.Embedding(num_spk, style_dim)
@@ -238,13 +308,21 @@ class Generator2(nn.Module):
 
         for lid in range(repeat_num):
             if lid in [1, 3]:
-                _downtype = "timepreserve"
+                _downtype = 'timepreserve'
             else:
-                _downtype = "half"
+                _downtype = 'half'
 
             dim_out = min(dim_in * 2, max_conv_dim)
-            self.encode.append(ResBlk(dim_in, dim_out, normalize=False, downsample=_downtype))
-            self.decode.insert(0, AdainResBlk(dim_out, dim_in, style_dim, w_hpf=w_hpf, upsample=_downtype, norm=False))  # stack-like
+            self.encode.append(
+                ResBlk(dim_in, dim_out, normalize=False, downsample=_downtype))
+            self.decode.insert(0,
+                               AdainResBlk(
+                                   dim_out,
+                                   dim_in,
+                                   style_dim,
+                                   w_hpf=w_hpf,
+                                   upsample=_downtype,
+                                   norm=False))  # stack-like
             dim_in = dim_out
 
         # bottleneck blocks (encoder)
@@ -255,9 +333,16 @@ class Generator2(nn.Module):
 
         # bottleneck blocks (decoder)
         for _ in range(2):
-            self.decode.insert(0, AdainResBlk(dim_out + int(F0_channel / 2), dim_out + int(F0_channel / 2), style_dim, w_hpf=w_hpf, norm=False))
+            self.decode.insert(
+                0,
+                AdainResBlk(
+                    dim_out + int(F0_channel / 2),
+                    dim_out + int(F0_channel / 2),
+                    style_dim,
+                    w_hpf=w_hpf,
+                    norm=False))
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.hpf = HighPass(w_hpf, device)
 
     def forward(self, x, c):
@@ -279,7 +364,12 @@ class Generator2(nn.Module):
 
 
 class MappingNetwork(nn.Module):
-    def __init__(self, latent_dim=16, style_dim=48, num_domains=2, hidden_dim=384):
+
+    def __init__(self,
+                 latent_dim=16,
+                 style_dim=48,
+                 num_domains=2,
+                 hidden_dim=384):
         super().__init__()
         layers = []
         layers += [nn.Linear(latent_dim, hidden_dim)]
@@ -315,7 +405,12 @@ class MappingNetwork(nn.Module):
 
 
 class StyleEncoder(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, num_domains=2, max_conv_dim=384):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 num_domains=2,
+                 max_conv_dim=384):
         super().__init__()
         blocks = []
         blocks += [nn.Conv2d(1, dim_in, 3, 1, 1)]
@@ -323,7 +418,7 @@ class StyleEncoder(nn.Module):
         repeat_num = 4
         for _ in range(repeat_num):
             dim_out = min(dim_in * 2, max_conv_dim)
-            blocks += [ResBlk(dim_in, dim_out, downsample="half")]
+            blocks += [ResBlk(dim_in, dim_out, downsample='half')]
             dim_in = dim_out
 
         blocks += [nn.LeakyReLU(0.2)]
@@ -352,13 +447,26 @@ class StyleEncoder(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, dim_in=48, num_domains=2, max_conv_dim=384, repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 num_domains=2,
+                 max_conv_dim=384,
+                 repeat_num=4):
         super().__init__()
 
         # real/fake discriminator
-        self.dis = Discriminator2d(dim_in=dim_in, num_domains=num_domains, max_conv_dim=max_conv_dim, repeat_num=repeat_num)
+        self.dis = Discriminator2d(
+            dim_in=dim_in,
+            num_domains=num_domains,
+            max_conv_dim=max_conv_dim,
+            repeat_num=repeat_num)
         # adversarial classifier
-        self.cls = Discriminator2d(dim_in=dim_in, num_domains=num_domains, max_conv_dim=max_conv_dim, repeat_num=repeat_num)
+        self.cls = Discriminator2d(
+            dim_in=dim_in,
+            num_domains=num_domains,
+            max_conv_dim=max_conv_dim,
+            repeat_num=repeat_num)
         self.num_domains = num_domains
 
     def forward(self, x, y):
@@ -369,25 +477,33 @@ class Discriminator(nn.Module):
 
 
 class LinearNorm(torch.nn.Module):
-    def __init__(self, in_dim, out_dim, bias=True, w_init_gain="linear"):
+
+    def __init__(self, in_dim, out_dim, bias=True, w_init_gain='linear'):
         super(LinearNorm, self).__init__()
         self.linear_layer = torch.nn.Linear(in_dim, out_dim, bias=bias)
 
-        torch.nn.init.xavier_uniform_(self.linear_layer.weight, gain=torch.nn.init.calculate_gain(w_init_gain))
+        torch.nn.init.xavier_uniform_(
+            self.linear_layer.weight,
+            gain=torch.nn.init.calculate_gain(w_init_gain))
 
     def forward(self, x):
         return self.linear_layer(x)
 
 
 class Discriminator2d(nn.Module):
-    def __init__(self, dim_in=48, num_domains=2, max_conv_dim=384, repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 num_domains=2,
+                 max_conv_dim=384,
+                 repeat_num=4):
         super().__init__()
         blocks = []
         blocks += [nn.Conv2d(1, dim_in, 3, 1, 1)]
 
         for lid in range(repeat_num):
             dim_out = min(dim_in * 2, max_conv_dim)
-            blocks += [ResBlk(dim_in, dim_out, downsample="half")]
+            blocks += [ResBlk(dim_in, dim_out, downsample='half')]
             dim_in = dim_out
 
         blocks += [nn.LeakyReLU(0.2)]
@@ -416,28 +532,48 @@ def print_network(model, name):
         num_params += p.numel()
     print(model)
     print(name)
-    print("The number of parameters: {}".format(num_params))
+    print('The number of parameters: {}'.format(num_params))
 
 
 def build_model(args, F0_model, ASR_model):
-    generator = Generator(args.dim_in, args.style_dim, args.max_conv_dim, w_hpf=args.w_hpf, F0_channel=args.F0_channel)
-    mapping_network = MappingNetwork(args.latent_dim, args.style_dim, args.num_domains, hidden_dim=args.max_conv_dim)
-    style_encoder = StyleEncoder(args.dim_in, args.style_dim, args.num_domains, args.max_conv_dim)
-    discriminator = Discriminator(args.dim_in, args.num_domains, args.max_conv_dim, args.n_repeat)
+    generator = Generator(
+        args.dim_in,
+        args.style_dim,
+        args.max_conv_dim,
+        w_hpf=args.w_hpf,
+        F0_channel=args.F0_channel)
+    mapping_network = MappingNetwork(
+        args.latent_dim,
+        args.style_dim,
+        args.num_domains,
+        hidden_dim=args.max_conv_dim)
+    style_encoder = StyleEncoder(args.dim_in, args.style_dim, args.num_domains,
+                                 args.max_conv_dim)
+    discriminator = Discriminator(args.dim_in, args.num_domains,
+                                  args.max_conv_dim, args.n_repeat)
     generator_ema = copy.deepcopy(generator)
     mapping_network_ema = copy.deepcopy(mapping_network)
     style_encoder_ema = copy.deepcopy(style_encoder)
-    print(generator, "generator")
-    print(mapping_network, "mapping_network")
-    print(style_encoder, "style_encoder")
-    nets = Munch(generator=generator, mapping_network=mapping_network, style_encoder=style_encoder, discriminator=discriminator, f0_model=F0_model, asr_model=ASR_model)
+    print(generator, 'generator')
+    print(mapping_network, 'mapping_network')
+    print(style_encoder, 'style_encoder')
+    nets = Munch(
+        generator=generator,
+        mapping_network=mapping_network,
+        style_encoder=style_encoder,
+        discriminator=discriminator,
+        f0_model=F0_model,
+        asr_model=ASR_model)
 
-    nets_ema = Munch(generator=generator_ema, mapping_network=mapping_network_ema, style_encoder=style_encoder_ema)
+    nets_ema = Munch(
+        generator=generator_ema,
+        mapping_network=mapping_network_ema,
+        style_encoder=style_encoder_ema)
 
     return nets, nets_ema
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     generator = Generator(48, 48, 256, w_hpf=1, F0_channel=0)
     a = torch.randn([1, 1, 256 + 32, 80])
     c = torch.randint(0, 1883, [1])

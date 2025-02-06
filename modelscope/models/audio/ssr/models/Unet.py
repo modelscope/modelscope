@@ -6,19 +6,15 @@ This work is licensed under the Creative Commons Attribution-NonCommercial
 http://creativecommons.org/licenses/by-nc/4.0/ or send a letter to
 Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 """
-import os
-import os.path as osp
-
-import copy
 import math
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class DownSample(nn.Module):
+
     def __init__(self, layer_type):
         super().__init__()
         self.layer_type = layer_type
@@ -31,11 +27,11 @@ class DownSample(nn.Module):
         elif self.layer_type == 'half':
             return F.avg_pool2d(x, 2)
         else:
-            raise RuntimeError(
-                'Got unexpected donwsampletype %s, expected is [none, timepreserve, half]' % self.layer_type)
+            raise
 
 
 class UpSample(nn.Module):
+
     def __init__(self, layer_type):
         super().__init__()
         self.layer_type = layer_type
@@ -48,13 +44,18 @@ class UpSample(nn.Module):
         elif self.layer_type == 'half':
             return F.interpolate(x, scale_factor=2, mode='nearest')
         else:
-            raise RuntimeError(
-                'Got unexpected upsampletype %s, expected is [none, timepreserve, half]' % self.layer_type)
+            raise 
 
 
 class ResBlk(nn.Module):
-    def __init__(self, dim_in, dim_out, actv=nn.LeakyReLU(0.2),
-                 normalize=False,style_dim=256, downsample='none'):
+
+    def __init__(self,
+                 dim_in,
+                 dim_out,
+                 actv=nn.LeakyReLU(0.2),
+                 normalize=False,
+                 style_dim=256,
+                 downsample='none'):
         super().__init__()
         self.actv = actv
         self.normalize = normalize
@@ -65,13 +66,11 @@ class ResBlk(nn.Module):
         if self.normalize:
             # self.norm1=nn.InstanceNorm2d(dim_in)
             # self.norm2=nn.InstanceNorm2d(dim_in)
-      
-            self.norm1 = AdaIN(style_dim,dim_in)
-            self.norm2 = AdaIN(style_dim,dim_in)
+
+            self.norm1 = AdaIN(style_dim, dim_in)
+            self.norm2 = AdaIN(style_dim, dim_in)
         if self.learned_sc:
             self.conv1x1 = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=False)
-
-   
 
     def _shortcut(self, x):
         if self.learned_sc:
@@ -80,25 +79,32 @@ class ResBlk(nn.Module):
             x = self.downsample(x)
         return x
 
-    def _residual(self, x,s=None):
+    def _residual(self, x, s=None):
         if self.normalize:
-            x = self.norm1(x,s)
+            x = self.norm1(x, s)
         x = self.actv(x)
         x = self.conv1(x)
         x = self.downsample(x)
         if self.normalize:
-            x = self.norm2(x,s)
+            x = self.norm2(x, s)
         x = self.actv(x)
         x = self.conv2(x)
         return x
 
-    def forward(self, x,s=None):
-        x = self._shortcut(x) + self._residual(x,s)
+    def forward(self, x, s=None):
+        x = self._shortcut(x) + self._residual(x, s)
         return x / math.sqrt(2)  # unit variance
 
+
 class ResBlk1D(nn.Module):
-    def __init__(self, dim_in, dim_out, actv=nn.LeakyReLU(0.2),
-                 normalize=False,out_for_onnx=False, downsample='none'):
+
+    def __init__(self,
+                 dim_in,
+                 dim_out,
+                 actv=nn.LeakyReLU(0.2),
+                 normalize=False,
+                 out_for_onnx=False,
+                 downsample='none'):
         super().__init__()
         self.actv = actv
         self.normalize = normalize
@@ -106,15 +112,13 @@ class ResBlk1D(nn.Module):
         self.learned_sc = dim_in != dim_out
         self.conv1 = nn.Conv1d(dim_in, dim_in, 3, 1, 1)
         self.conv2 = nn.Conv1d(dim_in, dim_out, 3, 1, 1)
-       
+
         if self.normalize:
-            self.norm1=nn.InstanceNorm1d(dim_in)
-            self.norm2=nn.InstanceNorm1d(dim_in)
+            self.norm1 = nn.InstanceNorm1d(dim_in)
+            self.norm2 = nn.InstanceNorm1d(dim_in)
 
         if self.learned_sc:
             self.conv1x1 = nn.Conv1d(dim_in, dim_out, 1, 1, 0, bias=False)
-
-   
 
     def _shortcut(self, x):
         if self.learned_sc:
@@ -139,25 +143,27 @@ class ResBlk1D(nn.Module):
         x = self._shortcut(x) + self._residual(x)
         return x / math.sqrt(2)  # unit variance
 
+
 class AdaIN(nn.Module):
+
     def __init__(self, style_dim, num_features):
         super().__init__()
 
-        self.norm =nn.InstanceNorm2d(num_features)
+        self.norm = nn.InstanceNorm2d(num_features)
 
         self.fc = nn.Linear(style_dim, num_features * 2)
         # self.emb=torch.nn.Linear(num_features,style_dim)
-        self.spk_emb=torch.nn.Parameter(torch.randn([1,1000,style_dim]))
-        self.mha=torch.nn.MultiheadAttention(style_dim,4,bias=False,batch_first=True)
-      
+        self.spk_emb = torch.nn.Parameter(torch.randn([1, 1000, style_dim]))
+        self.mha = torch.nn.MultiheadAttention(
+            style_dim, 4, bias=False, batch_first=True)
 
-    def forward(self, x, s:torch.Tensor):
-    
-        s=s.unsqueeze(1)
-        B=s.size(0)
-        key=self.spk_emb.repeat(B,1,1)
-        value,_=self.mha(s,key,key)
-   
+    def forward(self, x, s: torch.Tensor):
+
+        s = s.unsqueeze(1)
+        B = s.size(0)
+        key = self.spk_emb.repeat(B, 1, 1)
+        value, _ = self.mha(s, key, key)
+
         h = self.fc(value).squeeze(dim=1)
         h = h.view(h.size(0), h.size(1), 1, 1)
         gamma, beta = torch.chunk(h, chunks=2, dim=1)
@@ -165,10 +171,15 @@ class AdaIN(nn.Module):
         return (1 + gamma) * self.norm(x) + beta
 
 
-
 class AdainResBlk(nn.Module):
-    def __init__(self, dim_in, dim_out, style_dim=256, w_hpf=0,
-                 actv=nn.LeakyReLU(0.2), upsample='none'):
+
+    def __init__(self,
+                 dim_in,
+                 dim_out,
+                 style_dim=256,
+                 w_hpf=0,
+                 actv=nn.LeakyReLU(0.2),
+                 upsample='none'):
         super().__init__()
         self.w_hpf = w_hpf
         self.actv = actv
@@ -181,9 +192,6 @@ class AdainResBlk(nn.Module):
         self.norm2 = AdaIN(style_dim, dim_out)
         if self.learned_sc:
             self.conv1x1 = nn.Conv2d(dim_in, dim_out, 1, 1, 0, bias=False)
-
-   
-       
 
     def _shortcut(self, x):
         x = self.upsample(x)
@@ -209,28 +217,33 @@ class AdainResBlk(nn.Module):
 
 
 class HighPass(nn.Module):
+
     def __init__(self, w_hpf):
         super(HighPass, self).__init__()
-        self.filter = torch.tensor([[-1, -1, -1],
-                                    [-1, 8., -1],
-                                    [-1, -1, -1]]) / w_hpf
+        self.filter = torch.tensor([[-1, -1, -1], [-1, 8., -1], [-1, -1, -1]
+                                    ]) / w_hpf
 
     def forward(self, x):
-        filter = self.filter.unsqueeze(0).unsqueeze(1).repeat(x.size(1), 1, 1, 1)
+        filter = self.filter.unsqueeze(0).unsqueeze(1).repeat(
+            x.size(1), 1, 1, 1)
         return F.conv2d(x, filter, padding=1, groups=x.size(1))
 
 
 class UnetMapping(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, max_conv_dim=48 * 8,repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 max_conv_dim=48 * 8,
+                 repeat_num=4):
         super().__init__()
         self.stem = nn.Conv2d(1, dim_in, 3, 1, 1)
         self.encode = nn.ModuleList()
         self.decode = nn.ModuleList()
         self.to_out = nn.Sequential(
-            nn.InstanceNorm2d(dim_in, affine=True),
-            nn.LeakyReLU(0.2),
+            nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2),
             nn.Conv2d(dim_in, 1, 1, 1, 0))
- 
+
         for lid in range(repeat_num):
             if lid in [1, 3]:
                 _downtype = 'timepreserve'
@@ -239,52 +252,65 @@ class UnetMapping(nn.Module):
 
             dim_out = min(dim_in * 2, max_conv_dim)
             self.encode.append(
-                ResBlk(dim_in, dim_out,style_dim=style_dim, normalize=True, downsample=_downtype))
-            self.decode.insert(
-                0, AdainResBlk(dim_out, dim_in, style_dim,
-                               w_hpf=0, upsample=_downtype))  # stack-like
+                ResBlk(
+                    dim_in,
+                    dim_out,
+                    style_dim=style_dim,
+                    normalize=True,
+                    downsample=_downtype))
+            self.decode.insert(0,
+                               AdainResBlk(
+                                   dim_out,
+                                   dim_in,
+                                   style_dim,
+                                   w_hpf=0,
+                                   upsample=_downtype))  # stack-like
             dim_in = dim_out
 
         # bottleneck blocks (encoder)
         for _ in range(repeat_num):
             self.encode.append(
-                ResBlk(dim_out, dim_out,style_dim=style_dim, normalize=True))
+                ResBlk(dim_out, dim_out, style_dim=style_dim, normalize=True))
 
-       
         # bottleneck blocks (decoder)
         for _ in range(repeat_num):
-            self.decode.insert(
-                0, AdainResBlk(dim_out , dim_out , style_dim))
+            self.decode.insert(0, AdainResBlk(dim_out, dim_out, style_dim))
         # self.proj = nn.Conv1d(80, 80 * 2, 1)
-        self.style_extractor=StyleEncoder(dim_in,style_dim,num_domains=8)
-        self.flow=FlowBlocks(256,style_dim,5,1,4)
-    def forward(self, x:torch.Tensor, c:torch.Tensor):
-        s=self.style_extractor(c)
+        self.style_extractor = StyleEncoder(dim_in, style_dim, num_domains=8)
+        self.flow = FlowBlocks(256, style_dim, 5, 1, 4)
+
+    def forward(self, x: torch.Tensor, c: torch.Tensor):
+        s = self.style_extractor(c)
         x = self.stem(x)
-      
+
         for block in self.encode:
-           
-            x = block(x,s)
+
+            x = block(x, s)
 
         for block in self.decode:
             x = block(x, s)
-           
-        out= self.to_out(x).squeeze(dim=1)
-        out=self.flow(out,reverse=True)
-        
+
+        out = self.to_out(x).squeeze(dim=1)
+        out = self.flow(out, reverse=True)
+
         return out
+
 
 class MaskMapping(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, max_conv_dim=48 * 8,repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 max_conv_dim=48 * 8,
+                 repeat_num=4):
         super().__init__()
         self.stem = nn.Conv2d(1, dim_in, 3, 1, 1)
         self.encode = nn.ModuleList()
         self.decode = nn.ModuleList()
         self.to_out = nn.Sequential(
-            nn.InstanceNorm2d(dim_in, affine=True),
-            nn.LeakyReLU(0.2),
+            nn.InstanceNorm2d(dim_in, affine=True), nn.LeakyReLU(0.2),
             nn.Conv2d(dim_in, 1, 1, 1, 0))
- 
+
         for lid in range(repeat_num):
             if lid in [1, 3]:
                 _downtype = 'timepreserve'
@@ -293,50 +319,62 @@ class MaskMapping(nn.Module):
 
             dim_out = min(dim_in * 2, max_conv_dim)
             self.encode.append(
-                ResBlk(dim_in, dim_out,style_dim=style_dim, normalize=True, downsample=_downtype))
-            self.decode.insert(
-                0, AdainResBlk(dim_out, dim_in, style_dim,
-                               w_hpf=0, upsample=_downtype))  # stack-like
+                ResBlk(
+                    dim_in,
+                    dim_out,
+                    style_dim=style_dim,
+                    normalize=True,
+                    downsample=_downtype))
+            self.decode.insert(0,
+                               AdainResBlk(
+                                   dim_out,
+                                   dim_in,
+                                   style_dim,
+                                   w_hpf=0,
+                                   upsample=_downtype))  # stack-like
             dim_in = dim_out
 
         # bottleneck blocks (encoder)
         for _ in range(repeat_num):
             self.encode.append(
-                ResBlk(dim_out, dim_out,style_dim=style_dim, normalize=True))
+                ResBlk(dim_out, dim_out, style_dim=style_dim, normalize=True))
 
-       
         # bottleneck blocks (decoder)
         for _ in range(repeat_num):
-            self.decode.insert(
-                0, AdainResBlk(dim_out , dim_out , style_dim))
+            self.decode.insert(0, AdainResBlk(dim_out, dim_out, style_dim))
         # self.proj = nn.Conv1d(80, 80 * 2, 1)
-        self.style_extractor=StyleEncoder(dim_in,style_dim,num_domains=8)
-        self.flow=FlowBlocks(256,style_dim,5,1,4)
-    def forward(self, x:torch.Tensor, c:torch.Tensor):
-        s=self.style_extractor(c)
-        t=c.size(-1)
-        x=torch.cat((c.unsqueeze(1),x),dim=-1)
+        self.style_extractor = StyleEncoder(dim_in, style_dim, num_domains=8)
+        self.flow = FlowBlocks(256, style_dim, 5, 1, 4)
+
+    def forward(self, x: torch.Tensor, c: torch.Tensor):
+        s = self.style_extractor(c)
+        t = c.size(-1)
+        x = torch.cat((c.unsqueeze(1), x), dim=-1)
         x = self.stem(x)
-      
+
         for block in self.encode:
-           
-            x = block(x,s)
+
+            x = block(x, s)
 
         for block in self.decode:
             x = block(x, s)
-           
-        out= self.to_out(x).squeeze(dim=1)
-        out=self.flow(out,reverse=True)
-        out=out[:,:,t:]
-        return out
 
+        out = self.to_out(x).squeeze(dim=1)
+        out = self.flow(out, reverse=True)
+        out = out[:, :, t:]
+        return out
 
 
 class StyleEncoder(nn.Module):
-    def __init__(self, dim_in=48, style_dim=48, num_domains=4, max_conv_dim=384):
+
+    def __init__(self,
+                 dim_in=48,
+                 style_dim=48,
+                 num_domains=4,
+                 max_conv_dim=384):
         super().__init__()
         blocks = []
-        blocks += [nn.Conv1d(256,dim_in, 3, 1, 1)]
+        blocks += [nn.Conv1d(256, dim_in, 3, 1, 1)]
 
         repeat_num = 4
         for _ in range(repeat_num):
@@ -352,7 +390,7 @@ class StyleEncoder(nn.Module):
 
         self.unshared = nn.ModuleList()
         for _ in range(num_domains):
-            self.unshared += [nn.Linear(dim_out, style_dim//num_domains)]
+            self.unshared += [nn.Linear(dim_out, style_dim // num_domains)]
 
     def forward(self, x):
         h = self.shared(x)
@@ -363,6 +401,7 @@ class StyleEncoder(nn.Module):
             out += [layer(h)]
         out = torch.cat(out, dim=-1)  # (batch, num_domains, style_dim)
         return out
+
 
 class ResidualCouplingLayer(nn.Module):
 
@@ -377,7 +416,7 @@ class ResidualCouplingLayer(nn.Module):
         gin_channels=0,
         mean_only=False,
     ):
-        assert channels % 2 == 0, "channels should be divisible by 2"
+        assert channels % 2 == 0, 'channels should be divisible by 2'
         super().__init__()
         self.channels = channels
         self.hidden_channels = hidden_channels
@@ -401,11 +440,11 @@ class ResidualCouplingLayer(nn.Module):
         self.post.weight.data.zero_()
         self.post.bias.data.zero_()
 
-    def forward(self, x,reverse=False):
+    def forward(self, x, reverse=False):
         x0, x1 = torch.split(x, [self.half_channels] * 2, 1)
         h = self.pre(x0)
         h = self.enc(h)
-        stats = self.post(h) 
+        stats = self.post(h)
         if not self.mean_only:
             m, logs = torch.split(stats, [self.half_channels] * 2, 1)
             # print(m)
@@ -414,18 +453,18 @@ class ResidualCouplingLayer(nn.Module):
             m = stats
             logs = torch.zeros_like(m)
 
-      
         if not reverse:
-            x1 = m + x1 * torch.exp(logs) 
+            x1 = m + x1 * torch.exp(logs)
             x = torch.cat([x0, x1], 1)
             logdet = torch.sum(logs, [1, 2])
             return x, logdet
         else:
-            x1 = (x1 - m) * torch.exp(-logs) 
+            x1 = (x1 - m) * torch.exp(-logs)
             x = torch.cat([x0, x1], 1)
             return x
 
-def fused_add_tanh_sigmoid_multiply(input_a,  n_channels):
+
+def fused_add_tanh_sigmoid_multiply(input_a, n_channels):
     n_channels_int = n_channels[0]
     in_act = input_a
     t_act = torch.tanh(in_act[:, :n_channels_int, :])
@@ -458,7 +497,8 @@ class WN(nn.Module):
         self.res_skip_layers = nn.ModuleList()
         self.drop = nn.Dropout(p_dropout)
 
-        cond_layer = nn.Conv1d(hidden_channels, 2 * hidden_channels * n_layers, 1)
+        cond_layer = nn.Conv1d(hidden_channels, 2 * hidden_channels * n_layers,
+                               1)
         self.cond_layer = cond_layer
 
         for i in range(n_layers):
@@ -471,7 +511,7 @@ class WN(nn.Module):
                 dilation=dilation,
                 padding=padding,
             )
-       
+
             self.in_layers.append(in_layer)
 
             # last one is not necessary
@@ -481,42 +521,50 @@ class WN(nn.Module):
                 res_skip_channels = hidden_channels
 
             res_skip_layer = nn.Conv1d(hidden_channels, res_skip_channels, 1)
-     
+
             self.res_skip_layers.append(res_skip_layer)
 
-    def forward(self, x,  **kwargs):
+    def forward(self, x, **kwargs):
         output = torch.zeros_like(x)
         n_channels_tensor = torch.IntTensor([self.hidden_channels])
 
-
         for i in range(self.n_layers):
             x_in = self.in_layers[i](x)
-                
 
-            acts = fused_add_tanh_sigmoid_multiply(
-                x_in,  n_channels_tensor)
+            acts = fused_add_tanh_sigmoid_multiply(x_in, n_channels_tensor)
             acts = self.drop(acts)
 
             res_skip_acts = self.res_skip_layers[i](acts)
             if i < self.n_layers - 1:
                 res_acts = res_skip_acts[:, :self.hidden_channels, :]
-                x = (x + res_acts) 
+                x = (x + res_acts)
                 output = output + res_skip_acts[:, self.hidden_channels:, :]
             else:
                 output = output + res_skip_acts
-        return output 
+        return output
 
 
 class Discriminator(nn.Module):
-    def __init__(self, dim_in=48, num_domains=2, max_conv_dim=384, repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 num_domains=2,
+                 max_conv_dim=384,
+                 repeat_num=4):
         super().__init__()
 
         # real/fake discriminator
-        self.dis = Discriminator2d(dim_in=dim_in, num_domains=num_domains,
-                                   max_conv_dim=max_conv_dim, repeat_num=repeat_num)
+        self.dis = Discriminator2d(
+            dim_in=dim_in,
+            num_domains=num_domains,
+            max_conv_dim=max_conv_dim,
+            repeat_num=repeat_num)
         # adversarial classifier
-        self.cls = Discriminator2d(dim_in=dim_in, num_domains=num_domains,
-                                   max_conv_dim=max_conv_dim, repeat_num=repeat_num)
+        self.cls = Discriminator2d(
+            dim_in=dim_in,
+            num_domains=num_domains,
+            max_conv_dim=max_conv_dim,
+            repeat_num=repeat_num)
         self.num_domains = num_domains
 
     def forward(self, x, y):
@@ -527,6 +575,7 @@ class Discriminator(nn.Module):
 
 
 class LinearNorm(torch.nn.Module):
+
     def __init__(self, in_dim, out_dim, bias=True, w_init_gain='linear'):
         super(LinearNorm, self).__init__()
         self.linear_layer = torch.nn.Linear(in_dim, out_dim, bias=bias)
@@ -540,7 +589,12 @@ class LinearNorm(torch.nn.Module):
 
 
 class Discriminator2d(nn.Module):
-    def __init__(self, dim_in=48, num_domains=2, max_conv_dim=384, repeat_num=4):
+
+    def __init__(self,
+                 dim_in=48,
+                 num_domains=2,
+                 max_conv_dim=384,
+                 repeat_num=4):
         super().__init__()
         blocks = []
         blocks += [nn.Conv2d(1, dim_in, 3, 1, 1)]
@@ -564,10 +618,11 @@ class Discriminator2d(nn.Module):
 
     def forward(self, x):
         out = self.get_feature(x)
-       
+
         return out
 
-class FlowBlocks(nn.Module): 
+
+class FlowBlocks(nn.Module):
 
     def __init__(
         self,
@@ -589,7 +644,7 @@ class FlowBlocks(nn.Module):
         self.gin_channels = gin_channels
 
         self.flows = nn.ModuleList()
-      
+
         for i in range(n_flows):
             self.flows.append(
                 ResidualCouplingLayer(
@@ -603,20 +658,21 @@ class FlowBlocks(nn.Module):
                 ))
             self.flows.append(Flip())
 
-    def forward(self, x,  reverse=False):
+    def forward(self, x, reverse=False):
         if not reverse:
             for flow in self.flows:
                 x, log = flow(x, reverse=reverse)
-            return x,log
+            return x, log
         else:
             for flow in reversed(self.flows):
                 x = flow(x, reverse=reverse)
             return x
 
+
 class Flip(nn.Module):
 
     def forward(self, x, *args, reverse=False, **kwargs):
-  
+
         x = torch.flip(x, [1])
         if not reverse:
             logdet = torch.zeros(x.size(0)).to(dtype=x.dtype, device=x.device)
@@ -630,14 +686,15 @@ def print_network(model):
     num_params = 0
     for p in model.parameters():
         num_params += p.numel()
-    print("The number of parameters: {}".format(num_params))
+    print('The number of parameters: {}'.format(num_params))
+
 
 if __name__ == '__main__':
-    generator = UnetMapping(48,256)
-    a=torch.randn([1,1,256,224])
-    c=torch.randn([1,256,1000])
-    b=generator(a,c)
-   
+    generator = UnetMapping(48, 256)
+    a = torch.randn([1, 1, 256, 224])
+    c = torch.randn([1, 256, 1000])
+    b = generator(a, c)
+
     print(b.shape)
- 
+
     print_network(generator)

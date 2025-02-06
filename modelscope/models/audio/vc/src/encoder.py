@@ -1,28 +1,28 @@
-import onnxruntime
-import numpy as np
-import torchaudio.compliance.kaldi as kaldi
-import torch
-from torch.nn.utils.rnn import pad_sequence
 import librosa
+import numpy as np
+import onnxruntime
+import torch
+import torchaudio.compliance.kaldi as kaldi
+from torch.nn.utils.rnn import pad_sequence
 
 
 def load_cmvn(cmvn_file):
-    with open(cmvn_file, "r", encoding="utf-8") as f:
+    with open(cmvn_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     means_list = []
     vars_list = []
     for i in range(len(lines)):
         line_item = lines[i].split()
-        if line_item[0] == "<AddShift>":
+        if line_item[0] == '<AddShift>':
             line_item = lines[i + 1].split()
-            if line_item[0] == "<LearnRateCoef>":
-                add_shift_line = line_item[3 : (len(line_item) - 1)]
+            if line_item[0] == '<LearnRateCoef>':
+                add_shift_line = line_item[3:(len(line_item) - 1)]
                 means_list = list(add_shift_line)
                 continue
-        elif line_item[0] == "<Rescale>":
+        elif line_item[0] == '<Rescale>':
             line_item = lines[i + 1].split()
-            if line_item[0] == "<LearnRateCoef>":
-                rescale_line = line_item[3 : (len(line_item) - 1)]
+            if line_item[0] == '<LearnRateCoef>':
+                rescale_line = line_item[3:(len(line_item) - 1)]
                 vars_list = list(rescale_line)
                 continue
     means = np.array(means_list).astype(np.float32)
@@ -38,7 +38,7 @@ def apply_cmvn(inputs, cmvn):  # noqa
     """
 
     device = inputs.device
-    dtype = inputs.dtype
+    # dtype = inputs.dtype
     frame, dim = inputs.shape
 
     means = cmvn[0:1, :dim]
@@ -58,10 +58,11 @@ def apply_lfr(inputs, lfr_m, lfr_n):
     T = T + (lfr_m - 1) // 2
     for i in range(T_lfr):
         if lfr_m <= T - i * lfr_n:
-            LFR_inputs.append((inputs[i * lfr_n : i * lfr_n + lfr_m]).view(1, -1))
+            LFR_inputs.append(
+                (inputs[i * lfr_n:i * lfr_n + lfr_m]).view(1, -1))
         else:  # process last LFR frame
             num_padding = lfr_m - (T - i * lfr_n)
-            frame = (inputs[i * lfr_n :]).view(-1)
+            frame = (inputs[i * lfr_n:]).view(-1)
             for _ in range(num_padding):
                 frame = torch.hstack((frame, inputs[-1]))
             LFR_inputs.append(frame)
@@ -70,11 +71,12 @@ def apply_lfr(inputs, lfr_m, lfr_n):
 
 
 class WavFrontend(torch.nn.Module):
+
     def __init__(
         self,
         cmvn_file: str = None,
         fs: int = 16000,
-        window: str = "hamming",
+        window: str = 'hamming',
         n_mels: int = 80,
         frame_length: int = 25,
         frame_shift: int = 10,
@@ -101,7 +103,8 @@ class WavFrontend(torch.nn.Module):
         self.dither = dither
         self.snip_edges = snip_edges
         self.upsacle_samples = upsacle_samples
-        self.cmvn = None if self.cmvn_file is None else load_cmvn(self.cmvn_file)
+        self.cmvn = None if self.cmvn_file is None else load_cmvn(
+            self.cmvn_file)
 
     def output_size(self) -> int:
         return self.n_mels * self.lfr_m
@@ -148,7 +151,8 @@ class WavFrontend(torch.nn.Module):
         if batch_size == 1:
             feats_pad = feats[0][None, :, :]
         else:
-            feats_pad = pad_sequence(feats, batch_first=True, padding_value=0.0)
+            feats_pad = pad_sequence(
+                feats, batch_first=True, padding_value=0.0)
         # print(feats_pad.shape,feats_lens)
         return feats_pad, feats_lens
 
@@ -181,12 +185,13 @@ class WavFrontend(torch.nn.Module):
         feats_pad = pad_sequence(feats, batch_first=True, padding_value=0.0)
         return feats_pad, feats_lens
 
-    def forward_lfr_cmvn(self, input: torch.Tensor, input_lengths: torch.Tensor):
+    def forward_lfr_cmvn(self, input: torch.Tensor,
+                         input_lengths: torch.Tensor):
         batch_size = input.size(0)
         feats = []
         feats_lens = []
         for i in range(batch_size):
-            mat = input[i, : input_lengths[i], :]
+            mat = input[i, :input_lengths[i], :]
             if self.lfr_m != 1 or self.lfr_n != 1:
                 mat = apply_lfr(mat, self.lfr_m, self.lfr_n)
             if self.cmvn is not None:
@@ -203,7 +208,7 @@ class WavFrontend(torch.nn.Module):
 def make_pad_mask(lengths, xs=None, length_dim=-1, maxlen=None):
 
     if length_dim == 0:
-        raise ValueError("length_dim cannot be 0: {}".format(length_dim))
+        raise ValueError('length_dim cannot be 0: {}'.format(length_dim))
 
     if not isinstance(lengths, list):
         lengths = lengths.tolist()
@@ -228,15 +233,21 @@ def make_pad_mask(lengths, xs=None, length_dim=-1, maxlen=None):
         if length_dim < 0:
             length_dim = xs.dim() + length_dim
         # ind = (:, None, ..., None, :, , None, ..., None)
-        ind = tuple(slice(None) if i in (0, length_dim) else None for i in range(xs.dim()))
+        ind = tuple(
+            slice(None) if i in (0, length_dim) else None
+            for i in range(xs.dim()))
         mask = mask[ind].expand_as(xs).to(xs.device)
     return mask
 
 
 class Encoder:
+
     def __init__(self, encoder_front_path, encoder_onnx_path):
-        self.front = WavFrontend(encoder_front_path, lfr_m=7, lfr_n=6, dither=0.0)
-        self.asr_session = onnxruntime.InferenceSession(encoder_onnx_path, provider_options=onnxruntime.get_available_providers())
+        self.front = WavFrontend(
+            encoder_front_path, lfr_m=7, lfr_n=6, dither=0.0)
+        self.asr_session = onnxruntime.InferenceSession(
+            encoder_onnx_path,
+            provider_options=onnxruntime.get_available_providers())
 
     def inference(self, wav_path):
         wav = librosa.load(wav_path, sr=16000)[0]
@@ -250,7 +261,12 @@ class Encoder:
         # print(feats.shape)
         masks = ~make_pad_mask(feats_len)[:, None, :]
 
-        outs = self.asr_session.run(["ys_pad", "olens"], input_feed={"xs_pad": feats, "masks": masks.cpu().detach().numpy().astype("float32")})
+        outs = self.asr_session.run(
+            ['ys_pad', 'olens'],
+            input_feed={
+                'xs_pad': feats,
+                'masks': masks.cpu().detach().numpy().astype('float32')
+            })
         return torch.FloatTensor(outs[0])
 
     def get_feats(self, wav_path):

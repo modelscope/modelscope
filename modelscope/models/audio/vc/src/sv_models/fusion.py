@@ -10,10 +10,16 @@ class AFF(nn.Module):
         inter_channels = int(channels // r)
 
         self.local_att = nn.Sequential(
-            nn.Conv2d(channels * 2, inter_channels, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(
+                channels * 2,
+                inter_channels,
+                kernel_size=1,
+                stride=1,
+                padding=0),
             nn.BatchNorm2d(inter_channels),
             nn.SiLU(inplace=True),
-            nn.Conv2d(inter_channels, channels, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(
+                inter_channels, channels, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(channels),
         )
 

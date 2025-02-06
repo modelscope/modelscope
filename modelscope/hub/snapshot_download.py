@@ -9,8 +9,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
-from modelscope.hub.constants import \
-    MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD
 from modelscope.hub.errors import InvalidParameter
 from modelscope.hub.file_download import (create_temporary_directory_and_cache,
                                           download_file, get_file_download_url)
@@ -22,6 +20,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
+from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
 
@@ -223,9 +222,8 @@ def _snapshot_download(
 
     temporary_cache_dir, cache = create_temporary_directory_and_cache(
         repo_id, local_dir=local_dir, cache_dir=cache_dir, repo_type=repo_type)
-    system_cache = cache_dir if cache_dir is not None else os.getenv(
-        'MODELSCOPE_CACHE',
-        Path.home().joinpath('.cache', 'modelscope', 'hub'))
+    system_cache = cache_dir if cache_dir is not None else get_default_modelscope_cache_dir(
+    )
     if local_files_only:
         if len(cache.cached_files) == 0:
             raise ValueError(
@@ -500,9 +498,7 @@ def _download_file_lists(
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'
             )
-        disable_tqdm = len(
-            filtered_repo_files
-        ) > MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD  # noqa
+
         download_file(
             url,
             repo_file,
@@ -510,7 +506,7 @@ def _download_file_lists(
             cache,
             headers,
             cookies,
-            disable_tqdm=disable_tqdm,
+            disable_tqdm=False,
         )
 
     if len(filtered_repo_files) > 0:

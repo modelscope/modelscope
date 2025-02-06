@@ -282,6 +282,10 @@ def is_transformers_available():
     return importlib.util.find_spec('transformers') is not None
 
 
+def is_diffusers_available():
+    return importlib.util.find_spec('diffusers') is not None
+
+
 def is_tensorrt_llm_available():
     return importlib.util.find_spec('tensorrt_llm') is not None
 

@@ -494,10 +494,15 @@ def _patch_hub():
     # Patch repocard.validate
     from huggingface_hub import repocard
     if not hasattr(repocard.RepoCard, '_validate_origin'):
+
+        def load(*args, **kwargs):
+            from huggingface_hub.errors import EntryNotFoundError
+            raise EntryNotFoundError(message='API not supported.')
+
         repocard.RepoCard._validate_origin = repocard.RepoCard.validate
         repocard.RepoCard.validate = lambda *args, **kwargs: None
         repocard.RepoCard._load_origin = repocard.RepoCard.load
-        repocard.RepoCard.load = lambda *args, **kwargs: None
+        repocard.RepoCard.load = load
 
     if not hasattr(hf_api, '_hf_hub_download_origin'):
         # Patch hf_hub_download

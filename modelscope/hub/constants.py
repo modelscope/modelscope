@@ -35,8 +35,6 @@ TEMPORARY_FOLDER_NAME = '._____temp'
 DEFAULT_MAX_WORKERS = int(
     os.getenv('DEFAULT_MAX_WORKERS', min(8,
                                          os.cpu_count() + 4)))
-MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD = int(
-    os.environ.get('MODELSCOPE_SHOW_INDIVIDUAL_PROGRESS_THRESHOLD', 50))
 
 
 class Licenses(object):

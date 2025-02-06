@@ -227,6 +227,7 @@ class HFUtilTest(unittest.TestCase):
             from huggingface_hub import whoami
             self.assertTrue(whoami()['name'] == self.user)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub(self):
         with patch_context():
             from transformers import AutoModelForCausalLM

@@ -497,7 +497,7 @@ class HubApi:
             raise_for_http_status(r)
         return None
 
-    def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar: # noqa
+    def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar:  # noqa
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
@@ -1212,10 +1212,7 @@ class HubApi:
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
 
-        if token:
-            self.login(access_token=token)
-        else:
-            logger.warning('No token provided, will use the cached token.')
+        self.login(access_token=token)
 
         repo_id_list = repo_id.split('/')
         if len(repo_id_list) != 2:
@@ -1287,8 +1284,7 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         # Construct payload
         payload = self._prepare_commit_payload(
@@ -1361,8 +1357,7 @@ class HubApi:
             repo_type=repo_type,
         )
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
@@ -1414,7 +1409,7 @@ class HubApi:
             self,
             *,
             repo_id: str,
-            folder_path: Union[str, Path],
+            folder_path: Union[str, Path, List[str], List[Path]] = None,
             path_in_repo: Optional[str] = '',
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
@@ -1423,15 +1418,13 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> CommitInfo:
-
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         allow_patterns = allow_patterns if allow_patterns else None
         ignore_patterns = ignore_patterns if ignore_patterns else None
-
-        self.upload_checker.check_folder(folder_path)
 
         # Ignore .git folder
         if ignore_patterns is None:
@@ -1440,24 +1433,23 @@ class HubApi:
             ignore_patterns = [ignore_patterns]
         ignore_patterns += DEFAULT_IGNORE_PATTERNS
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         commit_message = (
-            commit_message if commit_message is not None else f'Upload folder to {repo_id} on ModelScope hub'
+            commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'
         )
-        commit_description = commit_description or 'Uploading folder'
+        commit_description = commit_description or 'Uploading files'
 
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
-        prepared_repo_objects = HubApi._prepare_upload_folder(
-            folder_path=folder_path,
+        prepared_repo_objects = self._prepare_upload_folder(
+            folder_path_or_files=folder_path,
             path_in_repo=path_in_repo,
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
 
         self.upload_checker.check_normal_files(
-            file_path_list = [item for _, item in prepared_repo_objects],
+            file_path_list=[item for _, item in prepared_repo_objects],
             repo_type=repo_type,
         )
 
@@ -1526,6 +1518,7 @@ class HubApi:
             commit_description=commit_description,
             token=token,
             repo_type=repo_type,
+            revision=revision,
         )
 
         return commit_info
@@ -1668,7 +1661,7 @@ class HubApi:
         resp = response.json()
         raise_on_error(resp)
 
-        upload_objects = []   # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
+        upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
         resp_objects = resp['Data']['objects']
         for obj in resp_objects:
             upload_objects.append(
@@ -1678,24 +1671,44 @@ class HubApi:
 
         return upload_objects
 
-    @staticmethod
     def _prepare_upload_folder(
-        folder_path: Union[str, Path],
-        path_in_repo: str,
-        allow_patterns: Optional[Union[List[str], str]] = None,
-        ignore_patterns: Optional[Union[List[str], str]] = None,
+            self,
+            folder_path_or_files: Union[str, Path, List[str], List[Path]],
+            path_in_repo: str,
+            allow_patterns: Optional[Union[List[str], str]] = None,
+            ignore_patterns: Optional[Union[List[str], str]] = None,
     ) -> List[Union[tuple, list]]:
+        folder_path = None
+        files_path = None
+        if isinstance(folder_path_or_files, list):
+            if os.path.isfile(folder_path_or_files[0]):
+                files_path = folder_path_or_files
+            else:
+                raise ValueError('Uploading multiple folders is not supported now.')
+        else:
+            if os.path.isfile(folder_path_or_files):
+                files_path = [folder_path_or_files]
+            else:
+                folder_path = folder_path_or_files
 
-        folder_path = Path(folder_path).expanduser().resolve()
-        if not folder_path.is_dir():
-            raise ValueError(f"Provided path: '{folder_path}' is not a directory")
+        if files_path is None:
+            self.upload_checker.check_folder(folder_path)
+            folder_path = Path(folder_path).expanduser().resolve()
+            if not folder_path.is_dir():
+                raise ValueError(f"Provided path: '{folder_path}' is not a directory")
 
-        # List files from folder
-        relpath_to_abspath = {
-            path.relative_to(folder_path).as_posix(): path
-            for path in sorted(folder_path.glob('**/*'))  # sorted to be deterministic
-            if path.is_file()
-        }
+            # List files from folder
+            relpath_to_abspath = {
+                path.relative_to(folder_path).as_posix(): path
+                for path in sorted(folder_path.glob('**/*'))  # sorted to be deterministic
+                if path.is_file()
+            }
+        else:
+            relpath_to_abspath = {}
+            for path in files_path:
+                if os.path.isfile(path):
+                    self.upload_checker.check_file(path)
+                    relpath_to_abspath[os.path.basename(path)] = path
 
         # Filter files
         filtered_repo_objects = list(
@@ -2004,5 +2017,5 @@ class UploadingCheck:
         total_size = sum([get_file_size(item) for item in normal_file_list])
 
         if total_size > self.normal_file_size_total_limit:
-            raise ValueError(f'Total size of non-lfs files {total_size/(1024 * 1024)}MB '
-                             f'and exceeds limit: {self.normal_file_size_total_limit/(1024 * 1024)}MB')
+            raise ValueError(f'Total size of non-lfs files {total_size / (1024 * 1024)}MB '
+                             f'and exceeds limit: {self.normal_file_size_total_limit / (1024 * 1024)}MB')

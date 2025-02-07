@@ -67,5 +67,5 @@ RUN sh /tmp/install.sh {version_args} && \
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
-ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
 SHELL ["/bin/bash", "-c"]

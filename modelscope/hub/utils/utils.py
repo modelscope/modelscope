@@ -31,6 +31,21 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
+def convert_patterns(raw_input: Union[str, List[str]]):
+    output = None
+    if isinstance(raw_input, str) and ',' in raw_input:
+        output = raw_input.split(',')
+    elif isinstance(raw_input, list):
+        output = list()
+        for s in raw_input:
+            if isinstance(s, str):
+                if ',' in s:
+                    output.extend(s.split(','))
+                else:
+                    output.append(s)
+    return output
+
+
 # during model download, the '.' would be converted to '___' to produce
 # actual physical (masked) directory for storage
 def get_model_masked_directory(directory, model_id):

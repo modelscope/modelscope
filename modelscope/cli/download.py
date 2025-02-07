@@ -8,6 +8,7 @@ from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
+from modelscope.hub.utils.utils import convert_patterns
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 
 
@@ -141,8 +142,8 @@ class DownloadCMD(CLICommand):
                     revision=self.args.revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
-                    allow_file_pattern=self.args.include,
-                    ignore_file_pattern=self.args.exclude,
+                    allow_file_pattern=convert_patterns(self.args.include),
+                    ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                 )
         elif self.args.dataset:

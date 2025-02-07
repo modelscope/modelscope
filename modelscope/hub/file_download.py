@@ -289,9 +289,18 @@ def _repo_file_download(
 
 def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
     if cache_dir.endswith(os.path.sep):
-        cache_dir = cache_dir[:-len(os.path.sep)]
+        cache_dir = cache_dir.strip(os.path.sep)
     legacy_cache_root = os.path.dirname(cache_dir)
-    legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
+    base_name = os.path.basename(cache_dir)
+    if base_name == 'datasets':
+        # datasets will not be not affected
+        return
+    if not legacy_cache_root.endswith('hub'):
+        # Two scenarios:
+        # 1: No Env: legacy is ~/.cache/modelscope/hub, with latest ms: ~/.cache/modelscope/hub
+        # 2: Env: legacy is Env/hub, with latest ms: Env
+        # so, if not end with hub, add hub here
+        legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     name = name.replace('.', '___')
     temporary_cache_dir = os.path.join(cache_dir, group_or_owner, name)

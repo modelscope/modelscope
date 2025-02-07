@@ -57,19 +57,29 @@ def get_all_imported_modules():
         import diffusers
         if importlib.util.find_spec('diffusers') is not None:
             lazy_module = sys.modules['diffusers']
-            _import_structure = lazy_module._import_structure
-            for key in _import_structure:
-                values = _import_structure[key]
-                for value in values:
-                    if any([name in value
-                            for name in diffusers_include_names]):
-                        try:
-                            module = importlib.import_module(
-                                f'.{key}', diffusers.__name__)
-                            value = getattr(module, value)
-                            all_imported_modules.append(value)
-                        except (ImportError, AttributeError):
-                            pass
+            if hasattr(lazy_module, '_import_structure'):
+                _import_structure = lazy_module._import_structure
+                for key in _import_structure:
+                    values = _import_structure[key]
+                    for value in values:
+                        if any([
+                                name in value
+                                for name in diffusers_include_names
+                        ]):
+                            try:
+                                module = importlib.import_module(
+                                    f'.{key}', diffusers.__name__)
+                                value = getattr(module, value)
+                                all_imported_modules.append(value)
+                            except (ImportError, AttributeError):
+                                pass
+            else:
+                attributes = dir(lazy_module)
+                imports = [
+                    attr for attr in attributes if not attr.startswith('__')
+                ]
+                all_imported_modules.extend(
+                    [getattr(lazy_module, _import) for _import in imports])
     return all_imported_modules
 
 

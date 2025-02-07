@@ -17,7 +17,6 @@ from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
-                                       DEFAULT_REPOSITORY_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import get_modelscope_cache_dir

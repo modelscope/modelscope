@@ -4,6 +4,7 @@ import copy
 import hashlib
 import io
 import os
+import shutil
 import tempfile
 import urllib
 import uuid
@@ -294,6 +295,15 @@ def create_temporary_directory_and_cache(model_id: str,
         default_cache_root = get_model_cache_root()
     elif repo_type == REPO_TYPE_DATASET:
         default_cache_root = get_dataset_cache_root()
+    else:
+        raise ValueError(
+            f'repo_type only support model and dataset, but now is : {repo_type}'
+        )
+    legacy_cache_root = os.path.dirname(default_cache_root)
+    legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
+    if os.path.exists(
+            legacy_cache_root) and not os.path.exists(default_cache_root):
+        shutil.move(legacy_cache_root, default_cache_root)
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     if local_dir is not None:

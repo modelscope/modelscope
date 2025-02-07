@@ -297,9 +297,14 @@ def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
         return
     if not legacy_cache_root.endswith('hub'):
         # Two scenarios:
-        # 1: No `MODELSCOPE_CACHE` env: cache_dir ~/.cache/modelscope/hub -> ~/.cache/modelscope/hub
-        # 2: With `MODELSCOPE_CACHE` env: cache_dir $Env/hub -> $Env
-        # so, if `legacy_cache_root` not end with `hub`, add `hub` to the end.
+        # We have restructured ModelScope cache directory,
+        # Scenery 1:
+        #   When MODELSCOPE_CACHE is not set, the default directory remains
+        #   the same at  ~/.cache/modelscope/hub
+        # Scenery 2:
+        #   When MODELSCOPE_CACHE is not set, the cache directory is moved from
+        #   $MODELSCOPE_CACHE/hub to $MODELSCOPE_CACHE/. In this case,
+        #   we will be migrating the hub directory accordingly.
         legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     name = name.replace('.', '___')

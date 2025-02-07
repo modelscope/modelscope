@@ -3,6 +3,7 @@
 import fnmatch
 import os
 import re
+import shutil
 import uuid
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -246,12 +247,20 @@ def _snapshot_download(
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
-        repo_files = []
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
                     system_cache, 'models', *repo_id.split('/'))
+            legacy_dir = os.path.abspath(
+                local_dir) if local_dir is not None else os.path.join(
+                    system_cache, *repo_id.split('/'))
             print(f'Downloading Model to directory: {directory}')
+            dest_dir = directory
+            if not os.path.exists(directory) and os.path.exists(legacy_dir):
+                # If the model path does not exist
+                # And the legacy dir exists, download to the legacy first
+                # then move to the new path
+                directory = legacy_dir
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies)
             revision = revision_detail['Revision']
@@ -308,12 +317,23 @@ def _snapshot_download(
                             f'Failed to create symbolic link {directory} for {os.path.abspath(masked_directory)}.'
                         )
 
+            if dest_dir != directory:
+                shutil.move(directory, dest_dir)
+
         elif repo_type == REPO_TYPE_DATASET:
             directory = os.path.abspath(
                 local_dir) if local_dir else os.path.join(
                     system_cache, 'datasets', *repo_id.split('/'))
+            legacy_dir = os.path.abspath(
+                local_dir) if local_dir is not None else os.path.join(
+                    system_cache, *repo_id.split('/'))
             print(f'Downloading Dataset to directory: {directory}')
-
+            dest_dir = directory
+            if not os.path.exists(directory) and os.path.exists(legacy_dir):
+                # If the dataset path does not exist
+                # And the legacy dir exists, download to the legacy first
+                # then move to the new path
+                directory = legacy_dir
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
@@ -343,6 +363,9 @@ def _snapshot_download(
                 ignore_patterns=ignore_patterns,
                 allow_patterns=allow_patterns,
                 max_workers=max_workers)
+
+            if dest_dir != directory:
+                shutil.move(directory, dest_dir)
 
         cache.save_model_version(revision_info=revision_detail)
         cache_root_path = cache.get_root_location()

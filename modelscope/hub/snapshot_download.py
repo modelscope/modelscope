@@ -17,7 +17,6 @@ from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
-                                       DEFAULT_REPOSITORY_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import get_modelscope_cache_dir
@@ -246,7 +245,6 @@ def _snapshot_download(
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
-        repo_files = []
         if repo_type == REPO_TYPE_MODEL:
             directory = os.path.abspath(
                 local_dir) if local_dir is not None else os.path.join(
@@ -313,7 +311,6 @@ def _snapshot_download(
                 local_dir) if local_dir else os.path.join(
                     system_cache, 'datasets', *repo_id.split('/'))
             print(f'Downloading Dataset to directory: {directory}')
-
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             revision_detail = revision or DEFAULT_DATASET_REVISION
 

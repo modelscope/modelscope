@@ -168,7 +168,7 @@ class UploadCMD(CLICommand):
                 commit_description=self.args.commit_description,
                 repo_type=self.args.repo_type,
                 allow_patterns=convert_patterns(self.args.include),
-                ignore_patterns=convert_patterns(self.args.exclude),
+                allow_file_pattern=convert_patterns(self.args.include),
                 max_workers=self.args.max_workers,
             )
         else:

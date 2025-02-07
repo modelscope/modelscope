@@ -4,6 +4,7 @@ import copy
 import hashlib
 import io
 import os
+import shutil
 import tempfile
 import urllib
 import uuid
@@ -286,6 +287,41 @@ def _repo_file_download(
                          temporary_cache_dir, cache, headers, cookies)
 
 
+def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
+    if cache_dir.endswith(os.path.sep):
+        cache_dir = cache_dir.strip(os.path.sep)
+    legacy_cache_root = os.path.dirname(cache_dir)
+    base_name = os.path.basename(cache_dir)
+    if base_name == 'datasets':
+        # datasets will not be not affected
+        return
+    if not legacy_cache_root.endswith('hub'):
+        # Two scenarios:
+        # We have restructured ModelScope cache directory,
+        # Scenery 1:
+        #   When MODELSCOPE_CACHE is not set, the default directory remains
+        #   the same at  ~/.cache/modelscope/hub
+        # Scenery 2:
+        #   When MODELSCOPE_CACHE is not set, the cache directory is moved from
+        #   $MODELSCOPE_CACHE/hub to $MODELSCOPE_CACHE/. In this case,
+        #   we will be migrating the hub directory accordingly.
+        legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
+    group_or_owner, name = model_id_to_group_owner_name(model_id)
+    name = name.replace('.', '___')
+    temporary_cache_dir = os.path.join(cache_dir, group_or_owner, name)
+    legacy_cache_dir = os.path.join(legacy_cache_root, group_or_owner, name)
+    if os.path.exists(
+            legacy_cache_dir) and not os.path.exists(temporary_cache_dir):
+        logger.info(
+            f'Legacy cache dir exists: {legacy_cache_dir}, move to {temporary_cache_dir}'
+        )
+        try:
+            shutil.move(legacy_cache_dir, temporary_cache_dir)
+        except Exception:  # noqa
+            # Failed, skip
+            pass
+
+
 def create_temporary_directory_and_cache(model_id: str,
                                          local_dir: str = None,
                                          cache_dir: str = None,
@@ -294,6 +330,10 @@ def create_temporary_directory_and_cache(model_id: str,
         default_cache_root = get_model_cache_root()
     elif repo_type == REPO_TYPE_DATASET:
         default_cache_root = get_dataset_cache_root()
+    else:
+        raise ValueError(
+            f'repo_type only support model and dataset, but now is : {repo_type}'
+        )
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     if local_dir is not None:
@@ -302,6 +342,7 @@ def create_temporary_directory_and_cache(model_id: str,
     else:
         if cache_dir is None:
             cache_dir = default_cache_root
+            move_legacy_cache_to_standard_dir(cache_dir, model_id)
         if isinstance(cache_dir, Path):
             cache_dir = str(cache_dir)
         temporary_cache_dir = os.path.join(cache_dir, TEMPORARY_FOLDER_NAME,

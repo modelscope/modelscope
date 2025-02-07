@@ -3,7 +3,6 @@
 import fnmatch
 import os
 import re
-import shutil
 import uuid
 from http.cookiejar import CookieJar
 from pathlib import Path

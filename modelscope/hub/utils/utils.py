@@ -33,16 +33,20 @@ def model_id_to_group_owner_name(model_id):
 
 def convert_patterns(raw_input: Union[str, List[str]]):
     output = None
-    if isinstance(raw_input, str) and ',' in raw_input:
-        output = raw_input.split(',')
+    if isinstance(raw_input, str):
+        output = list()
+        if ',' in raw_input:
+            output = [s.strip() for s in raw_input.split(',')]
+        else:
+            output.append(raw_input.strip())
     elif isinstance(raw_input, list):
         output = list()
         for s in raw_input:
             if isinstance(s, str):
                 if ',' in s:
-                    output.extend(s.split(','))
+                    output.extend([ss.strip() for ss in s.split(',')])
                 else:
-                    output.append(s)
+                    output.append(s.strip())
     return output
 
 

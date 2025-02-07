@@ -6,9 +6,25 @@ import unittest
 from requests import HTTPError
 
 from modelscope.fileio.file import File, HTTPStorage, LocalStorage
+from modelscope.hub.utils.utils import convert_patterns
 
 
 class FileTest(unittest.TestCase):
+
+    def test_pattern_conversion(self):
+        self._assert_patterns(None, None)
+        self._assert_patterns('*.h5', ['*.h5'])
+        self._assert_patterns('*.h5 ', ['*.h5'])
+        self._assert_patterns('*.h5, *flax_model.msgpack',
+                              ['*.h5', '*flax_model.msgpack'])
+        self._assert_patterns(['*.h5, *flax_model.msgpack'],
+                              ['*.h5', '*flax_model.msgpack'])
+        self._assert_patterns(['*.h5 ', '*flax_model.msgpack'],
+                              ['*.h5', '*flax_model.msgpack'])
+
+    def _assert_patterns(self, raw_input, expected_output):
+        output = convert_patterns(raw_input)
+        self.assertEqual(expected_output, output)
 
     def test_local_storage(self):
         storage = LocalStorage()

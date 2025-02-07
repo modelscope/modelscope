@@ -49,18 +49,20 @@ def get_all_imported_modules():
     if importlib.util.find_spec('peft') is not None:
         try:
             import peft
-        except: # noqa
+        except:  # noqa
             pass
         else:
             attributes = dir(peft)
-            imports = [attr for attr in attributes if not attr.startswith('__')]
+            imports = [
+                attr for attr in attributes if not attr.startswith('__')
+            ]
             all_imported_modules.extend(
                 [getattr(peft, _import) for _import in imports])
 
     if importlib.util.find_spec('diffusers') is not None:
         try:
             import diffusers
-        except: # noqa
+        except:  # noqa
             pass
         else:
             lazy_module = sys.modules['diffusers']

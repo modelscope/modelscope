@@ -45,8 +45,9 @@ else \
     pip cache purge; \
 fi
 
-RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
-    sh /tmp/install.sh {version_args} && \
+RUN echo "cache bust $(date +%Y%m%d%H%M%S)"
+
+RUN sh /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
     pip install --no-cache-dir -U qwen_vl_utils pyav librosa timm transformers accelerate peft trl safetensors && \

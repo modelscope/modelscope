@@ -294,10 +294,8 @@ def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
     legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     name = name.replace('.', '___')
-    temporary_cache_dir = os.path.join(cache_dir,
-                                       group_or_owner, name)
-    legacy_cache_dir = os.path.join(legacy_cache_root,
-                                       group_or_owner, name)
+    temporary_cache_dir = os.path.join(cache_dir, group_or_owner, name)
+    legacy_cache_dir = os.path.join(legacy_cache_root, group_or_owner, name)
     if os.path.exists(
             legacy_cache_dir) and not os.path.exists(temporary_cache_dir):
         shutil.move(legacy_cache_dir, temporary_cache_dir)

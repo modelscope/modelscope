@@ -297,9 +297,9 @@ def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
         return
     if not legacy_cache_root.endswith('hub'):
         # Two scenarios:
-        # 1: No Env: legacy is ~/.cache/modelscope/hub, with latest ms: ~/.cache/modelscope/hub
-        # 2: Env: legacy is Env/hub, with latest ms: Env
-        # so, if not end with hub, add hub here
+        # 1: No `MODELSCOPE_CACHE` env: cache_dir ~/.cache/modelscope/hub -> ~/.cache/modelscope/hub
+        # 2: With `MODELSCOPE_CACHE` env: cache_dir $Env/hub -> $Env
+        # so, if `legacy_cache_root` not end with `hub`, add `hub` to the end.
         legacy_cache_root = os.path.join(legacy_cache_root, 'hub')
     group_or_owner, name = model_id_to_group_owner_name(model_id)
     name = name.replace('.', '___')
@@ -307,7 +307,14 @@ def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
     legacy_cache_dir = os.path.join(legacy_cache_root, group_or_owner, name)
     if os.path.exists(
             legacy_cache_dir) and not os.path.exists(temporary_cache_dir):
-        shutil.move(legacy_cache_dir, temporary_cache_dir)
+        logger.info(
+            f'Legacy cache dir exists: {legacy_cache_dir}, move to {temporary_cache_dir}'
+        )
+        try:
+            shutil.move(legacy_cache_dir, temporary_cache_dir)
+        except Exception:  # noqa
+            # Failed, skip
+            pass
 
 
 def create_temporary_directory_and_cache(model_id: str,

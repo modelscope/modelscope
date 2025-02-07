@@ -66,5 +66,5 @@ RUN echo "cache bust $(date +%Y%m%d%H%M%S)" && \
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
-ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
 SHELL ["/bin/bash", "-c"]

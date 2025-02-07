@@ -171,8 +171,8 @@ class DownloadCMD(CLICommand):
                     revision=dataset_revision,
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
-                    allow_file_pattern=self.args.include,
-                    ignore_file_pattern=self.args.exclude,
+                    allow_file_pattern=convert_patterns(self.args.include),
+                    ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                 )
         else:

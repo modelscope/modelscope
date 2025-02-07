@@ -4,6 +4,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.utils.utils import convert_patterns, get_endpoint
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 
 
@@ -89,7 +90,7 @@ class UploadCMD(CLICommand):
         parser.add_argument(
             '--endpoint',
             type=str,
-            default='https://www.modelscope.cn',
+            default=get_endpoint(),
             help='Endpoint for Modelscope service.')
 
         parser.set_defaults(func=subparser_func)
@@ -166,8 +167,8 @@ class UploadCMD(CLICommand):
                 commit_message=self.args.commit_message,
                 commit_description=self.args.commit_description,
                 repo_type=self.args.repo_type,
-                allow_patterns=self.args.include,
-                ignore_patterns=self.args.exclude,
+                allow_file_pattern=convert_patterns(self.args.include),
+                ignore_file_pattern=convert_patterns(self.args.exclude),
                 max_workers=self.args.max_workers,
             )
         else:

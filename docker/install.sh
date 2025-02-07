@@ -8,9 +8,11 @@ lmdeploy_version=${5:-0.6.1}
 autogptq_version=${6:-0.7.1}
 flashattn_version=${7:-2.7.1.post4}
 
-pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
-
 pip uninstall -y torch torchvision torchaudio
+
+pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
+
+pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
 
 pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 

@@ -265,15 +265,15 @@ class LLMImageBuilder(Builder):
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.4.0'
-            args.torchaudio_version = '2.4.0'
-            args.torchvision_version = '0.19.0'
+            args.torch_version = '2.5.1'
+            args.torchaudio_version = '2.5.1'
+            args.torchvision_version = '0.20.1'
         if not args.cuda_version:
             args.cuda_version = '12.4.0'
         if not args.vllm_version:
-            args.vllm_version = '0.6.3.post1'
+            args.vllm_version = '0.7.2'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.6.2'
+            args.lmdeploy_version = '0.7.0.post2'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:

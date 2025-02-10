@@ -71,6 +71,9 @@ def check_local_model_is_latest(
             headers=snapshot_header,
             use_cookies=cookies,
         )
+        model_cache = None
+        if not os.path.exists(os.path.join(model_root_path, '.git')):
+            model_cache = ModelFileSystemCache(model_root_path)
         for model_file in model_files:
             if model_file['Type'] == 'tree':
                 continue
@@ -105,7 +108,7 @@ def check_model_is_id(model_id: str, token: Optional[str] = None):
         return False
     else:
         _api = HubApi()
-        _api.try_login(token)
+        _api.login(token)
         try:
             _api.get_model(model_id=model_id, )
             return True

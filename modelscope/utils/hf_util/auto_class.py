@@ -38,32 +38,39 @@ if TYPE_CHECKING:
     from transformers import (PretrainedConfig, PreTrainedModel,
                               PreTrainedTokenizerBase)
     from transformers import T5EncoderModel
+    from transformers import LlamaModel, LlamaPreTrainedModel, LlamaForCausalLM
 
     try:
         from transformers import Qwen2VLForConditionalGeneration
     except ImportError:
-        pass
+        Qwen2VLForConditionalGeneration = None
+
+    try:
+        from transformers import Qwen2_5_VLForConditionalGeneration
+    except ImportError:
+        Qwen2_5_VLForConditionalGeneration = None
 
     try:
         from transformers import GPTQConfig
         from transformers import AwqConfig
     except ImportError:
-        pass
+        GPTQConfig = None
+        AwqConfig = None
 
     try:
         from transformers import AutoModelForImageToImage
     except ImportError:
-        pass
+        AutoModelForImageToImage = None
 
     try:
         from transformers import AutoModelForImageTextToText
     except ImportError:
-        pass
+        AutoModelForImageTextToText = None
 
     try:
         from transformers import AutoModelForKeypointDetection
     except ImportError:
-        pass
+        AutoModelForKeypointDetection = None
 
 else:
 

@@ -31,6 +31,25 @@ def model_id_to_group_owner_name(model_id):
     return group_or_owner, name
 
 
+def convert_patterns(raw_input: Union[str, List[str]]):
+    output = None
+    if isinstance(raw_input, str):
+        output = list()
+        if ',' in raw_input:
+            output = [s.strip() for s in raw_input.split(',')]
+        else:
+            output.append(raw_input.strip())
+    elif isinstance(raw_input, list):
+        output = list()
+        for s in raw_input:
+            if isinstance(s, str):
+                if ',' in s:
+                    output.extend([ss.strip() for ss in s.split(',')])
+                else:
+                    output.append(s.strip())
+    return output
+
+
 # during model download, the '.' would be converted to '___' to produce
 # actual physical (masked) directory for storage
 def get_model_masked_directory(directory, model_id):
@@ -129,11 +148,11 @@ def file_integrity_validation(file_path, expected_sha256):
         raise FileIntegrityError(msg)
 
 
-def add_patterns_to_file(repo,
-                         file_name: str,
-                         patterns: List[str],
-                         commit_message: Optional[str] = None,
-                         ignore_push_error=False) -> None:
+def add_content_to_file(repo,
+                        file_name: str,
+                        patterns: List[str],
+                        commit_message: Optional[str] = None,
+                        ignore_push_error=False) -> None:
     if isinstance(patterns, str):
         patterns = [patterns]
     if commit_message is None:
@@ -168,26 +187,3 @@ def add_patterns_to_file(repo,
         else:
             raise e
 
-
-def add_patterns_to_gitignore(repo,
-                              patterns: List[str],
-                              commit_message: Optional[str] = None) -> None:
-    add_patterns_to_file(
-        repo, '.gitignore', patterns, commit_message, ignore_push_error=True)
-
-
-def add_patterns_to_gitattributes(
-        repo,
-        patterns: List[str],
-        commit_message: Optional[str] = None) -> None:
-    new_patterns = []
-    suffix = 'filter=lfs diff=lfs merge=lfs -text'
-    for pattern in patterns:
-        if suffix not in pattern:
-            pattern = f'{pattern} {suffix}'
-        new_patterns.append(pattern)
-    file_name = '.gitattributes'
-    if commit_message is None:
-        commit_message = f'Add `{patterns[0]}` patterns to {file_name}'
-    add_patterns_to_file(
-        repo, file_name, new_patterns, commit_message, ignore_push_error=True)

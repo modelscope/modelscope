@@ -43,7 +43,7 @@ def get_all_imported_modules():
                             f'.{key}', transformers.__name__)
                         value = getattr(module, value)
                         all_imported_modules.append(value)
-                    except (ImportError, AttributeError):
+                    except:  # noqa
                         pass
 
     if importlib.util.find_spec('peft') is not None:
@@ -80,7 +80,7 @@ def get_all_imported_modules():
                                     f'.{key}', diffusers.__name__)
                                 value = getattr(module, value)
                                 all_imported_modules.append(value)
-                            except (ImportError, AttributeError):
+                            except:  # noqa
                                 pass
             else:
                 attributes = dir(lazy_module)
@@ -250,7 +250,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
-        except ImportError:
+        except:  # noqa
             continue
 
         if wrap:
@@ -260,7 +260,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 else:
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
-            except Exception:
+            except:  # noqa
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,
@@ -307,7 +307,7 @@ def _unpatch_pretrained_class(all_imported_modules):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
-        except ImportError:
+        except:  # noqa
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             var.from_pretrained = var._from_pretrained_origin

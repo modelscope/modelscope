@@ -2,20 +2,15 @@
 
 import hashlib
 import os
-import shutil
-import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import BinaryIO, List, Optional, Union
-
-import requests
+from typing import List, Optional, Union
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
-from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()

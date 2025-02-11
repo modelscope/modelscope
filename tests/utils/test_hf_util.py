@@ -275,7 +275,7 @@ class HFUtilTest(unittest.TestCase):
             context=self.pipeline_qa_context)
 
         # save_pretrained
-        repo_id = 'damotestx/tst_push5'
+        repo_id = self.create_model_name
         save_dir = './tmp_test_hf_pipeline'
         try:
             os.system(f'rm -rf {save_dir}')

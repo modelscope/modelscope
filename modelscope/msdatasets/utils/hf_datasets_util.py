@@ -725,7 +725,7 @@ def _download_additional_modules(
                 f"Please change relative import {import_name} to another name and add a '# From: URL_OR_PATH' "
                 f'comment pointing to the original relative import file path.'
             )
-        if import_type == Visibility.INTERNAL:
+        if import_type == 'internal':
             _api = HubApi()
             # url_or_filename = url_or_path_join(base_path, import_path + ".py")
             file_name = import_path + '.py'

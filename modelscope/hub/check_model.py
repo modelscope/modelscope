@@ -72,6 +72,7 @@ def check_local_model_is_latest(
             use_cookies=cookies,
         )
         model_cache = None
+        # download via non-git method
         if not os.path.exists(os.path.join(model_root_path, '.git')):
             model_cache = ModelFileSystemCache(model_root_path)
         for model_file in model_files:

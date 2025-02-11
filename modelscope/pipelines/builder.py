@@ -198,8 +198,9 @@ def pipeline(task: str = None,
                 **kwargs)
         except Exception as e:
             logger.error(
-                f'Failed to initialize the pipeline using the transformers pipeline, details: {e}'
-            )
+                'We couldn\'t find a suitable pipeline from ms, so we tried to load it using the transformers pipeline,'
+                ' but that also failed.')
+            raise e
 
     if not device:
         device = 'gpu'

@@ -188,13 +188,18 @@ def pipeline(task: str = None,
         pipeline_props = {'type': pipeline_name}
 
     if not pipeline_props and is_transformers_available():
-        from modelscope.utils.hf_util import hf_pipeline
-        return hf_pipeline(
-            task=task,
-            model=model,
-            framework=framework,
-            device=device,
-            **kwargs)
+        try:
+            from modelscope.utils.hf_util import hf_pipeline
+            return hf_pipeline(
+                task=task,
+                model=model,
+                framework=framework,
+                device=device,
+                **kwargs)
+        except Exception as e:
+            logger.error(
+                f'Failed to initialize the pipeline using the transformers pipeline, details: {e}'
+            )
 
     if not device:
         device = 'gpu'

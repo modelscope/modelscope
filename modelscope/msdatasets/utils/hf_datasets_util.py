@@ -59,7 +59,6 @@ from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from packaging import version
 
 from modelscope import HubApi
-from modelscope.hub.constants import Visibility
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
 from modelscope.utils.config_ds import MS_DATASETS_CACHE

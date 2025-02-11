@@ -10,12 +10,11 @@ from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke, Tasks,
                                        ThirdParty)
 from modelscope.utils.hub import read_config
+from modelscope.utils.import_utils import is_transformers_available
+from modelscope.utils.logger import get_logger
 from modelscope.utils.plugins import (register_modelhub_repo,
                                       register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
-from modelscope.utils.logger import get_logger
-from modelscope.utils.import_utils import is_transformers_available
-
 from .base import Pipeline
 from .util import is_official_hub_path
 
@@ -190,11 +189,12 @@ def pipeline(task: str = None,
 
     if not pipeline_props and is_transformers_available():
         from modelscope.utils.hf_util import hf_pipeline
-        return hf_pipeline(task=task,
-             model=model,
-             framework=framework,
-             device=device,
-             **kwargs)
+        return hf_pipeline(
+            task=task,
+            model=model,
+            framework=framework,
+            device=device,
+            **kwargs)
 
     if not device:
         device = 'gpu'

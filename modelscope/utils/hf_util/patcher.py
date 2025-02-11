@@ -118,7 +118,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             model_dir = pretrained_model_name_or_path
         return model_dir
 
-
     def patch_pretrained_model_name_or_path(pretrained_model_name_or_path,
                                             *model_args, **kwargs):
         """Patch all from_pretrained/get_config_dict"""
@@ -150,11 +149,12 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         obj = kwargs.pop('obj')
         push_to_hub = kwargs.pop('push_to_hub', False)
 
-        obj._save_pretrained_origin(obj,
-                                    save_directory=save_directory,
-                                    safe_serialization=safe_serialization,
-                                    push_to_hub=False,
-                                    **kwargs)
+        obj._save_pretrained_origin(
+            obj,
+            save_directory=save_directory,
+            safe_serialization=safe_serialization,
+            push_to_hub=False,
+            **kwargs)
 
         # Class members may be unpatched, so push_to_hub is done separately here
         if push_to_hub:
@@ -162,16 +162,17 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             from modelscope.hub.api import HubApi
             api = HubApi()
 
-            token = kwargs.get("token")
-            commit_message = kwargs.pop("commit_message", None)
-            repo_name = kwargs.pop("repo_id", save_directory.split(os.path.sep)[-1])
+            token = kwargs.get('token')
+            commit_message = kwargs.pop('commit_message', None)
+            repo_name = kwargs.pop('repo_id',
+                                   save_directory.split(os.path.sep)[-1])
             api.create_repo(repo_name, **kwargs)
 
-            push_to_hub(repo_name=repo_name,
-                        output_dir=save_directory,
-                        commit_message=commit_message,
-                        token=token)
-        #return kwargs.pop('ori_func')(obj, save_directory, safe_serialization, **kwargs)
+            push_to_hub(
+                repo_name=repo_name,
+                output_dir=save_directory,
+                commit_message=commit_message,
+                token=token)
 
     def get_wrapped_class(
             module_class: 'PreTrainedModel',
@@ -244,10 +245,10 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 return module_obj
 
             def save_pretrained(
-                    self,
-                    save_directory: Union[str, os.PathLike],
-                    safe_serialization: bool = True,
-                    **kwargs,
+                self,
+                save_directory: Union[str, os.PathLike],
+                safe_serialization: bool = True,
+                **kwargs,
             ):
                 push_to_hub = kwargs.pop('push_to_hub', False)
                 if push_to_hub:
@@ -258,10 +259,12 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     from modelscope.hub.api import HubApi
                     api = HubApi()
 
-                    token = kwargs.get("token")
+                    token = kwargs.get('token')
                     api.login(token)
-                    commit_message = kwargs.pop("commit_message", None)
-                    repo_name = kwargs.pop("repo_id", save_directory.split(os.path.sep)[-1])
+                    commit_message = kwargs.pop('commit_message', None)
+                    repo_name = kwargs.pop(
+                        'repo_id',
+                        save_directory.split(os.path.sep)[-1])
                     api.create_repo(repo_name)
                     repo = Repository(save_directory, repo_name)
                     default_config = {
@@ -277,21 +280,19 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                         repo,
                         'configuration.json', [json.dumps(config)],
                         ignore_push_error=True)
-                super().save_pretrained(save_directory=save_directory,
-                                        safe_serialization=safe_serialization,
-                                        push_to_hub=False,
-                                        **kwargs)
+                super().save_pretrained(
+                    save_directory=save_directory,
+                    safe_serialization=safe_serialization,
+                    push_to_hub=False,
+                    **kwargs)
 
                 # Class members may be unpatched, so push_to_hub is done separately here
                 if push_to_hub:
-
-                    #api.create_repo(repo_name, **kwargs)
-
-
-                    push_to_hub(repo_name=repo_name,
-                                output_dir=save_directory,
-                                commit_message=commit_message,
-                                token=token)
+                    push_to_hub(
+                        repo_name=repo_name,
+                        output_dir=save_directory,
+                        commit_message=commit_message,
+                        token=token)
 
         if not hasattr(module_class, 'from_pretrained'):
             del ClassWrapper.from_pretrained
@@ -337,15 +338,17 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         except ImportError:
             continue
 
-        # save_pretrained is not a classmethod and cannot be overridden by replacing the class method. It requires replacing the class object method.
+        # save_pretrained is not a classmethod and cannot be overridden by replacing
+        # the class method. It requires replacing the class object method.
         if wrap or ('pipeline' in name.lower() and has_save_pretrained):
             try:
-                if not has_from_pretrained and not has_get_config_dict and not has_get_peft_type and not has_save_pretrained:
+                if (not has_from_pretrained and not has_get_config_dict
+                        and not has_get_peft_type and not has_save_pretrained):
                     all_available_modules.append(var)
                 else:
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
-            except Exception as e:
+            except Exception:
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,
@@ -379,7 +382,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     ori_func=var._get_config_dict_origin,
                     **ignore_file_pattern_kwargs)
 
-            if has_save_pretrained and not hasattr(var, '_save_pretrained_origin'):
+            if has_save_pretrained and not hasattr(var,
+                                                   '_save_pretrained_origin'):
                 var._save_pretrained_origin = var.save_pretrained
                 var.save_pretrained = partial(
                     save_pretrained,
@@ -658,6 +662,7 @@ def _patch_hub():
         huggingface_hub.hf_api.create_commit = hf_api.create_commit
         from transformers.utils import hub
         hub.create_commit = hf_api.create_commit
+
 
 def _unpatch_hub():
     import huggingface_hub

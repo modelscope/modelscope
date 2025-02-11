@@ -1,11 +1,14 @@
-from typing import Optional, Union
 import os
+from typing import Optional, Union
+
 import torch
-from modelscope.hub import snapshot_download
-from transformers import (TFPreTrainedModel, PreTrainedModel, pipeline)
-from transformers.pipelines import get_task, check_task
 from transformers import Pipeline as PipelineHF
-from modelscope.utils.hf_util.patcher import patch_hub, _patch_pretrained_class
+from transformers import PreTrainedModel, TFPreTrainedModel, pipeline
+from transformers.pipelines import check_task, get_task
+
+from modelscope.hub import snapshot_download
+from modelscope.utils.hf_util.patcher import _patch_pretrained_class, patch_hub
+
 
 def _get_hf_device(device):
     if isinstance(device, str):
@@ -16,19 +19,21 @@ def _get_hf_device(device):
             device = ''.join(eles)
     return device
 
+
 def _get_hf_pipeline_class(task, model):
     if not task:
         task = get_task(model)
     normalized_task, targeted_task, task_options = check_task(task)
-    pipeline_class = targeted_task["impl"]
+    pipeline_class = targeted_task['impl']
     pipeline_class = _patch_pretrained_class([pipeline_class])[0]
     return pipeline_class
 
+
 def hf_pipeline(
     task: str = None,
-    model: Optional[Union[str, "PreTrainedModel", "TFPreTrainedModel"]] = None,
+    model: Optional[Union[str, 'PreTrainedModel', 'TFPreTrainedModel']] = None,
     framework: Optional[str] = None,
-    device: Optional[Union[int, str, "torch.device"]] = None,
+    device: Optional[Union[int, str, 'torch.device']] = None,
     **kwargs,
 ) -> PipelineHF:
     if isinstance(model, str):
@@ -40,10 +45,10 @@ def hf_pipeline(
     device = _get_hf_device(device)
     pipeline_class = _get_hf_pipeline_class(task, model)
 
-    return pipeline(task=task,
-             model=model,
-             framework=framework,
-             device=device,
-             pipeline_class=pipeline_class,
-             #pipeline_class=QuestionAnsweringPipeline,
-             **kwargs)
+    return pipeline(
+        task=task,
+        model=model,
+        framework=framework,
+        device=device,
+        pipeline_class=pipeline_class,
+        **kwargs)

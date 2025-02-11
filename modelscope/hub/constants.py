@@ -58,3 +58,16 @@ class DatasetVisibility(object):
     PRIVATE = 1
     INTERNAL = 3
     PUBLIC = 5
+
+
+class Visibility(object):
+    PRIVATE = 'private'
+    INTERNAL = 'internal'
+    PUBLIC = 'public'
+
+
+VisibilityMap = {
+    ModelVisibility.PRIVATE: Visibility.PRIVATE,
+    ModelVisibility.INTERNAL: Visibility.INTERNAL,
+    ModelVisibility.PUBLIC: Visibility.PUBLIC
+}

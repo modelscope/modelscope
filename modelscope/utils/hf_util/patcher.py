@@ -11,7 +11,8 @@ from pathlib import Path
 from types import MethodType
 from typing import BinaryIO, Dict, Iterable, List, Optional, Union
 
-from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
+from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DATA_ENDPOINT,
+                                      Visibility)
 from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
                                          CommitOperationAdd)
 
@@ -410,7 +411,7 @@ def _patch_hub():
         """
         from modelscope.hub.api import HubApi
         api = HubApi()
-        visibility = 'private' if private else 'public'
+        visibility = Visibility.PRIVATE if private else Visibility.PUBLIC
         repo_url = api.create_repo(
             repo_id, token=token, visibility=visibility, **kwargs)
         from modelscope.utils.repo_utils import RepoUrl

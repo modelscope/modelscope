@@ -40,6 +40,13 @@ class HFUtilTest(unittest.TestCase):
         with open(self.test_file2, 'w') as f:
             f.write('{}')
 
+        self.pipeline_qa_context = r"""
+            Extractive Question Answering is the task of extracting an answer from a text given a question. An example of a
+            question answering dataset is the SQuAD dataset, which is entirely based on that task. If you would like to fine-tune
+            a model on a SQuAD task, you may leverage the examples/pytorch/question-answering/run_squad.py script.
+            """
+        self.pipeline_qa_question = "What is a good example of a question answering dataset?"
+
     def tearDown(self):
         logger.info('TearDown')
         shutil.rmtree(self.model_dir, ignore_errors=True)
@@ -235,6 +242,50 @@ class HFUtilTest(unittest.TestCase):
                 'Qwen/Qwen1.5-0.5B-Chat', trust_remote_code=True)
             model.push_to_hub(self.create_model_name)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_pipeline_model_id(self):
+        from modelscope import pipeline
+        model_id = 'damotestx/distilbert-base-cased-distilled-squad'
+        qa = pipeline("question-answering", model=model_id)
+        assert qa(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_pipeline_auto_model(self):
+        from modelscope import pipeline, AutoModelForQuestionAnswering, AutoTokenizer
+        model_id = 'damotestx/distilbert-base-cased-distilled-squad'
+        model = AutoModelForQuestionAnswering.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        qa = pipeline("question-answering", model=model, tokenizer=tokenizer)
+        assert qa(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_pipeline_save_pretrained(self):
+        from modelscope import pipeline
+        model_id = 'damotestx/distilbert-base-cased-distilled-squad'
+
+        pipe_ori = pipeline("question-answering", model=model_id)
+
+        result_ori = pipe_ori(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+
+        # save_pretrained
+        repo_id = 'damotestx/tst_push5'
+        save_dir = './tmp_test_hf_pipeline'
+        try:
+            os.system(f'rm -rf {save_dir}')
+            self.api.delete_model(repo_id)
+            # wait for delete repo
+            import time
+            time.sleep(5)
+        except Exception:
+            # if repo not exists
+            pass
+        pipe_ori.save_pretrained(save_dir, push_to_hub=True, repo_id=repo_id)
+
+        # load from saved
+        pipe_new = pipeline("question_answering", model=repo_id)
+        result_new = pipe_new(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+
+        assert result_new == result_ori
 
 if __name__ == '__main__':
     unittest.main()

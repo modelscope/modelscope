@@ -41,11 +41,12 @@ class HFUtilTest(unittest.TestCase):
             f.write('{}')
 
         self.pipeline_qa_context = r"""
-            Extractive Question Answering is the task of extracting an answer from a text given a question. An example of a
-            question answering dataset is the SQuAD dataset, which is entirely based on that task. If you would like to fine-tune
-            a model on a SQuAD task, you may leverage the examples/pytorch/question-answering/run_squad.py script.
+            Extractive Question Answering is the task of extracting an answer from a text given a question. An example
+            of a question answering dataset is the SQuAD dataset, which is entirely based on that task. If you would
+            like to fine-tune a model on a SQuAD task, you may leverage the
+            examples/pytorch/question-answering/run_squad.py script.
             """
-        self.pipeline_qa_question = "What is a good example of a question answering dataset?"
+        self.pipeline_qa_question = 'What is a good example of a question answering dataset?'
 
     def tearDown(self):
         logger.info('TearDown')
@@ -246,8 +247,10 @@ class HFUtilTest(unittest.TestCase):
     def test_pipeline_model_id(self):
         from modelscope import pipeline
         model_id = 'damotestx/distilbert-base-cased-distilled-squad'
-        qa = pipeline("question-answering", model=model_id)
-        assert qa(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+        qa = pipeline('question-answering', model=model_id)
+        assert qa(
+            question=self.pipeline_qa_question,
+            context=self.pipeline_qa_context)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline_auto_model(self):
@@ -255,17 +258,21 @@ class HFUtilTest(unittest.TestCase):
         model_id = 'damotestx/distilbert-base-cased-distilled-squad'
         model = AutoModelForQuestionAnswering.from_pretrained(model_id)
         tokenizer = AutoTokenizer.from_pretrained(model_id)
-        qa = pipeline("question-answering", model=model, tokenizer=tokenizer)
-        assert qa(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+        qa = pipeline('question-answering', model=model, tokenizer=tokenizer)
+        assert qa(
+            question=self.pipeline_qa_question,
+            context=self.pipeline_qa_context)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline_save_pretrained(self):
         from modelscope import pipeline
         model_id = 'damotestx/distilbert-base-cased-distilled-squad'
 
-        pipe_ori = pipeline("question-answering", model=model_id)
+        pipe_ori = pipeline('question-answering', model=model_id)
 
-        result_ori = pipe_ori(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+        result_ori = pipe_ori(
+            question=self.pipeline_qa_question,
+            context=self.pipeline_qa_context)
 
         # save_pretrained
         repo_id = 'damotestx/tst_push5'
@@ -282,10 +289,13 @@ class HFUtilTest(unittest.TestCase):
         pipe_ori.save_pretrained(save_dir, push_to_hub=True, repo_id=repo_id)
 
         # load from saved
-        pipe_new = pipeline("question-answering", model=repo_id)
-        result_new = pipe_new(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
+        pipe_new = pipeline('question-answering', model=repo_id)
+        result_new = pipe_new(
+            question=self.pipeline_qa_question,
+            context=self.pipeline_qa_context)
 
         assert result_new == result_ori
+
 
 if __name__ == '__main__':
     unittest.main()

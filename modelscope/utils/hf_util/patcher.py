@@ -143,37 +143,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                                   **kwargs)
         return kwargs.pop('ori_func')(model_dir, **kwargs)
 
-    def save_pretrained(save_directory: Union[str, os.PathLike],
-                        safe_serialization: bool = True,
-                        **kwargs):
-        obj = kwargs.pop('obj')
-        push_to_hub = kwargs.pop('push_to_hub', False)
-
-        obj._save_pretrained_origin(
-            obj,
-            save_directory=save_directory,
-            safe_serialization=safe_serialization,
-            push_to_hub=False,
-            **kwargs)
-
-        # Class members may be unpatched, so push_to_hub is done separately here
-        if push_to_hub:
-            from modelscope.hub.push_to_hub import push_to_hub
-            from modelscope.hub.api import HubApi
-            api = HubApi()
-
-            token = kwargs.get('token')
-            commit_message = kwargs.pop('commit_message', None)
-            repo_name = kwargs.pop('repo_id',
-                                   save_directory.split(os.path.sep)[-1])
-            api.create_repo(repo_name, **kwargs)
-
-            push_to_hub(
-                repo_name=repo_name,
-                output_dir=save_directory,
-                commit_message=commit_message,
-                token=token)
-
     def get_wrapped_class(
             module_class: 'PreTrainedModel',
             ignore_file_pattern: Optional[Union[str, List[str]]] = None,
@@ -254,6 +223,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 if push_to_hub:
                     from modelscope.hub.push_to_hub import push_to_hub
                     from modelscope.hub.api import HubApi
+                    from modelscope.hub.repository import Repository
 
                     token = kwargs.get('token')
                     commit_message = kwargs.pop('commit_message', None)
@@ -264,6 +234,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     api = HubApi()
                     api.login(token)
                     api.create_repo(repo_name)
+                    # clone the repo
+                    Repository(save_directory, repo_name)
 
                 super().save_pretrained(
                     save_directory=save_directory,
@@ -367,15 +339,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     ori_func=var._get_config_dict_origin,
                     **ignore_file_pattern_kwargs)
 
-            if has_save_pretrained and not hasattr(var,
-                                                   '_save_pretrained_origin'):
-                var._save_pretrained_origin = var.save_pretrained
-                var.save_pretrained = partial(
-                    save_pretrained,
-                    ori_func=var._save_pretrained_origin,
-                    obj=var,
-                    **ignore_file_pattern_kwargs)
-
             all_available_modules.append(var)
     return all_available_modules
 
@@ -389,7 +352,6 @@ def _unpatch_pretrained_class(all_imported_modules):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
-            has_save_pretrained = hasattr(var, 'save_pretrained')
         except ImportError:
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
@@ -401,9 +363,6 @@ def _unpatch_pretrained_class(all_imported_modules):
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             var.get_config_dict = var._get_config_dict_origin
             delattr(var, '_get_config_dict_origin')
-        if has_save_pretrained and hasattr(var, '_save_pretrained_origin'):
-            var.save_pretrained = var._save_pretrained_origin
-            delattr(var, '_save_pretrained_origin')
 
 
 def _patch_hub():

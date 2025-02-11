@@ -282,7 +282,7 @@ class HFUtilTest(unittest.TestCase):
         pipe_ori.save_pretrained(save_dir, push_to_hub=True, repo_id=repo_id)
 
         # load from saved
-        pipe_new = pipeline("question_answering", model=repo_id)
+        pipe_new = pipeline("question-answering", model=repo_id)
         result_new = pipe_new(question=self.pipeline_qa_question, context=self.pipeline_qa_context)
 
         assert result_new == result_ori

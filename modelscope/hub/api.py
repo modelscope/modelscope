@@ -121,6 +121,7 @@ class HubApi:
         Args:
             access_token (str): user access token on modelscope, set this argument or set `MODELSCOPE_API_TOKEN`.
             If neither of the tokens exist, login will directly return.
+
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
             git_token: token to access your git repository.
@@ -153,16 +154,6 @@ class HubApi:
 
         return d[API_RESPONSE_FIELD_DATA][
             API_RESPONSE_FIELD_GIT_ACCESS_TOKEN], cookies
-
-    def try_login(self, access_token: Optional[str] = None) -> bool:
-        """Wraps the `login` method and returns bool.
-        """
-        try:
-            self.login(access_token)
-            return True
-        except AssertionError:
-            logger.warning('Login failed.')
-            return False
 
     def create_model(self,
                      model_id: str,
@@ -1224,6 +1215,8 @@ class HubApi:
         self.login(access_token=token)
 
         repo_id_list = repo_id.split('/')
+        if len(repo_id_list) != 2:
+            raise ValueError('Invalid repo id, should be in the format of `owner_name/repo_name`')
         namespace, repo_name = repo_id_list
 
         if repo_type == REPO_TYPE_MODEL:

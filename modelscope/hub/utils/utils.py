@@ -186,4 +186,3 @@ def add_content_to_file(repo,
             pass
         else:
             raise e
-

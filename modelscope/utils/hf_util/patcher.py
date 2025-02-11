@@ -339,7 +339,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
         # save_pretrained is not a classmethod and cannot be overridden by replacing the class method. It requires replacing the class object method.
         if wrap or ('pipeline' in name.lower() and has_save_pretrained):
-            print(f'var wrap: {var}')
             try:
                 if not has_from_pretrained and not has_get_config_dict and not has_get_peft_type and not has_save_pretrained:
                     all_available_modules.append(var)
@@ -347,7 +346,6 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
             except Exception as e:
-                print(f'wrap failed: {e}')
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,

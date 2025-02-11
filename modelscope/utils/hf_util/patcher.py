@@ -252,34 +252,19 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             ):
                 push_to_hub = kwargs.pop('push_to_hub', False)
                 if push_to_hub:
-                    import json
-                    from modelscope.hub.repository import Repository
-                    from modelscope.hub.utils.utils import add_content_to_file
                     from modelscope.hub.push_to_hub import push_to_hub
                     from modelscope.hub.api import HubApi
-                    api = HubApi()
 
                     token = kwargs.get('token')
-                    api.login(token)
                     commit_message = kwargs.pop('commit_message', None)
                     repo_name = kwargs.pop(
                         'repo_id',
                         save_directory.split(os.path.sep)[-1])
+
+                    api = HubApi()
+                    api.login(token)
                     api.create_repo(repo_name)
-                    repo = Repository(save_directory, repo_name)
-                    default_config = {
-                        'framework': 'pytorch',
-                        'task': 'text-generation',
-                        'allow_remote': True
-                    }
-                    config_json = kwargs.get('config_json')
-                    if not config_json:
-                        config_json = {}
-                    config = {**default_config, **config_json}
-                    add_content_to_file(
-                        repo,
-                        'configuration.json', [json.dumps(config)],
-                        ignore_push_error=True)
+
                 super().save_pretrained(
                     save_directory=save_directory,
                     safe_serialization=safe_serialization,

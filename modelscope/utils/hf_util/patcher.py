@@ -26,7 +26,8 @@ def get_all_imported_modules():
     all_imported_modules = []
     transformers_include_names = [
         'Auto', 'T5', 'BitsAndBytes', 'GenerationConfig', 'Quant', 'Awq',
-        'GPTQ', 'BatchFeature', 'Qwen', 'Llama'
+        'GPTQ', 'BatchFeature', 'Qwen', 'Llama', 'PretrainedConfig',
+        'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast'
     ]
     diffusers_include_names = ['Pipeline']
     if importlib.util.find_spec('transformers') is not None:
@@ -109,6 +110,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         from modelscope import snapshot_download
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
+            if revision is None or revision == 'main':
+                revision = 'master'
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
                 revision=revision,
@@ -345,6 +348,8 @@ def _patch_hub():
         from modelscope.hub.api import HubApi
         api = HubApi()
         api.login(token)
+        if revision is None or revision == 'main':
+            revision = 'master'
         return api.file_exists(repo_id, filename, revision=revision)
 
     def _file_download(repo_id: str,
@@ -374,6 +379,8 @@ def _patch_hub():
         from modelscope import HubApi
         api = HubApi()
         api.login(token)
+        if revision is None or revision == 'main':
+            revision = 'master'
         return file_download(
             repo_id,
             file_path=os.path.join(subfolder, filename)
@@ -431,6 +438,8 @@ def _patch_hub():
         **kwargs,
     ):
         from modelscope.hub.push_to_hub import _push_files_to_hub
+        if revision is None or revision == 'main':
+            revision = 'master'
         _push_files_to_hub(
             path_or_fileobj=folder_path,
             path_in_repo=path_in_repo,
@@ -463,6 +472,8 @@ def _patch_hub():
         commit_description: Optional[str] = None,
         **kwargs,
     ):
+        if revision is None or revision == 'main':
+            revision = 'master'
         from modelscope.hub.push_to_hub import _push_files_to_hub
         _push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
                            revision, commit_message, commit_description)
@@ -485,7 +496,8 @@ def _patch_hub():
         if any(['Add' not in op.__class__.__name__ for op in operations]):
             raise ValueError(
                 'ModelScope create_commit only support Add operation for now.')
-
+        if revision is None or revision == 'main':
+            revision = 'master'
         all_files = [op.path_or_fileobj for op in operations]
         api.upload_folder(
             repo_id=repo_id,
@@ -500,14 +512,40 @@ def _patch_hub():
     from huggingface_hub import repocard
     if not hasattr(repocard.RepoCard, '_validate_origin'):
 
-        def load(*args, **kwargs):
-            from huggingface_hub.errors import EntryNotFoundError
-            raise EntryNotFoundError(message='API not supported.')
+        def load(
+            cls,
+            repo_id_or_path: Union[str, Path],
+            repo_type: Optional[str] = None,
+            token: Optional[str] = None,
+            ignore_metadata_errors: bool = False,
+        ):
+            from modelscope.hub.api import HubApi
+            api = HubApi()
+            api.login(token)
+            if os.path.exists(repo_id_or_path):
+                file_path = repo_id_or_path
+            elif repo_type == 'model' or repo_type is None:
+                from modelscope import model_file_download
+                file_path = model_file_download(repo_id_or_path, 'README.md')
+            elif repo_type == 'dataset':
+                from modelscope import dataset_file_download
+                file_path = dataset_file_download(repo_id_or_path, 'README.md')
+            else:
+                raise ValueError(
+                    f'repo_type should be `model` or `dataset`, but now is {repo_type}'
+                )
+
+            with open(file_path, 'r') as f:
+                repo_card = cls(
+                    f.read(), ignore_metadata_errors=ignore_metadata_errors)
+                if not hasattr(repo_card.data, 'tags'):
+                    repo_card.data.tags = []
+                return repo_card
 
         repocard.RepoCard._validate_origin = repocard.RepoCard.validate
         repocard.RepoCard.validate = lambda *args, **kwargs: None
         repocard.RepoCard._load_origin = repocard.RepoCard.load
-        repocard.RepoCard.load = load
+        repocard.RepoCard.load = MethodType(load, repocard.RepoCard)
 
     if not hasattr(hf_api, '_hf_hub_download_origin'):
         # Patch hf_hub_download

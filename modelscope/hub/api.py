@@ -291,7 +291,7 @@ class HubApi:
         Returns:
             True if the repository exists, False otherwise.
         """
-        if (repo_type is not None) and repo_type.lower != REPO_TYPE_MODEL:
+        if (repo_type is not None) and repo_type.lower() != REPO_TYPE_MODEL:
             raise Exception('Not support repo-type: %s' % repo_type)
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)

@@ -108,15 +108,23 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                       allow_file_pattern=None,
                       **kwargs):
         from modelscope import snapshot_download
+        subfolder = kwargs.pop('subfolder', None)
+        file_filter = None
+        if subfolder:
+            file_filter = f'{subfolder}/*'
         if not os.path.exists(pretrained_model_name_or_path):
             revision = kwargs.pop('revision', None)
             if revision is None or revision == 'main':
                 revision = 'master'
+            if file_filter is not None:
+                allow_file_pattern = file_filter
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
                 revision=revision,
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern)
+            if subfolder:
+                model_dir = os.path.join(model_dir, subfolder)
         else:
             model_dir = pretrained_model_name_or_path
         return model_dir

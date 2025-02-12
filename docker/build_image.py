@@ -160,6 +160,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
@@ -222,6 +223,7 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
@@ -296,6 +298,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
+            content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)

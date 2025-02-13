@@ -25,11 +25,11 @@ def get_all_imported_modules():
     """Find all modules in transformers/peft/diffusers"""
     all_imported_modules = []
     transformers_include_names = [
-        'Auto', 'T5', 'BitsAndBytes', 'GenerationConfig', 'Quant', 'Awq',
-        'GPTQ', 'BatchFeature', 'Qwen', 'Llama', 'PretrainedConfig',
+        'Auto.*', 'T5.*', 'BitsAndBytesConfig', 'GenerationConfig', 'Awq.*',
+        'GPTQ.*', 'BatchFeature', 'Qwen.*', 'Llama.*', 'PretrainedConfig',
         'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast'
     ]
-    diffusers_include_names = ['Pipeline']
+    diffusers_include_names = ['^(?!TF|Flax).*Pipeline$']
     if importlib.util.find_spec('transformers') is not None:
         import transformers
         lazy_module = sys.modules['transformers']
@@ -38,7 +38,10 @@ def get_all_imported_modules():
             values = _import_structure[key]
             for value in values:
                 # pretrained
-                if any([name in value for name in transformers_include_names]):
+                if any([
+                        re.fullmatch(name, value)
+                        for name in transformers_include_names
+                ]):
                     try:
                         module = importlib.import_module(
                             f'.{key}', transformers.__name__)
@@ -73,7 +76,7 @@ def get_all_imported_modules():
                     values = _import_structure[key]
                     for value in values:
                         if any([
-                                name in value
+                                re.fullmatch(name, value)
                                 for name in diffusers_include_names
                         ]):
                             try:

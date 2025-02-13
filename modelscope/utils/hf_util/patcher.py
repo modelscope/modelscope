@@ -129,30 +129,42 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             model_dir = pretrained_model_name_or_path
         return model_dir
 
-    def patch_pretrained_model_name_or_path(pretrained_model_name_or_path,
+    def patch_pretrained_model_name_or_path(cls, pretrained_model_name_or_path,
                                             *model_args, **kwargs):
-        """Patch all from_pretrained/get_config_dict"""
+        """Patch all from_pretrained"""
         model_dir = get_model_dir(pretrained_model_name_or_path,
                                   kwargs.pop('ignore_file_pattern', None),
                                   kwargs.pop('allow_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(model_dir, *model_args, **kwargs)
+        return cls._from_pretrained_origin.__func__(cls, model_dir,
+                                                    *model_args, **kwargs)
 
-    def patch_peft_model_id(model, model_id, *model_args, **kwargs):
+    def patch_get_config_dict(cls, pretrained_model_name_or_path, *model_args,
+                              **kwargs):
+        """Patch all get_config_dict"""
+        model_dir = get_model_dir(pretrained_model_name_or_path,
+                                  kwargs.pop('ignore_file_pattern', None),
+                                  kwargs.pop('allow_file_pattern', None),
+                                  **kwargs)
+        return cls._get_config_dict_origin.__func__(cls, model_dir,
+                                                    *model_args, **kwargs)
+
+    def patch_peft_model_id(cls, model, model_id, *model_args, **kwargs):
         """Patch all peft.from_pretrained"""
         model_dir = get_model_dir(model_id,
                                   kwargs.pop('ignore_file_pattern', None),
                                   kwargs.pop('allow_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(model, model_dir, *model_args, **kwargs)
+        return cls._from_pretrained_origin.__func__(cls, model, model_dir,
+                                                    *model_args, **kwargs)
 
-    def _get_peft_type(model_id, **kwargs):
+    def patch_get_peft_type(cls, model_id, **kwargs):
         """Patch all _get_peft_type"""
         model_dir = get_model_dir(model_id,
                                   kwargs.pop('ignore_file_pattern', None),
                                   kwargs.pop('allow_file_pattern', None),
                                   **kwargs)
-        return kwargs.pop('ori_func')(model_dir, **kwargs)
+        return cls._get_peft_type_origin.__func__(cls, model_dir, **kwargs)
 
     def get_wrapped_class(
             module_class: 'PreTrainedModel',
@@ -281,29 +293,24 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 is_peft = 'model' in parameters and 'model_id' in parameters
                 var._from_pretrained_origin = var.from_pretrained
                 if not is_peft:
-                    var.from_pretrained = partial(
-                        patch_pretrained_model_name_or_path,
-                        ori_func=var._from_pretrained_origin,
-                        **ignore_file_pattern_kwargs)
+                    var.from_pretrained = classmethod(
+                        partial(patch_pretrained_model_name_or_path,
+                                **ignore_file_pattern_kwargs))
                 else:
-                    var.from_pretrained = partial(
-                        patch_peft_model_id,
-                        ori_func=var._from_pretrained_origin,
-                        **ignore_file_pattern_kwargs)
+                    var.from_pretrained = classmethod(
+                        partial(patch_peft_model_id,
+                                **ignore_file_pattern_kwargs))
             if has_get_peft_type and not hasattr(var, '_get_peft_type_origin'):
                 var._get_peft_type_origin = var._get_peft_type
-                var._get_peft_type = partial(
-                    _get_peft_type,
-                    ori_func=var._get_peft_type_origin,
-                    **ignore_file_pattern_kwargs)
+                var._get_peft_type = classmethod(
+                    partial(patch_get_peft_type, **ignore_file_pattern_kwargs))
 
             if has_get_config_dict and not hasattr(var,
                                                    '_get_config_dict_origin'):
                 var._get_config_dict_origin = var.get_config_dict
-                var.get_config_dict = partial(
-                    patch_pretrained_model_name_or_path,
-                    ori_func=var._get_config_dict_origin,
-                    **ignore_file_pattern_kwargs)
+                var.get_config_dict = classmethod(
+                    partial(patch_get_config_dict,
+                            **ignore_file_pattern_kwargs))
 
             all_available_modules.append(var)
     return all_available_modules

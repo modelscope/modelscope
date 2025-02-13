@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 
@@ -26,7 +26,7 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
                  config_file: str = None,
                  device: str = 'gpu',
                  auto_collate: bool = True,
-                 trust_remote_code: bool = False,
+                 trust_remote_code: Optional[bool] = None,
                  **kwargs):
         # super().__init__
         self.device_name = device

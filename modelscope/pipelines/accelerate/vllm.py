@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from modelscope import get_logger
 from modelscope.pipelines.accelerate.base import InferFramework
@@ -14,7 +14,7 @@ class Vllm(InferFramework):
                  dtype: str = 'auto',
                  quantization: str = None,
                  tensor_parallel_size: int = 1,
-                 trust_remote_code: bool = False):
+                 trust_remote_code: Optional[bool] = None):
         """
         Args:
             dtype: The dtype to use, support `auto`, `float16`, `bfloat16`, `float32`

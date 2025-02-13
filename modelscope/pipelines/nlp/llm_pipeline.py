@@ -2,7 +2,8 @@
 import os
 from contextlib import contextmanager
 from threading import Lock
-from typing import Any, Callable, Dict, Generator, Iterator, List, Tuple, Union, Optional
+from typing import (Any, Callable, Dict, Generator, Iterator, List, Optional,
+                    Tuple, Union)
 
 import json
 import numpy as np

@@ -251,8 +251,8 @@ class ChatGLM6bV2TextGenerationPipeline(Pipeline):
 
     def __init__(self,
                  model: Union[Model, str],
-                 quantization_bit = None,
-                 use_bf16 = False,
+                 quantization_bit=None,
+                 use_bf16=False,
                  trust_remote_code: Optional[bool] = None,
                  **kwargs):
         from modelscope import AutoTokenizer
@@ -339,7 +339,8 @@ class QWenChatPipeline(Pipeline):
                 trust_remote_code=trust_remote_code,
                 fp16=bf16).eval()
             self.model.generation_config = GenerationConfig.from_pretrained(
-                model, trust_remote_code=trust_remote_code)  # 可指定不同的生成长度、top_p等相关超参
+                model,
+                trust_remote_code=trust_remote_code)  # 可指定不同的生成长度、top_p等相关超参
 
         super().__init__(model=self.model, **kwargs)
         # skip pipeline model placement

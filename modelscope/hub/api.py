@@ -1225,29 +1225,31 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_model(
-                model_id=repo_id,
-                visibility=visibility,
-                license=license,
-                chinese_name=chinese_name,
-            )
-
-            with tempfile.TemporaryDirectory() as temp_cache_dir:
-                from modelscope.hub.repository import Repository
-                repo = Repository(temp_cache_dir, repo_id)
-                default_config = {
-                    'framework': 'pytorch',
-                    'task': 'text-generation',
-                    'allow_remote': True
-                }
-                config_json = kwargs.get('config_json')
-                if not config_json:
-                    config_json = {}
-                config = {**default_config, **config_json}
-                add_content_to_file(
-                    repo,
-                    'configuration.json', [json.dumps(config)],
-                    ignore_push_error=True)
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_model(
+                    model_id=repo_id,
+                    visibility=visibility,
+                    license=license,
+                    chinese_name=chinese_name,
+                )
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    from modelscope.hub.repository import Repository
+                    repo = Repository(temp_cache_dir, repo_id)
+                    default_config = {
+                        'framework': 'pytorch',
+                        'task': 'text-generation',
+                        'allow_remote': True
+                    }
+                    config_json = kwargs.get('config_json')
+                    if not config_json:
+                        config_json = {}
+                    config = {**default_config, **config_json}
+                    add_content_to_file(
+                        repo,
+                        'configuration.json', [json.dumps(config)],
+                        ignore_push_error=True)
+            else:
+                repo_url = f'{self.endpoint}/{repo_id}'
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1255,13 +1257,16 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_dataset(
-                dataset_name=repo_name,
-                namespace=namespace,
-                chinese_name=chinese_name,
-                license=license,
-                visibility=visibility,
-            )
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_dataset(
+                    dataset_name=repo_name,
+                    namespace=namespace,
+                    chinese_name=chinese_name,
+                    license=license,
+                    visibility=visibility,
+                )
+            else:
+                repo_url = f'{self.endpoint}/datasets/{namespace}/{repo_name}'
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')

@@ -13,7 +13,8 @@ class Vllm(InferFramework):
                  model_id_or_dir: str,
                  dtype: str = 'auto',
                  quantization: str = None,
-                 tensor_parallel_size: int = 1):
+                 tensor_parallel_size: int = 1,
+                 trust_remote_code: bool = False):
         """
         Args:
             dtype: The dtype to use, support `auto`, `float16`, `bfloat16`, `float32`
@@ -30,14 +31,11 @@ class Vllm(InferFramework):
         if not Vllm.check_gpu_compatibility(8) and (dtype
                                                     in ('bfloat16', 'auto')):
             dtype = 'float16'
-        logger.warning(
-            f'Use trust_remote_code=True. Will invoke codes from {self.model_dir}. Please make '
-            'sure that you can trust the external codes.')
         self.model = LLM(
             self.model_dir,
             dtype=dtype,
             quantization=quantization,
-            trust_remote_code=True,
+            trust_remote_code=trust_remote_code,
             tensor_parallel_size=tensor_parallel_size)
 
     def __call__(self, prompts: Union[List[str], List[List[int]]],

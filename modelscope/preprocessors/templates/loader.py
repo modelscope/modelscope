@@ -909,6 +909,7 @@ class TemplateLoader:
         ignore_file_pattern = [r'.+\.bin$', r'.+\.safetensors$', r'.+\.gguf$']
         tokenizer = kwargs.get('tokenizer')
         config = kwargs.get('config')
+        trust_remote_code = kwargs.pop('trust_remote_code', None)
         for _info in template_info:
             if re.fullmatch(_info.template_regex, model_id):
                 if _info.template:
@@ -922,8 +923,8 @@ class TemplateLoader:
                                            ' Please make sure that you can trust the external codes.'
                                            )
                             tokenizer = AutoTokenizer.from_pretrained(
-                                model_dir, trust_remote_code=True)
-                            config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+                                model_dir, trust_remote_code=trust_remote_code)
+                            config = AutoConfig.from_pretrained(model_dir, trust_remote_code=trust_remote_code)
                         except Exception:
                             pass
                     return TemplateLoader.load_by_template_name(

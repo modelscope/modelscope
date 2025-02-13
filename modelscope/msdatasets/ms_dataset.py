@@ -170,7 +170,7 @@ class MsDataset:
         custom_cfg: Optional[Config] = Config(),
         token: Optional[str] = None,
         dataset_info_only: Optional[bool] = False,
-        trust_remote_code: Optional[bool] = True,
+        trust_remote_code: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[dict, 'MsDataset', NativeIterableDataset]:
         """Load a MsDataset from the ModelScope Hub, Hugging Face Hub, urls, or a local dataset.

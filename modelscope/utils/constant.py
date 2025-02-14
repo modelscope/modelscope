@@ -584,9 +584,6 @@ class MetaDataFields:
     ARGS_BIG_DATA = 'big_data'
 
 
-DatasetVisibilityMap = {1: 'private', 3: 'internal', 5: 'public'}
-
-
 class DistributedParallelType(object):
     """Parallel Strategies for Distributed Models"""
     DP = 'data_parallel'

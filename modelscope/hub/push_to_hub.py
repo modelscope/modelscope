@@ -51,7 +51,10 @@ def _push_files_to_hub(
     with tempfile.TemporaryDirectory() as temp_cache_dir:
         from modelscope.hub.repository import Repository
         repo = Repository(temp_cache_dir, repo_id, revision=revision)
-        sub_folder = os.path.join(temp_cache_dir, path_in_repo)
+        if path_in_repo:
+            sub_folder = os.path.join(temp_cache_dir, path_in_repo)
+        else:
+            sub_folder = temp_cache_dir
         os.makedirs(sub_folder, exist_ok=True)
         if os.path.isfile(path_or_fileobj):
             dest_file = os.path.join(sub_folder,

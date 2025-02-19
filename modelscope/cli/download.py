@@ -127,8 +127,7 @@ class DownloadCMD(CLICommand):
         cookies = None
         if self.args.token is not None:
             api = HubApi()
-            _, cookies = api.login(
-                access_token=self.args.token, save_session=False)
+            cookies = api.get_cookies(access_token=self.args.token)
         if self.args.model:
             if len(self.args.files) == 1:  # download single file
                 model_file_download(

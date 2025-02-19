@@ -140,8 +140,7 @@ class UploadCMD(CLICommand):
         cookies = None
         if self.args.token:
             api = HubApi(endpoint=self.args.endpoint)
-            _, cookies = api.login(
-                access_token=self.args.token, save_session=False)
+            cookies = api.get_cookies(access_token=self.args.token)
         else:
             cookies = ModelScopeConfig.get_cookies()
         if cookies is None:

@@ -40,9 +40,6 @@ def run_cmd():
     if not hasattr(args, 'func'):
         parser.print_help()
         exit(1)
-    if args.token is not None:
-        api = HubApi()
-        api.login(args.token)
     cmd = args.func(args)
     cmd.execute()
 

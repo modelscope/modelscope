@@ -75,8 +75,12 @@ if TYPE_CHECKING:
 else:
 
     from .patcher import get_all_imported_modules, _patch_pretrained_class
-    all_available_modules = _patch_pretrained_class(
-        get_all_imported_modules(), wrap=True)
-
-    for module in all_available_modules:
-        globals()[module.__name__] = module
+    try:
+        all_available_modules = _patch_pretrained_class(
+            get_all_imported_modules(), wrap=True)
+    except Exception:  # noqa
+        import traceback
+        traceback.print_exc()
+    else:
+        for module in all_available_modules:
+            globals()[module.__name__] = module

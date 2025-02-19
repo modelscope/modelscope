@@ -115,6 +115,7 @@ class HubApi:
     def login(
             self,
             access_token: Optional[str] = None,
+            save_session: Optional[bool] = True
     ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.
@@ -145,6 +146,9 @@ class HubApi:
 
         token = d[API_RESPONSE_FIELD_DATA][API_RESPONSE_FIELD_GIT_ACCESS_TOKEN]
         cookies = r.cookies
+
+        if not save_session:
+            return None, cookies
 
         # save token and cookie
         ModelScopeConfig.save_token(token)

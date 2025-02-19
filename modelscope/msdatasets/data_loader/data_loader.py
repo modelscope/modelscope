@@ -288,7 +288,7 @@ class VirgoDownloader(BaseDownloader):
             if download_mode == DownloadMode.FORCE_REDOWNLOAD:
                 shutil.rmtree(data_files_dir, ignore_errors=True)
 
-            from tqdm import tqdm
+            from tqdm.auto import tqdm
             tqdm.pandas(desc='apply download_file')
             self.dataset.meta[
                 VirgoDatasetConfig.

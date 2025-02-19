@@ -4,10 +4,13 @@ import os
 import torch
 import torch.nn as nn
 
+from modelscope import get_logger
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import ModelFile, Tasks
+
+logger = get_logger()
 
 
 def normalize_fn(tensor, mean, std):
@@ -41,10 +44,15 @@ class NormalizeByChannelMeanStd(nn.Module):
 class EasyRobustModel(TorchModel):
 
     def __init__(self, model_dir: str, **kwargs):
-        import easyrobust.models
+        try:
+            import easyrobust.models
+        except ImportError as e:
+            logger.error(
+                'You are using `EasyRobustModel`, but this model requires `easyrobust`,'
+                'please install it with command `pip install easyrobust`')
+            raise e
         from timm.models import create_model
         from mmcls.datasets import ImageNet
-        import modelscope.models.cv.image_classification.backbones
         from modelscope.utils.hub import read_config
 
         super().__init__(model_dir)

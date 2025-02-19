@@ -4,16 +4,13 @@ import hashlib
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
-import requests
+from typing import List, Optional, Union
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
-from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -27,6 +24,25 @@ def model_id_to_group_owner_name(model_id):
         group_or_owner = DEFAULT_MODELSCOPE_GROUP
         name = model_id
     return group_or_owner, name
+
+
+def convert_patterns(raw_input: Union[str, List[str]]):
+    output = None
+    if isinstance(raw_input, str):
+        output = list()
+        if ',' in raw_input:
+            output = [s.strip() for s in raw_input.split(',')]
+        else:
+            output.append(raw_input.strip())
+    elif isinstance(raw_input, list):
+        output = list()
+        for s in raw_input:
+            if isinstance(s, str):
+                if ',' in s:
+                    output.extend([ss.strip() for ss in s.split(',')])
+                else:
+                    output.append(s.strip())
+    return output
 
 
 # during model download, the '.' would be converted to '___' to produce
@@ -125,3 +141,43 @@ def file_integrity_validation(file_path, expected_sha256):
             file_path, expected_sha256, file_sha256)
         logger.error(msg)
         raise FileIntegrityError(msg)
+
+
+def add_content_to_file(repo,
+                        file_name: str,
+                        patterns: List[str],
+                        commit_message: Optional[str] = None,
+                        ignore_push_error=False) -> None:
+    if isinstance(patterns, str):
+        patterns = [patterns]
+    if commit_message is None:
+        commit_message = f'Add `{patterns[0]}` patterns to {file_name}'
+
+    # Get current file content
+    repo_dir = repo.model_dir
+    file_path = os.path.join(repo_dir, file_name)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            current_content = f.read()
+    else:
+        current_content = ''
+    # Add the patterns to file
+    content = current_content
+    for pattern in patterns:
+        if pattern not in content:
+            if len(content) > 0 and not content.endswith('\n'):
+                content += '\n'
+            content += f'{pattern}\n'
+
+    # Write the file if it has changed
+    if content != current_content:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            logger.debug(f'Writing {file_name} file. Content: {content}')
+            f.write(content)
+    try:
+        repo.push(commit_message)
+    except Exception as e:
+        if ignore_push_error:
+            pass
+        else:
+            raise e

@@ -472,6 +472,12 @@ template_info = [
     ),
     TemplateInfo(
         template_regex=
+        f'.*{cases("command-r7b")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r7b',
+    ),
+    TemplateInfo(
+        template_regex=
         f'.*{cases("command-r")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r',
@@ -592,10 +598,8 @@ template_info = [
     TemplateInfo(
         template=TemplateType.deepseek,
         template_regex=
-        f'.*{cases("deepseek")}{no("v2", "v2.5", "coder")}{no_multi_modal()}.*{chat_suffix}.*'
+        f'.*{cases("deepseek")}{no("v2", "v2.5", "v3", "r1", "coder")}{no_multi_modal()}.*{chat_suffix}.*'
     ),
-
-    # deepseek2
     TemplateInfo(
         template=TemplateType.deepseek2,
         template_regex=
@@ -603,19 +607,27 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
     ),
-
-    # deepseek_coder
     TemplateInfo(
         template=TemplateType.deepseek_coder,
         template_regex=
         f'.*{cases("deepseek")}{no("v2", "v2.5")}.*{cases("coder")}.*{chat_suffix}.*'
     ),
-
-    # deepseek v2.5
     TemplateInfo(
         template=TemplateType.deepseek2_5,
         template_regex=
         f'.*{cases("deepseek")}.*{cases("v2.5")}{no_multi_modal()}.*'),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v3',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("r1")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-r1',
+    ),
 
     # orion
     TemplateInfo(
@@ -720,6 +732,13 @@ template_info = [
         template_regex=f'.*{cases("smallthinker")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smallthinker'),
+
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("olmo2", "olmo-2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/olmo2',
+    ),
 
     TemplateInfo(
         template_regex=f'.*{cases("nomic-embed-text")}.*', 
@@ -869,6 +888,7 @@ template_info = [
         template_regex=f'.*{cases("exaone")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/exaone3.5'),
+
 
 ]
 

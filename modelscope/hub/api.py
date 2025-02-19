@@ -9,6 +9,7 @@ import pickle
 import platform
 import re
 import shutil
+import tempfile
 import uuid
 from collections import defaultdict
 from http import HTTPStatus
@@ -22,7 +23,7 @@ import json
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
@@ -38,7 +39,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility)
+                                      Licenses, ModelVisibility, Visibility,
+                                      VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
                                    datahub_raise_on_error,
@@ -47,7 +49,8 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
-from modelscope.hub.utils.utils import (get_endpoint, get_readable_folder_size,
+from modelscope.hub.utils.utils import (add_content_to_file, get_endpoint,
+                                        get_readable_folder_size,
                                         get_release_datetime,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
@@ -57,9 +60,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT, ConfigFields,
                                        DatasetFormations, DatasetMetaFormats,
-                                       DatasetVisibilityMap, DownloadChannel,
-                                       DownloadMode, Frameworks, ModelFile,
-                                       Tasks, VirgoDatasetConfig)
+                                       DownloadChannel, DownloadMode,
+                                       Frameworks, ModelFile, Tasks,
+                                       VirgoDatasetConfig)
 from modelscope.utils.file_utils import get_file_hash, get_file_size
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
@@ -75,6 +78,7 @@ logger = get_logger()
 class HubApi:
     """Model hub api interface.
     """
+
     def __init__(self,
                  endpoint: Optional[str] = None,
                  timeout=API_HTTP_CLIENT_TIMEOUT,
@@ -109,14 +113,15 @@ class HubApi:
         self.upload_checker = UploadingCheck()
 
     def login(
-        self,
-        access_token: str,
+            self,
+            access_token: Optional[str] = None,
     ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.
 
         Args:
-            access_token (str): user access token on modelscope.
+            access_token (str): user access token on modelscope, set this argument or set `MODELSCOPE_API_TOKEN`.
+            If neither of the tokens exist, login will directly return.
 
         Returns:
             cookies: to authenticate yourself to ModelScope open-api
@@ -125,6 +130,10 @@ class HubApi:
         Note:
             You only have to login once within 30 days.
         """
+        if access_token is None:
+            access_token = os.environ.get('MODELSCOPE_API_TOKEN')
+        if not access_token:
+            return None, None
         path = f'{self.endpoint}/api/v1/login'
         r = self.session.post(
             path,
@@ -226,9 +235,9 @@ class HubApi:
         return f'{self.endpoint}/api/v1/models/{model_id}.git'
 
     def get_model(
-        self,
-        model_id: str,
-        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            self,
+            model_id: str,
+            revision: Optional[str] = DEFAULT_MODEL_REVISION,
     ) -> str:
         """Get model information at ModelScope
 
@@ -264,10 +273,10 @@ class HubApi:
             raise_for_http_status(r)
 
     def repo_exists(
-        self,
-        repo_id: str,
-        *,
-        repo_type: Optional[str] = None,
+            self,
+            repo_id: str,
+            *,
+            repo_type: Optional[str] = None,
     ) -> bool:
         """
         Checks if a repository exists on ModelScope
@@ -283,7 +292,7 @@ class HubApi:
         Returns:
             True if the repository exists, False otherwise.
         """
-        if (repo_type is not None) and repo_type.lower != REPO_TYPE_MODEL:
+        if (repo_type is not None) and repo_type.lower() != REPO_TYPE_MODEL:
             raise Exception('Not support repo-type: %s' % repo_type)
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
@@ -475,7 +484,7 @@ class HubApi:
         r = self.session.put(
             path,
             data='{"Path":"%s", "PageNumber":%s, "PageSize": %s}' %
-            (owner_or_group, page_number, page_size),
+                 (owner_or_group, page_number, page_size),
             cookies=cookies,
             headers=self.builder_headers(self.headers))
         handle_http_response(r, logger, cookies, owner_or_group)
@@ -489,9 +498,7 @@ class HubApi:
             raise_for_http_status(r)
         return None
 
-    def _check_cookie(self,
-                      use_cookies: Union[bool,
-                                         CookieJar] = False) -> CookieJar:
+    def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar:  # noqa
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
@@ -602,7 +609,8 @@ class HubApi:
             else:
                 if revision is None:  # user not specified revision, use latest revision before release time
                     revisions_detail = [x for x in
-                                        all_tags_detail if x['CreatedAt'] <= release_timestamp] if all_tags_detail else [] # noqa E501
+                                        all_tags_detail if
+                                        x['CreatedAt'] <= release_timestamp] if all_tags_detail else []  # noqa E501
                     if len(revisions_detail) > 0:
                         revision = revisions_detail[0]['Revision']  # use latest revision before release time.
                         revision_detail = revisions_detail[0]
@@ -636,9 +644,9 @@ class HubApi:
                                               cookies=cookies)['Revision']
 
     def get_model_branches_and_tags_details(
-        self,
-        model_id: str,
-        use_cookies: Union[bool, CookieJar] = False,
+            self,
+            model_id: str,
+            use_cookies: Union[bool, CookieJar] = False,
     ) -> Tuple[List[str], List[str]]:
         """Get model branch and tags.
 
@@ -662,9 +670,9 @@ class HubApi:
         return info['RevisionMap']['Branches'], info['RevisionMap']['Tags']
 
     def get_model_branches_and_tags(
-        self,
-        model_id: str,
-        use_cookies: Union[bool, CookieJar] = False,
+            self,
+            model_id: str,
+            use_cookies: Union[bool, CookieJar] = False,
     ) -> Tuple[List[str], List[str]]:
         """Get model branch and tags.
 
@@ -1088,7 +1096,7 @@ class HubApi:
         # get visibility of the dataset
         raise_on_error(resp)
         data = resp['Data']
-        visibility = DatasetVisibilityMap.get(data['Visibility'])
+        visibility = VisibilityMap.get(data['Visibility'])
 
         datahub_sts_url = f'{datahub_url}/ststoken?Revision={revision}'
         r_sts = self.session.get(url=datahub_sts_url, cookies=cookies,
@@ -1103,7 +1111,7 @@ class HubApi:
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
                                  is_recursive, is_filter_dir, revision):
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
-            f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
+              f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
         cookies = ModelScopeConfig.get_cookies()
         resp = self.session.get(url=url, cookies=cookies, timeout=1800)
@@ -1132,7 +1140,7 @@ class HubApi:
             raise ValueError('Args cannot be empty!')
 
         url = f'{self.endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
-            f'&Revision={revision}'
+              f'&Revision={revision}'
 
         cookies = ModelScopeConfig.get_cookies()
         resp = self.session.delete(url=url, cookies=cookies)
@@ -1194,21 +1202,18 @@ class HubApi:
             repo_id: str,
             *,
             token: Union[str, bool, None] = None,
-            visibility: Optional[str] = 'public',
+            visibility: Optional[str] = Visibility.PUBLIC,
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             chinese_name: Optional[str] = '',
             license: Optional[str] = Licenses.APACHE_V2,
+            **kwargs,
     ) -> str:
 
         # TODO: exist_ok
-
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
 
-        if token:
-            self.login(access_token=token)
-        else:
-            logger.warning('No token provided, will use the cached token.')
+        self.login(access_token=token)
 
         repo_id_list = repo_id.split('/')
         if len(repo_id_list) != 2:
@@ -1221,12 +1226,31 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_model(
-                model_id=repo_id,
-                visibility=visibility,
-                license=license,
-                chinese_name=chinese_name,
-            )
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_model(
+                    model_id=repo_id,
+                    visibility=visibility,
+                    license=license,
+                    chinese_name=chinese_name,
+                )
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    from modelscope.hub.repository import Repository
+                    repo = Repository(temp_cache_dir, repo_id)
+                    default_config = {
+                        'framework': 'pytorch',
+                        'task': 'text-generation',
+                        'allow_remote': True
+                    }
+                    config_json = kwargs.get('config_json')
+                    if not config_json:
+                        config_json = {}
+                    config = {**default_config, **config_json}
+                    add_content_to_file(
+                        repo,
+                        'configuration.json', [json.dumps(config)],
+                        ignore_push_error=True)
+            else:
+                repo_url = f'{self.endpoint}/{repo_id}'
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1234,13 +1258,16 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_dataset(
-                dataset_name=repo_name,
-                namespace=namespace,
-                chinese_name=chinese_name,
-                license=license,
-                visibility=visibility,
-            )
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_dataset(
+                    dataset_name=repo_name,
+                    namespace=namespace,
+                    chinese_name=chinese_name,
+                    license=license,
+                    visibility=visibility,
+                )
+            else:
+                repo_url = f'{self.endpoint}/datasets/{namespace}/{repo_name}'
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
@@ -1263,8 +1290,7 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         # Construct payload
         payload = self._prepare_commit_payload(
@@ -1337,8 +1363,7 @@ class HubApi:
             repo_type=repo_type,
         )
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
@@ -1368,11 +1393,13 @@ class HubApi:
         add_operation: CommitOperationAdd = CommitOperationAdd(
             path_in_repo=path_in_repo,
             path_or_fileobj=path_or_fileobj,
+            file_hash_info=hash_info_d,
         )
         add_operation._upload_mode = 'lfs' if self.upload_checker.is_lfs(path_or_fileobj, repo_type) else 'normal'
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
+        print(f'Committing file to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
@@ -1388,7 +1415,7 @@ class HubApi:
             self,
             *,
             repo_id: str,
-            folder_path: Union[str, Path],
+            folder_path: Union[str, Path, List[str], List[Path]] = None,
             path_in_repo: Optional[str] = '',
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
@@ -1397,15 +1424,13 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> CommitInfo:
-
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         allow_patterns = allow_patterns if allow_patterns else None
         ignore_patterns = ignore_patterns if ignore_patterns else None
-
-        self.upload_checker.check_folder(folder_path)
 
         # Ignore .git folder
         if ignore_patterns is None:
@@ -1414,24 +1439,23 @@ class HubApi:
             ignore_patterns = [ignore_patterns]
         ignore_patterns += DEFAULT_IGNORE_PATTERNS
 
-        if token:
-            self.login(access_token=token)
+        self.login(access_token=token)
 
         commit_message = (
-            commit_message if commit_message is not None else f'Upload folder to {repo_id} on ModelScope hub'
+            commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'
         )
-        commit_description = commit_description or 'Uploading folder'
+        commit_description = commit_description or 'Uploading files'
 
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
-        prepared_repo_objects = HubApi._prepare_upload_folder(
-            folder_path=folder_path,
+        prepared_repo_objects = self._prepare_upload_folder(
+            folder_path_or_files=folder_path,
             path_in_repo=path_in_repo,
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
 
         self.upload_checker.check_normal_files(
-            file_path_list = [item for _, item in prepared_repo_objects],
+            file_path_list=[item for _, item in prepared_repo_objects],
             repo_type=repo_type,
         )
 
@@ -1459,6 +1483,7 @@ class HubApi:
                 'file_path_in_repo': file_path_in_repo,
                 'file_path': file_path,
                 'is_uploaded': upload_res['is_uploaded'],
+                'file_hash_info': hash_info_d,
             }
 
         uploaded_items_list = _upload_items(
@@ -1472,8 +1497,6 @@ class HubApi:
             disable_tqdm=False,
         )
 
-        logger.info(f'Uploading folder to {repo_id} finished')
-
         # Construct commit info and create commit
         operations = []
 
@@ -1481,9 +1504,11 @@ class HubApi:
             prepared_path_in_repo: str = item_d['file_path_in_repo']
             prepared_file_path: str = item_d['file_path']
             is_uploaded: bool = item_d['is_uploaded']
+            file_hash_info: dict = item_d['file_hash_info']
             opt = CommitOperationAdd(
                 path_in_repo=prepared_path_in_repo,
                 path_or_fileobj=prepared_file_path,
+                file_hash_info=file_hash_info,
             )
 
             # check normal or lfs
@@ -1491,22 +1516,18 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        self.create_commit(
+        print(f'Committing folder to {repo_id} ...')
+        commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
             commit_message=commit_message,
             commit_description=commit_description,
             token=token,
             repo_type=repo_type,
+            revision=revision,
         )
 
-        # Construct commit info
-        commit_url = f'{self.endpoint}/api/v1/{repo_type}s/{repo_id}/commit/{DEFAULT_REPOSITORY_REVISION}'
-        return CommitInfo(
-            commit_url=commit_url,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            oid='')
+        return commit_info
 
     def _upload_blob(
             self,
@@ -1539,7 +1560,7 @@ class HubApi:
         upload_object = upload_objects[0] if len(upload_objects) == 1 else None
 
         if upload_object is None:
-            logger.info(f'Blob {sha256} has already uploaded, reuse it.')
+            logger.info(f'Blob {sha256[:8]} has already uploaded, reuse it.')
             res_d['is_uploaded'] = True
             return res_d
 
@@ -1646,7 +1667,7 @@ class HubApi:
         resp = response.json()
         raise_on_error(resp)
 
-        upload_objects = []   # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
+        upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
         resp_objects = resp['Data']['objects']
         for obj in resp_objects:
             upload_objects.append(
@@ -1656,24 +1677,44 @@ class HubApi:
 
         return upload_objects
 
-    @staticmethod
     def _prepare_upload_folder(
-        folder_path: Union[str, Path],
-        path_in_repo: str,
-        allow_patterns: Optional[Union[List[str], str]] = None,
-        ignore_patterns: Optional[Union[List[str], str]] = None,
+            self,
+            folder_path_or_files: Union[str, Path, List[str], List[Path]],
+            path_in_repo: str,
+            allow_patterns: Optional[Union[List[str], str]] = None,
+            ignore_patterns: Optional[Union[List[str], str]] = None,
     ) -> List[Union[tuple, list]]:
+        folder_path = None
+        files_path = None
+        if isinstance(folder_path_or_files, list):
+            if os.path.isfile(folder_path_or_files[0]):
+                files_path = folder_path_or_files
+            else:
+                raise ValueError('Uploading multiple folders is not supported now.')
+        else:
+            if os.path.isfile(folder_path_or_files):
+                files_path = [folder_path_or_files]
+            else:
+                folder_path = folder_path_or_files
 
-        folder_path = Path(folder_path).expanduser().resolve()
-        if not folder_path.is_dir():
-            raise ValueError(f"Provided path: '{folder_path}' is not a directory")
+        if files_path is None:
+            self.upload_checker.check_folder(folder_path)
+            folder_path = Path(folder_path).expanduser().resolve()
+            if not folder_path.is_dir():
+                raise ValueError(f"Provided path: '{folder_path}' is not a directory")
 
-        # List files from folder
-        relpath_to_abspath = {
-            path.relative_to(folder_path).as_posix(): path
-            for path in sorted(folder_path.glob('**/*'))  # sorted to be deterministic
-            if path.is_file()
-        }
+            # List files from folder
+            relpath_to_abspath = {
+                path.relative_to(folder_path).as_posix(): path
+                for path in sorted(folder_path.glob('**/*'))  # sorted to be deterministic
+                if path.is_file()
+            }
+        else:
+            relpath_to_abspath = {}
+            for path in files_path:
+                if os.path.isfile(path):
+                    self.upload_checker.check_file(path)
+                    relpath_to_abspath[os.path.basename(path)] = path
 
         # Filter files
         filtered_repo_objects = list(
@@ -1905,13 +1946,13 @@ class UploadingCheck:
             max_file_count: int = 100_000,
             max_file_count_in_dir: int = 10_000,
             max_file_size: int = 50 * 1024 ** 3,
-            lfs_size_limit: int = 5 * 1024 * 1024,
+            size_threshold_to_enforce_lfs: int = 5 * 1024 * 1024,
             normal_file_size_total_limit: int = 500 * 1024 * 1024,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
-        self.lfs_size_limit = lfs_size_limit
+        self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):
@@ -1922,7 +1963,8 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
         if file_size > self.max_file_size:
-            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB')
+            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
+                             f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
         file_count = 0
@@ -1934,6 +1976,10 @@ class UploadingCheck:
         for item in folder_path.iterdir():
             if item.is_file():
                 file_count += 1
+                item_size: int = get_file_size(item)
+                if item_size > self.max_file_size:
+                    raise ValueError(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
+                                     f'got {round(item_size / (1024 ** 3), 4)} GB')
             elif item.is_dir():
                 dir_count += 1
                 # Count items in subdirectories recursively
@@ -1969,7 +2015,7 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
 
-        return file_size > self.lfs_size_limit or hit_lfs_suffix
+        return file_size > self.size_threshold_to_enforce_lfs or hit_lfs_suffix
 
     def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
 
@@ -1977,5 +2023,5 @@ class UploadingCheck:
         total_size = sum([get_file_size(item) for item in normal_file_list])
 
         if total_size > self.normal_file_size_total_limit:
-            raise ValueError(f'Total size of non-lfs files {total_size/(1024 * 1024)}MB '
-                             f'and exceeds limit: {self.normal_file_size_total_limit/(1024 * 1024)}MB')
+            raise ValueError(f'Total size of non-lfs files {total_size / (1024 * 1024)}MB '
+                             f'and exceeds limit: {self.normal_file_size_total_limit / (1024 * 1024)}MB')

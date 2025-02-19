@@ -3,7 +3,7 @@ import os
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
-from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.api import HubApi
 from modelscope.hub.constants import DEFAULT_MAX_WORKERS
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)

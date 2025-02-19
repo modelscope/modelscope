@@ -13,8 +13,7 @@ from modelscope.utils.constant import Tasks
 
 
 @PIPELINES.register_module(
-    Tasks.voice_conversion,
-    module_name=Pipelines.voice_conversion)
+    Tasks.voice_conversion, module_name=Pipelines.voice_conversion)
 class VCPipeline(Pipeline):
     r"""ANS (Acoustic Noise Suppression) Inference Pipeline .
 

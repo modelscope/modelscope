@@ -183,11 +183,8 @@ class SpeakerVerificationCamplus:
         # print(feature.shape)
 
         feature = feature - feature.mean(dim=0, keepdim=True)
-        feature = torch.cat([
-            feature,
-            torch.zeros([2, self.feature_dim], device=feature.device)
-        ],
-            dim=0)
+        pad = torch.zeros([2, self.feature_dim], device=feature.device)
+        feature = torch.cat([feature, pad], dim=0)
         feature = feature.reshape([B, -1, self.feature_dim])
         return feature
 

@@ -5,7 +5,6 @@ from typing import Dict
 import librosa
 import soundfile as sf
 import torch
-
 from torchaudio.transforms import Spectrogram
 
 from modelscope.metainfo import Models

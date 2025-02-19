@@ -65,6 +65,8 @@ RUN sh /tmp/install.sh {version_args} && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
+RUN pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge
+
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True

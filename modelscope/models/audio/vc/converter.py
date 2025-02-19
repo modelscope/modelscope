@@ -7,12 +7,14 @@ import torch
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
+from modelscope.models.audio.vc.src.encoder import Encoder
+from modelscope.models.audio.vc.src.sv_models.DTDNN import \
+    SpeakerVerificationCamplus
+from modelscope.models.audio.vc.src.vocoder import (ConditionGenerator,
+                                                    HiFiGANGenerator)
 from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from .src.encoder import Encoder
-from .src.sv_models.DTDNN import SpeakerVerificationCamplus
-from .src.vocoder import ConditionGenerator, HiFiGANGenerator
 
 
 @MODELS.register_module(Tasks.voice_conversion, module_name=Models.unetvc_16k)

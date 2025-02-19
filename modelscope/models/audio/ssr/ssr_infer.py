@@ -9,11 +9,11 @@ from torchaudio.transforms import Spectrogram
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel
+from modelscope.models.audio.ssr.models.hifigan import HiFiGANGenerator
+from modelscope.models.audio.ssr.models.Unet import MaskMapping
 from modelscope.models.base import Tensor
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from .models.hifigan import HiFiGANGenerator
-from .models.Unet import MaskMapping
 
 
 @MODELS.register_module(

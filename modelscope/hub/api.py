@@ -39,7 +39,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility)
+                                      Licenses, ModelVisibility, Visibility,
+                                      VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
                                    datahub_raise_on_error,
@@ -59,9 +60,9 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT, ConfigFields,
                                        DatasetFormations, DatasetMetaFormats,
-                                       DatasetVisibilityMap, DownloadChannel,
-                                       DownloadMode, Frameworks, ModelFile,
-                                       Tasks, VirgoDatasetConfig)
+                                       DownloadChannel, DownloadMode,
+                                       Frameworks, ModelFile, Tasks,
+                                       VirgoDatasetConfig)
 from modelscope.utils.file_utils import get_file_hash, get_file_size
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
@@ -291,7 +292,7 @@ class HubApi:
         Returns:
             True if the repository exists, False otherwise.
         """
-        if (repo_type is not None) and repo_type.lower != REPO_TYPE_MODEL:
+        if (repo_type is not None) and repo_type.lower() != REPO_TYPE_MODEL:
             raise Exception('Not support repo-type: %s' % repo_type)
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
@@ -1095,7 +1096,7 @@ class HubApi:
         # get visibility of the dataset
         raise_on_error(resp)
         data = resp['Data']
-        visibility = DatasetVisibilityMap.get(data['Visibility'])
+        visibility = VisibilityMap.get(data['Visibility'])
 
         datahub_sts_url = f'{datahub_url}/ststoken?Revision={revision}'
         r_sts = self.session.get(url=datahub_sts_url, cookies=cookies,
@@ -1201,7 +1202,7 @@ class HubApi:
             repo_id: str,
             *,
             token: Union[str, bool, None] = None,
-            visibility: Optional[str] = 'public',
+            visibility: Optional[str] = Visibility.PUBLIC,
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             chinese_name: Optional[str] = '',
             license: Optional[str] = Licenses.APACHE_V2,
@@ -1225,29 +1226,31 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_model(
-                model_id=repo_id,
-                visibility=visibility,
-                license=license,
-                chinese_name=chinese_name,
-            )
-
-            with tempfile.TemporaryDirectory() as temp_cache_dir:
-                from modelscope.hub.repository import Repository
-                repo = Repository(temp_cache_dir, repo_id)
-                default_config = {
-                    'framework': 'pytorch',
-                    'task': 'text-generation',
-                    'allow_remote': True
-                }
-                config_json = kwargs.get('config_json')
-                if not config_json:
-                    config_json = {}
-                config = {**default_config, **config_json}
-                add_content_to_file(
-                    repo,
-                    'configuration.json', [json.dumps(config)],
-                    ignore_push_error=True)
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_model(
+                    model_id=repo_id,
+                    visibility=visibility,
+                    license=license,
+                    chinese_name=chinese_name,
+                )
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    from modelscope.hub.repository import Repository
+                    repo = Repository(temp_cache_dir, repo_id)
+                    default_config = {
+                        'framework': 'pytorch',
+                        'task': 'text-generation',
+                        'allow_remote': True
+                    }
+                    config_json = kwargs.get('config_json')
+                    if not config_json:
+                        config_json = {}
+                    config = {**default_config, **config_json}
+                    add_content_to_file(
+                        repo,
+                        'configuration.json', [json.dumps(config)],
+                        ignore_push_error=True)
+            else:
+                repo_url = f'{self.endpoint}/{repo_id}'
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1255,13 +1258,16 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            repo_url: str = self.create_dataset(
-                dataset_name=repo_name,
-                namespace=namespace,
-                chinese_name=chinese_name,
-                license=license,
-                visibility=visibility,
-            )
+            if not self.repo_exists(repo_id, repo_type=repo_type):
+                repo_url: str = self.create_dataset(
+                    dataset_name=repo_name,
+                    namespace=namespace,
+                    chinese_name=chinese_name,
+                    license=license,
+                    visibility=visibility,
+                )
+            else:
+                repo_url = f'{self.endpoint}/datasets/{namespace}/{repo_name}'
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')

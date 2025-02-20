@@ -9,7 +9,7 @@ from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
-from modelscope.hub.utils.utils import convert_patterns, get_endpoint
+from modelscope.hub.utils.utils import convert_patterns
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 
 

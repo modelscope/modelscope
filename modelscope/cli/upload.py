@@ -138,8 +138,8 @@ class UploadCMD(CLICommand):
         # Check token and login
         # The cookies will be reused if the user has logged in before.
         cookies = None
+        api = HubApi(endpoint=self.args.endpoint)
         if self.args.token:
-            api = HubApi(endpoint=self.args.endpoint)
             cookies = api.get_cookies(access_token=self.args.token)
         else:
             cookies = ModelScopeConfig.get_cookies()
@@ -159,7 +159,7 @@ class UploadCMD(CLICommand):
                 repo_type=self.args.repo_type,
                 commit_message=self.args.commit_message,
                 commit_description=self.args.commit_description,
-                cookies=cookies,
+                token=self.args.token,
             )
         elif os.path.isdir(self.local_path):
             api.upload_folder(
@@ -172,7 +172,7 @@ class UploadCMD(CLICommand):
                 allow_patterns=convert_patterns(self.args.include),
                 ignore_patterns=convert_patterns(self.args.exclude),
                 max_workers=self.args.max_workers,
-                cookies=cookies,
+                token=self.args.token,
             )
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')

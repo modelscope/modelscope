@@ -91,7 +91,7 @@ class UploadCMD(CLICommand):
             '--endpoint',
             type=str,
             default=get_endpoint(),
-            help='Endpoint for Modelscope service.')
+            help='Endpoint for ModelScope service.')
 
         parser.set_defaults(func=subparser_func)
 
@@ -137,14 +137,15 @@ class UploadCMD(CLICommand):
 
         # Check token and login
         # The cookies will be reused if the user has logged in before.
+        cookies = None
         api = HubApi(endpoint=self.args.endpoint)
-
         if self.args.token:
-            api.login(access_token=self.args.token)
-        cookies = ModelScopeConfig.get_cookies()
+            cookies = api.get_cookies(access_token=self.args.token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
             raise ValueError(
-                'The `token` is not provided! '
+                'No credential found for entity upload. '
                 'You can pass the `--token` argument, '
                 'or use api.login(access_token=`your_sdk_token`). '
                 'Your token is available at https://modelscope.cn/my/myaccesstoken'
@@ -158,6 +159,7 @@ class UploadCMD(CLICommand):
                 repo_type=self.args.repo_type,
                 commit_message=self.args.commit_message,
                 commit_description=self.args.commit_description,
+                token=self.args.token,
             )
         elif os.path.isdir(self.local_path):
             api.upload_folder(
@@ -170,6 +172,7 @@ class UploadCMD(CLICommand):
                 allow_patterns=convert_patterns(self.args.include),
                 ignore_patterns=convert_patterns(self.args.exclude),
                 max_workers=self.args.max_workers,
+                token=self.args.token,
             )
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')

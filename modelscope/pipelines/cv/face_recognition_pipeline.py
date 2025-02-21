@@ -14,10 +14,11 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
+from modelscope.pipelines.cv.face_processing_base_pipeline import \
+    FaceProcessingBasePipeline
 from modelscope.preprocessors import LoadImage
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
-from . import FaceProcessingBasePipeline
 
 logger = get_logger()
 
@@ -26,15 +27,14 @@ logger = get_logger()
     Tasks.face_recognition, module_name=Pipelines.face_recognition)
 class FaceRecognitionPipeline(FaceProcessingBasePipeline):
 
-    def __init__(self, model: str, **kwargs):
+    def __init__(self, model: str, use_det=True, **kwargs):
         """
         use `model` to create a face recognition pipeline for prediction
         Args:
             model: model id on modelscope hub.
         """
-
         # face recong model
-        super().__init__(model=model, **kwargs)
+        super().__init__(model=model, use_det=use_det, **kwargs)
         device = torch.device(
             f'cuda:{0}' if torch.cuda.is_available() else 'cpu')
         self.device = device

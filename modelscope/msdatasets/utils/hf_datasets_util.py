@@ -894,7 +894,7 @@ class DatasetsWrapperHF:
         streaming: bool = False,
         num_proc: Optional[int] = None,
         storage_options: Optional[Dict] = None,
-        trust_remote_code: bool = False,
+        trust_remote_code: bool = True,
         dataset_info_only: Optional[bool] = False,
         **config_kwargs,
     ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset,

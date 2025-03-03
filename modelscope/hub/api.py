@@ -1297,6 +1297,8 @@ class HubApi:
             commit_message=commit_message,
         )
 
+        print(f'Got payload: {payload}')
+
         # POST
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
@@ -1309,6 +1311,8 @@ class HubApi:
         )
 
         resp = response.json()
+
+        print(f'Got resp: {resp}')
 
         if not resp['Success']:
             commit_message = resp['Message']

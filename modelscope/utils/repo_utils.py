@@ -244,14 +244,14 @@ class CommitInfo(str):
             Url to the PR that has been created, if any. Populated when `create_pr=True`
             is passed.
 
-        pr_revision (`str`, *optional*):
-            Revision of the PR that has been created, if any. Populated when
-            `create_pr=True` is passed. Example: `"refs/pr/1"`.
+        # pr_revision (`str`, *optional*):
+        #     Revision of the PR that has been created, if any. Populated when
+        #     `create_pr=True` is passed. Example: `"refs/pr/1"`.
 
-        pr_num (`int`, *optional*):
-            Number of the PR discussion that has been created, if any. Populated when
-            `create_pr=True` is passed. Can be passed as `discussion_num` in
-            [`get_discussion_details`]. Example: `1`.
+        # pr_num (`int`, *optional*):
+        #     Number of the PR discussion that has been created, if any. Populated when
+        #     `create_pr=True` is passed. Can be passed as `discussion_num` in
+        #     [`get_discussion_details`]. Example: `1`.
 
         _url (`str`, *optional*):
             Legacy url for `str` compatibility. Can be the url to the uploaded file on the Hub (if returned by
@@ -267,8 +267,8 @@ class CommitInfo(str):
     pr_url: Optional[str] = None
 
     # Computed from `pr_url` in `__post_init__`
-    pr_revision: Optional[str] = field(init=False)
-    pr_num: Optional[str] = field(init=False)
+    # pr_revision: Optional[str] = field(init=False)
+    # pr_num: Optional[str] = field(init=False)
 
     # legacy url for `str` compatibility (ex: url to uploaded file, url to uploaded folder, url to PR, etc.)
     _url: str = field(

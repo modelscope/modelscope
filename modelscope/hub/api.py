@@ -1289,6 +1289,8 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
+        print(f'>>url: {url}, >>commit_message: {commit_message}, >>commit_description: {commit_description}')
+
         self.login(access_token=token)
 
         # Construct payload
@@ -1297,7 +1299,7 @@ class HubApi:
             commit_message=commit_message,
         )
 
-        print(f'Got payload: {payload}')
+        print(f'>> Got payload: {payload}')
 
         # POST
         cookies = ModelScopeConfig.get_cookies()

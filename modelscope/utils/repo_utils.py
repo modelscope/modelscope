@@ -220,7 +220,7 @@ class RepoUtils:
 
 
 @dataclass
-class CommitInfo(str):
+class CommitInfo:
     """Data structure containing information about a newly created commit.
 
     Returned by any method that creates a commit on the Hub: [`create_commit`], [`upload_file`], [`upload_folder`],
@@ -240,46 +240,12 @@ class CommitInfo(str):
         oid (`str`):
             Commit hash id. Example: `"91c54ad1727ee830252e457677f467be0bfd8a57"`.
 
-        pr_url (`str`, *optional*):
-            Url to the PR that has been created, if any. Populated when `create_pr=True`
-            is passed.
-
-        # pr_revision (`str`, *optional*):
-        #     Revision of the PR that has been created, if any. Populated when
-        #     `create_pr=True` is passed. Example: `"refs/pr/1"`.
-
-        # pr_num (`int`, *optional*):
-        #     Number of the PR discussion that has been created, if any. Populated when
-        #     `create_pr=True` is passed. Can be passed as `discussion_num` in
-        #     [`get_discussion_details`]. Example: `1`.
-
-        _url (`str`, *optional*):
-            Legacy url for `str` compatibility. Can be the url to the uploaded file on the Hub (if returned by
-            [`upload_file`]), to the uploaded folder on the Hub (if returned by [`upload_folder`]) or to the commit on
-            the Hub (if returned by [`create_commit`]). Defaults to `commit_url`. It is deprecated to use this
-            attribute. Please use `commit_url` instead.
     """
 
     commit_url: str
     commit_message: str
     commit_description: str
     oid: str
-    pr_url: Optional[str] = None
-
-    # Computed from `pr_url` in `__post_init__`
-    # pr_revision: Optional[str] = field(init=False)
-    # pr_num: Optional[str] = field(init=False)
-
-    # legacy url for `str` compatibility (ex: url to uploaded file, url to uploaded folder, url to PR, etc.)
-    _url: str = field(
-        repr=False, default=None)  # type: ignore  # defaults to `commit_url`
-
-    def __new__(cls,
-                *args,
-                commit_url: str,
-                _url: Optional[str] = None,
-                **kwargs):
-        return str.__new__(cls, _url or commit_url)
 
     def to_dict(cls):
         return {
@@ -287,7 +253,7 @@ class CommitInfo(str):
             'commit_message': cls.commit_message,
             'commit_description': cls.commit_description,
             'oid': cls.oid,
-            'pr_url': cls.pr_url,
+            # 'pr_url': cls.pr_url,
         }
 
 

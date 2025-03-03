@@ -1289,8 +1289,6 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        print(f'>>url: {url}, >>commit_message: {commit_message}, >>commit_description: {commit_description}')
-
         self.login(access_token=token)
 
         # Construct payload
@@ -1298,8 +1296,6 @@ class HubApi:
             operations=operations,
             commit_message=commit_message,
         )
-
-        print(f'>> Got payload: {payload}')
 
         # POST
         cookies = ModelScopeConfig.get_cookies()
@@ -1313,8 +1309,6 @@ class HubApi:
         )
 
         resp = response.json()
-
-        print(f'Got resp: {resp}')
 
         if not resp['Success']:
             commit_message = resp['Message']

@@ -253,7 +253,6 @@ class CommitInfo:
             'commit_message': cls.commit_message,
             'commit_description': cls.commit_description,
             'oid': cls.oid,
-            # 'pr_url': cls.pr_url,
         }
 
 

@@ -361,14 +361,17 @@ class HubApi:
         """
         if endpoint is None:
             endpoint = self.endpoint
-        if (repo_type is not None) and repo_type.lower() != REPO_TYPE_MODEL:
+        if (repo_type is not None) and repo_type.lower() not in REPO_TYPE_SUPPORT:
             raise Exception('Not support repo-type: %s' % repo_type)
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
         cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
-        path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
+        if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
+            path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
+        else:
+            path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
 
         r = self.session.get(path, cookies=cookies,
                              headers=self.builder_headers(self.headers))

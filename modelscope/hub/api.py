@@ -17,13 +17,13 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Tuple, Union
-from urllib.error import HTTPError
 from urllib.parse import urlencode
 
 import json
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
+from requests.exceptions import HTTPError
 from tqdm.auto import tqdm
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
@@ -318,14 +318,12 @@ class HubApi:
         """
         if MODELSCOPE_DOMAIN in os.environ:
             endpoint = MODELSCOPE_URL_SCHEME + os.getenv(MODELSCOPE_DOMAIN)
-            if not self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint):
-                raise HTTPError(url=endpoint + '/' + repo_id,
-                                code=404,
-                                msg=f'Repo {repo_id} not exists on {endpoint}',
-                                hdrs={'Content-Type': 'text/html'},
-                                fp=None)
-            else:
-                return endpoint
+            try:
+                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
+            except Exception:
+                logger.error(f'Repo {repo_id} not exists on {endpoint}.')
+                raise
+            return endpoint
 
         check_cn_first = not is_env_true(MODELSCOPE_PREFER_INTL)
         prefer_endpoint = get_endpoint(cn_site=check_cn_first)
@@ -333,13 +331,12 @@ class HubApi:
                 repo_id, repo_type=repo_type, endpoint=prefer_endpoint):
             logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, will try on alternative endpoint.')
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
-            if not self.repo_exists(
-                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint):
-                raise HTTPError(url=alternative_endpoint + '/' + repo_id,
-                                code=404,
-                                msg=f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}',
-                                hdrs={'Content-Type': 'text/html'},
-                                fp=None)
+            try:
+                self.self.repo_exists(
+                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True)
+            except Exception:
+                logger.error(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
+                raise
             else:
                 return alternative_endpoint
         else:
@@ -351,6 +348,7 @@ class HubApi:
             *,
             repo_type: Optional[str] = None,
             endpoint: Optional[str] = None,
+            re_raise: Optional[bool] = False
     ) -> bool:
         """
         Checks if a repository exists on ModelScope
@@ -365,6 +363,8 @@ class HubApi:
             endpoint(`str`):
                 None or specific endpoint to use, when None, use the default endpoint
                 set in HubApi class (self.endpoint)
+            re_raise(`bool`):
+                raise exception when error
         Returns:
             True if the repository exists, False otherwise.
         """
@@ -388,7 +388,10 @@ class HubApi:
         if code == 200:
             return True
         elif code == 404:
-            return False
+            if re_raise:
+                raise HTTPError(r)
+            else:
+                return False
         else:
             logger.warn(f'Check repo_exists return status code {code}.')
             raise Exception(

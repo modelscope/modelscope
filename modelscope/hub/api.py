@@ -718,10 +718,12 @@ class HubApi:
     def get_valid_revision(self,
                            model_id: str,
                            revision=None,
-                           cookies: Optional[CookieJar] = None):
+                           cookies: Optional[CookieJar] = None,
+                           endpoint: Optional[str] = None):
         return self.get_valid_revision_detail(model_id=model_id,
                                               revision=revision,
-                                              cookies=cookies)['Revision']
+                                              cookies=cookies,
+                                              endpoint=endpoint)['Revision']
 
     def get_model_branches_and_tags_details(
             self,

@@ -359,8 +359,10 @@ def create_temporary_directory_and_cache(model_id: str,
     return temporary_cache_dir, cache
 
 
-def get_file_download_url(model_id: str, file_path: str, revision: str,
-                          endpoint: str):
+def get_file_download_url(model_id: str,
+                          file_path: str,
+                          revision: str,
+                          endpoint: Optional[str] = None):
     """Format file download url according to `model_id`, `revision` and `file_path`.
     e.g., Given `model_id=john/bert`, `revision=master`, `file_path=README.md`,
     the resulted download url is: https://modelscope.cn/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md

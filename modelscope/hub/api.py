@@ -17,6 +17,7 @@ from http.cookiejar import CookieJar
 from os.path import expanduser
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Tuple, Union
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 
 import json
@@ -318,7 +319,11 @@ class HubApi:
         if MODELSCOPE_DOMAIN in os.environ:
             endpoint = MODELSCOPE_URL_SCHEME + os.getenv(MODELSCOPE_DOMAIN)
             if not self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint):
-                raise NotExistError(f'Repo {repo_id} not exists on {endpoint}')
+                raise HTTPError(url=endpoint + '/' + repo_id,
+                                code=404,
+                                msg=f'Repo {repo_id} not exists on {endpoint}',
+                                hdrs={'Content-Type': 'text/html'},
+                                fp=None)
             else:
                 return endpoint
 
@@ -330,7 +335,11 @@ class HubApi:
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
             if not self.repo_exists(
                     repo_id, repo_type=repo_type, endpoint=alternative_endpoint):
-                raise NotExistError(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
+                raise HTTPError(url=alternative_endpoint + '/' + repo_id,
+                                code=404,
+                                msg=f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}',
+                                hdrs={'Content-Type': 'text/html'},
+                                fp=None)
             else:
                 return alternative_endpoint
         else:

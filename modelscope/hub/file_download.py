@@ -199,17 +199,19 @@ def _repo_file_download(
     if cookies is None:
         cookies = ModelScopeConfig.get_cookies()
     repo_files = []
+    endpoint = _api.get_endpoint_for_read(repo_id=repo_id, repo_type=repo_type)
     file_to_download_meta = None
     if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(
-            repo_id, revision=revision, cookies=cookies)
+            repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
         # we need to confirm the version is up-to-date
         # we need to get the file list to check if the latest version is cached, if so return, otherwise download
         repo_files = _api.get_model_files(
             model_id=repo_id,
             revision=revision,
             recursive=True,
-            use_cookies=False if cookies is None else cookies)
+            use_cookies=False if cookies is None else cookies,
+            endpoint=endpoint)
         for repo_file in repo_files:
             if repo_file['Type'] == 'tree':
                 continue
@@ -238,7 +240,8 @@ def _repo_file_download(
                 root_path='/',
                 recursive=True,
                 page_number=page_number,
-                page_size=page_size)
+                page_size=page_size,
+                endpoint=endpoint)
             if not ('Code' in files_list_tree
                     and files_list_tree['Code'] == 200):
                 print(
@@ -273,13 +276,15 @@ def _repo_file_download(
 
     # we need to download again
     if repo_type == REPO_TYPE_MODEL:
-        url_to_download = get_file_download_url(repo_id, file_path, revision)
+        url_to_download = get_file_download_url(repo_id, file_path, revision,
+                                                endpoint)
     elif repo_type == REPO_TYPE_DATASET:
         url_to_download = _api.get_dataset_file_url(
             file_name=file_to_download_meta['Path'],
             dataset_name=name,
             namespace=group_or_owner,
-            revision=revision)
+            revision=revision,
+            endpoint=endpoint)
     else:
         raise ValueError(f'Invalid repo type {repo_type}')
 
@@ -354,7 +359,8 @@ def create_temporary_directory_and_cache(model_id: str,
     return temporary_cache_dir, cache
 
 
-def get_file_download_url(model_id: str, file_path: str, revision: str):
+def get_file_download_url(model_id: str, file_path: str, revision: str,
+                          endpoint: str):
     """Format file download url according to `model_id`, `revision` and `file_path`.
     e.g., Given `model_id=john/bert`, `revision=master`, `file_path=README.md`,
     the resulted download url is: https://modelscope.cn/api/v1/models/john/bert/repo?Revision=master&FilePath=README.md
@@ -363,6 +369,7 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
         model_id (str): The model_id.
         file_path (str): File path
         revision (str): File revision.
+        endpoint (str): The remote endpoint
 
     Returns:
         str: The file url.
@@ -370,8 +377,10 @@ def get_file_download_url(model_id: str, file_path: str, revision: str):
     file_path = urllib.parse.quote_plus(file_path)
     revision = urllib.parse.quote_plus(revision)
     download_url_template = '{endpoint}/api/v1/models/{model_id}/repo?Revision={revision}&FilePath={file_path}'
+    if not endpoint:
+        endpoint = get_endpoint()
     return download_url_template.format(
-        endpoint=get_endpoint(),
+        endpoint=endpoint,
         model_id=model_id,
         revision=revision,
         file_path=file_path,

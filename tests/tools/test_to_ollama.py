@@ -123,6 +123,36 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'DevQuasar/CohereForAI.c4ai-command-r7b-arabic-02-2025-GGUF',
+            'command-r7b-arabic',
+            gguf_meta={
+                'general.name': 'CohereForAI.c4ai Command R7B Arabic 02 2025'
+            })
+        _test_check_tmpl_type(
+            'lmstudio-community/granite-vision-3.2-2b-GGUF',
+            'granite3.2-vision',
+            gguf_meta={'general.name': 'Granite Vision 3.2 2b'})
+        _test_check_tmpl_type(
+            'unsloth/Phi-4-mini-instruct-GGUF',
+            'phi4-mini',
+            gguf_meta={'general.name': 'Phi 4 Mini Instruct'})
+        _test_check_tmpl_type(
+            'lmstudio-community/granite-3.2-2b-instruct-GGUF',
+            'granite3.2',
+            gguf_meta={'general.name': 'Granite 3.2 2b Instruct'})
+        _test_check_tmpl_type(
+            'unsloth/r1-1776-GGUF',
+            'r1-1776',
+            gguf_meta={'general.name': 'R1 1776'})
+        _test_check_tmpl_type(
+            'QuantFactory/DeepScaleR-1.5B-Preview-GGUF',
+            'deepscaler',
+            gguf_meta={'general.name': 'DeepScaleR 1.5B Preview'})
+        _test_check_tmpl_type(
+            'lmstudio-community/OpenThinker-32B-GGUF',
+            'openthinker',
+            gguf_meta={'general.name': 'Qwen2.5 7B Instruct'})
+        _test_check_tmpl_type(
             'LLM-Research/Llama-3.3-70B-Instruct',
             'llama3.3',
             gguf_meta={'general.name': 'Llama 3.3 70B Instruct'})

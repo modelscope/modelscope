@@ -243,6 +243,8 @@ def _snapshot_download(
             # To count the download statistics, to add the snapshot-identifier as a header.
             headers['snapshot-identifier'] = str(uuid.uuid4())
         _api = HubApi()
+        endpoint = _api.get_endpoint_for_read(
+            repo_id=repo_id, repo_type=repo_type)
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
         if repo_type == REPO_TYPE_MODEL:
@@ -255,7 +257,7 @@ def _snapshot_download(
                                          *repo_id.split('/'))
             print(f'Downloading Model to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
-                repo_id, revision=revision, cookies=cookies)
+                repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
             revision = revision_detail['Revision']
 
             snapshot_header = headers if 'CI_TEST' in os.environ else {
@@ -274,7 +276,7 @@ def _snapshot_download(
                 recursive=True,
                 use_cookies=False if cookies is None else cookies,
                 headers=snapshot_header,
-            )
+                endpoint=endpoint)
             _download_file_lists(
                 repo_files,
                 cache,
@@ -324,7 +326,7 @@ def _snapshot_download(
 
             logger.info('Fetching dataset repo file list...')
             repo_files = fetch_repo_files(_api, name, group_or_owner,
-                                          revision_detail)
+                                          revision_detail, endpoint)
 
             if repo_files is None:
                 logger.error(
@@ -354,7 +356,7 @@ def _snapshot_download(
         return cache_root_path
 
 
-def fetch_repo_files(_api, name, group_or_owner, revision):
+def fetch_repo_files(_api, name, group_or_owner, revision, endpoint):
     page_number = 1
     page_size = 150
     repo_files = []
@@ -367,7 +369,8 @@ def fetch_repo_files(_api, name, group_or_owner, revision):
             root_path='/',
             recursive=True,
             page_number=page_number,
-            page_size=page_size)
+            page_size=page_size,
+            endpoint=endpoint)
 
         if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
             logger.error(f'Get dataset file list failed, request_id:  \
@@ -416,22 +419,23 @@ def _get_valid_regex_pattern(patterns: List[str]):
 
 
 def _download_file_lists(
-        repo_files: List[str],
-        cache: ModelFileSystemCache,
-        temporary_cache_dir: str,
-        repo_id: str,
-        api: HubApi,
-        name: str,
-        group_or_owner: str,
-        headers,
-        repo_type: Optional[str] = None,
-        revision: Optional[str] = DEFAULT_MODEL_REVISION,
-        cookies: Optional[CookieJar] = None,
-        ignore_file_pattern: Optional[Union[str, List[str]]] = None,
-        allow_file_pattern: Optional[Union[str, List[str]]] = None,
-        allow_patterns: Optional[Union[List[str], str]] = None,
-        ignore_patterns: Optional[Union[List[str], str]] = None,
-        max_workers: int = 8):
+    repo_files: List[str],
+    cache: ModelFileSystemCache,
+    temporary_cache_dir: str,
+    repo_id: str,
+    api: HubApi,
+    name: str,
+    group_or_owner: str,
+    headers,
+    repo_type: Optional[str] = None,
+    revision: Optional[str] = DEFAULT_MODEL_REVISION,
+    cookies: Optional[CookieJar] = None,
+    ignore_file_pattern: Optional[Union[str, List[str]]] = None,
+    allow_file_pattern: Optional[Union[str, List[str]]] = None,
+    allow_patterns: Optional[Union[List[str], str]] = None,
+    ignore_patterns: Optional[Union[List[str], str]] = None,
+    max_workers: int = 8,
+):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
     ignore_file_pattern = _normalize_patterns(ignore_file_pattern)

@@ -11,7 +11,7 @@ from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.errors import GitError, HTTPError, NotLoginException
 from modelscope.hub.push_to_hub import push_to_hub, push_to_hub_async
 from modelscope.hub.repository import Repository
-from modelscope.utils.constant import ModelFile
+from modelscope.utils.constant import REPO_TYPE_DATASET, ModelFile
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
                                          delete_credential, test_level)
@@ -51,6 +51,12 @@ class HubUploadTest(unittest.TestCase):
         res = self.api.repo_exists('Qwen/Qwen2.5-7B-Instruct')
         self.assertTrue(res)
         res = self.api.repo_exists('Qwen/not-a-repo')
+        self.assertFalse(res)
+        res = self.api.repo_exists(
+            'Qwen/ProcessBench', repo_type=REPO_TYPE_DATASET)
+        self.assertTrue(res)
+        res = self.api.repo_exists(
+            'Qwen/not-a-repo', repo_type=REPO_TYPE_DATASET)
         self.assertFalse(res)
 
     def test_upload_exits_repo_master(self):

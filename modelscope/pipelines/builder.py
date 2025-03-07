@@ -111,6 +111,8 @@ def pipeline(task: str = None,
     """
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
+    else:
+        pass
 
     pipeline_props = None
     if pipeline_name is None:

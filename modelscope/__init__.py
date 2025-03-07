@@ -56,7 +56,7 @@ if TYPE_CHECKING:
             AutoModelForPreTraining, AutoModelForTextEncoding,
             AutoImageProcessor, BatchFeature, Qwen2VLForConditionalGeneration,
             T5EncoderModel, Qwen2_5_VLForConditionalGeneration, LlamaModel,
-            LlamaPreTrainedModel, LlamaForCausalLM)
+            LlamaPreTrainedModel, LlamaForCausalLM, hf_pipeline)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'

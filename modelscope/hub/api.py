@@ -34,6 +34,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
+                                      DEFAULT_MODELSCOPE_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_REQUEST_ID, ONE_YEAR_SECONDS,
@@ -112,9 +113,19 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
+    def get_cookies(self, access_token):
+        from requests.cookies import RequestsCookieJar
+        jar = RequestsCookieJar()
+        jar.set('m_session_id',
+                access_token,
+                domain=os.getenv('MODELSCOPE_DOMAIN',
+                                 DEFAULT_MODELSCOPE_DOMAIN),
+                path='/')
+        return jar
+
     def login(
             self,
-            access_token: Optional[str] = None,
+            access_token: Optional[str] = None
     ):
         """Login with your SDK access token, which can be obtained from
            https://www.modelscope.cn user center.

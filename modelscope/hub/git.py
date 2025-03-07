@@ -46,6 +46,7 @@ class GitCommandWrapper(metaclass=Singleton):
         git_env = os.environ.copy()
         git_env['GIT_TERMINAL_PROMPT'] = '0'
         command = [self.git_path, *args]
+        command = [item for item in command if item]
         response = subprocess.run(
             command,
             stdout=subprocess.PIPE,

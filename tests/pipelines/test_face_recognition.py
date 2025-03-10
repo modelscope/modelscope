@@ -17,11 +17,35 @@ class FaceRecognitionTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_face_compare(self):
-        img1 = 'data/test/images/face_recognition_1.png'
-        img2 = 'data/test/images/face_recognition_2.png'
+        img1 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png'
+        img2 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_2.png'
 
         face_recognition = pipeline(
             Tasks.face_recognition, model=self.model_id)
+        emb1 = face_recognition(img1)[OutputKeys.IMG_EMBEDDING]
+        emb2 = face_recognition(img2)[OutputKeys.IMG_EMBEDDING]
+        sim = np.dot(emb1[0], emb2[0])
+        print(f'Cos similarity={sim:.3f}, img1:{img1}  img2:{img2}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_face_compare_use_det(self):
+        img1 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png'
+        img2 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_2.png'
+
+        face_recognition = pipeline(
+            Tasks.face_recognition, model=self.model_id, use_det=True)
+        emb1 = face_recognition(img1)[OutputKeys.IMG_EMBEDDING]
+        emb2 = face_recognition(img2)[OutputKeys.IMG_EMBEDDING]
+        sim = np.dot(emb1[0], emb2[0])
+        print(f'Cos similarity={sim:.3f}, img1:{img1}  img2:{img2}')
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_face_compare_not_use_det(self):
+        img1 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_1.png'
+        img2 = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/face_recognition_2.png'
+
+        face_recognition = pipeline(
+            Tasks.face_recognition, model=self.model_id, use_det=False)
         emb1 = face_recognition(img1)[OutputKeys.IMG_EMBEDDING]
         emb2 = face_recognition(img2)[OutputKeys.IMG_EMBEDDING]
         sim = np.dot(emb1[0], emb2[0])

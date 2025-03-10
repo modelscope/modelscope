@@ -27,7 +27,8 @@ def get_all_imported_modules():
     transformers_include_names = [
         'Auto.*', 'T5.*', 'BitsAndBytesConfig', 'GenerationConfig', 'Awq.*',
         'GPTQ.*', 'BatchFeature', 'Qwen.*', 'Llama.*', 'PretrainedConfig',
-        'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast'
+        'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast',
+        'Pipeline'
     ]
     peft_include_names = ['.*PeftModel.*', '.*Config']
     diffusers_include_names = ['^(?!TF|Flax).*Pipeline$']
@@ -252,6 +253,44 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     model_dir, *model_args, **kwargs)
                 return module_obj
 
+            def save_pretrained(
+                self,
+                save_directory: Union[str, os.PathLike],
+                safe_serialization: bool = True,
+                **kwargs,
+            ):
+                push_to_hub = kwargs.pop('push_to_hub', False)
+                if push_to_hub:
+                    from modelscope.hub.push_to_hub import push_to_hub
+                    from modelscope.hub.api import HubApi
+                    from modelscope.hub.repository import Repository
+
+                    token = kwargs.get('token')
+                    commit_message = kwargs.pop('commit_message', None)
+                    repo_name = kwargs.pop(
+                        'repo_id',
+                        save_directory.split(os.path.sep)[-1])
+
+                    api = HubApi()
+                    api.login(token)
+                    api.create_repo(repo_name)
+                    # clone the repo
+                    Repository(save_directory, repo_name)
+
+                super().save_pretrained(
+                    save_directory=save_directory,
+                    safe_serialization=safe_serialization,
+                    push_to_hub=False,
+                    **kwargs)
+
+                # Class members may be unpatched, so push_to_hub is done separately here
+                if push_to_hub:
+                    push_to_hub(
+                        repo_name=repo_name,
+                        output_dir=save_directory,
+                        commit_message=commit_message,
+                        token=token)
+
         if not hasattr(module_class, 'from_pretrained'):
             del ClassWrapper.from_pretrained
         else:
@@ -265,6 +304,9 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
         if not hasattr(module_class, 'get_config_dict'):
             del ClassWrapper.get_config_dict
+
+        if not hasattr(module_class, 'save_pretrained'):
+            del ClassWrapper.save_pretrained
 
         ClassWrapper.__name__ = module_class.__name__
         ClassWrapper.__qualname__ = module_class.__qualname__
@@ -289,12 +331,16 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
+            has_save_pretrained = hasattr(var, 'save_pretrained')
         except:  # noqa
             continue
 
-        if wrap:
+        # save_pretrained is not a classmethod and cannot be overridden by replacing
+        # the class method. It requires replacing the class object method.
+        if wrap or ('pipeline' in name.lower() and has_save_pretrained):
             try:
-                if not has_from_pretrained and not has_get_config_dict and not has_get_peft_type:
+                if (not has_from_pretrained and not has_get_config_dict
+                        and not has_get_peft_type and not has_save_pretrained):
                     all_available_modules.append(var)
                 else:
                     all_available_modules.append(

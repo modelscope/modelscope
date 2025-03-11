@@ -269,7 +269,8 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
     if not isinstance(model, str):
         model = model.model_dir
 
-    if kwargs.get('llm_framework') == 'swift':
+    llm_framework = kwargs.get('llm_framework', '')
+    if llm_framework == 'swift':
         # check if swift supports
         if os.path.exists(model):
             model_id = get_model_id_from_cache(model)
@@ -280,9 +281,8 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
             info = get_model_info_meta(model_id)
             model_type = info[0].model_type
         except Exception as e:
-            logger.warning(
-                f'Cannot using llm_framework with {model_id}, '
-                f'ignoring llm_framework={self.llm_framework} : {e}')
+            logger.warning(f'Cannot using llm_framework with {model_id}, '
+                           f'ignoring llm_framework={llm_framework} : {e}')
             model_type = None
         if model_type:
             return 'llm'

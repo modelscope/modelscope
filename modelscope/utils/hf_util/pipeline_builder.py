@@ -43,6 +43,9 @@ def hf_pipeline(
     device = _get_hf_device(device)
     pipeline_class = _get_hf_pipeline_class(task, model)
 
+    kwargs.pop('external_engine_for_llm', None)
+    kwargs.pop('llm_framework', None)
+
     return pipeline(
         task=task,
         model=model,

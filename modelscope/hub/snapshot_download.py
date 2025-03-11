@@ -255,7 +255,8 @@ def _snapshot_download(
             else:
                 directory = os.path.join(system_cache, 'models',
                                          *repo_id.split('/'))
-            print(f'Downloading Model to directory: {directory}')
+            print(
+                f'Downloading Model from {endpoint} to directory: {directory}')
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
             revision = revision_detail['Revision']
@@ -293,7 +294,9 @@ def _snapshot_download(
                 allow_file_pattern=allow_file_pattern,
                 ignore_patterns=ignore_patterns,
                 allow_patterns=allow_patterns,
-                max_workers=max_workers)
+                max_workers=max_workers,
+                endpoint=endpoint,
+            )
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
                     directory, repo_id)
@@ -349,7 +352,9 @@ def _snapshot_download(
                 allow_file_pattern=allow_file_pattern,
                 ignore_patterns=ignore_patterns,
                 allow_patterns=allow_patterns,
-                max_workers=max_workers)
+                max_workers=max_workers,
+                endpoint=endpoint,
+            )
 
         cache.save_model_version(revision_info=revision_detail)
         cache_root_path = cache.get_root_location()
@@ -435,6 +440,7 @@ def _download_file_lists(
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
+    endpoint: Optional[str] = None,
 ):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
@@ -496,13 +502,15 @@ def _download_file_lists(
             url = get_file_download_url(
                 model_id=repo_id,
                 file_path=repo_file['Path'],
-                revision=revision)
+                revision=revision,
+                endpoint=endpoint)
         elif repo_type == REPO_TYPE_DATASET:
             url = api.get_dataset_file_url(
                 file_name=repo_file['Path'],
                 dataset_name=name,
                 namespace=group_or_owner,
-                revision=revision)
+                revision=revision,
+                endpoint=endpoint)
         else:
             raise InvalidParameter(
                 f'Invalid repo type: {repo_type}, supported types: {REPO_TYPE_SUPPORT}'

@@ -38,7 +38,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_DOMAIN,
-                                      MODELSCOPE_PREFER_INTL,
+                                      MODELSCOPE_PREFER_AI_SITE,
                                       MODELSCOPE_REQUEST_ID,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
@@ -309,10 +309,10 @@ class HubApi:
         """Get proper endpoint for read operation (such as download, list etc.)
         1. If user has set MODELSCOPE_DOMAIN, construct endpoint with user-specified domain.
            If the repo does not exist on that endpoint, throw 404 error, otherwise return the endpoint.
-        2. If domain is not set, check existence of repo in cn-site and intl-site respectively.
-           Checking order is determined by MODELSCOPE_PREFER_INTL.
-             a. if MODELSCOPE_PREFER_INTL is not set ,check cn-site first before intl-site
-             b. otherwise check intl-site before cn-site
+        2. If domain is not set, check existence of repo in cn-site and ai-site (intl version) respectively.
+           Checking order is determined by MODELSCOPE_PREFER_AI_SITE.
+             a. if MODELSCOPE_PREFER_AI_SITE is not set ,check cn-site first before ai-site (intl version)
+             b. otherwise check ai-site before cn-site
            return the endpoint with which the given repo_id exists.
            if neither exists, throw 404 error
         """
@@ -325,14 +325,15 @@ class HubApi:
                 raise
             return endpoint
 
-        check_cn_first = not is_env_true(MODELSCOPE_PREFER_INTL)
+        check_cn_first = not is_env_true(MODELSCOPE_PREFER_AI_SITE)
         prefer_endpoint = get_endpoint(cn_site=check_cn_first)
         if not self.repo_exists(
                 repo_id, repo_type=repo_type, endpoint=prefer_endpoint):
-            logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, will try on alternative endpoint.')
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
+            logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, '
+                           f'will try on alternative endpoint {alternative_endpoint}.')
             try:
-                self.self.repo_exists(
+                self.repo_exists(
                     repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True)
             except Exception:
                 logger.error(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
@@ -680,7 +681,7 @@ class HubApi:
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
-                    'Model revision not specified, using default: [%s] version.'
+                    'Model revision not specified, using default [%s] version.'
                     % revision)
             if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
@@ -1982,8 +1983,8 @@ class ModelScopeConfig:
                     if cookie.name == 'm_session_id' and cookie.is_expired() and \
                             not ModelScopeConfig.cookie_expired_warning:
                         ModelScopeConfig.cookie_expired_warning = True
-                        logger.warning('Authentication has expired, '
-                                       'please re-login for uploading or accessing controlled entities.')
+                        logger.info('Authentication has expired, please re-login '
+                                    'for uploading or accessing controlled entities.')
                         return None
                 return cookies
         return None

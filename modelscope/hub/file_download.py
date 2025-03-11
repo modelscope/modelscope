@@ -431,15 +431,14 @@ def download_part_with_retry(params):
             retry.sleep()
 
 
-def parallel_download(
-    url: str,
-    local_dir: str,
-    file_name: str,
-    cookies: CookieJar,
-    headers: Optional[Dict[str, str]] = None,
-    file_size: int = None,
-    disable_tqdm: bool = False,
-):
+def parallel_download(url: str,
+                      local_dir: str,
+                      file_name: str,
+                      cookies: CookieJar,
+                      headers: Optional[Dict[str, str]] = None,
+                      file_size: int = None,
+                      disable_tqdm: bool = False,
+                      endpoint: str = None):
     # create temp file
     with tqdm(
             unit='B',

@@ -129,8 +129,13 @@ class BaseGPUImageBuilder(Builder):
         return content
 
     def image(self) -> str:
+        # return (
+        #     f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-{self.args.python_tag}-'
+        #     f'torch{self.args.torch_version}-tf{self.args.tf_version}-base')
+
+        # TODO: set the python tag to `py310` for base image temporarily
         return (
-            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-{self.args.python_tag}-'
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-py310-'
             f'torch{self.args.torch_version}-tf{self.args.tf_version}-base')
 
     def build(self) -> int:

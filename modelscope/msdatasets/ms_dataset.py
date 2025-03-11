@@ -28,7 +28,8 @@ from modelscope.preprocessors import build_preprocessor
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
-                                       DEFAULT_DATASET_REVISION, ConfigFields,
+                                       DEFAULT_DATASET_REVISION,
+                                       REPO_TYPE_DATASET, ConfigFields,
                                        DatasetFormations, DownloadMode, Hubs,
                                        ModeKeys, Tasks, UploadMode)
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
@@ -290,12 +291,16 @@ class MsDataset:
 
         # Load from the modelscope hub
         elif hub == Hubs.modelscope:
-
             # Get dataset type from ModelScope Hub;  dataset_type->4: General Dataset
             from modelscope.hub.api import HubApi
             _api = HubApi()
+            endpoint = _api.get_endpoint_for_read(
+                repo_id=namespace + '/' + dataset_name,
+                repo_type=REPO_TYPE_DATASET)
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
-                dataset_name=dataset_name, namespace=namespace)
+                dataset_name=dataset_name,
+                namespace=namespace,
+                endpoint=endpoint)
 
             # Load from the ModelScope Hub for type=4 (general)
             if str(dataset_type) == str(DatasetFormations.general.value):

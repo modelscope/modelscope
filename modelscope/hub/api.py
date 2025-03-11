@@ -963,7 +963,7 @@ class HubApi:
                        endpoint: Optional[str] = None):
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=dataset_name, namespace=namespace)
+            dataset_name=dataset_name, namespace=namespace, endpoint=endpoint)
 
         recursive = 'True' if recursive else 'False'
         if not endpoint:
@@ -1983,8 +1983,8 @@ class ModelScopeConfig:
                     if cookie.name == 'm_session_id' and cookie.is_expired() and \
                             not ModelScopeConfig.cookie_expired_warning:
                         ModelScopeConfig.cookie_expired_warning = True
-                        logger.info('Authentication has expired, please re-login '
-                                    'for uploading or accessing controlled entities.')
+                        logger.info('Not logged-in, you can login for uploading'
+                                    'or accessing controlled entities.')
                         return None
                 return cookies
         return None

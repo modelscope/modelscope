@@ -13,8 +13,8 @@ from modelscope.msdatasets.context.dataset_context_config import \
 from modelscope.msdatasets.meta.data_meta_config import DataMetaConfig
 from modelscope.msdatasets.utils.dataset_utils import (
     get_dataset_files, get_target_dataset_structure)
-from modelscope.utils.constant import (DatasetFormations, DatasetPathName,
-                                       DownloadMode)
+from modelscope.utils.constant import (REPO_TYPE_DATASET, DatasetFormations,
+                                       DatasetPathName, DownloadMode)
 
 
 class DataMetaManager(object):
@@ -177,9 +177,13 @@ class DataMetaManager(object):
     def _fetch_meta_from_hub(self, dataset_name: str, namespace: str,
                              revision: str, meta_cache_dir: str):
 
+        _api = HubApi()
+        endpoint = _api.get_endpoint_for_read(
+            repo_id=namespace + '/' + dataset_name,
+            repo_type=REPO_TYPE_DATASET)
         # Fetch id and type of dataset
         dataset_id, dataset_type = self.api.get_dataset_id_and_type(
-            dataset_name, namespace)
+            dataset_name, namespace, endpoint)
 
         # Fetch meta file-list of dataset
         file_list = self.api.get_dataset_meta_file_list(

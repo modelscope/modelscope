@@ -4,7 +4,7 @@ import unittest
 
 from requests import HTTPError
 
-from modelscope import snapshot_download
+from modelscope import MsDataset, snapshot_download
 from modelscope.hub.constants import MODELSCOPE_PREFER_AI_SITE
 
 
@@ -54,6 +54,13 @@ class HubAiSiteTest(unittest.TestCase):
         with self.assertRaises(HTTPError):
             model_id = 'ModelScope_Developer/not_exist_model'
             snapshot_download(model_id)
+
+    # test download dataset from ai site
+    def test_download_dataset_from_ai_site(self):
+        os.environ[MODELSCOPE_PREFER_AI_SITE] = 'True'
+        dataset_id = 'ModelScope_Developer/ai_only_dataset'
+        dataset = MsDataset.load(dataset_id)
+        assert dataset
 
 
 if __name__ == '__main__':

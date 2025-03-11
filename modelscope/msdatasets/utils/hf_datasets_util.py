@@ -62,7 +62,7 @@ from modelscope import HubApi
 from modelscope.hub.utils.utils import get_endpoint
 from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
-from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DEFAULT_DATASET_REVISION
+from modelscope.utils.constant import DEFAULT_DATASET_NAMESPACE, DEFAULT_DATASET_REVISION, REPO_TYPE_DATASET
 from modelscope.utils.import_utils import has_attr_in_class
 from modelscope.utils.logger import get_logger
 
@@ -160,14 +160,17 @@ def _dataset_info(
     """
     _api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
     dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_namespace)
+        dataset_name=_dataset_name, namespace=_namespace, endpoint=endpoint)
 
     revision: str = revision or DEFAULT_DATASET_REVISION
     data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
                                   revision=revision,
                                   files_metadata=files_metadata,
-                                  timeout=timeout)
+                                  timeout=timeout,
+                                  endpoint=endpoint)
 
     # Parse data
     data_d: dict = data['Data']
@@ -220,7 +223,8 @@ def _list_repo_tree(
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
     _api = HubApi(timeout=3 * 60, max_retries=3)
-
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
     if is_relative_path(repo_id) and repo_id.count('/') == 1:
         _namespace, _dataset_name = repo_id.split('/')
     elif is_relative_path(repo_id) and repo_id.count('/') == 0:
@@ -240,6 +244,7 @@ def _list_repo_tree(
                                          recursive=True,
                                          page_number=page_number,
                                          page_size=page_size,
+                                         endpoint=endpoint
                                          )
         if not ('Code' in data and data['Code'] == 200):
             logger.error(f'Get dataset: {repo_id} file list failed, message: {data["Message"]}')
@@ -275,8 +280,10 @@ def _get_paths_info(
 
     _api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
     dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_namespace)
+        dataset_name=_dataset_name, namespace=_namespace, endpoint=endpoint)
 
     revision: str = revision or DEFAULT_DATASET_REVISION
     data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
@@ -300,7 +307,8 @@ def _get_paths_info(
 def _download_repo_file(repo_id: str, path_in_repo: str, download_config: DownloadConfig, revision: str):
     _api = HubApi()
     _namespace, _dataset_name = repo_id.split('/')
-
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
     if download_config and download_config.download_desc is None:
         download_config.download_desc = f'Downloading [{path_in_repo}]'
     try:
@@ -310,6 +318,7 @@ def _download_repo_file(repo_id: str, path_in_repo: str, download_config: Downlo
             namespace=_namespace,
             revision=revision,
             extension_filter=False,
+            endpoint=endpoint
         )
         repo_file_path = cached_path(
             url_or_filename=url_or_filename, download_config=download_config)
@@ -656,10 +665,14 @@ def get_module_without_script(self) -> DatasetModule:
             )
         ]
         default_config_name = None
+    _api = HubApi()
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
+
     builder_kwargs = {
         # "base_path": hf_hub_url(self.name, "", revision=revision).rstrip("/"),
         'base_path':
-        HubApi().get_file_base_path(repo_id=repo_id),
+        HubApi().get_file_base_path(repo_id=repo_id, endpoint=endpoint),
         'repo_id':
         self.name,
         'dataset_name':
@@ -1021,9 +1034,12 @@ class DatasetsWrapperHF:
 
         try:
             _api = HubApi()
+
             if is_relative_path(path) and path.count('/') == 1:
                 _namespace, _dataset_name = path.split('/')
-                _api.dataset_download_statistics(dataset_name=_dataset_name, namespace=_namespace)
+                endpoint = _api.get_endpoint_for_read(
+                    repo_id=path, repo_type=REPO_TYPE_DATASET)
+                _api.dataset_download_statistics(dataset_name=_dataset_name, namespace=_namespace, endpoint=endpoint)
         except Exception as e:
             logger.warning(f'Could not record download statistics: {e}')
 

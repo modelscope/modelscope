@@ -620,7 +620,7 @@ def _patch_hub():
     from huggingface_hub import repocard
     if not hasattr(repocard.RepoCard, '_validate_origin'):
 
-        def load(*args, **kwargs):
+        def load(*args, **kwargs):  # noqa
             from huggingface_hub.errors import EntryNotFoundError
             raise EntryNotFoundError(message='API not supported.')
 

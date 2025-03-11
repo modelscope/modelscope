@@ -18,6 +18,7 @@ class TemplateInfo:
     template: str = None
     template_regex: str = None
     modelfile_prefix: str = None
+    allow_general_name: bool = True
 
 
 def cases(*names):
@@ -257,6 +258,12 @@ template_info = [
     ),
     TemplateInfo(
         template_regex=
+        f'.*{cases("phi4-mini", "phi-4-mini")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4-mini',
+    ),
+    TemplateInfo(
+        template_regex=
         f'.*{cases("phi4", "phi-4")}{no_multi_modal()}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4',
@@ -472,6 +479,12 @@ template_info = [
     ),
     TemplateInfo(
         template_regex=
+        f'.*{cases("command-r7b-arabic")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r7b-arabic',
+    ),
+    TemplateInfo(
+        template_regex=
         f'.*{cases("command-r7b")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r7b',
@@ -663,9 +676,17 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3-guardian'),
     TemplateInfo(
-        template_regex=f'.*{cases("granite")}.*{cases("code")}.*', 
+        template_regex=f'.*{cases("granite")}.*{cases("code")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite-code'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite")}.*{cases("vision")}.*{cases("3.2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3.2-vision'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite")}.*{cases("3.2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite3.2'),
     TemplateInfo(
         template_regex=f'.*{cases("granite-3.1")}.*{cases("2b", "8b")}.*', 
         modelfile_prefix=
@@ -732,6 +753,12 @@ template_info = [
         template_regex=f'.*{cases("smallthinker")}.*', 
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/smallthinker'),
+
+    TemplateInfo(
+        template_regex=f'.*{cases("openthinker")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/openthinker',
+        allow_general_name=False),
 
     TemplateInfo(
         template_regex=
@@ -888,8 +915,14 @@ template_info = [
         template_regex=f'.*{cases("exaone")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/exaone3.5'),
-
-
+    TemplateInfo(
+        template_regex=f'.*{cases("r1-1776")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/r1-1776'),
+    TemplateInfo(
+        template_regex=f'.*{cases("deepscaler")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepscaler'),
 ]
 
 
@@ -1014,33 +1047,50 @@ class TemplateLoader:
                 f'Please make sure you model_id: {model_id} '
                 f'and template_name: {template_name} is supported.')
         logger.info('Exporting to ollama:')
-        names = []
+        names = {}
+        match_infos = {}
         if gguf_meta:
             gguf_header_name = gguf_meta.get("general.name", None)
-            names.append(gguf_header_name)
+            if gguf_header_name:
+                names['gguf_header_name'] = gguf_header_name
         if model_id:
-            names.append(model_id)
-        for name in names:
+            names['model_id'] = model_id
+        for name_type, name in names.items():
             for _info in template_info:
                 if re.fullmatch(_info.template_regex, name):
                     if _info.modelfile_prefix and not kwargs.get('ignore_oss_model_file', False):
-                        template_str = TemplateLoader._read_content_from_url(
-                            _info.modelfile_prefix + '.template')
-                        if not template_str:
-                            logger.info(f'{name} has no template file.')
-                        params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
-                        if params:
-                            params = json.loads(params)
-                        else:
-                            logger.info(f'{name} has no params file.')
-                        license = TemplateLoader._read_content_from_url(
-                            _info.modelfile_prefix + '.license')
-                        if not template_str:
-                            logger.info(f'{name} has no license file.')
-                        format_out = TemplateLoader._format_return(template_str, params, split, license)
-                        if debug:
-                            return format_out, _info
-                        return format_out
+                        match_infos[name_type] = name, _info
+                        break
+
+        _name = None
+        _info = None
+        if len(match_infos) == 1:
+            _, (_name, _info) = match_infos.popitem()
+        elif len(match_infos) > 1:
+            if not match_infos['model_id'][1].allow_general_name:
+                _name, _info = match_infos['model_id']
+            else:
+                _name, _info = match_infos['gguf_header_name']
+
+        if _info:
+            template_str = TemplateLoader._read_content_from_url(
+                _info.modelfile_prefix + '.template')
+            if not template_str:
+                logger.info(f'{_name} has no template file.')
+            params = TemplateLoader._read_content_from_url(_info.modelfile_prefix + '.params')
+            if params:
+                params = json.loads(params)
+            else:
+                logger.info(f'{_name} has no params file.')
+            license = TemplateLoader._read_content_from_url(
+                _info.modelfile_prefix + '.license')
+            if not template_str:
+                logger.info(f'{_name} has no license file.')
+            format_out = TemplateLoader._format_return(template_str, params, split, license)
+            if debug:
+                return format_out, _info
+            return format_out
+
         if template_name:
             template = TemplateLoader.load_by_template_name(
                 template_name, **kwargs)

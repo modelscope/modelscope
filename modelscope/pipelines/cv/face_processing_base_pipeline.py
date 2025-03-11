@@ -22,7 +22,7 @@ logger = get_logger()
 
 class FaceProcessingBasePipeline(Pipeline):
 
-    def __init__(self, model: str, **kwargs):
+    def __init__(self, model: str, use_det=True, **kwargs):
         """
         use `model` to create a face processing pipeline and output cropped img, scores, bbox and lmks.
 
@@ -30,11 +30,13 @@ class FaceProcessingBasePipeline(Pipeline):
             model: model id on modelscope hub.
 
         """
+        self.use_det = use_det
         super().__init__(model=model, **kwargs)
         # face detect pipeline
-        det_model_id = 'damo/cv_ddsar_face-detection_iclr23-damofd'
-        self.face_detection = pipeline(
-            Tasks.face_detection, model=det_model_id)
+        if use_det:
+            det_model_id = 'damo/cv_ddsar_face-detection_iclr23-damofd'
+            self.face_detection = pipeline(
+                Tasks.face_detection, model=det_model_id)
 
     def _choose_face(self,
                      det_result,
@@ -94,21 +96,27 @@ class FaceProcessingBasePipeline(Pipeline):
     def preprocess(self, input: Input) -> Dict[str, Any]:
         img = LoadImage.convert_to_ndarray(input)
         img = img[:, :, ::-1]
-        det_result = self.face_detection(img.copy())
-        rtn = self._choose_face(det_result, img_shape=img.shape)
-        if rtn is not None:
-            scores, bboxes, face_lmks = rtn
-            face_lmks = face_lmks.reshape(5, 2)
-            align_img, _ = align_face(img, (112, 112), face_lmks)
+        if self.use_det:
+            det_result = self.face_detection(img.copy())
+            rtn = self._choose_face(det_result, img_shape=img.shape)
+            if rtn is not None:
+                scores, bboxes, face_lmks = rtn
+                face_lmks = face_lmks.reshape(5, 2)
+                align_img, _ = align_face(img, (112, 112), face_lmks)
 
-            result = {}
-            result['img'] = np.ascontiguousarray(align_img)
-            result['scores'] = [scores]
-            result['bbox'] = bboxes
-            result['lmks'] = face_lmks
-            return result
+                result = {}
+                result['img'] = np.ascontiguousarray(align_img)
+                result['scores'] = [scores]
+                result['bbox'] = bboxes
+                result['lmks'] = face_lmks
+                return result
+            else:
+                return None
         else:
-            return None
+            result = {}
+            resized_img = cv2.resize(img, (112, 112))
+            result['img'] = np.ascontiguousarray(resized_img)
+            return result
 
     def align_face_padding(self, img, rect, padding_size=16, pad_pixel=127):
         rect = np.reshape(rect, (-1, 4))

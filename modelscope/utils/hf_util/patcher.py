@@ -345,7 +345,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 else:
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
-            except:  # noqa
+            except Exception:
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,
@@ -370,9 +370,10 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             if has_get_config_dict and not hasattr(var,
                                                    '_get_config_dict_origin'):
                 var._get_config_dict_origin = var.get_config_dict
-                var.get_config_dict = classmethod(
-                    partial(patch_get_config_dict,
-                            **ignore_file_pattern_kwargs))
+                var.get_config_dict = partial(
+                    patch_pretrained_model_name_or_path,
+                    ori_func=var._get_config_dict_origin,
+                    **ignore_file_pattern_kwargs)
 
             all_available_modules.append(var)
     return all_available_modules
@@ -618,6 +619,11 @@ def _patch_hub():
     # Patch repocard.validate
     from huggingface_hub import repocard
     if not hasattr(repocard.RepoCard, '_validate_origin'):
+
+        def load(*args, **kwargs):  # noqa
+            from huggingface_hub.errors import EntryNotFoundError
+            raise EntryNotFoundError(message='API not supported.')
+
         repocard.RepoCard._validate_origin = repocard.RepoCard.validate
         repocard.RepoCard.validate = lambda *args, **kwargs: None
         repocard.RepoCard._load_origin = repocard.RepoCard.load

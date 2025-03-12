@@ -1,2 +1,1 @@
-editdistance
-funasr==1.2.4
+funasr>=1.0.0

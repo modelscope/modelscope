@@ -1,4 +1,4 @@
--r audio/audio_asr.txt
+#-r audio/audio_asr.txt
 -r audio/audio_kws.txt
 -r audio/audio_signal.txt
 -r audio/audio_tts.txt

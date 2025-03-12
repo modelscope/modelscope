@@ -11,7 +11,7 @@ from modelscope.hub.constants import MODELSCOPE_PREFER_AI_SITE
 class HubAiSiteTest(unittest.TestCase):
 
     def setUp(self):
-        pass
+        ...
 
     # test download from an ai-site only model, it should
     # work as expected since we shall fall back to ai-site

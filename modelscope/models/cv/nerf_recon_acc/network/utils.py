@@ -5,7 +5,6 @@ from collections import defaultdict
 
 import mcubes
 import numpy as np
-import tinycudann as tcnn
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -166,6 +165,8 @@ def normalize(dat, inp_scale, tgt_scale):
 
 
 def cleanup():
+    import tinycudann as tcnn
+
     gc.collect()
     torch.cuda.empty_cache()
     tcnn.free_temporary_memory()

@@ -5,7 +5,6 @@ from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
-logger.setLevel('DEBUG')
 DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
 

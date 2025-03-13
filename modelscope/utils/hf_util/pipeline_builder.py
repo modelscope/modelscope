@@ -33,7 +33,6 @@ def hf_pipeline(
     **kwargs,
 ) -> 'transformers.Pipeline':
     from transformers import pipeline
-
     if isinstance(model, str):
         if not os.path.exists(model):
             model = snapshot_download(model)

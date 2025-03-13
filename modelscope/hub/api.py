@@ -318,11 +318,11 @@ class HubApi:
         """
         s = os.environ.get(MODELSCOPE_DOMAIN)
         if s is not None and s.strip() != '':
-            endpoint = MODELSCOPE_URL_SCHEME + os.getenv(MODELSCOPE_DOMAIN)
+            endpoint = MODELSCOPE_URL_SCHEME + s
             try:
                 self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
             except Exception:
-                logger.error(f'Repo {repo_id} not exists on {endpoint}.')
+                logger.error(f'Repo {repo_id} does not exist on {endpoint}.')
                 raise
             return endpoint
 

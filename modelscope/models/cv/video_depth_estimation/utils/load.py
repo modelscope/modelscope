@@ -1,9 +1,6 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
 import importlib
-import logging
-import os
-import warnings
 from collections import OrderedDict
 from inspect import signature
 
@@ -14,23 +11,6 @@ from modelscope.models.cv.video_depth_estimation.utils.misc import (make_list,
                                                                     pcolor,
                                                                     same_shape)
 from modelscope.models.cv.video_depth_estimation.utils.types import is_str
-
-
-def set_debug(debug):
-    """
-    Enable or disable debug terminal logging
-
-    Parameters
-    ----------
-    debug : bool
-        Debugging flag (True to enable)
-    """
-    # Disable logging if requested
-    if not debug:
-        os.environ['NCCL_DEBUG'] = ''
-        os.environ['WANDB_SILENT'] = 'false'
-        warnings.filterwarnings('ignore')
-        logging.disable(logging.CRITICAL)
 
 
 def filter_args(func, keys):

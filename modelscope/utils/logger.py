@@ -11,6 +11,7 @@ formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 default_log_level = int(os.getenv('MODELSCOPE_LOG_LEVEL', str(logging.INFO)))
+logging.getLogger('numba').setLevel(logging.INFO)
 
 
 def get_logger(log_file: Optional[str] = None,

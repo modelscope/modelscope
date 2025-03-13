@@ -121,8 +121,11 @@ def get_release_datetime():
     return rt
 
 
-def get_endpoint(cn_site=True):
-    return MODELSCOPE_URL_SCHEME + get_domain(cn_site)
+def get_endpoint():
+    modelscope_domain = os.getenv(
+        MODELSCOPE_DOMAIN,
+        DEFAULT_MODELSCOPE_DOMAIN) or DEFAULT_MODELSCOPE_DOMAIN
+    return MODELSCOPE_URL_SCHEME + modelscope_domain
 
 
 def compute_hash(file_path):

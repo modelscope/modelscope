@@ -106,8 +106,9 @@ def get_release_datetime():
 
 
 def get_endpoint():
-    modelscope_domain = os.getenv('MODELSCOPE_DOMAIN',
-                                  DEFAULT_MODELSCOPE_DOMAIN)
+    modelscope_domain = os.getenv(
+        'MODELSCOPE_DOMAIN',
+        DEFAULT_MODELSCOPE_DOMAIN) or DEFAULT_MODELSCOPE_DOMAIN
     return MODELSCOPE_URL_SCHEME + modelscope_domain
 
 

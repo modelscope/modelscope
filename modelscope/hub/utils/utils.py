@@ -34,7 +34,7 @@ def is_env_true(var_name):
 
 
 def get_domain(cn_site=True):
-    if MODELSCOPE_DOMAIN in os.environ:
+    if MODELSCOPE_DOMAIN in os.environ and os.getenv(MODELSCOPE_DOMAIN):
         return os.getenv(MODELSCOPE_DOMAIN)
     if cn_site:
         return DEFAULT_MODELSCOPE_DOMAIN

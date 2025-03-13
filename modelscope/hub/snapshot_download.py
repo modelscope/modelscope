@@ -238,10 +238,8 @@ def _snapshot_download(
         headers = {
             'user-agent':
             ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
+            'snapshot-identifier': str(uuid.uuid4()),
         }
-        if 'CI_TEST' not in os.environ:
-            # To count the download statistics, to add the snapshot-identifier as a header.
-            headers['snapshot-identifier'] = str(uuid.uuid4())
         _api = HubApi()
         if cookies is None:
             cookies = ModelScopeConfig.get_cookies()
@@ -258,12 +256,12 @@ def _snapshot_download(
                 repo_id, revision=revision, cookies=cookies)
             revision = revision_detail['Revision']
 
-            snapshot_header = headers if 'CI_TEST' in os.environ else {
-                **headers,
-                **{
-                    'Snapshot': 'True'
-                }
-            }
+            # Add snapshot-ci-test for counting the ci test download
+            if 'CI_TEST' in os.environ:
+                snapshot_header = {**headers, **{'snapshot-ci-test': 'True'}}
+            else:
+                snapshot_header = {**headers, **{'Snapshot': 'True'}}
+
             if cache.cached_model_revision is not None:
                 snapshot_header[
                     'cached_model_revision'] = cache.cached_model_revision

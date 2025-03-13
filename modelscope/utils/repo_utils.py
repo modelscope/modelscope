@@ -49,6 +49,7 @@ DATASET_LFS_SUFFIX = [
     '.jack',
     '.jpeg',
     '.jpg',
+    '.png',
     '.jsonl',
     '.joblib',
     '.lz4',

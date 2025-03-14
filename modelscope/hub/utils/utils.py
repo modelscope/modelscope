@@ -8,7 +8,9 @@ from typing import List, Optional, Union
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
-                                      MODEL_ID_SEPARATOR, MODELSCOPE_SDK_DEBUG,
+                                      DEFAULT_MODELSCOPE_INTL_DOMAIN,
+                                      MODEL_ID_SEPARATOR, MODELSCOPE_DOMAIN,
+                                      MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.logger import get_logger
@@ -24,6 +26,20 @@ def model_id_to_group_owner_name(model_id):
         group_or_owner = DEFAULT_MODELSCOPE_GROUP
         name = model_id
     return group_or_owner, name
+
+
+def is_env_true(var_name):
+    value = os.environ.get(var_name, '').strip().lower()
+    return value == 'true'
+
+
+def get_domain(cn_site=True):
+    if MODELSCOPE_DOMAIN in os.environ and os.getenv(MODELSCOPE_DOMAIN):
+        return os.getenv(MODELSCOPE_DOMAIN)
+    if cn_site:
+        return DEFAULT_MODELSCOPE_DOMAIN
+    else:
+        return DEFAULT_MODELSCOPE_INTL_DOMAIN
 
 
 def convert_patterns(raw_input: Union[str, List[str]]):
@@ -105,11 +121,8 @@ def get_release_datetime():
     return rt
 
 
-def get_endpoint():
-    modelscope_domain = os.getenv(
-        'MODELSCOPE_DOMAIN',
-        DEFAULT_MODELSCOPE_DOMAIN) or DEFAULT_MODELSCOPE_DOMAIN
-    return MODELSCOPE_URL_SCHEME + modelscope_domain
+def get_endpoint(cn_site=True):
+    return MODELSCOPE_URL_SCHEME + get_domain(cn_site)
 
 
 def compute_hash(file_path):

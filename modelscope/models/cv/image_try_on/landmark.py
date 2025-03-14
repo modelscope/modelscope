@@ -369,7 +369,7 @@ class VTONLandmark(nn.Module):
                 'SHIFT_HEATMAP': True
             },
             'DEBUG': {
-                'DEBUG': True,
+                'DEBUG': False,
                 'SAVE_BATCH_IMAGES_GT': True,
                 'SAVE_BATCH_IMAGES_PRED': True,
                 'SAVE_HEATMAPS_GT': True,

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 
@@ -25,7 +25,8 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
                  preprocessor: Preprocessor = None,
                  config_file: str = None,
                  device: str = 'gpu',
-                 auto_collate=True,
+                 auto_collate: bool = True,
+                 trust_remote_code: Optional[bool] = None,
                  **kwargs):
         # super().__init__
         self.device_name = device
@@ -37,14 +38,11 @@ class VisionChatPipeline(VisualQuestionAnsweringPipeline):
         torch_dtype = kwargs.get('torch_dtype', torch.float16)
         multimodal_max_length = kwargs.get('multimodal_max_length', 8192)
         self.device = 'cuda' if device == 'gpu' else device
-        logger.warning(
-            f'Use trust_remote_code=True. Will invoke codes from {model}. Please make '
-            'sure that you can trust the external codes.')
         self.model = AutoModelForCausalLM.from_pretrained(
             model,
             torch_dtype=torch_dtype,
             multimodal_max_length=multimodal_max_length,
-            trust_remote_code=True).to(self.device)
+            trust_remote_code=trust_remote_code).to(self.device)
         self.text_tokenizer = self.model.get_text_tokenizer()
         self.visual_tokenizer = self.model.get_visual_tokenizer()
 

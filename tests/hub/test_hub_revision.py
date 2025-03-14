@@ -18,7 +18,6 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_ORG)
 
 logger = get_logger()
-logger.setLevel('DEBUG')
 download_model_file_name = 'test.bin'
 download_model_file_name2 = 'test2.bin'
 

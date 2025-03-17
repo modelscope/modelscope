@@ -204,12 +204,13 @@ ARG TENSORFLOW_VERSION={tf_version}
     fi
 
  # This limits the cuda121 version
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
-        else \
-            echo 'cpu not install tinycudann'; \
-    fi
+# RUN if [ "$USE_GPU" = "True" ] ; then \
+#            pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
+#        else \
+#            echo 'cpu not install tinycudann'; \
+#    fi
 
- RUN pip install --no-cache-dir fairseq
+ # RUN pip install --no-cache-dir fairseq  # for py310
+ RUN pip install --no-cache-dir https://github.com/liyaodev/fairseq/releases/download/v0.12.3.1/fairseq-0.12.3.1-cp311-cp311-linux_x86_64.whl  # for py311
 
 ENTRYPOINT []

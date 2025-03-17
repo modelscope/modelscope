@@ -31,7 +31,11 @@ def get_all_imported_modules():
         'Pipeline'
     ]
     peft_include_names = ['.*PeftModel.*', '.*Config']
-    diffusers_include_names = ['^(?!TF|Flax).*Pipeline$']
+    diffusers_include_names = [
+        '^(?!TF|Flax).*Pipeline$', '^(?!TF|Flax).*Autoencoder.*',
+        '^(?!TF|Flax).*Model$', '^(?!TF|Flax).*Adapter$', 'ImageProjection',
+        '^(?!TF|Flax).*UNet$'
+    ]
     if importlib.util.find_spec('transformers') is not None:
         import transformers
         lazy_module = sys.modules['transformers']

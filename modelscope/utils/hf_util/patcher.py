@@ -322,7 +322,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             continue
         name = var.__name__
         need_model = 'model' in name.lower() or 'processor' in name.lower(
-        ) or 'extractor' in name.lower() or 'pipeline' in name.lower() or 'for' in name.lower()
+        ) or 'extractor' in name.lower() or 'pipeline' in name.lower(
+        ) or 'for' in name.lower()
         if need_model:
             ignore_file_pattern_kwargs = {}
         else:

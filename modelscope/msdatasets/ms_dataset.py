@@ -217,7 +217,7 @@ class MsDataset:
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         hub = Hubs(hub or Hubs.modelscope)
-
+        is_huggingface_hub = (hub == Hubs.huggingface)
         if not isinstance(dataset_name, str) and not isinstance(
                 dataset_name, list):
             raise TypeError(
@@ -233,7 +233,7 @@ class MsDataset:
         dataset_name = os.path.expanduser(dataset_name)
         is_local_path = os.path.exists(dataset_name)
         if is_relative_path(dataset_name) and dataset_name.count(
-                '/') == 1 and not is_local_path:
+                '/') == 1 and not is_local_path and not is_huggingface_hub:
             dataset_name_split = dataset_name.split('/')
             namespace = dataset_name_split[0].strip()
             dataset_name = dataset_name_split[1].strip()

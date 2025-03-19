@@ -123,6 +123,14 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'lmstudio-community/c4ai-command-a-03-2025-GGUF',
+            'command-a',
+            gguf_meta={'general.name': 'C4Ai Command A 03 2025'})
+        _test_check_tmpl_type(
+            'unsloth/gemma-3-27b-it-GGUF',
+            'gemma3',
+            gguf_meta={'general.name': 'Gemma-3-27B-It'})
+        _test_check_tmpl_type(
             'DevQuasar/CohereForAI.c4ai-command-r7b-arabic-02-2025-GGUF',
             'command-r7b-arabic',
             gguf_meta={

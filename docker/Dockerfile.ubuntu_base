@@ -189,6 +189,13 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
      echo 'cpu unsupport Pointnet2'; \
     fi
 
+# NVIDIA apex building
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        bash /tmp/install_apex.sh; \
+    else \
+     echo 'cpu unsupport nvidia apex'; \
+    fi
+
 
 ARG TENSORFLOW_VERSION={tf_version}
  RUN if [ "$USE_GPU" = "True" ] ; then \

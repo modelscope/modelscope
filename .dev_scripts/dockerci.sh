@@ -26,6 +26,7 @@ do
 
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
+  TEST_LEVEL=1
   if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     echo 'debugging'
     docker run --rm --name $CONTAINER_NAME --shm-size=16gb \

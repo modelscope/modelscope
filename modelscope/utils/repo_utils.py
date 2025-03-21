@@ -323,7 +323,8 @@ class UploadInfo:
         file_hash_info = file_hash_info or get_file_hash(path)
         size = file_hash_info['file_size']
         sha = file_hash_info['file_hash']
-        sample = open(path, 'rb').read(512)
+        with open(path, 'rb') as f:
+            sample = f.read(512)
 
         return cls(sha256=sha, size=size, sample=sample)
 

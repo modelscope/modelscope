@@ -18,14 +18,14 @@ from modelscope.utils.test_utils import delete_credential, test_level
 logger = get_logger()
 
 
-class TestUploadFile(unittest.TestCase):
+class TestUploadFileFolder(unittest.TestCase):
 
     def setUp(self):
         self.api = HubApi(endpoint='https://www.modelscope.cn')
         self.api.login(TEST_ACCESS_TOKEN1)
 
-        self.repo_id_model: str = f'{TEST_ORG}/test_upload_file_model_{uuid.uuid4().hex[-6:]}'
-        self.repo_id_dataset: str = f'{TEST_ORG}/test_upload_file_dataset_{uuid.uuid4().hex[-6:]}'
+        self.repo_id_model: str = f'{TEST_ORG}/test_upload_file_folder_model_{uuid.uuid4().hex[-6:]}'
+        self.repo_id_dataset: str = f'{TEST_ORG}/test_upload_file_folder_dataset_{uuid.uuid4().hex[-6:]}'
 
         self.work_dir = tempfile.mkdtemp()
         self.model_file_path = f'{self.work_dir}/test_model.bin'
@@ -96,25 +96,43 @@ class TestUploadFile(unittest.TestCase):
         logger.info(f'Constructed dataset file: {self.dataset_file_path}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    def test_upload_file(self):
+    def test_upload_file_folder(self):
         """
-        Test uploading files to the model/dataset repository.
+        Test uploading file/folder to the model/dataset repository.
         """
 
-        commit_info_upload_model = self.api.upload_file(
+        commit_info_upload_file_model = self.api.upload_file(
             path_or_fileobj=self.model_file_path,
             path_in_repo=os.path.basename(self.model_file_path),
             repo_id=self.repo_id_model,
             repo_type=REPO_TYPE_MODEL,
             commit_message='Add model file for CI_TEST',
         )
-        self.assertTrue(commit_info_upload_model is not None)
+        self.assertTrue(commit_info_upload_file_model is not None)
 
-        commit_info_upload_dataset = self.api.upload_file(
+        commit_info_upload_file_dataset = self.api.upload_file(
             path_or_fileobj=self.dataset_file_path,
             path_in_repo=os.path.basename(self.dataset_file_path),
             repo_id=self.repo_id_dataset,
             repo_type=REPO_TYPE_DATASET,
             commit_message='Add dataset file for CI_TEST',
         )
-        self.assertTrue(commit_info_upload_dataset is not None)
+        self.assertTrue(commit_info_upload_file_dataset is not None)
+
+        commit_info_upload_folder_model = self.api.upload_folder(
+            repo_id=self.repo_id_model,
+            folder_path=self.work_dir,
+            path_in_repo='test_data',
+            repo_type=REPO_TYPE_MODEL,
+            commit_message='Add model folder for CI_TEST',
+        )
+        self.assertTrue(commit_info_upload_folder_model is not None)
+
+        commit_info_upload_folder_dataset = self.api.upload_folder(
+            repo_id=self.repo_id_dataset,
+            folder_path=self.work_dir,
+            path_in_repo='test_data',
+            repo_type=REPO_TYPE_DATASET,
+            commit_message='Add dataset folder for CI_TEST',
+        )
+        self.assertTrue(commit_info_upload_folder_dataset is not None)

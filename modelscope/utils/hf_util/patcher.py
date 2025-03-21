@@ -28,7 +28,6 @@ def get_all_imported_modules():
         'Auto.*', 'T5.*', 'BitsAndBytesConfig', 'GenerationConfig', 'Awq.*',
         'GPTQ.*', 'BatchFeature', 'Qwen.*', 'Llama.*', 'PretrainedConfig',
         'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast',
-        'Pipeline'
     ]
     peft_include_names = ['.*PeftModel.*', '.*Config']
     diffusers_include_names = [

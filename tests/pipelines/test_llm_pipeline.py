@@ -175,6 +175,18 @@ class LLMPipelineTest(unittest.TestCase):
         print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    def test_qwen2(self):
+        pipe = pipeline(
+            task='chat',
+            model='qwen/Qwen2-0.5B-Instruct',
+            model_revision='master',
+            llm_first=True,
+            torch_dtype='torch.float16',
+            device_map='auto')
+        print('messages: ', pipe(self.messages_en, **self.gen_cfg))
+        print('prompt: ', pipe(self.prompt_en, **self.gen_cfg))
+
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_llama2chat(self):
         pipe = pipeline(
             task='chat',

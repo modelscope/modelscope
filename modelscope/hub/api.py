@@ -425,6 +425,8 @@ class HubApi:
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 
+        logger.info(f'Repo {repo_id} deleted successfully.')
+
     @staticmethod
     def _create_default_config(model_dir):
         cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
@@ -1481,6 +1483,8 @@ class HubApi:
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        logger.info(f'Repo created: {repo_url}')
 
         return repo_url
 

@@ -25,9 +25,19 @@ def get_all_imported_modules():
     """Find all modules in transformers/peft/diffusers"""
     all_imported_modules = []
     transformers_include_names = [
-        'Auto.*', 'T5.*', 'BitsAndBytesConfig', 'GenerationConfig', 'Awq.*',
-        'GPTQ.*', 'BatchFeature', 'Qwen.*', 'Llama.*', 'PretrainedConfig',
-        'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast',
+        'Auto.*',
+        'T5.*',
+        'BitsAndBytesConfig',
+        'GenerationConfig',
+        'Awq.*',
+        'GPTQ.*',
+        'BatchFeature',
+        'Qwen.*',
+        'Llama.*',
+        'PretrainedConfig',
+        'PreTrainedTokenizer',
+        'PreTrainedModel',
+        'PreTrainedTokenizerFast',
     ]
     peft_include_names = ['.*PeftModel.*', '.*Config']
     diffusers_include_names = [

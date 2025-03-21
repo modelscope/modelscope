@@ -1424,7 +1424,7 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
+        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=False)
         if repo_exists:
             if exist_ok:
                 return f'{endpoint}/{repo_type}s/{repo_id}'

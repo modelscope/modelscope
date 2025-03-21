@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 import uuid
 
@@ -27,7 +28,7 @@ class TestCreateRepo(unittest.TestCase):
             repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
         delete_credential()
 
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_create_repo(self):
 
         logger.info(
@@ -36,14 +37,18 @@ class TestCreateRepo(unittest.TestCase):
 
         try:
             self.api.create_repo(
-                repo_id=self.repo_id_model, repo_type=REPO_TYPE_MODEL)
+                repo_id=self.repo_id_model,
+                repo_type=REPO_TYPE_MODEL,
+                exist_ok=True)
         except Exception as e:
             logger.error(f'Failed to create repo {self.repo_id_model} !')
             raise e
 
         try:
             self.api.create_repo(
-                repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
+                repo_id=self.repo_id_dataset,
+                repo_type=REPO_TYPE_DATASET,
+                exist_ok=True)
         except Exception as e:
             logger.error(f'Failed to create repo {self.repo_id_dataset} !')
             raise e

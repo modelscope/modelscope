@@ -186,14 +186,15 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 RUN if [ "$USE_GPU" = "True" ] ; then \
        export TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" && pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
     else \
-     echo 'cpu unsupport Pointnet2'; \
+     echo 'CPU env does not support Pointnet2'; \
     fi
 
 # NVIDIA apex building
 RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir packaging &&\
         bash /tmp/install_apex.sh; \
     else \
-     echo 'cpu unsupport nvidia apex'; \
+     echo 'CPU env does not support NVIDIA Apex.'; \
     fi
 
 

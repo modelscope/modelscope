@@ -60,13 +60,13 @@ do
               -v $MODELSCOPE_HOME_CACHE/$idx:/root \
               -v /home/admin/pre-commit:/home/admin/pre-commit \
               -e CI_TEST=True \
-              -e TEST_LEVEL=$TEST_LEVEL \
+              -e TEST_LEVEL=1 \
               -e MODELSCOPE_CACHE=$MODELSCOPE_CACHE_DIR_IN_CONTAINER \
               -e MODELSCOPE_DOMAIN=$MODELSCOPE_DOMAIN \
               -e HUB_DATASET_ENDPOINT=$HUB_DATASET_ENDPOINT \
               -e TEST_ACCESS_TOKEN_CITEST=$TEST_ACCESS_TOKEN_CITEST \
               -e TEST_ACCESS_TOKEN_SDKDEV=$TEST_ACCESS_TOKEN_SDKDEV \
-              -e TEST_LEVEL=$TEST_LEVEL \
+              -e TEST_LEVEL=1 \
               -e MODELSCOPE_ENVIRONMENT='ci' \
               -e TEST_UPLOAD_MS_TOKEN=$TEST_UPLOAD_MS_TOKEN \
               -e MODEL_TAG_URL=$MODEL_TAG_URL \

@@ -73,14 +73,4 @@ if TYPE_CHECKING:
         AutoModelForKeypointDetection = None
 
 else:
-
-    from .patcher import get_all_imported_modules, _patch_pretrained_class
-    try:
-        all_available_modules = _patch_pretrained_class(
-            get_all_imported_modules(), wrap=True)
-    except Exception:  # noqa
-        import traceback
-        traceback.print_exc()
-    else:
-        for module in all_available_modules:
-            globals()[module.__name__] = module
+    pass

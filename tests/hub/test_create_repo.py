@@ -15,7 +15,7 @@ logger = get_logger()
 class TestCreateRepo(unittest.TestCase):
 
     def setUp(self):
-        self.api = HubApi(endpoint='https://www.modelscope.cn')
+        self.api = HubApi()
         self.api.login(TEST_ACCESS_TOKEN1)
 
         self.repo_id_model: str = f'{TEST_ORG}/test_create_repo_model_{uuid.uuid4().hex[-6:]}'

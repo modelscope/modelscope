@@ -11,6 +11,7 @@ import re
 import shutil
 import tempfile
 import uuid
+import warnings
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -422,6 +423,12 @@ class HubApi:
                    original_model_id: Optional[str] = None,
                    ignore_file_pattern: Optional[Union[List[str], str]] = None,
                    lfs_suffix: Optional[Union[str, List[str]]] = None):
+        warnings.warn(
+            'This function is deprecated and will be removed in future versions. '
+            'Please use git command directly or use HubApi().upload_folder instead',
+            DeprecationWarning,
+            stacklevel=2
+        )
         """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 

@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union
@@ -64,7 +65,10 @@ def convert_patterns(raw_input: Union[str, List[str]]):
 # during model download, the '.' would be converted to '___' to produce
 # actual physical (masked) directory for storage
 def get_model_masked_directory(directory, model_id):
-    parts = directory.rsplit('/', 2)
+    if sys.platform.startswith('win'):
+        parts = directory.rsplit('\\', 2)
+    else:
+        parts = directory.rsplit('/', 2)
     # this is the actual directory the model files are located.
     masked_directory = os.path.join(parts[0], model_id.replace('.', '___'))
     return masked_directory

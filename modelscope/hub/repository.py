@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import warnings
 from typing import Optional
 
 from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
@@ -113,6 +114,11 @@ class Repository:
              local_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
              remote_branch: Optional[str] = DEFAULT_REPOSITORY_REVISION,
              force: Optional[bool] = False):
+        warnings.warn(
+            'This function is deprecated and will be removed in future versions. '
+            'Please use git command directly or use HubApi().upload_folder instead',
+            DeprecationWarning,
+            stacklevel=2)
         """Push local files to remote, this method will do.
         Execute git pull, git add, git commit, git push in order.
 
@@ -261,6 +267,11 @@ class DatasetRepository:
              commit_message: str,
              branch: Optional[str] = DEFAULT_DATASET_REVISION,
              force: Optional[bool] = False):
+        warnings.warn(
+            'This function is deprecated and will be removed in future versions. '
+            'Please use git command directly or use HubApi().upload_folder instead',
+            DeprecationWarning,
+            stacklevel=2)
         """Push local files to remote, this method will do.
            git pull
            git add

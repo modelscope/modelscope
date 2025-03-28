@@ -1,0 +1,30 @@
+ENV TZ=Asia/Shanghai
+ENV arch=x86_64
+SHELL ["/bin/bash", "-c"]
+COPY docker/rcfiles /tmp/resources
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-certificates && \
+    apt-get install -y make apt-utils openssh-server locales wget git strace gdb sox libopenmpi-dev curl \
+    iputils-ping net-tools iproute2 autoconf automake gperf libre2-dev libssl-dev \
+    libtool libcurl4-openssl-dev libb64-dev libgoogle-perftools-dev patchelf \
+    rapidjson-dev scons software-properties-common pkg-config unzip zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev \
+    libarchive-dev libxml2-dev libnuma-dev cmake \
+    libgeos-dev strace vim ffmpeg libsm6 tzdata language-pack-zh-hans \
+    ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy libxext6 build-essential ninja-build \
+    libjpeg-dev libpng-dev && \
+    wget https://packagecloud.io/github/git-lfs/packages/debian/bullseye/git-lfs_3.2.0_amd64.deb/download -O ./git-lfs_3.2.0_amd64.deb && \
+    dpkg -i ./git-lfs_3.2.0_amd64.deb && \
+    rm -f ./git-lfs_3.2.0_amd64.deb && \
+    locale-gen zh_CN && \
+    locale-gen zh_CN.utf8 && \
+    update-locale LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 && \
+    ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
+RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz && \
+    cd /tmp && tar xzf boost.tar.gz  && \
+    mv /tmp/boost_1_80_0/boost /usr/include/boost && \
+    rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz

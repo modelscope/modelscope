@@ -345,7 +345,8 @@ class PaddleCPUImageBuilder(Builder):
         # self.args.modelscope_version = '1.24.0'
 
     def generate_dockerfile(self) -> str:
-        extra_content = ''
+        with open('docker/Dockerfile.paddle_extra_install', 'r') as f:
+            extra_content = f.read()
 
         with open('docker/Dockerfile.ubuntu_paddle', 'r') as f:
             content = f.read()

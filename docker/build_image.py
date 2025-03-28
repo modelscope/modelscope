@@ -335,6 +335,50 @@ class LLMImageBuilder(Builder):
         return os.system(f'docker push {image_tag2}')
 
 
+class PaddleCPUImageBuilder(Builder):
+
+    def __init__(self, args: Any, dry_run: bool):
+        super().__init__(args, dry_run)
+        self.args.paddle_version = '3.0.0'
+        self.args.python_tag = 'py310'
+        self.args.ubuntu_version = '20.04'
+        # self.args.modelscope_version = '1.24.0'
+
+    def generate_dockerfile(self) -> str:
+        extra_content = ''
+
+        with open('docker/Dockerfile.ubuntu_paddle', 'r') as f:
+            content = f.read()
+            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    # TODO: self.args.paddle_version
+    # TODO: ubuntu version: 20.04
+    # TODO: python 3.10.13
+    def image(self) -> str:
+        return (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
+            f'paddle{self.args.paddle_version}-{self.args.modelscope_version}-test'
+        )
+
+    def build(self) -> int:
+        return os.system(f'docker build -t {self.image()} -f Dockerfile .')
+
+    def push(self):
+        ret = os.system(f'docker push {self.image()}')
+        if ret != 0:
+            return ret
+        image_tag2 = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
+            f'torch{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
+        )
+        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
@@ -352,6 +396,7 @@ parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
+parser.add_argument('--paddle_version', type=str, default='3.0.0')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--dry_run', type=int, default=0)
 args = parser.parse_args()
@@ -366,6 +411,8 @@ elif args.image_type.lower() == 'gpu':
     builder_cls = GPUImageBuilder
 elif args.image_type.lower() == 'llm':
     builder_cls = LLMImageBuilder
+elif args.image_type.lower() == 'paddle_cpu':
+    builder_cls = PaddleCPUImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

@@ -11,7 +11,7 @@ on:
         description: 'ModelScope branch to build from(release/x.xx)'
         required: true
       image_type:
-        description: 'The image type to build(cpu/gpu/llm)'
+        description: 'The image type to build(cpu/gpu/llm/paddle_cpu)'
         required: true
       modelscope_version:
         description: 'ModelScope version to use(x.xx.x)'
@@ -30,6 +30,10 @@ on:
         description: 'Python version to use, default is 3.10.14'
         required: false
         default: '3.10.14'
+      paddle_version:
+        description: 'Paddle version to use, default is 3.0.0'
+        required: false
+        default: '3.0.0'
 
 run-name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}-${{ inputs.python_version }}-by-@${{ github.actor }}
 
@@ -55,4 +59,4 @@ jobs:
       run: |
         set -e
         source ~/.bashrc
-        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --python_version ${{ github.event.inputs.python_version }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --ci_image ${{ github.event.inputs.ci_image }} ${{ github.event.inputs.other_params }}
+        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --python_version ${{ github.event.inputs.python_version }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --paddle_version ${{ github.event.inputs.paddle_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --ci_image ${{ github.event.inputs.ci_image }} ${{ github.event.inputs.other_params }}

@@ -371,7 +371,7 @@ class PaddleCPUImageBuilder(Builder):
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
-            f'paddle{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
+            f'paddle{self.args.paddle_version}-{self.args.modelscope_version}-{formatted_time}-test'
         )
         ret = os.system(f'docker tag {self.image()} {image_tag2}')
         if ret != 0:

@@ -5,7 +5,7 @@ bmt_clipit>=1.0
 chumpy
 clip>=1.0
 control_ldm
-ddpm_guided_diffusion
+ddpm_guided_diffusion==0.0.0
 diffusers
 easydict
 edit_distance
@@ -55,7 +55,7 @@ regex
 scikit-image
 scikit-learn
 shapely
-shotdetect_scenedetect_lgss>=0.0.4
+shotdetect_scenedetect_lgss==0.0.4
 smplx
 tensorflow-estimator>=1.15.1
 tf_slim

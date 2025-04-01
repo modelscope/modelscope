@@ -14,8 +14,8 @@ class HifiSSRTestTask(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_face_compare(self):
-        ref_wav = 'data/test/audios/ssr_ref.wav'
-        source_wav = 'data/test/audios/ssr_source.wav'
+        ref_wav = 'data/test/audios/speaker1_a_en_16k.wav'
+        source_wav = 'data/test/audios/speaker1_a_en_16k.wav'
         # out_wav= ''
         inp_data = {
             'ref_wav': ref_wav,

@@ -350,7 +350,11 @@ class SwiftImageBuilder(LLMImageBuilder):
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
-        extra_content = """
+        with open('docker/Dockerfile.extra_install', 'r') as f:
+            extra_content = f.read()
+            extra_content = extra_content.replace('{python_version}',
+                                                  self.args.python_version)
+        extra_content += """
 RUN pip install --no-cache-dir -U deepspeed==0.14.5 icecream soundfile pybind11 && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && \
     CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \

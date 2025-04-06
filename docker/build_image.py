@@ -352,6 +352,8 @@ class SwiftImageBuilder(LLMImageBuilder):
         meta_file = './docker/install.sh'
         extra_content = """
 RUN pip install --no-cache-dir -U deepspeed==0.14.5 icecream soundfile pybind11 && \
+    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && \
+    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
     pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
 """
         version_args = (

@@ -206,6 +206,7 @@ class OCRDetectionPipeline(Pipeline):
             img_pad_resize = img_pad_resize - np.array(
                 [123.68, 116.78, 103.94], dtype=np.float32)
 
+            import tensorflow as tf
             with self._graph.as_default():
                 resize_size = tf.stack([resize_size, resize_size])
                 orig_size = tf.stack([max(h, w), max(h, w)])

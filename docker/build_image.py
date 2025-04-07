@@ -162,6 +162,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -225,6 +226,7 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -300,6 +302,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -354,10 +357,7 @@ class SwiftImageBuilder(LLMImageBuilder):
                                                   self.args.python_version)
         extra_content += """
 RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 && \
-    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
-    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
-    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+    pip install --no-cache-dir -U icecream soundfile pybind11
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -371,6 +371,7 @@ RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps && \
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{install_megatron_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',

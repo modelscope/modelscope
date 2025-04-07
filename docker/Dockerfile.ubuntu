@@ -16,6 +16,8 @@ COPY {meta_file} /tmp/install.sh
 
 ARG INSTALL_MS_DEPS={install_ms_deps}
 
+ARG INSTALL_MEGATRON_DEPS={install_megatron_deps}
+
 # install dependencies
 COPY requirements /var/modelscope
 
@@ -49,6 +51,12 @@ if [ "$INSTALL_MS_DEPS" = "True" ]; then \
 else \
     pip install --no-cache-dir -r /var/modelscope/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip cache purge; \
+fi
+
+if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
+    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
+    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
+    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
 fi
 
 ARG CUR_TIME={cur_time}

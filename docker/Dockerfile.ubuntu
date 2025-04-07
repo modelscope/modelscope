@@ -53,12 +53,6 @@ else \
     pip cache purge; \
 fi
 
-RUN if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
-    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
-    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
-    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable; \
-fi
-
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
@@ -79,7 +73,13 @@ RUN sh /tmp/install.sh {version_args} && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
-RUN pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge
+
+RUN pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge && \
+if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
+    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
+    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
+    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable; \
+fi
 
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True

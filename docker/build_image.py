@@ -31,7 +31,7 @@ class Builder:
         if not args.cuda_version:
             args.cuda_version = '12.1.0'
         if not args.vllm_version:
-            args.vllm_version = '0.5.3'
+            args.vllm_version = '0.7.2'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:

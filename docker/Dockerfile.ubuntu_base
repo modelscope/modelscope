@@ -186,7 +186,15 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
 RUN if [ "$USE_GPU" = "True" ] ; then \
        export TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" && pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
     else \
-     echo 'cpu unsupport Pointnet2'; \
+     echo 'CPU env does not support Pointnet2'; \
+    fi
+
+# NVIDIA apex building
+RUN if [ "$USE_GPU" = "True" ] ; then \
+        pip install --no-cache-dir packaging &&\
+        bash /tmp/install_apex.sh; \
+    else \
+     echo 'CPU env does not support NVIDIA Apex.'; \
     fi
 
 
@@ -203,13 +211,6 @@ ARG TENSORFLOW_VERSION={tf_version}
             cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
     fi
 
- # This limits the cuda121 version
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            pip install --no-cache-dir --force tinycudann==1.7  -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html; \
-        else \
-            echo 'cpu not install tinycudann'; \
-    fi
-
- RUN pip install --no-cache-dir fairseq
+ RUN pip install --no-cache-dir https://github.com/liyaodev/fairseq/releases/download/v0.12.3.1/fairseq-0.12.3.1-cp311-cp311-linux_x86_64.whl  # for py311
 
 ENTRYPOINT []

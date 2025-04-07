@@ -51,7 +51,7 @@ RUN echo $CUR_TIME
 RUN sh /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils pyav librosa timm transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils pyav librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \

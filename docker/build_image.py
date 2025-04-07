@@ -335,6 +335,76 @@ class LLMImageBuilder(Builder):
         return os.system(f'docker push {image_tag2}')
 
 
+class SwiftImageBuilder(LLMImageBuilder):
+
+    def init_args(self, args) -> Any:
+        if not args.torch_version:
+            args.torch_version = '2.5.1'
+            args.torchaudio_version = '2.5.1'
+            args.torchvision_version = '0.20.1'
+        if not args.cuda_version:
+            args.cuda_version = '12.4.0'
+        if not args.vllm_version:
+            args.vllm_version = '0.7.3'
+        return super().init_args(args)
+
+    def generate_dockerfile(self) -> str:
+        meta_file = './docker/install.sh'
+        with open('docker/Dockerfile.extra_install', 'r') as f:
+            extra_content = f.read()
+            extra_content = extra_content.replace('{python_version}',
+                                                  self.args.python_version)
+        extra_content += """
+RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps \
+    pip install --no-cache-dir -U icecream soundfile pybind11 && \
+    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && \
+    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
+    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+"""
+        version_args = (
+            f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
+            f'{self.args.flashattn_version}')
+        with open('docker/Dockerfile.ubuntu', 'r') as f:
+            content = f.read()
+            content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{meta_file}', meta_file)
+            content = content.replace('{version_args}', version_args)
+            content = content.replace('{cur_time}', formatted_time)
+            content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{torch_version}',
+                                      self.args.torch_version)
+            content = content.replace('{torchvision_version}',
+                                      self.args.torchvision_version)
+            content = content.replace('{torchaudio_version}',
+                                      self.args.torchaudio_version)
+            content = content.replace('{index_url}', '')
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
+        return content
+
+    def image(self) -> str:
+        return (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
+            f'{self.args.python_tag}-torch{self.args.torch_version}-{self.args.modelscope_version}-swift-test'
+        )
+
+    def push(self):
+        ret = os.system(f'docker push {self.image()}')
+        if ret != 0:
+            return ret
+        image_tag2 = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
+            f'{self.args.python_tag}-torch{self.args.torch_version}-'
+            f'{self.args.modelscope_version}-swift-{formatted_time}-test')
+        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
@@ -366,6 +436,8 @@ elif args.image_type.lower() == 'gpu':
     builder_cls = GPUImageBuilder
 elif args.image_type.lower() == 'llm':
     builder_cls = LLMImageBuilder
+elif args.image_type.lower() == 'swift':
+    builder_cls = SwiftImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

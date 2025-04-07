@@ -9,5 +9,3 @@ apt-get update && apt-get install -y  hmmer kalign curl cmake \
         && popd \
         && rm -rf /tmp/hh-suite \
         && pip install --no-cache-dir  biopython ipdb
-
-#        && pip install --no-cache-dir unicore -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html \

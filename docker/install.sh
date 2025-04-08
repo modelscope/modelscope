@@ -16,7 +16,7 @@ pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
 
 pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 
-pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord optimum
+pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord optimum openai-whisper
 
 # pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl
 # find on: https://github.com/Dao-AILab/flash-attention/releases

@@ -11,6 +11,7 @@ import re
 import shutil
 import tempfile
 import uuid
+import warnings
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -225,7 +226,7 @@ class HubApi:
             headers=self.builder_headers(self.headers))
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
-        model_repo_url = f'{endpoint}/{model_id}'
+        model_repo_url = f'{endpoint}/models/{model_id}'
         return model_repo_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):
@@ -400,6 +401,33 @@ class HubApi:
                 'Failed to check existence of repo: %s, make sure you have access authorization.'
                 % repo_type)
 
+    def delete_repo(self, repo_id: str, repo_type: str, endpoint: Optional[str] = None):
+        """
+        Delete a repository from ModelScope.
+
+        Args:
+            repo_id (`str`):
+                A namespace (user or an organization) and a repo name separated
+                by a `/`.
+            repo_type (`str`):
+                The type of the repository. Supported types are `model` and `dataset`.
+            endpoint(`str`):
+                The endpoint to use. If not provided, the default endpoint is `https://www.modelscope.cn`
+                Could be set to `https://ai.modelscope.ai` for international version.
+        """
+
+        if not endpoint:
+            endpoint = self.endpoint
+
+        if repo_type == REPO_TYPE_DATASET:
+            self.delete_dataset(repo_id, endpoint)
+        elif repo_type == REPO_TYPE_MODEL:
+            self.delete_model(repo_id, endpoint)
+        else:
+            raise Exception(f'Arg repo_type {repo_type} not supported.')
+
+        logger.info(f'Repo {repo_id} deleted successfully.')
+
     @staticmethod
     def _create_default_config(model_dir):
         cfg_file = os.path.join(model_dir, ModelFile.CONFIGURATION)
@@ -422,6 +450,12 @@ class HubApi:
                    original_model_id: Optional[str] = None,
                    ignore_file_pattern: Optional[Union[List[str], str]] = None,
                    lfs_suffix: Optional[Union[str, List[str]]] = None):
+        warnings.warn(
+            'This function is deprecated and will be removed in future versions. '
+            'Please use git command directly or use HubApi().upload_folder instead',
+            DeprecationWarning,
+            stacklevel=2
+        )
         """Upload model from a given directory to given repository. A valid model directory
         must contain a configuration.json file.
 
@@ -917,6 +951,21 @@ class HubApi:
         dataset_list = r.json()[API_RESPONSE_FIELD_DATA]
         return [x['Name'] for x in dataset_list]
 
+    def delete_dataset(self, dataset_id: str, endpoint: Optional[str] = None):
+
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        path = f'{endpoint}/api/v1/datasets/{dataset_id}'
+        r = self.session.delete(path,
+                                cookies=cookies,
+                                headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        raise_on_error(r.json())
+
     def get_dataset_id_and_type(self, dataset_name: str, namespace: str, endpoint: Optional[str] = None):
         """ Get the dataset id and type. """
         if not endpoint:
@@ -1354,15 +1403,42 @@ class HubApi:
             chinese_name: Optional[str] = '',
             license: Optional[str] = Licenses.APACHE_V2,
             endpoint: Optional[str] = None,
+            exist_ok: Optional[bool] = False,
             **kwargs,
     ) -> str:
+        """
+        Create a repository on the ModelScope Hub.
 
-        # TODO: exist_ok
+        Args:
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            token (Union[str, bool, None]): The access token.
+            visibility (Optional[str]): The visibility of the repo,
+                could be `public`, `private`, `internal`, default to `public`.
+            repo_type (Optional[str]): The repo type, default to `model`.
+            chinese_name (Optional[str]): The Chinese name of the repo.
+            license (Optional[str]): The license of the repo, default to `apache-2.0`.
+            endpoint (Optional[str]): The endpoint to use.
+                In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
+            exist_ok (Optional[bool]): If the repo exists, whether to return the repo url directly.
+            **kwargs: The additional arguments.
+
+        Returns:
+            str: The repo url.
+        """
+
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
         if not endpoint:
             endpoint = self.endpoint
-        self.login(access_token=token)
+
+        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint)
+        if repo_exists:
+            if exist_ok:
+                return f'{endpoint}/{repo_type}s/{repo_id}'
+            else:
+                raise ValueError(f'Repo {repo_id} already exists!')
+
+        self.login(access_token=token, endpoint=endpoint)
 
         repo_id_list = repo_id.split('/')
         if len(repo_id_list) != 2:
@@ -1375,31 +1451,28 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            if not self.repo_exists(repo_id, repo_type=repo_type):
-                repo_url: str = self.create_model(
-                    model_id=repo_id,
-                    visibility=visibility,
-                    license=license,
-                    chinese_name=chinese_name,
-                )
-                with tempfile.TemporaryDirectory() as temp_cache_dir:
-                    from modelscope.hub.repository import Repository
-                    repo = Repository(temp_cache_dir, repo_id)
-                    default_config = {
-                        'framework': 'pytorch',
-                        'task': 'text-generation',
-                        'allow_remote': True
-                    }
-                    config_json = kwargs.get('config_json')
-                    if not config_json:
-                        config_json = {}
-                    config = {**default_config, **config_json}
-                    add_content_to_file(
-                        repo,
-                        'configuration.json', [json.dumps(config)],
-                        ignore_push_error=True)
-            else:
-                repo_url = f'{endpoint}/{repo_id}'
+            repo_url: str = self.create_model(
+                model_id=repo_id,
+                visibility=visibility,
+                license=license,
+                chinese_name=chinese_name,
+            )
+            with tempfile.TemporaryDirectory() as temp_cache_dir:
+                from modelscope.hub.repository import Repository
+                repo = Repository(temp_cache_dir, repo_id)
+                default_config = {
+                    'framework': 'pytorch',
+                    'task': 'text-generation',
+                    'allow_remote': True
+                }
+                config_json = kwargs.get('config_json')
+                if not config_json:
+                    config_json = {}
+                config = {**default_config, **config_json}
+                add_content_to_file(
+                    repo,
+                    'configuration.json', [json.dumps(config)],
+                    ignore_push_error=True)
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1407,19 +1480,18 @@ class HubApi:
             if visibility is None:
                 raise ValueError(f'Invalid visibility: {visibility}, '
                                  f'supported visibilities: `public`, `private`, `internal`')
-            if not self.repo_exists(repo_id, repo_type=repo_type):
-                repo_url: str = self.create_dataset(
-                    dataset_name=repo_name,
-                    namespace=namespace,
-                    chinese_name=chinese_name,
-                    license=license,
-                    visibility=visibility,
-                )
-            else:
-                repo_url = f'{endpoint}/datasets/{namespace}/{repo_name}'
+            repo_url: str = self.create_dataset(
+                dataset_name=repo_name,
+                namespace=namespace,
+                chinese_name=chinese_name,
+                license=license,
+                visibility=visibility,
+            )
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        logger.info(f'Repo created: {repo_url}')
 
         return repo_url
 

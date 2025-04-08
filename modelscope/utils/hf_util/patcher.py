@@ -33,10 +33,19 @@ def get_all_imported_modules():
     """Find all modules in transformers/peft/diffusers"""
     all_imported_modules = []
     transformers_include_names = [
-        'Auto.*', 'T5.*', 'BitsAndBytesConfig', 'GenerationConfig', 'Awq.*',
-        'GPTQ.*', 'BatchFeature', 'Qwen.*', 'Llama.*', 'PretrainedConfig',
-        'PreTrainedTokenizer', 'PreTrainedModel', 'PreTrainedTokenizerFast',
-        'Pipeline'
+        'Auto.*',
+        'T5.*',
+        'BitsAndBytesConfig',
+        'GenerationConfig',
+        'Awq.*',
+        'GPTQ.*',
+        'BatchFeature',
+        'Qwen.*',
+        'Llama.*',
+        'PretrainedConfig',
+        'PreTrainedTokenizer',
+        'PreTrainedModel',
+        'PreTrainedTokenizerFast',
     ]
     peft_include_names = ['.*PeftModel.*', '.*Config']
     diffusers_include_names = [
@@ -329,9 +338,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         if var is None or not hasattr(var, '__name__'):
             continue
         name = var.__name__
-        need_model = 'model' in name.lower() or 'processor' in name.lower(
-        ) or 'extractor' in name.lower() or 'pipeline' in name.lower()
-        if need_model:
+        skip_model = 'tokenizer' in name.lower() or 'config' in name.lower()
+        if not skip_model:
             ignore_file_pattern_kwargs = {}
         else:
             ignore_file_pattern_kwargs = {

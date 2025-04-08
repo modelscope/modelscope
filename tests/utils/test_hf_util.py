@@ -11,7 +11,8 @@ from huggingface_hub import CommitInfo, RepoUrl
 from modelscope import HubApi
 from modelscope.utils.hf_util.patcher import patch_context
 from modelscope.utils.logger import get_logger
-from modelscope.utils.test_utils import TEST_MODEL_ORG, test_level
+from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
+                                         test_level)
 
 logger = get_logger()
 
@@ -21,6 +22,7 @@ class HFUtilTest(unittest.TestCase):
     def setUp(self):
         logger.info('SetUp')
         self.api = HubApi()
+        self.api.login(TEST_ACCESS_TOKEN1)
         self.user = TEST_MODEL_ORG
         print(self.user)
         self.create_model_name = '%s/%s_%s' % (self.user, 'test_model_upload',

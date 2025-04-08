@@ -200,6 +200,13 @@ template_info = [
     TemplateInfo(
         template=TemplateType.gemma,
         template_regex=
+        f'{no("pali")}.*{cases("gemma3", "gemma-3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma3',
+    ),
+    TemplateInfo(
+        template=TemplateType.gemma,
+        template_regex=
         f'{no("pali")}.*{cases("gemma2", "gemma-2")}\\b.*{chat_suffix}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma2',
@@ -494,6 +501,13 @@ template_info = [
         f'.*{cases("command-r")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-r',
+    ),
+
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("command-a")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/command-a',
     ),
 
     # codegeex

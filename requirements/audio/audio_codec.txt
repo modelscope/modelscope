@@ -1,1 +1,1 @@
-funcodec>=0.2.0
+ms-funcodec>=0.2.0

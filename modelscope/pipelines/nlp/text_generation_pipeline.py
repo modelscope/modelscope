@@ -440,7 +440,7 @@ class QWenTextGenerationPipeline(Pipeline):
 class SeqGPTPipeline(Pipeline):
 
     def __init__(self, model: Union[Model, str], **kwargs):
-        from modelscope.utils.hf_util import AutoTokenizer
+        from modelscope import AutoTokenizer
 
         if isinstance(model, str):
             model_dir = snapshot_download(

@@ -78,11 +78,10 @@ def get_default_automodel(config) -> Optional[type]:
 
 def get_hf_automodel_class(model_dir: str,
                            task_name: Optional[str]) -> Optional[type]:
-    from modelscope.utils.hf_util import (AutoConfig, AutoModel,
-                                          AutoModelForCausalLM,
-                                          AutoModelForSeq2SeqLM,
-                                          AutoModelForTokenClassification,
-                                          AutoModelForSequenceClassification)
+    from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
+                            AutoModelForSeq2SeqLM,
+                            AutoModelForTokenClassification,
+                            AutoModelForSequenceClassification)
     automodel_mapping = {
         Tasks.backbone: AutoModel,
         Tasks.chat: AutoModelForCausalLM,

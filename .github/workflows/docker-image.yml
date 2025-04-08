@@ -11,7 +11,7 @@ on:
         description: 'ModelScope branch to build from(release/x.xx)'
         required: true
       image_type:
-        description: 'The image type to build(cpu/gpu/llm)'
+        description: 'The image type to build(cpu/gpu/llm/swift)'
         required: true
       modelscope_version:
         description: 'ModelScope version to use(x.xx.x)'

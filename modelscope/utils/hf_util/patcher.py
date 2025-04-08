@@ -16,8 +16,16 @@ from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
                                          CommitOperationAdd)
 
 ignore_file_pattern = [
-    r'\w+\.bin', r'\w+\.safetensors', r'\w+\.pth', r'\w+\.pt', r'\w+\.h5',
-    r'\w+\.ckpt'
+    r'\w+\.bin',
+    r'\w+\.safetensors',
+    r'\w+\.pth',
+    r'\w+\.pt',
+    r'\w+\.h5',
+    r'\w+\.ckpt',
+    r'\w+\.zip',
+    r'\w+\.onnx',
+    r'\w+\.tar',
+    r'\w+\.gz',
 ]
 
 
@@ -34,7 +42,7 @@ def get_all_imported_modules():
     diffusers_include_names = [
         '^(?!TF|Flax).*Pipeline$', '^(?!TF|Flax).*Autoencoder.*',
         '^(?!TF|Flax).*Model$', '^(?!TF|Flax).*Adapter$', 'ImageProjection',
-        '^(?!TF|Flax).*UNet$'
+        '^(?!TF|Flax).*UNet$', '^(?!TF|Flax).*Scheduler$'
     ]
     if importlib.util.find_spec('transformers') is not None:
         import transformers

@@ -1,0 +1,26 @@
+FROM paddlepaddle/paddle:3.0.0-gpu-cuda12.6-cudnn9.5-trt10.5
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+ENV arch=x86_64
+
+COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
+RUN apt-get update && \
+    apt-get install -y libsox-dev unzip libaio-dev zip iputils-ping telnet sudo git net-tools && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+{extra_content}
+
+# Install modelscope[datasets]
+RUN pip install 'modelscope[datasets]' -U && pip cache purge
+
+ARG CUR_TIME={cur_time}
+RUN echo $CUR_TIME
+
+
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+ENV VLLM_USE_MODELSCOPE=True
+ENV LMDEPLOY_USE_MODELSCOPE=True
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
+SHELL ["/bin/bash", "-c"]

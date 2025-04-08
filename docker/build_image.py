@@ -450,6 +450,53 @@ class PaddleCPUImageBuilder(Builder):
         return os.system(f'docker push {image_tag2}')
 
 
+class PaddleGPUImageBuilder(Builder):
+
+    def __init__(self, args: Any, dry_run: bool):
+        super().__init__(args, dry_run)
+        self.args.paddle_version = '3.0.0'
+        self.args.python_tag = 'py310'
+        self.args.ubuntu_version = '20.04'
+        # self.args.modelscope_version = '1.24.0'
+        self.args.cuda_tag = '12.6'
+        self.args.trt_tag = '10.5'
+
+    def generate_dockerfile(self) -> str:
+        with open('docker/Dockerfile.paddle_extra_install', 'r') as f:
+            extra_content = f.read()
+
+        with open('docker/Dockerfile.ubuntu_paddle_gpu', 'r') as f:
+            content = f.read()
+            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    # TODO: self.args.paddle_version
+    # TODO: ubuntu version: 20.04
+    # TODO: python 3.10.13
+    def image(self) -> str:
+        return (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_tag}-trt{self.args.trt_tag}-'
+            f'{self.args.python_tag}-paddle{self.args.paddle_version}-{self.args.modelscope_version}-test'
+        )
+
+    def build(self) -> int:
+        return os.system(f'docker build -t {self.image()} -f Dockerfile .')
+
+    def push(self):
+        ret = os.system(f'docker push {self.image()}')
+        if ret != 0:
+            return ret
+        image_tag2 = (
+            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_tag}-trt{self.args.trt_tag}-'
+            f'{self.args.python_tag}-paddle{self.args.paddle_version}-{self.args.modelscope_version}-'
+            f'{formatted_time}-test')
+        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        if ret != 0:
+            return ret
+        return os.system(f'docker push {image_tag2}')
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
@@ -486,6 +533,8 @@ elif args.image_type.lower() == 'swift':
     builder_cls = SwiftImageBuilder
 elif args.image_type.lower() == 'paddle_cpu':
     builder_cls = PaddleCPUImageBuilder
+elif args.image_type.lower() == 'paddle_gpu':
+    builder_cls = PaddleGPUImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

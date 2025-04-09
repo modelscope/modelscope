@@ -198,6 +198,8 @@ class VolumeDensity(nn.Module):
 class VolumeRadiance(nn.Module):
 
     def __init__(self, config):
+        import tinycudann as tcnn
+
         super(VolumeRadiance, self).__init__()
         self.config = config
         self.n_dir_dims = 3

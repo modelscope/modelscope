@@ -1,4 +1,4 @@
-FROM paddlepaddle/paddle:3.0.0-gpu-cuda12.6-cudnn9.5-trt10.5
+FROM paddlepaddle/paddle:3.0.0rc1-gpu-cuda12.3-cudnn9.0-trt8.6
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai

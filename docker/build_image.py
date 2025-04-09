@@ -458,8 +458,8 @@ class PaddleGPUImageBuilder(Builder):
         self.args.python_tag = 'py310'
         self.args.ubuntu_version = '20.04'
         # self.args.modelscope_version = '1.24.0'
-        self.args.cuda_tag = '12.6'
-        self.args.trt_tag = '10.5'
+        self.args.cuda_tag = '12.3'
+        self.args.trt_tag = '8.6'
 
     def generate_dockerfile(self) -> str:
         with open('docker/Dockerfile.paddle_extra_install', 'r') as f:

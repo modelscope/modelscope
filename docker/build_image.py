@@ -340,15 +340,6 @@ class LLMImageBuilder(Builder):
 
 class SwiftImageBuilder(LLMImageBuilder):
 
-    def init_args(self, args) -> Any:
-        if not args.torch_version:
-            args.torch_version = '2.5.1'
-            args.torchaudio_version = '2.5.1'
-            args.torchvision_version = '0.20.1'
-        if not args.vllm_version:
-            args.vllm_version = '0.7.3'
-        return super().init_args(args)
-
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:

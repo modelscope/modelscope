@@ -455,7 +455,7 @@ class PaddleGPUImageBuilder(Builder):
     def __init__(self, args: Any, dry_run: bool):
         super().__init__(args, dry_run)
         self.args.paddle_version = '3.0.0'
-        self.args.python_tag = 'py310'
+        self.args.python_tag = 'py310'  # 3.10.16
         self.args.ubuntu_version = '20.04'
         # self.args.modelscope_version = '1.24.0'
         self.args.cuda_tag = '12.3'
@@ -473,7 +473,7 @@ class PaddleGPUImageBuilder(Builder):
 
     # TODO: self.args.paddle_version
     # TODO: ubuntu version: 20.04
-    # TODO: python 3.10.13
+    # TODO: python 3.10.16
     def image(self) -> str:
         return (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_tag}-trt{self.args.trt_tag}-'

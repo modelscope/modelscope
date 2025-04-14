@@ -25,11 +25,3 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-ce
 
 ENV PATH /usr/bin:$PATH
 ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
-
-RUN set -eux; \
-        for src in idle3 pydoc3 python3 python3-config; do \
-                dst="$(echo "$src" | tr -d 3)"; \
-                [ -s "/usr/bin/$src" ]; \
-                [ ! -e "/usr/bin/$dst" ]; \
-                ln -svT "$src" "/usr/bin/$dst"; \
-        done

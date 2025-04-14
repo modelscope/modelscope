@@ -19,14 +19,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# make some useful symlinks that are expected to exist ("/usr/local/bin/python" and friends)
-RUN set -eux; \
-        for src in idle3 pydoc3 python3 python3-config; do \
-                dst="$(echo "$src" | tr -d 3)"; \
-                [ -s "/usr/local/bin/$src" ]; \
-                [ ! -e "/usr/local/bin/$dst" ]; \
-                ln -svT "$src" "/usr/local/bin/$dst"; \
-        done
+# set link for python
+sudo ln -s /usr/bin/python3 /usr/local/bin/python
 
 
 {extra_content}

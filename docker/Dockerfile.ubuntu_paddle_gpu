@@ -4,11 +4,30 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 ENV arch=x86_64
 
+# default shell bash
+ENV SHELL=/bin/bash
+
+
+ENV PATH /usr/local/bin:$PATH
+ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+
+SHELL ["/bin/bash", "-c"]
+
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
 RUN apt-get update && \
     apt-get install -y libsox-dev unzip libaio-dev zip iputils-ping telnet sudo git net-tools && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# make some useful symlinks that are expected to exist ("/usr/local/bin/python" and friends)
+RUN set -eux; \
+        for src in idle3 pydoc3 python3 python3-config; do \
+                dst="$(echo "$src" | tr -d 3)"; \
+                [ -s "/usr/local/bin/$src" ]; \
+                [ ! -e "/usr/local/bin/$dst" ]; \
+                ln -svT "$src" "/usr/local/bin/$dst"; \
+        done
+
 
 {extra_content}
 
@@ -23,4 +42,3 @@ ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
-SHELL ["/bin/bash", "-c"]

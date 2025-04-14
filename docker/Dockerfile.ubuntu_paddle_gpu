@@ -20,7 +20,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # set link for python
-sudo ln -s /usr/bin/python3 /usr/local/bin/python
+RUN sudo ln -s /usr/bin/python3 /usr/local/bin/python
 
 
 {extra_content}

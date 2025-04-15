@@ -206,12 +206,8 @@ class OCRDetectionPipeline(Pipeline):
             img_pad_resize = img_pad_resize - np.array(
                 [123.68, 116.78, 103.94], dtype=np.float32)
 
-            import tensorflow as tf
-            with self._graph.as_default():
-                resize_size = tf.stack([resize_size, resize_size])
-                orig_size = tf.stack([max(h, w), max(h, w)])
-                self.output['orig_size'] = orig_size
-                self.output['resize_size'] = resize_size
+            self._last_image_resize_size = np.array([resize_size, resize_size])
+            self._last_image_orig_size = np.array([max(h, w), max(h, w)])
 
             result = {'img': np.expand_dims(img_pad_resize, axis=0)}
             return result
@@ -240,8 +236,8 @@ class OCRDetectionPipeline(Pipeline):
             rboxes = rboxes[:count, :]
 
             # convert rboxes to polygons and find its coordinates on the original image
-            orig_h, orig_w = inputs['orig_size']
-            resize_h, resize_w = inputs['resize_size']
+            resize_h, resize_w = self._last_image_resize_size
+            orig_h, orig_w = self._last_image_orig_size
             polygons = rboxes_to_polygons(rboxes)
             scale_y = float(orig_h) / float(resize_h)
             scale_x = float(orig_w) / float(resize_w)

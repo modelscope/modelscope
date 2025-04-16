@@ -2,9 +2,11 @@ accelerate
 cloudpickle
 decord>=0.6.0
 diffusers>=0.25.0
-# 0.12.1 has issue of No such file or directory: 'fairseq/version.txt'
-fairseq==0.12.2
 ftfy>=6.0.3
+# 0.12.1 has issue of No such file or directory: 'fairseq/version.txt'
+# 0.12.2 not support py311
+#fairseq==0.12.2
+https://github.com/liyaodev/fairseq/releases/download/v0.12.3.1/fairseq-0.12.3.1-cp311-cp311-linux_x86_64.whl
 librosa==0.10.1
 opencv-python
 pycocoevalcap>=1.2

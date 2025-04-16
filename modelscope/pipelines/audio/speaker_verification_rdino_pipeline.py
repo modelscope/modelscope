@@ -93,7 +93,7 @@ class RDINO_Pipeline(Pipeline):
                 if fs != self.model_config['sample_rate']:
                     raise ValueError(
                         'modelscope error: Only support %d sample rate files'
-                        % self.model_cfg['sample_rate'])
+                        % self.model_config['sample_rate'])
                 output['data%d' %
                        (i + 1)] = torch.from_numpy(data).unsqueeze(0)
             else:

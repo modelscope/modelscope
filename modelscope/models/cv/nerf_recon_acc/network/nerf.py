@@ -1,7 +1,6 @@
 # The implementation is modified from nerfacc, made publicly available under the MIT License
 # at https://github.com/KAIR-BAIR/nerfacc/blob/master/examples/radiance_fields/ngp.py
 import numpy as np
-import tinycudann as tcnn
 import torch
 import torch.nn as nn
 from nerfacc import ContractionType, OccupancyGrid, ray_marching, rendering
@@ -113,6 +112,8 @@ trunc_exp = _TruncExp.apply
 class VolumeDensity(nn.Module):
 
     def __init__(self, config):
+        import tinycudann as tcnn
+
         super().__init__()
         self.config = config
         self.radius = self.config.radius
@@ -197,6 +198,8 @@ class VolumeDensity(nn.Module):
 class VolumeRadiance(nn.Module):
 
     def __init__(self, config):
+        import tinycudann as tcnn
+
         super(VolumeRadiance, self).__init__()
         self.config = config
         self.n_dir_dims = 3

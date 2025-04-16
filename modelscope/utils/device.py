@@ -60,7 +60,7 @@ def device_placement(framework, device_name='gpu:0'):
         if device_type == Devices.gpu and not tf.test.is_gpu_available():
             logger.debug(
                 'tensorflow: cuda is not available, using cpu instead.')
-        device_type = Devices.cpu
+            device_type = Devices.cpu
         if device_type == Devices.cpu:
             with tf.device('/CPU:0'):
                 yield

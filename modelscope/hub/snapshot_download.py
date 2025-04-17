@@ -245,6 +245,9 @@ def _snapshot_download(
         if ALIYUN_INTERNAL_ACCELERATION == 'true':
             region_id: str = HubApi()._get_internal_acceleration_domain()
             if region_id:
+                logger.info(
+                    f'Aliyun internal acceleration has been enabled for {repo_id}.'
+                )
                 headers['x-aliyun-region-id'] = region_id
 
         _api = HubApi()

@@ -2025,6 +2025,12 @@ class HubApi:
         return payload
 
     def _get_internal_acceleration_domain(self):
+        """
+        Get the internal acceleration domain.
+
+        Returns:
+            str: The internal acceleration domain. e.g. `cn-hangzhou`, `cn-zhangjiakou`
+        """
 
         url = f'{self.endpoint}/api/v1/repos/internalAccelerationInfo'
 

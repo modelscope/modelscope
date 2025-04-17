@@ -385,6 +385,8 @@ class HubApi:
         else:
             path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
 
+        print(f'>>urlpath: {path}')
+
         r = self.session.get(path, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         code = handle_http_response(r, logger, cookies, repo_id, False)

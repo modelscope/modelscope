@@ -2024,26 +2024,23 @@ class HubApi:
 
         return payload
 
-    def _get_internal_acceleration_domain(self, internal_timeout: float = 0.5):
+    def _get_internal_acceleration_domain(self, internal_timeout: float = 0.2):
         """
         Get the internal acceleration domain.
 
         Args:
-            internal_timeout (float): The timeout for the request. Default to 0.5s.
+            internal_timeout (float): The timeout for the request. Default to 0.2s
 
         Returns:
             str: The internal acceleration domain. e.g. `cn-hangzhou`, `cn-zhangjiakou`
         """
-        import time
 
         def send_request(url: str, timeout: float):
-            t1 = time.time()
             try:
                 response = requests.get(url, timeout=timeout)
                 response.raise_for_status()
             except requests.exceptions.RequestException:
                 response = None
-            print(f'>> {url} took {time.time() - t1:.4f}s')
 
             return response
 

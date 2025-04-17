@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import enum
+import os
 
 
 class Fields(object):
@@ -510,6 +511,8 @@ DEFAULT_REPOSITORY_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
 DEFAULT_DATASET_NAMESPACE = 'modelscope'
 DEFAULT_DATA_ACCELERATION_ENDPOINT = 'https://oss-accelerate.aliyuncs.com'
+ALIYUN_INTERNAL_ACCELERATION = str(
+    os.environ.get('ALIYUN_INTERNAL_ACCELERATION', 'False')).lower()
 
 
 class ModeKeys:

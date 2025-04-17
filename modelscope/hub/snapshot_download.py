@@ -15,7 +15,8 @@ from modelscope.hub.file_download import (create_temporary_directory_and_cache,
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
-from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+from modelscope.utils.constant import (ALIYUN_INTERNAL_ACCELERATION,
+                                       DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
@@ -240,6 +241,10 @@ def _snapshot_download(
             ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
             'snapshot-identifier': str(uuid.uuid4()),
         }
+
+        if ALIYUN_INTERNAL_ACCELERATION == 'true':
+            headers['x-aliyun-region-id'] = 'cn-zhangjiakou'
+
         _api = HubApi()
         endpoint = _api.get_endpoint_for_read(
             repo_id=repo_id, repo_type=repo_type)

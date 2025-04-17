@@ -386,6 +386,7 @@ class HubApi:
             path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
 
         print(f'>>urlpath: {path}')
+        print(f'>>headers: {self.builder_headers(self.headers)}')
 
         r = self.session.get(path, cookies=cookies,
                              headers=self.builder_headers(self.headers))

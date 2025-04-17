@@ -243,7 +243,7 @@ def _snapshot_download(
         }
 
         if ALIYUN_INTERNAL_ACCELERATION == 'true':
-            headers['x-aliyun-region-id'] = 'cn-zhangjiakou'
+            headers['x-aliyun-region-id'] = 'cn-hangzhou'
 
         _api = HubApi()
         endpoint = _api.get_endpoint_for_read(

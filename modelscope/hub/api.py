@@ -385,9 +385,6 @@ class HubApi:
         else:
             path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
 
-        print(f'>>urlpath: {path}')
-        print(f'>>headers: {self.builder_headers(self.headers)}')
-
         r = self.session.get(path, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         code = handle_http_response(r, logger, cookies, repo_id, False)
@@ -2026,6 +2023,31 @@ class HubApi:
             logger.info(f'Skipped {nb_ignored_files} file(s) in commit (ignored by gitignore file).')
 
         return payload
+
+    def _get_internal_acceleration_domain(self):
+
+        url = f'{self.endpoint}/api/v1/repos/internalAccelerationInfo'
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            resp = response.json()
+            query_addr: str = resp['Data']['InternalRegionQueryAddress']
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f'Error occurred while fetching internal acceleration info: {e}')
+            query_addr: str = ''
+
+        region_id: str = ''
+        if query_addr:
+            try:
+                domain_response = requests.get(query_addr)
+                domain_response.raise_for_status()
+                region_id = domain_response.text.strip()
+            except requests.exceptions.RequestException as e:
+                logger.error(f'Error occurred while fetching region ID: {e}')
+
+        return region_id
 
 
 class ModelScopeConfig:

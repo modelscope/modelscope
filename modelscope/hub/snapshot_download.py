@@ -15,9 +15,9 @@ from modelscope.hub.file_download import (create_temporary_directory_and_cache,
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
                                         model_id_to_group_owner_name)
-from modelscope.utils.constant import (ALIYUN_INTERNAL_ACCELERATION,
-                                       DEFAULT_DATASET_REVISION,
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
+                                       INTRA_CLOUD_ACCELERATION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import get_modelscope_cache_dir
@@ -242,11 +242,11 @@ def _snapshot_download(
             'snapshot-identifier': str(uuid.uuid4()),
         }
 
-        if ALIYUN_INTERNAL_ACCELERATION == 'true':
+        if INTRA_CLOUD_ACCELERATION == 'true':
             region_id: str = HubApi()._get_internal_acceleration_domain()
             if region_id:
                 logger.info(
-                    f'Aliyun internal acceleration has been enabled for {repo_id}.'
+                    f'Intra-cloud acceleration enabled for downloading from {repo_id}'
                 )
                 headers['x-aliyun-region-id'] = region_id
 

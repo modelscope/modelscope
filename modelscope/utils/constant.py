@@ -511,8 +511,8 @@ DEFAULT_REPOSITORY_REVISION = 'master'
 DEFAULT_DATASET_REVISION = 'master'
 DEFAULT_DATASET_NAMESPACE = 'modelscope'
 DEFAULT_DATA_ACCELERATION_ENDPOINT = 'https://oss-accelerate.aliyuncs.com'
-ALIYUN_INTERNAL_ACCELERATION = str(
-    os.environ.get('ALIYUN_INTERNAL_ACCELERATION', 'True')).lower()
+INTRA_CLOUD_ACCELERATION = str(
+    os.environ.get('INTRA_CLOUD_ACCELERATION', 'True')).lower()
 
 
 class ModeKeys:

@@ -123,6 +123,22 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'lmstudio-community/granite-3.3-2b-instruct-GGUF',
+            'granite3.3',
+            gguf_meta={'general.name': 'Granite 3.3 2b Instruct'})
+        _test_check_tmpl_type(
+            'bartowski/deepcogito_cogito-v1-preview-llama-3B-GGUF',
+            'cogito',
+            gguf_meta={'general.name': 'Cogito v1 Preview Llama 3B'})
+        _test_check_tmpl_type(
+            'unsloth/Mistral-Small-3.1-24B-Instruct-2503-GGUF',
+            'mistral-small3.1',
+            gguf_meta={'general.name': 'Mistral-Small-3.1-24B-Instruct-2503t'})
+        _test_check_tmpl_type(
+            'lmstudio-community/DeepCoder-1.5B-Preview-GGUF',
+            'deepcoder',
+            gguf_meta={'general.name': 'DeepCoder 1.5B Preview'})
+        _test_check_tmpl_type(
             'lmstudio-community/c4ai-command-a-03-2025-GGUF',
             'command-a',
             gguf_meta={'general.name': 'C4Ai Command A 03 2025'})

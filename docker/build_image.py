@@ -31,7 +31,7 @@ class Builder:
         if not args.cuda_version:
             args.cuda_version = '12.1.0'
         if not args.vllm_version:
-            args.vllm_version = '0.7.2'
+            args.vllm_version = '0.5.3'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.6.2'
         if not args.autogptq_version:
@@ -162,6 +162,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -225,6 +226,7 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -267,15 +269,15 @@ class LLMImageBuilder(Builder):
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.5.1'
-            args.torchaudio_version = '2.5.1'
-            args.torchvision_version = '0.20.1'
+            args.torch_version = '2.6.0'
+            args.torchaudio_version = '2.6.0'
+            args.torchvision_version = '0.21.0'
         if not args.cuda_version:
             args.cuda_version = '12.4.0'
         if not args.vllm_version:
-            args.vllm_version = '0.7.2'
+            args.vllm_version = '0.8.3'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.7.0.post2'
+            args.lmdeploy_version = '0.7.2.post1'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
@@ -300,6 +302,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{install_megatron_deps}', 'False')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -337,17 +340,6 @@ class LLMImageBuilder(Builder):
 
 class SwiftImageBuilder(LLMImageBuilder):
 
-    def init_args(self, args) -> Any:
-        if not args.torch_version:
-            args.torch_version = '2.5.1'
-            args.torchaudio_version = '2.5.1'
-            args.torchvision_version = '0.20.1'
-        if not args.cuda_version:
-            args.cuda_version = '12.4.0'
-        if not args.vllm_version:
-            args.vllm_version = '0.7.3'
-        return super().init_args(args)
-
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -355,11 +347,8 @@ class SwiftImageBuilder(LLMImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps \
-    pip install --no-cache-dir -U icecream soundfile pybind11 && \
-    SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && \
-    CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
-    pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps && \
+    pip install --no-cache-dir -U icecream soundfile pybind11
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -373,6 +362,7 @@ RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps \
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{install_megatron_deps}', 'True')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',

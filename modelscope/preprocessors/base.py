@@ -326,9 +326,10 @@ class Preprocessor(ABC):
                 )
                 return None
             if (model_type, task) not in PREPROCESSOR_MAP:
-                logger.warning(
+                logger.info(
                     f'No preprocessor key {(model_type, task)} found in PREPROCESSOR_MAP, '
-                    f'skip building preprocessor.')
+                    f'skip building preprocessor. If the pipeline runs normally, please ignore this log.'
+                )
                 return None
 
             sub_cfg = ConfigDict({

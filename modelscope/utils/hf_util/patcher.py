@@ -238,6 +238,35 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             @classmethod
             def from_pretrained(cls, pretrained_model_name_or_path,
                                 *model_args, **kwargs):
+                if 'GenerationConfig' == module_class.__name__:
+                    from transformers.utils import GENERATION_CONFIG_NAME
+                    allow_file_pattern = [GENERATION_CONFIG_NAME, r'*.py']
+                elif 'Config' in module_class.__name__:
+                    from transformers import CONFIG_NAME
+                    allow_file_pattern = [CONFIG_NAME, r'*.py']
+                elif 'Tokenizer' in module_class.__name__:
+                    from transformers.tokenization_utils import ADDED_TOKENS_FILE
+                    from transformers.tokenization_utils import SPECIAL_TOKENS_MAP_FILE
+                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
+                    from transformers.tokenization_utils_base import FULL_TOKENIZER_FILE
+                    from transformers.tokenization_utils_base import CHAT_TEMPLATE_FILE
+                    allow_file_pattern = list(
+                        cls.vocab_files_names.values()) + [
+                            ADDED_TOKENS_FILE, SPECIAL_TOKENS_MAP_FILE,
+                            TOKENIZER_CONFIG_FILE, FULL_TOKENIZER_FILE,
+                            CHAT_TEMPLATE_FILE, r'*.py'
+                        ]  # noqa
+                elif 'Processor' in module_class.__name__:
+                    from transformers.utils import FEATURE_EXTRACTOR_NAME
+                    from transformers.utils import PROCESSOR_NAME
+                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
+                    allow_file_pattern = [
+                        FEATURE_EXTRACTOR_NAME, TOKENIZER_CONFIG_FILE,
+                        PROCESSOR_NAME, r'*.py'
+                    ]
+                else:
+                    allow_file_pattern = None
+
                 model_dir = get_model_dir(
                     pretrained_model_name_or_path,
                     ignore_file_pattern=ignore_file_pattern,

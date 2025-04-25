@@ -2024,6 +2024,44 @@ class HubApi:
 
         return payload
 
+    def _get_internal_acceleration_domain(self, internal_timeout: float = 0.2):
+        """
+        Get the internal acceleration domain.
+
+        Args:
+            internal_timeout (float): The timeout for the request. Default to 0.2s
+
+        Returns:
+            str: The internal acceleration domain. e.g. `cn-hangzhou`, `cn-zhangjiakou`
+        """
+
+        def send_request(url: str, timeout: float):
+            try:
+                response = requests.get(url, timeout=timeout)
+                response.raise_for_status()
+            except requests.exceptions.RequestException:
+                response = None
+
+            return response
+
+        internal_url = f'{self.endpoint}/api/v1/repos/internalAccelerationInfo'
+
+        # Get internal url and region for acceleration
+        internal_info_response = send_request(url=internal_url, timeout=internal_timeout)
+        region_id: str = ''
+        if internal_info_response is not None:
+            internal_info_response = internal_info_response.json()
+            if 'Data' in internal_info_response:
+                query_addr = internal_info_response['Data']['InternalRegionQueryAddress']
+            else:
+                query_addr: str = ''
+
+            if query_addr:
+                domain_response = send_request(query_addr, timeout=internal_timeout)
+                region_id = domain_response.text.strip()
+
+        return region_id
+
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)

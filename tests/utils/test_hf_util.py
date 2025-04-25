@@ -97,6 +97,12 @@ class HFUtilTest(unittest.TestCase):
             'Qwen/Qwen2-Math-7B-Instruct')
         self.assertTrue(tokenizer is not None)
 
+    def test_extra_ignore_args(self):
+        from modelscope import Qwen2Tokenizer
+        tokenizer = Qwen2Tokenizer.from_pretrained(
+            'Qwen/Qwen2-Math-7B-Instruct', ignore_file_pattern=[r'\w+\.h5'])
+        self.assertTrue(tokenizer is not None)
+
     def test_transformer_patch(self):
         with patch_context():
             from transformers import AutoTokenizer, AutoModelForCausalLM

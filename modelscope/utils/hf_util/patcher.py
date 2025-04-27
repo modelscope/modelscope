@@ -245,12 +245,12 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     from transformers.tokenization_utils_base import FULL_TOKENIZER_FILE
                     from transformers.tokenization_utils_base import CHAT_TEMPLATE_FILE
                     extra_allow_file_pattern = list(
-                        (cls.vocab_files_names.values()
-                         ) if cls is not None else []) + [
-                             ADDED_TOKENS_FILE, SPECIAL_TOKENS_MAP_FILE,
-                             TOKENIZER_CONFIG_FILE, FULL_TOKENIZER_FILE,
-                             CHAT_TEMPLATE_FILE, r'*.py'
-                         ]  # noqa
+                        (cls.vocab_files_names.values()) if cls is not None
+                        and hasattr(cls, 'vocab_files_names') else []) + [
+                            ADDED_TOKENS_FILE, SPECIAL_TOKENS_MAP_FILE,
+                            TOKENIZER_CONFIG_FILE, FULL_TOKENIZER_FILE,
+                            CHAT_TEMPLATE_FILE, r'*.py'
+                        ]  # noqa
                 elif 'Processor' in module_class.__name__:
                     from transformers.utils import FEATURE_EXTRACTOR_NAME
                     from transformers.utils import PROCESSOR_NAME

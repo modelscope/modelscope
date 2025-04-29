@@ -123,6 +123,10 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'unsloth/Qwen3-32B-GGUF',
+            'qwen3',
+            gguf_meta={'general.name': 'Qwen3-32B'})
+        _test_check_tmpl_type(
             'lmstudio-community/granite-3.3-2b-instruct-GGUF',
             'granite3.3',
             gguf_meta={'general.name': 'Granite 3.3 2b Instruct'})

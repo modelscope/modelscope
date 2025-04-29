@@ -155,6 +155,12 @@ template_info = [
     # qwen
     TemplateInfo(
         template=TemplateType.qwen,
+        template_regex=f'.*{cases("qwen3")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen3',
+    ),
+    TemplateInfo(
+        template=TemplateType.qwen,
         template_regex=f'.*{cases("qwen2.5")}.*{cases("coder")}.*{chat_suffix}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2.5-coder',

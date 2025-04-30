@@ -220,13 +220,60 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             The wrapped class
         """
 
+        @contextlib.contextmanager
+        def file_pattern_context(kwargs, module_class, cls):
+            if 'allow_file_pattern' not in kwargs:
+                kwargs['allow_file_pattern'] = allow_file_pattern
+            if 'ignore_file_pattern' not in kwargs:
+                kwargs['ignore_file_pattern'] = ignore_file_pattern
+
+            if kwargs.get(
+                    'allow_file_pattern') is None and module_class is not None:
+                extra_allow_file_pattern = None
+                if 'GenerationConfig' == module_class.__name__:
+                    from transformers.utils import GENERATION_CONFIG_NAME
+                    extra_allow_file_pattern = [
+                        GENERATION_CONFIG_NAME, r'*.py'
+                    ]
+                elif 'Config' in module_class.__name__:
+                    from transformers import CONFIG_NAME
+                    extra_allow_file_pattern = [CONFIG_NAME, r'*.py']
+                elif 'Tokenizer' in module_class.__name__:
+                    from transformers.tokenization_utils import ADDED_TOKENS_FILE
+                    from transformers.tokenization_utils import SPECIAL_TOKENS_MAP_FILE
+                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
+                    from transformers.tokenization_utils_base import FULL_TOKENIZER_FILE
+                    from transformers.tokenization_utils_base import CHAT_TEMPLATE_FILE
+                    extra_allow_file_pattern = list(
+                        (cls.vocab_files_names.values()) if cls is not None
+                        and hasattr(cls, 'vocab_files_names') else []) + [
+                            ADDED_TOKENS_FILE, SPECIAL_TOKENS_MAP_FILE,
+                            TOKENIZER_CONFIG_FILE, FULL_TOKENIZER_FILE,
+                            CHAT_TEMPLATE_FILE, r'*.py'
+                        ]  # noqa
+                elif 'Processor' in module_class.__name__:
+                    from transformers.utils import FEATURE_EXTRACTOR_NAME
+                    from transformers.utils import PROCESSOR_NAME
+                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
+                    extra_allow_file_pattern = [
+                        FEATURE_EXTRACTOR_NAME, TOKENIZER_CONFIG_FILE,
+                        PROCESSOR_NAME, r'*.py'
+                    ]
+
+                kwargs['allow_file_pattern'] = extra_allow_file_pattern
+            yield
+            kwargs.pop('ignore_file_pattern', None)
+            kwargs.pop('allow_file_pattern', None)
+
         def from_pretrained(model, model_id, *model_args, **kwargs):
-            # model is an instance
-            model_dir = get_model_dir(
-                model_id,
-                ignore_file_pattern=ignore_file_pattern,
-                allow_file_pattern=allow_file_pattern,
-                **kwargs)
+
+            with file_pattern_context(kwargs):
+                # model is an instance
+                model_dir = get_model_dir(
+                    model_id,
+                    module_class=module_class,
+                    cls=module_class,
+                    **kwargs)
 
             module_obj = module_class.from_pretrained(model, model_dir,
                                                       *model_args, **kwargs)
@@ -238,11 +285,9 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             @classmethod
             def from_pretrained(cls, pretrained_model_name_or_path,
                                 *model_args, **kwargs):
-                model_dir = get_model_dir(
-                    pretrained_model_name_or_path,
-                    ignore_file_pattern=ignore_file_pattern,
-                    allow_file_pattern=allow_file_pattern,
-                    **kwargs)
+                with file_pattern_context(kwargs, module_class, cls):
+                    model_dir = get_model_dir(pretrained_model_name_or_path,
+                                              **kwargs)
 
                 module_obj = module_class.from_pretrained(
                     model_dir, *model_args, **kwargs)
@@ -253,22 +298,25 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
             @classmethod
             def _get_peft_type(cls, model_id, **kwargs):
-                model_dir = get_model_dir(
-                    model_id,
-                    ignore_file_pattern=ignore_file_pattern,
-                    allow_file_pattern=allow_file_pattern,
-                    **kwargs)
+                with file_pattern_context(kwargs, module_class, cls):
+                    model_dir = get_model_dir(
+                        model_id,
+                        ignore_file_pattern=ignore_file_pattern,
+                        allow_file_pattern=allow_file_pattern,
+                        **kwargs)
+
                 module_obj = module_class._get_peft_type(model_dir, **kwargs)
                 return module_obj
 
             @classmethod
             def get_config_dict(cls, pretrained_model_name_or_path,
                                 *model_args, **kwargs):
-                model_dir = get_model_dir(
-                    pretrained_model_name_or_path,
-                    ignore_file_pattern=ignore_file_pattern,
-                    allow_file_pattern=allow_file_pattern,
-                    **kwargs)
+                with file_pattern_context(kwargs, module_class, cls):
+                    model_dir = get_model_dir(
+                        pretrained_model_name_or_path,
+                        ignore_file_pattern=ignore_file_pattern,
+                        allow_file_pattern=allow_file_pattern,
+                        **kwargs)
 
                 module_obj = module_class.get_config_dict(
                     model_dir, *model_args, **kwargs)

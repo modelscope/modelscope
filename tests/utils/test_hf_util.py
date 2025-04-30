@@ -91,6 +91,18 @@ class HFUtilTest(unittest.TestCase):
             revision='v1.0.3')
         self.assertEqual(gen_config.assistant_token_id, 196)
 
+    def test_qwen_tokenizer(self):
+        from modelscope import Qwen2Tokenizer
+        tokenizer = Qwen2Tokenizer.from_pretrained(
+            'Qwen/Qwen2-Math-7B-Instruct')
+        self.assertTrue(tokenizer is not None)
+
+    def test_extra_ignore_args(self):
+        from modelscope import Qwen2Tokenizer
+        tokenizer = Qwen2Tokenizer.from_pretrained(
+            'Qwen/Qwen2-Math-7B-Instruct', ignore_file_pattern=[r'\w+\.h5'])
+        self.assertTrue(tokenizer is not None)
+
     def test_transformer_patch(self):
         with patch_context():
             from transformers import AutoTokenizer, AutoModelForCausalLM

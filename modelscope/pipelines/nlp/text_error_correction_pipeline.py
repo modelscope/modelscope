@@ -43,7 +43,7 @@ class TextErrorCorrectionPipeline(Pipeline):
             >>> sentence1 = '随着中国经济突飞猛近，建造工业与日俱增'
             >>> print(pipeline_ins(sentence1))
 
-        To view other examples plese check tests/pipelines/test_text_error_correction.py.
+        To view other examples please check tests/pipelines/test_text_error_correction.py.
         """
         super().__init__(
             model=model,

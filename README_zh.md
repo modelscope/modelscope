@@ -227,7 +227,7 @@ conda activate modelscope
 
 安装完前置依赖，你可以按照如下方式安装 ModelScope Library。
 
-ModelScope Libarary 由核心框架，以及不同领域模型的对接组件组成。如果只需要 ModelScope 模型和数据集访问等基础能力，可以只安装 ModelScope 的核心框架：
+ModelScope Library 由核心框架，以及不同领域模型的对接组件组成。如果只需要 ModelScope 模型和数据集访问等基础能力，可以只安装 ModelScope 的核心框架：
 
 ```shell
 pip install modelscope

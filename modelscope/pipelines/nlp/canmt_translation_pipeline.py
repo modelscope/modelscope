@@ -49,7 +49,7 @@ class CanmtTranslationPipeline(Pipeline):
             >>> # Or use the list input:
             >>> print(pipeline_ins([sentence1])
 
-            To view other examples plese check tests/pipelines/test_canmt_translation.py.
+            To view other examples please check tests/pipelines/test_canmt_translation.py.
         """
         super().__init__(
             model=model,

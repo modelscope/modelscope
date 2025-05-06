@@ -98,7 +98,7 @@ class INCEPTION_V3_FID(nn.Module):
     # Maps feature dimensionality to their output blocks indices
     BLOCK_INDEX_BY_DIM = {
         64: 0,  # First max pooling features
-        192: 1,  # Second max pooling featurs
+        192: 1,  # Second max pooling features
         768: 2,  # Pre-aux classifier features
         2048: 3  # Final average pooling features
     }
@@ -295,7 +295,7 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
             nception net (like returned by the function 'get_predictions')
             or generated samples.
         mu2: The sample mean over activations, precalculated on an
-            representive data set.
+            representative data set.
         sigma1: The covariance matrix over activations for generated samples.
         sigma2: The covariance matrix over activations, precalculated on an
             epresentive data set.

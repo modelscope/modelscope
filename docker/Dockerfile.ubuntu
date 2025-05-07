@@ -88,6 +88,13 @@ if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     cd / && rm -fr /tmp/apex && pip cache purge; \
 fi
 
+# install nvm and set node version to 18
+ENV NVM_DIR=/root/.nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash && \
+    . $NVM_DIR/nvm.sh && \
+    nvm install 18 && \
+    nvm use 18
+
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True

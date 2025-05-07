@@ -125,7 +125,7 @@ class SpacePreTrainedModel(TorchModel, PreTrainedModel):
 @add_start_docstrings(
     """
     Space Model transformer with Dialog state tracking heads on top (a inform projection
-    layer with a dialog state layer and a set of slots including history infromation from
+    layer with a dialog state layer and a set of slots including history information from
     previous dialog) e.g. for multiwoz2.2 tasks.
     """,
     SPACE_START_DOCSTRING,

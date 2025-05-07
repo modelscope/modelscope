@@ -72,7 +72,7 @@ class SpeakerDiarizationSemanticSpeakerTurnDetectionPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any],
                     **postprocess_params) -> Dict[str, Any]:
-        r"""Precess the prediction results
+        r"""Process the prediction results
             Args:
                 inputs (dict[str, Any]): should be tensors from model
 

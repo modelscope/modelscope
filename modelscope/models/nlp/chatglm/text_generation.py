@@ -646,7 +646,7 @@ class GLMBlock(torch.nn.Module):
         attention_mask: [(1, 1), seq_len, seq_len]
         """
 
-        # Layer norm at the begining of the transformer layer.
+        # Layer norm at the beginning of the transformer layer.
         # [seq_len, batch, hidden_size]
         attention_input = self.input_layernorm(hidden_states)
 

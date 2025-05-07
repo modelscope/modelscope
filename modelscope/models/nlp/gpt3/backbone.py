@@ -195,7 +195,7 @@ class GPT3TransformerLayer(nn.Module):
         # hidden_states: [b, s, h]
         # ltor_mask: [1, 1, s, s]
 
-        # Layer norm at the begining of the transformer layer.
+        # Layer norm at the beginning of the transformer layer.
         layernorm_output = self.input_layernorm(hidden_states)
         # Self attention.
         attention_output = self.attention(layernorm_output, ltor_mask)

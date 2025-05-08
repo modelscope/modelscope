@@ -1238,7 +1238,7 @@ def dot_product_attention(q,
 
         if rpr is None:
             logits = tf.matmul(q, k, transpose_b=True)
-        else:  # self-attention with relative position representaion
+        else:  # self-attention with relative position representation
             logits_part1 = tf.matmul(q, k, transpose_b=True)  # bs, hd, lq, lk
 
             q = tf.reshape(tf.transpose(q, [2, 0, 1, 3]),

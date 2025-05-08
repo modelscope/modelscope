@@ -700,6 +700,6 @@ class EncoderModel(TorchModel):
             model_name_or_path=model_name_or_path,
             revision=revision,
             cfg_dict=cfg_dict,
-            devic=device,
+            device=device,
             task=task if task is not None else cls.task,
             **kwargs)

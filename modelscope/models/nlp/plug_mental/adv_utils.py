@@ -23,7 +23,7 @@ logger = get_logger()
 
 def _symmetric_kl_div(logits1, logits2, attention_mask=None):
     """
-    Calclate two logits' the KL div value symmetrically.
+    Calculate two logits' the KL div value symmetrically.
     :param logits1: The first logit.
     :param logits2: The second logit.
     :param attention_mask: An optional attention_mask which is used to mask some element out.
@@ -58,12 +58,12 @@ def compute_adv_loss(embedding,
                      **kwargs):
     """
     Calculate the adv loss of the model.
-    :param embedding: Original sentense embedding
+    :param embedding: Original sentence embedding
     :param model: The model, or the forward function(including decoder/classifier),
             accept kwargs as input, output logits
-    :param ori_logits: The original logits outputed from the model function
+    :param ori_logits: The original logits outputted from the model function
     :param ori_loss: The original loss
-    :param adv_grad_factor: This factor will be multipled by the KL loss grad and then the result will be added to
+    :param adv_grad_factor: This factor will be multiplied by the KL loss grad and then the result will be added to
             the original embedding.
             More details please check:https://arxiv.org/abs/1908.04577
             The range of this value always be 1e-3~1e-7
@@ -96,7 +96,7 @@ def compute_adv_loss(embedding,
             1, keepdim=True)[0]
     is_nan = torch.any(torch.isnan(emb_grad_norm))
     if is_nan:
-        logger.warning('Nan occured when calculating adv loss.')
+        logger.warning('Nan occurred when calculating adv loss.')
         return ori_loss
     emb_grad = emb_grad / (emb_grad_norm + 1e-6)
     embedding_2 = embedding_1 + adv_grad_factor * emb_grad
@@ -118,14 +118,14 @@ def compute_adv_loss_pair(embedding,
                           sigma=5e-6,
                           **kwargs):
     """
-    Calculate the adv loss of the model. This function is used in the pair logits scenerio.
-    :param embedding: Original sentense embedding
+    Calculate the adv loss of the model. This function is used in the pair logits scenario.
+    :param embedding: Original sentence embedding
     :param model: The model, or the forward function(including decoder/classifier),
             accept kwargs as input, output logits
-    :param start_logits: The original start logits outputed from the model function
-    :param end_logits: The original end logits outputed from the model function
+    :param start_logits: The original start logits outputted from the model function
+    :param end_logits: The original end logits outputted from the model function
     :param ori_loss: The original loss
-    :param adv_grad_factor: This factor will be multipled by the KL loss grad and then the result will be added to
+    :param adv_grad_factor: This factor will be multiplied by the KL loss grad and then the result will be added to
             the original embedding.
             More details please check:https://arxiv.org/abs/1908.04577
             The range of this value always be 1e-3~1e-7
@@ -154,7 +154,7 @@ def compute_adv_loss_pair(embedding,
             1, keepdim=True)[0]
     is_nan = torch.any(torch.isnan(emb_grad_norm))
     if is_nan:
-        logger.warning('Nan occured when calculating pair adv loss.')
+        logger.warning('Nan occurred when calculating pair adv loss.')
         return ori_loss
     emb_grad = emb_grad / emb_grad_norm
     embedding_2 = embedding_1 + adv_grad_factor * emb_grad

@@ -81,7 +81,7 @@ class SpaceForDialogModeling(TorchModel):
             Dict[str, Tensor]: results
                 Example:
                     {
-                        'labels': array([1,192,321,12]), # lable
+                        'labels': array([1,192,321,12]), # label
                         'resp': array([293,1023,123,1123]), #vocab label for response
                         'bspn': array([123,321,2,24,1 ]),
                         'aspn': array([47,8345,32,29,1983]),

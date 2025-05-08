@@ -22,7 +22,7 @@ class TextToSpeechSambertHifiganPipeline(Pipeline):
         """use `model` to create a text-to-speech pipeline for prediction
 
         Args:
-            model (SambertHifigan or str): a model instance or valid offical model id
+            model (SambertHifigan or str): a model instance or valid official model id
         """
         super().__init__(model=model, **kwargs)
 

@@ -30,7 +30,7 @@ class DecoderPooler(torch.nn.Module):
             n, l, h = last_hidden.shape
 
             # Get shape [n] indices of the last token (i.e. the last token for each batch item)
-            # Any sequence where min == 1, we use the entire sequence lenth since argmin = 0
+            # Any sequence where min == 1, we use the entire sequence length since argmin = 0
             values, indices = torch.min(attention_mask, 1, keepdim=False)
             gather_indices = torch.where(values == 0, indices,
                                          l) - 1  # Shape [n]

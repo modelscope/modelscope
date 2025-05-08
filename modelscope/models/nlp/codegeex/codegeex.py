@@ -623,7 +623,7 @@ class Transformer(torch.nn.Module):
         prompt_length=None,
         context_length=None,
     ):
-        # data format change to avoid explicit tranposes : [b s h] --> [s b h]
+        # data format change to avoid explicit transposes : [b s h] --> [s b h]
         hidden_states = hidden_states.transpose(0, 1).contiguous()
         query_hidden_state = query_hidden_state.transpose(0, 1).contiguous()
 

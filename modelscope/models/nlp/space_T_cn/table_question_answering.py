@@ -419,7 +419,7 @@ class TableQuestionAnswering(Model):
         input_mask = []
 
         i_nlu = [
-        ]  # index to retreive the position of contextual vector later.
+        ]  # index to retrieve the position of contextual vector later.
         i_hds = []
         tokens = []
         orders = []

@@ -35,7 +35,7 @@ class WordSegmentationPipeline(TokenClassificationPipeline):
         >>> sentence1 = '今天天气不错，适合出去游玩'
         >>> print(pipeline_ins(sentence1))
 
-    To view other examples plese check tests/pipelines/test_word_segmentation.py.
+    To view other examples please check tests/pipelines/test_word_segmentation.py.
     """
 
     def postprocess(self,

@@ -20,7 +20,7 @@ def precook(s, n=4, out=False):
     can take string arguments as well.
     :param s: string : sentence to be converted into ngrams
     :param n: int    : number of ngrams for which representation is calculated
-    :return: term frequency vector for occuring ngrams
+    :return: term frequency vector for occurring ngrams
     """
     words = s.split()
     counts = defaultdict(int)

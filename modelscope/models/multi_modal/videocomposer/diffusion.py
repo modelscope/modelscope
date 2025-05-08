@@ -525,7 +525,7 @@ class GaussianDiffusion(object):
             # 2nd order pseudo linear multistep (Adams-Bashforth)
             eps_prime = (3 * eps - eps_cache[-1]) / 2.0
         elif len(eps_cache) == 2:
-            # 3nd order pseudo linear multistep (Adams-Bashforth)
+            # 3rd order pseudo linear multistep (Adams-Bashforth)
             eps_prime = (23 * eps - 16 * eps_cache[-1]
                          + 5 * eps_cache[-2]) / 12.0
         elif len(eps_cache) >= 3:
@@ -1158,7 +1158,7 @@ class GaussianDiffusion_style(object):
             # 2nd order pseudo linear multistep (Adams-Bashforth)
             eps_prime = (3 * eps - eps_cache[-1]) / 2.0
         elif len(eps_cache) == 2:
-            # 3nd order pseudo linear multistep (Adams-Bashforth)
+            # 3rd order pseudo linear multistep (Adams-Bashforth)
             eps_prime = (23 * eps - 16 * eps_cache[-1]
                          + 5 * eps_cache[-2]) / 12.0
         elif len(eps_cache) >= 3:

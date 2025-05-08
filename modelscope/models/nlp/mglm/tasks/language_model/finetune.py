@@ -210,7 +210,7 @@ def evaluate_and_print_results(data_loader, model, eval_metric, args):
 
 
 def metrics_func_provider(args, tokenizer, is_test):
-    """Privde metrics callback function."""
+    """Provide metrics callback function."""
 
     if args.task.lower() == 'lambda':
         eval_metric = 'accuracy'

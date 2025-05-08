@@ -89,7 +89,7 @@ cfg.UNet = {
 
 cfg.guidances = []
 
-# auotoencoder from stabel diffusion
+# auotoencoder from stable diffusion
 cfg.auto_encoder = {
     'type': 'AutoencoderKL',
     'ddconfig': {

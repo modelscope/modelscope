@@ -85,7 +85,7 @@ class RandomColor(object):
         hue_range = self.get_hue_range(hue)
         hue = self.random_within(hue_range)
 
-        # Instead of storing red as two seperate ranges,
+        # Instead of storing red as two separate ranges,
         # we group them, using negative numbers
         if (hue < 0):
             hue += 360

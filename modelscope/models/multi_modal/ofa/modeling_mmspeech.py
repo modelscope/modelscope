@@ -111,7 +111,7 @@ class MMSpeechEncoderOutput(ModelOutput):
             heads.
 
         position_embedding (`torch.FloatTensor` of shape `(bsz, seq_len, hidden)`):
-            postional embeddings of the inputs.
+            positional embeddings of the inputs.
     """
 
     phone_distribution: torch.Tensor = None

@@ -87,7 +87,7 @@ def convert_tokens_to_ids(vocab, tokens):
 
 
 def whitespace_tokenize(text):
-    """Runs basic whitespace cleaning and splitting on a peice of text."""
+    """Runs basic whitespace cleaning and splitting on a piece of text."""
     text = text.strip()
     if not text:
         return []
@@ -295,7 +295,7 @@ class WordpieceTokenizer(object):
 
 def _is_whitespace(char):
     """Checks whether `chars` is a whitespace character."""
-    # \t, \n, and \r are technically contorl characters but we treat them
+    # \t, \n, and \r are technically control characters but we treat them
     # as whitespace since they are generally considered as such.
     if char == ' ' or char == '\t' or char == '\n' or char == '\r':
         return True

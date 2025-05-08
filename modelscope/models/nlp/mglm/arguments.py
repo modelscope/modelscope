@@ -217,7 +217,7 @@ def add_training_args(parser):
     group.add_argument(
         '--reset-position-ids',
         action='store_true',
-        help='Reset posistion ids after end-of-document token.')
+        help='Reset position ids after end-of-document token.')
     group.add_argument(
         '--reset-attention-mask',
         action='store_true',

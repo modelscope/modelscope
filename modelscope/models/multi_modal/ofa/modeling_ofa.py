@@ -777,7 +777,7 @@ class OFAEncoderOutput(ModelOutput):
             heads.
 
         position_embedding (`torch.FloatTensor` of shape `(bsz, seq_len, hidden)`):
-            postional embeddings of the inputs.
+            positional embeddings of the inputs.
     """
 
     last_hidden_state: torch.FloatTensor = None

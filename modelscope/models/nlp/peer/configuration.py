@@ -70,7 +70,7 @@ class PeerConfig(PretrainedConfig):
         summary_type (:obj:`str`, `onal`, defaults to :obj:`"first"`)
             Argument used when doing sequence summary. Used in the sequence classification and multiple choice models.
 
-            Has to be one of the following ons
+            Has to be one of the following ones
 
                 - :obj:`"last"`: Take the last token hidden state (like XLNet).
                 - :obj:`"first"`: Take the first token hidden state (like BERT).

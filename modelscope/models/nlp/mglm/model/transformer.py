@@ -505,7 +505,7 @@ class ParallelDecoderLayer(torch.nn.Module):
         # hidden_states: [b, s, h]
         # ltor_mask: [1, 1, s, s]
 
-        # Layer norm at the begining of the transformer layer.
+        # Layer norm at the beginning of the transformer layer.
         layernorm_output = self.input_layernorm(hidden_states)
         # Self attention.
         self_attention_output = self.self_attention(layernorm_output,
@@ -609,7 +609,7 @@ class ParallelTransformerLayer(torch.nn.Module):
         # hidden_states: [b, s, h]
         # ltor_mask: [1, 1, s, s]
 
-        # Layer norm at the begining of the transformer layer.
+        # Layer norm at the beginning of the transformer layer.
         layernorm_output = self.input_layernorm(hidden_states)
         mem = self.input_layernorm(mem) if mem is not None else None
         # Self attention.
@@ -677,7 +677,7 @@ class GPT2ParallelTransformer(torch.nn.Module):
                            division by zero.
         init_method_std: standard deviation of the init method which has
                          the form N(0, std).
-        use_scaled_init_for_output_weights: If Ture use 1/sqrt(2*num_layers)
+        use_scaled_init_for_output_weights: If True use 1/sqrt(2*num_layers)
                                             scaling for the output weights (
                                             output of self attention and mlp).
     """
@@ -805,11 +805,11 @@ class GPT2ParallelTransformer(torch.nn.Module):
         batch_size, query_length = hidden_states.size()[:2]
         memory_length = memory_states[0].size(1) if memory_states else 0
         key_length = query_length + memory_length
-        # attention mask is the beginning postion of B region, \in [0, query_len)
+        # attention mask is the beginning position of B region, \in [0, query_len)
         is_scalar = torch.numel(attention_mask) == 1
         is_sep = is_scalar or torch.numel(attention_mask) == batch_size
         if self.performer:
-            assert is_scalar, 'attention_mask should be a scalar to indicate the seperation position.'
+            assert is_scalar, 'attention_mask should be a scalar to indicate the separation position.'
             assert memory_length == 0, 'Do not support transformer-xl.'
         if is_sep:
             sep = attention_mask.item() if is_scalar else attention_mask
@@ -958,7 +958,7 @@ class BertParallelSelfAttention(torch.nn.Module):
     """Parallel self-attention layer for BERT.
 
     Self-attention layer takes input with size [b, s, h] where b is
-    the batch size, s is the sequence lenght, and h is the hidden size
+    the batch size, s is the sequence length, and h is the hidden size
     and creates output of the same size.
     Arguments:
         hidden_size: total hidden size of the layer (h).

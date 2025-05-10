@@ -204,7 +204,7 @@ class TextLayoutSerializer(object):
         Either ocr_info or (input_ids, bbox_line, bbox_word)
             should be provided.
         If (input_ids, bbox_line, bbox_word) is provided,
-            convinient plug into the serialization (customization)
+            convenient plug into the serialization (customization)
             is offered. The tokens must be organised by blocks and words.
         Else, ocr_info must be provided, to be parsed
             to sequences directly (the simplest way).
@@ -351,7 +351,7 @@ class TextLayoutSerializer(object):
     def halfseq2seq(self, input_ids: list, bbox_line: List[List],
                     bbox_word: List[List], width: int, height: int):
         """
-        for convinient plug into the serialization, given the 3 customized sequences.
+        for convenient plug into the serialization, given the 3 customized sequences.
         They should not contain special tokens like [CLS] or [SEP].
         """
         bbs_word = []

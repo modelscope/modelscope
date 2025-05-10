@@ -283,7 +283,7 @@ class DFPPAFPN(nn.Module):
     def forward(self, input, buffer=None, mode='off_pipe'):
 
         if mode == 'off_pipe':
-            # Glops caculate mode
+            # Glops calculate mode
             if input.size()[1] == 3:
                 input = torch.cat([input, input], dim=1)
                 output = self.off_forward(input)

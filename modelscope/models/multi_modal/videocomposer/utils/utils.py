@@ -389,7 +389,7 @@ def save_video_multiple_conditions(oss_key,
     model_kwargs_channel3 = {}
     for key, conditions in model_kwargs[0].items():
         if conditions.shape[-1] == 1024:
-            # Skip for style embeding
+            # Skip for style embedding
             continue
         if len(conditions.shape) == 3:
             conditions_np = conditions.cpu().numpy()

@@ -249,7 +249,7 @@ class TokenClassificationTransformersPreprocessor(
         is_split_into_words = self.nlp_tokenizer.get_tokenizer_kwarg(
             'is_split_into_words', False)
         if is_split_into_words:
-            # for supporting prompt seperator, should split twice. [SEP] for default.
+            # for supporting prompt separator, should split twice. [SEP] for default.
             sep_idx = tokens.find('[SEP]')
             if sep_idx == -1 or self.is_lstm_model:
                 tokens = list(tokens)

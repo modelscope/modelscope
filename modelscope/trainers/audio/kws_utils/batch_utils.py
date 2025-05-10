@@ -69,7 +69,7 @@ def executor_train(model, optimizer, data_loader, device, writer, args):
         loss, acc = ctc_loss(logits, target, feats_lengths, target_lengths)
         loss = loss / num_utts
 
-        # normlize loss to account for batch accumulation
+        # normalize loss to account for batch accumulation
         loss = loss / accum_batchs
         loss.backward()
         if (batch_idx + 1) % accum_batchs == 0:

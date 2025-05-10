@@ -476,7 +476,7 @@ class MultiWOZBPETextField(BPETextField):
     def add_sepcial_tokens(self):
         """
             add special tokens to gpt tokenizer
-            serves a similar role of Vocab.construt()
+            serves a similar role of Vocab.construct()
             make a dict of special tokens
         """
         special_tokens = []
@@ -692,7 +692,7 @@ class MultiWOZBPETextField(BPETextField):
         """
         convert the current and the last turn
         concat [U_0,R_0,...,U_{t-1}, R_{t-1}, U_t, B_t, A_t, R_t]
-        firts turn: [U_t, B_t, A_t, R_t]
+        first turn: [U_t, B_t, A_t, R_t]
         try: [user, bspn, db, aspn, resp]
 
         """
@@ -774,7 +774,7 @@ class MultiWOZBPETextField(BPETextField):
     def convert_turn_eval(self, turn, pv_turn, first_turn=False):
         """
         input: [all previous ubar, U_t, B_t, A_t] predict R_t
-        firts turn: [U_t, B_t, A_t] predict R_t
+        first turn: [U_t, B_t, A_t] predict R_t
 
         regarding the context, all previous ubar is too slow, try the previous ubar
         """

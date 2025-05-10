@@ -10,7 +10,7 @@ from mmdet.datasets import DATASETS
 @DATASETS.register_module()
 class CustomNuScenesDataset(NuScenesDataset):
     r"""NuScenes Dataset.
-    This datset only add camera intrinsics and extrinsics to the results.
+    This dataset only add camera intrinsics and extrinsics to the results.
     """
 
     def __init__(self, idx_range=None, **kwargs):
@@ -27,7 +27,7 @@ class CustomNuScenesDataset(NuScenesDataset):
 
     def get_data_info(self, index):
         info = self.data_infos[index]
-        # standard protocal modified from SECOND.Pytorch
+        # standard protocol modified from SECOND.Pytorch
         input_dict = dict(
             sample_idx=info['token'],
             pts_filename=[info['lidar_path']],

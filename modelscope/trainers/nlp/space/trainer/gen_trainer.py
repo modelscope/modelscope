@@ -272,7 +272,7 @@ class Trainer(object):
                         if name == 'embedder.token_embedding.weight':
                             z[-param.shape[0]:] = arr
                             print(
-                                f'part of parameter({name}) random normlize initialize'
+                                f'part of parameter({name}) random normalize initialize'
                             )
                         else:
                             if z.shape[0] < param.shape[0]:
@@ -281,7 +281,7 @@ class Trainer(object):
                             else:
                                 z[:param.shape[0]] = arr
                                 print(
-                                    f'part of parameter({name}) random normlize initialize'
+                                    f'part of parameter({name}) random normalize initialize'
                                 )
                         dtype, device = param.dtype, param.device
                         z = torch.tensor(z, dtype=dtype, device=device)
@@ -295,7 +295,7 @@ class Trainer(object):
             for name in parameters:
                 if name not in model_state_dict:
                     if parameters[name].requires_grad:
-                        print(f'parameter({name}) random normlize initialize')
+                        print(f'parameter({name}) random normalize initialize')
                         z = np.random.normal(
                             scale=self.func_model.initializer_range,
                             size=parameters[name].shape).astype('float32')

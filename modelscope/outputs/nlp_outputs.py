@@ -472,10 +472,10 @@ class MachineReadingComprehensionOutput(ModelOutputBase):
 
     Args:
         loss (`Tensor`, *optional*): The training loss of the current batch
-        match_loss (`Tensor`, *optinal*): The match loss of the current batch
+        match_loss (`Tensor`, *optional*): The match loss of the current batch
         span_logits (`Tensor`): The logits of the span matrix output by the model
-        hidden_states (`Tuple[Tensor]`, *optinal*): The hidden states output by the model
-        attentions (`Tuple[Tensor]`, *optinal*):  The attention scores output by the model
+        hidden_states (`Tuple[Tensor]`, *optional*): The hidden states output by the model
+        attentions (`Tuple[Tensor]`, *optional*):  The attention scores output by the model
         input_ids (`Tensor`): The token ids of the input sentence
 
     """

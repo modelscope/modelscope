@@ -1,4 +1,4 @@
-# Implementation in this file is modifed from source code avaiable via https://github.com/ternaus/retinaface
+# Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -106,9 +106,9 @@ def match(
         variances: Variances corresponding to each prior coord, Shape: [num_priors, 4].
         labels_gt: All the class labels for the image, Shape: [num_obj, 2].
         landmarks_gt: Ground truth landms, Shape [num_obj, 10].
-        box_t: Tensor to be filled w/ endcoded location targets.
+        box_t: Tensor to be filled w/ encoded location targets.
         label_t: Tensor to be filled w/ matched indices for labels predictions.
-        landmarks_t: Tensor to be filled w/ endcoded landmarks targets.
+        landmarks_t: Tensor to be filled w/ encoded landmarks targets.
         batch_id: current batch index
     Return:
         The matched indices corresponding to 1)location 2)confidence 3)landmarks preds.

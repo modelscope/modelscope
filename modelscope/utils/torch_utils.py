@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-# Following code is partialy borrowed from openmmlab/mmcv
+# Following code is partially borrowed from openmmlab/mmcv
 import functools
 import os
 import pickle

@@ -10,7 +10,7 @@ from typing import BinaryIO, Optional, Union
 
 # TODO: remove this api, unify to flattened args
 def func_receive_dict_inputs(func):
-    """to decide if a func could recieve dict inputs or not
+    """to decide if a func could receive dict inputs or not
 
     Args:
         func (class): the target function to be inspected

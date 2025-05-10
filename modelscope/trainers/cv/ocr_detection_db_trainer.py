@@ -372,7 +372,7 @@ class DBTrainer:
         pred:
             binary: text region segmentation map, with shape (N, 1, H, W)
             thresh: [if exists] thresh hold prediction with shape (N, 1, H, W)
-            thresh_binary: [if exists] binarized with threshhold, (N, 1, H, W)
+            thresh_binary: [if exists] binarized with threshold, (N, 1, H, W)
         '''
         images = batch['image']
         if isinstance(_pred, dict):

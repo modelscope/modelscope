@@ -55,7 +55,7 @@ def format_toolbench(tool_names, tool_descs):
     TOOLBENCH_PROMPT = '''You can use many tools(functions) to do the following task.
     First I will give you the task description, and your task start.
     At each step, you need to give your thought to analyze the status now and what to do next, \
-    with a function call to actually excute your step. Your output should follow this format:
+    with a function call to actually execute your step. Your output should follow this format:
     Thought:
     Action:
     Action Input:
@@ -67,7 +67,7 @@ def format_toolbench(tool_names, tool_descs):
     1.the state change is irreversible, you can't go back to one of the former state, if you want to restart the task, \
     say \"I give up and restart\".
     2.All the thought is short, at most in 5 sentence.
-    3.You can do more then one trys, so if your plan is to continusly try some conditions, \
+    3.You can do more then one tries, so if your plan is to continuously try some conditions, \
     you can do one of the conditions per try.
     Let's Begin!
     Task description: You should use functions to help handle the real time user querys. Remember:

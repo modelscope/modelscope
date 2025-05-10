@@ -58,7 +58,7 @@ class StableDiffusionPipeline(DiffusersPipeline):
             model, use_safetensors=use_safetensors, torch_dtype=torch_type)
         self.pipeline = self.pipeline.to(self.device)
 
-        # load lora moudle to unet
+        # load lora module to unet
         if lora_dir is not None:
             assert os.path.exists(lora_dir), f"{lora_dir} isn't exist"
             if use_swift:

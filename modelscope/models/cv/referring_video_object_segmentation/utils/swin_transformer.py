@@ -657,7 +657,7 @@ class SwinTransformer3D(nn.Module):
 
         Args:
             logger (logging.Logger): The logger used to print
-                debugging infomation.
+                debugging information.
         """
         checkpoint = torch.load(self.pretrained, map_location='cpu')
         state_dict = checkpoint['model']

@@ -396,7 +396,7 @@ def nearest_neighbor_clusters_v2(batch, gap_agreement_weight=0.0):
     """Assign each extra MSA sequence to its nearest neighbor in sampled MSA."""
 
     # Determine how much weight we assign to each agreement.  In theory, we could
-    # use a full blosum matrix here, but right now let's just down-weight gap
+    # use a full blossom matrix here, but right now let's just down-weight gap
     # agreement because it could be spurious.
     # Never put weight on agreeing on BERT mask.
 

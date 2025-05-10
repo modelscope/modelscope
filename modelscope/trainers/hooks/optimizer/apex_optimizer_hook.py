@@ -25,7 +25,7 @@ class ApexOptimizerProcessor(OptimizerProcessor):
             )
 
         logging.info('open fp16')
-        # TODO: fix it should initialze amp with model not wrapper by DDP or DP
+        # TODO: fix it should initialize amp with model not wrapper by DDP or DP
         model = trainer.unwrap_module(trainer.model)
         trainer.model, trainer.optimizer = amp.initialize(
             model, trainer.optimizer, opt_level=self.opt_level)

@@ -217,11 +217,11 @@ class ImageClassifitionTrainer(BaseTrainer):
         mmcv.mkdir_or_exist(osp.abspath(self.work_dir))
         cfg.work_dir = self.work_dir
 
-        # evaluate config seting
+        # evaluate config setting
         self.eval_checkpoint_path = os.path.join(self.model_dir,
                                                  ModelFile.TORCH_MODEL_FILE)
 
-        # train config seting
+        # train config setting
         if 'resume_from' in kwargs:
             cfg.train.resume_from = kwargs['resume_from']
         else:

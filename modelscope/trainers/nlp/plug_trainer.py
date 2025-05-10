@@ -161,7 +161,7 @@ class PlugTrainer(NlpEpochBasedTrainer):
         self.log_buffer.update(self.train_outputs)
 
     def evaluation_step(self, data):
-        # wapper 1: DeepspeedEngine, wapper 2: DDP
+        # wrapper 1: DeepspeedEngine, wapper 2: DDP
         # model = self.model.module
         if isinstance(self.model, DeepSpeedEngine):
             model = self.model.module
@@ -170,7 +170,7 @@ class PlugTrainer(NlpEpochBasedTrainer):
 
         model.eval()
 
-        # model: fp16 wapper; model.module : distributedPlug
+        # model: fp16 wrapper; model.module : distributedPlug
         vocab_size = self.unwrap_module(self.model).config.original_vocab_size
         batch_size = data['input_ids'].shape[0]
         beam_generator = TextGenerator(model,

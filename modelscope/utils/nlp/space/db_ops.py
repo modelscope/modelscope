@@ -297,7 +297,7 @@ if __name__ == '__main__':
     while True:
         constraints = {}
         inp = input(
-            'input belief state in fomat: domain-slot1=value1;slot2=value2...\n'
+            'input belief state in format: domain-slot1=value1;slot2=value2...\n'
         )
         domain, cons = inp.split('-')
         for sv in cons.split(';'):

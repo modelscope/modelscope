@@ -64,7 +64,7 @@ class ControlNetConditioningEmbedding(nn.Module):
             layers = (
                 RRDB(block_out_channels[0], block_out_channels[0])
                 for i in range(num_rrdb_block))
-            self.preprocesser = nn.Sequential(*layers)
+            self.preprocessor = nn.Sequential(*layers)
 
         self.blocks = nn.ModuleList([])
         if return_rgbs:

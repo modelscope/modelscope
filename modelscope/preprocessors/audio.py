@@ -110,7 +110,7 @@ class Feature:
         if self.feat_type == 'raw':
             return utt
         elif self.feat_type == 'fbank':
-            # have to use local import before modelscope framework supoort lazy loading
+            # have to use local import before modelscope framework support lazy loading
             import torchaudio.compliance.kaldi as kaldi
             if len(utt.shape) == 1:
                 utt = utt.unsqueeze(0)

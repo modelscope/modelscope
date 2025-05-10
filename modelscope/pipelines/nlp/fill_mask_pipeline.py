@@ -89,7 +89,7 @@ class FillMaskPipeline(Pipeline):
         Args:
             inputs (Dict[str, Any]): The model outputs.
             The output should follow some rules:
-                1. Values can be retrieved by keys(dict-like, or the __getitem__ method is overriden)
+                1. Values can be retrieved by keys(dict-like, or the __getitem__ method is overridden)
                 2. 'logits' and 'input_ids' key exists.
             Models in modelscope will return the output dataclass `modelscope.outputs.FillMaskModelOutput`.
         Returns:

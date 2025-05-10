@@ -86,7 +86,7 @@ class MplugOwlMultimodalDialogueTest(unittest.TestCase):
                 },
                 {
                     'role': 'user',
-                    'content': 'Where is the captial of China?'
+                    'content': 'Where is the capital of China?'
                 },
             ]
         }

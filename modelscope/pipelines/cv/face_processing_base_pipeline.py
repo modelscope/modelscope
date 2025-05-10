@@ -50,7 +50,7 @@ class FaceProcessingBasePipeline(Pipeline):
             det_result: output of face detection pipeline
             min_face: minimum size of valid face w/h
             top_face: take faces with top max areas
-            center_face: choose the most centerd face from multi faces, only valid if top_face > 1
+            center_face: choose the most centered face from multi faces, only valid if top_face > 1
         '''
         bboxes = np.array(det_result[OutputKeys.BOXES])
         landmarks = np.array(det_result[OutputKeys.KEYPOINTS])

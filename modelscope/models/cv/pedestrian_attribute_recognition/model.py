@@ -63,11 +63,11 @@ def weights_init_classifier(m):
     Tasks.pedestrian_attribute_recognition,
     module_name=Models.pedestrian_attribute_recognition)
 class PedestrainAttribute(TorchModel):
-    """Pedestrain Attribute Recognition model.
+    """Pedestrian Attribute Recognition model.
     """
 
     def __init__(self, num_classes=51, **kwargs):
-        """initialize the pedestrain attribute recognition model.
+        """initialize the pedestrian attribute recognition model.
 
         Args:
             num_classes (int): the number of attributes.

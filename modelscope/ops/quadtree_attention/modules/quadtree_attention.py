@@ -259,7 +259,7 @@ class QTAttB(nn.Module):
         query = rearrange(query, 'b c h t1 w t2-> b (h w) (t1 t2) c ').view(
             bs, -1, 4, self.nhead, cur_dim)
 
-        # convert 2D coordiantes to 1D index
+        # convert 2D coordinates to 1D index
         topk_pos = topk_pos * 2
         idx_gather = []
         for x in [0, 1]:

@@ -129,7 +129,7 @@ def resize(input,
         # STEP 2.5- CALCULATE PAD AND UPDATE: according to the field of view,
         # the input should be padded to handle the boundaries, coordinates
         # should be updated. actual padding only occurs when weights are
-        # aplied (step 4). if using by_convs for this dim, then we need to
+        # applied (step 4). if using by_convs for this dim, then we need to
         # calc right and left boundaries for each filter instead.
         pad_sz, projected_grid, field_of_view = calc_pad_sz(
             in_sz, out_sz, field_of_view, projected_grid, scale_factor,
@@ -304,7 +304,7 @@ def apply_convs(input, scale_factor, in_sz, out_sz, weights, dim, pad_sz,
         tmp_input = fw_pad(input, fw, pad_sz, pad_mode, dim=pad_dim)
 
         # apply convolution over last dim. store in the output tensor with
-        # positional strides so that when the loop is comlete conv results are
+        # positional strides so that when the loop is complete conv results are
         # interwind
         tmp_output[..., conv_ind::num_convs] = fw_conv(tmp_input, filt, stride)
 
@@ -326,7 +326,7 @@ def set_scale_and_out_sz(in_shape, out_shape, scale_factors, by_convs,
             else list(in_shape[:-len(out_shape)]) + list(out_shape))
         if scale_factors is None:
             # if no scale given, we calculate it as the out to in ratio
-            # (not recomended)
+            # (not recommended)
             scale_factors = [
                 out_sz / in_sz for out_sz, in_sz in zip(out_shape, in_shape)
             ]
@@ -347,7 +347,7 @@ def set_scale_and_out_sz(in_shape, out_shape, scale_factors, by_convs,
                                    - len(scale_factors)) + list(scale_factors)
         if out_shape is None:
             # when no out_shape given, it is calculated by multiplying the
-            # scale by the in_shape (not recomended)
+            # scale by the in_shape (not recommended)
             out_shape = [
                 ceil(scale_factor * in_sz)
                 for scale_factor, in_sz in zip(scale_factors, in_shape)
@@ -443,7 +443,7 @@ def fw_pad(x, fw, pad_sz, pad_mode, dim=0):
 
 def fw_conv(input, filter, stride):
     # we want to apply 1d conv to any nd array. the way to do it is to reshape
-    # the input to a 4D tensor. first two dims are singeletons, 3rd dim stores
+    # the input to a 4D tensor. first two dims are singletons, 3rd dim stores
     # all the spatial dims that we are not convolving along now. then we can
     # apply conv2d with a 1xK filter. This convolves the same way all the other
     # dims stored in the 3d dim. like depthwise conv over these.

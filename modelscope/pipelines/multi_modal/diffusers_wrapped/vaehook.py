@@ -475,10 +475,10 @@ class VAEHook:
         """
         divider = 32
         while divider >= 2:
-            remainer = lowerbound % divider
-            if remainer == 0:
+            remainder = lowerbound % divider
+            if remainder == 0:
                 return lowerbound
-            candidate = lowerbound - remainer + divider
+            candidate = lowerbound - remainder + divider
             if candidate <= upperbound:
                 return candidate
             divider //= 2
@@ -515,7 +515,7 @@ class VAEHook:
         for i in range(num_height_tiles):
             for j in range(num_width_tiles):
                 # bbox: [x1, x2, y1, y2]
-                # the padding is is unnessary for image borders. So we directly start from (32, 32)
+                # the padding is is unnecessary for image borders. So we directly start from (32, 32)
                 input_bbox = [
                     pad + j * real_tile_width,
                     min(pad + (j + 1) * real_tile_width, w),
@@ -636,7 +636,7 @@ class VAEHook:
             z = z.to(device)
             downsampled_z = F.interpolate(
                 z, scale_factor=scale_factor, mode='nearest-exact')
-            # use nearest-exact to keep statictics as close as possible
+            # use nearest-exact to keep statistics as close as possible
             print(
                 f'[Tiled VAE]: Fast mode enabled, estimating group norm parameters on \
                     {downsampled_z.shape[3]} x {downsampled_z.shape[2]} image')

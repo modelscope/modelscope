@@ -19,7 +19,7 @@ class PositionEncodingSine(nn.Module):
             max_shape (tuple): for 1/8 featmap, the max length of 256 corresponds to 2048 pixels
             temp_bug_fix (bool): As noted in this [issue](https://github.com/zju3dv/LoFTR/issues/41),
                 the original implementation of LoFTR includes a bug in the pos-enc impl, which has little impact
-                on the final performance. For now, we keep both impls for backward compatability.
+                on the final performance. For now, we keep both impls for backward compatibility.
                 We will remove the buggy impl after re-training all variants of our released models.
         """
         super().__init__()
@@ -31,7 +31,7 @@ class PositionEncodingSine(nn.Module):
             div_term = torch.exp(
                 torch.arange(0, d_model // 2, 2).float() *  # noqa
                 (-math.log(10000.0) / (d_model // 2)))
-        else:  # a buggy implementation (for backward compatability only)
+        else:  # a buggy implementation (for backward compatibility only)
             div_term = torch.exp(
                 torch.arange(0, d_model // 2, 2).float() *  # noqa
                 (-math.log(10000.0) / d_model // 2))

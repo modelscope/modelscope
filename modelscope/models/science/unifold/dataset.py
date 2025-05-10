@@ -363,7 +363,7 @@ class UnifoldDataset(UnicoreDataset):
 
     @staticmethod
     def collater(samples):
-        # first dim is recyling. bsz is at the 2nd dim
+        # first dim is recycling. bsz is at the 2nd dim
         return data_utils.collate_dict(samples, dim=1)
 
     @staticmethod
@@ -466,7 +466,7 @@ class UnifoldMultimerDataset(UnifoldDataset):
 
     @staticmethod
     def collater(samples):
-        # first dim is recyling. bsz is at the 2nd dim
+        # first dim is recycling. bsz is at the 2nd dim
         if len(samples) <= 0:  # tackle empty batch
             return None
         feats = [s[0] for s in samples]

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 # Soft aggregation from STM
 def aggregate(prob, keep_bg=False):
-    # Caclulate the probability of the background.
+    # Calculate the probability of the background.
     background_prob = torch.prod(1 - prob, dim=0, keepdim=True)
     # Concatenate the probabilities of background and foreground objects.
     new_prob = torch.cat([background_prob, prob], 0).clamp(1e-7, 1 - 1e-7)

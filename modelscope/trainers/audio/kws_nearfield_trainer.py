@@ -114,7 +114,7 @@ class KWSNearfieldTrainer(BaseTrainer):
                 checkpoint (str): basemodel checkpoint, if None, default to use base.pt in model path
                 tensorboard_dir (str): path to save tensorboard results,
                                        create 'tensorboard_dir' in work_dir by default
-                need_dump (bool): wether to dump data with mapping tokens or not
+                need_dump (bool): whether to dump data with mapping tokens or not
         '''
         train_checkpoint = kwargs.get('checkpoint', None)
         if train_checkpoint is not None and os.path.exists(train_checkpoint):

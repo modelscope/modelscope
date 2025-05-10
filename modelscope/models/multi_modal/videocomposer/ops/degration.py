@@ -568,7 +568,7 @@ def gen_kernel(
     [X, Y] = np.meshgrid(range(k_size[0]), range(k_size[1]))
     Z = np.stack([X, Y], 2)[:, :, :, None]
 
-    # Calcualte Gaussian for every pixel of the kernel
+    # Calculate Gaussian for every pixel of the kernel
     ZZ = Z - MU
     ZZ_t = ZZ.transpose(0, 1, 3, 2)
     raw_kernel = np.exp(-0.5 * np.squeeze(ZZ_t @ INV_SIGMA @ ZZ)) * (1 + noise)

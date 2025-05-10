@@ -387,7 +387,7 @@ def _resolve_pattern(
 
     Hidden files and directories (i.e. whose names start with a dot) are ignored, unless they are explicitly requested.
     The same applies to special directories that start with a double underscore like "__pycache__".
-    You can still include one if the pattern explicilty mentions it:
+    You can still include one if the pattern explicitly mentions it:
     - to include a hidden file: "*/.hidden.txt" or "*/.*"
     - to include a hidden directory: ".hidden/*" or ".*/*"
     - to include a special directory: "__special__/*" or "__*/*"

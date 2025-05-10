@@ -195,7 +195,7 @@ class RegressTool:
             'metric' for compare the best metrics in the evaluation loop.
             compare_fn: A custom fn used to compare the results manually.
             ignore_keys: The keys to ignore of the named_parameters.
-            compare_random: If to compare random setttings, default True.
+            compare_random: If to compare random settings, default True.
             reset_dropout: Reset all dropout modules to 0.0.
             lazy_stop_callback: A callback passed in, when the moniting is over, this callback will be called.
             kwargs:

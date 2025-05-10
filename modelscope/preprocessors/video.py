@@ -224,7 +224,7 @@ def _decode_video(cfg, path, num_temporal_views_override=None):
 class KineticsResizedCrop(object):
     """Perform resize and crop for kinetics-400 dataset
     Args:
-        short_side_range (list): The length of short side range. In inference, this shoudle be [256, 256]
+        short_side_range (list): The length of short side range. In inference, this should be [256, 256]
         crop_size         (int): The cropped size for frames.
         num_spatial_crops (int): The number of the cropped spatial regions in each video.
     """

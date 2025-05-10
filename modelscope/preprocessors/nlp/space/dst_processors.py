@@ -67,7 +67,7 @@ class DSTProcessor(object):
     def _convert_inputs_to_utterances(self, inputs: dict,
                                       history_states: list):
         """This method is to generate the utterances with user, sys, dialog_acts and metadata,
-         while metadata is from the history_states or the output from the inference pipline"""
+         while metadata is from the history_states or the output from the inference pipeline"""
 
         utterances = []
         user_inputs = []
@@ -82,7 +82,7 @@ class DSTProcessor(object):
             else:
                 dialog_acts_inputs.insert(int(turn) - 1, inputs[item])
 
-        # user is leading the topic should aways larger than sys and dialog acts
+        # user is leading the topic should always larger than sys and dialog acts
         assert len(user_inputs) - 1 == len(sys_gen_inputs)
         assert len(user_inputs) - 1 == len(dialog_acts_inputs)
         # the history states record both user and sys states
@@ -584,7 +584,7 @@ class multiwoz22Processor(DSTProcessor):
                             + new_hst_utt_tok_label_dict[slot]
                         ]
 
-                # For now, we map all occurences of unpointable slot values
+                # For now, we map all occurrences of unpointable slot values
                 # to none. However, since the labels will still suggest
                 # a presence of unpointable slot values, the task of the
                 # DST is still to find those values. It is just not

@@ -102,7 +102,7 @@ class _LayerNorm(nn.Module):
         self.beta = nn.Parameter(torch.zeros(channel_size), requires_grad=True)
 
     def apply_gain_and_bias(self, normed_x):
-        """ Assumes input of size `[batch, chanel, *]`. """
+        """ Assumes input of size `[batch, channel, *]`. """
         return (self.gamma * normed_x.transpose(1, -1) + self.beta).transpose(
             1, -1)
 

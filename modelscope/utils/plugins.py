@@ -425,7 +425,7 @@ def install_requirements_by_names(plugins: List[str]):
 
 
 def install_requirements_by_files(requirements: List[str]):
-    """ install the requriements by files
+    """ install the requirements by files
 
     Args:
         requirements: a list of files including requirements info (requirements.txt)

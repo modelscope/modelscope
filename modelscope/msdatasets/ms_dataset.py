@@ -617,7 +617,7 @@ class MsDataset:
                 the `preprocessors` is None, the `collate_fn` shouldn't be None.
             drop_remainder(bool, default None): Drop the last incomplete batch when loading.
             collate_fn_args (Dict, optional): A `dict` of arguments to be passed to the`collate_fn`.
-            label_cols (str or List[str], defalut None): Dataset column(s) to load as labels.
+            label_cols (str or List[str], default None): Dataset column(s) to load as labels.
             prefetch (bool, default True): Prefetch data.
 
         Returns:

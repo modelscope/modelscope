@@ -75,7 +75,7 @@ class TensorboardHook(LoggerHook):
         self.writer.flush()
 
     def visualization_log(self, trainer):
-        """ Images Visulization.
+        """ Images Visualization.
         `visualization_buffer` is a dictionary containing:
             images (list): list of visulaized images.
             filenames (list of str, optional): image filenames.

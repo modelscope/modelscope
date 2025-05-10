@@ -62,7 +62,7 @@ class GeneralImageClassificationTest(unittest.TestCase):
         print(result)
 
     @unittest.skipUnless(test_level() >= 2,
-                         'skip test for timm compatbile need 0.5.4')
+                         'skip test for timm compatible need 0.5.4')
     def test_run_easyrobust(self):
         robust_image_classification = pipeline(
             Tasks.image_classification, model='aaig/easyrobust-models')

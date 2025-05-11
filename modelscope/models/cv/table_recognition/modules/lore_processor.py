@@ -235,7 +235,7 @@ class PositionalEncoder(nn.Module):
         super().__init__()
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
-        # create constant 'pe' matrix with values dependant on
+        # create constant 'pe' matrix with values dependent on
         # pos and i
         pe = torch.zeros(max_seq_len, d_model)
         for pos in range(max_seq_len):

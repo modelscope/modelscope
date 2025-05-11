@@ -1,5 +1,5 @@
 # Copyright © Alibaba, Inc. and its affiliates.
-# The implementation here is modifed based on diffusers.StableDiffusionPipeline,
+# The implementation here is modified based on diffusers.StableDiffusionPipeline,
 # originally Apache 2.0 License and public available at
 # https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
 

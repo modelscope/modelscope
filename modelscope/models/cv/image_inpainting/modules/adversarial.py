@@ -153,7 +153,7 @@ class NonSaturatingWithR1(BaseAdversarialLoss):
             # == if masked region should be treated differently
             mask = self.interpolate_mask(mask, discr_fake_pred.shape[-2:])
             # use_unmasked_for_discr=False only makes sense for fakes;
-            # for reals there is no difference beetween two regions
+            # for reals there is no difference between two regions
             fake_loss = fake_loss * mask
             if self.mask_as_fake_target:
                 fake_loss = fake_loss + (1

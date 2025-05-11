@@ -15,7 +15,7 @@ from modelscope.utils.constant import Tasks
 
 
 class SpectralCluster:
-    r"""A spectral clustering mehtod using unnormalized Laplacian of affinity matrix.
+    r"""A spectral clustering method using unnormalized Laplacian of affinity matrix.
     This implementation is adapted from https://github.com/speechbrain/speechbrain.
     """
 
@@ -135,7 +135,7 @@ class UmapHdbscan:
 @MODELS.register_module(
     Tasks.speaker_diarization, module_name=Models.cluster_backend)
 class ClusterBackend(TorchModel):
-    r"""Perfom clustering for input embeddings and output the labels.
+    r"""Perform clustering for input embeddings and output the labels.
     Args:
         model_dir: A model dir.
         model_config: The model config.

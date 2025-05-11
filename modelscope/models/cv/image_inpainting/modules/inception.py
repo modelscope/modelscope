@@ -32,7 +32,7 @@ class InceptionV3(nn.Module):
     # Maps feature dimensionality to their output blocks indices
     BLOCK_INDEX_BY_DIM = {
         64: 0,  # First max pooling features
-        192: 1,  # Second max pooling featurs
+        192: 1,  # Second max pooling features
         768: 2,  # Pre-aux classifier features
         2048: 3  # Final average pooling features
     }

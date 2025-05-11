@@ -521,7 +521,7 @@ class DirectVoxGO(torch.nn.Module):
         @viewdirs: [N, 3] viewing direction to compute positional embedding for MLP.
         '''
         assert len(rays_o.shape) == 2 and rays_o.shape[
-            -1] == 3, 'Only suuport point queries in [N, 3] format'
+            -1] == 3, 'Only support point queries in [N, 3] format'
 
         ret_dict = {}
         N = len(rays_o)
@@ -964,7 +964,7 @@ class DirectMPIGO(torch.nn.Module):
         @viewdirs: [N, 3] viewing direction to compute positional embedding for MLP.
         '''
         assert len(rays_o.shape) == 2 and rays_o.shape[
-            -1] == 3, 'Only suuport point queries in [N, 3] format'
+            -1] == 3, 'Only support point queries in [N, 3] format'
 
         ret_dict = {}
         N = len(rays_o)
@@ -1674,7 +1674,7 @@ class ResidualDenseBlock_SFT(nn.Module):
         x4 = self.lrelu(self.conv4(torch.cat((xc0, x1, x2, x3), 1)))
         xc1 = self.sft1(x4, x[1])
         x5 = self.conv5(torch.cat((xc0, x1, x2, x3, xc1), 1))
-        # Emperically, we use 0.2 to scale the residual for better performance
+        # Empirically, we use 0.2 to scale the residual for better performance
         return (x5 * 0.2 + x[0], x[1])
 
 
@@ -1698,7 +1698,7 @@ class RRDB_SFT(nn.Module):
         out = self.rdb2(out)
         out = self.rdb3(out)
         out = self.sft0(out[0], x[1])
-        # Emperically, we use 0.2 to scale the residual for better performance
+        # Empirically, we use 0.2 to scale the residual for better performance
         return (out * 0.2 + x[0], x[1])
 
 
@@ -1884,7 +1884,7 @@ class SFTNet(nn.Module):
     def _print_different_keys_loading(self, load_net, strict=True):
         """Print keys with differnet name or different size when loading models.
 
-        1. Print keys with differnet names.
+        1. Print keys with different names.
         2. If strict=False, print the same key but with different tensor size.
             It also ignore these keys with different sizes (not load).
 

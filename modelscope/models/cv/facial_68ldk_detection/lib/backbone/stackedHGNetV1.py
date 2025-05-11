@@ -205,7 +205,7 @@ class E2HTransform(nn.Module):
             'weight',
             e2h_matrix.view(e2h_matrix.size(0), e2h_matrix.size(1), 1, 1))
 
-        # some keypoints are not coverred by any edges,
+        # some keypoints are not covered by any edges,
         # in these cases, we must add a constant bias to their heatmap weights.
         bias = ((e2h_matrix @ torch.ones(e2h_matrix.size(1)).to(e2h_matrix))
                 <  # noqa

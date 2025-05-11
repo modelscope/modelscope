@@ -12,7 +12,7 @@ from mmdet.datasets.builder import PIPELINES
 
 @PIPELINES.register_module()
 class LoadAnnotationsV2(object):
-    """Load mutiple types of annotations.
+    """Load multiple types of annotations.
 
     Args:
         with_bbox (bool): Whether to parse and load the bbox annotation.

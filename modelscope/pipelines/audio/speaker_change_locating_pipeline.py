@@ -43,7 +43,7 @@ class SpeakerChangeLocatingPipeline(Pipeline):
     def __init__(self, model: InputModel, **kwargs):
         """use `model` to create a speaker change Locating pipeline for prediction
         Args:
-            model (str): a valid offical model id
+            model (str): a valid official model id
         """
         super().__init__(model=model, **kwargs)
         self.model_config = self.model.model_config

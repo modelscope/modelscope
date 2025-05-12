@@ -79,13 +79,13 @@ class MBertForWordAlignment(BertPreTrainedModel):
         src_attention_mask:
             Source mask to avoid performing attention on padding token indices.
         src_b2w_map:
-            Word order numner of subword in source sequence.
+            Word order number of subword in source sequence.
         tgt_input_ids:
             Indices of target input sequence tokens in the vocabulary.
         tgt_attention_mask:
             Target mask to avoid performing attention on padding token indices.
         tgt_b2w_map:
-            Word order numner of subword in target sequence.
+            Word order number of subword in target sequence.
         threshold:
             The threshold used to extract alignment.
         bpe_level:

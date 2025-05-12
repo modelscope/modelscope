@@ -55,7 +55,7 @@ class FillMaskPipeline(Pipeline):
         NOTE2: Please pay attention to the model's special tokens.
         If bert based model(bert, structbert, etc.) is used, the mask token is '[MASK]'.
         If the xlm-roberta(xlm-roberta, veco, etc.) based model is used, the mask token is '<mask>'.
-        To view other examples plese check tests/pipelines/test_fill_mask.py.
+        To view other examples please check tests/pipelines/test_fill_mask.py.
         """
         super().__init__(
             model=model,

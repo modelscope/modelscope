@@ -155,7 +155,7 @@ class GridVlpPipeline(Pipeline):
     Tasks.visual_question_answering,
     module_name=Pipelines.gridvlp_multi_modal_classification)
 class GridVlpClassificationPipeline(GridVlpPipeline):
-    """ Pipeline for gridvlp classification, including cate classfication and
+    """ Pipeline for gridvlp classification, including cate classification and
     brand classification.
 
     Example:
@@ -174,7 +174,7 @@ class GridVlpClassificationPipeline(GridVlpPipeline):
     """
 
     def __init__(self, model_name_or_path: str, **kwargs):
-        """ Pipeline for gridvlp classification, including cate classfication and
+        """ Pipeline for gridvlp classification, including cate classification and
     brand classification.
         Args:
             model: path to local model directory.

@@ -202,7 +202,7 @@ def print_examples(examples: Dict[str, Any], tokenizer) -> None:
     print(f'[INPUT_IDS] {tokenizer.decode(input_ids)}')
     print()
     print(
-        f'[LABLES] {tokenizer.decode([lb if lb != -100 else 0 for lb in labels])}'
+        f'[LABELS] {tokenizer.decode([lb if lb != -100 else 0 for lb in labels])}'
     )
 
 

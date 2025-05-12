@@ -769,7 +769,7 @@ def get_all_result(qid, pred_result, ref_result):
 
 def format_metrics(metrics, task, err_msg):
     """
-    Format metrics. 'err' field returns any error occured during evaluation.
+    Format metrics. 'err' field returns any error occurred during evaluation.
 
     Args:
         metrics: A dict object contains metrics for different tasks.

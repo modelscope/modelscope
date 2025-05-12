@@ -45,7 +45,7 @@ class SegmentationClusteringPipeline(Pipeline):
     def __init__(self, model: InputModel, **kwargs):
         """use `model` to create a speaker diarization pipeline for prediction
         Args:
-            model (str): a valid offical model id
+            model (str): a valid official model id
         """
         super().__init__(model=model, **kwargs)
         self.config = self.model.other_config
@@ -112,7 +112,7 @@ class SegmentationClusteringPipeline(Pipeline):
         # merge the same speakers chronologically
         distribute_res = self.merge_seque(distribute_res)
 
-        # accquire speaker center
+        # acquire speaker center
         spk_embs = []
         for i in range(labels.max() + 1):
             spk_emb = embeddings[labels == i].mean(0)

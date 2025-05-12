@@ -60,7 +60,7 @@ class SiameseUiePipeline(Pipeline):
             >>> sentence = '1944年毕业于北大的名古屋铁道会长谷口清太郎等人在日本积极筹资，共筹款2.7亿日元，参加捐款的日本企业有69家。'
             >>> print(pipeline_ins(sentence, schema={'人物': None, '地理位置': None, '组织机构': None}))
 
-            To view other examples plese check tests/pipelines/test_siamese_uie.py.
+            To view other examples please check tests/pipelines/test_siamese_uie.py.
         """
         super().__init__(
             model=model,

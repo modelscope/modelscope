@@ -45,7 +45,7 @@ class LanguageRecognitionPipeline(Pipeline):
     def __init__(self, model: InputModel, **kwargs):
         """use `model` to create a Language Recognition pipeline for prediction
         Args:
-            model (str): a valid offical model id
+            model (str): a valid official model id
         """
         super().__init__(model=model, **kwargs)
         self.model_config = self.model.model_config

@@ -143,8 +143,8 @@ def print_example(example: Dict[str, Any], tokenizer) -> None:
     print(f'[INPUT] {tokenizer.decode(input_ids)}')
     print()
     n_mask = Counter(labels)[-100]
-    print(f'[LABLES_IDS] {labels}')
-    print(f'[LABLES] <-100 * {n_mask}>{tokenizer.decode(labels[n_mask:])}')
+    print(f'[LABELS_IDS] {labels}')
+    print(f'[LABELS] <-100 * {n_mask}>{tokenizer.decode(labels[n_mask:])}')
 
 
 def data_collate_fn(batch: List[Dict[str, Any]], tokenizer) -> Dict[str, Any]:

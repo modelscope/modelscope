@@ -64,7 +64,7 @@ class TextGenerationPipeline(Pipeline, PipelineStreamingOutputMixin):
             >>> # Or use the dict input:
             >>> print(pipeline_ins({'sentence': sentence1}))
 
-            To view other examples plese check tests/pipelines/test_text_generation.py.
+            To view other examples please check tests/pipelines/test_text_generation.py.
         """
         super().__init__(
             model=model,
@@ -517,7 +517,7 @@ class Llama2TaskPipeline(TextGenerationPipeline):
             >>>     temperature=1.0, repetition_penalty=1., eos_token_id=2, bos_token_id=1, pad_token_id=0)
             >>> print(result['text'])
 
-            To view other examples plese check tests/pipelines/test_llama2_text_generation_pipeline.py.
+            To view other examples please check tests/pipelines/test_llama2_text_generation_pipeline.py.
         """
         self.model = Model.from_pretrained(
             model, device_map='auto', torch_dtype=torch.float16)
@@ -604,7 +604,7 @@ class Llama2chatTaskPipeline(Pipeline):
             >>> pad_token_id=0, history=history_demo)
             >>> print(result['response'])
 
-            To view other examples plese check tests/pipelines/test_llama2_text_generation_pipeline.py.
+            To view other examples please check tests/pipelines/test_llama2_text_generation_pipeline.py.
         """
 
     def __init__(self,

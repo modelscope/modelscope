@@ -68,7 +68,7 @@ RUN sh /tmp/install.sh {version_args} && \
     pip install .[eval] && pip install evalscope -U --no-dependencies && pip install xtuner --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers timm>=0.9.0 && pip cache purge; \
+    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
@@ -76,7 +76,7 @@ RUN sh /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub==0.25.* -U; \
+    pip install --no-cache-dir huggingface-hub==0.25.* transformers==4.48.3 -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     pip install liger_kernel nvitop pre-commit transformers huggingface-hub -U && \

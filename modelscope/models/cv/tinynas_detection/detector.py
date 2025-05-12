@@ -29,7 +29,7 @@ class SingleStageDetector(TorchModel):
         init model by cfg
         """
         super().__init__(model_dir, *args, **kwargs)
-
+        self.check_trust_remote_code()
         config_path = osp.join(model_dir, self.config_name)
         config = parse_config(config_path)
         self.cfg = config

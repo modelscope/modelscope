@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from functools import partial
 from multiprocessing import Pool
 from threading import Lock
-from typing import Any, Dict, Generator, List, Mapping, Union
+from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 
 import numpy as np
 from packaging import version
@@ -95,6 +95,7 @@ class Pipeline(ABC):
         self.device_map = device_map
         verify_device(device)
         self.device_name = device
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
 
         if not isinstance(model, List):
             self.model = self.initiate_single_model(model, **kwargs)
@@ -132,6 +133,18 @@ class Pipeline(ABC):
         self._auto_collate = auto_collate
         self._compile = kwargs.get('compile', False)
         self._compile_options = kwargs.get('compile_options', {})
+
+    def check_trust_remote_code(self, info_str: Optional[str] = None):
+        """Check trust_remote_code if the pipeline needs to import extra libs
+
+        Args:
+            info_str(str): The info showed to user if trust_remote_code is `False`.
+        """
+        info_str = info_str or (
+            'This pipeline requires `trust_remote_code` to be `True` because it needs to '
+            'import extra libs or execute the code in the model repo, setting this to true '
+            'means you trust the files in it.')
+        assert self.trust_remote_code, info_str
 
     def prepare_model(self):
         """ Place model on certain device for pytorch models before first inference

@@ -17,7 +17,10 @@ class VideoDepthEstimationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_video_depth_estimation(self):
         input_location = 'data/test/videos/video_depth_estimation.mp4'
-        estimator = pipeline(Tasks.video_depth_estimation, model=self.model_id)
+        estimator = pipeline(
+            Tasks.video_depth_estimation,
+            model=self.model_id,
+            trust_remote_code=True)
         result = estimator(input_location)
         show_video_depth_estimation_result(result[OutputKeys.DEPTHS_COLOR],
                                            'out.mp4')

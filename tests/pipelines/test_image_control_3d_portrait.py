@@ -16,7 +16,7 @@ class ImageControl3dPortraitTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model_id = 'damo/cv_vit_image-control-3d-portrait-synthesis'
-        self.test_image = 'data/test/images/image_control_3d_portrait.jpg'
+        self.test_image = '/mnt/nas3/yzhao/1.jpg'
         self.save_dir = 'exp'
         os.makedirs(self.save_dir, exist_ok=True)
 

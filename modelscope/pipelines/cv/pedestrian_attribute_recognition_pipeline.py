@@ -63,7 +63,8 @@ class PedestrainAttributeRecognitionPipeline(Pipeline):
         self.human_detect_model_id = 'damo/cv_tinynas_human-detection_damoyolo'
         self.human_detector = pipeline(
             Tasks.domain_specific_object_detection,
-            model=self.human_detect_model_id)
+            model=self.human_detect_model_id,
+            trust_remote_code=kwargs.get('trust_remote_code', False))
 
     def get_labels(self, outputs, thres=0.5):
         gender = outputs[0][0:1]

@@ -189,6 +189,7 @@ class DiscoDiffusionPipeline(DiffusersPipeline):
         """
 
         super().__init__(model, device, **kwargs)
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
         self.check_trust_remote_code(
             'This pipeline requires `trust_remote_code=True` to load the module defined'
             ' in `model_index.json`, setting this to True means you trust the code and files'

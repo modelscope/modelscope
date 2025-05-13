@@ -20,7 +20,8 @@ class TrafficSignDetectionTest(unittest.TestCase):
     def test_traffic_sign_detection_damoyolo(self):
         tinynas_object_detection = pipeline(
             Tasks.domain_specific_object_detection,
-            model='damo/cv_tinynas_object-detection_damoyolo_traffic_sign')
+            model='damo/cv_tinynas_object-detection_damoyolo_traffic_sign',
+            trust_remote_code=True)
         result = tinynas_object_detection(
             'data/test/images/image_traffic_sign.jpg')
         assert result and (OutputKeys.SCORES in result) and (

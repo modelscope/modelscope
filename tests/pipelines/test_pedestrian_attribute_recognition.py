@@ -26,14 +26,14 @@ class PedestrianAttributeRecognitionTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub_with_image_file(self):
         pedestrian_attribute_recognition = pipeline(
-            self.task, model=self.model_id)
+            self.task, model=self.model_id, trust_remote_code=True)
         self.pipeline_inference(pedestrian_attribute_recognition,
                                 self.test_image)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub_with_image_input(self):
         pedestrian_attribute_recognition = pipeline(
-            self.task, model=self.model_id)
+            self.task, model=self.model_id, trust_remote_code=True)
         self.pipeline_inference(pedestrian_attribute_recognition,
                                 Image.open(self.test_image))
 

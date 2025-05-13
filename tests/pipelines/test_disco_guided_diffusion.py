@@ -21,7 +21,10 @@ class DiscoGuidedDiffusionTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run(self):
         diffusers_pipeline = pipeline(
-            task=self.task, model=self.model_id1, model_revision='v1.0')
+            task=self.task,
+            model=self.model_id1,
+            model_revision='v1.0',
+            trust_remote_code=True)
         output = diffusers_pipeline({
             'text': self.test_input1,
             'height': 256,
@@ -31,7 +34,10 @@ class DiscoGuidedDiffusionTest(unittest.TestCase):
         print('Image saved to output1.png')
 
         diffusers_pipeline = pipeline(
-            task=self.task, model=self.model_id2, model_revision='v1.0')
+            task=self.task,
+            model=self.model_id2,
+            model_revision='v1.0',
+            trust_remote_code=True)
         output = diffusers_pipeline({
             'text': self.test_input2,
             'height': 256,

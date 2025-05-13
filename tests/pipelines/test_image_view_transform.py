@@ -36,12 +36,16 @@ class ImageViewTransformTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
         image_view_transform = pipeline(
-            Tasks.image_view_transform, model=self.model_id, revision='v1.0.3')
+            Tasks.image_view_transform,
+            model=self.model_id,
+            revision='v1.0.3',
+            trust_remote_code=True)
         self.pipeline_inference(image_view_transform, self.input)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
-        image_view_transform = pipeline(Tasks.image_view_transform)
+        image_view_transform = pipeline(
+            Tasks.image_view_transform, trust_remote_code=True)
         self.pipeline_inference(image_view_transform, self.input)
 
 

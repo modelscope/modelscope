@@ -291,9 +291,9 @@ def multiHomoEstimate(motion, kp):
     distanceMeasure = MotionDistanceMeasure(cluster1_meanMotion,
                                             cluster2_meanMotion)
 
-    threhold = (np.sum(pred_Y) > cfg.MODEL.THRESHOLDPOINT) and distanceMeasure
+    threshold = (np.sum(pred_Y) > cfg.MODEL.THRESHOLDPOINT) and distanceMeasure
 
-    if threhold:
+    if threshold:
 
         Homo_2, _ = cv2.findHomography(cluster2_old_points,
                                        cluster2_new_points, cv2.RANSAC)

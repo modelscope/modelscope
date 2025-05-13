@@ -155,7 +155,7 @@ class UpMaskNet(nn.Module):
             nn.Conv2d(hidden_dim * 2, ratio * ratio * 9, 1, padding=0))
 
     def forward(self, feat):
-        # scale mask to balence gradients
+        # scale mask to balance gradients
         mask = .25 * self.mask(feat)
         return mask
 
@@ -195,7 +195,7 @@ class BasicUpdateBlockDepth(nn.Module):
 
             net = self.depth_gru(net, inp_i)
             delta_inv_depth = self.depth_head(net)
-            # scale mask to balence gradients
+            # scale mask to balance gradients
             mask = .25 * self.mask(net)
 
             inv_depth = inv_depth + delta_inv_depth
@@ -230,5 +230,5 @@ class BasicUpdateBlockPose(nn.Module):
             pose = pose + delta_pose
             pose_list.append(pose)
 
-        # scale mask to balence gradients
+        # scale mask to balance gradients
         return net, pose_list

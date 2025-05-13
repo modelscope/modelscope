@@ -16,7 +16,7 @@ class DeinterlaceFre(nn.Module):
     def __init__(self, num_in_ch=3, num_out_ch=3, ngf=64):
         """Defines a video deinterlace module.
            input a [b,c,h,w] tensor with range [0,1] as frame,
-           it will output a [b,c,h,w] tensor with range [0,1] whitout interlace.
+           it will output a [b,c,h,w] tensor with range [0,1] without interlace.
 
         Args:
             num_in_ch (int): Channel number of inputs. Default: 3.

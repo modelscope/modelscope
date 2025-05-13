@@ -432,7 +432,7 @@ def compute_pose_metrics(config, gt, pred):
     pr = pred[0].mat.squeeze().detach().cpu().numpy()
     gt = gt[0].squeeze().detach().cpu().numpy()
 
-    # seperate rotations and translations
+    # separate rotations and translations
     R1, t1 = gt[:3, :3], gt[:3, 3]
     R2, t2 = pr[:3, :3], pr[:3, 3]
 

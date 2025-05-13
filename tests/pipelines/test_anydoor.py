@@ -22,7 +22,7 @@ class AnydoorTest(unittest.TestCase):
         save_path = 'data/test/images/image_anydoor_gen.png'
 
         anydoor_pipline: AnydoorPipeline = pipeline(
-            self.task, model=self.model_id)
+            self.task, model=self.model_id, trust_remote_code=True)
         out = anydoor_pipline((ref_image, ref_mask, bg_image, bg_mask))
         image = out['output_img']
         image.save(save_path)

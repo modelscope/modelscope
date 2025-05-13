@@ -45,6 +45,8 @@ class Pipeline(ABC):
     """
 
     def initiate_single_model(self, model, **kwargs):
+        if self.trust_remote_code:
+            kwargs['trust_remote_code'] = True
         if isinstance(model, str):
             logger.info(f'initiate model from {model}')
         if isinstance(model, str) and is_official_hub_path(model):

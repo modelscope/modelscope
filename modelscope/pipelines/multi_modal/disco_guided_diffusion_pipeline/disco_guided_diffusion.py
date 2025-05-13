@@ -208,6 +208,7 @@ class DiscoDiffusionPipeline(DiffusersPipeline):
         if model_config['use_fp16']:
             self.unet.convert_to_fp16()
 
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
         self.check_trust_remote_code(
             'This pipeline requires import modules listed in `model_index.json`, '
             'please add `trust_remote_code=True` if you trust this model repo.'

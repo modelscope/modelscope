@@ -269,7 +269,7 @@ class VideoKNet(TorchModel):
             self.mask_preds_memory = None
             print('fid', fid)
 
-        # wheter to link the previous
+        # whether to link the previous
         if self.link_previous:
             simple_test_result = self.roi_head.simple_test_with_previous(
                 x_feats,

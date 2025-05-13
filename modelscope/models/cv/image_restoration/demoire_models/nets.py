@@ -1,5 +1,5 @@
 # The implementation is adopted from UHDM work, made publicly available under the Apache 2.0 License
-# source code avaiable via https://github.com/CVMI-Lab/UHDM/
+# source code available via https://github.com/CVMI-Lab/UHDM/
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

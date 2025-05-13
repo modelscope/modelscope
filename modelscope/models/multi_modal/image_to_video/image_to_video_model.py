@@ -19,9 +19,9 @@ from modelscope.models.multi_modal.image_to_video.modules import (
 from modelscope.models.multi_modal.image_to_video.utils.config import cfg
 from modelscope.models.multi_modal.image_to_video.utils.diffusion import \
     GaussianDiffusion
-from modelscope.models.multi_modal.image_to_video.utils.seed import setup_seed
-from modelscope.models.multi_modal.image_to_video.utils.shedule import \
+from modelscope.models.multi_modal.image_to_video.utils.schedule import \
     beta_schedule
+from modelscope.models.multi_modal.image_to_video.utils.seed import setup_seed
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.device import create_device

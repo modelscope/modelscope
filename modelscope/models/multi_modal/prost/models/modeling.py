@@ -36,7 +36,7 @@ class MyObject:
 
 class CLIP4ClipPreTrainedModel(PreTrainedModel, nn.Module):
     """ An abstract class to handle weights initialization and
-        a simple interface for dowloading and loading pretrained models.
+        a simple interface for downloading and loading pretrained models.
     """
 
     def __init__(self, cross_config, *inputs, **kwargs):
@@ -669,7 +669,7 @@ class CLIP4Clip(CLIP4ClipPreTrainedModel):
         if release_size > 0:
             split_size += [release_size]
 
-        # due to clip text branch retrun the last hidden
+        # due to clip text branch return the last hidden
         attention_mask = torch.ones(sequence_output.size(0), 1)\
             .to(device=attention_mask.device, dtype=attention_mask.dtype)
 

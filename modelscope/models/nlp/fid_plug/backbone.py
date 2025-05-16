@@ -44,7 +44,7 @@ class MultiHeadedAttention(nn.Module):  # SelfAttention
     :cite:`DBLP:journals/corr/VaswaniSPUJGKP17`.
 
     Similar to standard `dot` attention but uses
-    multiple attention distributions simulataneously
+    multiple attention distributions simultaneously
     to select relevant items.
 
     .. mermaid::
@@ -440,7 +440,7 @@ class TransformerDecoder(nn.Module):  # Decoder
        dropout (float): dropout parameters
        embeddings (:obj:`onmt.modules.Embeddings`):
           embeddings to use, should have positional encodings
-       attn_type (str): if using a seperate copy attention
+       attn_type (str): if using a separate copy attention
     """
     decoder_type = 'transformer'
 

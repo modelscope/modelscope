@@ -132,7 +132,7 @@ class GPTMoEEmbedding(nn.Module):
         position_embeddings = self.position_embeddings(position_ids)
         embeddings = words_embeddings + position_embeddings
 
-        # Data format change to avoid explicit tranposes : [b s h] --> [s b h].
+        # Data format change to avoid explicit transposes : [b s h] --> [s b h].
         embeddings = embeddings.transpose(0, 1).contiguous()
 
         # If the input flag for fp32 residual connection is set, convert for float.

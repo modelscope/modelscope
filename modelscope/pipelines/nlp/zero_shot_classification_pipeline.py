@@ -59,7 +59,7 @@ class ZeroShotClassificationPipeline(Pipeline):
             >>> template = '这篇文章的标题是{}'
             >>> print(pipeline_ins(sentence1, candidate_labels=labels, hypothesis_template=template))
 
-            To view other examples plese check tests/pipelines/test_zero_shot_classification.py.
+            To view other examples please check tests/pipelines/test_zero_shot_classification.py.
         """
         super().__init__(
             model=model,

@@ -39,7 +39,7 @@ def gather(var, idx):
 
 
 class SpaceGenerator(object):
-    """ Genrator class. """
+    """ Generator class. """
 
     _registry = dict()
 

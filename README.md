@@ -126,7 +126,7 @@ AI for Science:
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
-**Note:** Most models on ModelScope are public and can be downloaded without account registration on modelscope website([www.modelscope.cn](www.modelscope.cn)), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for dowloading models with api provided by modelscope library or git.
+**Note:** Most models on ModelScope are public and can be downloaded without account registration on modelscope website([www.modelscope.cn](www.modelscope.cn)), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for downloading models with api provided by modelscope library or git.
 
 # QuickTour
 
@@ -158,7 +158,7 @@ The output image with the background removed is:
 ![image](data/resource/portrait_output.png)
 
 
-Fine-tuning and evaluation can also be done with a few more lines of code to set up training dataset and trainer, with the heavy-lifting work of training and evaluation a model encapsulated in the implementation of  `traner.train()` and
+Fine-tuning and evaluation can also be done with a few more lines of code to set up training dataset and trainer, with the heavy-lifting work of training and evaluation a model encapsulated in the implementation of  `trainer.train()` and
 `trainer.evaluate()`  interfaces.
 
 For example, the gpt3 base model (1.3B) can be fine-tuned with the chinese-poetry dataset, resulting in a model that can be used for chinese-poetry generation.

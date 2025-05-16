@@ -342,6 +342,8 @@ class ControlLDM(LatentDiffusion, Model):
         self.control_key = control_key
         self.only_mid_control = only_mid_control
         self.control_scales = [1.0] * 13
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
+        self.check_trust_remote_code()
 
     @torch.no_grad()
     def get_input(self, batch, k, bs=None, *args, **kwargs):

@@ -55,7 +55,7 @@ class Vllm(InferFramework):
 
         # for vllm, default to do_sample/greedy(depends on temperature).
         # for hf, do_sample=false, num_beam=1 -> greedy(default)
-        #         do_sample=ture, num_beam=1 -> sample
+        #         do_sample=true, num_beam=1 -> sample
         #         do_sample=false, num_beam>1 -> beam_search
         if not do_sample and num_beam > 1:
             kwargs['use_beam_search'] = True

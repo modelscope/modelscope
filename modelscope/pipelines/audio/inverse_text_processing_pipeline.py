@@ -37,7 +37,7 @@ class InverseTextProcessingPipeline(Pipeline):
     >>> sentence = 'sembilan ribu sembilan ratus sembilan puluh sembilan'
     >>> print(pipeline_itn(sentence))
 
-    To view other examples plese check tests/pipelines/test_inverse_text_processing.py.
+    To view other examples please check tests/pipelines/test_inverse_text_processing.py.
     """
 
     def __init__(self, model: Union[Model, str] = None, **kwargs):

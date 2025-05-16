@@ -30,9 +30,22 @@ class Model(ABC):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self._device_name = device_name
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.postprocess(self.forward(*args, **kwargs))
+
+    def check_trust_remote_code(self, info_str: Optional[str] = None):
+        """Check trust_remote_code if the model needs to import extra libs
+
+        Args:
+            info_str(str): The info showed to user if trust_remote_code is `False`.
+        """
+        info_str = info_str or (
+            'This model requires `trust_remote_code` to be `True` because it needs to '
+            'import extra libs or execute the code in the model repo, setting this to true '
+            'means you trust the files in it.')
+        assert self.trust_remote_code, info_str
 
     @abstractmethod
     def forward(self, *args, **kwargs) -> Dict[str, Any]:

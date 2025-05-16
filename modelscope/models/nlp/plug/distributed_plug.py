@@ -19,7 +19,7 @@ logger = get_logger()
 
 class DistributedPlug(TorchModel):
     """
-    The wapper class of PLUG Model to initialize parallel environment, load model weights, generate sentences.
+    The wrapper class of PLUG Model to initialize parallel environment, load model weights, generate sentences.
     Parameters:
         model_dir (`str`, *required*):
             Path to model damo/nlp_plug_text-generation_27B.

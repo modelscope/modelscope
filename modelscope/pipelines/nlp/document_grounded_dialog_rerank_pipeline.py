@@ -415,7 +415,7 @@ def get_rank(guess_item, gold_item, k, rank_keys, verbose=False):
                 f'for a robust recall@{k} computation (you provided {len(guess_ids)} item(s)).'
             )
 
-        # 3. rank by gruping pages in each evidence set (each evidence set count as 1),
+        # 3. rank by grouping pages in each evidence set (each evidence set count as 1),
         # the position in the rank of each evidence set is given by the last page in guess_ids
         # non evidence pages counts as 1
         rank = []

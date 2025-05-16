@@ -2058,7 +2058,8 @@ class HubApi:
 
             if query_addr:
                 domain_response = send_request(query_addr, timeout=internal_timeout)
-                region_id = domain_response.text.strip()
+                if domain_response is not None:
+                    region_id = domain_response.text.strip()
 
         return region_id
 

@@ -67,6 +67,10 @@ class LinearAECPipeline(Pipeline):
             model: model id on modelscope hub.
         """
         super().__init__(model=model, **kwargs)
+        self.check_trust_remote_code(
+            'This pipeline requires `trust_remote_code=True` to load the module defined'
+            ' in the `dey_mini.yaml`, setting this to True means you trust the code and files'
+            ' listed in this model repo.')
 
         self.use_cuda = torch.cuda.is_available()
         with open(

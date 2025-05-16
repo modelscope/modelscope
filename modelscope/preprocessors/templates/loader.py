@@ -54,6 +54,12 @@ def no_multi_modal():
 # Order matters
 template_info = [
     # llama
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("llama4", "llama-4")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama4',
+    ),
     ## "llama3"
     TemplateInfo(
         template_regex=
@@ -154,10 +160,14 @@ template_info = [
 
     # qwen
     TemplateInfo(
-        template=TemplateType.qwen,
         template_regex=f'.*{cases("qwen3")}{no_multi_modal()}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen3',
+    ),
+    TemplateInfo(
+        template_regex=f'.*{cases("qwen2.5")}.*{cases("vl")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen2.5vl',
     ),
     TemplateInfo(
         template=TemplateType.qwen,
@@ -249,6 +259,18 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/dolphin3'),
 
     # "phi"
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("phi-4-reasoning")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4-reasoning',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("phi-4-mini-reasoning")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/phi4-mini-reasoning',
+    ),
     TemplateInfo(
         template_regex=
         f'.*{cases("llava-phi3", "llava-phi-3")}.*',

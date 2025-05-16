@@ -123,6 +123,18 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
+            'unsloth/Qwen2.5-VL-3B-Instruct-GGUF',
+            'qwen2.5vl',
+            gguf_meta={'general.name': 'Qwen2.5-Vl-3B-Instruct'})
+        _test_check_tmpl_type(
+            'unsloth/Phi-4-reasoning-GGUF',
+            'phi4-reasoning',
+            gguf_meta={'general.name': 'Phi-4-Reasoning-Plus'})
+        _test_check_tmpl_type('unsloth/Phi-4-mini-reasoning-GGUF',
+                              'phi4-mini-reasoning')
+        _test_check_tmpl_type('unsloth/Llama-4-Scout-17B-16E-Instruct-GGUF',
+                              'llama4')
+        _test_check_tmpl_type(
             'unsloth/Qwen3-32B-GGUF',
             'qwen3',
             gguf_meta={'general.name': 'Qwen3-32B'})

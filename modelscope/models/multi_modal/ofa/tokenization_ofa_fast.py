@@ -58,7 +58,7 @@ PRETRAINED_VOCAB_FILES_MAP_ZH = {
         'bert-base-chinese':
         'https://huggingface.co/bert-base-chinese/resolve/main/vocab.txt',
     }
-    # OFA models are implemeted to be compatible with both huggingface
+    # OFA models are implemented to be compatible with both huggingface
     # and modelscope frameworks. For all OFA models available on huggingface,
     # please refer to https://huggingface.co/models?filter=ofa
 }

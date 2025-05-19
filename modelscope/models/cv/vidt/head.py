@@ -408,6 +408,6 @@ class PostProcess(nn.Module):
 
 
 def _get_clones(module, N):
-    """ Clone a moudle N times """
+    """ Clone a module N times """
 
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])

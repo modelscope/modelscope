@@ -364,7 +364,7 @@ class CLIP4Clip(nn.Module):
             logit_scale = self.clip.logit_scale.exp()
             retrieve_logits = logit_scale * retrieve_logits
 
-            # selecet max
+            # select max
             max_idx1 = max_idx1[torch.arange(max_idx1.shape[0]),
                                 torch.arange(max_idx1.shape[1])]
             max_idx2 = max_idx2[torch.arange(max_idx2.shape[0]),

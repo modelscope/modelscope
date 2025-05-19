@@ -21,7 +21,7 @@ logger = logging.get_logger()
 
 OFA_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     'ofa-medium': 'https://huggingface.co/ofa-base/resolve/main/config.json',
-    # OFA models are implemeted to be compatible with both huggingface
+    # OFA models are implemented to be compatible with both huggingface
     # and modelscope frameworks. For all OFA models available on huggingface,
     # please refer to https://huggingface.co/models?filter=ofa
 }

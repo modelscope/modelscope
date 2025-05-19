@@ -730,7 +730,7 @@ class CLIPTextEncoder(nn.Module):
                     if k == 'positional_embedding' and checkpoint[k].size(
                             0) > self.context_length:
                         checkpoint[k] = checkpoint[k][:self.context_length]
-                        print('positional_embedding is tuncated from 77 to',
+                        print('positional_embedding is truncated from 77 to',
                               self.context_length)
                     state_dict[k] = checkpoint[k]
 
@@ -808,7 +808,7 @@ class CLIPTextContextEncoder(nn.Module):
                     if k == 'positional_embedding' and checkpoint[k].size(
                             0) > self.context_length:
                         checkpoint[k] = checkpoint[k][:self.context_length]
-                        print('positional_embedding is tuncated from 77 to',
+                        print('positional_embedding is truncated from 77 to',
                               self.context_length)
                     state_dict[k] = checkpoint[k]
 

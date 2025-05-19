@@ -105,7 +105,7 @@ def get_masks_and_position_ids(data,
     position_ids = position_ids.unsqueeze(0).expand_as(data)
     if set_loss_mask:
         loss_mask[data == eod_token] = 0.0
-    # We need to clone as the ids will be modifed based on batch index.
+    # We need to clone as the ids will be modified based on batch index.
     if reset_position_ids:
         position_ids = position_ids.clone()
 
@@ -113,13 +113,13 @@ def get_masks_and_position_ids(data,
         # Loop through the batches:
         for b in range(batch_size):
 
-            # Find indecies where EOD token is.
+            # Find indices where EOD token is.
             eod_index = position_ids[b, data[b] == eod_token]
-            # Detach indecies from positions if going to modify positions.
+            # Detach indices from positions if going to modify positions.
             if reset_position_ids:
                 eod_index = eod_index.clone()
 
-            # Loop through EOD indecies:
+            # Loop through EOD indices:
             prev_index = 0
             for j in range(eod_index.size()[0]):
                 i = eod_index[j]
@@ -139,7 +139,7 @@ def get_batch(context_tokens, device, args):
     tokens = tokens.view(args.batch_size, -1).contiguous()
     tokens = tokens.to(device)
 
-    # Get the masks and postition ids.
+    # Get the masks and position ids.
     if args.block_lm:
         attention_mask = torch.tensor([tokens.size(1)],
                                       device=device,

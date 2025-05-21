@@ -275,9 +275,9 @@ class LLMImageBuilder(Builder):
         if not args.cuda_version:
             args.cuda_version = '12.4.0'
         if not args.vllm_version:
-            args.vllm_version = '0.8.3'
+            args.vllm_version = '0.8.5.post1'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.7.2.post1'
+            args.lmdeploy_version = '0.8.0'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:

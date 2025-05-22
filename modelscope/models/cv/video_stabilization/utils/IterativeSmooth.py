@@ -15,7 +15,7 @@ def gauss(t, r=0, window_size=3):
     @param t is the index of current point
     @param r is the index of point in window
 
-    @return guassian weights over a window size
+    @return gaussian weights over a window size
     """
     if np.abs(r - t) > window_size:
         return 0

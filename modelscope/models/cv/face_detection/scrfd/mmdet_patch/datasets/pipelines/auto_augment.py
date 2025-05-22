@@ -182,7 +182,7 @@ class RotateV2(object):
                 h, w, c = results['img'].shape
                 new = np.stack([w - k[..., 0], h - k[..., 1], k[..., 2]],
                                axis=-1)
-            # a kps is invalid if thrid value is -1
+            # a kps is invalid if third value is -1
             kps_invalid = new[..., -1][:, -1] == -1
             new[kps_invalid] = np.zeros(new.shape[1:]) - 1
             results[key] = new

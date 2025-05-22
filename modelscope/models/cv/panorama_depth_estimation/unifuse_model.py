@@ -73,7 +73,7 @@ class PanoramaDepthEstimation(TorchModel):
     def forward(self, Inputs):
         """
         Args:
-            Inputs: model inputs containning equirectangular panorama images and the corresponding cubmap images
+            Inputs: model inputs containing equirectangular panorama images and the corresponding cubmap images
             The torch size of Inputs['rgb'] should be [n, 3, 512, 1024]
             The torch size of Inputs['cube_rgb'] should be [n, 3, 256, 1536]
         Returns:

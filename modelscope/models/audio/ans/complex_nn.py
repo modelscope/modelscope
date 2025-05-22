@@ -167,7 +167,7 @@ class ComplexConvTranspose2d(nn.Module):
             dilation=dilation,
             **kwargs)
 
-    def forward(self, x):  # shpae of x : [batch,channel,axis1,axis2,2]
+    def forward(self, x):  # shape of x : [batch,channel,axis1,axis2,2]
         real = self.tconv_re(x[..., 0]) - self.tconv_im(x[..., 1])
         imaginary = self.tconv_re(x[..., 1]) + self.tconv_im(x[..., 0])
         output = torch.stack((real, imaginary), dim=-1)

@@ -82,7 +82,7 @@ def pano_connect_points(p1, p2, z=-50, w=1024, h=512):
 
 
 def visualize_pano_stretch(stretched_img, stretched_cor, title):
-    thikness = 2
+    thickness = 2
     color = (0, 255, 0)
     for i in range(4):
         xys = pano_connect_points(
@@ -93,8 +93,8 @@ def visualize_pano_stretch(stretched_img, stretched_cor, title):
             cv2.polylines(stretched_img, [xys], False, color, 2)
         else:
             t = blue_split[0] + 1
-            cv2.polylines(stretched_img, [xys[:t]], False, color, thikness)
-            cv2.polylines(stretched_img, [xys[t:]], False, color, thikness)
+            cv2.polylines(stretched_img, [xys[:t]], False, color, thickness)
+            cv2.polylines(stretched_img, [xys[t:]], False, color, thickness)
 
     for i in range(4):
         xys = pano_connect_points(
@@ -105,8 +105,8 @@ def visualize_pano_stretch(stretched_img, stretched_cor, title):
             cv2.polylines(stretched_img, [xys], False, color, 2)
         else:
             t = blue_split[0] + 1
-            cv2.polylines(stretched_img, [xys[:t]], False, color, thikness)
-            cv2.polylines(stretched_img, [xys[t:]], False, color, thikness)
+            cv2.polylines(stretched_img, [xys[:t]], False, color, thickness)
+            cv2.polylines(stretched_img, [xys[t:]], False, color, thickness)
 
     cv2.putText(stretched_img, title, (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 1,
                 (0, 0, 0), 2, cv2.LINE_AA)

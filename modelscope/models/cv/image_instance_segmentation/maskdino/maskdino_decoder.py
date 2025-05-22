@@ -265,7 +265,7 @@ class MaskDINODecoder(nn.Module):
         tgt_mask = None
         mask_dict = None
 
-        # direct prediction from the matching and denoising part in the begining
+        # direct prediction from the matching and denoising part in the beginning
         if self.initial_pred:
             outputs_class, outputs_mask = self.forward_prediction_heads(
                 tgt.transpose(0, 1), mask_features, self.training)

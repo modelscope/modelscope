@@ -15,7 +15,7 @@ class TAP(nn.Module):
 
     def forward(self, x):
         pooling_mean = x.mean(dim=-1)
-        # To be compatable with 2D input
+        # To be compatible with 2D input
         pooling_mean = pooling_mean.flatten(start_dim=1)
         return pooling_mean
 

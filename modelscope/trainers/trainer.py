@@ -149,7 +149,7 @@ class EpochBasedTrainer(BaseTrainer):
                                         ModelFile.CONFIGURATION)
             self.input_model_id = model
         else:
-            assert cfg_file is not None, 'Config file should not be None if model is not from pretrained !'
+            assert cfg_file is not None, 'Config file should not be None if model is not from pretrained!'
             self.model_dir = os.path.dirname(cfg_file)
             self.input_model_id = None
             if hasattr(model, 'model_dir'):

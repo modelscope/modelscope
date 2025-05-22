@@ -5,8 +5,7 @@ einops
 Pillow
 python-dateutil>=2.1
 scipy
-# latest version has some compatible issue.
-setuptools==69.5.1
+setuptools
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
 transformers

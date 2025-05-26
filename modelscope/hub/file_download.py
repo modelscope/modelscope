@@ -307,7 +307,7 @@ def move_legacy_cache_to_standard_dir(cache_dir: str, model_id: str):
         #   When MODELSCOPE_CACHE is not set, the default directory remains
         #   the same at  ~/.cache/modelscope/hub
         # Scenery 2:
-        #   When MODELSCOPE_CACHE is not set, the cache directory is moved from
+        #   When MODELSCOPE_CACHE is set, the cache directory is moved from
         #   $MODELSCOPE_CACHE/hub to $MODELSCOPE_CACHE/. In this case,
         #   we will be migrating the hub directory accordingly.
         legacy_cache_root = os.path.join(legacy_cache_root, 'hub')

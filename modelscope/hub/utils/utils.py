@@ -3,7 +3,7 @@
 import hashlib
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, time
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -74,7 +74,7 @@ def get_model_masked_directory(directory, model_id):
     return masked_directory
 
 
-def convert_readable_size(size_bytes):
+def convert_readable_size(size_bytes: int) -> str:
     import math
     if size_bytes == 0:
         return '0B'
@@ -85,7 +85,7 @@ def convert_readable_size(size_bytes):
     return f'{s} {size_name[i]}'
 
 
-def get_folder_size(folder_path):
+def get_folder_size(folder_path: str) -> int:
     total_size = 0
     for path in Path(folder_path).rglob('*'):
         if path.is_file():
@@ -94,7 +94,7 @@ def get_folder_size(folder_path):
 
 
 # return a readable string that describe size of for a given folder (MB, GB etc.)
-def get_readable_folder_size(folder_path) -> str:
+def get_readable_folder_size(folder_path: str) -> str:
     return convert_readable_size(get_folder_size(folder_path=folder_path))
 
 
@@ -199,3 +199,47 @@ def add_content_to_file(repo,
             pass
         else:
             raise e
+
+
+_TIMESINCE_CHUNKS = (
+    # Label, divider, max value
+    ('second', 1, 60),
+    ('minute', 60, 60),
+    ('hour', 60 * 60, 24),
+    ('day', 60 * 60 * 24, 6),
+    ('week', 60 * 60 * 24 * 7, 6),
+    ('month', 60 * 60 * 24 * 30, 11),
+    ('year', 60 * 60 * 24 * 365, None),
+)
+
+
+def format_timesince(ts: float) -> str:
+    """Format timestamp in seconds into a human-readable string, relative to now.
+
+    Vaguely inspired by Django's `timesince` formatter.
+    """
+    delta = time.time() - ts
+    if delta < 20:
+        return 'a few seconds ago'
+    for label, divider, max_value in _TIMESINCE_CHUNKS:  # noqa: B007
+        value = round(delta / divider)
+        if max_value is not None and value <= max_value:
+            break
+    return f"{value} {label}{'s' if value > 1 else ''} ago"
+
+
+def tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
+    """
+    Inspired by:
+
+    - stackoverflow.com/a/8356620/593036
+    - stackoverflow.com/questions/9535954/printing-lists-as-tabular-data
+    """
+    col_widths = [max(len(str(x)) for x in col) for col in zip(*rows, headers)]
+    row_format = ('{{:{}}} ' * len(headers)).format(*col_widths)
+    lines = []
+    lines.append(row_format.format(*headers))
+    lines.append(row_format.format(*['-' * w for w in col_widths]))
+    for row in rows:
+        lines.append(row_format.format(*row))
+    return '\n'.join(lines)

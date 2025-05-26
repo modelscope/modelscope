@@ -3,7 +3,8 @@
 import hashlib
 import os
 import sys
-from datetime import datetime, time
+import time
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -215,8 +216,6 @@ _TIMESINCE_CHUNKS = (
 
 def format_timesince(ts: float) -> str:
     """Format timestamp in seconds into a human-readable string, relative to now.
-
-    Vaguely inspired by Django's `timesince` formatter.
     """
     delta = time.time() - ts
     if delta < 20:

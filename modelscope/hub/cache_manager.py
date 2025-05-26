@@ -1,17 +1,17 @@
 """Contains utilities to manage the ModelScope cache directory."""
 
 import os
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Literal, Optional, Set, Union
 
 from modelscope.hub.errors import CacheNotFound, CorruptedCacheException
 from modelscope.hub.utils.caching import ModelFileSystemCache
+from modelscope.hub.utils.utils import (convert_readable_size,
+                                        format_timesince, tabulate)
 from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL
 from modelscope.utils.file_utils import get_default_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
-from .utils.utils import convert_readable_size, format_timesince, tabulate
 
 logger = get_logger()
 
@@ -232,7 +232,7 @@ class ModelScopeCacheInfo:
 
         Example:
         ```py
-        >>> from modelscope.hub.utils import scan_cache_dir
+        >>> from modelscope.hub.cache_manager import scan_cache_dir
 
         >>> ms_cache_info = scan_cache_dir()
         ModelScopeCacheInfo(...)

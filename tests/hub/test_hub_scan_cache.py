@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
+from modelscope import snapshot_download
 from modelscope.hub.cache_manager import scan_cache_dir
 from modelscope.hub.errors import CacheNotFound
 from modelscope.utils.file_utils import get_modelscope_cache_dir
@@ -11,9 +12,12 @@ logger = get_logger()
 
 class HubScanCacheTest(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """Set up for tests."""
-        self.fake_cache_dir = '/fake/cache/path'
+        # download one file to ensure the cache directory exists
+        model_id = 'Qwen/Qwen3-0.6B'
+        snapshot_download(model_id, allow_file_pattern='README.md')
 
     def test_scan_default_dir(self):
         """Test scanning the default cache directory."""

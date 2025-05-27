@@ -10,7 +10,7 @@ from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (convert_readable_size,
                                         format_timesince, tabulate)
 from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL
-from modelscope.utils.file_utils import get_default_modelscope_cache_dir
+from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -42,6 +42,7 @@ class CachedFileInfo:
 
     file_name: str
     file_path: Path
+    file_revision_hash: str
     blob_path: Path
     size_on_disk: int
 
@@ -238,11 +239,11 @@ class ModelScopeCacheInfo:
         ModelScopeCacheInfo(...)
 
         >>> print(ms_cache_info.export_as_table())
-        REPO ID                                             REPO TYPE REVISION   SIZE ON DISK NB FILES LAST_MODIFIED LOCAL PATH
-        --------------------------------------------------- --------- ---------- ------------ -------- -------------  -------------------------------------------------------------
-        damo/bert-base-chinese                              model     master             2.7M        5 1 week ago     ~/.cache/modelscope/hub/models--damo--bert-base-chinese/...
-        damo/structured-bert                                model     master             8.8K        1 1 week ago     ~/.cache/modelscope/hub/models--damo--structured-bert/...
-        damo/t5-base                                        model     master           893.8M        4 7 months ago   ~/.cache/modelscope/hub/models--damo--t5-base/...
+        REPO ID                REPO TYPE REVISION   SIZE ON DISK NB FILES LAST_MODIFIED LOCAL PATH
+        ---------------------- --------- ---------- ------------ -------- -------------  -------------------------------------------------------------
+        damo/bert-base-chinese model     master             2.7M        5 1 week ago     ~/.cache/modelscope/hub/models--damo--bert-base-chinese/...
+        damo/structured-bert   model     master             8.8K        1 1 week ago     ~/.cache/modelscope/hub/models--damo--structured-bert/...
+        damo/t5-base           model     master           893.8M        4 7 months ago   ~/.cache/modelscope/hub/models--damo--t5-base/...
         ```
 
         Returns:
@@ -351,7 +352,7 @@ def scan_cache_dir(
     Returns: a [`ModelScopeCacheInfo`] object.
     """
     if cache_dir is None:
-        cache_dir = get_default_modelscope_cache_dir()
+        cache_dir = get_modelscope_cache_dir()
 
     cache_dir = Path(cache_dir).expanduser().resolve()
     if not cache_dir.exists():
@@ -391,7 +392,7 @@ def scan_cache_dir(
     # Also check for repos directly in cache_dir (older structure)
     # If the repo is not in models/ or datasets/, assume it's a model repo
     other_repos, other_warnings = _scan_dir(
-        cache_dir, repo_type=REPO_TYPE_MODEL, extended=True)
+        cache_dir, repo_type=REPO_TYPE_MODEL, inplace=True)
     repos.update(other_repos)
     warnings.extend(other_warnings)
 
@@ -415,13 +416,13 @@ def _is_valid_dir(dir: Path) -> bool:
     return True
 
 
-def _scan_dir(dir: Path, repo_type: str, extended: bool = False):
+def _scan_dir(dir: Path, repo_type: str, inplace: bool = False):
     """Scan a directory for cached repos and return a set of [`~CachedRepoInfo`] and warnings."""
     repos = set()
     warnings = []
     for owner_dir in dir.iterdir():
-        # not extend scan the following dirs
-        if extended and owner_dir.name in ['models', 'datasets', 'hub']:
+        # not extend scan the following dirs when scan current dir
+        if inplace and owner_dir.name in ['models', 'datasets', 'hub']:
             continue
         if not _is_valid_dir(owner_dir):
             continue
@@ -467,6 +468,7 @@ def _scan_cached_repo(repo_path: Path,
     # Process all cached files
     for cached_file in cached_files:
         file_path = os.path.join(repo_path, cached_file['Path'])
+        file_revision_hash = cached_file.get('Revision', '')
         if not os.path.exists(file_path):
             continue
 
@@ -478,6 +480,7 @@ def _scan_cached_repo(repo_path: Path,
             CachedFileInfo(
                 file_name=os.path.basename(cached_file['Path']),
                 file_path=blob_path,
+                file_revision_hash=file_revision_hash,
                 size_on_disk=blob_stats[blob_path].st_size,
                 blob_path=blob_path,
                 blob_last_accessed=blob_stats[blob_path].st_atime,

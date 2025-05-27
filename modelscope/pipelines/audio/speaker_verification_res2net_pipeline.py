@@ -56,21 +56,22 @@ class Res2Net_Pipeline(Pipeline):
                  save_dir: str = None,
                  output_emb: bool = False,
                  thr: float = None):
-        if thr is not None:
-            self.thr = thr
-        if self.thr < -1 or self.thr > 1:
-            raise ValueError(
-                'modelscope error: the thr value should be in [-1, 1], but found to be %f.'
-                % self.thr)
-        wavs = self.preprocess(in_audios)
-        embs = self.forward(wavs)
-        outputs = self.postprocess(embs, in_audios, save_dir)
-        if output_emb:
-            self.save_dict['outputs'] = outputs
-            self.save_dict['embs'] = embs.numpy()
-            return self.save_dict
-        else:
-            return outputs
+        with torch.no_grad():
+            if thr is not None:
+                self.thr = thr
+            if self.thr < -1 or self.thr > 1:
+                raise ValueError(
+                    'modelscope error: the thr value should be in [-1, 1], but found to be %f.'
+                    % self.thr)
+            wavs = self.preprocess(in_audios)
+            embs = self.forward(wavs)
+            outputs = self.postprocess(embs, in_audios, save_dir)
+            if output_emb:
+                self.save_dict['outputs'] = outputs
+                self.save_dict['embs'] = embs.numpy()
+                return self.save_dict
+            else:
+                return outputs
 
     def forward(self, inputs: list):
         embs = []

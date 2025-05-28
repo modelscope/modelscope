@@ -135,7 +135,7 @@ class BaseGPUImageBuilder(Builder):
 
     def build(self) -> int:
         return os.system(
-            f'DOCKER_BUILDKIT=0 docker build -t {self.image()} -f Dockerfile .'
+            f'DOCKER_BUILDKIT=0 docker build --network=host -t {self.image()} -f Dockerfile .'
         )
 
     def push(self):

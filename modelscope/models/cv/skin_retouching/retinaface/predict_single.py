@@ -1,4 +1,4 @@
-# Implementation in this file is modifed from source code avaiable via https://github.com/ternaus/retinaface
+# Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
 """
 There is a lot of post processing of the predictions.
 """

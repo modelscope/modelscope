@@ -35,7 +35,7 @@ class Mask2FormerHeadFromMMSeg(BaseDecodeHead):
         pixel_decoder (:obj:`mmcv.ConfigDict` | dict): Config for pixel
             decoder. Defaults to None.
         enforce_decoder_input_project (bool, optional): Whether to add
-            a layer to change the embed_dim of tranformer encoder in
+            a layer to change the embed_dim of transformer encoder in
             pixel decoder to the embed_dim of transformer decoder.
             Defaults to False.
         transformer_decoder (:obj:`mmcv.ConfigDict` | dict): Config for
@@ -305,7 +305,7 @@ class Mask2FormerHeadFromMMSeg(BaseDecodeHead):
         # shape (batch_size, num_queries)
         mask_weights = torch.stack(mask_weights_list, dim=0)
 
-        # classfication loss
+        # classification loss
         # shape (batch_size * num_queries, )
         cls_scores = cls_scores.flatten(0, 1)
         labels = labels.flatten(0, 1)

@@ -504,7 +504,7 @@ class SF_RCP(nn.Module):
             pc1_l_new, feats1_new, _ = self.feature_extraction(
                 pc1_new, pc1_new, fps_idx1)
 
-            # pointwise optimization to get udpated flow_lr and cost
+            # pointwise optimization to get updated flow_lr and cost
             flow_lr_update, cost = self.pointwise_optimization(
                 pc1_l_new, pc2_l, feats1_new, feats2, pc1_l, flow_lr, iter)
             flow_lr = flow_lr_update

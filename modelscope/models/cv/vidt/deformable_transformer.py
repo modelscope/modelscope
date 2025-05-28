@@ -345,7 +345,7 @@ class DeformableTransformerDecoder(nn.Module):
                 src_valid_ratios,
                 query_pos=None,
                 src_padding_mask=None):
-        """ The forwared step of the Deformable Decoder
+        """ The forward step of the Deformable Decoder
 
         Args:
             tgt: [DET] tokens

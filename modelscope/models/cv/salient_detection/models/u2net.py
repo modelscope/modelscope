@@ -1,5 +1,5 @@
 # The implementation is adopted from U-2-Net, made publicly available under the Apache 2.0 License
-# source code avaiable via https://github.com/xuebinqin/U-2-Net
+# source code available via https://github.com/xuebinqin/U-2-Net
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

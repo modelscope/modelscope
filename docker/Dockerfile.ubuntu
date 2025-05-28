@@ -59,7 +59,7 @@ RUN echo $CUR_TIME
 RUN sh /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils pyav librosa timm transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
@@ -68,7 +68,7 @@ RUN sh /tmp/install.sh {version_args} && \
     pip install .[eval] && pip install evalscope -U --no-dependencies && pip install xtuner --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers timm>=0.9.0 && pip cache purge; \
+    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
@@ -76,7 +76,7 @@ RUN sh /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub==0.25.* -U; \
+    pip install --no-cache-dir huggingface-hub==0.25.* transformers==4.48.3 -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     pip install liger_kernel nvitop pre-commit transformers huggingface-hub -U && \
@@ -87,6 +87,13 @@ if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
 fi
+
+# install nvm and set node version to 18
+ENV NVM_DIR=/root/.nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash && \
+    . $NVM_DIR/nvm.sh && \
+    nvm install 18 && \
+    nvm use 18
 
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True

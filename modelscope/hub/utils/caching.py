@@ -126,7 +126,7 @@ class ModelFileSystemCache(FileSystemCache):
     def __init__(self, cache_root, owner=None, name=None):
         """Put file to the cache
         Args:
-            cache_root(`str`): The modelscope local cache root(default: ~/.cache/modelscope/)
+            cache_root(`str`): The modelscope local cache root(default: ~/.cache/modelscope/hub)
             owner(`str`): The model owner.
             name('str'): The name of the model
         Returns:

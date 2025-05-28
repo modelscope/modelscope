@@ -10,6 +10,7 @@ from modelscope.cli.login import LoginCMD
 from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
+from modelscope.cli.scancache import ScanCacheCMD
 from modelscope.cli.server import ServerCMD
 from modelscope.cli.upload import UploadCMD
 from modelscope.hub.api import HubApi
@@ -34,6 +35,7 @@ def run_cmd():
     ServerCMD.define_args(subparsers)
     LoginCMD.define_args(subparsers)
     LlamafileCMD.define_args(subparsers)
+    ScanCacheCMD.define_args(subparsers)
 
     args = parser.parse_args()
 

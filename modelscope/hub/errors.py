@@ -2,7 +2,8 @@
 
 import logging
 from http import HTTPStatus
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import requests
 from requests.exceptions import HTTPError
@@ -47,6 +48,20 @@ class FileIntegrityError(Exception):
 
 class FileDownloadError(Exception):
     pass
+
+
+class CacheNotFound(Exception):
+    """Exception thrown when the ModelScope cache is not found."""
+
+    cache_dir: Union[str, Path]
+
+    def __init__(self, msg: str, cache_dir: Union[str, Path], *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.cache_dir = cache_dir
+
+
+class CorruptedCacheException(Exception):
+    """Exception for any unexpected structure in the ModelScope cache-system."""
 
 
 def get_request_id(response: requests.Response):

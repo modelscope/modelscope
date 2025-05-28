@@ -246,7 +246,7 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
             f'{self.args.modelscope_version}-test')
 
     def build(self) -> int:
-        return os.system(f'docker build -t {self.image()} -f Dockerfile .')
+        return os.system(f'docker build --network=host -t {self.image()} -f Dockerfile .')
 
     def push(self):
         ret = os.system(f'docker push {self.image()}')

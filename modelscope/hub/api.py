@@ -354,7 +354,8 @@ class HubApi:
             *,
             repo_type: Optional[str] = None,
             endpoint: Optional[str] = None,
-            re_raise: Optional[bool] = False
+            re_raise: Optional[bool] = False,
+            token: Optional[str] = None
     ) -> bool:
         """
         Checks if a repository exists on ModelScope
@@ -382,6 +383,8 @@ class HubApi:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
         cookies = ModelScopeConfig.get_cookies()
+        if cookies is None and token is not None:
+            cookies = get_cookies(token)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
@@ -1555,7 +1558,7 @@ class HubApi:
             *,
             token: str,
             repo_type: Optional[str],
-            visibility: Optional[str] = Visibility.PUBLIC,
+            visibility: Optional[int] = ModelVisibility.PUBLIC,
             license: Optional[str] = Licenses.APACHE_V2
     ) -> str:
         if self.repo_exists(repo_id=repo_id, repo_type=repo_type, token=token):
@@ -1563,20 +1566,20 @@ class HubApi:
         else:
             if repo_type == REPO_TYPE_MODEL:
                 model_id = repo_id
-                self.create_model(
+                model_url = self.create_model(
                     model_id=model_id,
                     visibility=visibility,
                     license=license,
                     token=token)
-                logger.info(f'Model {model_id} successfully created.')
+                print(f'New model {model_id} created successfully at {model_url}.')
             elif repo_type == REPO_TYPE_DATASET:
                 dataset_id = repo_id
-                self.create_dataset(
+                dataset_url = self.create_dataset(
                     dataset_name=dataset_id,
                     visibility=visibility,
                     license=license,
                     token=token)
-                logger.info(f'Dataset {dataset_id} successfully created.')
+                print(f'New dataset {dataset_id} created successfully at {dataset_url}.')
             else:
                 raise ValueError(f'Invalid repo type: {repo_type}, expected value from {REPO_TYPE_SUPPORT}')
             return repo_id

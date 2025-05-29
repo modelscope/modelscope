@@ -32,7 +32,6 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
-                                      API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
@@ -180,7 +179,8 @@ class HubApi:
                      license: Optional[str] = Licenses.APACHE_V2,
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
-                     endpoint: Optional[str] = None) -> str:
+                     endpoint: Optional[str] = None,
+                     token: Optional[str] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -205,7 +205,10 @@ class HubApi:
             raise InvalidParameter('model_id is required!')
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
+            if token is None:
+                raise ValueError('Token does not exist, please login first.')
+            else:
+                cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/models'
@@ -1546,6 +1549,38 @@ class HubApi:
             oid='',
         )
 
+    def _create_repo_if_not_exist(
+            self,
+            repo_id: str,
+            *,
+            token: str,
+            repo_type: Optional[str],
+            visibility: Optional[str] = Visibility.PUBLIC,
+            license: Optional[str] = Licenses.APACHE_V2
+    ) -> str:
+        if self.repo_exists(repo_id=repo_id, repo_type=repo_type, token=token):
+            return repo_id
+        else:
+            if repo_type == REPO_TYPE_MODEL:
+                model_id = repo_id
+                self.create_model(
+                    model_id=model_id,
+                    visibility=visibility,
+                    license=license,
+                    token=token)
+                logger.info(f'Model {model_id} successfully created.')
+            elif repo_type == REPO_TYPE_DATASET:
+                dataset_id = repo_id
+                self.create_dataset(
+                    dataset_name=dataset_id,
+                    visibility=visibility,
+                    license=license,
+                    token=token)
+                logger.info(f'Dataset {dataset_id} successfully created.')
+            else:
+                raise ValueError(f'Invalid repo type: {repo_type}, expected value from {REPO_TYPE_SUPPORT}')
+            return repo_id
+
     def upload_file(
             self,
             *,
@@ -1602,6 +1637,12 @@ class HubApi:
         )
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
+
+        self._create_repo_if_not_exist(
+            repo_id=repo_id,
+            token=token,
+            repo_type=repo_type
+        )
 
         upload_res: dict = self._upload_blob(
             repo_id=repo_id,
@@ -1681,6 +1722,12 @@ class HubApi:
         self.upload_checker.check_normal_files(
             file_path_list=[item for _, item in prepared_repo_objects],
             repo_type=repo_type,
+        )
+
+        self._create_repo_if_not_exist(
+            repo_id=repo_id,
+            token=token,
+            repo_type=repo_type
         )
 
         @thread_executor(max_workers=max_workers, disable_tqdm=False)

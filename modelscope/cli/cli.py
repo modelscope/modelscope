@@ -14,12 +14,14 @@ from modelscope.cli.scancache import ScanCacheCMD
 from modelscope.cli.server import ServerCMD
 from modelscope.cli.upload import UploadCMD
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import MODELSCOPE_ASCII
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
 
 
 def run_cmd():
+    print(MODELSCOPE_ASCII)
     parser = argparse.ArgumentParser(
         'ModelScope Command Line tool', usage='modelscope <command> [<args>]')
     parser.add_argument(

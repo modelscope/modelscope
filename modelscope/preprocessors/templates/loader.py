@@ -158,6 +158,55 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/llama2',
     ),
 
+    # "deepseek"
+    TemplateInfo(
+        template=TemplateType.deepseek2_5,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v2.5")}{no_multi_modal()}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2.5',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek_coder,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("coder")}.*{cases("v2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder-v2',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek_coder,
+        template_regex=
+        f'.*{cases("deepseek")}{no("v2", "v2.5")}.*{cases("coder")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek2,
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
+    ),
+    TemplateInfo(
+        template=TemplateType.deepseek,
+        template_regex=
+        f'.*{cases("deepseek")}{no("v2", "v2.5", "coder")}{no_multi_modal()}.*{chat_suffix}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-llm',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("v3")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v3',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("deepseek")}.*{cases("r1")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-r1',
+    ),
+
     # qwen
     TemplateInfo(
         template_regex=f'.*{cases("qwen3")}{no_multi_modal()}.*',
@@ -397,43 +446,6 @@ template_info = [
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/nous-hermes'),
 
-    # "deepseek"
-    TemplateInfo(
-        template=TemplateType.deepseek2_5,
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("v2.5")}{no_multi_modal()}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2.5',
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek_coder,
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("coder")}.*{cases("v2")}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder-v2',
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek_coder,
-        template_regex=
-        f'.*{cases("deepseek")}{no("v2", "v2.5")}.*{cases("coder")}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-coder',
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek2,
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek,
-        template_regex=
-        f'.*{cases("deepseek")}{no("v2", "v2.5", "coder")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-llm',
-    ),
-
     # "yi"
     TemplateInfo(
         template=TemplateType.yi_coder,
@@ -653,41 +665,6 @@ template_info = [
     TemplateInfo(
         template=TemplateType.zephyr,
         template_regex=f'.*{cases("zephyr")}{no_multi_modal()}.*'),
-
-    # deepseek
-    TemplateInfo(
-        template=TemplateType.deepseek,
-        template_regex=
-        f'.*{cases("deepseek")}{no("v2", "v2.5", "v3", "r1", "coder")}{no_multi_modal()}.*{chat_suffix}.*'
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek2,
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("v2")}{no("v2.5")}{no_multi_modal()}.*{chat_suffix}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v2',
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek_coder,
-        template_regex=
-        f'.*{cases("deepseek")}{no("v2", "v2.5")}.*{cases("coder")}.*{chat_suffix}.*'
-    ),
-    TemplateInfo(
-        template=TemplateType.deepseek2_5,
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("v2.5")}{no_multi_modal()}.*'),
-    TemplateInfo(
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("v3")}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v3',
-    ),
-    TemplateInfo(
-        template_regex=
-        f'.*{cases("deepseek")}.*{cases("r1")}.*',
-        modelfile_prefix=
-        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-r1',
-    ),
 
     # orion
     TemplateInfo(

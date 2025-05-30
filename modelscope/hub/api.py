@@ -1406,10 +1406,11 @@ class HubApi:
             token: Union[str, bool, None] = None,
             visibility: Optional[str] = Visibility.PUBLIC,
             repo_type: Optional[str] = REPO_TYPE_MODEL,
-            chinese_name: Optional[str] = '',
+            chinese_name: Optional[str] = None,
             license: Optional[str] = Licenses.APACHE_V2,
             endpoint: Optional[str] = None,
             exist_ok: Optional[bool] = False,
+            create_default_config: Optional[bool] = True,
             **kwargs,
     ) -> str:
         """
@@ -1463,22 +1464,24 @@ class HubApi:
                 license=license,
                 chinese_name=chinese_name,
             )
-            with tempfile.TemporaryDirectory() as temp_cache_dir:
-                from modelscope.hub.repository import Repository
-                repo = Repository(temp_cache_dir, repo_id)
-                default_config = {
-                    'framework': 'pytorch',
-                    'task': 'text-generation',
-                    'allow_remote': True
-                }
-                config_json = kwargs.get('config_json')
-                if not config_json:
-                    config_json = {}
-                config = {**default_config, **config_json}
-                add_content_to_file(
-                    repo,
-                    'configuration.json', [json.dumps(config)],
-                    ignore_push_error=True)
+            if create_default_config:
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    from modelscope.hub.repository import Repository
+                    repo = Repository(temp_cache_dir, repo_id)
+                    default_config = {
+                        'framework': 'pytorch',
+                        'task': 'text-generation',
+                        'allow_remote': True
+                    }
+                    config_json = kwargs.get('config_json')
+                    if not config_json:
+                        config_json = {}
+                    config = {**default_config, **config_json}
+                    add_content_to_file(
+                        repo,
+                        'configuration.json', [json.dumps(config)],
+                        ignore_push_error=True)
+            print(f'New model created successfully at {repo_url}.')
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1493,11 +1496,10 @@ class HubApi:
                 license=license,
                 visibility=visibility,
             )
+            print(f'New dataset created successfully at {repo_url}.')
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
-
-        logger.info(f'Repo created: {repo_url}')
 
         return repo_url
 
@@ -1551,38 +1553,6 @@ class HubApi:
             commit_description=commit_description,
             oid='',
         )
-
-    def _create_repo_if_not_exist(
-            self,
-            repo_id: str,
-            *,
-            token: str,
-            repo_type: Optional[str],
-            visibility: Optional[int] = ModelVisibility.PUBLIC,
-            license: Optional[str] = Licenses.APACHE_V2
-    ) -> str:
-        if self.repo_exists(repo_id=repo_id, repo_type=repo_type, token=token):
-            return repo_id
-        else:
-            if repo_type == REPO_TYPE_MODEL:
-                model_id = repo_id
-                model_url = self.create_model(
-                    model_id=model_id,
-                    visibility=visibility,
-                    license=license,
-                    token=token)
-                print(f'New model {model_id} created successfully at {model_url}.')
-            elif repo_type == REPO_TYPE_DATASET:
-                dataset_id = repo_id
-                dataset_url = self.create_dataset(
-                    dataset_name=dataset_id,
-                    visibility=visibility,
-                    license=license,
-                    token=token)
-                print(f'New dataset {dataset_id} created successfully at {dataset_url}.')
-            else:
-                raise ValueError(f'Invalid repo type: {repo_type}, expected value from {REPO_TYPE_SUPPORT}')
-            return repo_id
 
     def upload_file(
             self,
@@ -1641,11 +1611,12 @@ class HubApi:
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
 
-        self._create_repo_if_not_exist(
-            repo_id=repo_id,
-            token=token,
-            repo_type=repo_type
-        )
+        self.create_repo(repo_id=repo_id,
+                         token=token,
+                         repo_type=repo_type,
+                         endpoint=self.endpoint,
+                         exist_ok=True,
+                         create_default_config=False)
 
         upload_res: dict = self._upload_blob(
             repo_id=repo_id,
@@ -1727,11 +1698,12 @@ class HubApi:
             repo_type=repo_type,
         )
 
-        self._create_repo_if_not_exist(
-            repo_id=repo_id,
-            token=token,
-            repo_type=repo_type
-        )
+        self.create_repo(repo_id=repo_id,
+                         token=token,
+                         repo_type=repo_type,
+                         endpoint=self.endpoint,
+                         exist_ok=True,
+                         create_default_config=False)
 
         @thread_executor(max_workers=max_workers, disable_tqdm=False)
         def _upload_items(item_pair, **kwargs):

@@ -384,7 +384,7 @@ class HubApi:
 
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None and token is not None:
-            cookies = get_cookies(token)
+            cookies = self.get_cookies(token)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'

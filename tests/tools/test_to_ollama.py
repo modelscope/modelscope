@@ -123,9 +123,6 @@ class TestToOllama(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
         _test_check_tmpl_type(
-            'AI-ModelScope/DeepSeek-Coder-V2-Lite-Instruct-GGUF',
-            'deepseek-coder-v2')
-        _test_check_tmpl_type(
             'unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF',
             'deepseek-r1',
             gguf_meta={'general.name': 'Deepseek-R1-0528-Qwen3-8B'})

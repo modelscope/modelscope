@@ -157,6 +157,7 @@ class DownloadCMD(CLICommand):
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                     cookies=cookies)
+            print(f'\nSuccessfully Downloaded from model {self.args.model}.\n')
         elif self.args.dataset:
             dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
             if len(self.args.files) == 1:  # download single file
@@ -187,5 +188,8 @@ class DownloadCMD(CLICommand):
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                     cookies=cookies)
+            print(
+                f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
+            )
         else:
             pass  # noop

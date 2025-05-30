@@ -32,7 +32,6 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
-                                      API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
@@ -180,7 +179,8 @@ class HubApi:
                      license: Optional[str] = Licenses.APACHE_V2,
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
-                     endpoint: Optional[str] = None) -> str:
+                     endpoint: Optional[str] = None,
+                     token: Optional[str] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -205,7 +205,10 @@ class HubApi:
             raise InvalidParameter('model_id is required!')
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
+            if token is None:
+                raise ValueError('Token does not exist, please login first.')
+            else:
+                cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/models'
@@ -351,7 +354,8 @@ class HubApi:
             *,
             repo_type: Optional[str] = None,
             endpoint: Optional[str] = None,
-            re_raise: Optional[bool] = False
+            re_raise: Optional[bool] = False,
+            token: Optional[str] = None
     ) -> bool:
         """
         Checks if a repository exists on ModelScope
@@ -379,6 +383,8 @@ class HubApi:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
         cookies = ModelScopeConfig.get_cookies()
+        if cookies is None and token is not None:
+            cookies = self.get_cookies(token)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
@@ -1399,10 +1405,11 @@ class HubApi:
             token: Union[str, bool, None] = None,
             visibility: Optional[str] = Visibility.PUBLIC,
             repo_type: Optional[str] = REPO_TYPE_MODEL,
-            chinese_name: Optional[str] = '',
+            chinese_name: Optional[str] = None,
             license: Optional[str] = Licenses.APACHE_V2,
             endpoint: Optional[str] = None,
             exist_ok: Optional[bool] = False,
+            create_default_config: Optional[bool] = True,
             **kwargs,
     ) -> str:
         """
@@ -1456,22 +1463,24 @@ class HubApi:
                 license=license,
                 chinese_name=chinese_name,
             )
-            with tempfile.TemporaryDirectory() as temp_cache_dir:
-                from modelscope.hub.repository import Repository
-                repo = Repository(temp_cache_dir, repo_id)
-                default_config = {
-                    'framework': 'pytorch',
-                    'task': 'text-generation',
-                    'allow_remote': True
-                }
-                config_json = kwargs.get('config_json')
-                if not config_json:
-                    config_json = {}
-                config = {**default_config, **config_json}
-                add_content_to_file(
-                    repo,
-                    'configuration.json', [json.dumps(config)],
-                    ignore_push_error=True)
+            if create_default_config:
+                with tempfile.TemporaryDirectory() as temp_cache_dir:
+                    from modelscope.hub.repository import Repository
+                    repo = Repository(temp_cache_dir, repo_id)
+                    default_config = {
+                        'framework': 'pytorch',
+                        'task': 'text-generation',
+                        'allow_remote': True
+                    }
+                    config_json = kwargs.get('config_json')
+                    if not config_json:
+                        config_json = {}
+                    config = {**default_config, **config_json}
+                    add_content_to_file(
+                        repo,
+                        'configuration.json', [json.dumps(config)],
+                        ignore_push_error=True)
+            print(f'New model created successfully at {repo_url}.', flush=True)
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1486,11 +1495,10 @@ class HubApi:
                 license=license,
                 visibility=visibility,
             )
+            print(f'New dataset created successfully at {repo_url}.', flush=True)
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
-
-        logger.info(f'Repo created: {repo_url}')
 
         return repo_url
 
@@ -1602,6 +1610,13 @@ class HubApi:
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
 
+        self.create_repo(repo_id=repo_id,
+                         token=token,
+                         repo_type=repo_type,
+                         endpoint=self.endpoint,
+                         exist_ok=True,
+                         create_default_config=False)
+
         upload_res: dict = self._upload_blob(
             repo_id=repo_id,
             repo_type=repo_type,
@@ -1622,7 +1637,7 @@ class HubApi:
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
-        print(f'Committing file to {repo_id} ...')
+        print(f'Committing file to {repo_id} ...', flush=True)
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
@@ -1682,6 +1697,13 @@ class HubApi:
             repo_type=repo_type,
         )
 
+        self.create_repo(repo_id=repo_id,
+                         token=token,
+                         repo_type=repo_type,
+                         endpoint=self.endpoint,
+                         exist_ok=True,
+                         create_default_config=False)
+
         @thread_executor(max_workers=max_workers, disable_tqdm=False)
         def _upload_items(item_pair, **kwargs):
             file_path_in_repo, file_path = item_pair
@@ -1739,7 +1761,7 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        print(f'Committing folder to {repo_id} ...')
+        print(f'Committing folder to {repo_id} ...', flush=True)
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,

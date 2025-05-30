@@ -1481,7 +1481,7 @@ class HubApi:
                         repo,
                         'configuration.json', [json.dumps(config)],
                         ignore_push_error=True)
-            print(f'New model created successfully at {repo_url}.')
+            logger.info(f'New model created successfully at {repo_url}.')
 
         elif repo_type == REPO_TYPE_DATASET:
             visibilities = {k: v for k, v in DatasetVisibility.__dict__.items() if not k.startswith('__')}
@@ -1496,7 +1496,7 @@ class HubApi:
                 license=license,
                 visibility=visibility,
             )
-            print(f'New dataset created successfully at {repo_url}.')
+            logger.info(f'New dataset created successfully at {repo_url}.')
 
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
@@ -1638,7 +1638,7 @@ class HubApi:
         add_operation._is_uploaded = upload_res['is_uploaded']
         operations = [add_operation]
 
-        print(f'Committing file to {repo_id} ...')
+        logger.info(f'Committing file to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,
@@ -1762,7 +1762,7 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        print(f'Committing folder to {repo_id} ...')
+        logger.info(f'Committing folder to {repo_id} ...')
         commit_info: CommitInfo = self.create_commit(
             repo_id=repo_id,
             operations=operations,

@@ -155,7 +155,7 @@ def replace_module(module,
         replaced_module_type (Type): module type to be replaced.
         new_module_type (Type)
         replace_func (function): python function to describe replace logic.
-                                 Defalut value None.
+                                 Default value None.
 
     Returns:
         model (nn.Module): module that already been replaced.

@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """ This ECAPA-TDNN implementation is adapted from https://github.com/speechbrain/speechbrain.
-    Self-Distillation Prototypes Network(SDPN) is a self-supervised learning framwork in SV.
+    Self-Distillation Prototypes Network(SDPN) is a self-supervised learning framework in SV.
     It comprises a teacher and a student network with identical architecture
     but different parameters. Teacher/student network consists of three main modules:
     the encoder for extracting speaker embeddings, multi-layer perceptron for

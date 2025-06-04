@@ -118,7 +118,7 @@ def get_ray_limits_box(rays_o: torch.Tensor, rays_d: torch.Tensor,
 def linspace(start: torch.Tensor, stop: torch.Tensor, num: int):
     """
     Creates a tensor of shape [num, *start.shape] whose values are evenly spaced from start to end, inclusive.
-    Replicates but the multi-dimensional bahaviour of numpy.linspace in PyTorch.
+    Replicates but the multi-dimensional behaviour of numpy.linspace in PyTorch.
     """
     # create a tensor of 'num' steps from 0 to 1
     steps = torch.arange(

@@ -2403,7 +2403,7 @@ class MPlugForImageTextRetrieval(MPlug):
 
             self._dequeue_and_enqueue(image_feat_m, text_feat_m, idx)
 
-            # forward the positve image-text pair
+            # forward the positive image-text pair
             _, output_pos = self.fusion_encoder(
                 encoder_embeds=text_embeds,
                 attention_mask=text.attention_mask,

@@ -132,7 +132,7 @@ class LazyLoader(object):
     Arguments:
         path: path to directory where array entries are concatenated into one big string file
             and the .len file are located
-        data_type (str): Some datsets have multiple fields that are stored in different paths.
+        data_type (str): Some datasets have multiple fields that are stored in different paths.
             `data_type` specifies which of these fields to load in this class
         mem_map  (boolean): Specifies whether to memory map file `path`
         map_fn (callable): Fetched strings are passed through map_fn before being returned.

@@ -769,7 +769,7 @@ class SwinTransformer(nn.Module):
 
     Args:
         pretrain_img_size (int): Input image size for training the pretrained model,
-            used in absolute postion embedding. Default 224.
+            used in absolute position embedding. Default 224.
         patch_size (int | tuple(int)): Patch size. Default: 4.
         in_chans (int): Number of input image channels. Default: 3.
         embed_dim (int): Number of linear projection output channels. Default: 96.
@@ -913,7 +913,7 @@ class SwinTransformer(nn.Module):
                      det_token_num=100,
                      pos_dim=256,
                      cross_indices=[3]):
-        """ A funtion to add neccessary (leanable) variables to Swin Transformer for object detection
+        """ A function to add necessary (leanable) variables to Swin Transformer for object detection
 
             Args:
                 method: vidt or vidt_wo_neck

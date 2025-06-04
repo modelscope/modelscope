@@ -1285,7 +1285,7 @@ class MplugOwlVisualAbstractorModel(MplugOwlPreTrainedModel):
 
 class MplugOwlModel(MplugOwlPreTrainedModel):
     r"""The mPLUG-Owl model is a multi-modal conversation model that support various modalities as input.
-    mPLUG-Owl consists a visual encoder, a visual abstrator module and a language decoder model, which enables
+    mPLUG-Owl consists a visual encoder, a visual abstractor module and a language decoder model, which enables
     both image and text input.
     This model is implemented base on mPLUG-Owl: Modularization Empowers Large Language Models with Multimodality.
     `Paper <https://arxiv.org/abs/2304.14178>`.

@@ -333,8 +333,8 @@ class ImageClassificationPreprocessor(Preprocessor):
             Dict[str, Any] | None: the preprocessed data
         """
         if self.mode == ModeKeys.TRAIN:
-            pipline = self.train_preprocess_pipeline
+            pipeline = self.train_preprocess_pipeline
         else:
-            pipline = self.test_preprocess_pipeline
+            pipeline = self.test_preprocess_pipeline
 
-        return pipline(results)
+        return pipeline(results)

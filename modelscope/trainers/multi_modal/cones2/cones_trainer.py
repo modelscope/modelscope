@@ -138,7 +138,7 @@ class ConesDiffusionTrainer(EpochBasedTrainer):
         self.resolution = kwargs.pop('resolution', 512)
         self.prior_loss_weight = kwargs.pop('prior_loss_weight', 1.0)
 
-        # Save checkpoint and configurate files.
+        # Save checkpoint and configure files.
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]

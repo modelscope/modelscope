@@ -394,7 +394,7 @@ class CustomDiffusionTrainer(EpochBasedTrainer):
         )
         self.freeze_params(params_to_freeze)
 
-        # Save checkpoint and configurate files
+        # Save checkpoint and configure files
         ckpt_hook = list(
             filter(lambda hook: isinstance(hook, CheckpointHook),
                    self.hooks))[0]

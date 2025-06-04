@@ -59,8 +59,8 @@ def compute_hp_neighmap(nsides):
 def precompute_pixelization_maps(nsides, initial_img_size=(128, 256)):
     """ Precomputing the mapping from multi-resolution ERP image to multi-resolution spherical pixels.
 
-        Precomputing the mapping from multi-resolution(sacle factor = 2) ERP image to
-        multi-resolution(sacle factor = 4)spherical surface. Each pixel on spherical surface
+        Precomputing the mapping from multi-resolution(scale factor = 2) ERP image to
+        multi-resolution(scale factor = 4)spherical surface. Each pixel on spherical surface
         is back projected to ERP image and the indices are recorded and returned.
         Bilinear interpolation is used.
         Args:

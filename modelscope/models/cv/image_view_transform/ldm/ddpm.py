@@ -1182,7 +1182,7 @@ class LatentDiffusion(DDPM):
             ]
             assert not isinstance(
                 output_list[0], tuple
-            )  # todo cant deal with multiple model outputs check this never happens
+            )  # todo can't deal with multiple model outputs check this never happens
 
             o = torch.stack(output_list, axis=-1)
             o = o * weighting

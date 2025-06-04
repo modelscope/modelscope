@@ -181,7 +181,7 @@ class BertTokenizer(object):
             logger.info('loading vocabulary file {} from cache at {}'.format(
                 vocab_file, resolved_vocab_file))
         if pretrained_model_name_or_path in PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP:
-            # if we're using a pretrained model, ensure the tokenizer wont index sequences longer
+            # if we're using a pretrained model, ensure the tokenizer won't index sequences longer
             # than the number of positional embeddings
             max_len = PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP[
                 pretrained_model_name_or_path]

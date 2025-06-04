@@ -315,7 +315,7 @@ class SequentialEx(Module):
 
 
 class MergeLayer(Module):
-    'Merge a shortcut with the result of the module by adding them or concatenating thme if `dense=True`.'
+    'Merge a shortcut with the result of the module by adding them or concatenating them if `dense=True`.'
 
     def __init__(self, dense: bool = False):
         self.dense = dense

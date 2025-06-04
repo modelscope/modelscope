@@ -89,7 +89,7 @@ def resolve_absolute_import(module_name, all_symbols):
     if module_name in all_symbols:
         return all_symbols[module_name]
 
-    # some symble import by package __init__.py, we need find the real file which define the symbel.
+    # some symbol import by package __init__.py, we need find the real file which define the symbel.
     parent, sub = module_name.rsplit('.', 1)
 
     # case module_name is a python Definition

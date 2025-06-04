@@ -153,7 +153,7 @@ class GPT2Tokenizer(object):
         logger.info('loading vocabulary file {}'.format(vocab_file))
         logger.info('loading merges file {}'.format(merges_file))
         if pretrained_model_name_or_path in PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP:
-            # if we're using a pretrained model, ensure the tokenizer wont index sequences longer
+            # if we're using a pretrained model, ensure the tokenizer won't index sequences longer
             # than the number of positional embeddings
             max_len = PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP[
                 pretrained_model_name_or_path]

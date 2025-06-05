@@ -69,7 +69,7 @@ class Downsample(nn.Module):
 class FeatureEncoder(nn.Module):
 
     def __init__(self, in_channels, chns=[64, 128, 256, 256, 256]):
-        # in_channels = 3 for images, and is larger (e.g., 17+1+1) for agnositc representation
+        # in_channels = 3 for images, and is larger (e.g., 17+1+1) for agnostic representation
         super(FeatureEncoder, self).__init__()
         self.encoders = []
         for i, out_chns in enumerate(chns):

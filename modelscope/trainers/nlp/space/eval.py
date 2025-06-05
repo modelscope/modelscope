@@ -72,7 +72,7 @@ def DA_evaluate(preds, labels):
 class BLEUScorer(object):
     # BLEU score calculator via GentScorer interface
     # it calculates the BLEU-4 by taking the entire corpus in
-    # Calulate based multiple candidates against multiple references
+    # Calculate based multiple candidates against multiple references
     def __init__(self):
         pass
 
@@ -501,7 +501,7 @@ class MultiWOZEvaluator(object):
                         goal[domain]['requestable'].append('id')
             else:
                 if 'reqt' in true_goal[domain]:
-                    for s in true_goal[domain]['reqt']:  # addtional requests:
+                    for s in true_goal[domain]['reqt']:  # additional requests:
                         if s in [
                                 'phone', 'address', 'postcode', 'reference',
                                 'id'

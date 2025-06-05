@@ -203,7 +203,7 @@ def model_wrapper(
 
     def model_fn(x, t_continuous):
         """
-        The noise predicition model function that is used for DPM-Solver.
+        The noise prediction model function that is used for DPM-Solver.
         """
         if t_continuous.reshape((-1, )).shape[0] == 1:
             t_continuous = t_continuous.expand((x.shape[0]))
@@ -325,7 +325,7 @@ def model_wrapper_guided_diffusion(
 
     def model_fn(x, t_continuous):
         """
-        The noise predicition model function that is used for DPM-Solver.
+        The noise prediction model function that is used for DPM-Solver.
         """
         if t_continuous.reshape((-1, )).shape[0] == 1:
             t_continuous = t_continuous.expand((x.shape[0]))

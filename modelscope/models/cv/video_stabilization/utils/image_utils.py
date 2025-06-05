@@ -159,7 +159,7 @@ def clip_patch(kpts_byxc, kpts_scale, kpts_ori, im_info, images, PSIZE):
 def warp(im1_data, homo21):
     """
     warp im1 to im2
-    cause we get pixel valu ein im2 from im1
+    cause we get pixel value ein im2 from im1
     so we warp grid in im2 to im1 that we need homo21
     :param im1_data: (B, H, W, C)
     :param homo21: (B, 3, 3)
@@ -334,7 +334,7 @@ def soft_max_and_argmax_1d(input,
     :param orint_maps: (B, H, W, 10, 2)
     :param dim: final channel
     :param scale_list: scale space list
-    :param keepdim: kepp dimension
+    :param keepdim: keep dimension
     :param com_strength1: magnify argument of score
     :param com_strength2: magnify argument of scale
     :return: score_map(B, H, W, 1), scale_map(B, H, W, 1), (orint_map(B, H, W, 1, 2))

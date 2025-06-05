@@ -161,7 +161,7 @@ class PlugTrainer(NlpEpochBasedTrainer):
         self.log_buffer.update(self.train_outputs)
 
     def evaluation_step(self, data):
-        # wapper 1: DeepspeedEngine, wapper 2: DDP
+        # wrapper 1: DeepspeedEngine, wrapper 2: DDP
         # model = self.model.module
         if isinstance(self.model, DeepSpeedEngine):
             model = self.model.module

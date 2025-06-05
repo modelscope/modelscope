@@ -82,7 +82,7 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             checkpoint_path=os.path.join(self.cache_path,
                                          'damoyolo_tinynasL25_S.pt'))
 
-    @unittest.skip('multiGPU test is varified offline')
+    @unittest.skip('multiGPU test is verified offline')
     def test_trainer_from_scratch_multiGPU(self):
         kwargs = dict(
             cfg_file=os.path.join(self.cache_path, 'configuration.json'),

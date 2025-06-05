@@ -244,7 +244,7 @@ class MaskDINOEncoder(nn.Module):
             conv_dim: number of output channels for the intermediate conv layers.
             mask_dim: number of output channels for the final conv layer.
             num_feature_levels: feature scales used
-            total_num_feature_levels: total feautre scales used (include the downsampled features)
+            total_num_feature_levels: total feature scales used (include the downsampled features)
             feature_order: 'low2high' or 'high2low', i.e., 'low2high' means low-resolution features
                 are put in the first.
         """

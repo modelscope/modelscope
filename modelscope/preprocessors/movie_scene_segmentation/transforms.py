@@ -198,7 +198,7 @@ class VideoRandomColorJitter(torch.nn.Module):
                     name, bound))
         else:
             raise TypeError(
-                '{} should be a single number or a list/tuple with lenght 2.'.
+                '{} should be a single number or a list/tuple with length 2.'.
                 format(name))
 
         # if value is 0 or (1., 1.) for brightness/contrast/saturation

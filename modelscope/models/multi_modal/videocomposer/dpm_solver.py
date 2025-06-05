@@ -377,7 +377,7 @@ def model_wrapper(model,
 
     def model_fn(x, t_continuous):
         """
-        The noise predicition model function that is used for DPM-Solver.
+        The noise prediction model function that is used for DPM-Solver.
         """
         if guidance_type == 'uncond':
             return noise_pred_fn(x, t_continuous)
@@ -549,7 +549,7 @@ def model_wrapper_guided_diffusion(model,
 
     def model_fn(x, t_continuous):
         """
-        The noise predicition model function that is used for DPM-Solver.
+        The noise prediction model function that is used for DPM-Solver.
         """
         if t_continuous.reshape((-1, )).shape[0] == 1:
             t_continuous = t_continuous.expand((x.shape[0]))
@@ -1460,7 +1460,7 @@ class DPM_Solver:
 
         =====================================================
 
-        Some advices for choosing the algorithm:
+        Some advice for choosing the algorithm:
             - For **unconditional sampling** or **guided sampling with small guidance scale** by DPMs:
                 Use singlestep DPM-Solver ("DPM-Solver-fast" in the paper) with `order = 3`.
                 e.g.

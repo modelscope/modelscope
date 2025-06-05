@@ -129,7 +129,7 @@ def resize(input,
         # STEP 2.5- CALCULATE PAD AND UPDATE: according to the field of view,
         # the input should be padded to handle the boundaries, coordinates
         # should be updated. actual padding only occurs when weights are
-        # aplied (step 4). if using by_convs for this dim, then we need to
+        # applied (step 4). if using by_convs for this dim, then we need to
         # calc right and left boundaries for each filter instead.
         pad_sz, projected_grid, field_of_view = calc_pad_sz(
             in_sz, out_sz, field_of_view, projected_grid, scale_factor,
@@ -304,7 +304,7 @@ def apply_convs(input, scale_factor, in_sz, out_sz, weights, dim, pad_sz,
         tmp_input = fw_pad(input, fw, pad_sz, pad_mode, dim=pad_dim)
 
         # apply convolution over last dim. store in the output tensor with
-        # positional strides so that when the loop is comlete conv results are
+        # positional strides so that when the loop is complete conv results are
         # interwind
         tmp_output[..., conv_ind::num_convs] = fw_conv(tmp_input, filt, stride)
 

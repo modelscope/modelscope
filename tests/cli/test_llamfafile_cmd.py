@@ -63,7 +63,7 @@ class LlamafileCMDTest(unittest.TestCase):
         cmd = f'python -m modelscope.cli.cli {self.cmd} --model {self.model_id} --file {file} --accuracy {accuracy}'
         stat, output = subprocess.getstatusoutput(cmd)
         # cannot provide accuracy and file at the same time
-        self.assertNotEquals(stat, 0)
+        self.assertNotEqual(stat, 0)
 
     def test_no_match_llamafile(self):
         accuracy = 'not-exist'
@@ -79,7 +79,7 @@ class LlamafileCMDTest(unittest.TestCase):
         cmd = f'python -m modelscope.cli.cli {self.cmd} --model {self.invalid_model_id}'
         stat, output = subprocess.getstatusoutput(cmd)
         print(output)
-        self.assertNotEquals(stat, 0)
+        self.assertNotEqual(stat, 0)
         self.assertTrue('Cannot locate a valid llamafile in repo' in output)
 
     def test_no_execution(self):

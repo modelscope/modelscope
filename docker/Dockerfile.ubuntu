@@ -76,7 +76,7 @@ RUN sh /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub==0.25.* transformers==4.48.3 -U; \
+    pip install --no-cache-dir huggingface-hub transformers -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     pip install liger_kernel nvitop pre-commit transformers huggingface-hub -U && \
@@ -92,8 +92,8 @@ fi
 ENV NVM_DIR=/root/.nvm
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash && \
     . $NVM_DIR/nvm.sh && \
-    nvm install 18 && \
-    nvm use 18
+    nvm install 22 && \
+    nvm use 22
 
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True

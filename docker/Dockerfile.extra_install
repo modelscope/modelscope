@@ -24,7 +24,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-ce
     rm -rf /var/lib/apt/lists/*
 
 ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
-RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz && \
+RUN wget -O /tmp/boost.tar.gz https://archives.boost.io/release/1.80.0/source/boost_1_80_0.tar.gz && \
     cd /tmp && tar xzf boost.tar.gz  && \
     mv /tmp/boost_1_80_0/boost /usr/include/boost && \
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz

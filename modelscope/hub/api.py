@@ -32,6 +32,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
+                                      API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
@@ -372,6 +373,7 @@ class HubApi:
                 set in HubApi class (self.endpoint)
             re_raise(`bool`):
                 raise exception when error
+            token (`str`, *optional*): access token to use for checking existence.
         Returns:
             True if the repository exists, False otherwise.
         """
@@ -1426,6 +1428,7 @@ class HubApi:
             endpoint (Optional[str]): The endpoint to use.
                 In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
             exist_ok (Optional[bool]): If the repo exists, whether to return the repo url directly.
+            create_default_config (Optional[bool]): If True, create a default configuration file in the model repo.
             **kwargs: The additional arguments.
 
         Returns:
@@ -1437,14 +1440,14 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint)
+        self.login(access_token=token, endpoint=endpoint)
+
+        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
                 return f'{endpoint}/{repo_type}s/{repo_id}'
             else:
                 raise ValueError(f'Repo {repo_id} already exists!')
-
-        self.login(access_token=token, endpoint=endpoint)
 
         repo_id_list = repo_id.split('/')
         if len(repo_id_list) != 2:

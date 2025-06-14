@@ -101,7 +101,7 @@ class MeshRenderer(nn.Module):
             vertex_ndc = torch.cat(vertex_ndc, dim=0)
             tri = torch.cat(tri, dim=0)
 
-        # for range_mode vetex: [B*N, 4], tri: [B*M, 3], for instance_mode vetex: [B, N, 4], tri: [M, 3]
+        # for range_mode vertex: [B*N, 4], tri: [B*M, 3], for instance_mode vetex: [B, N, 4], tri: [M, 3]
         tri = tri.type(torch.int32).contiguous()
         rast_out, _ = dr.rasterize(
             self.glctx,
@@ -196,7 +196,7 @@ class MeshRenderer(nn.Module):
             vertex_ndc = torch.cat(vertex_ndc, dim=0)
             tri = torch.cat(tri, dim=0)
 
-        # for range_mode vetex: [B*N, 4], tri: [B*M, 3], for instance_mode vetex: [B, N, 4], tri: [M, 3]
+        # for range_mode vertex: [B*N, 4], tri: [B*M, 3], for instance_mode vetex: [B, N, 4], tri: [M, 3]
         tri = tri.type(torch.int32).contiguous()
         rast_out, _ = dr.rasterize(
             self.glctx,

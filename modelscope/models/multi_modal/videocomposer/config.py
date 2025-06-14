@@ -78,7 +78,7 @@ cfg.use_div_loss = False
 cfg.p_zero = 0.9
 cfg.guide_scale = 6.0
 
-# stabel diffusion
+# stable diffusion
 cfg.sd_checkpoint = 'v2-1_512-ema-pruned.ckpt'
 
 # clip vision encoder

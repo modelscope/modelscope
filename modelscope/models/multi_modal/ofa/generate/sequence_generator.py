@@ -292,7 +292,7 @@ class SequenceGenerator(nn.Module):
                 torch.jit.annotate(List[Dict[str, Tensor]], [])
                 for i in range(bsz)
             ],
-        )  # contains lists of dictionaries of infomation about the hypothesis being finalized at each step
+        )  # contains lists of dictionaries of information about the hypothesis being finalized at each step
 
         # a boolean array indicating if the sentence at the index is finished or not
         finished = [False for i in range(bsz)]

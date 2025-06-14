@@ -124,7 +124,7 @@ class AllGather2(torch.autograd.Function):
 
 class PreTrainedModel(nn.Module):
     """ An abstract class to handle weights initialization and
-        a simple interface for dowloading and loading pretrained models.
+        a simple interface for downloading and loading pretrained models.
     """
 
     def __init__(self, config, *inputs, **kwargs):

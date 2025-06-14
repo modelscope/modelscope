@@ -257,7 +257,7 @@ class DKD(nn.Module):
                 )[0, 0, 0, :]  # CxN
                 keypoints.append(keypoints_xy)
                 scoredispersitys.append(
-                    kptscore)  # for jit.script compatability
+                    kptscore)  # for jit.script compatibility
                 kptscores.append(kptscore)
 
         return keypoints, scoredispersitys, kptscores

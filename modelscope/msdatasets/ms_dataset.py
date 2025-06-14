@@ -391,7 +391,7 @@ class MsDataset:
             version: Optional[str]: Version of the dataset
             num_processes: Optional[int]: The number of processes used for multiprocess uploading.
                 This is only applicable when local_file_path is a directory, and we are uploading mutliple-files
-                insided the directory. When None provided, the number returned by os.cpu_count() is used as default.
+                inside the directory. When None provided, the number returned by os.cpu_count() is used as default.
             chunksize: Optional[int]: The chunksize of objects to upload.
                 For very long iterables using a large value for chunksize can make the job complete much faster than
                 using the default value of 1. Available if local_file_path is a directory.
@@ -617,7 +617,7 @@ class MsDataset:
                 the `preprocessors` is None, the `collate_fn` shouldn't be None.
             drop_remainder(bool, default None): Drop the last incomplete batch when loading.
             collate_fn_args (Dict, optional): A `dict` of arguments to be passed to the`collate_fn`.
-            label_cols (str or List[str], defalut None): Dataset column(s) to load as labels.
+            label_cols (str or List[str], default None): Dataset column(s) to load as labels.
             prefetch (bool, default True): Prefetch data.
 
         Returns:

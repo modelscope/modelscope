@@ -200,7 +200,7 @@ class TableQuestionAnswering(Model):
         orders = []
         types = []
         segment_ids = []
-        matchs = []
+        matches = []
         col_dict = {}
         schema_tok = []
 
@@ -209,15 +209,15 @@ class TableQuestionAnswering(Model):
         types.append(0)
         i_st_nlu = len(tokens)
 
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(0)
         for idx, token in enumerate(nlu1_tok):
             if q_know[idx] == 100:
                 break
             elif q_know[idx] >= 5:
-                matchs.append(1)
+                matches.append(1)
             else:
-                matchs.append(q_know[idx] + 1)
+                matches.append(q_know[idx] + 1)
             tokens.append(token)
             orders.append(0)
             types.append(0)
@@ -228,7 +228,7 @@ class TableQuestionAnswering(Model):
         tokens.append('[SEP]')
         orders.append(0)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(0)
 
         sel, whe = self.get_history_select_where(his_sql, len(hs_t_1))
@@ -240,35 +240,35 @@ class TableQuestionAnswering(Model):
             tokens.append('select')
             orders.append(0)
             types.append(0)
-            matchs.append(10)
+            matches.append(10)
             segment_ids.append(0)
 
             for seli in sel:
                 tokens.append('[PAD]')
                 orders.append(0)
                 types.append(0)
-                matchs.append(10)
+                matches.append(10)
                 segment_ids.append(0)
                 col_dict[len(tokens) - 1] = seli
 
             tokens.append('where')
             orders.append(0)
             types.append(0)
-            matchs.append(10)
+            matches.append(10)
             segment_ids.append(0)
 
             for whei in whe:
                 tokens.append('[PAD]')
                 orders.append(0)
                 types.append(0)
-                matchs.append(10)
+                matches.append(10)
                 segment_ids.append(0)
                 col_dict[len(tokens) - 1] = whei
 
             tokens.append('[SEP]')
             orders.append(0)
             types.append(0)
-            matchs.append(10)
+            matches.append(10)
             segment_ids.append(0)
 
         column_start = len(tokens)
@@ -290,15 +290,15 @@ class TableQuestionAnswering(Model):
             col_dict[len(tokens) - 1] = i
             i_hds_f.append((i_st_hd_f, i_ed_hd_f))
             if i == 0:
-                matchs.append(6)
+                matches.append(6)
             else:
-                matchs.append(t_know[i - 1] + 6)
+                matches.append(t_know[i - 1] + 6)
             segment_ids.append(1)
 
         tokens.append('[SEP]')
         orders.append(0)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(1)
 
         # position where
@@ -308,39 +308,39 @@ class TableQuestionAnswering(Model):
         tokens.append('action')  # action
         orders.append(1)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(1)
 
         tokens.append('connect')  # column
         orders.append(1)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(1)
 
         tokens.append('allen')  # select len
         orders.append(1)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(1)
 
         for x in range(self.max_where_num):
             tokens.append('act')  # op
             orders.append(2 + x)
             types.append(0)
-            matchs.append(0)
+            matches.append(0)
             segment_ids.append(1)
 
         tokens.append('size')  # where len
         orders.append(1)
         types.append(0)
-        matchs.append(0)
+        matches.append(0)
         segment_ids.append(1)
 
         for x in range(self.max_select_num):
             tokens.append('focus')  # agg
             orders.append(2 + x)
             types.append(0)
-            matchs.append(0)
+            matches.append(0)
             segment_ids.append(1)
 
         i_nlu = (i_st_nlu, i_ed_nlu)
@@ -369,7 +369,7 @@ class TableQuestionAnswering(Model):
                                  column_start + cid + 1:column_start + cid + 1
                                  + 1] = 1.0
 
-        return tokens, orders, types, segment_ids, matchs, \
+        return tokens, orders, types, segment_ids, matches, \
             i_nlu, i_hds_f, start_ids, column_start, col_dict, schema_tok, \
             header_flatten_tokens, header_flatten_index, schema_link_matrix, schema_link_mask
 
@@ -424,7 +424,7 @@ class TableQuestionAnswering(Model):
         tokens = []
         orders = []
         types = []
-        matchs = []
+        matches = []
         segments = []
         schema_link_matrix_list = []
         schema_link_mask_list = []
@@ -462,7 +462,7 @@ class TableQuestionAnswering(Model):
             orders.append(orders1)
             types.append(types1)
             segments.append(segment1)
-            matchs.append(match1)
+            matches.append(match1)
             i_nlu.append(i_nlu1)
             i_hds.append(i_hds_1)
             schema_link_matrix_list.append(schema_link_matrix)
@@ -487,7 +487,7 @@ class TableQuestionAnswering(Model):
             segment_ids1 = segments[i]
             order_ids1 = orders[i]
             type_ids1 = types[i]
-            match_ids1 = matchs[i]
+            match_ids1 = matches[i]
             input_ids1 = tokenizer.convert_tokens_to_ids(tokens1)
             input_mask1 = [1] * len(input_ids1)
 
@@ -636,12 +636,12 @@ class TableQuestionAnswering(Model):
         return all_encoder_layer, pooled_output, tokens, i_nlu, i_hds, \
             l_n, l_hpu, l_hs, start_index, column_index, all_ids
 
-    def predict(self, querys):
+    def predict(self, queries):
         self.head_model.eval()
         self.backbone_model.eval()
 
         nlu, nlu_t, sql_i, q_know, t_know, tb, hs_t, types, units, his_sql, schema_link = \
-            self.get_fields_info(querys, None, train=False)
+            self.get_fields_info(queries, None, train=False)
 
         with torch.no_grad():
             all_encoder_layer, _, tokens, i_nlu, i_hds, l_n, l_hpu, l_hs, start_index, column_index, ids = \
@@ -667,7 +667,7 @@ class TableQuestionAnswering(Model):
         wlen_batch = torch.argmax(F.softmax(s_wlen, -1), -1).cpu().tolist()
 
         pr_wvi = []
-        for i in range(len(querys)):
+        for i in range(len(queries)):
             wvi = []
             for j in range(wlen_batch[i]):
                 wvi.append([
@@ -678,7 +678,7 @@ class TableQuestionAnswering(Model):
         pr_wvi_str = self.convert_string(pr_wvi, nlu, nlu_t)
 
         pre_results = []
-        for ib in range(len(querys)):
+        for ib in range(len(queries)):
             res_one = {}
             sql = {}
             sql['cond_conn_op'] = scco_batch[ib]
@@ -712,7 +712,7 @@ class TableQuestionAnswering(Model):
             wc_os = list(
                 numpy.array(wc_batch[ib][:wl]).astype(numpy.int32) - 1)
             wo_os = list(numpy.array(wo_batch[ib][:wl]).astype(numpy.int32))
-            res_one['question_tok'] = querys[ib]['question_tok']
+            res_one['question_tok'] = queries[ib]['question_tok']
             for i in range(wl):
                 if wc_os[i] == -1:
                     continue
@@ -720,8 +720,8 @@ class TableQuestionAnswering(Model):
             if len(conds) == 0:
                 conds.append([l_hs[ib] - 1, 2, 'Nulll'])
             sql['conds'] = conds
-            res_one['question'] = querys[ib]['question']
-            res_one['table_id'] = querys[ib]['table_id']
+            res_one['question'] = queries[ib]['question']
+            res_one['table_id'] = queries[ib]['table_id']
             res_one['sql'] = sql
             res_one['action'] = action_batch[ib]
             res_one['model_out'] = [

@@ -56,7 +56,7 @@ class MaskHungarianAssignerVideo(BaseAssigner):
 
     This class computes an assignment between the targets and the predictions
     based on the costs. The costs are weighted sum of three components:
-    classfication cost, regression L1 cost and regression iou cost. The
+    classification cost, regression L1 cost and regression iou cost. The
     targets don't include the no_object, so generally there are more
     predictions than targets. After the one-to-one matching, the un-matched
     are treated as backgrounds. Thus each query prediction will be assigned

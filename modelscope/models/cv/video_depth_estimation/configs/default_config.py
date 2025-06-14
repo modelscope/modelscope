@@ -91,7 +91,7 @@ cfg.model.loss = CN()
 #
 cfg.model.loss.num_scales = 4  # Number of inverse depth scales to use
 cfg.model.loss.progressive_scaling = 0.0  # Training percentage to decay number of scales
-cfg.model.loss.flip_lr_prob = 0.5  # Probablity of horizontal flippping
+cfg.model.loss.flip_lr_prob = 0.5  # Probability of horizontal flippping
 cfg.model.loss.rotation_mode = 'euler'  # Rotation mode
 cfg.model.loss.upsample_depth_maps = True  # Resize depth maps to highest resolution
 #

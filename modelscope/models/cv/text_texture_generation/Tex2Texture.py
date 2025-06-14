@@ -1,5 +1,5 @@
 # Copyright © Alibaba, Inc. and its affiliates.
-# The implementation here is modifed based on StableDiffusionControlNetInpaintPipeline,
+# The implementation here is modified based on StableDiffusionControlNetInpaintPipeline,
 # originally Apache 2.0 License and public available at
 # https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py
 
@@ -565,7 +565,7 @@ class StableDiffusionControlinpaintPipeline(
                 )
 
                 if guess_mode and do_classifier_free_guidance:
-                    # Infered ControlNet only for the conditional batch.
+                    # Inferred ControlNet only for the conditional batch.
                     # To apply the output of ControlNet to both the unconditional and conditional batches,
                     # add 0 to the unconditional batch to keep it unchanged.
                     down_block_res_samples = [

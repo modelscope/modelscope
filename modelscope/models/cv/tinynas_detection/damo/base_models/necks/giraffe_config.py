@@ -48,7 +48,7 @@ def gen_log2n_graph_file(log2n_graph_file, depth_multiplier):
 
 def get_log2n_graph(depth_multiplier):
     nodes = []
-    connnections = []
+    connections = []
 
     for i in range(depth_multiplier):
         nodes.append(i)
@@ -56,8 +56,8 @@ def get_log2n_graph(depth_multiplier):
             if i - j < 0:
                 break
             else:
-                connnections.append((i - j, i))
-    return nodes, connnections
+                connections.append((i - j, i))
+    return nodes, connections
 
 
 def get_dense_graph(depth_multiplier):

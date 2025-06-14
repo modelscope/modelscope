@@ -126,7 +126,7 @@ AI for Science:
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
-**Note:** Most models on ModelScope are public and can be downloaded without account registration on modelscope website([www.modelscope.cn](www.modelscope.cn)), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for downloading models with api provided by modelscope library or git.
+**Note:** Most models on ModelScope are public and can be downloaded directly from the [website](https://modelscope.cn/), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for downloading models with api provided by modelscope library or git.
 
 # QuickTour
 

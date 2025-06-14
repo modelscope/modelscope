@@ -181,7 +181,7 @@ class BertTokenizer(object):
             logger.info('loading vocabulary file {} from cache at {}'.format(
                 vocab_file, resolved_vocab_file))
         if pretrained_model_name_or_path in PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP:
-            # if we're using a pretrained model, ensure the tokenizer wont index sequences longer
+            # if we're using a pretrained model, ensure the tokenizer won't index sequences longer
             # than the number of positional embeddings
             max_len = PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP[
                 pretrained_model_name_or_path]
@@ -370,7 +370,7 @@ class WordpieceTokenizer(object):
 
 def _is_whitespace(char):
     """Checks whether `chars` is a whitespace character."""
-    # \t, \n, and \r are technically contorl characters but we treat them
+    # \t, \n, and \r are technically control characters but we treat them
     # as whitespace since they are generally considered as such.
     if char == ' ' or char == '\t' or char == '\n' or char == '\r':
         return True

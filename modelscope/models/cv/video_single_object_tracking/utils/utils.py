@@ -193,15 +193,15 @@ def transform_image_to_crop(box_in: torch.Tensor,
                             resize_factor: float,
                             crop_sz: torch.Tensor,
                             normalize=False) -> torch.Tensor:
-    """ Transform the box co-ordinates from the original image co-ordinates to the co-ordinates of the cropped image
+    """ Transform the box coordinates from the original image coordinates to the coordinates of the cropped image
     args:
-        box_in - the box for which the co-ordinates are to be transformed
+        box_in - the box for which the coordinates are to be transformed
         box_extract - the box about which the image crop has been extracted.
         resize_factor - the ratio between the original image scale and the scale of the image crop
         crop_sz - size of the cropped image
 
     returns:
-        torch.Tensor - transformed co-ordinates of box_in
+        torch.Tensor - transformed coordinates of box_in
     """
     box_extract_center = box_extract[0:2] + 0.5 * box_extract[2:4]
 

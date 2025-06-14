@@ -370,7 +370,7 @@ class HighResolutionNet(nn.Module):
 
         self.aspp = nn.ModuleList(aspp(in_channel=128))
 
-        # additional layers specfic for Phase 3
+        # additional layers specific for Phase 3
         self.pred_conv = nn.Conv2d(128, 512, 3, padding=1)
         self.pred_bn = nn.BatchNorm2d(512)
         self.GAP = nn.AdaptiveAvgPool2d(1)

@@ -584,7 +584,7 @@ class multiwoz22Processor(DSTProcessor):
                             + new_hst_utt_tok_label_dict[slot]
                         ]
 
-                # For now, we map all occurences of unpointable slot values
+                # For now, we map all occurrences of unpointable slot values
                 # to none. However, since the labels will still suggest
                 # a presence of unpointable slot values, the task of the
                 # DST is still to find those values. It is just not

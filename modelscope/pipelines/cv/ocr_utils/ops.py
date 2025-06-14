@@ -475,7 +475,7 @@ def smooth_l1_loss(offsets, gt_offsets, scope=None):
   Smooth L1 loss between offsets and encoded_gt
   ARGS
     offsets: [m?, 5], predicted offsets for one example
-    gt_offsets: [m?, 5], correponding groundtruth offsets
+    gt_offsets: [m?, 5], corresponding groundtruth offsets
   RETURN
     loss: scalar
   """

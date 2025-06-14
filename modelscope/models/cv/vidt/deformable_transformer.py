@@ -324,7 +324,7 @@ class DeformableTransformerDecoder(nn.Module):
     Args:
         decoder_layer: a deformable decoding layer
         num_layers: the number of layers
-        return_intermediate: whether to return intermediate resutls
+        return_intermediate: whether to return intermediate results
     """
 
     def __init__(self, decoder_layer, num_layers, return_intermediate=False):
@@ -345,7 +345,7 @@ class DeformableTransformerDecoder(nn.Module):
                 src_valid_ratios,
                 query_pos=None,
                 src_padding_mask=None):
-        """ The forwared step of the Deformable Decoder
+        """ The forward step of the Deformable Decoder
 
         Args:
             tgt: [DET] tokens

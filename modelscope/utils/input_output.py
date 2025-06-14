@@ -31,7 +31,7 @@ output into webservice output, which automatically encodes and
 decodes relevant fields.
 
 Example:
-    # create pipeine instance and pipeline information, save it to app
+    # create pipeline instance and pipeline information, save it to app
     pipeline_instance = create_pipeline('damo/cv_gpen_image-portrait-enhancement', 'v1.0.0')
     # get pipeline information, input,output, request example.
     pipeline_info = get_pipeline_information_by_pipeline(pipeline_instance)

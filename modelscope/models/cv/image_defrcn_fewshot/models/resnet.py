@@ -11,7 +11,7 @@ __all__ = [
 
 class ResNetFeatures(ResNet):
     """
-    Modified from torchvision.models.resnet, the only one difference is outputing layer4 feature in forward.
+    Modified from torchvision.models.resnet, the only one difference is outputting layer4 feature in forward.
     """
 
     def __init__(self,

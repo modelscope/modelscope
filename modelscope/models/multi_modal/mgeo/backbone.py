@@ -920,7 +920,7 @@ class BertForPreTrainingOutput(ModelOutput):
 class BertModel(BertPreTrainedModel):
     """
     Noted that the bert model here is slightly updated from original bert, so we
-    maintian the code here independently. The Bert Model transformer outputting
+    maintain the code here independently. The Bert Model transformer outputting
     raw hidden-states without any specific head on top.
 
     This model inherits from [`PreTrainedModel`]. Check the superclass

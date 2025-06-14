@@ -1079,7 +1079,7 @@ class LatentDiffusion(DDPM):
     def apply_model(self, x_noisy, t, cond, return_ids=False):
 
         if isinstance(cond, dict):
-            # hybrid case, cond is exptected to be a dict
+            # hybrid case, cond is expected to be a dict
             pass
         else:
             if not isinstance(cond, list):
@@ -1134,7 +1134,7 @@ class LatentDiffusion(DDPM):
                 num_downs = self.first_stage_model.encoder.num_resolutions - 1
                 rescale_latent = 2**(num_downs)
 
-                # get top left postions of patches as conforming for the bbbox tokenizer, therefore we
+                # get top left positions of patches as conforming for the bbbox tokenizer, therefore we
                 # need to rescale the tl patch coordinates to be in between (0,1)
                 res_1 = rescale_latent * stride[0] * (
                     patch_nr % n_patches_per_row) / full_img_w
@@ -1182,7 +1182,7 @@ class LatentDiffusion(DDPM):
             ]
             assert not isinstance(
                 output_list[0], tuple
-            )  # todo cant deal with multiple model outputs check this never happens
+            )  # todo can't deal with multiple model outputs check this never happens
 
             o = torch.stack(output_list, axis=-1)
             o = o * weighting

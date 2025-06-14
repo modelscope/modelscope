@@ -372,7 +372,7 @@ class LexicallyConstrainedBeamSearch(Search):
             step: the decoder step
             lprobs: (batch size, beam size, target vocab)
                 the target-vocab distributions for each item in the beam.
-        Retrun: A tuple of (scores, indices, beams, constraints) where:
+        Return: A tuple of (scores, indices, beams, constraints) where:
             scores: (batch, output beam size)
                 the scores of the chosen elements
             indices: (batch, output beam size)

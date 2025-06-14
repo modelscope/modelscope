@@ -841,7 +841,7 @@ TASK_OUTPUTS = {
         OutputKeys.KEYPOINTS, OutputKeys.TIMESTAMPS, OutputKeys.OUTPUT_VIDEO
     ],
 
-    # pedestrain attribute recognition result for single sample
+    # pedestrian attribute recognition result for single sample
     # {
     #   "boxes": [
     #               [x1, y1, x2, y2],

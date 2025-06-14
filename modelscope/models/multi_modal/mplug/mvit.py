@@ -291,7 +291,7 @@ def cal_rel_pos_spatial(attn, q, k, has_cls_embed, q_shape, k_shape, rel_pos_h,
         - torch.arange(k_w)[None, :] * k_w_ratio)
     dist_w += (k_w - 1) * k_w_ratio
 
-    # Intepolate rel pos if needed.
+    # Interpolate rel pos if needed.
     rel_pos_h = get_rel_pos(rel_pos_h, dh)
     rel_pos_w = get_rel_pos(rel_pos_w, dw)
     Rh = rel_pos_h[dist_h.long()]
@@ -322,7 +322,7 @@ def cal_rel_pos_temporal(attn, q, has_cls_embed, q_shape, k_shape, rel_pos_t):
     q_t, q_h, q_w = q_shape
     k_t, k_h, k_w = k_shape
     dt = int(2 * max(q_t, k_t) - 1)
-    # Intepolate rel pos if needed.
+    # Interpolate rel pos if needed.
     rel_pos_t = get_rel_pos(rel_pos_t, dt)
 
     # Scale up rel pos if shapes for q and k are different.

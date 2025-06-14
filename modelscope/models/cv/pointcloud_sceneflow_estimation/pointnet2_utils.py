@@ -206,7 +206,7 @@ class GroupingOperation(Function):
         """
         :param ctx:
         :param features: (B, C, N) tensor of features to group
-        :param idx: (B, npoint, nsample) tensor containing the indicies of features to group with
+        :param idx: (B, npoint, nsample) tensor containing the indices of features to group with
         :return:
             output: (B, C, npoint, nsample) tensor
         """
@@ -259,7 +259,7 @@ class BallQuery(Function):
         :param xyz: (B, N, 3) xyz coordinates of the features
         :param new_xyz: (B, npoint, 3) centers of the ball query
         :return:
-            idx: (B, npoint, nsample) tensor with the indicies of the features that form the query balls
+            idx: (B, npoint, nsample) tensor with the indices of the features that form the query balls
         """
         assert new_xyz.is_contiguous()
         assert xyz.is_contiguous()

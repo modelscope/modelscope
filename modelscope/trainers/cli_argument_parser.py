@@ -8,7 +8,7 @@ class CliArgumentParser(ArgumentParser):
 
     Args:
         training_args: dict or list of dict which defines different
-            paramters for training.
+            parameters for training.
     """
 
     def __init__(self, training_args=None, **kwargs):

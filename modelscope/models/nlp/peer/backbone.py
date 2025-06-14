@@ -125,7 +125,7 @@ class PeerEmbeddings(nn.Module):
                 position_idx)
             embeddings += position_embeddings__token_position_in_sentence
 
-        # Pass to attention layers to calcualte position-2-position attention scores
+        # Pass to attention layers to calculate position-2-position attention scores
         if 'absolute_self_only' in self.position_embedding_type:
             if 'embeddings' not in side_info_sets:
                 side_info_sets['embeddings'] = dict()

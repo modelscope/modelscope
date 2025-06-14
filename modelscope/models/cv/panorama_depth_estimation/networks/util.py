@@ -27,7 +27,7 @@ class Equirec2Cube:
 
     def _xyzcube(self):
         '''
-        Compute the xyz cordinates of the unit cube in [F R B L U D] format.
+        Compute the xyz coordinates of the unit cube in [F R B L U D] format.
         '''
         self.xyz = np.zeros((self.face_w, self.face_w * 6, 3), np.float32)
         rng = np.linspace(-0.5, 0.5, num=self.face_w, dtype=np.float32)

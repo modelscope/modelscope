@@ -290,7 +290,7 @@ def _decoder_default_args(kw):
 class JSONEncoder(json.JSONEncoder):
 
     def __init__(self, **kw):
-        """Constructor for simplejson.JSONEncoder, with defaults overriden
+        """Constructor for simplejson.JSONEncoder, with defaults overridden
         for jsonplus.
         """
         _encoder_default_args(kw)
@@ -300,7 +300,7 @@ class JSONEncoder(json.JSONEncoder):
 class JSONDecoder(json.JSONDecoder):
 
     def __init__(self, **kw):
-        """Constructor for simplejson.JSONDecoder, with defaults overriden
+        """Constructor for simplejson.JSONDecoder, with defaults overridden
         for jsonplus.
         """
         _decoder_default_args(kw)

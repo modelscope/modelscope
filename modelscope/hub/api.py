@@ -2085,6 +2085,126 @@ class HubApi:
         return region_id
 
 
+    def get_model_info(
+            self,
+            repo_id: str,
+            get_extend_info: bool = False,
+            get_aigc_info: bool = False,
+            get_deploy_info: bool = False,
+            revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            endpoint: Optional[str] = None,
+            use_cookies: Union[bool, CookieJar] = False
+    ) -> Dict[str, Any]:
+        
+        """获取模型的详细信息。
+
+        Args:
+            repo_id (str): 模型ID，格式为 {owner_or_group}/{name}
+            revision (str, optional): 模型版本，默认为 DEFAULT_MODEL_REVISION
+            endpoint (str, optional): API 端点，默认为 None
+            use_cookies (Union[bool, CookieJar], optional): 是否使用 cookies，默认为 False
+
+        Returns:
+            Dict[str, Any]: 包含模型信息的字典，包括：
+                - name: 模型英文名
+                - owner: 模型Owner (即所谓path)
+                - chinese_name: 模型中文名称
+                - description: 模型简介
+                - readme: 模型Readme介绍
+                - domain: 模型领域
+                - task: 模型任务类型
+                - framework: 模型框架
+                - license: 模型授权协议
+                - languages: 模型支持的语言类型
+                - tags: 模型标签列表
+                - downloads: 模型下载量
+                - stars: 模型点赞量
+                - extend_info: 模型基础额外信息（例如血缘相关信息)
+                - aigc_info: 模型AIGC相关信息（例如封面图、版本、触发词等）
+                - deploy_info: 模型部署相关信息（例如api_inference_type, SwingDeploy支持的配置backend、资源信息等）
+
+        Raises:
+            NotExistError: 如果模型不存在
+            RequestError: 如果请求失败
+        """
+        if not endpoint:
+            endpoint = self.endpoint
+
+        # 获取模型基本信息
+        path = f'{endpoint}/api/v1/models/{repo_id}'
+        cookies = self._check_cookie(use_cookies)
+        headers = self.builder_headers(self.headers)
+        
+        try:
+            r = self.session.get(path, cookies=cookies, headers=headers)
+            if r.status_code == 400:
+                raise RequestError(f"400: {r.json().get('Message', 'Bad Request')}")
+            elif r.status_code == 401:
+                raise RequestError("401: Authentication failed, please make sure that a valid ModelScope token is supplied.")
+            elif r.status_code == 500:
+                raise RequestError("500: Internal Server Error")
+            raise_for_http_status(r)
+            model_info = r.json()
+            raise_on_error(model_info)
+            basic_info = model_info[API_RESPONSE_FIELD_DATA]
+        except Exception as e:
+            raise RequestError(f"Failed to get model info: {str(e)}")
+
+        # 获取模型配置信息
+        try:
+            config_path = f'{endpoint}/api/v1/models/{repo_id}/revision/{revision}/files/configuration.json'
+            r = self.session.get(config_path, cookies=cookies, headers=headers)
+            if r.status_code == 200:
+                config_info = r.json()
+                if is_ok(config_info):
+                    basic_info.update(config_info[API_RESPONSE_FIELD_DATA])
+        except Exception as e:
+            logger.warning(f"Failed to get model configuration: {str(e)}")
+
+        # 获取模型统计信息
+        try:
+            stats_path = f'{endpoint}/api/v1/models/{repo_id}/stats'
+            r = self.session.get(stats_path, cookies=cookies, headers=headers)
+            if r.status_code == 200:
+                stats_info = r.json()
+                if is_ok(stats_info):
+                    basic_info.update(stats_info[API_RESPONSE_FIELD_DATA])
+        except Exception as e:
+            logger.warning(f"Failed to get model statistics: {str(e)}")
+
+        first_task_name = None
+        if "Tasks" in basic_info and isinstance(basic_info["Tasks"], list) and basic_info["Tasks"]:
+            first_task_name = basic_info["Tasks"][0].get("Name")
+        result = {
+        "name": basic_info.get("Name"),
+        "owner": basic_info.get("Path"),
+        "chinese_name": basic_info.get("ChineseName"),
+        "description": basic_info.get("Description"),
+        "readme": basic_info.get("ReadMeContent"),
+        "domain": basic_info.get("Domain"),
+        "task_type": first_task_name,
+        "framework": basic_info.get("Frameworks"),
+        "license": basic_info.get("License"),
+        "languages": basic_info.get("Language"),
+        "tags": basic_info.get("Tags"),
+        "downloads": basic_info.get("Downloads"),
+        "stars": basic_info.get("Stars")
+        }
+
+        # 按需添加扩展字段
+        if get_extend_info and "extend_info" in basic_info:
+            pass
+            # result["extend_info"] = basic_info["extend_info"]
+        if get_aigc_info and "aigc_info" in basic_info:
+             pass
+            # result["aigc_info"] = basic_info["aigc_info"]
+        if get_deploy_info and "deploy_info" in basic_info:
+            pass
+            # result["deploy_infoP1"] = basic_info["deploy_infoP1"]
+
+        return result
+
+
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
     COOKIES_FILE_NAME = 'cookies'

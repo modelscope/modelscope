@@ -2088,6 +2088,14 @@ class HubApi:
         return region_id
 
 
+    @property
+    def mcp(self):
+        """Get MCP API instance"""
+        if not hasattr(self, '_mcp_api'):
+            self._mcp_api = McpApi(self)
+        return self._mcp_api
+
+
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
     COOKIES_FILE_NAME = 'cookies'

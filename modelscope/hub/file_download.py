@@ -462,7 +462,7 @@ def parallel_download(url: str,
         if end + 1 < file_size:
             tasks.append((file_path, progress, end + 1, file_size - 1, url,
                           file_name, cookies, headers))
-        parallels = MODELSCOPE_DOWNLOAD_PARALLELS if MODELSCOPE_DOWNLOAD_PARALLELS <= 4 else 4
+        parallels = min(MODELSCOPE_DOWNLOAD_PARALLELS, 16)
         # download every part
         with ThreadPoolExecutor(
                 max_workers=parallels,

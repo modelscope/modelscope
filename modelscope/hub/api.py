@@ -2237,7 +2237,7 @@ class UploadingCheck:
             max_file_count: int = 100_000,
             max_file_count_in_dir: int = 50_000,
             max_file_size: int = 50 * 1024 ** 3,
-            size_threshold_to_enforce_lfs: int = 5 * 1024 * 1024,
+            size_threshold_to_enforce_lfs: int = 1 * 1024 * 1024,
             normal_file_size_total_limit: int = 500 * 1024 * 1024,
     ):
         self.max_file_count = max_file_count

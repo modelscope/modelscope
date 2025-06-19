@@ -27,7 +27,6 @@ class McpApi:
         self.builder_headers = base_api.builder_headers
         self.headers = base_api.headers
 
-    @validate_filter_params
     def get_mcp_servers(
         self,
         token: str,

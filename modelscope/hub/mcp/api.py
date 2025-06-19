@@ -4,7 +4,6 @@ import requests
 from typing import Any, Dict, Optional
 
 from modelscope.hub.errors import raise_for_http_status
-from .types import McpFilter, validate_mcp_filter, validate_filter_params
 
 # MCP API path suffix
 MCP_API_PATH = "/openapi/v1"
@@ -29,7 +28,7 @@ class McpApi:
 
     def get_mcp_servers(
         self,
-        token: str,
+        token: Optional[str] = None,
         filter: dict = None,
         page_number: int = 1,
         page_size: int = 20,
@@ -40,7 +39,7 @@ class McpApi:
         Get MCP server list
         
         Args:
-            token: Authentication token
+            token: Authentication token (optional). If not provided, request will be made without authentication
             filter: Filter condition dictionary containing the following sub-branches:
                 - category: String type, filter by category
                 - is_hosted: Boolean type, filter by hosting status
@@ -61,8 +60,11 @@ class McpApi:
             endpoint = self.endpoint
         url = f"{endpoint}/mcp/servers"
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
-
+        
+        # Only add Authorization header if token is provided
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        
         body = {
             "filter": filter or {},
             "page_number": page_number,
@@ -94,14 +96,14 @@ class McpApi:
 
     def get_mcp_server_operational(
         self,
-        token: str,
+        token: Optional[str] = None,
         endpoint: Optional[str] = None
     ) -> dict:
         """
         Get user-hosted MCP server list
         
         Args:
-            token: Authentication token
+            token: Authentication token (optional). If not provided, request will be made without authentication
             endpoint: API endpoint, defaults to MCP-specific endpoint (inherited from HubApi + /openapi/v1)
             
         Returns:
@@ -114,7 +116,10 @@ class McpApi:
             endpoint = self.endpoint
         url = f"{endpoint}/mcp/servers/operational"
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
+        
+        # Only add Authorization header if token is provided
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
 
         r = self.session.get(url, headers=headers)
         raise_for_http_status(r)
@@ -142,7 +147,7 @@ class McpApi:
     def get_mcp_server_special(
         self,
         server_id: str,
-        token: str,
+        token: Optional[str] = None,
         get_operational_url: bool = False,
         endpoint: Optional[str] = None
     ) -> dict:
@@ -151,7 +156,7 @@ class McpApi:
         
         Args:
             server_id: Server ID
-            token: Authentication token
+            token: Authentication token (optional). If not provided, request will be made without authentication
             get_operational_url: Whether to get operational URL, defaults to False
             endpoint: API endpoint, defaults to MCP-specific endpoint (inherited from HubApi + /openapi/v1)
             
@@ -162,7 +167,11 @@ class McpApi:
             endpoint = self.endpoint
         url = f"{endpoint}/mcp/servers/{server_id}"
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
+        
+        # Only add Authorization header if token is provided
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+            
         params = {"get_operational_url": str(get_operational_url).lower()} if get_operational_url else {}
 
         r = self.session.get(url, headers=headers, params=params)

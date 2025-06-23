@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 import requests
 from requests.adapters import Retry
@@ -30,6 +30,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
 from modelscope.utils.file_utils import (get_dataset_cache_root,
                                          get_model_cache_root)
 from modelscope.utils.logger import get_logger
+from .callback import ProgressCallback, TqdmCallback
 from .errors import FileDownloadError, InvalidParameter, NotExistError
 from .utils.caching import ModelFileSystemCache
 from .utils.utils import (file_integrity_validation, get_endpoint,
@@ -493,6 +494,7 @@ def http_get_model_file(
     cookies: CookieJar,
     headers: Optional[Dict[str, str]] = None,
     disable_tqdm: bool = False,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     """Download remote file, will retry 5 times before giving up on errors.
 
@@ -515,6 +517,9 @@ def http_get_model_file(
         FileDownloadError: File download failed.
 
     """
+    progress_callbacks = progress_callbacks or []
+    if not disable_tqdm:
+        progress_callbacks.append(TqdmCallback)
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     temp_file_path = os.path.join(local_dir, file_name)
@@ -529,53 +534,52 @@ def http_get_model_file(
         allowed_methods=['GET'])
     while True:
         try:
-            with tqdm(
-                    unit='B',
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    total=file_size if file_size > 0 else 1,
-                    initial=0,
-                    desc='Downloading [' + file_name + ']',
-                    leave=True,
-                    disable=disable_tqdm,
-            ) as progress:
-                if file_size == 0:
-                    # Avoid empty file server request
-                    with open(temp_file_path, 'w+'):
-                        progress.update(1)
-                    break
-                # Determine the length of any existing partial download
-                partial_length = 0
-                # download partial, continue download
-                if os.path.exists(temp_file_path):
-                    # resuming from interrupted download is also considered as retry
-                    has_retry = True
-                    with open(temp_file_path, 'rb') as f:
-                        partial_length = f.seek(0, io.SEEK_END)
-                        progress.update(partial_length)
+            progress_callbacks = [
+                callback(file_name, file_size)
+                for callback in progress_callbacks
+            ]
+            if file_size == 0:
+                # Avoid empty file server request
+                with open(temp_file_path, 'w+'):
+                    for callback in progress_callbacks:
+                        callback.update(1)
+                break
+            # Determine the length of any existing partial download
+            partial_length = 0
+            # download partial, continue download
+            if os.path.exists(temp_file_path):
+                # resuming from interrupted download is also considered as retry
+                has_retry = True
+                with open(temp_file_path, 'rb') as f:
+                    partial_length = f.seek(0, io.SEEK_END)
+                    for callback in progress_callbacks:
+                        callback.update(partial_length)
 
-                # Check if download is complete
-                if partial_length >= file_size:
-                    break
-                # closed range[], from 0.
-                get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
-                                                        file_size - 1)
-                with open(temp_file_path, 'ab+') as f:
-                    r = requests.get(
-                        url,
-                        stream=True,
-                        headers=get_headers,
-                        cookies=cookies,
-                        timeout=API_FILE_DOWNLOAD_TIMEOUT)
-                    r.raise_for_status()
-                    for chunk in r.iter_content(
-                            chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
-                        if chunk:  # filter out keep-alive new chunks
-                            progress.update(len(chunk))
-                            f.write(chunk)
-                            # hash would be discarded in retry case anyway
-                            if not has_retry:
-                                hash_sha256.update(chunk)
+            # Check if download is complete
+            if partial_length >= file_size:
+                break
+            # closed range[], from 0.
+            get_headers['Range'] = 'bytes=%s-%s' % (partial_length,
+                                                    file_size - 1)
+            with open(temp_file_path, 'ab+') as f:
+                r = requests.get(
+                    url,
+                    stream=True,
+                    headers=get_headers,
+                    cookies=cookies,
+                    timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                r.raise_for_status()
+                for chunk in r.iter_content(
+                        chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        for callback in progress_callbacks:
+                            callback.update(len(chunk))
+                        f.write(chunk)
+                        # hash would be discarded in retry case anyway
+                        if not has_retry:
+                            hash_sha256.update(chunk)
+            for callback in progress_callbacks:
+                callback.end()
             break
         except Exception as e:  # no matter what happen, we will retry.
             has_retry = True
@@ -675,6 +679,7 @@ def download_file(
     headers,
     cookies,
     disable_tqdm=False,
+    progress_callbacks: List[ProgressCallback] = None,
 ):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
@@ -696,6 +701,7 @@ def download_file(
             headers=headers,
             cookies=cookies,
             disable_tqdm=disable_tqdm,
+            progress_callbacks=progress_callbacks,
         )
 
     # check file integrity

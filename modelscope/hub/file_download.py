@@ -523,6 +523,9 @@ def http_get_model_file(
     )
     if not disable_tqdm:
         progress_callbacks.append(TqdmCallback)
+    progress_callbacks = [
+        callback(file_name, file_size) for callback in progress_callbacks
+    ]
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     temp_file_path = os.path.join(local_dir, file_name)
@@ -535,12 +538,9 @@ def http_get_model_file(
         total=API_FILE_DOWNLOAD_RETRY_TIMES,
         backoff_factor=1,
         allowed_methods=['GET'])
+
     while True:
         try:
-            progress_callbacks = [
-                callback(file_name, file_size)
-                for callback in progress_callbacks
-            ]
             if file_size == 0:
                 # Avoid empty file server request
                 with open(temp_file_path, 'w+'):

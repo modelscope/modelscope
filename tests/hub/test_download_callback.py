@@ -15,6 +15,9 @@ class NewProgressCallback(ProgressCallback):
     def update(self, size: int):
         self.progress.update(size)
 
+    def end(self):
+        self.progress.close()
+
 
 class ProgressCallbackTest(unittest.TestCase):
 

@@ -79,6 +79,8 @@ def snapshot_download(
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
         max_workers (`int`): The maximum number of workers to download files, default 8.
+        progress_callbacks (`List[Type[ProgressCallback]]`, **optional**, default to `None`):
+            progress callbacks to track the download progress.
     Raises:
         ValueError: the value details.
 

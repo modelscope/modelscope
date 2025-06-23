@@ -512,12 +512,15 @@ def http_get_model_file(
         headers(Dict[str, str], optional):
             http headers to carry necessary info when requesting the remote file
         disable_tqdm(bool, optional): Disable the progress bar with tqdm.
+        progress_callbacks(List[Type[ProgressCallback]], optional):
+            progress callbacks to track the download progress.
 
     Raises:
         FileDownloadError: File download failed.
 
     """
-    progress_callbacks = progress_callbacks or []
+    progress_callbacks = [] if progress_callbacks is None else progress_callbacks.copy(
+    )
     if not disable_tqdm:
         progress_callbacks.append(TqdmCallback)
     get_headers = {} if headers is None else copy.deepcopy(headers)

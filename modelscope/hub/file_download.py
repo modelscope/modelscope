@@ -581,13 +581,13 @@ def http_get_model_file(
                         # hash would be discarded in retry case anyway
                         if not has_retry:
                             hash_sha256.update(chunk)
-            for callback in progress_callbacks:
-                callback.end()
             break
         except Exception as e:  # no matter what happen, we will retry.
             has_retry = True
             retry = retry.increment('GET', url, error=e)
             retry.sleep()
+    for callback in progress_callbacks:
+        callback.end()
     # if anything went wrong, we would discard the real-time computed hash and return None
     return None if has_retry else hash_sha256.hexdigest()
 

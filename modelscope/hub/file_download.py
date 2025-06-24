@@ -392,7 +392,7 @@ def get_file_download_url(model_id: str,
 
 def download_part_with_retry(params):
     # unpack parameters
-    model_file_path, progress, start, end, url, file_name, cookies, headers = params
+    model_file_path, progress_callbacks, start, end, url, file_name, cookies, headers = params
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     retry = Retry(
@@ -407,7 +407,8 @@ def download_part_with_retry(params):
                     part_file_name):  # download partial, continue download
                 with open(part_file_name, 'rb') as f:
                     partial_length = f.seek(0, io.SEEK_END)
-                    progress.update(partial_length)
+                    for callback in progress_callbacks:
+                        callback.update(partial_length)
             download_start = start + partial_length
             if download_start > end:
                 break  # this part is download completed.
@@ -423,7 +424,8 @@ def download_part_with_retry(params):
                         chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
                     if chunk:  # filter out keep-alive new chunks
                         f.write(chunk)
-                        progress.update(len(chunk))
+                        for callback in progress_callbacks:
+                            callback.update(len(chunk))
             break
         except (Exception) as e:  # no matter what exception, we will retry.
             retry = retry.increment('GET', url, error=e)
@@ -439,37 +441,35 @@ def parallel_download(url: str,
                       headers: Optional[Dict[str, str]] = None,
                       file_size: int = None,
                       disable_tqdm: bool = False,
+                      progress_callbacks: List[Type[ProgressCallback]] = None,
                       endpoint: str = None):
+    progress_callbacks = [] if progress_callbacks is None else progress_callbacks.copy(
+    )
+    if not disable_tqdm:
+        progress_callbacks.append(TqdmCallback)
+    progress_callbacks = [
+        callback(file_name, file_size) for callback in progress_callbacks
+    ]
     # create temp file
-    with tqdm(
-            unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
-            total=file_size,
-            initial=0,
-            desc='Downloading [' + file_name + ']',
-            leave=True,
-            disable=disable_tqdm,
-    ) as progress:
-        PART_SIZE = 160 * 1024 * 1024  # every part is 160M
-        tasks = []
-        file_path = os.path.join(local_dir, file_name)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        for idx in range(int(file_size / PART_SIZE)):
-            start = idx * PART_SIZE
-            end = (idx + 1) * PART_SIZE - 1
-            tasks.append((file_path, progress, start, end, url, file_name,
-                          cookies, headers))
-        if end + 1 < file_size:
-            tasks.append((file_path, progress, end + 1, file_size - 1, url,
-                          file_name, cookies, headers))
-        parallels = min(MODELSCOPE_DOWNLOAD_PARALLELS, 16)
-        # download every part
-        with ThreadPoolExecutor(
-                max_workers=parallels,
-                thread_name_prefix='download') as executor:
-            list(executor.map(download_part_with_retry, tasks))
-
+    PART_SIZE = 160 * 1024 * 1024  # every part is 160M
+    tasks = []
+    file_path = os.path.join(local_dir, file_name)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    for idx in range(int(file_size / PART_SIZE)):
+        start = idx * PART_SIZE
+        end = (idx + 1) * PART_SIZE - 1
+        tasks.append((file_path, progress_callbacks, start, end, url,
+                      file_name, cookies, headers))
+    if end + 1 < file_size:
+        tasks.append((file_path, progress_callbacks, end + 1, file_size - 1,
+                      url, file_name, cookies, headers))
+    parallels = min(MODELSCOPE_DOWNLOAD_PARALLELS, 16)
+    # download every part
+    with ThreadPoolExecutor(
+            max_workers=parallels, thread_name_prefix='download') as executor:
+        list(executor.map(download_part_with_retry, tasks))
+    for callback in progress_callbacks:
+        callback.end()
     # merge parts.
     hash_sha256 = hashlib.sha256()
     with open(os.path.join(local_dir, file_name), 'wb') as output_file:
@@ -682,7 +682,7 @@ def download_file(
     headers,
     cookies,
     disable_tqdm=False,
-    progress_callbacks: List[ProgressCallback] = None,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
             'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
@@ -694,6 +694,7 @@ def download_file(
             cookies=None if cookies is None else cookies.get_dict(),
             file_size=file_meta['Size'],
             disable_tqdm=disable_tqdm,
+            progress_callbacks=progress_callbacks,
         )
     else:
         file_digest = http_get_model_file(

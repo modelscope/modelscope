@@ -2243,7 +2243,8 @@ class UploadingCheck:
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
-        self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
+        self.size_threshold_to_enforce_lfs = int(os.environ.get('SIZE_THRESHOLD_TO_ENFORCE_LFS',
+                                                                size_threshold_to_enforce_lfs))
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):

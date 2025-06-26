@@ -8,6 +8,7 @@ import os
 import pickle
 import platform
 import re
+import fnmatch
 import shutil
 import tempfile
 import uuid
@@ -77,7 +78,6 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
 from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
-
 
 class HubApi:
     """Model hub api interface.
@@ -305,6 +305,133 @@ class HubApi:
                 raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
             raise_for_http_status(r)
+
+    def get_model_info(
+            self,
+            model_id: str,
+            get_extend_info: bool = False,
+            get_aigc_info: bool = False,
+            get_deploy_info: bool = False,
+            revision: Optional[str] = DEFAULT_MODEL_REVISION,
+            endpoint: Optional[str] = None,
+            use_cookies: Union[bool, CookieJar] = False
+    ) -> Dict[str, Any]:
+        """Get detailed model information at ModelScope
+
+        Args:
+            repo_id (str): The model id, format: {owner_or_group}/{name}
+            get_extend_info (bool): Whether to get extended information, defaults to False
+            get_aigc_info (bool): Whether to get AIGC information, defaults to False
+            get_deploy_info (bool): Whether to get deployment information, defaults to False
+            revision (str, optional): revision of model, defaults to DEFAULT_MODEL_REVISION
+            endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            use_cookies (Union[bool, CookieJar]): Whether to use cookies, defaults to False
+
+        Returns:
+            Dict[str, Any]: Dictionary containing model information including:
+                - name: Model English name
+                - owner: Model owner (path)
+                - chinese_name: Model Chinese name
+                - description: Model description
+                - readme: Model README content
+                - domain: Model domain
+                - task_type: Model task type
+                - framework: Model framework
+                - license: Model license
+                - languages: Model supported languages
+                - tags: Model tags list
+                - downloads: Model download count
+                - stars: Model star count
+                - extend_info: Extended model information (if get_extend_info=True)
+                - aigc_info: AIGC model information (if get_aigc_info=True)
+                - deploy_info: Deployment information (if get_deploy_info=True)
+
+        Raises:
+            NotExistError: If the model is not exist, will throw NotExistError
+            RequestError: If the request fails
+
+        Note:
+            repo_id = {owner}/{name}
+        """
+        cookies = self._check_cookie(use_cookies)
+        owner_or_group, name = model_id_to_group_owner_name(model_id)
+        if not endpoint:
+            endpoint = self.endpoint
+
+        # Get basic model information
+        if revision:
+            path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}?Revision={revision}'
+        else:
+            path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
+
+        r = self.session.get(path, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        handle_http_response(r, logger, cookies, repo_id)
+        
+        if r.status_code == HTTPStatus.OK:
+            if is_ok(r.json()):
+                basic_info = r.json()[API_RESPONSE_FIELD_DATA]
+            else:
+                raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
+        else:
+            raise_for_http_status(r)
+
+        # Get model configuration information
+        try:
+            config_path = f'{endpoint}/api/v1/models/{repo_id}/revision/{revision}/files/configuration.json'
+            r = self.session.get(config_path, cookies=cookies, headers=self.builder_headers(self.headers))
+            if r.status_code == HTTPStatus.OK:
+                config_info = r.json()
+                if is_ok(config_info):
+                    basic_info.update(config_info[API_RESPONSE_FIELD_DATA])
+        except Exception as e:
+            logger.warning(f"Failed to get model configuration: {str(e)}")
+
+        # Get model statistics information
+        try:
+            stats_path = f'{endpoint}/api/v1/models/{repo_id}/stats'
+            r = self.session.get(stats_path, cookies=cookies, headers=self.builder_headers(self.headers))
+            if r.status_code == HTTPStatus.OK:
+                stats_info = r.json()
+                if is_ok(stats_info):
+                    basic_info.update(stats_info[API_RESPONSE_FIELD_DATA])
+        except Exception as e:
+            logger.warning(f"Failed to get model statistics: {str(e)}")
+
+        # Extract first task name
+        first_task_name = None
+        if "Tasks" in basic_info and isinstance(basic_info["Tasks"], list) and basic_info["Tasks"]:
+            first_task_name = basic_info["Tasks"][0].get("Name")
+
+        # Build result dictionary
+        result = {
+            "name": basic_info.get("Name"),
+            "owner": basic_info.get("Path"),
+            "chinese_name": basic_info.get("ChineseName"),
+            "description": basic_info.get("Description"),
+            "readme": basic_info.get("ReadMeContent"),
+            "domain": basic_info.get("Domain"),
+            "task_type": first_task_name,
+            "framework": basic_info.get("Frameworks"),
+            "license": basic_info.get("License"),
+            "languages": basic_info.get("Language"),
+            "tags": basic_info.get("Tags"),
+            "downloads": basic_info.get("Downloads"),
+            "stars": basic_info.get("Stars")
+        }
+
+        # Add extended fields as requested
+        if get_extend_info and "extend_info" in basic_info:
+            pass
+            # result["extend_info"] = basic_info["extend_info"]
+        if get_aigc_info and "aigc_info" in basic_info:
+             pass
+            # result["aigc_info"] = basic_info["aigc_info"]
+        if get_deploy_info and "deploy_info" in basic_info:
+            pass
+            # result["deploy_infoP1"] = basic_info["deploy_infoP1"]
+
+        return result
 
     def get_endpoint_for_read(self,
                               repo_id: str,
@@ -2084,13 +2211,104 @@ class HubApi:
 
         return region_id
 
+    def delete_files(self,
+                     repo_id: str,
+                     repo_type: str,
+                     delete_patterns: Union[str, List[str]],
+                     *,
+                     revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                     endpoint: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Delete files in batch using glob (wildcard) patterns, e.g. '*.py', 'data/*.csv', 'foo*', etc.
 
-    @property
-    def mcp(self):
-        """Get MCP API instance"""
-        if not hasattr(self, '_mcp_api'):
-            self._mcp_api = McpApi(self)
-        return self._mcp_api
+        Example:
+            # Delete all Python and Markdown files in a model repo
+            api.delete_files(
+                repo_id='your_username/your_model',
+                repo_type=REPO_TYPE_MODEL,
+                delete_patterns=['*.py', '*.md']
+            )
+
+            # Delete all CSV files in the data/ directory of a dataset repo
+            api.delete_files(
+                repo_id='your_username/your_dataset',
+                repo_type=REPO_TYPE_DATASET,
+                delete_patterns='data/*.csv'
+            )
+
+        Args:
+            repo_id (str): 'owner/repo_name' or 'owner/dataset_name', e.g. 'Koko/my_model'
+            repo_type (str): REPO_TYPE_MODEL or REPO_TYPE_DATASET
+            delete_patterns (str or List[str]): List of glob patterns, e.g. '*.py', 'data/*.csv', 'foo*'
+            revision (str, optional): Branch or tag name
+            endpoint (str, optional): API endpoint
+        Returns:
+            dict: Deletion result
+        """
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Unsupported repo_type: {repo_type}')
+        if not delete_patterns:
+            raise ValueError('delete_patterns cannot be empty')
+        if isinstance(delete_patterns, str):
+            delete_patterns = [delete_patterns]
+
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+        headers = self.builder_headers(self.headers)
+
+        # List all files in the repo
+        if repo_type == REPO_TYPE_MODEL:
+            files = self.get_model_files(repo_id, revision=revision or DEFAULT_MODEL_REVISION, recursive=True, endpoint=endpoint)
+            file_list = [f['Path'] for f in files]
+        else:
+            namespace, dataset_name = repo_id.split('/')
+            dataset_hub_id, _ = self.get_dataset_id_and_type(dataset_name, namespace, endpoint=endpoint)
+            dataset_info = self.get_dataset_infos(dataset_hub_id, revision or DEFAULT_DATASET_REVISION, recursive='True', endpoint=endpoint)
+            files = dataset_info.get('Data', {}).get('Files', [])
+            file_list = [f['Path'] for f in files]
+
+        # Glob pattern matching
+        to_delete = []
+        for path in file_list:
+            for delete_pattern in delete_patterns:
+                if fnmatch.fnmatch(path, delete_pattern):
+                    to_delete.append(path)
+                    break
+
+        deleted_files, failed_files = [], []
+        for path in to_delete:
+            try:
+                if repo_type == REPO_TYPE_MODEL:
+                    owner, repo_name = repo_id.split('/')
+                    url = f"{endpoint}/api/v1/models/{owner}/{repo_name}/file"
+                    params = {
+                        "Revision": revision or DEFAULT_MODEL_REVISION,
+                        "FilePath": path
+                    }
+                else:
+                    owner, dataset_name = repo_id.split('/')
+                    url = f"{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo"
+                    params = {
+                        "FilePath": path
+                    }
+                r = self.session.delete(url, params=params, cookies=cookies, headers=headers)
+                raise_for_http_status(r)
+                resp = r.json()
+                raise_on_error(resp)
+                deleted_files.append(path)
+            except Exception as e:
+                failed_files.append(path)
+                logger.error(f'Failed to delete {path}: {str(e)}')
+
+        return {
+            'deleted_files': deleted_files,
+            'failed_files': failed_files,
+            'total_files': len(to_delete)
+        }
+
 
 
 class ModelScopeConfig:

@@ -6,7 +6,7 @@ import re
 import uuid
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import InvalidParameter
@@ -23,6 +23,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
 from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
+from .callback import ProgressCallback
 
 logger = get_logger()
 
@@ -42,6 +43,7 @@ def snapshot_download(
     max_workers: int = 8,
     repo_id: str = None,
     repo_type: Optional[str] = REPO_TYPE_MODEL,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -77,6 +79,8 @@ def snapshot_download(
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
         max_workers (`int`): The maximum number of workers to download files, default 8.
+        progress_callbacks (`List[Type[ProgressCallback]]`, **optional**, default to `None`):
+            progress callbacks to track the download progress.
     Raises:
         ValueError: the value details.
 
@@ -118,7 +122,8 @@ def snapshot_download(
         local_dir=local_dir,
         ignore_patterns=ignore_patterns,
         allow_patterns=allow_patterns,
-        max_workers=max_workers)
+        max_workers=max_workers,
+        progress_callbacks=progress_callbacks)
 
 
 def dataset_snapshot_download(
@@ -213,6 +218,7 @@ def _snapshot_download(
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -304,6 +310,7 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 max_workers=max_workers,
                 endpoint=endpoint,
+                progress_callbacks=progress_callbacks,
             )
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
@@ -362,6 +369,7 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 max_workers=max_workers,
                 endpoint=endpoint,
+                progress_callbacks=progress_callbacks,
             )
 
         cache.save_model_version(revision_info=revision_detail)
@@ -449,6 +457,7 @@ def _download_file_lists(
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
     endpoint: Optional[str] = None,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
@@ -532,6 +541,7 @@ def _download_file_lists(
             headers,
             cookies,
             disable_tqdm=False,
+            progress_callbacks=progress_callbacks,
         )
 
     if len(filtered_repo_files) > 0:

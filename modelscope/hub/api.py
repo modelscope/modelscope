@@ -43,8 +43,14 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_REQUEST_ID,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
-                                      TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility, Visibility,
+                                      TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_MAX_FILE_COUNT,
+                                      UPLOAD_MAX_FILE_COUNT_IN_DIR,
+                                      UPLOAD_MAX_FILE_SIZE,
+                                      UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+                                      DatasetVisibility, Licenses,
+                                      ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -2234,17 +2240,16 @@ class ModelScopeConfig:
 class UploadingCheck:
     def __init__(
             self,
-            max_file_count: int = 100_000,
-            max_file_count_in_dir: int = 50_000,
-            max_file_size: int = 50 * 1024 ** 3,
-            size_threshold_to_enforce_lfs: int = 1 * 1024 * 1024,
-            normal_file_size_total_limit: int = 500 * 1024 * 1024,
+            max_file_count: int = UPLOAD_MAX_FILE_COUNT,
+            max_file_count_in_dir: int = UPLOAD_MAX_FILE_COUNT_IN_DIR,
+            max_file_size: int = UPLOAD_MAX_FILE_SIZE,
+            size_threshold_to_enforce_lfs: int = UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+            normal_file_size_total_limit: int = UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
         self.max_file_size = max_file_size
-        self.size_threshold_to_enforce_lfs = int(os.environ.get('SIZE_THRESHOLD_TO_ENFORCE_LFS',
-                                                                size_threshold_to_enforce_lfs))
+        self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
     def check_file(self, file_path_or_obj):
@@ -2255,8 +2260,8 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
         if file_size > self.max_file_size:
-            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
-                             f'got {round(file_size / (1024 ** 3), 4)} GB')
+            logger.warning(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
+                           f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
         file_count = 0
@@ -2270,8 +2275,8 @@ class UploadingCheck:
                 file_count += 1
                 item_size: int = get_file_size(item)
                 if item_size > self.max_file_size:
-                    raise ValueError(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
-                                     f'got {round(item_size / (1024 ** 3), 4)} GB')
+                    logger.warning(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
+                                   f'got {round(item_size / (1024 ** 3), 4)} GB')
             elif item.is_dir():
                 dir_count += 1
                 # Count items in subdirectories recursively

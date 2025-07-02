@@ -79,7 +79,8 @@ RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir huggingface-hub transformers -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
-    pip install liger_kernel nvitop pre-commit "transformers==4.51.3" huggingface-hub -U && \
+    pip install "sglang[all]<0.4.7" math_verify -U && \
+    pip install liger_kernel nvitop pre-commit "transformers<4.52" huggingface-hub -U && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
     CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
     pip install git+https://github.com/NVIDIA/TransformerEngine.git@release_v2.3; \

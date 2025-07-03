@@ -388,7 +388,8 @@ class GroupNormParam:
         pixels = pixels.unsqueeze(1)
         var = torch.sum(var * pixels, dim=0)
         mean = torch.sum(mean * pixels, dim=0)
-        return lambda x: custom_group_norm(x, 32, mean, var, self.weight, self.bias)
+        return lambda x: custom_group_norm(x, 32, mean, var, self.weight, self.
+                                           bias)
 
     @staticmethod
     def from_tile(tile, norm):
@@ -441,10 +442,11 @@ class VAEHook:
         B, C, H, W = x.shape
         original_device = next(self.net.parameters()).device
         try:
-            target_device = get_optimal_device() if self.to_gpu else original_device
+            target_device = get_optimal_device(
+            ) if self.to_gpu else original_device
             if self.to_gpu:
                 self.net.to(target_device)
-                
+
             if max(H, W) <= self.pad * 2 + self.tile_size:
                 print(
                     '[Tiled VAE]: the input size is tiny and unnecessary to tile.'
@@ -597,10 +599,7 @@ class VAEHook:
         in_bboxes, out_bboxes = self.split_tiles(height, width)
 
         # Prepare tiles using list comprehension
-        tiles = [
-            z[:, :, b[2]:b[3], b[0]:b[1]].cpu() 
-            for b in in_bboxes
-        ]
+        tiles = [z[:, :, b[2]:b[3], b[0]:b[1]].cpu() for b in in_bboxes]
 
         num_tiles = len(tiles)
         num_completed = 0
@@ -612,20 +611,20 @@ class VAEHook:
             scale_factor = tile_size / max(height, width)
             downsampled_z = F.interpolate(
                 z, scale_factor=scale_factor, mode='nearest-exact')
-            
+
             print(
                 f'[Tiled VAE]: Fast mode enabled, estimating group norm parameters on '
-                f'{downsampled_z.shape[3]} x {downsampled_z.shape[2]} image'
-            )
+                f'{downsampled_z.shape[3]} x {downsampled_z.shape[2]} image')
 
             # Adjust statistics to match original distribution
             std_old, mean_old = torch.std_mean(z, dim=[0, 2, 3], keepdim=True)
             std_new, mean_new = torch.std_mean(
                 downsampled_z, dim=[0, 2, 3], keepdim=True)
-            downsampled_z = (downsampled_z - mean_new) / std_new * std_old + mean_old
+            downsampled_z = (downsampled_z
+                             - mean_new) / std_new * std_old + mean_old
             downsampled_z = torch.clamp(
                 downsampled_z, min=z.min(), max=z.max())
-            
+
             estimate_task_queue = clone_task_queue(single_task_queue)
             if self.estimate_group_norm(
                     downsampled_z, estimate_task_queue,
@@ -648,23 +647,24 @@ class VAEHook:
         total_tasks = sum(len(q) for q in task_queues)
         pbar = tqdm(
             total=total_tasks,
-            desc=f"[Tiled VAE]: Executing {'Decoder' if is_decoder else 'Encoder'}"
-        )
+            desc=
+            f"[Tiled VAE]: Executing {'Decoder' if is_decoder else 'Encoder'}")
 
         # execute the task back and forth when switch tiles
         forward = True
         while num_completed < num_tiles:
             group_norm_param = GroupNormParam()
-            indices = range(num_tiles) if forward else reversed(range(num_tiles))
-            
+            indices = range(num_tiles) if forward else reversed(
+                range(num_tiles))
+
             for i in indices:
                 if tiles[i] is None:
                     continue  # Skip completed tiles
-                    
+
                 tile = tiles[i].to(device)
                 input_bbox = in_bboxes[i]
                 task_queue = task_queues[i]
-                
+
                 # Process all tasks in the queue
                 for task_idx, task in enumerate(task_queue):
                     if task[0] == 'pre_norm':
@@ -677,7 +677,7 @@ class VAEHook:
                         if task[0] == 'store_res_cpu' or not self.fast_mode:
                             res = res.cpu()
                         # Find the corresponding 'add_res' task
-                        for add_idx in range(task_idx+1, len(task_queue)):
+                        for add_idx in range(task_idx + 1, len(task_queue)):
                             if task_queue[add_idx][0] == 'add_res':
                                 task_queue[add_idx] = ('add_res', res)
                                 break
@@ -689,10 +689,10 @@ class VAEHook:
                         tile = task[1](tile)
                         task_queue[task_idx] = None
                     pbar.update(1)
-                
+
                 # Remove processed tasks
                 task_queues[i] = [t for t in task_queue if t is not None]
-                
+
                 # Check for NaNs
                 test_for_nans(tile, 'vae')
 
@@ -704,11 +704,11 @@ class VAEHook:
                             (N, tile.shape[1],
                              height * 8 if is_decoder else height // 8,
                              width * 8 if is_decoder else width // 8),
-                            device=device
-                        )
+                            device=device)
                     result[:, :, out_bboxes[i][2]:out_bboxes[i][3],
-                           out_bboxes[i][0]:out_bboxes[i][1]] = crop_valid_region(
-                               tile, in_bboxes[i], out_bboxes[i], is_decoder)
+                           out_bboxes[i][0]:out_bboxes[i]
+                           [1]] = crop_valid_region(tile, in_bboxes[i],
+                                                    out_bboxes[i], is_decoder)
                     del tile
                 else:
                     # Keep tile for next processing
@@ -727,7 +727,8 @@ class VAEHook:
             if group_norm_func is not None:
                 for i in range(num_tiles):
                     if tiles[i] is not None:
-                        task_queues[i].insert(0, ('apply_norm', group_norm_func))
+                        task_queues[i].insert(0,
+                                              ('apply_norm', group_norm_func))
 
         # Done!
         pbar.close()

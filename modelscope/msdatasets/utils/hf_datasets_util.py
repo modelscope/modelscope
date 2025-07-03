@@ -3,6 +3,7 @@
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
 import importlib
 import contextlib
+import inspect
 import os
 import warnings
 from functools import partial
@@ -17,9 +18,9 @@ from datasets import (BuilderConfig, Dataset, DatasetBuilder, DatasetDict,
                       IterableDataset, IterableDatasetDict, Split,
                       VerificationMode, Version, config, data_files)
 from datasets.data_files import (
-    FILES_TO_IGNORE, DataFilesDict, DataFilesList, EmptyDatasetError,
+    FILES_TO_IGNORE, DataFilesDict, EmptyDatasetError,
     _get_data_files_patterns, _is_inside_unrequested_special_dir,
-    _is_unrequested_hidden_file_or_is_inside_unrequested_hidden_dir, get_metadata_patterns, sanitize_patterns)
+    _is_unrequested_hidden_file_or_is_inside_unrequested_hidden_dir, sanitize_patterns)
 from datasets.download.streaming_download_manager import (
     _prepare_path_and_storage_options, xbasename, xjoin)
 from datasets.exceptions import DataFilesNotFoundError, DatasetNotFoundError
@@ -37,7 +38,6 @@ from datasets.load import (
     init_dynamic_modules)
 from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
-                                       _MODULE_SUPPORTS_METADATA,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
 from datasets.utils import file_utils
@@ -625,38 +625,29 @@ def get_module_without_script(self) -> DatasetModule:
         path=self.name,
         download_config=self.download_config,
     )
-    data_files = data_files.filter_extensions(
-        _MODULE_TO_EXTENSIONS[module_name])
-    # Collect metadata files if the module supports them
-    supports_metadata = module_name in _MODULE_SUPPORTS_METADATA
-    if self.data_files is None and supports_metadata:
-        try:
-            metadata_patterns = get_metadata_patterns(
-                base_path, download_config=self.download_config)
-        except FileNotFoundError:
-            metadata_patterns = None
-        if metadata_patterns is not None:
-            metadata_data_files_list = DataFilesList.from_patterns(
-                metadata_patterns,
-                download_config=self.download_config,
-                base_path=base_path)
-            if metadata_data_files_list:
-                data_files = DataFilesDict({
-                    split: data_files_list + metadata_data_files_list
-                    for split, data_files_list in data_files.items()
-                })
+
+    if hasattr(data_files, 'filter'):
+        data_files = data_files.filter(extensions=_MODULE_TO_EXTENSIONS[module_name])
+    else:
+        data_files = data_files.filter_extensions(_MODULE_TO_EXTENSIONS[module_name])
 
     module_path, _ = _PACKAGED_DATASETS_MODULES[module_name]
 
     if metadata_configs:
-        builder_configs, default_config_name = create_builder_configs_from_metadata_configs(
-            module_path,
-            metadata_configs,
-            base_path=base_path,
-            supports_metadata=supports_metadata,
-            default_builder_kwargs=default_builder_kwargs,
-            download_config=self.download_config,
-        )
+
+        supports_metadata = module_name in {'imagefolder', 'audiofolder'}
+        create_builder_signature = inspect.signature(create_builder_configs_from_metadata_configs)
+        in_args = {
+            'module_path': module_path,
+            'metadata_configs': metadata_configs,
+            'base_path': base_path,
+            'default_builder_kwargs': default_builder_kwargs,
+            'download_config': self.download_config,
+        }
+        if 'supports_metadata' in create_builder_signature.parameters:
+            in_args['supports_metadata'] = supports_metadata
+
+        builder_configs, default_config_name = create_builder_configs_from_metadata_configs(**in_args)
     else:
         builder_configs: List[BuilderConfig] = [
             import_main_class(module_path).BUILDER_CONFIG_CLASS(

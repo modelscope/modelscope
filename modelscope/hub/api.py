@@ -8,6 +8,7 @@ import os
 import pickle
 import platform
 import re
+import fnmatch
 import shutil
 import tempfile
 import uuid
@@ -78,7 +79,6 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
 from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
-
 
 class HubApi:
     """Model hub api interface.
@@ -306,6 +306,7 @@ class HubApi:
                 raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
             raise_for_http_status(r)
+
 
     def get_endpoint_for_read(self,
                               repo_id: str,
@@ -2086,6 +2087,105 @@ class HubApi:
                     region_id = domain_response.text.strip()
 
         return region_id
+
+    def delete_files(self,
+                     repo_id: str,
+                     repo_type: str,
+                     delete_patterns: Union[str, List[str]],
+                     *,
+                     revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                     endpoint: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Delete files in batch using glob (wildcard) patterns, e.g. '*.py', 'data/*.csv', 'foo*', etc.
+
+        Example:
+            # Delete all Python and Markdown files in a model repo
+            api.delete_files(
+                repo_id='your_username/your_model',
+                repo_type=REPO_TYPE_MODEL,
+                delete_patterns=['*.py', '*.md']
+            )
+
+            # Delete all CSV files in the data/ directory of a dataset repo
+            api.delete_files(
+                repo_id='your_username/your_dataset',
+                repo_type=REPO_TYPE_DATASET,
+                delete_patterns='data/*.csv'
+            )
+
+        Args:
+            repo_id (str): 'owner/repo_name' or 'owner/dataset_name', e.g. 'Koko/my_model'
+            repo_type (str): REPO_TYPE_MODEL or REPO_TYPE_DATASET
+            delete_patterns (str or List[str]): List of glob patterns, e.g. '*.py', 'data/*.csv', 'foo*'
+            revision (str, optional): Branch or tag name
+            endpoint (str, optional): API endpoint
+        Returns:
+            dict: Deletion result
+        """
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Unsupported repo_type: {repo_type}')
+        if not delete_patterns:
+            raise ValueError('delete_patterns cannot be empty')
+        if isinstance(delete_patterns, str):
+            delete_patterns = [delete_patterns]
+
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+        headers = self.builder_headers(self.headers)
+
+        # List all files in the repo
+        if repo_type == REPO_TYPE_MODEL:
+            files = self.get_model_files(repo_id, revision=revision or DEFAULT_MODEL_REVISION, recursive=True, endpoint=endpoint)
+            file_list = [f['Path'] for f in files]
+        else:
+            namespace, dataset_name = repo_id.split('/')
+            dataset_hub_id, _ = self.get_dataset_id_and_type(dataset_name, namespace, endpoint=endpoint)
+            dataset_info = self.get_dataset_infos(dataset_hub_id, revision or DEFAULT_DATASET_REVISION, recursive='True', endpoint=endpoint)
+            files = dataset_info.get('Data', {}).get('Files', [])
+            file_list = [f['Path'] for f in files]
+
+        # Glob pattern matching
+        to_delete = []
+        for path in file_list:
+            for delete_pattern in delete_patterns:
+                if fnmatch.fnmatch(path, delete_pattern):
+                    to_delete.append(path)
+                    break
+
+        deleted_files, failed_files = [], []
+        for path in to_delete:
+            try:
+                if repo_type == REPO_TYPE_MODEL:
+                    owner, repo_name = repo_id.split('/')
+                    url = f"{endpoint}/api/v1/models/{owner}/{repo_name}/file"
+                    params = {
+                        "Revision": revision or DEFAULT_MODEL_REVISION,
+                        "FilePath": path
+                    }
+                else:
+                    owner, dataset_name = repo_id.split('/')
+                    url = f"{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo"
+                    params = {
+                        "FilePath": path
+                    }
+                r = self.session.delete(url, params=params, cookies=cookies, headers=headers)
+                raise_for_http_status(r)
+                resp = r.json()
+                raise_on_error(resp)
+                deleted_files.append(path)
+            except Exception as e:
+                failed_files.append(path)
+                logger.error(f'Failed to delete {path}: {str(e)}')
+
+        return {
+            'deleted_files': deleted_files,
+            'failed_files': failed_files,
+            'total_files': len(to_delete)
+        }
+
 
 
 class ModelScopeConfig:

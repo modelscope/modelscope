@@ -667,7 +667,6 @@ class VAEHook:
                     continue  # Skip completed tiles
 
                 tile = tiles[i].to(device)
-                input_bbox = in_bboxes[i]
                 task_queue = task_queues[i]
 
                 # Process all tasks in the queue

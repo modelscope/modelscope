@@ -2,4 +2,4 @@
 
 from .api import McpApi
 
-__all__ = ['McpApi'] 
+__all__ = ['McpApi']

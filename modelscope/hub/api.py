@@ -2,13 +2,13 @@
 # yapf: disable
 
 import datetime
+import fnmatch
 import functools
 import io
 import os
 import pickle
 import platform
 import re
-import fnmatch
 import shutil
 import tempfile
 import uuid
@@ -79,6 +79,7 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
 from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
+
 
 class HubApi:
     """Model hub api interface.
@@ -306,7 +307,6 @@ class HubApi:
                 raise NotExistError(r.json()[API_RESPONSE_FIELD_MESSAGE])
         else:
             raise_for_http_status(r)
-
 
     def get_endpoint_for_read(self,
                               repo_id: str,
@@ -840,7 +840,7 @@ class HubApi:
                         model_id: str,
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         root: Optional[str] = None,
-                        recursive: Optional[str] = False,
+                        recursive: Optional[bool] = False,
                         use_cookies: Union[bool, CookieJar] = False,
                         headers: Optional[dict] = {},
                         endpoint: Optional[str] = None) -> List[dict]:
@@ -850,7 +850,7 @@ class HubApi:
             model_id (str): The model id
             revision (Optional[str], optional): The branch or tag name.
             root (Optional[str], optional): The root path. Defaults to None.
-            recursive (Optional[str], optional): Is recursive list files. Defaults to False.
+            recursive (Optional[bool], optional): Is recursive list files. Defaults to False.
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
             headers: request headers
@@ -2138,12 +2138,22 @@ class HubApi:
 
         # List all files in the repo
         if repo_type == REPO_TYPE_MODEL:
-            files = self.get_model_files(repo_id, revision=revision or DEFAULT_MODEL_REVISION, recursive=True, endpoint=endpoint)
+            files = self.get_model_files(
+                repo_id,
+                revision=revision or DEFAULT_MODEL_REVISION,
+                recursive=True,
+                endpoint=endpoint
+            )
             file_list = [f['Path'] for f in files]
         else:
             namespace, dataset_name = repo_id.split('/')
             dataset_hub_id, _ = self.get_dataset_id_and_type(dataset_name, namespace, endpoint=endpoint)
-            dataset_info = self.get_dataset_infos(dataset_hub_id, revision or DEFAULT_DATASET_REVISION, recursive='True', endpoint=endpoint)
+            dataset_info = self.get_dataset_infos(
+                dataset_hub_id,
+                revision or DEFAULT_DATASET_REVISION,
+                recursive='True',
+                endpoint=endpoint
+            )
             files = dataset_info.get('Data', {}).get('Files', [])
             file_list = [f['Path'] for f in files]
 
@@ -2160,16 +2170,16 @@ class HubApi:
             try:
                 if repo_type == REPO_TYPE_MODEL:
                     owner, repo_name = repo_id.split('/')
-                    url = f"{endpoint}/api/v1/models/{owner}/{repo_name}/file"
+                    url = f'{endpoint}/api/v1/models/{owner}/{repo_name}/file'
                     params = {
-                        "Revision": revision or DEFAULT_MODEL_REVISION,
-                        "FilePath": path
+                        'Revision': revision or DEFAULT_MODEL_REVISION,
+                        'FilePath': path
                     }
                 else:
                     owner, dataset_name = repo_id.split('/')
-                    url = f"{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo"
+                    url = f'{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo'
                     params = {
-                        "FilePath": path
+                        'FilePath': path
                     }
                 r = self.session.delete(url, params=params, cookies=cookies, headers=headers)
                 raise_for_http_status(r)
@@ -2185,7 +2195,6 @@ class HubApi:
             'failed_files': failed_files,
             'total_files': len(to_delete)
         }
-
 
 
 class ModelScopeConfig:

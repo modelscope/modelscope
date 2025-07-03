@@ -3,6 +3,7 @@
 
 import gc
 import math
+import os
 from time import time
 
 import torch
@@ -292,9 +293,9 @@ def custom_group_norm(input,
 
     # post affine transform
     if weight is not None:
-        out = out * weight.view(1, -1, 1, 1)
+        out = out * weight.view(1, -1, 1, 1).to(out.dtype)
     if bias is not None:
-        out = out + bias.view(1, -1, 1, 1)
+        out = out + bias.view(1, -1, 1, 1).to(out.dtype)
     return out
 
 
@@ -437,6 +438,8 @@ class VAEHook:
         self.color_fix = color_fix and not is_decoder
         self.to_gpu = to_gpu
         self.pad = 11 if is_decoder else 32
+        self.enable_cuda_empty_cache = os.getenv('MODELSCOPE_VAE_EMPTY_CACHE',
+                                                 '0') == '1'
 
     def __call__(self, x):
         B, C, H, W = x.shape
@@ -456,7 +459,8 @@ class VAEHook:
                 return self.vae_tile_forward(x.to(target_device))
         finally:
             self.net.to(original_device)
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                torch.cuda.empty_cache()
 
     def get_best_tile_size(self, lowerbound, upperbound):
         """
@@ -631,7 +635,8 @@ class VAEHook:
                     color_fix=self.color_fix):
                 single_task_queue = estimate_task_queue
             del downsampled_z
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                torch.cuda.empty_cache()
 
         task_queues = [
             clone_task_queue(single_task_queue) for _ in range(num_tiles)
@@ -720,7 +725,8 @@ class VAEHook:
                         tiles[i] = tile
                     else:
                         tiles[i] = tile.cpu()
-                torch.cuda.empty_cache()
+                if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                    torch.cuda.empty_cache()
 
             # Insert the group norm task to each remaining task queue
             group_norm_func = group_norm_param.summary()

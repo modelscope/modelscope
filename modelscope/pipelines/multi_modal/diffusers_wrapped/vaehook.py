@@ -4,12 +4,9 @@
 import gc
 import math
 from time import time
-import collections
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.version
 from tqdm import tqdm
 
 from .devices import device, get_optimal_device, test_for_nans, torch_gc

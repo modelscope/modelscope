@@ -1,22 +1,24 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+from typing import Optional
 
 import requests
-from typing import Any, Dict, Optional
 
 from modelscope.hub.errors import raise_for_http_status
-from .types import McpFilter, validate_mcp_filter, validate_filter_params
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 # MCP API path suffix
-MCP_API_PATH = "/openapi/v1"
+MCP_API_PATH = '/openapi/v1'
 
 
 class McpApi:
     """MCP (Model Context Protocol) API interface class"""
-    
+
     def __init__(self, base_api):
         """
         Initialize MCP API
-        
+
         Args:
             base_api: HubApi instance for accessing basic API functionality
         """
@@ -27,18 +29,16 @@ class McpApi:
         self.builder_headers = base_api.builder_headers
         self.headers = base_api.headers
 
-    def get_mcp_servers(
-        self,
-        token: str,
-        filter: dict = None,
-        page_number: int = 1,
-        page_size: int = 20,
-        search: str = "",
-        endpoint: Optional[str] = None
-    ) -> dict:
+    def get_mcp_servers(self,
+                        token: str,
+                        filter: dict = None,
+                        page_number: int = 1,
+                        page_size: int = 20,
+                        search: str = '',
+                        endpoint: Optional[str] = None) -> dict:
         """
         Get MCP server list
-        
+
         Args:
             token: Authentication token
             filter: Filter condition dictionary containing the following sub-branches:
@@ -50,7 +50,7 @@ class McpApi:
             page_size: Page size, defaults to 20
             search: Search keyword, defaults to empty string
             endpoint: API endpoint, defaults to MCP-specific endpoint (inherited from HubApi + /openapi/v1)
-            
+
         Returns:
             dict: Dictionary containing MCP server list
                 - mcp_server_list: Detailed MCP server list
@@ -59,51 +59,50 @@ class McpApi:
         """
         if not endpoint:
             endpoint = self.endpoint
-        url = f"{endpoint}/mcp/servers"
+        url = f'{endpoint}/mcp/servers'
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
+        headers['Authorization'] = f'Bearer {token}'
 
         body = {
-            "filter": filter or {},
-            "page_number": page_number,
-            "page_size": page_size,
-            "search": search
+            'filter': filter or {},
+            'page_number': page_number,
+            'page_size': page_size,
+            'search': search
         }
 
         r = self.session.put(url, headers=headers, json=body)
         raise_for_http_status(r)
-        
+
         try:
             resp = r.json()
         except requests.exceptions.JSONDecodeError:
-            print("JSON parsing failed")
-            print("Response content:", r.text)
+            logger.error(
+                f'Failed to parse JSON response from MCP server list API: {r.text}'
+            )
             raise
 
-        data = resp.get("data", {})
-        mcp_server_list = data.get("mcp_server_list", [])
-        server_brief_list = [
-            {"name": item.get("name", ""), "description": item.get("description", "")}
-            for item in mcp_server_list
-        ]
+        data = resp.get('data', {})
+        mcp_server_list = data.get('mcp_server_list', [])
+        server_brief_list = [{
+            'name': item.get('name', ''),
+            'description': item.get('description', '')
+        } for item in mcp_server_list]
         return {
-            "mcp_server_list": mcp_server_list,
-            "total_count": data.get("total_count", 0),
-            "server_brief_list": server_brief_list
+            'mcp_server_list': mcp_server_list,
+            'total_count': data.get('total_count', 0),
+            'server_brief_list': server_brief_list
         }
 
-    def get_mcp_server_operational(
-        self,
-        token: str,
-        endpoint: Optional[str] = None
-    ) -> dict:
+    def get_mcp_server_operational(self,
+                                   token: str,
+                                   endpoint: Optional[str] = None) -> dict:
         """
         Get user-hosted MCP server list
-        
+
         Args:
             token: Authentication token
             endpoint: API endpoint, defaults to MCP-specific endpoint (inherited from HubApi + /openapi/v1)
-            
+
         Returns:
             dict: Dictionary containing MCP server list
                 - mcp_server_list: Detailed MCP server list
@@ -112,58 +111,58 @@ class McpApi:
         """
         if not endpoint:
             endpoint = self.endpoint
-        url = f"{endpoint}/mcp/servers/operational"
+        url = f'{endpoint}/mcp/servers/operational'
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
+        headers['Authorization'] = f'Bearer {token}'
 
         r = self.session.get(url, headers=headers)
         raise_for_http_status(r)
 
-        print(r.status_code)
         try:
             resp = r.json()
         except requests.exceptions.JSONDecodeError:
-            print("JSON parsing failed")
-            print("Response content:", r.text)
+            logger.error(
+                f'Failed to parse JSON response from MCP server operational API: {r.text}'
+            )
             raise
 
-        data = resp.get("data", {})
-        mcp_server_list = data.get("mcp_server_list", [])
-        server_brief_list = [
-            {"name": item.get("name", ""), "description": item.get("description", "")}
-            for item in mcp_server_list
-        ]
+        data = resp.get('data', {})
+        mcp_server_list = data.get('mcp_server_list', [])
+        server_brief_list = [{
+            'name': item.get('name', ''),
+            'description': item.get('description', '')
+        } for item in mcp_server_list]
         return {
-            "mcp_server_list": mcp_server_list,
-            "total_count": data.get("total_count", 0),
-            "server_brief_list": server_brief_list
+            'mcp_server_list': mcp_server_list,
+            'total_count': data.get('total_count', 0),
+            'server_brief_list': server_brief_list
         }
-    
-    def get_mcp_server_special(
-        self,
-        server_id: str,
-        token: str,
-        get_operational_url: bool = False,
-        endpoint: Optional[str] = None
-    ) -> dict:
+
+    def get_mcp_server_special(self,
+                               server_id: str,
+                               token: str,
+                               get_operational_url: bool = False,
+                               endpoint: Optional[str] = None) -> dict:
         """
         Get specific MCP server details
-        
+
         Args:
             server_id: Server ID
             token: Authentication token
             get_operational_url: Whether to get operational URL, defaults to False
             endpoint: API endpoint, defaults to MCP-specific endpoint (inherited from HubApi + /openapi/v1)
-            
+
         Returns:
             dict: Dictionary containing MCP server details
         """
         if not endpoint:
             endpoint = self.endpoint
-        url = f"{endpoint}/mcp/servers/{server_id}"
+        url = f'{endpoint}/mcp/servers/{server_id}'
         headers = self.builder_headers(self.headers)
-        headers["Authorization"] = f"Bearer {token}"
-        params = {"get_operational_url": str(get_operational_url).lower()} if get_operational_url else {}
+        headers['Authorization'] = f'Bearer {token}'
+        params = {
+            'get_operational_url': str(get_operational_url).lower()
+        } if get_operational_url else {}
 
         r = self.session.get(url, headers=headers, params=params)
         raise_for_http_status(r)
@@ -171,7 +170,8 @@ class McpApi:
         try:
             resp = r.json()
         except requests.exceptions.JSONDecodeError:
-            print("JSON parsing failed")
-            print("Response content:", r.text)
+            logger.error(
+                f'Failed to parse JSON response from MCP server special API: {r.text}'
+            )
             raise
-        return resp.get("data", {}) 
+        return resp.get('data', {})

@@ -40,6 +40,18 @@ DEFAULT_MAX_WORKERS = int(
     os.getenv('DEFAULT_MAX_WORKERS', min(8,
                                          os.cpu_count() + 4)))
 
+# Upload check env
+UPLOAD_MAX_FILE_SIZE = int(
+    os.environ.get('UPLOAD_MAX_FILE_SIZE', 100 * 1024**3))
+UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS = int(
+    os.environ.get('UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS', 1 * 1024 * 1024))
+UPLOAD_MAX_FILE_COUNT = int(os.environ.get('UPLOAD_MAX_FILE_COUNT', 100_000))
+UPLOAD_MAX_FILE_COUNT_IN_DIR = int(
+    os.environ.get('UPLOAD_MAX_FILE_COUNT_IN_DIR', 50_000))
+UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT = int(
+    os.environ.get('UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT', 500 * 1024 * 1024))
+
+
 MODELSCOPE_ASCII = """
  _   .-')                _ .-') _     ('-.             .-')                              _ (`-.    ('-.
 ( '.( OO )_             ( (  OO) )  _(  OO)           ( OO ).                           ( (OO  ) _(  OO)

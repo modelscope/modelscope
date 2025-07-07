@@ -281,7 +281,7 @@ class LLMImageBuilder(Builder):
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
-            args.flashattn_version = '2.8.0.post2'
+            args.flashattn_version = '2.7.1.post4'
         return args
 
     def generate_dockerfile(self) -> str:

@@ -60,7 +60,7 @@ class TestImagePortraitStylizationTrainer(unittest.TestCase):
         result = pipeline_cartoon(input=self.test_image)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {os.path.abspath("result.png")}')
+            print(f'Output written to {os.path.abspath('result.png')}')
 
 
 if __name__ == '__main__':

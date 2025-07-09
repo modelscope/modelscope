@@ -33,6 +33,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
+                                      API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
@@ -43,8 +44,14 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_REQUEST_ID,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
-                                      TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility, Visibility,
+                                      TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_MAX_FILE_COUNT,
+                                      UPLOAD_MAX_FILE_COUNT_IN_DIR,
+                                      UPLOAD_MAX_FILE_SIZE,
+                                      UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+                                      DatasetVisibility, Licenses,
+                                      ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -500,6 +507,7 @@ class HubApi:
                 set in HubApi class (self.endpoint)
             re_raise(`bool`):
                 raise exception when error
+            token (`str`, *optional*): access token to use for checking existence.
         Returns:
             True if the repository exists, False otherwise.
         """
@@ -965,7 +973,7 @@ class HubApi:
                         model_id: str,
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         root: Optional[str] = None,
-                        recursive: Optional[str] = False,
+                        recursive: Optional[bool] = False,
                         use_cookies: Union[bool, CookieJar] = False,
                         headers: Optional[dict] = {},
                         endpoint: Optional[str] = None) -> List[dict]:
@@ -975,7 +983,7 @@ class HubApi:
             model_id (str): The model id
             revision (Optional[str], optional): The branch or tag name.
             root (Optional[str], optional): The root path. Defaults to None.
-            recursive (Optional[str], optional): Is recursive list files. Defaults to False.
+            recursive (Optional[bool], optional): Is recursive list files. Defaults to False.
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
             headers: request headers
@@ -1554,6 +1562,7 @@ class HubApi:
             endpoint (Optional[str]): The endpoint to use.
                 In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
             exist_ok (Optional[bool]): If the repo exists, whether to return the repo url directly.
+            create_default_config (Optional[bool]): If True, create a default configuration file in the model repo.
             **kwargs: The additional arguments.
 
         Returns:
@@ -1565,14 +1574,14 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint)
+        self.login(access_token=token, endpoint=endpoint)
+
+        repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
                 return f'{endpoint}/{repo_type}s/{repo_id}'
             else:
                 raise ValueError(f'Repo {repo_id} already exists!')
-
-        self.login(access_token=token, endpoint=endpoint)
 
         repo_id_list = repo_id.split('/')
         if len(repo_id_list) != 2:
@@ -2271,8 +2280,7 @@ class HubApi:
             file_list = [f['Path'] for f in files]
         else:
             namespace, dataset_name = repo_id.split('/')
-            dataset_hub_id, _ = self.get_dataset_id_and_type(
-                dataset_name, namespace, endpoint=endpoint)
+            dataset_hub_id, _ = self.get_dataset_id_and_type(dataset_name, namespace, endpoint=endpoint)
             dataset_info = self.get_dataset_infos(
                 dataset_hub_id,
                 revision or DEFAULT_DATASET_REVISION,
@@ -2328,7 +2336,6 @@ class HubApi:
         if not hasattr(self, '_mcp_api'):
             self._mcp_api = McpApi(self)
         return self._mcp_api
-
 
 class ModelScopeConfig:
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
@@ -2476,11 +2483,11 @@ class ModelScopeConfig:
 class UploadingCheck:
     def __init__(
             self,
-            max_file_count: int = 100_000,
-            max_file_count_in_dir: int = 50_000,
-            max_file_size: int = 50 * 1024 ** 3,
-            size_threshold_to_enforce_lfs: int = 5 * 1024 * 1024,
-            normal_file_size_total_limit: int = 500 * 1024 * 1024,
+            max_file_count: int = UPLOAD_MAX_FILE_COUNT,
+            max_file_count_in_dir: int = UPLOAD_MAX_FILE_COUNT_IN_DIR,
+            max_file_size: int = UPLOAD_MAX_FILE_SIZE,
+            size_threshold_to_enforce_lfs: int = UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+            normal_file_size_total_limit: int = UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
@@ -2496,8 +2503,8 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
         if file_size > self.max_file_size:
-            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
-                             f'got {round(file_size / (1024 ** 3), 4)} GB')
+            logger.warning(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
+                           f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
         file_count = 0
@@ -2511,8 +2518,8 @@ class UploadingCheck:
                 file_count += 1
                 item_size: int = get_file_size(item)
                 if item_size > self.max_file_size:
-                    raise ValueError(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
-                                     f'got {round(item_size / (1024 ** 3), 4)} GB')
+                    logger.warning(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
+                                   f'got {round(item_size / (1024 ** 3), 4)} GB')
             elif item.is_dir():
                 dir_count += 1
                 # Count items in subdirectories recursively

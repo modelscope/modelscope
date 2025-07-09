@@ -869,7 +869,7 @@ class TFSClient(object):
         img = Image.open(
             BytesIO(
                 read(
-                    f'http://{self.server}/v1/{self.app_key}/{tfs}?offset=0&size={meta["SIZE"]}',
+                    f'http://{self.server}/v1/{self.app_key}/{tfs}?offset=0&size={meta['SIZE']}',
                     'rb')))
         return img
 

@@ -25,7 +25,7 @@ class HumanReconstructionTest(unittest.TestCase):
         result = pipeline(input_location)
         mesh = result[OutputKeys.OUTPUT]
         print(
-            f'Output to {osp.abspath("human_reconstruction.obj")}, vertices num: {mesh["vertices"].shape}'
+            f'Output to {osp.abspath('human_reconstruction.obj')}, vertices num: {mesh['vertices'].shape}'
         )
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')

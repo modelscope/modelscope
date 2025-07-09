@@ -84,7 +84,7 @@ def check_local_model_is_latest(
                     continue
                 else:
                     logger.info(
-                        f'Model file {model_file["Name"]} is different from the latest version `{latest_revision}`,'
+                        f'Model file {model_file['Name']} is different from the latest version `{latest_revision}`,'
                         f'This is because you are using an older version or the file is updated manually.'
                     )
                     break
@@ -96,7 +96,7 @@ def check_local_model_is_latest(
                         continue
                     else:
                         logger.info(
-                            f'Model file {model_file["Name"]} is different from the latest version `{latest_revision}`,'
+                            f'Model file {model_file['Name']} is different from the latest version `{latest_revision}`,'
                             f'This is because you are using an older version or the file is updated manually.'
                         )
                         break

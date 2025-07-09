@@ -36,7 +36,7 @@ def load_model_from_config(model, config, ckpt, device, verbose=False):
     print(f'Loading model from {ckpt}')
     pl_sd = torch.load(ckpt, map_location='cpu')
     if 'global_step' in pl_sd:
-        print(f'Global Step: {pl_sd["global_step"]}')
+        print(f'Global Step: {pl_sd['global_step']}')
     sd = pl_sd['state_dict']
     model = instantiate_from_config(config.model)
     m, u = model.load_state_dict(sd, strict=False)

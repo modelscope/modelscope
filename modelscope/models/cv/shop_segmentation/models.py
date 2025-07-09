@@ -604,7 +604,7 @@ class CLIPVisionTransformer(nn.Module):
                 if self.positional_embedding.shape != state_dict[
                         'positional_embedding'].shape:
                     print(
-                        f'Resize the pos_embed shape from {state_dict["positional_embedding"].shape} to'
+                        f'Resize the pos_embed shape from {state_dict['positional_embedding'].shape} to'
                         f' {self.positional_embedding.shape}')
                     cls_pos = state_dict['positional_embedding'][0:1, :]
                     spatial_pos = F.interpolate(

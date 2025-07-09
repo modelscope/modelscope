@@ -60,7 +60,7 @@ class RegressTool:
             if not os.path.exists(baseline):
                 raise ValueError(f'base line file {baseline} not exist')
             print(
-                f'local file found:{baseline}, md5:{hashlib.md5(open(baseline,"rb").read()).hexdigest()}'
+                f'local file found:{baseline}, md5:{hashlib.md5(open(baseline,'rb').read()).hexdigest()}'
             )
             if os.path.exists(local):
                 os.remove(local)

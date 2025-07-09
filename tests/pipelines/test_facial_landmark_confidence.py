@@ -21,7 +21,7 @@ class FacialLandmarkConfidenceTest(unittest.TestCase):
     def show_result(self, img_path, facial_expression_result):
         img = draw_face_detection_result(img_path, facial_expression_result)
         cv2.imwrite('result.png', img)
-        print(f'output written to {osp.abspath("result.png")}')
+        print(f'output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

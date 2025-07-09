@@ -24,7 +24,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --reinstall ca-ce
     rm -rf /var/lib/apt/lists/*
 
 ENV LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
-RUN wget -O /tmp/boost.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz && \
+RUN wget -O /tmp/boost.tar.gz https://archives.boost.io/release/1.80.0/source/boost_1_80_0.tar.gz && \
     cd /tmp && tar xzf boost.tar.gz  && \
     mv /tmp/boost_1_80_0/boost /usr/include/boost && \
     rm -rf /tmp/boost_1_80_0 && rm -rf boost.tar.gz
@@ -46,7 +46,7 @@ RUN set -eux; \
         wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
         wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
         GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
-        gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+        gpg --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys "$GPG_KEY"; \
         gpg --batch --verify python.tar.xz.asc python.tar.xz; \
         gpgconf --kill all; \
         rm -rf "$GNUPGHOME" python.tar.xz.asc; \

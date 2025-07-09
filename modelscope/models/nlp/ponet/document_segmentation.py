@@ -108,7 +108,7 @@ class PoNetForDocumentSegmentation(PoNetPreTrainedModel):
             config = PoNetConfig.from_pretrained(model_dir, num_labels=2)
         else:
             raise ValueError(
-                f'Expected config type bert and ponet, which is : {model_config["type"]}'
+                f'Expected config type bert and ponet, which is : {model_config['type']}'
             )
         model = super(Model, cls).from_pretrained(model_dir, config=config)
         model.model_dir = model_dir

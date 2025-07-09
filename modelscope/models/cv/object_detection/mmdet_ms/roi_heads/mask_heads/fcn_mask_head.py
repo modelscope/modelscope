@@ -48,7 +48,7 @@ class FCNMaskNHead(BaseModule):
                 None, 'deconv', 'nearest', 'bilinear', 'carafe'
         ]:
             raise ValueError(
-                f'Invalid upsample method {self.upsample_cfg["type"]}, '
+                f'Invalid upsample method {self.upsample_cfg['type']}, '
                 'accepted methods are "deconv", "nearest", "bilinear", '
                 '"carafe"')
         self.num_convs = num_convs

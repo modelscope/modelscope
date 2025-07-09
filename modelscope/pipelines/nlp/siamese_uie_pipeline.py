@@ -233,7 +233,7 @@ class SiameseUiePipeline(Pipeline):
         for st in schema_types:
             hint = ''
             for item in prefix_info:
-                hint += f'{item["type"]}: {item["span"]}, '
+                hint += f'{item['type']}: {item['span']}, '
             hint += f'{st}: '
             # print('hint: ', hint)
             hints.append(hint)

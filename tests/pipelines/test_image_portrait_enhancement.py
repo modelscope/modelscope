@@ -24,7 +24,7 @@ class ImagePortraitEnhancementTest(unittest.TestCase):
         result = pipeline(test_image)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
         else:
             raise Exception('Testing failed: invalid output')
 

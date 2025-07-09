@@ -157,11 +157,11 @@ class SiameseUIETrainer(EpochBasedTrainer):
             for info in raw_sample['info_list']:
                 hint = ''
                 for item in info:
-                    hint += f'{item["type"]}: '
+                    hint += f'{item['type']}: '
                     span = {'span': item['span'], 'offset': item['offset']}
                     if span not in hint_spans_map[hint]:
                         hint_spans_map[hint].append(span)
-                    hint += f'{item["span"]}, '
+                    hint += f'{item['span']}, '
             # negative sampling
             brother_type_map = defaultdict(list)
             self.get_brother_type_map(raw_sample['schema'], brother_type_map,
@@ -176,8 +176,8 @@ class SiameseUIETrainer(EpochBasedTrainer):
                         if neg_hint not in hint_spans_map and random.random(
                         ) < self.negative_sampling_rate:
                             hint_spans_map[neg_hint] = []
-                    hint += f'{item["type"]}: '
-                    hint += f'{item["span"]}, '
+                    hint += f'{item['type']}: '
+                    hint += f'{item['span']}, '
             # info list为空
             for k in raw_sample['schema']:
                 neg_hint = f'{k}: '
@@ -187,7 +187,7 @@ class SiameseUIETrainer(EpochBasedTrainer):
 
             for i, hint in enumerate(hint_spans_map):
                 sample = {
-                    'id': f'{raw_sample["id"]}-{i}',
+                    'id': f'{raw_sample['id']}-{i}',
                     'hint': hint,
                     'text': raw_sample['text'],
                     'spans': hint_spans_map[hint]

@@ -4,20 +4,20 @@
 
 ---
 
-## ⚠️ Important Tips / 重要提示
+## ⚠️ Important Tips
 
-### 🔑 Key Features / 核心特性
+### 🔑 Key Features
 - **Integrated ModelScope MCP Services**: This framework integrates with MCP services deployed on ModelScope. Users only need to log in to use the MCP servers configured on the ModelScope platform.
 - **Simplified Development**: Developers only need to use the `MCPManager` - all underlying client operations are completely hidden within the manager.
 - **Performance Optimization**: It's not recommended to enable too many MCP servers simultaneously as it may slow down output. ModelScope will launch personal MCP server management features in the future.
 - **Warmup & Summary Features**: Built-in warmup connection mode and server summary functionality for better performance.
 
-### 🚀 Development Options / 开发选择
+### 🚀 Development Options
 - **Direct Usage**: Use `MCPManager` directly for quick integration
 - **Framework Development**: Build custom solutions based on the ModelScope MCP framework
 - **Reference Examples**: See provided examples for both approaches
 
-### 💡 Developer Tips / 开发者提示
+### 💡 Developer Tips
 1. **ModelScope Integration**: This framework integrates with MCP services deployed on ModelScope. Simply log in to use the MCP servers configured on the ModelScope official platform.
 2. **Manager-First Approach**: Developers only need to use the `MCPManager` - all underlying client operations are completely hidden within the manager for simplified development.
 3. **Server Performance**: Avoid enabling too many MCP servers simultaneously as it may slow down output. ModelScope will launch personal MCP server management features in the future, stay tuned.
@@ -133,16 +133,14 @@ For complete working examples, see:
 ```json
 {
   "mcpServers": {
-    {
-      "filesystem": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
-        "env": {
-          "DEBUG": "1"
-        }
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {
+        "DEBUG": "1"
       }
+    }
   }
-}
 }
 ```
 
@@ -177,6 +175,19 @@ For complete working examples, see:
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
+
+### Contributing
+
+Welcome contributions! Please follow these steps:
+
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Create a Pull Request
+
+### License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ---
 
@@ -288,14 +299,14 @@ export MODELSCOPE_SDK_TOKEN="your_token_here"
 ```json
 {
   "mcpServers": {
-      "filesystem": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
-        "env": {
-          "DEBUG": "1"
-        }
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "env": {
+        "DEBUG": "1"
       }
     }
+  }
 }
 ```
 

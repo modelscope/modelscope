@@ -188,7 +188,8 @@ class HubApi:
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
-                     token: Optional[str] = None) -> str:
+                     token: Optional[str] = None,
+                     aigc: Optional[dict] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -198,6 +199,42 @@ class HubApi:
             chinese_name (str, optional): chinese name of the model.
             original_model_id (str, optional): the base model id which this model is trained from
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc (dict, optional): Dictionary of AIGC-specific parameters. If provided, an AIGC model will be created.
+                Required fields:
+                    TagShowName (str): Tag name, e.g. 'v1.0'
+                    ModelTask (str): Model task, e.g. 'text-to-image-synthesis'
+                    WeightsName (str): Name of the weight file
+                    WeightsSha256 (str): SHA256 hash of the weight file
+                    WeightsSize (int): Size of the weight file (in bytes)
+                    CoverImages (list[str]): List of cover image URLs, at least one required
+                    AigcType (str): AIGC model type, currently only supports 'LoRA'
+                    TagDescription (str): Tag description, recommended to use the official example format
+                    VisionFoundation (str): Vision foundation model, e.g. 'FLUX_1'
+                Optional fields:
+                    TriggerWords (list): Trigger words, usually an empty list
+                    Description (str): Model description
+                    ProtectedMode (int): Protection mode
+                    ModelTools (str): Tool information
+                    ModelRecommend (str): Recommendation information
+                    ModelDetail (str): Detail information
+                    ApprovalMode (int): Approval mode
+                    BaseModel (str): Base model name
+                    Other fields: Can be added as needed according to the platform
+                Example usage:
+                    aigc={
+                        'TagShowName': 'v1.0',
+                        'ModelTask': 'text-to-image-synthesis',
+                        'WeightsName': 'your_model.safetensors',
+                        'WeightsSha256': 'xxxx',
+                        'WeightsSize': 123456,
+                        'CoverImages': ['https://...'],
+                        'AigcType': 'LoRA',
+                        'TagDescription': '["root",{},[...]]',
+                        'VisionFoundation': 'FLUX_1',
+                        'TriggerWords': [],
+                        ...other optional fields...
+                    }
 
         Returns:
             Name of the model created
@@ -219,17 +256,65 @@ class HubApi:
                 cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
-        path = f'{endpoint}/api/v1/models'
+        
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        body = {
-            'Path': owner_or_group,
-            'Name': name,
-            'ChineseName': chinese_name,
-            'Visibility': visibility,  # server check
-            'License': license,
-            'OriginalModelId': original_model_id,
-            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
-        }
+        
+        # Check if creating AIGC model
+        if aigc is not None:
+            # Use AIGC endpoint
+            path = f'{endpoint}/api/v1/models/aigc'
+            
+            # Validate required AIGC parameters
+            required_fields = ['TagShowName', 'ModelTask','WeightsName', 'WeightsSha256', 'WeightsSize', 
+                             'CoverImages', 'AigcType', 'TagDescription', 'VisionFoundation']
+            for field in required_fields:
+                if field not in aigc:
+                    raise InvalidParameter(f'AIGC model requires {field} field')
+            
+            # Build AIGC model body
+            body = {
+                'Path': owner_or_group,
+                'Name': name,
+                'ChineseName': chinese_name,
+                'License': license,
+                'Visibility': visibility,
+                'ModelTask': aigc['ModelTask'], 
+                'ModelFramework': 'Pytorch',  # Fixed for AIGC
+                'TagShowName': aigc['TagShowName'],
+                'WeightsName': aigc['WeightsName'],
+                'WeightsSha256': aigc['WeightsSha256'],
+                'WeightsSize': aigc['WeightsSize'],
+                'CoverImages': aigc['CoverImages'],
+                'AigcType': aigc['AigcType'],
+                'TagDescription': aigc['TagDescription'],
+                'VisionFoundation': aigc['VisionFoundation'],
+                'OriginalModelId': original_model_id,
+                'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
+            }
+            
+            # Add optional AIGC fields if provided
+            optional_fields = [
+                'Description', 'ProtectedMode', 'ModelTools', 'ModelRecommend', 
+                'ModelDetail', 'ApprovalMode', 'BaseModel', 'ChineseName', 'License', 'Visibility',
+                'ModelTask', 'ModelFramework', 'OriginalModelId', 'TrainId','TriggerWords'
+            ]
+            for field in optional_fields:
+                if field in aigc:
+                    body[field] = aigc[field]
+
+        else:
+            # Use regular model endpoint
+            path = f'{endpoint}/api/v1/models'
+            body = {
+                'Path': owner_or_group,
+                'Name': name,
+                'ChineseName': chinese_name,
+                'Visibility': visibility,  # server check
+                'License': license,
+                'OriginalModelId': original_model_id,
+                'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
+            }
+        
         r = self.session.post(
             path,
             json=body,

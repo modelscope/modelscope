@@ -256,21 +256,21 @@ class HubApi:
                 cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
-        
+
         owner_or_group, name = model_id_to_group_owner_name(model_id)
-        
+
         # Check if creating AIGC model
         if aigc is not None:
             # Use AIGC endpoint
             path = f'{endpoint}/api/v1/models/aigc'
-            
+
             # Validate required AIGC parameters
-            required_fields = ['TagShowName', 'ModelTask','WeightsName', 'WeightsSha256', 'WeightsSize', 
+            required_fields = ['TagShowName', 'ModelTask', 'WeightsName', 'WeightsSha256', 'WeightsSize',
                              'CoverImages', 'AigcType', 'TagDescription', 'VisionFoundation']
             for field in required_fields:
                 if field not in aigc:
                     raise InvalidParameter(f'AIGC model requires {field} field')
-            
+
             # Build AIGC model body
             body = {
                 'Path': owner_or_group,
@@ -278,7 +278,7 @@ class HubApi:
                 'ChineseName': chinese_name,
                 'License': license,
                 'Visibility': visibility,
-                'ModelTask': aigc['ModelTask'], 
+                'ModelTask': aigc['ModelTask'],
                 'ModelFramework': 'Pytorch',  # Fixed for AIGC
                 'TagShowName': aigc['TagShowName'],
                 'WeightsName': aigc['WeightsName'],
@@ -291,12 +291,12 @@ class HubApi:
                 'OriginalModelId': original_model_id,
                 'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
             }
-            
+
             # Add optional AIGC fields if provided
             optional_fields = [
-                'Description', 'ProtectedMode', 'ModelTools', 'ModelRecommend', 
+                'Description', 'ProtectedMode', 'ModelTools', 'ModelRecommend',
                 'ModelDetail', 'ApprovalMode', 'BaseModel', 'ChineseName', 'License', 'Visibility',
-                'ModelTask', 'ModelFramework', 'OriginalModelId', 'TrainId','TriggerWords'
+                'ModelTask', 'ModelFramework', 'OriginalModelId', 'TrainId', 'TriggerWords'
             ]
             for field in optional_fields:
                 if field in aigc:
@@ -314,7 +314,7 @@ class HubApi:
                 'OriginalModelId': original_model_id,
                 'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
             }
-        
+
         r = self.session.post(
             path,
             json=body,

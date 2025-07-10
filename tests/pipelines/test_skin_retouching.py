@@ -22,7 +22,7 @@ class SkinRetouchingTest(unittest.TestCase):
     def pipeline_inference(self, pipeline: Pipeline, input_location: str):
         result = pipeline(input_location)
         cv2.imwrite('result_skinretouching.png', result[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result_skinretouching.png")}')
+        print(f'Output written to {osp.abspath('result_skinretouching.png')}')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):

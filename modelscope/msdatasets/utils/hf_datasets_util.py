@@ -247,7 +247,7 @@ def _list_repo_tree(
                                          endpoint=endpoint
                                          )
         if not ('Code' in data and data['Code'] == 200):
-            logger.error(f'Get dataset: {repo_id} file list failed, message: {data["Message"]}')
+            logger.error(f'Get dataset: {repo_id} file list failed, message: {data['Message']}')
             return None
 
         # Parse data (Type: 'tree' or 'blob')

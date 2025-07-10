@@ -419,8 +419,8 @@ def install_requirements_by_names(plugins: List[str]):
     status, _ = plugins_manager.install_plugins(uninstalled_plugins)
     if status != 0:
         raise EnvironmentError(
-            f'The required packages {",".join(uninstalled_plugins)} are not installed.',
-            f'Please run the command `modelscope plugin install {" ".join(uninstalled_plugins)}` to install them.'
+            f'The required packages {','.join(uninstalled_plugins)} are not installed.',
+            f'Please run the command `modelscope plugin install {' '.join(uninstalled_plugins)}` to install them.'
         )
 
 
@@ -880,7 +880,7 @@ class PluginsManager(object):
         )
 
         if status_code == 0:
-            logger.info(f'The plugins {",".join(args)} is installed')
+            logger.info(f'The plugins {','.join(args)} is installed')
 
             # TODO Add Ast index for ast update record
 
@@ -970,7 +970,7 @@ class PluginsManager(object):
         )
 
         if status_code == 0:
-            logger.info(f'The plugins {",".join(args)} is uninstalled')
+            logger.info(f'The plugins {','.join(args)} is uninstalled')
 
             # TODO Add Ast index for ast update record
 

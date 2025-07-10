@@ -30,7 +30,7 @@ class ObjectDetection3DTest(unittest.TestCase):
         result = pipeline(input_dict, save_path='./depe_result')
         if result is not None:
             cv2.imwrite('result.jpg', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.jpg")}')
+            print(f'Output written to {osp.abspath('result.jpg')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

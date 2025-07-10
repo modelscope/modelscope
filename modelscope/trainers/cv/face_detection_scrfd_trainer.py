@@ -102,7 +102,7 @@ class FaceDetectionScrfdTrainer(BaseTrainer):
         if 'seed' in kwargs:
             cfg.seed = kwargs['seed']
             _deterministic = kwargs.get('deterministic', False)
-            logger.info(f'Set random seed to {kwargs["seed"]}, '
+            logger.info(f'Set random seed to {kwargs['seed']}, '
                         f'deterministic: {_deterministic}')
             set_random_seed(kwargs['seed'], deterministic=_deterministic)
         else:

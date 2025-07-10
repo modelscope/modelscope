@@ -25,7 +25,7 @@ class ImageBodyReshapingTest(unittest.TestCase):
             cv2.imwrite('result_bodyreshaping.png',
                         result[OutputKeys.OUTPUT_IMG])
             print(
-                f'Output written to {osp.abspath("result_body_reshaping.png")}'
+                f'Output written to {osp.abspath('result_body_reshaping.png')}'
             )
         else:
             raise Exception('Testing failed: invalid output')

@@ -21,7 +21,7 @@ class FaceGenerationTest(unittest.TestCase):
         result = pipeline(seed)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

@@ -49,8 +49,8 @@ def update_question_info(current_chapter_index, current_challenge_index):
     global challenges
     current_chapter = challenges[current_chapter_index]
     challenge = get_problem(current_chapter_index, current_challenge_index)
-    question_info = f"""\n<center><font size=4>{current_chapter["name"]}""" \
-                    f"""</center>\n\n <center><font size=3>{challenge["title"]}</center>"""
+    question_info = f"""\n<center><font size=4>{current_chapter['name']}""" \
+                    f"""</center>\n\n <center><font size=3>{challenge['title']}</center>"""
     return question_info
 
 

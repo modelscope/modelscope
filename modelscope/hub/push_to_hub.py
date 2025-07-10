@@ -230,7 +230,7 @@ def push_to_hub_in_queue(queue_name, strategy=UploadStrategy.cancel, **kwargs):
     elif flag.value and strategy == UploadStrategy.cancel:
         logger.error(
             f'Another uploading is running, '
-            f'this uploading with message {kwargs.get("commit_message")} will be canceled.'
+            f'this uploading with message {kwargs.get('commit_message')} will be canceled.'
         )
     else:
         queue.put(kwargs)

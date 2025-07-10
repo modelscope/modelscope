@@ -133,6 +133,6 @@ class LoadCheckpointHook(Hook):
                     'using a converting script to split the single pth file into two.'
                 )
             trainer.logger.info(
-                f'Checkpoint {filename} saving time: {meta.get("time")}, modelscope version: {_version}'
+                f'Checkpoint {filename} saving time: {meta.get('time')}, modelscope version: {_version}'
             )
         return meta

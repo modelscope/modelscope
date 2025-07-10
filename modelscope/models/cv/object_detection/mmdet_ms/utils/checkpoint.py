@@ -71,10 +71,10 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
 
     if unexpected_keys:
         err_msg.append('unexpected key in source '
-                       f'state_dict: {", ".join(unexpected_keys)}\n')
+                       f'state_dict: {', '.join(unexpected_keys)}\n')
     if missing_keys:
         err_msg.append(
-            f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
+            f'missing keys in source state_dict: {', '.join(missing_keys)}\n')
 
     rank, _ = get_dist_info()
     if len(err_msg) > 0 and rank == 0:

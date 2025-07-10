@@ -5,6 +5,7 @@ repos:
     rev: 4.0.0
     hooks:
       - id: flake8
+        language_version: python3.10
         exclude: |
             (?x)^(
                 thirdparty/|
@@ -16,6 +17,7 @@ repos:
     rev: 4.3.21
     hooks:
       - id: isort
+        language_version: python3.10
         exclude: |
             (?x)^(
                 examples/|
@@ -26,6 +28,7 @@ repos:
     rev: v0.30.0
     hooks:
       - id: yapf
+        language_version: python3.10
         exclude: |
             (?x)^(
                 thirdparty/|

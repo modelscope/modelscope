@@ -22,7 +22,7 @@ class AdaIntImageColorEnhanceTest(unittest.TestCase):
         result = pipeline(input_location)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')

@@ -32,7 +32,7 @@ class ImageDrivingPerceptionTest(unittest.TestCase):
         img = cv2.resize(img, (1280, 720), interpolation=cv2.INTER_LINEAR)
         show_image_driving_perception_result(
             img, result, out_file='result.jpg', if_draw=[1, 1, 1])
-        print(f'Output written to {osp.abspath("result.jpg")}')
+        print(f'Output written to {osp.abspath('result.jpg')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_with_model_name(self):

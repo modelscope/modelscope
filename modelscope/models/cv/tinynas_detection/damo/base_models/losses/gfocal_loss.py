@@ -2,7 +2,6 @@
 # https://github.com/implus/GFocalV2/blob/master/mmdet/models/losses/gfocal_loss.py
 
 import functools
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

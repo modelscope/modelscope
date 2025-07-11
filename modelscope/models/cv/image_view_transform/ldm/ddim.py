@@ -1,10 +1,9 @@
 """SAMPLING ONLY."""
 
-from functools import partial
-
 import numpy as np
 import torch
 from einops import rearrange
+from functools import partial
 from tqdm import tqdm
 
 from .sampling_util import (norm_thresholding, renorm_thresholding,

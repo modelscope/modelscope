@@ -2,7 +2,6 @@
 # made publicly available under MIT license at https://github.com/Mathux/ACTOR
 
 import functools
-
 import torch
 import torch.nn.functional as F
 

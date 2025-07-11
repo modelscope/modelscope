@@ -1,8 +1,7 @@
 # based on https://github.com/isl-org/MiDaS
 
-import os
-
 import cv2
+import os
 import torch
 import torch.nn as nn
 from torchvision.transforms import Compose

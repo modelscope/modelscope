@@ -2,9 +2,8 @@
 
 import copy
 import math
-import random
-
 import numpy as np
+import random
 import torch
 import torch.utils.data
 from megatron_util import mpu, print_rank_0

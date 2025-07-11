@@ -2,9 +2,8 @@
 # made publicly available under the Apache 2.0 License at
 # https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/metrics/niqe.py
 
-import math
-
 import cv2
+import math
 import numpy as np
 from scipy.ndimage import convolve
 from scipy.special import gamma

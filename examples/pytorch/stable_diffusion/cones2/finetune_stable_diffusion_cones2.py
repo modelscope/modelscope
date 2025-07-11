@@ -1,7 +1,6 @@
+import cv2
 import os
 from dataclasses import dataclass, field
-
-import cv2
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset

@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
-
 import torch
 import torch.nn.functional as F
+from dataclasses import dataclass
 from torch import nn
 from transformers import AutoConfig
 from transformers.modeling_outputs import ModelOutput
 from transformers.models.roberta.modeling_roberta import (
     RobertaModel, RobertaPreTrainedModel)
+from typing import Any, Dict, Optional, Tuple
 
 from modelscope.metainfo import Heads, Models, TaskModels
 from modelscope.models.base import TorchModel

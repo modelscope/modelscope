@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from contextlib import contextmanager
-from threading import Lock
-from typing import (Any, Callable, Dict, Generator, Iterator, List, Optional,
-                    Tuple, Union)
-
 import json
 import numpy as np
+import os
 import torch
+from contextlib import contextmanager
+from threading import Lock
 from transformers import AutoConfig, PreTrainedModel, PreTrainedTokenizer
+from typing import (Any, Callable, Dict, Generator, Iterator, List, Optional,
+                    Tuple, Union)
 
 from modelscope import (AutoModelForCausalLM, AutoTokenizer, Pipeline,
                         snapshot_download)
@@ -217,8 +216,8 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             tokenizer_class) if tokenizer is None else tokenizer
 
     def _init_swift(self, model_id, device) -> None:
-        from swift.llm import prepare_model_template
-        from swift.llm import InferArguments, get_model_info_meta
+        from swift.llm import (InferArguments, get_model_info_meta,
+                               prepare_model_template)
 
         def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,

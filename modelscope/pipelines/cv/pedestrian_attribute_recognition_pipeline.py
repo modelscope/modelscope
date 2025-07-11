@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-from typing import Any, Dict, List, Union
-
 import cv2
 import json
 import numpy as np
+import os.path as osp
 import torch
 from PIL import Image
 from torchvision import transforms
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.pedestrian_attribute_recognition.model import \

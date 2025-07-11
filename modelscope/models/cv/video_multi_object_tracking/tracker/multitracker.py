@@ -1,10 +1,9 @@
 # The implementation is adopted from FairMOT,
 # made publicly available under the MIT License at https://github.com/ifzhang/FairMOT
-from collections import deque
-
 import numpy as np
 import torch
 import torch.nn.functional as F
+from collections import deque
 
 from modelscope.models.cv.video_multi_object_tracking.models.decode import \
     mot_decode

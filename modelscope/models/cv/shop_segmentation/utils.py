@@ -2,15 +2,14 @@
 # Adapted from https://github.com/openai/CLIP.
 # Originally MIT License, Copyright (c) 2021 OpenAI.
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-from typing import Any, List, Union
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
+from typing import Any, List, Union
 
 
 @lru_cache()

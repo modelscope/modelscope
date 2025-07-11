@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Dict
-
 import tensorflow as tf
+from typing import Dict
 
 from modelscope.models.base import Model, Tensor
 from .loss import content_loss, guided_filter, style_loss, total_variation_loss

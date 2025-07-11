@@ -21,15 +21,13 @@ import math
 import os
 import os.path as osp
 import random
-from dataclasses import dataclass
-from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 import transformers
+from dataclasses import dataclass
+from io import BytesIO
 from torch.nn import CrossEntropyLoss
 from transformers.activations import ACT2FN
 from transformers.modeling_outputs import (
@@ -42,6 +40,7 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          prune_linear_layer)
 from transformers.models.auto import AutoModelForCausalLM
 from transformers.utils import ModelOutput
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

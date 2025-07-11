@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 # NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
 #         A segmentation fault may be raise by pytorch cpp library
 #         if 'import tensorflow' in front of 'import torch'.
 #         Putting a 'import torch' here can bypass this incompatibility.
 import torch
+import unittest
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

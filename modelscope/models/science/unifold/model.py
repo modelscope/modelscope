@@ -3,9 +3,8 @@
 
 import argparse
 import os
-from typing import Any
-
 import torch
+from typing import Any
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

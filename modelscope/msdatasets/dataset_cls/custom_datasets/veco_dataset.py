@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, List, Union
-
 import numpy as np
 from datasets import Dataset, IterableDataset, concatenate_datasets
+from typing import Any, List, Union
 
 from modelscope.metainfo import Models
 from modelscope.msdatasets.dataset_cls.custom_datasets import (

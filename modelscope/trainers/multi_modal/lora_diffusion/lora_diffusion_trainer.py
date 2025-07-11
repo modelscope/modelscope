@@ -1,9 +1,8 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Union
-
 import torch
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import LoRAAttnProcessor
+from typing import Union
 
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS

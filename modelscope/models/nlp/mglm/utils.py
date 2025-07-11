@@ -13,13 +13,12 @@
 # limitations under the License.
 """Utilities for logging and serialization"""
 
+import json
+import numpy as np
 import os
 import random
 import subprocess
 import time
-
-import json
-import numpy as np
 import torch
 from megatron_util import mpu, print_rank_0
 from megatron_util.fp16 import FP16_Optimizer

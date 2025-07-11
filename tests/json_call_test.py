@@ -1,6 +1,5 @@
-import os
-
 import json
+import os
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.file_download import model_file_download

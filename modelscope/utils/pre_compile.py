@@ -1,5 +1,4 @@
 import os
-
 import torch
 
 from modelscope.utils.megatron_utils import init_megatron_util
@@ -19,7 +18,9 @@ def pre_compile_megatron_util():
 def pre_compile_all():
     if torch.cuda.is_available():  # extension require cuda.
         # pre compile pai-easycv
-        from easycv.thirdparty.deformable_attention.functions import ms_deform_attn_func
+        from easycv.thirdparty.deformable_attention.functions import \
+            ms_deform_attn_func
+
         # extension for all platform.
         pre_compile_megatron_util()
 

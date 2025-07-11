@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import pickle
-
-import numpy as np
 import torch
 
 from .bvh_writer import WriterWrapper

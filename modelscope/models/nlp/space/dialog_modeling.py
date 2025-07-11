@@ -32,7 +32,8 @@ class SpaceForDialogModeling(TorchModel):
         """
 
         super().__init__(model_dir, *args, **kwargs)
-        from modelscope.trainers.nlp.space.trainer.gen_trainer import MultiWOZTrainer
+        from modelscope.trainers.nlp.space.trainer.gen_trainer import \
+            MultiWOZTrainer
         self.model_dir = model_dir
         self.config = kwargs.pop(
             'config',

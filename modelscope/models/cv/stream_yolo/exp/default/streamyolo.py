@@ -1,7 +1,6 @@
 # The implementation is based on StreamYOLO, available at https://github.com/yancie-yjr/StreamYOLO
 import os
 import sys
-
 import torch
 
 from ..yolox_base import Exp as YoloXExp
@@ -19,7 +18,7 @@ class StreamYoloExp(YoloXExp):
         self.nmsthre = 0.65
 
     def get_model(self):
-        from ...models import StreamYOLO, DFPPAFPN, TALHead
+        from ...models import DFPPAFPN, StreamYOLO, TALHead
 
         def init_yolo(M):
             for m in M.modules():

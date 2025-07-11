@@ -1,8 +1,7 @@
 # The implementation is adopted from FairMOT,
 # made publicly available under the MIT License at https://github.com/ifzhang/FairMOT
-from collections import OrderedDict
-
 import numpy as np
+from collections import OrderedDict
 
 
 class TrackState(object):

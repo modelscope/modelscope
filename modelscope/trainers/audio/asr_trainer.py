@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import shutil
 import tempfile
-from typing import Dict, Optional, Union
-
-import json
 from funasr.bin import build_trainer
+from typing import Dict, Optional, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset

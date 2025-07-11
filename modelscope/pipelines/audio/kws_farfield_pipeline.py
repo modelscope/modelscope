@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
-import wave
-from typing import Any, Dict
-
 import numpy
 import soundfile as sf
+import wave
+from typing import Any, Dict
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines

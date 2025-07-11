@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 import os.path as osp
-import unittest
-
-import cv2
 import torch
+import unittest
 
 import modelscope
 from modelscope.outputs import OutputKeys

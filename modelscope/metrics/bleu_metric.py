@@ -1,7 +1,6 @@
+import sacrebleu
 from itertools import zip_longest
 from typing import Dict
-
-import sacrebleu
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

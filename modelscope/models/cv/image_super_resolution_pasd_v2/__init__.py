@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .unet_2d_condition import UNet2DConditionModel
     from .controlnet import ControlNetModel
+    from .unet_2d_condition import UNet2DConditionModel
 
 else:
     _import_structure = {

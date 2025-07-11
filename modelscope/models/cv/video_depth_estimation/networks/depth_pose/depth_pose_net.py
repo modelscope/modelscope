@@ -1,10 +1,9 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from functools import partial
 
 from modelscope.models.cv.video_depth_estimation.geometry.camera import (
     Camera, Pose)

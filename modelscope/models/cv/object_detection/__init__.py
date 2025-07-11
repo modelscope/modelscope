@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .dino import DINO
     from .mmdet_model import DetectionModel
     from .yolox_pai import YOLOX
-    from .dino import DINO
 
 else:
     _import_structure = {

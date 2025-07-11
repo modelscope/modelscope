@@ -1,11 +1,10 @@
 """Utils for monoDepth."""
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
-import re
-import sys
-
 import cv2
 import numpy as np
+import re
+import sys
 import torch
 
 

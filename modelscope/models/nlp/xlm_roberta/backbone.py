@@ -16,7 +16,6 @@
 """PyTorch XLM-RoBERTa model."""
 
 import math
-
 import torch
 import torch.utils.checkpoint
 from packaging import version

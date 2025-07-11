@@ -17,10 +17,8 @@
 import copy
 import math
 import os
-import warnings
-from typing import Optional, Tuple, Union
-
 import torch
+import warnings
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 from transformers.activations import ACT2FN
@@ -34,6 +32,7 @@ from transformers.utils import (DUMMY_INPUTS, DUMMY_MASK, add_start_docstrings,
                                 is_torch_fx_proxy, replace_return_docstrings)
 from transformers.utils.model_parallel_utils import (assert_device_map,
                                                      get_device_map)
+from typing import Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor, TorchModel
@@ -53,9 +52,8 @@ logger = get_logger()
 def load_tf_weights_in_t5(model, config, tf_checkpoint_path):
     """Load tf checkpoints in a pytorch model."""
     try:
-        import re
-
         import numpy as np
+        import re
         import tensorflow as tf
     except ImportError:
         logger.error(

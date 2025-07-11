@@ -2,12 +2,11 @@
 
 import os
 import platform
-from collections import OrderedDict
-from types import SimpleNamespace
-
 import torch
+from collections import OrderedDict
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from types import SimpleNamespace
 
 from modelscope.models.multi_modal.mmr.models.module_clip import (
     _PT_NAME, CLIP, QuickGELU, convert_weights)

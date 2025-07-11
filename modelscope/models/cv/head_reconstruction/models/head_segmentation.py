@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import cv2
 import json
 import numpy as np
+import os
 import tensorflow as tf
 
 if tf.__version__ >= '2.0':

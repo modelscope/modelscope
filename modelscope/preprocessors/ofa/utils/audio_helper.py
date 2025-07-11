@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Optional, Tuple, Union
-
 import numpy as np
 import torch
+from typing import Optional, Tuple, Union
 
 
 def convert_waveform(

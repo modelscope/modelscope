@@ -6,14 +6,13 @@
 # and publicly available at https://github.com/openai/CLIP/.
 """ CLIP Tokenizer."""
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
 
 
 @lru_cache()

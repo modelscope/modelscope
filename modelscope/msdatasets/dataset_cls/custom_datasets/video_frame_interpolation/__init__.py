@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .video_frame_interpolation_dataset import VideoFrameInterpolationDataset
+    from .video_frame_interpolation_dataset import \
+        VideoFrameInterpolationDataset
 
 else:
     _import_structure = {

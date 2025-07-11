@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import numpy as np
 import torch
 from transformers.modeling_utils import PreTrainedModel
+from typing import Any, Dict
 
 from modelscope.metainfo import TaskModels
 from modelscope.models.builder import MODELS

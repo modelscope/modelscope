@@ -1,11 +1,10 @@
-from collections import OrderedDict
-
 import librosa
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
+from collections import OrderedDict
 
 from .layers import (BasicResBlock, CAMDenseTDNNBlock, DenseLayer, StatsPool,
                      TDNNLayer, TransitLayer, get_nonlinear)

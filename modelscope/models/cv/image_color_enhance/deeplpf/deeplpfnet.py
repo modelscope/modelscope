@@ -21,12 +21,11 @@ Authors: Sean Moran (sean.j.moran@gmail.com),
 
 '''
 import math
-from math import exp
-
 import matplotlib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from math import exp
 from torch.autograd import Variable
 
 matplotlib.use('agg')

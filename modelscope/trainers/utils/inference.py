@@ -4,9 +4,8 @@ import logging
 import os
 import pickle
 import shutil
-from collections.abc import Mapping
-
 import torch
+from collections.abc import Mapping
 from torch import distributed as dist
 from tqdm import tqdm
 

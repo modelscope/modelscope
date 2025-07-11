@@ -1,8 +1,7 @@
-from contextlib import contextmanager
-
 import torch
 import torch.distributed as distributed
 import torch.nn.functional as F
+from contextlib import contextmanager
 from einops import rearrange, repeat
 from torch import einsum, nn
 from torch.cuda.amp import autocast

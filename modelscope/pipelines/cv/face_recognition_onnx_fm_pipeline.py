@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
 import onnxruntime
+import os.path as osp
 import PIL
 import torch
 import torch.nn.functional as F
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_recognition.align_face import align_face

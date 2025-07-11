@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import io
-from typing import Any, Dict, Union
-
 import cv2
+import io
 import numpy as np
 import PIL
 from numpy import ndarray
 from PIL import Image, ImageOps
+from typing import Any, Dict, Union
 
 from modelscope.fileio import File
 from modelscope.metainfo import Preprocessors

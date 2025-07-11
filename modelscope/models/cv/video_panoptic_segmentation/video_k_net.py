@@ -372,7 +372,8 @@ class VideoKNet(TorchModel):
 
         vis_tracker = None
         vis_sem = None
-        from .visualizer import trackmap2rgb, cityscapes_cat2rgb, draw_bbox_on_img
+        from .visualizer import (cityscapes_cat2rgb, draw_bbox_on_img,
+                                 trackmap2rgb)
         if len(things_labels_for_tracking):
             vis_tracker = trackmap2rgb(track_maps)
             vis_sem = cityscapes_cat2rgb(semantic_map)

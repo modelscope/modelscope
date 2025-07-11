@@ -1,14 +1,12 @@
 import math
 import os
 import random
-import warnings
-from dataclasses import dataclass
-from typing import Optional, Tuple
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 import transformers
+import warnings
+from dataclasses import dataclass
 from torch import Tensor, device, dtype, nn
 from torch.nn import CrossEntropyLoss, MSELoss
 from transformers.activations import ACT2FN
@@ -29,6 +27,7 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          prune_linear_layer)
 from transformers.models.bert.configuration_bert import BertConfig
 from transformers.utils import logging
+from typing import Optional, Tuple
 
 from modelscope.metainfo import Models
 from modelscope.models import Model, TorchModel
@@ -48,9 +47,8 @@ _TOKENIZER_FOR_DOC = 'BertTokenizer'
 def load_tf_weights_in_bert(model, config, tf_checkpoint_path):
     """Load tf checkpoints in a pytorch model."""
     try:
-        import re
-
         import numpy as np
+        import re
         import tensorflow as tf
     except ImportError:
         logger.error(

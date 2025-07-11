@@ -1,8 +1,7 @@
 import argparse
 import copy
-import math
-
 import cv2
+import math
 import numpy as np
 import torch
 

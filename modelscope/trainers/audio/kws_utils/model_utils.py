@@ -2,13 +2,12 @@
 # Author: di.wu@mobvoi.com (DI WU)
 
 import glob
+import numpy as np
 import os
 import re
-from shutil import copyfile
-
-import numpy as np
 import torch
 import yaml
+from shutil import copyfile
 
 from modelscope.utils.checkpoint import load_checkpoint, save_checkpoint
 from modelscope.utils.logger import get_logger

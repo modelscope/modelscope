@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-import time
-from collections import OrderedDict
-
 import json
 import numpy as np
+import os
+import time
 import torch
+from collections import OrderedDict
 from tqdm import tqdm
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 

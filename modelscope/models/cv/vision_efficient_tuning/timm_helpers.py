@@ -2,12 +2,11 @@
 # made publicly available under the Apache 2.0 License at
 # https://github.com/rwightman/pytorch-image-models/blob/main/timm/models/helpers.py
 import math
-from itertools import chain
-from typing import Callable
-
 import torch
 import torch.nn as nn
+from itertools import chain
 from torch.utils.checkpoint import checkpoint
+from typing import Callable
 
 
 def named_apply(fn: Callable,

@@ -1,9 +1,8 @@
-import os
-from dataclasses import dataclass, field
-
 import numpy as np
+import os
 import torch
 from chatglm_trainer import Seq2SeqTrainer
+from dataclasses import dataclass, field
 from swift import LoRAConfig, Swift
 from text_generation_metric import TextGenerationMetric
 from transformers import DataCollatorForSeq2Seq

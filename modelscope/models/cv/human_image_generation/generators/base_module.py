@@ -1,11 +1,10 @@
 import collections
 import functools
 import math
-from tkinter.ttk import Style
-
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
+from tkinter.ttk import Style
 
 from .base_function import *
 from .flow_module import MaskStyle, StyleFlow

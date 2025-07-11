@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, List, Sequence, Tuple, Union
-
 import json
+import os
 import yaml
 from funasr.utils import asr_utils
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

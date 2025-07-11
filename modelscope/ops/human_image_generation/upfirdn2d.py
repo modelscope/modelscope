@@ -1,7 +1,6 @@
 import os
-from collections import abc
-
 import torch
+from collections import abc
 from torch.autograd import Function
 from torch.nn import functional as F
 from torch.utils.cpp_extension import load

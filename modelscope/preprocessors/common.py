@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import time
+import torch
 from collections.abc import Sequence
 from typing import Mapping
-
-import numpy as np
-import torch
 
 from modelscope.utils.registry import default_group
 from .builder import PREPROCESSORS, build_preprocessor

@@ -1,9 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 # Copyright © Alibaba, Inc. and its affiliates.
-import random
-
 import cv2
 import numpy as np
+import random
 import torch
 from torchvision.transforms import functional as F
 

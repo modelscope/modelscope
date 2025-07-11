@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass, field
-
 from datasets import load_dataset
 from transformers import (BertForSequenceClassification, BertTokenizerFast,
                           default_data_collator)

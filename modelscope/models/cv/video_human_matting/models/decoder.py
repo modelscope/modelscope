@@ -2,10 +2,9 @@
 Part of the implementation is borrowed from paper RVM
 paper publicly available at <https://arxiv.org/abs/2108.11515/>
 """
-from typing import Optional
-
 import torch
 from torch import Tensor, nn
+from typing import Optional
 
 
 class hswish(nn.Module):

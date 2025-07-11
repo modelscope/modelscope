@@ -1,10 +1,9 @@
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
+from functools import lru_cache
 
 
 @lru_cache()

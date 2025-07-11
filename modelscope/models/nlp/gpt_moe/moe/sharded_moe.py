@@ -13,8 +13,6 @@ Copyright 2021 The Microsoft DeepSpeed Team
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
-
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -22,6 +20,7 @@ from megatron_util import mpu
 from scipy.special import binom
 from torch import Tensor, nn
 from torch.nn import Module
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple
 
 from ..configuration import logger
 from .mappings import drop_tokens, gather_tokens

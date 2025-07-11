@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import torch
+import unittest
 from torch import nn
 from torch.optim.lr_scheduler import MultiStepLR
 

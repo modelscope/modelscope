@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-from typing import Dict, Union
-
 import torch
+from typing import Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

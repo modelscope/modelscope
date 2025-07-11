@@ -3,16 +3,15 @@
 
 import hashlib
 import os
-import urllib
-import warnings
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+import urllib
+import warnings
+from collections import OrderedDict
 from torch import nn
 from tqdm import tqdm
+from typing import Tuple, Union
 
 _MODELS = {}
 _PT_NAME = {'ViT-B/16': 'ViT-B-16.pt'}

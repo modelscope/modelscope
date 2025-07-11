@@ -9,10 +9,9 @@ Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 import copy
 import math
+import numpy as np
 import os
 import os.path as osp
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

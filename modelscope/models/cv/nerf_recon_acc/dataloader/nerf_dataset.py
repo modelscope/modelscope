@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import math
-import os
-
 import json
+import math
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF

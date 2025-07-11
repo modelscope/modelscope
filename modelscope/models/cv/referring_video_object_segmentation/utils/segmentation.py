@@ -2,12 +2,11 @@
 # made publicly available under the Apache 2.0 License at https://github.com/mttr2021/MTTR
 # Modified from DETR https://github.com/facebookresearch/detr
 
-from typing import List
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+from typing import List
 
 
 class FPNSpatialDecoder(nn.Module):

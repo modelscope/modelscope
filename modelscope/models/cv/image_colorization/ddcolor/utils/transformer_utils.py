@@ -1,10 +1,9 @@
 # The implementation here is modified based on Mask2Former, originally MIT license and publicly available at
 # https://github.com/facebookresearch/Mask2Former/blob/main/mask2former/modeling/transformer_decoder/mask2former_transformer_decoder.py
 
-from typing import Optional
-
 from torch import Tensor, nn
 from torch.nn import functional as F
+from typing import Optional
 
 
 class SelfAttentionLayer(nn.Module):

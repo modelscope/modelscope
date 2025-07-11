@@ -1,7 +1,6 @@
-import math
-
 import cv2
 import imgaug
+import math
 import numpy as np
 
 from ..augmenter import AugmenterBuilder

@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Dict
-
 import cv2
 import numpy as np
 import torch
@@ -8,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from scipy import linalg
 from torchvision import models
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.models.cv.image_inpainting.modules.inception import InceptionV3

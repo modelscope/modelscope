@@ -1,9 +1,8 @@
 # Copyright (c) 2022 Zhipu.AI
 
-from typing import List
-
 import torch
 import torch.nn.functional as F
+from typing import List
 
 
 def get_ltor_masks_and_position_ids(

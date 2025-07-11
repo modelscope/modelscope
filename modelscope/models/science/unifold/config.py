@@ -2,9 +2,8 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 import copy
-from typing import Any
-
 import ml_collections as mlc
+from typing import Any
 
 N_RES = 'number of residues'
 N_MSA = 'number of MSA sequences'

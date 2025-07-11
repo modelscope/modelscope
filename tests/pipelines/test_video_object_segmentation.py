@@ -2,7 +2,6 @@
 
 import os
 import unittest
-
 from PIL import Image
 
 from modelscope.outputs import OutputKeys

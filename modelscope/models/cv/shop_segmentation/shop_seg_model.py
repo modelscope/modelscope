@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-from typing import Any, Dict
-
 import json
 import numpy as np
+import os.path as osp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

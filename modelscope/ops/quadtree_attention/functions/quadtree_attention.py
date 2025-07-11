@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from pathlib import Path
-
 import torch
 from einops.einops import rearrange
+from pathlib import Path
 from torch.autograd import Function
 from torch.utils.cpp_extension import load
 

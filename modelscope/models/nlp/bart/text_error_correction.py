@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
-from typing import Any, Dict
-
 import torch.cuda
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

@@ -1,9 +1,8 @@
 import os
 import random
-from typing import Callable, Iterator, List, Optional, Union
-
 import torch.nn as nn
 from tqdm import tqdm
+from typing import Callable, Iterator, List, Optional, Union
 
 from .tensorBase import *
 from .tensoRF import TensorVMSplit

@@ -2,8 +2,6 @@
 
 import os
 import os.path as osp
-from typing import Callable, Dict, Optional
-
 import torch
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.data import (build_detection_test_loader,
@@ -17,6 +15,7 @@ from detectron2.utils import comm
 from detectron2.utils.file_io import PathManager
 from detectron2.utils.logger import setup_logger
 from fvcore.common.param_scheduler import CosineParamScheduler
+from typing import Callable, Dict, Optional
 
 from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.hub.snapshot_download import snapshot_download

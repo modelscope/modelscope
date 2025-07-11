@@ -43,7 +43,6 @@
 # Adapted by Remi Pautrat, Philipp Lindenberger
 
 import os.path as osp
-
 import torch
 from kornia.color import rgb_to_grayscale
 from torch import nn

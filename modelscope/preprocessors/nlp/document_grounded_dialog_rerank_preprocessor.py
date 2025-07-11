@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import copy
 import os
-from typing import Any, Dict
-
 import torch
 from transformers import XLMRobertaTokenizer
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

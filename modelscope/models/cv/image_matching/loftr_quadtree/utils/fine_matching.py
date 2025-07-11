@@ -3,7 +3,6 @@
 # at https://github.com/zju3dv/LoFTR
 
 import math
-
 import torch
 import torch.nn as nn
 from kornia.geometry.subpix import dsnt

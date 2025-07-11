@@ -16,11 +16,10 @@
 """ MPLUG OWL model configuration """
 import copy
 import os
-from typing import Union
-
 from transformers import PretrainedConfig
 from transformers.models.auto import CONFIG_MAPPING
 from transformers.utils import logging
+from typing import Union
 
 from modelscope.utils.constant import Tasks
 

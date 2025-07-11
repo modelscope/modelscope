@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import requests
 import shutil
 import tempfile
 import unittest
 import uuid
 from pathlib import Path
 from shutil import rmtree
-
-import requests
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import Licenses, ModelVisibility

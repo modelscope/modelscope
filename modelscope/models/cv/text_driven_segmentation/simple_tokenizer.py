@@ -2,13 +2,12 @@
 # Adapted from https://github.com/openai/CLIP.
 # Originally MIT License, Copyright (c) 2021 OpenAI.
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
+from functools import lru_cache
 
 
 @lru_cache()

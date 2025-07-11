@@ -1,11 +1,10 @@
 # The implementation here is modified based on BaSSL,
 # originally Apache 2.0 License and publicly available at https://github.com/kakaobrain/bassl
 import copy
+import json
 import os
 import os.path as osp
 import random
-
-import json
 import torch
 from torchvision.datasets.folder import pil_loader
 

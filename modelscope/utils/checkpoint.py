@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
+import json
 import os
 import re
 import sys
 import time
+import torch
 from collections import OrderedDict
 from shutil import copytree, ignore_patterns, rmtree
-from typing import Callable, Dict, Optional, Union
-
-import json
-import torch
 from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from typing import Callable, Dict, Optional, Union
 
 from modelscope.fileio import File, LocalStorage
 from modelscope.utils.config import Config, JSONIteratorEncoder

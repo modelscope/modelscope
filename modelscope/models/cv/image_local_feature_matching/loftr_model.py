@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import io
-import os.path as osp
-from copy import deepcopy
-
 import cv2
+import io
 import matplotlib.cm as cm
 import numpy as np
+import os.path as osp
 import torch
+from copy import deepcopy
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

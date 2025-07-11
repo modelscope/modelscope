@@ -5,8 +5,13 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .builder import HOOKS, build_hook
-    from .early_stop_hook import EarlyStopHook
+    from .checkpoint import (BestCkptSaverHook, CheckpointHook,
+                             LoadCheckpointHook)
     from .compression import SparsityHook
+    from .distributed.ddp_hook import DDPHook
+    from .distributed.deepspeed_hook import DeepspeedHook
+    from .distributed.megatron_hook import MegatronHook
+    from .early_stop_hook import EarlyStopHook
     from .evaluation_hook import EvaluationHook
     from .hook import Hook
     from .iter_timer_hook import IterTimerHook
@@ -15,10 +20,6 @@ if TYPE_CHECKING:
     from .optimizer import (ApexAMPOptimizerHook, NoneOptimizerHook,
                             OptimizerHook, TorchAMPOptimizerHook)
     from .priority import Priority, get_priority
-    from .checkpoint import CheckpointHook, LoadCheckpointHook, BestCkptSaverHook
-    from .distributed.ddp_hook import DDPHook
-    from .distributed.deepspeed_hook import DeepspeedHook
-    from .distributed.megatron_hook import MegatronHook
     from .swift.swift_hook import SwiftHook
 
 else:

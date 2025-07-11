@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
-from typing import Any, Dict, List, Sequence, Tuple, Union
-
 import yaml
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -103,7 +102,8 @@ class InverseTextProcessingPipeline(Pipeline):
     def run_inference(self, cmd):
         itn_result = ''
         if self.framework == Frameworks.torch:
-            from fun_text_processing.inverse_text_normalization.inverse_normalize import InverseNormalizer
+            from fun_text_processing.inverse_text_normalization.inverse_normalize import \
+                InverseNormalizer
             if cmd['lang'] == 'ja':
                 itn_normalizer = InverseNormalizer(
                     lang=cmd['lang'],

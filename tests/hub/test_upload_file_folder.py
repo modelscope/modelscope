@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import shutil
 import struct
 import tempfile
 import unittest
 import uuid
-
-import json
 
 from modelscope import HubApi
 from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL

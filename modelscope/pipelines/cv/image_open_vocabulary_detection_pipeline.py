@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
+import os
 import PIL
 import torch
 from PIL import Image
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

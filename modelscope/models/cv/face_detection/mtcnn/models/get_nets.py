@@ -1,10 +1,9 @@
 # The implementation is based on mtcnn, available at https://github.com/TropComplique/mtcnn-pytorch
-from collections import OrderedDict
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
 
 
 class Flatten(nn.Module):

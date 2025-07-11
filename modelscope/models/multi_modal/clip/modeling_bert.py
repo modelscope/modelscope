@@ -16,14 +16,14 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
+import json
 import logging
 import math
 import os
 import sys
-from io import open
-
-import json
 import torch
+from io import open
 from torch import nn
 
 from .configuration_bert import BertConfig

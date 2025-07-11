@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-from typing import Dict, Union
-
 import numpy as np
 import torch
 import torch.nn.functional as F
+from typing import Dict, Union
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys

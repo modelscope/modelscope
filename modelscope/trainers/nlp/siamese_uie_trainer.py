@@ -1,18 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
+import numpy as np
 import os
 import random
 import time
+import torch
 from collections import defaultdict
 from math import ceil
-from typing import Callable, Dict, List, Optional, Tuple, Union
-
-import json
-import numpy as np
-import torch
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import Dataset
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel

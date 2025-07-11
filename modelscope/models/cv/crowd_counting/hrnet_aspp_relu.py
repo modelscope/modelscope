@@ -8,9 +8,8 @@ https://github.com/HRNet/HRNet-Image-Classification/blob/master/lib/models/cls_h
 
 import functools
 import logging
-import os
-
 import numpy as np
+import os
 import torch
 import torch._utils
 import torch.nn as nn

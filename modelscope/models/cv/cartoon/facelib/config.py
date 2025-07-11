@@ -1,8 +1,7 @@
 # The implementation is adopted from https://github.com/610265158/Peppa_Pig_Face_Engine
 
-import os
-
 import numpy as np
+import os
 from easydict import EasyDict as edict
 
 config = edict()

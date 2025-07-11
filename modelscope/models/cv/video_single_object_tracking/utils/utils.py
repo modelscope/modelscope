@@ -1,13 +1,12 @@
 # The implementation is adopted from OSTrack,
 # made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
-import math
-from typing import Optional
-
 import cv2
+import math
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor
+from typing import Optional
 
 
 def hann1d(sz: int, centered=True) -> torch.Tensor:

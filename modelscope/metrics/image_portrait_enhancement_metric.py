@@ -1,9 +1,8 @@
 # Part of the implementation is borrowed and modified from BasicSR, publicly available at
 # https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/metrics/psnr_ssim.py
-from typing import Dict
-
 import cv2
 import numpy as np
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

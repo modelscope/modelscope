@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 import cv2
 import numpy as np
+import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline

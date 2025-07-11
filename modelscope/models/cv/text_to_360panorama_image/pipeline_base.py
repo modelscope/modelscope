@@ -5,10 +5,8 @@
 
 import inspect
 import re
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Union
-
 import torch
+import warnings
 from diffusers import (AutoencoderKL, DiffusionPipeline,
                        StableDiffusionPipeline, UNet2DConditionModel)
 from diffusers.configuration_utils import FrozenDict
@@ -24,6 +22,7 @@ from diffusers.utils import (deprecate, is_accelerate_available,
                              replace_example_docstring)
 from packaging import version
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+from typing import Any, Callable, Dict, List, Optional, Union
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 

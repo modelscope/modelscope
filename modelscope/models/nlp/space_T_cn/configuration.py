@@ -16,10 +16,10 @@
 """PyTorch BERT configuration."""
 
 from __future__ import absolute_import, division, print_function
-import copy
-import logging
 
+import copy
 import json
+import logging
 
 logger = logging.getLogger(__name__)
 

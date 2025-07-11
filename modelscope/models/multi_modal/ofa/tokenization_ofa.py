@@ -14,13 +14,12 @@
 """Tokenization classes for OFA."""
 import collections
 import os
-from typing import List, Optional, Tuple
-
 from transformers import PreTrainedTokenizer
 from transformers.models.bart.tokenization_bart import BartTokenizer
 from transformers.models.bert.tokenization_bert import (BasicTokenizer,
                                                         WordpieceTokenizer)
 from transformers.utils import logging
+from typing import List, Optional, Tuple
 
 from modelscope.utils.constant import ModelFile
 

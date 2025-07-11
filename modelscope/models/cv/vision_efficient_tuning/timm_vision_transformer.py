@@ -9,14 +9,13 @@
 import collections.abc
 import logging
 import math
-from collections import OrderedDict
-from functools import partial
-from itertools import repeat
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
+from collections import OrderedDict
+from functools import partial
+from itertools import repeat
 from torch import _assert
 
 from .timm_helpers import adapt_input_conv, checkpoint_seq, named_apply

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import shutil
+import soundfile
 import unittest
 from typing import Any, Dict, Union
-
-import numpy as np
-import soundfile
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

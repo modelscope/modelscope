@@ -1,16 +1,15 @@
 # Part of the implementation is borrowed and modified from DUTCode,
 # publicly available at https://github.com/Annbless/DUTCode
 
+import cv2
 import math
+import numpy as np
 import os
 import sys
 import tempfile
-from typing import Any, Dict, Optional, Union
-
-import cv2
-import numpy as np
 import torch
 import torch.nn as nn
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

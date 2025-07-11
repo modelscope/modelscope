@@ -17,15 +17,15 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
 import copy
+import json
 import logging
 import math
 import os
 import shutil
 import tarfile
 import tempfile
-
-import json
 import torch
 import torch.nn.functional as F
 from data_utils.file_utils import cached_path
@@ -96,8 +96,8 @@ def load_tf_weights_in_bert(model, tf_checkpoint_path):
     """ Load tf checkpoints in a pytorch model
     """
     try:
-        import re
         import numpy as np
+        import re
         import tensorflow as tf
     except ImportError:
         print(
@@ -273,7 +273,8 @@ class BertConfig(object):
 
 
 try:
-    from apex.normalization.fused_layer_norm import FusedLayerNorm as BertLayerNorm
+    from apex.normalization.fused_layer_norm import \
+        FusedLayerNorm as BertLayerNorm
 except ImportError:
     print(
         'Better speed can be achieved with apex installed from https://www.github.com/nvidia/apex.'

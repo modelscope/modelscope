@@ -1,8 +1,7 @@
 # The implementation is adopted from Deep3DFaceRecon_pytorch, made publicly available under the MIT License
 # at https://github.com/sicxu/Deep3DFaceRecon_pytorch/blob/master/models/bfm.py
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
 from scipy.io import loadmat

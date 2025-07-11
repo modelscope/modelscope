@@ -4,7 +4,6 @@
 # 2D sine positional encodings for the visual features in the multimodal transformer.
 
 import math
-
 import torch
 from torch import Tensor, nn
 

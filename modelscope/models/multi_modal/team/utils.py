@@ -5,15 +5,14 @@
 # originally MIT License, Copyright (c) 2021 OpenAI,
 # and publicly available at https://github.com/openai/CLIP/.
 
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from collections import OrderedDict
 from torch import nn
 from transformers import BertConfig, BertForMaskedLM
+from typing import Tuple, Union
 
 from modelscope.utils.compatible_with_transformers import \
     compatible_position_ids

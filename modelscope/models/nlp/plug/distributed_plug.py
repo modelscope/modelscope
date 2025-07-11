@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Dict
-
 import torch
 from megatron_util import mpu, print_rank_0
 from megatron_util.fp16 import FP16_Module
 from torch.nn import functional as F
+from typing import Dict
 
 from modelscope.models import TorchModel
 from modelscope.models.base import Tensor

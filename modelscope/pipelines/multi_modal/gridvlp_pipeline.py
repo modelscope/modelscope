@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-import time
-import traceback
-from typing import Any, Dict, Optional
-
 import json
 import numpy as np
+import os.path as osp
+import time
 import torch
+import traceback
 from PIL import Image
 from transformers import BertTokenizer
+from typing import Any, Dict, Optional
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Pipelines

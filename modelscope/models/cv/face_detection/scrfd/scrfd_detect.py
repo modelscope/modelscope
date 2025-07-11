@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os.path as osp
+import torch
 from copy import deepcopy
 from typing import Any, Dict, List, Union
-
-import numpy as np
-import torch
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
@@ -34,11 +33,17 @@ class ScrfdDetect(TorchModel):
         from mmcv.parallel import MMDataParallel
         from mmcv.runner import load_checkpoint
         from mmdet.models import build_detector
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets import RetinaFaceDataset
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import RandomSquareCrop
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.backbones import ResNetV1e
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.dense_heads import SCRFDHead
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.detectors import SCRFD
+
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets import \
+            RetinaFaceDataset
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import \
+            RandomSquareCrop
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.backbones import \
+            ResNetV1e
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.dense_heads import \
+            SCRFDHead
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.detectors import \
+            SCRFD
         cfg_file = kwargs.get('config_file', 'mmcv_scrfd.py')
         cfg = Config.fromfile(osp.join(model_dir, cfg_file))
         model_file = kwargs.get('model_file', ModelFile.TORCH_MODEL_BIN_FILE)

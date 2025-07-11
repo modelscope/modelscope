@@ -8,11 +8,10 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-import os
-import warnings
-
 import numpy as np
+import os
 import torch
+import warnings
 
 from .. import custom_ops, misc
 from . import bias_act, upfirdn2d

@@ -2,13 +2,12 @@
 # Originally MIT License, Copyright (c) 2021 Intelligent Systems Lab Org.
 
 import math
-import types
-
 import timm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+import types
 
 from . import clip
 

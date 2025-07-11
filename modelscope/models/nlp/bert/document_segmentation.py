@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
-
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import Model

@@ -1,15 +1,14 @@
 # The implementation here is modified based on BaSSL,
 # originally Apache 2.0 License and publicly available at https://github.com/kakaobrain/bassl
 import numbers
+import numpy as np
 import os.path as osp
 import random
-from typing import List
-
-import numpy as np
 import torch
 import torchvision.transforms as TF
 import torchvision.transforms.functional as F
 from PIL import Image, ImageFilter
+from typing import List
 
 
 def get_transform(lst):

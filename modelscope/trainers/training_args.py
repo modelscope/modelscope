@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import addict
+import json
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from typing import List, Union
-
-import addict
-import json
 
 from modelscope.trainers.cli_argument_parser import CliArgumentParser
 from modelscope.utils.config import Config
@@ -529,9 +528,7 @@ def build_dataset_from_file(filename):
             remove_columns = [
                 column for column in all_columns if column not in keep_columns
             ]
-            from datasets import Features
-            from datasets import Value
-            from datasets import ClassLabel
+            from datasets import ClassLabel, Features, Value
             features = [
                 f for f in dataset.features.items() if f[0] in keep_columns
             ]

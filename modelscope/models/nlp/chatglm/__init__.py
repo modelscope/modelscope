@@ -23,10 +23,9 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .configuration import ChatGLMConfig
-    from .tokenization import ChatGLMTokenizer
+    from .quantization import quantize
     from .text_generation import ChatGLMForConditionalGeneration
-    from .quantization import (
-        quantize, )
+    from .tokenization import ChatGLMTokenizer
 
 else:
     _import_structure = {

@@ -16,8 +16,6 @@
 
 import math
 import os
-from typing import Tuple
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
@@ -39,6 +37,7 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          find_pruneable_heads_and_indices,
                                          prune_linear_layer)
 from transformers.utils import logging
+from typing import Tuple
 
 from modelscope.models.multi_modal.mplug.configuration_mplug import (
     HiTeAConfig, MPlugConfig)
@@ -59,9 +58,8 @@ _TOKENIZER_FOR_DOC = 'BertTokenizer'
 def load_tf_weights_in_bert(model, config, tf_checkpoint_path):
     """Load tf checkpoints in a pytorch model."""
     try:
-        import re
-
         import numpy as np
+        import re
         import tensorflow as tf
     except ImportError:
         logger.error(

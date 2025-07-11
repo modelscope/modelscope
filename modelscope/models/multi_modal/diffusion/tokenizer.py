@@ -14,10 +14,10 @@
 """Tokenization classes."""
 
 from __future__ import absolute_import, division, print_function
-import collections
-import unicodedata
 
+import collections
 import six
+import unicodedata
 
 
 def convert_to_unicode(text):

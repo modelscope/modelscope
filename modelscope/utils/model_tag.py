@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import logging
 import os
-
-import json
 import requests
 
 from modelscope.version import __version__

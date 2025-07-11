@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
+import os.path as osp
 import PIL
 import torch
 from PIL import Image
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.virual_tryon import SDAFNet_Tryon

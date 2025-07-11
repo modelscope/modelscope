@@ -1,7 +1,6 @@
 # The implementation is adopted from Pytorch_Retinaface, made publicly available under the MIT License
 # at https://github.com/biubug6/Pytorch_Retinaface/tree/master/models/net.py
 import time
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

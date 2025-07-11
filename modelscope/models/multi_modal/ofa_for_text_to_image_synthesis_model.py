@@ -1,18 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from os import path as osp
-from typing import Any, Dict
-
 import json
 import numpy as np
+import os
 import packaging
 import torch
 import torch.cuda
+from os import path as osp
 from PIL import Image
 from taming.models.vqgan import GumbelVQ, VQModel
 from torchvision.transforms import (CenterCrop, Compose, Normalize, Resize,
                                     ToTensor)
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model

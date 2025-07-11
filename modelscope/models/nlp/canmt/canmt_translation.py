@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
-import os.path as osp
-from typing import Any, Dict, List, Optional, Tuple
-
 import numpy
+import os.path as osp
 import torch
 import torch.nn as nn
 from torch import Tensor
+from typing import Any, Dict, List, Optional, Tuple
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

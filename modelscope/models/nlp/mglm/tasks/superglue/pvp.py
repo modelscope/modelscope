@@ -15,16 +15,15 @@ This file contains the pattern-verbalizer pairs (PVPs) for all tasks.
 """
 import copy
 import math
+import numpy as np
 import random
 import string
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Tuple, Union
-
-import numpy as np
 from tasks.data_utils import (InputExample, build_decoder_input,
                               build_decoder_sample, build_input_from_ids,
                               build_sample, num_special_tokens_to_add)
+from typing import Dict, List, Tuple, Union
 from utils import print_rank_0
 
 FilledPattern = Tuple[List[Union[str, Tuple[str, bool]]],

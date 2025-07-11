@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import io
-import os
-from typing import Any, Dict
-
 import cv2
+import io
 import numpy as np
 import nvdiffrast.torch as dr
+import os
 import torch
 import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_reconstruction.utils import mesh_to_string

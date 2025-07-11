@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-import re
-from io import BytesIO
-from typing import Any, Dict, List, Tuple, Union
-
 import decord
 import json
 import numpy as np
+import os.path as osp
+import re
 import torch
+from io import BytesIO
 from PIL import Image
 from timm.data import create_transform
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from typing import Any, Dict, List, Tuple, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Preprocessors
@@ -188,7 +187,8 @@ class CLIPPreprocessor(Preprocessor):
             model_dir, user_agent={Invoke.KEY: Invoke.PREPROCESSOR})
         self.mode = mode
         # text tokenizer
-        from modelscope.models.multi_modal.clip.bert_tokenizer import FullTokenizer
+        from modelscope.models.multi_modal.clip.bert_tokenizer import \
+            FullTokenizer
         if 'tokenizer' in kwargs and isinstance(kwargs['tokenizer'],
                                                 FullTokenizer):
             self.tokenizer = kwargs['tokenizer']
@@ -370,7 +370,9 @@ class MPlugPreprocessor(Preprocessor):
     def patch_resize_transform(self):
         if self._patch_resize_transform is None:
             from torchvision import transforms
-            from modelscope.models.multi_modal.mplug import CONFIG_NAME, MPlugConfig
+
+            from modelscope.models.multi_modal.mplug import (CONFIG_NAME,
+                                                             MPlugConfig)
 
             config = MPlugConfig.from_yaml_file(
                 osp.join(self.model_dir, CONFIG_NAME))
@@ -466,11 +468,13 @@ class VLDocPreprocessor(Preprocessor):
         with open(model_cfg_path, 'r', encoding='utf-8') as f:
             model_cfg = json.load(f)
 
-        from modelscope.models.multi_modal.vldoc.tokenization import VLDocXLMTokenizer
+        from modelscope.models.multi_modal.vldoc.tokenization import \
+            VLDocXLMTokenizer
         tokenizer_path = osp.join(model_dir, ModelFile.TOKENIZER_FOLDER)
         self.tokenizer = VLDocXLMTokenizer.from_pretrained(tokenizer_path)
 
-        from modelscope.models.multi_modal.vldoc.processing import Processor, ImageProcessor
+        from modelscope.models.multi_modal.vldoc.processing import (
+            ImageProcessor, Processor)
         self.img_proc = ImageProcessor(
             do_preprocess=True,
             do_resize=True,
@@ -546,7 +550,9 @@ class HiTeAPreprocessor(Preprocessor):
     def patch_resize_transform(self):
         if self._patch_resize_transform is None:
             from torchvision import transforms
-            from modelscope.models.multi_modal.mplug import CONFIG_NAME, HiTeAConfig
+
+            from modelscope.models.multi_modal.mplug import (CONFIG_NAME,
+                                                             HiTeAConfig)
 
             config = HiTeAConfig.from_yaml_file(
                 osp.join(self.model_dir, CONFIG_NAME))
@@ -566,7 +572,9 @@ class HiTeAPreprocessor(Preprocessor):
     def num_frames(self):
         if self._num_frames is None:
             from torchvision import transforms
-            from modelscope.models.multi_modal.mplug import CONFIG_NAME, HiTeAConfig
+
+            from modelscope.models.multi_modal.mplug import (CONFIG_NAME,
+                                                             HiTeAConfig)
 
             config = HiTeAConfig.from_yaml_file(
                 osp.join(self.model_dir, CONFIG_NAME))

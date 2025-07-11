@@ -7,10 +7,8 @@ if TYPE_CHECKING:
     from .mogface import MogFaceDetector
     from .mtcnn import MtcnnFaceDetector
     from .retinaface import RetinaFaceDetection
+    from .scrfd import ScrfdDetect, SCRFDPreprocessor, TinyMogDetect
     from .ulfd_slim import UlfdFaceDetector
-    from .scrfd import ScrfdDetect
-    from .scrfd import TinyMogDetect
-    from .scrfd import SCRFDPreprocessor
 else:
     _import_structure = {
         'ulfd_slim': ['UlfdFaceDetector'],

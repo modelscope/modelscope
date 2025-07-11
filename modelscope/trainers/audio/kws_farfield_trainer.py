@@ -1,14 +1,13 @@
 import datetime
 import glob
 import math
+import numpy as np
 import os
 import pickle
-from typing import Callable, Dict, Optional
-
-import numpy as np
 import torch
 from torch import nn as nn
 from torch import optim as optim
+from typing import Callable, Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel

@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import addict
 import math
 import os
-from typing import Optional, Union
-
-import addict
 import torch
 from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
+from typing import Optional, Union
 
 from modelscope.outputs import TokenGeneratorOutput
 from modelscope.utils.constant import ModelFile

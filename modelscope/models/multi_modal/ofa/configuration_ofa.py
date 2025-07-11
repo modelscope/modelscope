@@ -13,7 +13,6 @@
 # limitations under the License.
 """ OFA model configuration"""
 import warnings
-
 from transformers import PretrainedConfig
 from transformers.utils import logging
 

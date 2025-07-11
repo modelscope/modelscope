@@ -3,14 +3,13 @@
 # Copyright 2018 The HuggingFace Inc. team.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
 
 
 @lru_cache()

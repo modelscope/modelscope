@@ -3,7 +3,6 @@
 # at https://github.com/zju3dv/LoFTR
 
 import math
-
 import torch
 from torch import nn
 

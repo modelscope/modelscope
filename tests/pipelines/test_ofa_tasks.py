@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 import unittest
 from os import path as osp
-
-import cv2
 from PIL import Image
 
 from modelscope.models import Model

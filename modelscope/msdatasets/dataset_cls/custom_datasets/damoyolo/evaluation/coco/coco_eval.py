@@ -3,9 +3,8 @@
 
 import os
 import tempfile
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 
 from modelscope.models.cv.tinynas_detection.damo.structures.bounding_box import \
     BoxList
@@ -251,6 +250,7 @@ def compute_thresholds_for_classes(coco_eval):
     f-measure. The resulting thresholds are used in fcos_demo.py.
     '''
     import numpy as np
+
     # dimension of precision: [TxRxKxAxM]
     precision = coco_eval.eval['precision']
     # we compute thresholds with IOU being 0.5

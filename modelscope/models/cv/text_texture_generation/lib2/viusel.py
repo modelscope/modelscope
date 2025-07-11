@@ -1,12 +1,11 @@
-import os
-import sys
-
 import imageio.v2 as imageio
 # visualization
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import sys
 import torch
 from PIL import Image
 

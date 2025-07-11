@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .text_generation import (T5Chat, FIDT5Chat)
+    from .text_generation import FIDT5Chat, T5Chat
 else:
     _import_structure = {
         'text_generation': ['T5Chat', 'FIDT5Chat'],

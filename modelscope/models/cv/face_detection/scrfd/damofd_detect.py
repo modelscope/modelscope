@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path as osp
+import torch
 from copy import deepcopy
 from typing import Any, Dict
-
-import torch
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

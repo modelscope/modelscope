@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import numbers
 import os.path as osp
-from typing import Dict, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from typing import Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

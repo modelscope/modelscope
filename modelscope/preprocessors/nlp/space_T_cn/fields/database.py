@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import sqlite3
-
 import json
+import sqlite3
 import tqdm
 
 from .struct import Trie

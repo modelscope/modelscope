@@ -16,13 +16,12 @@
 # limitations under the License.
 """PyTorch Space model. mainly copied from :module:`~transformers.modeling_xlm_roberta`"""
 
-from typing import Dict
-
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers.file_utils import add_start_docstrings
 from transformers.modeling_utils import PreTrainedModel
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import Model, TorchModel

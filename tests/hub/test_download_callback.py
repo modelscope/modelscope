@@ -1,6 +1,5 @@
 import tempfile
 import unittest
-
 from tqdm import tqdm
 
 from modelscope import snapshot_download

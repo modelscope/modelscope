@@ -16,22 +16,21 @@
 
 import codecs
 import copy
+import json
 import math
+import numpy as np
 import os
 import subprocess
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
-
-import json
-import numpy as np
 import torch
 import torch.nn.functional as F
+from dataclasses import dataclass
 from torch import Tensor, nn
 from torch.nn.init import xavier_uniform_
 from transformers import (BertConfig, BertModel, BertTokenizer, RobertaConfig,
                           RobertaModel, RobertaTokenizer)
 from transformers.activations import ACT2FN
 from transformers.modeling_utils import PreTrainedModel
+from typing import Any, Dict, List, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import Model

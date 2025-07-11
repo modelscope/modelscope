@@ -2,14 +2,13 @@
 
 import math
 import os
-from collections import namedtuple
-from typing import Dict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import namedtuple
 from torch import Tensor
 from torch.nn import BCEWithLogitsLoss
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS

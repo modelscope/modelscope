@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import random
-from typing import Any, List, Union
-
 import torch
 from torch.utils.data import ConcatDataset
+from typing import Any, List, Union
 
 from modelscope.metainfo import Models
 from modelscope.msdatasets.dataset_cls.custom_datasets import (

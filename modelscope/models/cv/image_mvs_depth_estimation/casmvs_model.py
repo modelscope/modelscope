@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import os.path as osp
-
 import cv2
 import numpy as np
+import os
+import os.path as osp
 import torch
 from easydict import EasyDict as edict
 

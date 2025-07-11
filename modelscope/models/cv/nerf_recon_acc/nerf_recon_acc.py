@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import glob
+import numpy as np
 import os
 import time
-
-import cv2
-import numpy as np
 import torch
 import tqdm
 

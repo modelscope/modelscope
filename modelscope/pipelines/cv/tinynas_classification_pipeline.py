@@ -2,10 +2,9 @@
 
 import math
 import os.path as osp
-from typing import Any, Dict
-
 import torch
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.tinynas_classfication import get_zennet

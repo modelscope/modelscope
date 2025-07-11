@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-
 import cv2
 import numpy as np
+import os.path as osp
 import torch
 
 from modelscope.metainfo import Models

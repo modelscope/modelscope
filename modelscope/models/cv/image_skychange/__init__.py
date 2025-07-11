@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .skychange_model import ImageSkychange
     from .preprocessor import ImageSkyChangePreprocessor
+    from .skychange_model import ImageSkychange
 
 else:
     _import_structure = {'skychange_model': ['ImageSkychange']}

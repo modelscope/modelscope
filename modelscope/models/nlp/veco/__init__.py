@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import VecoConfig
     from .backbone import VecoModel
+    from .configuration import VecoConfig
+    from .fill_mask import VecoForMaskedLM
     from .text_classification import VecoForSequenceClassification
     from .token_classification import VecoForTokenClassification
-    from .fill_mask import VecoForMaskedLM
 else:
     _import_structure = {
         'configuration': ['VecoConfig'],

@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .backbone import PoNetModel, PoNetPreTrainedModel
     from .configuration import PoNetConfig
-    from .backbone import (PoNetModel, PoNetPreTrainedModel)
-    from .tokenization import PoNetTokenizer
-    from .fill_mask import PoNetForMaskedLM
     from .document_segmentation import PoNetForDocumentSegmentation
+    from .fill_mask import PoNetForMaskedLM
+    from .tokenization import PoNetTokenizer
 else:
     _import_structure = {
         'configuration': ['PoNetConfig'],

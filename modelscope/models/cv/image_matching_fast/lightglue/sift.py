@@ -1,8 +1,7 @@
-import warnings
-
 import cv2
 import numpy as np
 import torch
+import warnings
 from kornia.color import rgb_to_grayscale
 from packaging import version
 

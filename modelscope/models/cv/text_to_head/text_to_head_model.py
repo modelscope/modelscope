@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from collections import OrderedDict
-
 import cv2
 import numpy as np
+import os
 import torch
+from collections import OrderedDict
 from diffusers import (ControlNetModel, DDIMScheduler,
                        StableDiffusionControlNetPipeline)
 from diffusers.utils import load_image

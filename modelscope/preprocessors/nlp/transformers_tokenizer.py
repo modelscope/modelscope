@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os
 from collections.abc import Mapping
-
-import json
 from transformers import AutoTokenizer
 
 from modelscope.metainfo import Models
@@ -84,12 +83,14 @@ class NLPTokenizer:
             return tokenizer.from_pretrained(
                 model_dir) if model_dir is not None else tokenizer()
         elif model_type == Models.veco:
-            from transformers import XLMRobertaTokenizer, XLMRobertaTokenizerFast
+            from transformers import (XLMRobertaTokenizer,
+                                      XLMRobertaTokenizerFast)
             tokenizer = XLMRobertaTokenizerFast if self.use_fast else XLMRobertaTokenizer
             return tokenizer.from_pretrained(
                 model_dir) if model_dir is not None else tokenizer()
         elif model_type == Models.llama:
-            from modelscope.models.nlp import LlamaTokenizer, LlamaTokenizerFast
+            from modelscope.models.nlp import (LlamaTokenizer,
+                                               LlamaTokenizerFast)
             tokenizer = LlamaTokenizerFast if self.use_fast else LlamaTokenizer
             return tokenizer.from_pretrained(
                 model_dir) if model_dir is not None else tokenizer()

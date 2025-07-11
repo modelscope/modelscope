@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import logging
-from collections import OrderedDict
-
 import json
+import logging
 import numpy as np
+from collections import OrderedDict
 
 from modelscope.utils.logger import get_logger
 from . import ontology

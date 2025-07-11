@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import time
-from collections.abc import Mapping
-
 import torch
+from collections.abc import Mapping
 from torch import distributed as dist
 
 from modelscope.metainfo import Trainers

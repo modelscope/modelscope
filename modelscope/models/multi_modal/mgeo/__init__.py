@@ -18,10 +18,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbone import (MGeo, MGeoPreTrainedModel)
+    from .backbone import MGeo, MGeoPreTrainedModel
     from .text_classification import MGeoForSequenceClassification
-    from .token_classification import MGeoForTokenClassification
     from .text_ranking import MGeoForTextRanking
+    from .token_classification import MGeoForTokenClassification
 else:
     _import_structure = {
         'backbone': ['MGeo', 'MGeoPreTrainedModel'],

@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import functools
 import os
-from typing import Any, Dict, Union
-
 import torch
 import torch.cuda
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

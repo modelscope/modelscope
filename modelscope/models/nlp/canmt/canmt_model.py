@@ -2,8 +2,6 @@
 # publicly available at https://github.com/facebookresearch/fairseq
 # Copyright 2022-2023 The Alibaba MT Team Authors. All rights reserved.
 import math
-from typing import Any, Dict, List, Optional, Tuple
-
 import numpy
 import torch
 import torch.nn as nn
@@ -20,6 +18,7 @@ from fairseq.modules import (AdaptiveSoftmax, BaseLayer, FairseqDropout,
 from fairseq.modules.checkpoint_activations import checkpoint_wrapper
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
+from typing import Any, Dict, List, Optional, Tuple
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024

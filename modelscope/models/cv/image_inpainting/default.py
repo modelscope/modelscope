@@ -3,7 +3,6 @@ Part of the implementation is borrowed and modified from LaMa, publicly availabl
 https://github.com/saic-mdal/lama
 """
 import bisect
-
 import torch
 import torch.nn.functional as F
 

@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os
 import shutil
 from collections import defaultdict
-
-import json
 from datasets.utils.filelock import FileLock
 
 from modelscope.hub.api import HubApi

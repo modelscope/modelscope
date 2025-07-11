@@ -15,11 +15,10 @@
 """Tokenization classes for DeBERTa. mainly copied from :module:`~transformers.tokenization_deberta`"""
 
 import os
-import unicodedata
-from typing import Any, Dict, List, Optional, Tuple
-
 import sentencepiece as sp
+import unicodedata
 from transformers.tokenization_utils import PreTrainedTokenizer
+from typing import Any, Dict, List, Optional, Tuple
 
 PRETRAINED_VOCAB_FILES_MAP = {'vocab_file': {}}
 

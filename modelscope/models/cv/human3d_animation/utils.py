@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-
 import cv2
 import numpy as np
 import nvdiffrast.torch as dr
+import os
 import torch
 import torch.nn.functional as F
 

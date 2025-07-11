@@ -7,16 +7,17 @@ if TYPE_CHECKING:
     from .audio import ANSTrainer, KanttsTrainer
     from .base import DummyTrainer
     from .builder import build_trainer
-    from .cv import (ImageInstanceSegmentationTrainer,
+    from .cv import (ImageInpaintingTrainer, ImageInstanceSegmentationTrainer,
                      ImagePortraitEnhancementTrainer,
-                     MovieSceneSegmentationTrainer, ImageInpaintingTrainer,
+                     MovieSceneSegmentationTrainer,
                      ReferringVideoObjectSegmentationTrainer)
+    from .hooks import Hook, Priority
     from .multi_modal import CLIPTrainer
-    from .nlp import SequenceClassificationTrainer, TextRankingTrainer, SiameseUIETrainer
+    from .nlp import (SequenceClassificationTrainer, SiameseUIETrainer,
+                      TextRankingTrainer)
     from .nlp_trainer import NlpEpochBasedTrainer, VecoTrainer
     from .trainer import EpochBasedTrainer
     from .training_args import TrainingArgs, build_dataset_from_file
-    from .hooks import Hook, Priority
 
 else:
     _import_structure = {

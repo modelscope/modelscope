@@ -1,8 +1,6 @@
 # Copyright © Alibaba, Inc. and its affiliates.
-import random
-from typing import Any, Dict
-
 import numpy as np
+import random
 import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from diffusers import (ControlNetModel, DiffusionPipeline,
@@ -10,6 +8,7 @@ from diffusers import (ControlNetModel, DiffusionPipeline,
                        UniPCMultistepScheduler)
 from PIL import Image
 from realesrgan import RealESRGANer
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.text_to_360panorama_image import (

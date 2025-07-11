@@ -4,6 +4,7 @@ import copy
 import hashlib
 import io
 import os
+import requests
 import shutil
 import tempfile
 import urllib
@@ -12,11 +13,9 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import Dict, List, Optional, Type, Union
-
-import requests
 from requests.adapters import Retry
 from tqdm.auto import tqdm
+from typing import Dict, List, Optional, Type, Union
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (

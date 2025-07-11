@@ -16,7 +16,6 @@
 """ PyTorch MegatronBERT model."""
 
 import math
-
 import torch
 import torch.utils.checkpoint
 from torch import nn

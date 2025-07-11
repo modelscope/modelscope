@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
-
 from regex import R
 
 from modelscope.hub.snapshot_download import snapshot_download

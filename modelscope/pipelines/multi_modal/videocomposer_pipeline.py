@@ -1,20 +1,19 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
+import imageio
+import numpy as np
 import os
 import random
 import subprocess
 import tempfile
 import time
-from functools import partial
-from typing import Any, Dict
-
-import cv2
-import imageio
-import numpy as np
 import torch
 import torchvision.transforms as T
+from functools import partial
 from mvextractor.videocap import VideoCap
 from PIL import Image
+from typing import Any, Dict
 
 import modelscope.models.multi_modal.videocomposer.data as data
 from modelscope.metainfo import Pipelines

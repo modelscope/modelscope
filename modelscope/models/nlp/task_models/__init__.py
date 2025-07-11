@@ -4,16 +4,17 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .information_extraction import ModelForInformationExtraction
     from .feature_extraction import ModelForFeatureExtraction
     from .fill_mask import ModelForFillMask
-    from .text_classification import ModelForTextClassification
+    from .information_extraction import ModelForInformationExtraction
+    from .machine_reading_comprehension import \
+        ModelForMachineReadingComprehension
     from .task_model import SingleBackboneTaskModelBase
-    from .token_classification import (ModelForTokenClassification,
-                                       ModelForTokenClassificationWithCRF)
+    from .text_classification import ModelForTextClassification
     from .text_generation import ModelForTextGeneration
     from .text_ranking import ModelForTextRanking
-    from .machine_reading_comprehension import ModelForMachineReadingComprehension
+    from .token_classification import (ModelForTokenClassification,
+                                       ModelForTokenClassificationWithCRF)
 
 else:
     _import_structure = {

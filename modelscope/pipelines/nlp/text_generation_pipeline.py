@@ -2,10 +2,9 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
-from typing import Any, Dict, List, Optional, Union
-
 import torch
 from transformers import GenerationConfig
+from typing import Any, Dict, List, Optional, Union
 
 from modelscope import snapshot_download
 from modelscope.metainfo import Pipelines
@@ -211,8 +210,8 @@ class ChatGLM6bTextGenerationPipeline(Pipeline):
                  quantization_bit=None,
                  use_bf16=False,
                  **kwargs):
-        from modelscope.models.nlp.chatglm.text_generation import (
-            ChatGLMForConditionalGeneration)
+        from modelscope.models.nlp.chatglm.text_generation import \
+            ChatGLMForConditionalGeneration
         if isinstance(model, str):
             model_dir = snapshot_download(
                 model) if not os.path.exists(model) else model

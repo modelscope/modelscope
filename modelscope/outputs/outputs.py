@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
+import torch
 from collections import OrderedDict, namedtuple
 from dataclasses import dataclass, fields
 from typing import Dict, List, Tuple
-
-import numpy as np
-import torch
 
 from modelscope.utils.constant import Tasks
 

@@ -15,9 +15,8 @@
 
 import os
 import subprocess
-from typing import Optional, Sequence
-
 from absl import logging
+from typing import Optional, Sequence
 
 from modelscope.models.science.unifold.msa import parsers
 from . import hmmbuild, utils

@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import PIL
+import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline

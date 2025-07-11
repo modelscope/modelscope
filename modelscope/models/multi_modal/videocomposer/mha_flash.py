@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
+import numpy as np
 import os
 import random
 import time
-
-import numpy as np
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn

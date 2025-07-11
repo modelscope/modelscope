@@ -1,10 +1,9 @@
 # Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
-from typing import Dict, Tuple
-
 import torch
 from torch import nn
 from torchvision import models
 from torchvision.models import _utils
+from typing import Dict, Tuple
 
 from .net import FPN, SSH
 

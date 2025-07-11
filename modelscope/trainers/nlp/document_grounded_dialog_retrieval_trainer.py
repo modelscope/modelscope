@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import faiss
 import json
 import numpy as np
+import os
 import torch
 import tqdm
 from torch.utils.data import DataLoader

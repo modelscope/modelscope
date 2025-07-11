@@ -5,12 +5,10 @@ import math
 import os
 import re
 import sys
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
+import warnings
 from torch import nn
 from torch.nn import CrossEntropyLoss, LayerNorm
 from torch.nn.utils import skip_init
@@ -25,6 +23,7 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import (add_code_sample_docstrings,
                                 add_start_docstrings,
                                 add_start_docstrings_to_model_forward)
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, Model, TorchModel
@@ -66,9 +65,8 @@ class InvalidScoreLogitsProcessor(LogitsProcessor):
 def load_tf_weights_in_chatglm_6b(model, config, tf_checkpoint_path):
     """Load tf checkpoints in a pytorch model."""
     try:
-        import re
-
         import numpy as np
+        import re
         import tensorflow as tf
     except ImportError:
         logger.error(

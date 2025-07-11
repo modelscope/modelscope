@@ -6,13 +6,12 @@ import contextlib
 import copy
 import io
 import itertools
-import logging
-import os
-from collections import OrderedDict
-
 import json
+import logging
 import numpy as np
+import os
 import torch
+from collections import OrderedDict
 from detectron2.data import MetadataCatalog
 from detectron2.data.datasets.coco import convert_to_coco_json
 from detectron2.evaluation import DatasetEvaluator

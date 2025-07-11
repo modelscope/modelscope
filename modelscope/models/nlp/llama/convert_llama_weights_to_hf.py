@@ -14,11 +14,10 @@
 # limitations under the License.
 import argparse
 import gc
+import json
 import math
 import os
 import shutil
-
-import json
 import torch
 from transformers.models.llama import LlamaConfig
 

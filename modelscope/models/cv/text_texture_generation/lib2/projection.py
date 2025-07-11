@@ -1,11 +1,9 @@
+import cv2
+import numpy as np
 import os
 import random
 # customized
 import sys
-from typing import NamedTuple, Sequence
-
-import cv2
-import numpy as np
 import torch
 from PIL import Image
 from pytorch3d.io import save_obj
@@ -17,6 +15,7 @@ from pytorch3d.renderer import (AmbientLights, MeshRasterizer,
 from pytorch3d.renderer.mesh.shader import ShaderBase
 from torchvision import transforms
 from tqdm import tqdm
+from typing import NamedTuple, Sequence
 
 from modelscope.models.cv.text_texture_generation.lib2.camera import \
     init_camera

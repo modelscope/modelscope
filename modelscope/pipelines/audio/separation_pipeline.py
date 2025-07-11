@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
-from typing import Any, Dict
-
 import numpy
 import soundfile as sf
 import torch
+from typing import Any, Dict
 
 from modelscope.fileio import File
 from modelscope.metainfo import Models, Pipelines

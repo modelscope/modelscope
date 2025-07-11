@@ -3,9 +3,8 @@
 import os
 import random
 import re
-from typing import Any, Dict, List
-
 import torch
+from typing import Any, Dict, List
 
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor

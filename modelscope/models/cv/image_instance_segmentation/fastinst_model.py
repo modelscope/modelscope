@@ -1,11 +1,10 @@
 # Part of implementation is borrowed and modified from Mask2Former, publicly available at
 # https://github.com/facebookresearch/Mask2Former.
 import os
-from typing import Any, Dict, List
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict, List
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

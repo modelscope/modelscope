@@ -1,14 +1,13 @@
 # Part of the implementation is borrowed and modified from Deep3DFaceRecon_pytorch,
 # publicly available at https://github.com/sicxu/Deep3DFaceRecon_pytorch
-import warnings
-from typing import List
-
 import numpy as np
 import nvdiffrast
 import nvdiffrast.torch as dr
 import torch
 import torch.nn.functional as F
+import warnings
 from torch import nn
+from typing import List
 
 from .losses import TVLoss, TVLoss_std
 

@@ -1,9 +1,8 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-import os
-import sys
-
 import cv2
 import numpy as np
+import os
+import sys
 import torch
 import torch.nn.functional as F
 from PIL import Image

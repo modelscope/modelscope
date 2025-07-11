@@ -1,10 +1,9 @@
 # The implementation is based on ULFD, available at
 # https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
-import types
-
 import cv2
 import numpy as np
 import torch
+import types
 from numpy import random
 
 

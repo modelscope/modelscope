@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Dict
-
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys

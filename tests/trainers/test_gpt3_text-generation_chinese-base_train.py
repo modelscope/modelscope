@@ -2,9 +2,8 @@
 import os
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset

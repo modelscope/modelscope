@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
+import cv2
+import json
 import logging as logger
+import numpy as np
 import os
 import os.path as osp
 import time
-
-import cv2
-import json
-import numpy as np
 import torch
 from tqdm import tqdm
 

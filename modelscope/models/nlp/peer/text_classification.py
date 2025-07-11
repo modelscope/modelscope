@@ -16,7 +16,6 @@
 # limitations under the License.
 
 import copy
-
 from torch.nn import CrossEntropyLoss, MSELoss
 
 from modelscope.metainfo import Models

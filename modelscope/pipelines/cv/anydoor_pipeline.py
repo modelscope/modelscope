@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Any, Dict
-
 import cv2
 import einops
 import numpy as np
+import os
 import requests
 import torch
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.anydoor.cldm.ddim_hacked import DDIMSampler

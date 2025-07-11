@@ -1,14 +1,12 @@
 # Part of the implementation is borrowed and modified from diffusers,
 # publicly available at https://github.com/huggingface/diffusers/tree/main/src/diffusers/models/unet_2d_condition.py
-import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import json
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import UNet2DConditionLoadersMixin
 from diffusers.models import ModelMixin
@@ -18,6 +16,7 @@ from diffusers.models.embeddings import (GaussianFourierProjection,
                                          TextTimeEmbedding, TimestepEmbedding,
                                          Timesteps)
 from diffusers.utils import BaseOutput, logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .unet_2d_blocks import (CrossAttnDownBlock2D, CrossAttnUpBlock2D,
                              DownBlock2D, UNetMidBlock2DCrossAttn,

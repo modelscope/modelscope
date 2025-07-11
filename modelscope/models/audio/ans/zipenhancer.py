@@ -2,14 +2,13 @@
 #
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import random
-from typing import Dict
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

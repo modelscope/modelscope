@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Dict, Iterable, List
-
 import jieba
 import numpy as np
 from nltk.translate.bleu_score import (SmoothingFunction, corpus_bleu,
                                        sentence_bleu)
 from rouge import Rouge
+from typing import Dict, Iterable, List
 
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric

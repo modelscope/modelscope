@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbone import (SbertModel, SbertPreTrainedModel)
+    from .backbone import SbertModel, SbertPreTrainedModel
     from .configuration import SbertConfig
     from .faq_question_answering import SbertForFaqQuestionAnswering
     from .fill_mask import SbertForMaskedLM

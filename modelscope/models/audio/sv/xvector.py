@@ -6,14 +6,13 @@
     referred to in https://www.danielpovey.com/files/2017_interspeech_embeddings.pdf.
 """
 import math
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
+from typing import Any, Dict, Union
 
 import modelscope.models.audio.sv.pooling_layers as pooling_layers
 from modelscope.metainfo import Models

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import requests
 import unittest
 from http.client import HTTPMessage, HTTPResponse
 from io import StringIO
 from unittest.mock import Mock, patch
-
-import requests
 from urllib3.exceptions import MaxRetryError
 
 from modelscope.hub.api import HubApi

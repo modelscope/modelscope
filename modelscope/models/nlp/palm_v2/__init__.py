@@ -18,11 +18,8 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .configuration import PalmConfig
-    from .text_generation import (
-        AbsSummarizer,
-        PalmForTextGeneration,
-        Translator,
-    )
+    from .text_generation import (AbsSummarizer, PalmForTextGeneration,
+                                  Translator)
 else:
     _import_structure = {
         'configuration': ['PalmConfig'],

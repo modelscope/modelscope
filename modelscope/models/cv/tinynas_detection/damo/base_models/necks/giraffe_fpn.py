@@ -2,17 +2,16 @@
 # The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import math
-from collections import OrderedDict
-from functools import partial
-from typing import Callable, List, Optional, Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
+from functools import partial
 from timm import create_model
 from timm.models.layers import (Swish, create_conv2d, create_pool2d,
                                 get_act_layer)
+from typing import Callable, List, Optional, Tuple, Union
 
 from modelscope.models.cv.tinynas_detection.damo.base_models.core.base_ops import (
     CSPLayer, ShuffleBlock, ShuffleCSPLayer)

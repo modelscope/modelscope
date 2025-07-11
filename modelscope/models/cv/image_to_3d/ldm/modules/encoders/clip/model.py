@@ -1,10 +1,9 @@
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
 from torch import nn
+from typing import Tuple, Union
 
 
 class Bottleneck(nn.Module):

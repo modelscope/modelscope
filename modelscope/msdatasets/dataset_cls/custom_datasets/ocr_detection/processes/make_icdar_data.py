@@ -1,8 +1,7 @@
-from collections import OrderedDict
-
 import cv2
 import numpy as np
 import torch
+from collections import OrderedDict
 
 from .data_process import DataProcess
 

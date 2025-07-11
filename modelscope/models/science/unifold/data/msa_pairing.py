@@ -14,11 +14,10 @@
 """Pairing logic for multimer data """
 
 import collections
-from typing import Dict, Iterable, List, Sequence
-
 import numpy as np
 import pandas as pd
 import scipy.linalg
+from typing import Dict, Iterable, List, Sequence
 
 from .data_ops import NumpyDict
 from .residue_constants import restypes_with_x_and_gap

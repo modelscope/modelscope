@@ -1,11 +1,10 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
 import importlib
-import random
-from collections import OrderedDict
-
 import numpy as np
+import random
 import torch
+from collections import OrderedDict
 
 from modelscope.models.cv.video_depth_estimation.utils.load import (
     filter_args, load_class, load_class_args_create, load_network)

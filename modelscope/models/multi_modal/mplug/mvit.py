@@ -1,14 +1,13 @@
 # Copyright 2021-2022 The Alibaba DAMO NLP Team Authors.
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved. All Rights Reserved.
 
-from collections import OrderedDict
-from functools import partial
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from collections import OrderedDict
+from functools import partial
 from timm.models.layers import trunc_normal_
 
 try:

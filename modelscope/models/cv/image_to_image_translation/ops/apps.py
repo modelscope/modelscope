@@ -1,11 +1,10 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 # APPs that facilitate the use of pretrained neural networks.
 
-import os.path as osp
-
 import artist.data as data
 import artist.models as models
 import numpy as np
+import os.path as osp
 import torch
 import torch.cuda.amp as amp
 import torch.nn.functional as F

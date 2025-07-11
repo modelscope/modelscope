@@ -1,18 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
 import glob
+import numpy as np
 import os
 import os.path as osp
 import random
 import time
-from datetime import datetime
-from typing import Dict, Optional
-
-import cv2
-import numpy as np
 import torch
 import torch.nn.functional as F
 import tqdm
+from datetime import datetime
+from typing import Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models.cv.nerf_recon_acc import NeRFReconPreprocessor

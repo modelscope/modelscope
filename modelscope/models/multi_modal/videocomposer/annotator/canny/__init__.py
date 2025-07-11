@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import torch
+
 from tools.annotator.util import HWC3
 
 

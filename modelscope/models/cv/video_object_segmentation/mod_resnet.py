@@ -3,10 +3,9 @@
 # https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py
 
 import math
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 from torch.utils import model_zoo
 
 

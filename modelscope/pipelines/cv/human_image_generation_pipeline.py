@@ -1,9 +1,8 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-from typing import Any, Dict
-
 import numpy as np
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.human_image_generation import \

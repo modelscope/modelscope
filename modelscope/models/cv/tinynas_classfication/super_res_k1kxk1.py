@@ -2,7 +2,6 @@
 # The ZenNAS implementation is also open-sourced by the authors, and available at https://github.com/idstcv/ZenNAS.
 
 import uuid
-
 from torch import nn
 
 from . import basic_blocks, global_utils

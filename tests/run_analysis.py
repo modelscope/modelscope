@@ -3,7 +3,6 @@
 import os
 import subprocess
 from fnmatch import fnmatch
-
 from trainers.model_trainer_map import model_trainer_map
 from utils.case_file_analyzer import get_pipelines_trainers_test_info
 from utils.source_file_analyzer import (get_all_register_modules,

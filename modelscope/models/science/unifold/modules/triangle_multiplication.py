@@ -1,11 +1,10 @@
 # The Uni-fold implementation is also open-sourced by the authors under Apache-2.0 license,
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
-from functools import partialmethod
-from typing import List, Optional
-
 import torch
 import torch.nn as nn
+from functools import partialmethod
+from typing import List, Optional
 from unicore.modules import LayerNorm
 from unicore.utils import permute_final_dims
 

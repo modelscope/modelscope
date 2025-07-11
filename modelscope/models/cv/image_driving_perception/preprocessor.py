@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
 import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

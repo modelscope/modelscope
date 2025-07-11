@@ -54,7 +54,8 @@ class NLPPreprocessorTest(unittest.TestCase):
             os.path.isfile(os.path.join(save_path, 'configuration.json')))
 
     def test_preprocessor_download(self):
-        from modelscope.preprocessors.nlp.token_classification_preprocessor import TokenClassificationPreprocessorBase
+        from modelscope.preprocessors.nlp.token_classification_preprocessor import \
+            TokenClassificationPreprocessorBase
         preprocessor: TokenClassificationPreprocessorBase = \
             Preprocessor.from_pretrained('damo/nlp_raner_named-entity-recognition_chinese-base-news')
         self.assertTrue(preprocessor is not None)

@@ -2,10 +2,9 @@
 # https://github.com/CASIA-IVA-Lab/PASS-reID
 
 import os
-from enum import Enum
-
 import torch
 import torch.nn as nn
+from enum import Enum
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

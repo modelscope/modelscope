@@ -20,6 +20,7 @@ class TextDrivenSegmentationTest(unittest.TestCase):
         shop_seg = pipeline(Tasks.text_driven_segmentation, model=model_id)
         result = shop_seg(test_input)
         import cv2
+
         # result[OutputKeys.MASKS] is segment map result,other keys are not used
         cv2.imwrite(input_location + '_lseg.jpg', result[OutputKeys.MASKS])
 

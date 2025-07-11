@@ -1,17 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import contextlib
+import numpy as np
+import torch
 from collections import defaultdict
 from dataclasses import dataclass
 from distutils.version import LooseVersion
 from functools import partial
-from typing import Callable, Dict, List, Optional, Tuple, Union
-
-import numpy as np
-import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import shutil
 import tempfile
 import zipfile
 from typing import Callable, Dict, List, Optional, Tuple, Union
-
-import json
 
 from modelscope.metainfo import Preprocessors, Trainers
 from modelscope.models import Model

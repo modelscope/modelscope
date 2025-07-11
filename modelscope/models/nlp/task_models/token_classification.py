@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Heads, Models, TaskModels
 from modelscope.models.builder import MODELS

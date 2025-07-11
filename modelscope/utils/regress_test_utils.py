@@ -2,23 +2,22 @@
 
 import contextlib
 import hashlib
+import json
+import numpy as np
 import os
 import pickle
 import random
 import re
 import shutil
 import tempfile
+import torch
+import torch.optim
 from collections import OrderedDict
 from collections.abc import Mapping
 from pathlib import Path
+from torch import nn
 from types import FunctionType
 from typing import Any, Dict, Union
-
-import json
-import numpy as np
-import torch
-import torch.optim
-from torch import nn
 
 from .test_utils import compare_arguments_nested
 

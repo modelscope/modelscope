@@ -3,8 +3,6 @@ import copy
 import datetime
 import os
 import re
-from typing import Callable, Dict, Optional
-
 import torch
 import torch.distributed as dist
 import yaml
@@ -12,6 +10,7 @@ from tensorboardX import SummaryWriter
 from torch import nn as nn
 from torch import optim as optim
 from torch.utils.data import DataLoader
+from typing import Callable, Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel

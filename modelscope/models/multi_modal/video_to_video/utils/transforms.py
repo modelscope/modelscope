@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-import random
-
 import numpy as np
+import random
 import torch
 import torchvision.transforms.functional as F
 from PIL import Image, ImageFilter

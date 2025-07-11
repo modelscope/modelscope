@@ -1,6 +1,5 @@
-from typing import Any, Dict, Optional, Union
-
 import torch
+from typing import Any, Dict, Optional, Union
 
 from modelscope import AutoModelForCausalLM, get_logger
 from modelscope.metainfo import Pipelines, Preprocessors

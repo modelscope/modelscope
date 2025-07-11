@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .summarizer import (
-        ClipItVideoSummarization, )
+    from .summarizer import ClipItVideoSummarization
 
 else:
     _import_structure = {

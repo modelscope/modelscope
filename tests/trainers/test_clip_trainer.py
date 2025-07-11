@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import shutil
 import unittest
-
-import json
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.msdatasets import MsDataset

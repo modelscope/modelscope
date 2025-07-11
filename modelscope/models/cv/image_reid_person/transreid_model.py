@@ -2,12 +2,11 @@
 # https://github.com/CASIA-IVA-Lab/PASS-reID
 
 import collections.abc as container_abcs
-from functools import partial
-from itertools import repeat
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from functools import partial
+from itertools import repeat
 
 
 # From PyTorch internals

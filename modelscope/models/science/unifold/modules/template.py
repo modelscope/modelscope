@@ -2,11 +2,10 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 import math
-from functools import partial
-from typing import List, Optional, Tuple
-
 import torch
 import torch.nn as nn
+from functools import partial
+from typing import List, Optional, Tuple
 from unicore.modules import LayerNorm
 from unicore.utils import (checkpoint_sequential, permute_final_dims,
                            tensor_tree_map)

@@ -1,9 +1,8 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-import os
-import sys
-
 import cv2
 import numpy as np
+import os
+import sys
 from PIL import Image, ImageFile
 
 from .face import FaceDetector

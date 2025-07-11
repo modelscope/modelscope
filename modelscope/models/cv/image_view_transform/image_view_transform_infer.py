@@ -1,19 +1,18 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import math
-import os
-import sys
-import time
-from contextlib import nullcontext
-from functools import partial
-
 import cv2
 import diffusers  # 0.12.1
 import fire
+import math
 import numpy as np
+import os
 import rich
+import sys
+import time
 import torch
+from contextlib import nullcontext
 from einops import rearrange
+from functools import partial
 from omegaconf import OmegaConf
 from PIL import Image
 from rich import print

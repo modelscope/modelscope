@@ -3,14 +3,13 @@
 # Part of implementation is borrowed from Mask2Former,
 # https://github.com/facebookresearch/Mask2Former, under MIT license.
 
-from typing import Any, Dict, List
-
 import numpy as np
 import torch
 from torch import nn
 from torch.cuda.amp import autocast
 from torch.nn import functional as F
 from torch.nn.init import constant_, kaiming_uniform_, normal_
+from typing import Any, Dict, List
 
 from .ms_deform_attn import MSDeformAttn
 from .position_encoding import PositionEmbeddingSine

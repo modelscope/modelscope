@@ -1,7 +1,6 @@
 # The implementation is adopted from CenseoQoE, made publicly available under the MIT License at
 # https://github.com/Tencent/CenseoQoE
 import os
-
 import torch
 import torch.nn as nn
 

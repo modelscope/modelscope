@@ -14,9 +14,8 @@
 """Feature processing logic for multimer data """
 
 import collections
-from typing import Iterable, List, MutableMapping
-
 import numpy as np
+from typing import Iterable, List, MutableMapping
 
 from modelscope.models.science.unifold.data import (msa_pairing,
                                                     residue_constants)

@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Any, Dict, Optional, Union
-
 import json
 import numpy as np
+import os
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

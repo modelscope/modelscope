@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .generic_automatic_speech_recognition import GenericAutomaticSpeechRecognition
+    from .generic_automatic_speech_recognition import \
+        GenericAutomaticSpeechRecognition
 
 else:
     _import_structure = {

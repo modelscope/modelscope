@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """several datasets with preset arguments"""
+import json
 import os
 import random
+import tqdm
 from collections import defaultdict
 from multiprocessing import Process, Queue
 from queue import Empty
-
-import json
-import tqdm
 from torch.utils import data
 
 from modelscope.models.nlp.mglm.utils import print_rank_0

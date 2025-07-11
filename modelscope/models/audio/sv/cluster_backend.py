@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Union
-
 import hdbscan
 import numpy as np
 import scipy
 import sklearn
 import umap
 from sklearn.cluster._kmeans import k_means
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel

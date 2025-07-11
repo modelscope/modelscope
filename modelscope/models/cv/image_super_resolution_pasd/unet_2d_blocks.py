@@ -1,7 +1,5 @@
 # Part of the implementation is borrowed and modified from diffusers,
 # publicly available at https://github.com/huggingface/diffusers/tree/main/src/diffusers/models/unet_2d_blocks.py
-from typing import Optional
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -14,6 +12,7 @@ from diffusers.models.resnet import (Downsample2D, FirDownsample2D,
 from diffusers.models.transformers.dual_transformer_2d import \
     DualTransformer2DModel
 from torch import nn
+from typing import Optional
 
 from .attention import AdaGroupNorm
 from .transformer_2d import Transformer2DModel

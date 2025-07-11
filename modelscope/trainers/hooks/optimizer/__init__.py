@@ -5,7 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .apex_optimizer_hook import ApexAMPOptimizerHook
-    from .base import OptimizerHook, NoneOptimizerHook
+    from .base import NoneOptimizerHook, OptimizerHook
     from .torch_optimizer_hook import TorchAMPOptimizerHook
 else:
     _import_structure = {

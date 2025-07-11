@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import glob
+import numpy as np
 import os
 import time
-from functools import partial
-
-import cv2
-import numpy as np
 import torch
 import tqdm
+from functools import partial
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

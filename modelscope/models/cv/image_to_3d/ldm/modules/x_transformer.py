@@ -1,11 +1,10 @@
 """shout-out to https://github.com/lucidrains/x-transformers/tree/main/x_transformers"""
-from collections import namedtuple
-from functools import partial
-from inspect import isfunction
-
 import torch
 import torch.nn.functional as F
+from collections import namedtuple
 from einops import rearrange, reduce, repeat
+from functools import partial
+from inspect import isfunction
 from torch import einsum, nn
 
 # constants

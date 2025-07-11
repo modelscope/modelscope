@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import math
-import os
-from typing import Any, Dict
-
 import cv2
+import math
 import numpy as np
+import os
 import PIL
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor, load_image

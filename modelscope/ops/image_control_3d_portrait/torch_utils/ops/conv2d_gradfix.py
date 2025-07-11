@@ -11,7 +11,6 @@
 arbitrarily high order gradients with zero performance penalty."""
 
 import contextlib
-
 import torch
 
 # pylint: disable=redefined-builtin

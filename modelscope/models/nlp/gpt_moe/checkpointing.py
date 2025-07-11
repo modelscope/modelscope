@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-
 import torch
 from megatron_util import mpu
 from megatron_util.model import Float16Module

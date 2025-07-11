@@ -3,12 +3,11 @@
 # Copyright (c) 2021 Peng Wang. All Rights Reserved.
 # ------------------------------------------------------------------------
 
-import os
-from glob import glob
-
 import cv2 as cv
 import numpy as np
+import os
 import torch
+from glob import glob
 from scipy.spatial.transform import Rotation as Rot
 from scipy.spatial.transform import Slerp
 

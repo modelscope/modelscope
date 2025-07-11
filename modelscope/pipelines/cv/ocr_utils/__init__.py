@@ -5,9 +5,9 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .model_resnet_mutex_v4_linewithchar import SegLinkDetector
-    from .ops import decode_segments_links_python, combine_segments_python
-    from .utils import (rboxes_to_polygons, cal_width, nms_python,
-                        polygons_from_bitmap, rboxes_from_bitmap)
+    from .ops import combine_segments_python, decode_segments_links_python
+    from .utils import (cal_width, nms_python, polygons_from_bitmap,
+                        rboxes_from_bitmap, rboxes_to_polygons)
 else:
     _import_structure = {
         'model_resnet_mutex_v4_linewithchar': ['SegLinkDetector'],

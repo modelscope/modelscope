@@ -1,11 +1,10 @@
 # The implementation is adopt from PointNet2, open-sourced under MIT license,
 # made publicy available at https://github.com/sshaoshuai/Pointnet2.PyTorch
-from typing import Tuple
-
 import pointnet2_cuda as pointnet2
 import torch
 import torch.nn as nn
 from torch.autograd import Function, Variable
+from typing import Tuple
 
 
 class FurthestPointSampling(Function):

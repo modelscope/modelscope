@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
 import PIL
 import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
@@ -33,9 +32,9 @@ class ImageSemanticSegmentationPipeline(Pipeline):
         logger.info('semantic segmentation model, pipeline init')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:
-        from mmdet.datasets.pipelines import Compose
         from mmcv.parallel import collate, scatter
         from mmdet.datasets import replace_ImageToTensor
+        from mmdet.datasets.pipelines import Compose
 
         cfg = self.model.cfg
         # build the data pipeline

@@ -3,7 +3,6 @@
 # and publicly available at https://github.com/megvii-research/ECCV2022-RIFE
 
 import itertools
-
 import numpy as np
 import torch
 import torch.nn as nn

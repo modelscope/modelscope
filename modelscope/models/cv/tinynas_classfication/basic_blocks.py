@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # The ZenNAS implementation is also open-sourced by the authors, and available at https://github.com/idstcv/ZenNAS.
 
-import uuid
-
 import numpy as np
 import torch
 import torch.nn.functional as F
+import uuid
 from torch import nn
 
 from .global_utils import (create_netblock_list_from_str_inner,

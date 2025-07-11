@@ -1,10 +1,9 @@
 # The implementation is adopted from Pytorch-Lightning
 # https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/callbacks/model_checkpoint.py
 
+import numpy as np
 import os
 import re
-
-import numpy as np
 import torch
 
 

@@ -3,7 +3,6 @@
 import importlib
 import sys
 from collections import OrderedDict
-
 from packaging import version
 
 from modelscope.utils.import_utils import _torch_available

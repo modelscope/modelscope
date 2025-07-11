@@ -6,11 +6,10 @@
 
 import math
 import sys
-from typing import Dict, List, Optional, Tuple
-
 import torch
 import torch.nn as nn
 from torch import Tensor
+from typing import Dict, List, Optional, Tuple
 
 from modelscope.models.multi_modal.ofa.generate import search
 from modelscope.models.multi_modal.ofa.generate.ngram_repeat_block import \

@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import inspect
+import json
 import os
+import torch
 from collections.abc import Mapping
 from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import partial
-from typing import Callable, Dict, List, Optional, Tuple, Union
-
-import json
-import torch
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, Sampler
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.distributed import DistributedSampler
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.hub.check_model import check_local_model_is_latest
 from modelscope.metainfo import Trainers
@@ -1280,6 +1279,7 @@ class EpochBasedTrainer(BaseTrainer):
         self.invoke_hook(TrainerStages.before_val)
         if self._dist:
             from modelscope.trainers.utils.inference import multi_gpu_test
+
             # list of batched result and data samples
             metric_values = multi_gpu_test(
                 self,

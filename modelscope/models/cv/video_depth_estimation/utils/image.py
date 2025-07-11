@@ -1,12 +1,11 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
-import os
-from functools import lru_cache
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.nn.functional as funct
+from functools import lru_cache
 from PIL import Image
 
 from modelscope.models.cv.video_depth_estimation.utils.misc import same_shape

@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import importlib
-from typing import Dict, List, Union
-
 from pandas import DataFrame
+from typing import Dict, List, Union
 
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric

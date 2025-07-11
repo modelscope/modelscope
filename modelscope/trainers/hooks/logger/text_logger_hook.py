@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import datetime
+import json
 import os
 import os.path as osp
-from collections import OrderedDict
-
-import json
 import torch
+from collections import OrderedDict
 from torch import distributed as dist
 
 from modelscope.metainfo import Hooks

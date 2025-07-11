@@ -6,11 +6,10 @@
 # originally MIT License, Copyright (c) 2022 Rao, Yongming.
 
 import math
-from collections import OrderedDict
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from collections import OrderedDict
 from timm.models.layers import drop_path, trunc_normal_
 from torch import nn
 

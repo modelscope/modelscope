@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import random
-from typing import Optional
-
 import numpy as np
+import random
 import torch
 from packaging import version
+from typing import Optional
 
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS

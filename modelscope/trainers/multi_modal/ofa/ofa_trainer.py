@@ -1,18 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import math
 import os
 import shutil
 import tempfile
+import torch
 from functools import partial
 from shutil import ignore_patterns
-from typing import Callable, Dict, Optional, Tuple, Union
-
-import json
-import torch
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import Dataset
+from typing import Callable, Dict, Optional, Tuple, Union
 
 from modelscope.hub.file_download import model_file_download
 from modelscope.metainfo import Trainers

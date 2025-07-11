@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import shutil
-from typing import Any, Dict
-
-import numpy as np
 import torch
 import trimesh
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.human_reconstruction.utils import (

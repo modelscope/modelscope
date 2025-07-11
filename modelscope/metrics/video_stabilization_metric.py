@@ -1,14 +1,13 @@
 # Part of the implementation is borrowed and modified from DIFRINT,
 # publicly available at https://github.com/jinsc37/DIFRINT/blob/master/metrics.py
 
+import cv2
+import numpy as np
 import os
 import sys
 import tempfile
-from typing import Dict
-
-import cv2
-import numpy as np
 from tqdm import tqdm
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.models.cv.video_stabilization.utils.WarpUtils import \

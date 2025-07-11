@@ -1,18 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import logging
 import os
 import pathlib
+import torch
 from copy import deepcopy
 from math import ceil
-from time import time
-from typing import Any, Dict, Generator, List, Mapping, Optional, Union
-
-import json
-import torch
 from scipy.special import softmax
+from time import time
 from torch.cuda.amp import autocast
 from tqdm import tqdm
+from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

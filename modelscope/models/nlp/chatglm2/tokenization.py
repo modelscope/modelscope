@@ -1,10 +1,9 @@
 import os
-from typing import Dict, List, Optional, Union
-
 from sentencepiece import SentencePieceProcessor
 from transformers import PreTrainedTokenizer
 from transformers.tokenization_utils_base import BatchEncoding, EncodedInput
 from transformers.utils import PaddingStrategy
+from typing import Dict, List, Optional, Union
 
 
 class SPTokenizer:

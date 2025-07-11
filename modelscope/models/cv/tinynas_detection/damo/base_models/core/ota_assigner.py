@@ -1,10 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import warnings
-
 import torch
 import torch.nn.functional as F
+import warnings
 
 from modelscope.models.cv.tinynas_detection.damo.utils.boxes import \
     bbox_overlaps
@@ -126,6 +125,7 @@ class AssignResult(object):
                 labels = None
         else:
             import numpy as np
+
             # Create an overlap for each predicted box
             max_overlaps = torch.from_numpy(rng.rand(num_preds))
 

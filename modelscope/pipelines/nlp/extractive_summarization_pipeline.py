@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import re
-from typing import Any, Dict, List, Union
-
 import numpy as np
+import re
 import torch
 from datasets import Dataset
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

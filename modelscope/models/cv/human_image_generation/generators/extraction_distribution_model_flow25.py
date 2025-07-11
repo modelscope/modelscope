@@ -1,7 +1,6 @@
 import collections
 import os
 import sys
-
 import torch
 from torch import nn
 

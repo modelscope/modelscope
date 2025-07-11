@@ -5,7 +5,6 @@ import tempfile
 import unittest
 import uuid
 from os.path import expanduser
-
 from requests import delete
 
 from modelscope.hub.api import HubApi

@@ -3,9 +3,8 @@
 import os
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks

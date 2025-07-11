@@ -1,11 +1,10 @@
 # The implementation here is modified based on timm,
 # originally Apache 2.0 License and publicly available at
 # https://github.com/rwightman/pytorch-image-models/blob/main/timm/models/vision_transformer.py
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from functools import partial
 
 from .petl import Adapter, LoRA, Prefix, Prompt, SideTune
 from .timm_vision_transformer import (Attention, Block, DropPath, LayerScale,

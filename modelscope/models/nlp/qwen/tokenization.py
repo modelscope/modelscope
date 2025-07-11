@@ -6,16 +6,16 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
 import base64
+import json
 import logging
 import os
+import tiktoken
 import unicodedata
 from io import open
-from typing import List, Optional, Tuple, Union
-
-import json
-import tiktoken
 from transformers import AddedToken, PreTrainedTokenizer
+from typing import List, Optional, Tuple, Union
 
 from modelscope.utils.logger import get_logger
 

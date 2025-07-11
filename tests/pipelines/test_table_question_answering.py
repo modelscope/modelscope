@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import unittest
 from threading import Thread
-from typing import List
-
-import json
 from transformers import BertTokenizer
+from typing import List
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model

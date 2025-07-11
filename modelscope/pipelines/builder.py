@@ -261,8 +261,8 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
                                                  List[Model]],
                                     revision: Optional[str],
                                     kwargs: Dict[str, Any]) -> Optional[str]:
-    from .nlp.llm_pipeline import ModelTypeHelper, LLMAdapterRegistry
     from ..hub.check_model import get_model_id_from_cache
+    from .nlp.llm_pipeline import LLMAdapterRegistry, ModelTypeHelper
     if isinstance(model, list):
         model = model[0]
     if not isinstance(model, str):
@@ -271,6 +271,7 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
     llm_framework = kwargs.get('llm_framework', '')
     if llm_framework == 'swift':
         from swift.llm import get_model_info_meta
+
         # check if swift supports
         if os.path.exists(model):
             model_id = get_model_id_from_cache(model)

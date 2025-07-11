@@ -1,13 +1,12 @@
 # Part of the implementation is borrowed and modified from PGL-SUM,
 # publicly available at https://github.com/e-apostolidis/PGL-SUM
 
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os.path as osp
 import torch
 from tqdm import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_summarization import (PGLVideoSummarization,

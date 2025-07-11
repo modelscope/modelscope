@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Optional
-
 import torch
 import torch.nn as nn
+from typing import Optional
 
 
 def expand_mask(mask: torch.Tensor,

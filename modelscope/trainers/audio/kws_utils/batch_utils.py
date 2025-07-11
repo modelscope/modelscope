@@ -14,17 +14,16 @@
 
 import datetime
 import math
+import numpy as np
 import os
 import sys
-from collections import defaultdict
-from typing import List, Optional, Tuple
-
-import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
+from collections import defaultdict
 from torch.distributed import ReduceOp
 from torch.nn.utils import clip_grad_norm_
+from typing import List, Optional, Tuple
 
 from modelscope.utils.logger import get_logger
 

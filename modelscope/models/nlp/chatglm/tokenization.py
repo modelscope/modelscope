@@ -1,12 +1,11 @@
 """Tokenization classes for ChatGLM."""
-import os
-from typing import Dict, List, Optional, Union
-
 import numpy as np
+import os
 import sentencepiece as spm
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.tokenization_utils_base import BatchEncoding, EncodedInput
 from transformers.utils import PaddingStrategy
+from typing import Dict, List, Optional, Union
 
 from modelscope.utils import logger as logging
 

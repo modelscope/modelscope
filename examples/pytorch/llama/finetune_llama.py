@@ -2,12 +2,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
+import json
 import logging
 import os
-from dataclasses import dataclass, field
-
-import json
 import torch
+from dataclasses import dataclass, field
 from swift import LoRAConfig, Swift
 
 from modelscope import TrainingArgs, build_dataset_from_file

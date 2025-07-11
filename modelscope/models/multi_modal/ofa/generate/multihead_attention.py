@@ -4,8 +4,6 @@
 # https://github.com/facebookresearch/fairseq/blob/main/LICENSE
 
 import math
-from typing import Dict, Optional, Tuple
-
 import torch
 import torch.nn.functional as F
 from fairseq import utils
@@ -14,6 +12,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 from torch import Tensor, nn
 from torch.nn import Parameter
+from typing import Dict, Optional, Tuple
 
 
 @with_incremental_state

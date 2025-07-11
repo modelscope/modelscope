@@ -14,10 +14,9 @@
 """Protein data type."""
 import dataclasses
 import io
-from typing import Any, Mapping, Optional
-
 import numpy as np
 from Bio.PDB import PDBParser
+from typing import Any, Mapping, Optional
 
 from modelscope.models.science.unifold.data import residue_constants
 

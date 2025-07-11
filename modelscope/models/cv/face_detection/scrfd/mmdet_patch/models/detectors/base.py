@@ -2,14 +2,13 @@
 The implementation here is modified based on insightface, originally MIT license and publicly available at
 https://github.com/deepinsight/insightface/blob/master/detection/scrfd/mmdet/models/detectors/base.py
 """
-from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
-
 import mmcv
 import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 from mmcv.runner import auto_fp16
 from mmcv.utils import print_log
 from mmdet.utils import get_root_logger

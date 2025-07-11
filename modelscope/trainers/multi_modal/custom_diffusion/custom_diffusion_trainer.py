@@ -1,24 +1,23 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import hashlib
 import itertools
-import os
-import random
-import warnings
-from pathlib import Path
-from typing import Union
-
 import json
 import numpy as np
+import os
+import random
 import torch
 import torch.nn.functional as F
+import warnings
 from diffusers import DiffusionPipeline
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import CustomDiffusionAttnProcessor
+from pathlib import Path
 from PIL import Image
 from PIL.ImageOps import exif_transpose
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm.auto import tqdm
+from typing import Union
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset

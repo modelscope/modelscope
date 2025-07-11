@@ -1,9 +1,8 @@
 import math
-from inspect import isfunction
-
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
+from inspect import isfunction
 from torch import einsum, nn
 
 from .util_diffusion import checkpoint

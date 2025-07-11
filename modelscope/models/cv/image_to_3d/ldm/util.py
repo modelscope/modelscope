@@ -1,14 +1,13 @@
-import importlib
-import os
-import time
-from inspect import isfunction
-
 import cv2
+import importlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import PIL
+import time
 import torch
 import torchvision
+from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 from torch import optim
 
@@ -42,6 +41,7 @@ def add_margin(pil_img, color=0, size=256):
 
 def create_carvekit_interface():
     from carvekit.api.high import HiInterface
+
     # Check doc strings for more information
     interface = HiInterface(
         object_type='object',  # Can be "object" or "hairs-like".

@@ -1,8 +1,7 @@
 import importlib
-from inspect import isfunction
-
 import numpy as np
 import torch
+from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 from torch import optim
 

@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .tokenizer import SimpleTokenizer
-    from .model import SOONet
-    from .utils import decode_video
     from .clip import load_clip
+    from .model import SOONet
+    from .tokenizer import SimpleTokenizer
+    from .utils import decode_video
 else:
     _import_structure = {
         'model': ['SOONet'],

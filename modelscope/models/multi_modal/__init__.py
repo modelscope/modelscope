@@ -22,8 +22,8 @@ if TYPE_CHECKING:
     from .rleg import RLEGForMultiModalEmbedding
     from .team import TEAMForMultiModalSimilarity
     from .video_synthesis import TextToVideoSynthesis
-    from .vldoc import VLDocForDocVLEmbedding
     from .videocomposer import VideoComposer
+    from .vldoc import VLDocForDocVLEmbedding
 
 else:
     _import_structure = {

@@ -1,8 +1,7 @@
 import os.path
+import torch.cuda
 from abc import abstractmethod
 from typing import List, Union
-
-import torch.cuda
 
 from modelscope import read_config, snapshot_download
 from modelscope.utils.config import Config

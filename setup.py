@@ -1,9 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # !/usr/bin/env python
+from setuptools import find_packages, setup
+
 import os
 import shutil
 import subprocess
-from setuptools import find_packages, setup
 
 from modelscope.utils.constant import Fields
 

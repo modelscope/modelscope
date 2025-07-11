@@ -13,9 +13,8 @@
 # limitations under the License.
 """Transformer."""
 
-import math
-
 import deepspeed
+import math
 import torch
 import torch.nn.init as init
 from apex.normalization.fused_layer_norm import FusedLayerNorm as LayerNorm

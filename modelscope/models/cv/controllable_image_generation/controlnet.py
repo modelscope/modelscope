@@ -1,22 +1,21 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
 
+import cv2
+import einops
 import math
+import numpy as np
 import os
 import random
 import sys
 import tempfile
-from typing import Any, Dict, Optional, Union
-
-import cv2
-import einops
-import numpy as np
 import torch
 import torch.nn as nn
 from control_ldm.cldm.hack import disable_verbosity, enable_sliced_attention
 from control_ldm.cldm.model import create_model, load_state_dict
 from control_ldm.ldm.models.diffusion.ddim import DDIMSampler
 from PIL import Image
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

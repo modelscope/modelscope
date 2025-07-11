@@ -19,12 +19,13 @@ class LongShortNetExp(Exp):
         self.merge_cfg = dict()
 
     def get_model(self):
-        from ..models.longshort import LONGSHORT
+        import torch.nn as nn
+
+        from modelscope.models.cv.stream_yolo.models.tal_head import TALHead
         from ..models.dfp_pafpn_long import DFPPAFPNLONG
         from ..models.dfp_pafpn_short import DFPPAFPNSHORT
+        from ..models.longshort import LONGSHORT
         from ..models.longshort_backbone_neck import BACKBONENECK
-        from modelscope.models.cv.stream_yolo.models.tal_head import TALHead
-        import torch.nn as nn
 
         if getattr(self, 'model', None) is None:
             in_channels = [256, 512, 1024]

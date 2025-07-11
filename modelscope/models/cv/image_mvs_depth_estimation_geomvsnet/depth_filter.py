@@ -1,8 +1,7 @@
 # The implementation here is modified based on https://github.com/xy-guo/MVSNet_pytorch
-import os
-
 import cv2
 import numpy as np
+import os
 from PIL import Image
 from plyfile import PlyData, PlyElement
 

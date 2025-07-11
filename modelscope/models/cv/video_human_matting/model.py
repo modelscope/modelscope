@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-from typing import Optional
-
 import numpy as np
+import os.path as osp
 import torch
 import torchvision
 from torch.nn import functional as F
+from typing import Optional
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

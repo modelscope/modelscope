@@ -3,9 +3,6 @@
 # made publicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
 import os
 import os.path as osp
-from functools import partial
-from typing import Any, Callable, List, Mapping, Optional, Union
-
 import torch
 import torch.nn.functional as F
 from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
@@ -13,7 +10,9 @@ from diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline,
                        utils)
 from diffusers.models import attention
 from diffusers.utils import deprecation_utils
+from functools import partial
 from transformers import CLIPTextModel, CLIPTokenizer
+from typing import Any, Callable, List, Mapping, Optional, Union
 
 from modelscope import snapshot_download
 from modelscope.metainfo import Models

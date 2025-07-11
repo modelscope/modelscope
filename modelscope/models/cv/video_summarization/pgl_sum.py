@@ -2,7 +2,6 @@
 # publicly available at https://github.com/e-apostolidis/PGL-SUM
 
 import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

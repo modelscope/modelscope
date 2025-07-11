@@ -1,7 +1,6 @@
 import base64
-import unittest
-
 import json
+import unittest
 
 from modelscope.utils.constant import Tasks
 from modelscope.utils.input_output import (

@@ -14,16 +14,15 @@
 # limitations under the License.
 """ PyTorch DeBERTa-v2 model."""
 
-from collections.abc import Sequence
-from typing import Optional, Tuple, Union
-
 import torch
 import torch.utils.checkpoint
+from collections.abc import Sequence
 from torch import nn
 from torch.nn import LayerNorm
 from transformers.activations import ACT2FN
 from transformers.modeling_utils import PreTrainedModel
 from transformers.pytorch_utils import softmax_backward_data
+from typing import Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import Model, TorchModel

@@ -3,15 +3,14 @@
 Processor class for GeoLayoutLM.
 """
 
-from collections import defaultdict
-from typing import Dict, Iterable, List, Union
-
 import cv2
 import numpy as np
 import PIL
 import torch
+from collections import defaultdict
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from torchvision import transforms
+from typing import Dict, Iterable, List, Union
 
 from modelscope.preprocessors.image import LoadImage
 

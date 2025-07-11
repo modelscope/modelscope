@@ -3,13 +3,12 @@
 # Mostly copy-paste from torchvision references.
 
 import pickle
-from typing import List, Optional
-
 import torch
 import torch.distributed as dist
 # needed due to empty tensor bug in pytorch and torchvision 0.5
 import torchvision
 from torch import Tensor
+from typing import List, Optional
 
 if float(torchvision.__version__.split('.')[1]) < 7.0:
     from torchvision.ops import _new_empty_tensor

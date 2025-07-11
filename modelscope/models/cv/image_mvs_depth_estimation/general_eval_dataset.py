@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
+import numpy as np
 import os
 import re
 import sys
-
-import cv2
-import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 

@@ -2,9 +2,8 @@
 # made publicly available under the Apache 2.0 License at https://github.com/mttr2021/MTTR
 # Modified from DETR https://github.com/facebookresearch/detr
 
-import random
-
 import PIL
+import random
 import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as F

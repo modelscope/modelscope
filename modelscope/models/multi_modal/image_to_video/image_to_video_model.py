@@ -3,11 +3,10 @@
 import os
 import os.path as osp
 import random
-from copy import copy
-from typing import Any, Dict
-
 import torch
 import torch.cuda.amp as amp
+from copy import copy
+from typing import Any, Dict
 
 import modelscope.models.multi_modal.image_to_video.utils.transforms as data
 from modelscope.metainfo import Models

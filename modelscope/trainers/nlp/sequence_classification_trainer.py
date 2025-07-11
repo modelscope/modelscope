@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import time
 from typing import Dict, Optional, Tuple, Union
-
-import numpy as np
 
 from modelscope.metainfo import Trainers
 from modelscope.trainers.base import BaseTrainer

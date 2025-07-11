@@ -7,9 +7,8 @@ import os
 import shutil
 import sys
 import tempfile
-from os.path import dirname, join
-
 from easydict import EasyDict
+from os.path import dirname, join
 
 
 def parse_config(filename):

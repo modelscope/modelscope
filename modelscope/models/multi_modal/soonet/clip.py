@@ -1,13 +1,12 @@
 # The implementation is adopted from CLIP, made publicly available
 # under MIT License at https://github.com/openai/CLIP
 
-import warnings
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import numpy as np
 import torch
+import warnings
+from collections import OrderedDict
 from torch import nn
+from typing import Tuple, Union
 
 
 class CLIP(nn.Module):

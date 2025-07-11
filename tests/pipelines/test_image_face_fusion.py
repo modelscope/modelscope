@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import cv2
+import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.outputs import OutputKeys

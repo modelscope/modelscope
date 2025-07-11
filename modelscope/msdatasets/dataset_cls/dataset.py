@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
+import datasets
 import math
 import os
-from itertools import islice
-
-import datasets
 import pandas as pd
 from datasets import IterableDataset
+from itertools import islice
 from tqdm.auto import tqdm
 
 from modelscope.msdatasets.utils.maxcompute_utils import MaxComputeUtil

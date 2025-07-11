@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 import numpy as np
+import unittest
 
 from modelscope.metrics.token_classification_metric import \
     TokenClassificationMetric

@@ -1,13 +1,12 @@
 # Copyright © Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Optional
-
 import cv2
 import numpy as np
+import os
 import torch
 import torchvision.transforms as transforms
 from diffusers import DiffusionPipeline
 from PIL import Image
+from typing import Any, Dict, Optional
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

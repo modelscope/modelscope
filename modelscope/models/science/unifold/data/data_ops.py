@@ -2,12 +2,11 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 import itertools
+import numpy as np
+import torch
 from functools import reduce, wraps
 from operator import add
 from typing import List, MutableMapping, Optional
-
-import numpy as np
-import torch
 from unicore.data import data_utils
 from unicore.utils import batched_gather, one_hot, tensor_tree_map, tree_map
 

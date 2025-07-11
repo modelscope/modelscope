@@ -4,10 +4,8 @@
 # The implementation here is modified based on diffusers,
 # originally Apache License, Copyright 2023 The HuggingFace Team
 
-import math
-from typing import Any, Dict
-
 import cv2
+import math
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -17,6 +15,7 @@ from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import \
     StableDiffusionPipelineOutput
 from PIL import Image
 from tqdm.auto import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

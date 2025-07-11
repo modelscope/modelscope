@@ -1,12 +1,11 @@
 import math
-from abc import abstractmethod
-from functools import partial
-from typing import Iterable
-
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from abc import abstractmethod
+from functools import partial
+from typing import Iterable
 
 from ..util import exists
 from .attention import SpatialTransformer

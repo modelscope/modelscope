@@ -3,9 +3,8 @@
 # ICCV 2019, Seoul, paper available at https://arxiv.org/abs/1910.04562
 # Poster available at https://chufengt.github.io/publication/pedestrian-attribute/iccv_poster_id2029.pdf
 
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

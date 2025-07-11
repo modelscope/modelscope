@@ -5,11 +5,12 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .cascade_mask_rcnn_swin import CascadeMaskRCNNSwin
+    from .fastinst_model import FastInst
+    from .maskdino_model import MaskDINOSwinModel
     from .maskdino_swin import MaskDINOSwin
     from .model import CascadeMaskRCNNSwinModel
-    from .maskdino_model import MaskDINOSwinModel
-    from .fastinst_model import FastInst
-    from .postprocess_utils import get_img_ins_seg_result, get_maskdino_ins_seg_result
+    from .postprocess_utils import (get_img_ins_seg_result,
+                                    get_maskdino_ins_seg_result)
 else:
     _import_structure = {
         'cascade_mask_rcnn_swin': ['CascadeMaskRCNNSwin'],

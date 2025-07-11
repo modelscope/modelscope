@@ -2,11 +2,10 @@
 
 import copy
 import logging
-import os.path as osp
-from collections import OrderedDict
-
 import numpy as np
+import os.path as osp
 import pandas as pd
+from collections import OrderedDict
 from detectron2.evaluation import DatasetEvaluator
 from detectron2.evaluation.pascal_voc_evaluation import voc_ap
 from detectron2.structures.boxes import Boxes, pairwise_iou

@@ -8,9 +8,10 @@ if TYPE_CHECKING:
     from .dialog_intent_prediction_preprocessor import \
         DialogIntentPredictionPreprocessor
     from .dialog_modeling_preprocessor import DialogModelingPreprocessor
-    from .dialog_state_tracking_preprocessor import DialogStateTrackingPreprocessor
+    from .dialog_state_tracking_preprocessor import \
+        DialogStateTrackingPreprocessor
     from .dst_processors import InputFeatures
-    from .fields import MultiWOZBPETextField, IntentBPETextField
+    from .fields import IntentBPETextField, MultiWOZBPETextField
 
 else:
     _import_structure = {

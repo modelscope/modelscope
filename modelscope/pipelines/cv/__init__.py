@@ -4,126 +4,171 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .action_recognition_pipeline import ActionRecognitionPipeline
     from .action_detection_pipeline import ActionDetectionPipeline
+    from .action_recognition_pipeline import ActionRecognitionPipeline
     from .animal_recognition_pipeline import AnimalRecognitionPipeline
+    from .anydoor_pipeline import AnydoorPipeline
+    from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
+    from .bad_image_detecting_pipeline import BadImageDetecingPipeline
     from .body_2d_keypoints_pipeline import Body2DKeypointsPipeline
     from .body_3d_keypoints_pipeline import Body3DKeypointsPipeline
-    from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
+    from .card_detection_correction_pipeline import \
+        CardDetectionCorrectionPipeline
     from .card_detection_pipeline import CardDetectionPipeline
-    from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
+    from .cmdssl_video_embedding_pipeline import CMDSSLVideoEmbeddingPipeline
+    from .controllable_image_generation_pipeline import \
+        ControllableImageGenerationPipeline
     from .crowd_counting_pipeline import CrowdCountingPipeline
-    from .image_detection_pipeline import ImageDetectionPipeline
-    from .image_salient_detection_pipeline import ImageSalientDetectionPipeline
+    from .ddcolor_image_colorization_pipeline import \
+        DDColorImageColorizationPipeline
+    from .ddpm_semantic_segmentation_pipeline import \
+        DDPMImageSemanticSegmentationPipeline
+    from .face_attribute_recognition_pipeline import \
+        FaceAttributeRecognitionPipeline
     from .face_detection_pipeline import FaceDetectionPipeline
     from .face_image_generation_pipeline import FaceImageGenerationPipeline
-    from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .face_liveness_ir_pipeline import FaceLivenessIrPipeline
+    from .face_processing_base_pipeline import FaceProcessingBasePipeline
+    from .face_recognition_onnx_fm_pipeline import \
+        FaceRecognitionOnnxFmPipeline
+    from .face_recognition_onnx_ir_pipeline import \
+        FaceRecognitionOnnxIrPipeline
     from .face_recognition_ood_pipeline import FaceRecognitionOodPipeline
-    from .arc_face_recognition_pipeline import ArcFaceRecognitionPipeline
-    from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
-    from .face_recognition_onnx_ir_pipeline import FaceRecognitionOnnxIrPipeline
-    from .face_recognition_onnx_fm_pipeline import FaceRecognitionOnnxFmPipeline
+    from .face_recognition_pipeline import FaceRecognitionPipeline
+    from .face_reconstruction_pipeline import FaceReconstructionPipeline
+    from .facial_expression_recognition_pipeline import \
+        FacialExpressionRecognitionPipeline
+    from .facial_landmark_confidence_pipeline import \
+        FacialLandmarkConfidencePipeline
     from .general_recognition_pipeline import GeneralRecognitionPipeline
+    from .hand_static_pipeline import HandStaticPipeline
+    from .hicossl_video_embedding_pipeline import HICOSSLVideoEmbeddingPipeline
+    from .human3d_animation_pipeline import Human3DAnimationPipeline
+    from .human3d_render_pipeline import Human3DRenderPipeline
+    from .human_normal_estimation_pipeline import HumanNormalEstimationPipeline
+    from .image_bts_depth_estimation_pipeline import \
+        ImageBTSDepthEstimationPipeline
     from .image_cartoon_pipeline import ImageCartoonPipeline
-    from .image_classification_pipeline import GeneralImageClassificationPipeline
+    from .image_classification_pipeline import \
+        GeneralImageClassificationPipeline
     from .image_color_enhance_pipeline import ImageColorEnhancePipeline
     from .image_colorization_pipeline import ImageColorizationPipeline
-    from .image_denoise_pipeline import ImageDenoisePipeline
     from .image_deblur_pipeline import ImageDeblurPipeline
+    from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
+    from .image_denoise_pipeline import ImageDenoisePipeline
+    from .image_depth_estimation_marigold_pipeline import \
+        ImageDepthEstimationMarigoldPipeline
+    from .image_detection_pipeline import ImageDetectionPipeline
+    from .image_driving_perception_pipeline import \
+        ImageDrivingPerceptionPipeline
     from .image_editing_pipeline import ImageEditingPipeline
-    from .image_instance_segmentation_pipeline import ImageInstanceSegmentationPipeline
-    from .image_matting_pipeline import ImageMattingPipeline
-    from .image_portrait_enhancement_pipeline import ImagePortraitEnhancementPipeline
-    from .image_reid_person_pipeline import ImageReidPersonPipeline
-    from .image_semantic_segmentation_pipeline import ImageSemanticSegmentationPipeline
-    from .image_style_transfer_pipeline import ImageStyleTransferPipeline
-    from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
-    from .image_super_resolution_pasd_pipeline import ImageSuperResolutionPASDPipeline
-    from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
-    from .image_to_image_translation_pipeline import Image2ImageTranslationPipeline
-
+    from .image_human_parsing_pipeline import ImageHumanParsingPipeline
     from .image_inpainting_pipeline import ImageInpaintingPipeline
+    from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
+    from .image_instance_segmentation_pipeline import \
+        ImageInstanceSegmentationPipeline
+    from .image_local_feature_matching_pipeline import \
+        ImageLocalFeatureMatchingPipeline
+    from .image_matching_fast_pipeline import ImageMatchingFastPipeline
+    from .image_matching_pipeline import ImageMatchingPipeline
+    from .image_matting_pipeline import ImageMattingPipeline
+    from .image_mvs_depth_estimation_pipeline import \
+        ImageMultiViewDepthEstimationPipeline
+    from .image_open_vocabulary_detection_pipeline import \
+        ImageOpenVocabularyDetectionPipeline
     from .image_paintbyexample_pipeline import ImagePaintbyexamplePipeline
-    from .product_retrieval_embedding_pipeline import ProductRetrievalEmbeddingPipeline
+    from .image_panoptic_segmentation_pipeline import \
+        ImagePanopticSegmentationPipeline
+    from .image_portrait_enhancement_pipeline import \
+        ImagePortraitEnhancementPipeline
+    from .image_quality_assessment_degradation_pipeline import \
+        ImageQualityAssessmentDegradationPipeline
+    from .image_quality_assessment_man_pipeline import \
+        ImageQualityAssessmentMANPipeline
+    from .image_quality_assessment_mos_pipeline import \
+        ImageQualityAssessmentMosPipeline
+    from .image_reid_person_pipeline import ImageReidPersonPipeline
+    from .image_salient_detection_pipeline import ImageSalientDetectionPipeline
+    from .image_semantic_segmentation_pipeline import \
+        ImageSemanticSegmentationPipeline
+    from .image_skychange_pipeline import ImageSkychangePipeline
+    from .image_structured_model_probing_pipeline import \
+        ImageStructuredModelProbingPipeline
+    from .image_style_transfer_pipeline import ImageStyleTransferPipeline
+    from .image_super_resolution_pasd_pipeline import \
+        ImageSuperResolutionPASDPipeline
+    from .image_super_resolution_pipeline import ImageSuperResolutionPipeline
+    from .image_to_3d_pipeline import Image23DPipeline
+    from .image_to_image_generate_pipeline import Image2ImageGenerationPipeline
+    from .image_to_image_translation_pipeline import \
+        Image2ImageTranslationPipeline
+    from .language_guided_video_summarization_pipeline import \
+        LanguageGuidedVideoSummarizationPipeline
+    from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
+    from .lineless_table_recognition_pipeline import \
+        LinelessTableRecognitionPipeline
     from .live_category_pipeline import LiveCategoryPipeline
+    from .mask_face_recognition_pipeline import MaskFaceRecognitionPipeline
+    from .maskdino_instance_segmentation_pipeline import \
+        MaskDINOInstanceSegmentationPipeline
+    from .mobile_image_super_resolution_pipeline import \
+        MobileImageSuperResolutionPipeline
+    from .mog_face_detection_pipeline import MogFaceDetectionPipeline
+    from .movie_scene_segmentation_pipeline import \
+        MovieSceneSegmentationPipeline
+    from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
+    from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
+    from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
+    from .object_detection_3d_pipeline import ObjectDetection3DPipeline
     from .ocr_detection_pipeline import OCRDetectionPipeline
     from .ocr_recognition_pipeline import OCRRecognitionPipeline
-    from .license_plate_detection_pipeline import LicensePlateDetectionPipeline
-    from .card_detection_correction_pipeline import CardDetectionCorrectionPipeline
-    from .table_recognition_pipeline import TableRecognitionPipeline
-    from .lineless_table_recognition_pipeline import LinelessTableRecognitionPipeline
-    from .skin_retouching_pipeline import SkinRetouchingPipeline
-    from .face_reconstruction_pipeline import FaceReconstructionPipeline
-    from .tinynas_classification_pipeline import TinynasClassificationPipeline
-    from .video_category_pipeline import VideoCategoryPipeline
-    from .virtual_try_on_pipeline import VirtualTryonPipeline
-    from .shop_segmentation_pipleline import ShopSegmentationPipeline
-    from .text_driven_segmentation_pipleline import TextDrivenSegmentationPipeline
-    from .movie_scene_segmentation_pipeline import MovieSceneSegmentationPipeline
-    from .mog_face_detection_pipeline import MogFaceDetectionPipeline
-    from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
+    from .panorama_depth_estimation_pipeline import \
+        PanoramaDepthEstimationPipeline
+    from .pedestrian_attribute_recognition_pipeline import \
+        PedestrainAttributeRecognitionPipeline
+    from .pointcloud_sceneflow_estimation_pipeline import \
+        PointCloudSceneFlowEstimationPipeline
+    from .product_retrieval_embedding_pipeline import \
+        ProductRetrievalEmbeddingPipeline
+    from .referring_video_object_segmentation_pipeline import \
+        ReferringVideoObjectSegmentationPipeline
     from .retina_face_detection_pipeline import RetinaFaceDetectionPipeline
-    from .facial_expression_recognition_pipeline import FacialExpressionRecognitionPipeline
-    from .facial_landmark_confidence_pipeline import FacialLandmarkConfidencePipeline
-    from .face_processing_base_pipeline import FaceProcessingBasePipeline
-    from .face_attribute_recognition_pipeline import FaceAttributeRecognitionPipeline
-    from .mtcnn_face_detection_pipeline import MtcnnFaceDetectionPipelin
-    from .hand_static_pipeline import HandStaticPipeline
-    from .referring_video_object_segmentation_pipeline import ReferringVideoObjectSegmentationPipeline
-    from .language_guided_video_summarization_pipeline import LanguageGuidedVideoSummarizationPipeline
-    from .vision_efficient_tuning_adapter_pipeline import VisionEfficientTuningAdapterPipeline
-    from .vision_efficient_tuning_prompt_pipeline import VisionEfficientTuningPromptPipeline
-    from .vision_efficient_tuning_prefix_pipeline import VisionEfficientTuningPrefixPipeline
-    from .vision_efficient_tuning_lora_pipeline import VisionEfficientTuningLoRAPipeline
-    from .vision_middleware_pipeline import VisionMiddlewarePipeline
-    from .vidt_pipeline import VidtPipeline
-    from .video_frame_interpolation_pipeline import VideoFrameInterpolationPipeline
-    from .image_skychange_pipeline import ImageSkychangePipeline
-    from .image_driving_perception_pipeline import ImageDrivingPerceptionPipeline
-    from .vop_retrieval_pipeline import VopRetrievalPipeline
-    from .vop_retrieval_se_pipeline import VopRetrievalSEPipeline
-    from .video_object_segmentation_pipeline import VideoObjectSegmentationPipeline
+    from .rife_video_frame_interpolation_pipeline import \
+        RIFEVideoFrameInterpolationPipeline
+    from .self_supervised_depth_completion_pipeline import \
+        SelfSupervisedDepthCompletionPipeline
+    from .shop_segmentation_pipleline import ShopSegmentationPipeline
+    from .skin_retouching_pipeline import SkinRetouchingPipeline
+    from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
+    from .table_recognition_pipeline import TableRecognitionPipeline
+    from .text_driven_segmentation_pipleline import \
+        TextDrivenSegmentationPipeline
+    from .text_to_360panorama_image_pipeline import \
+        Text2360PanoramaImagePipeline
+    from .tinynas_classification_pipeline import TinynasClassificationPipeline
+    from .ulfd_face_detection_pipeline import UlfdFaceDetectionPipeline
+    from .video_category_pipeline import VideoCategoryPipeline
+    from .video_colorization_pipeline import VideoColorizationPipeline
     from .video_deinterlace_pipeline import VideoDeinterlacePipeline
-    from .image_matching_pipeline import ImageMatchingPipeline
-    from .image_matching_fast_pipeline import ImageMatchingFastPipeline
+    from .video_frame_interpolation_pipeline import \
+        VideoFrameInterpolationPipeline
+    from .video_object_segmentation_pipeline import \
+        VideoObjectSegmentationPipeline
     from .video_stabilization_pipeline import VideoStabilizationPipeline
     from .video_super_resolution_pipeline import VideoSuperResolutionPipeline
-    from .pointcloud_sceneflow_estimation_pipeline import PointCloudSceneFlowEstimationPipeline
-    from .face_liveness_ir_pipeline import FaceLivenessIrPipeline
-    from .maskdino_instance_segmentation_pipeline import MaskDINOInstanceSegmentationPipeline
-    from .image_mvs_depth_estimation_pipeline import ImageMultiViewDepthEstimationPipeline
-    from .panorama_depth_estimation_pipeline import PanoramaDepthEstimationPipeline
-    from .ddcolor_image_colorization_pipeline import DDColorImageColorizationPipeline
-    from .image_structured_model_probing_pipeline import ImageStructuredModelProbingPipeline
-    from .video_colorization_pipeline import VideoColorizationPipeline
-    from .image_defrcn_fewshot_pipeline import ImageDefrcnDetectionPipeline
-    from .image_quality_assessment_degradation_pipeline import ImageQualityAssessmentDegradationPipeline
-    from .image_open_vocabulary_detection_pipeline import ImageOpenVocabularyDetectionPipeline
-    from .object_detection_3d_pipeline import ObjectDetection3DPipeline
-    from .ddpm_semantic_segmentation_pipeline import DDPMImageSemanticSegmentationPipeline
-    from .image_inpainting_sdv2_pipeline import ImageInpaintingSDV2Pipeline
-    from .image_quality_assessment_mos_pipeline import ImageQualityAssessmentMosPipeline
-    from .image_quality_assessment_man_pipeline import ImageQualityAssessmentMANPipeline
-    from .bad_image_detecting_pipeline import BadImageDetecingPipeline
-    from .mobile_image_super_resolution_pipeline import MobileImageSuperResolutionPipeline
-    from .image_human_parsing_pipeline import ImageHumanParsingPipeline
-    from .nerf_recon_acc_pipeline import NeRFReconAccPipeline
-    from .nerf_recon_4k_pipeline import NeRFRecon4KPipeline
-    from .image_to_3d_pipeline import Image23DPipeline
-    from .surface_recon_common_pipeline import SurfaceReconCommonPipeline
-    from .controllable_image_generation_pipeline import ControllableImageGenerationPipeline
-    from .image_bts_depth_estimation_pipeline import ImageBTSDepthEstimationPipeline
-    from .pedestrian_attribute_recognition_pipeline import PedestrainAttributeRecognitionPipeline
-    from .image_panoptic_segmentation_pipeline import ImagePanopticSegmentationPipeline
-    from .text_to_360panorama_image_pipeline import Text2360PanoramaImagePipeline
-    from .human3d_render_pipeline import Human3DRenderPipeline
-    from .human3d_animation_pipeline import Human3DAnimationPipeline
-    from .image_local_feature_matching_pipeline import ImageLocalFeatureMatchingPipeline
-    from .rife_video_frame_interpolation_pipeline import RIFEVideoFrameInterpolationPipeline
-    from .anydoor_pipeline import AnydoorPipeline
-    from .image_depth_estimation_marigold_pipeline import ImageDepthEstimationMarigoldPipeline
-    from .self_supervised_depth_completion_pipeline import SelfSupervisedDepthCompletionPipeline
-    from .human_normal_estimation_pipeline import HumanNormalEstimationPipeline
+    from .vidt_pipeline import VidtPipeline
+    from .virtual_try_on_pipeline import VirtualTryonPipeline
+    from .vision_efficient_tuning_adapter_pipeline import \
+        VisionEfficientTuningAdapterPipeline
+    from .vision_efficient_tuning_lora_pipeline import \
+        VisionEfficientTuningLoRAPipeline
+    from .vision_efficient_tuning_prefix_pipeline import \
+        VisionEfficientTuningPrefixPipeline
+    from .vision_efficient_tuning_prompt_pipeline import \
+        VisionEfficientTuningPromptPipeline
+    from .vision_middleware_pipeline import VisionMiddlewarePipeline
+    from .vop_retrieval_pipeline import VopRetrievalPipeline
+    from .vop_retrieval_se_pipeline import VopRetrievalSEPipeline
 
 else:
     _import_structure = {

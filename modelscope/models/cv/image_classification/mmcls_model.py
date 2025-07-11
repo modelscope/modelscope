@@ -14,6 +14,7 @@ class ClassificationModel(TorchModel):
     def __init__(self, model_dir: str, **kwargs):
         import mmcv
         from mmcls.models import build_classifier
+
         import modelscope.models.cv.image_classification.backbones
         from modelscope.utils.hub import read_config
 

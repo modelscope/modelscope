@@ -1,10 +1,9 @@
 # The code is modified based on BasicSR metrics:
 # https://github.com/XPixelGroup/BasicSR/tree/master/basicsr/metrics
 
-from typing import Dict
-
 import cv2
 import numpy as np
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

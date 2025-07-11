@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 import torch
+import unittest
 
 from modelscope.models import Model
 from modelscope.outputs import OutputKeys

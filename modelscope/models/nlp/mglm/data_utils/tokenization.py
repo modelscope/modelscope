@@ -14,14 +14,13 @@
 """Utilities for using and training tokenizers (char, wordpiece, sentencepiece)"""
 import csv
 import itertools
+import nltk
 import os
 import random
-from collections import namedtuple
-
-import nltk
 import regex as re
 import sentencepiece as spm
 import torch
+from collections import namedtuple
 from nltk import tokenize as nltk_tokenize
 
 from . import sp_tokenizer

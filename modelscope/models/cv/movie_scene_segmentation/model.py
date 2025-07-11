@@ -1,13 +1,11 @@
 # The implementation here is modified based on BaSSL,
 # originally Apache 2.0 License and publicly available at https://github.com/kakaobrain/bassl
 
+import einops
 import math
+import numpy as np
 import os
 import os.path as osp
-from typing import Any, Dict
-
-import einops
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,6 +13,7 @@ import torchvision.transforms as TF
 from PIL import Image
 from shotdetect_scenedetect_lgss import shot_detector
 from tqdm import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

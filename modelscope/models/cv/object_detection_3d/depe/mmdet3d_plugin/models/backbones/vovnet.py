@@ -2,11 +2,10 @@
 The implementation here is modified based on PETR, originally Apache-2.0 license and publicly available at
 https://github.com/megvii-research/PETR/blob/main/projects/mmdet3d_plugin/models/backbones
 """
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
 from mmcv.runner import BaseModule
 from mmdet.models.builder import BACKBONES
 from torch.nn.modules.batchnorm import _BatchNorm

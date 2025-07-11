@@ -1,10 +1,9 @@
 # The implementation is adopted from https://github.com/610265158/Peppa_Pig_Face_Engine
 
-import time
-
 import cv2
 import numpy as np
 import tensorflow as tf
+import time
 
 from .config import config as cfg
 

@@ -57,7 +57,9 @@ class TestFinetuneTokenClassification(unittest.TestCase):
         )
         shutil.unpack_archive(f'{self.tmp_dir}/icwb2-data.zip', self.tmp_dir)
         from datasets import load_dataset
-        from modelscope.preprocessors.nlp import WordSegmentationBlankSetToLabelPreprocessor
+
+        from modelscope.preprocessors.nlp import \
+            WordSegmentationBlankSetToLabelPreprocessor
         preprocessor = WordSegmentationBlankSetToLabelPreprocessor()
         dataset = load_dataset(
             'text',

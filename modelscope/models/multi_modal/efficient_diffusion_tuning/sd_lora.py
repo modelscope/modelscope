@@ -2,16 +2,15 @@
 # The implementation is adopted from HighCWu,
 # made publicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
 import os
-from dataclasses import dataclass
-from typing import List, Tuple, Union
-
 import torch
 import torch.nn as nn
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.attention_processor import Attention
 from diffusers.models.lora import LoRALinearLayer
 from diffusers.models.modeling_utils import ModelMixin
 from diffusers.utils.outputs import BaseOutput
+from typing import List, Tuple, Union
 
 
 @dataclass

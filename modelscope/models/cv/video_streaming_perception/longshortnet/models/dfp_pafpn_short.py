@@ -1,11 +1,10 @@
 # Copyright (c) 2014-2021 Megvii Inc.
 # Copyright (c) 2022-2023 Alibaba, Inc. and its affiliates. All rights reserved.
 
-from collections import defaultdict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import defaultdict
 
 from modelscope.models.cv.stream_yolo.models.darknet import CSPDarknet
 from modelscope.models.cv.stream_yolo.models.network_blocks import (BaseConv,

@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import glob
+import json
+import numpy as np
 import os
 import shutil
 import tempfile
-import unittest
-
-import json
-import numpy as np
 import torch
+import unittest
 from packaging import version
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel

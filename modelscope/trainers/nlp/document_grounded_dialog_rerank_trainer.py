@@ -1,13 +1,12 @@
+import numpy as np
 import os
 import random
 import time
-from typing import Iterable
-
-import numpy as np
 import torch
 import torch.cuda
 import torch.nn.functional as F
 from transformers import AdamW, get_linear_schedule_with_warmup
+from typing import Iterable
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

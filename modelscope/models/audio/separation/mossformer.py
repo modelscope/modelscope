@@ -2,11 +2,10 @@
 
 import copy
 import os
-from typing import Any, Dict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel

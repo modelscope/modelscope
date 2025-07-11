@@ -2,12 +2,11 @@
 Part of the implementation is borrowed and modified from LaMa, publicly available at
 https://github.com/saic-mdal/lama
 """
-from typing import Dict
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from scipy import linalg
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.models.cv.image_inpainting.modules.inception import InceptionV3

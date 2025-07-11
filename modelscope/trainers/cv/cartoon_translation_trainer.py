@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import os.path as osp
-from typing import Dict, Optional
-
-import numpy as np
 import tensorflow as tf
 from packaging import version
 from tqdm import tqdm
+from typing import Dict, Optional
 
 from modelscope.models.cv.cartoon import (CartoonModel, all_file,
                                           simple_superpixel, tf_data_loader,

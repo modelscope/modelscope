@@ -1,13 +1,12 @@
 # Part of the implementation is borrowed and modified from MTTR,
 # publicly available at https://github.com/mttr2021/MTTR
-from typing import Dict
-
 import numpy as np
 import torch
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools.mask import decode
 from tqdm import tqdm
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

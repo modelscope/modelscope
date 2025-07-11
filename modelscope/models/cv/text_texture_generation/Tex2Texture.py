@@ -3,11 +3,9 @@
 # originally Apache 2.0 License and public available at
 # https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/controlnet/pipeline_controlnet_inpaint.py
 
-import os
-from typing import Any, Callable, Dict, List, Optional, Union
-
 import cv2
 import numpy as np
+import os
 import PIL
 import PIL.Image as Image
 import torch
@@ -24,6 +22,7 @@ from diffusers.utils import (deprecate, is_accelerate_available,
                              is_accelerate_version, is_compiled_module,
                              logging, randn_tensor, replace_example_docstring)
 from pytorch3d.io import load_obj, load_objs_as_meshes, save_obj
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

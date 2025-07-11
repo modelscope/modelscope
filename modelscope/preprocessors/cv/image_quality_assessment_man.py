@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
-from typing import Any, Dict
-
 import torch
 import torch.nn.functional as F
 from numpy import ndarray
 from PIL import Image
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import load_image

@@ -2,9 +2,8 @@
 import os
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.megatron_utils import (convert_megatron_checkpoint,

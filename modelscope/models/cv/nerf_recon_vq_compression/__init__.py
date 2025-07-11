@@ -5,6 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .nerf_recon_vq_compression import NeRFReconVQCompression
+
     # from .nerf_preprocess import NeRFReconPreprocessor
 
 else:

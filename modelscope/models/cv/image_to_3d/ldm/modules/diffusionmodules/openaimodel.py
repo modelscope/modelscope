@@ -1,12 +1,11 @@
 import math
-from abc import abstractmethod
-from functools import partial
-from typing import Iterable
-
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from abc import abstractmethod
+from functools import partial
+from typing import Iterable
 
 from modelscope.models.cv.image_to_3d.ldm.modules.attention import \
     SpatialTransformer

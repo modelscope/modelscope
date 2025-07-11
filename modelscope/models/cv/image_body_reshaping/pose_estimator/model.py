@@ -1,9 +1,8 @@
 # The implementation is based on openpose, available at https://github.com/Hzzone/pytorch-openpose.
 
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 
 
 def make_layers(block, no_relu_layers):

@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
+import numpy as np
 import os
 import random
 import shutil
-from typing import Optional
-
-import json
-import numpy as np
 import torch
+from typing import Optional
 
 from modelscope.hub.check_model import check_model_is_id
 from modelscope.hub.push_to_hub import (UploadStrategy, push_to_hub_in_queue,
@@ -453,5 +452,6 @@ class BestCkptSaverHook(CheckpointHook):
         if self.restore_best:
             # If restore_best is True, will call the LoadCheckpointHook to load the best checkpoint
             # for later evaluation or prediction.
-            from modelscope.trainers.hooks.checkpoint.load_checkpoint_hook import LoadCheckpointHook
+            from modelscope.trainers.hooks.checkpoint.load_checkpoint_hook import \
+                LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(self._best_ckpt_file, trainer)

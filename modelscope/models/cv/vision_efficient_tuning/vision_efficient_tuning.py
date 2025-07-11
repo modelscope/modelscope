@@ -1,10 +1,9 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import os
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
 
 from modelscope.outputs import OutputKeys
 from modelscope.utils.constant import ModelFile

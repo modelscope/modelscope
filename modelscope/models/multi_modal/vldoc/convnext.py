@@ -2,7 +2,6 @@
 # made publicly available under the MIT License at https://github.com/facebookresearch/ConvNeXt.
 
 import os
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

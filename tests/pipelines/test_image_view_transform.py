@@ -1,9 +1,8 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-import unittest
-
 import cv2
 import numpy as np
 import torch
+import unittest
 from PIL import Image
 
 from modelscope.outputs import OutputKeys

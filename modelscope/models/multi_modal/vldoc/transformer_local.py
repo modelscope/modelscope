@@ -3,7 +3,6 @@
 # https://github.com/FangShancheng/ABINet/blob/main/modules/transformer.py
 
 import copy
-
 import torch.nn as nn
 from torch import Tensor
 from torch.nn import Dropout, LayerNorm, Linear, Module, ModuleList

@@ -4,19 +4,18 @@ import collections.abc
 import itertools
 import math
 import os
-import warnings
-from functools import partial
-from typing import Dict, Sequence
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import warnings
 from einops import rearrange
+from functools import partial
 from mmcls.models.backbones.base_backbone import BaseBackbone
 from mmcls.models.builder import BACKBONES
 from mmcv.cnn.bricks import DropPath, build_activation_layer, build_norm_layer
 from mmcv.runner import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
+from typing import Dict, Sequence
 
 from ..utils import to_2tuple, trunc_normal_
 

@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import torch
+import unittest
 
 from modelscope.outputs import TextClassificationModelOutput
 from modelscope.utils.test_utils import test_level

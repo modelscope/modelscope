@@ -1,7 +1,6 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
 import random
-
 import torch.nn as nn
 
 from modelscope.models.cv.video_depth_estimation.geometry.pose import Pose

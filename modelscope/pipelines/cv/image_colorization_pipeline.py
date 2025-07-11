@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import cv2
 import numpy as np
 import PIL
 import torch
 from torchvision import models, transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_colorization import (DynamicUnetDeep,

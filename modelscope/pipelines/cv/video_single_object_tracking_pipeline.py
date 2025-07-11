@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 from typing import Any, Dict
-
-import cv2
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_single_object_tracking.config.ostrack import \

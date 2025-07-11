@@ -2,7 +2,6 @@
 # originally Apache 2.0 License and publicly available at https://github.com/RangiLyu/nanodet
 
 import math
-
 import torch
 import torch.nn as nn
 

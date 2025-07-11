@@ -1,10 +1,9 @@
 # The implementation is adopted from torchvision
 
-from typing import Any, Callable, List, Optional, Type, Union
-
 import torch
 import torch.nn as nn
 from torch import Tensor
+from typing import Any, Callable, List, Optional, Type, Union
 
 
 def conv3x3(in_planes: int,

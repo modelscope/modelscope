@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import time
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import numpy as np
+import time
 import torch
+from dataclasses import dataclass
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import DataCollatorWithPadding
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel

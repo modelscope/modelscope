@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Dict, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.init import xavier_uniform_
 from transformers import BertModel
+from typing import Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

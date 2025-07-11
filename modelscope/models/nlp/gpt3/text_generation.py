@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from collections import OrderedDict
-from typing import Dict, Generator
-
 import torch
+from collections import OrderedDict
 from transformers import BertTokenizer
+from typing import Dict, Generator
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

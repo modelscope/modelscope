@@ -1,8 +1,7 @@
 # Part of the implementation is borrowed and modified from internet,
 # publicly available at https://github.com/CAIC-AD/YOLOPv2
-import time
-
 import numpy as np
+import time
 import torch
 from torchvision.ops import nms
 

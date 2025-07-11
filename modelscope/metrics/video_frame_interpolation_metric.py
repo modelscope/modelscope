@@ -1,14 +1,13 @@
 # ------------------------------------------------------------------------
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # ------------------------------------------------------------------------
-import math
-from math import exp
-from typing import Dict
-
 import lpips
+import math
 import numpy as np
 import torch
 import torch.nn.functional as F
+from math import exp
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric

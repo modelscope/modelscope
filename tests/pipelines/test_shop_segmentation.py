@@ -16,6 +16,7 @@ class ShopSegmentationTest(unittest.TestCase):
         shop_seg = pipeline(Tasks.shop_segmentation, model=model_id)
         result = shop_seg(input_location)
         import cv2
+
         # result[OutputKeys.MASKS] is segment map result,other keys are not used
         cv2.imwrite(input_location + '_shopseg.jpg', result[OutputKeys.MASKS])
 

@@ -1,12 +1,11 @@
 import functools
+import gradio as gr
 import inspect
 import os
 import random
 import re
-import tarfile
-
-import gradio as gr
 import requests
+import tarfile
 from challenges.ch1 import challenge1
 from challenges.ch2 import challenge2
 from challenges.ch3 import challenge3

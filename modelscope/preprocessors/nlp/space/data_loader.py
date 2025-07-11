@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-import os
-
 import numpy as np
+import os
 
 from modelscope.preprocessors.nlp.space.args import str2bool
 from modelscope.preprocessors.nlp.space.batch import batch

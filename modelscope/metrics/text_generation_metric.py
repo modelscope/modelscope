@@ -2,10 +2,9 @@
 
 import sys
 from contextlib import contextmanager
-from typing import Dict, Iterable, List, Tuple
-
 from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 from rouge import Rouge
+from typing import Dict, Iterable, List, Tuple
 
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric

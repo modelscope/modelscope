@@ -1,8 +1,7 @@
-from typing import Optional
-
 import torch
 from torch import Tensor
 from torch.nn import functional as F
+from typing import Optional
 
 from .decoder import Projection, RecurrentDecoder
 from .deep_guided_filter import DeepGuidedFilterRefiner

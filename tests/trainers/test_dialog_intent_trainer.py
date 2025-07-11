@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os
 import shutil
 import tempfile
 import unittest
-
-import json
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers

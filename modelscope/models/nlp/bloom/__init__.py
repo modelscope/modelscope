@@ -5,8 +5,8 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .backbone import BloomModel
-    from .text_generation import BloomForTextGeneration
     from .sentence_embedding import BloomForSentenceEmbedding
+    from .text_generation import BloomForTextGeneration
 else:
     _import_structure = {
         'backbone': ['BloomModel'],

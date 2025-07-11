@@ -17,14 +17,13 @@ import datetime
 import os
 import random
 import time
-from collections import OrderedDict
-from typing import List
-
 import torch
+from collections import OrderedDict
 from finetune_glm import process_batch
 from megatron_util import mpu
 from sklearn.metrics import f1_score
 from tasks.data_utils import InputExample, build_data_loader
+from typing import List
 from utils import debug_finetune_data, get_spare_port, print_rank_0
 
 

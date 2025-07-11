@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .maskdino_encoder import MaskDINOEncoder
     from .maskdino_decoder import MaskDINODecoder
+    from .maskdino_encoder import MaskDINOEncoder
 
 else:
     _import_structure = {

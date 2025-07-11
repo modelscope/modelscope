@@ -1,14 +1,13 @@
-import importlib
-import os
-import time
-from inspect import isfunction
-
 import cv2
+import importlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import PIL
+import time
 import torch
 import torchvision
+from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 from torch import optim
 

@@ -2,22 +2,21 @@
 # Implementation in this file is modified based on ViTAE-Transformer
 # Originally Apache 2.0 License and publicly available at https://github.com/ViTAE-Transformer/ViTDet
 import io
+import mmcv
 import os
 import os.path as osp
 import pkgutil
 import time
+import torch
+import torchvision
 import warnings
 from collections import OrderedDict
 from importlib import import_module
-from tempfile import TemporaryDirectory
-
-import mmcv
-import torch
-import torchvision
 from mmcv.fileio import FileClient
 from mmcv.fileio import load as load_file
 from mmcv.parallel import is_module_wrapper
 from mmcv.runner import get_dist_info
+from tempfile import TemporaryDirectory
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils import model_zoo

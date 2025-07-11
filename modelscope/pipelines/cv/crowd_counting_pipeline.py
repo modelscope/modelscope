@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
-from typing import Any, Dict
-
 import numpy as np
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.crowd_counting import HRNetCrowdCounting

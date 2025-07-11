@@ -4,10 +4,9 @@
 
 import math
 import time
-from copy import deepcopy
-
 import torch
 import torch.nn as nn
+from copy import deepcopy
 from thop import profile
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -127,8 +126,8 @@ def fuse_conv_and_bn(conv, bn):
 
 
 def fuse_model(model):
-    from damo.base_models.core.ops import ConvBNAct
     from damo.base_models.backbones.tinynas_res import ConvKXBN
+    from damo.base_models.core.ops import ConvBNAct
 
     for m in model.modules():
         if type(m) is ConvBNAct and hasattr(m, 'bn'):

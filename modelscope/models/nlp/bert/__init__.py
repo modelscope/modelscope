@@ -4,19 +4,15 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbone import (
-        BertLayer,
-        BertModel,
-        BertPreTrainedModel,
-    )
+    from .backbone import BertLayer, BertModel, BertPreTrainedModel
     from .configuration import BertConfig
-    from .fill_mask import BertForMaskedLM
-    from .text_ranking import BertForTextRanking
-    from .sentence_embedding import BertForSentenceEmbedding
-    from .text_classification import BertForSequenceClassification
-    from .token_classification import BertForTokenClassification
     from .document_segmentation import BertForDocumentSegmentation
+    from .fill_mask import BertForMaskedLM
+    from .sentence_embedding import BertForSentenceEmbedding
     from .siamese_uie import SiameseUieModel
+    from .text_classification import BertForSequenceClassification
+    from .text_ranking import BertForTextRanking
+    from .token_classification import BertForTokenClassification
     from .word_alignment import MBertForWordAlignment
 else:
     _import_structure = {

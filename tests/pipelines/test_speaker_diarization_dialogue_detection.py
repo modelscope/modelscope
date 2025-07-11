@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import unittest
 from typing import Any, Dict
-
-import numpy as np
 
 from modelscope.models import Model
 from modelscope.pipelines import pipeline

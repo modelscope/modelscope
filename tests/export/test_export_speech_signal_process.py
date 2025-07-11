@@ -4,9 +4,8 @@ import os
 import pickle
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 
 from modelscope.exporters import Exporter
 from modelscope.models import Model

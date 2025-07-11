@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Dict
-
 from transformers import BertTokenizer
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

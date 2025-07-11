@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Optional, Union
-
 import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_colorization import DDColorForImageColorization

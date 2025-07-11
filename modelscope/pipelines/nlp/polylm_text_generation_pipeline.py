@@ -2,9 +2,8 @@
 
 # Copyright (c) 2022 Zhipu.AI
 import os
-from typing import Any, Dict, Union
-
 import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model

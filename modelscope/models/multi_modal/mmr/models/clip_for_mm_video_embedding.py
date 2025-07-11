@@ -1,19 +1,18 @@
 # The implementation is adopted from the CLIP4Clip implementation,
 # made publicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
 
+import json
+import numpy as np
 import os
 import random
+import torch
 import uuid
+from decord import VideoReader, cpu
 from os.path import exists
+from PIL import Image
 from tempfile import TemporaryDirectory
 from typing import Any, Dict
 from urllib.parse import urlparse
-
-import json
-import numpy as np
-import torch
-from decord import VideoReader, cpu
-from PIL import Image
 
 from modelscope.hub.file_download import http_get_file
 from modelscope.metainfo import Models

@@ -1,7 +1,6 @@
 # common utils
-import os
-
 import imageio.v2 as imageio
+import os
 import torch
 # pytorch3d
 from pytorch3d.io import load_obj, load_objs_as_meshes

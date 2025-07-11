@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import io
-import os
-import shutil
-from typing import Any, Dict
-
 import cv2
 import face_alignment
+import io
 import numpy as np
+import os
 import PIL.Image
+import shutil
 import tensorflow as tf
 import torch
 from scipy.io import loadmat, savemat
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_reconstruction.models.facelandmark.large_base_lmks_infer import \

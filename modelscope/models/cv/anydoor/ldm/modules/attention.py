@@ -1,13 +1,12 @@
 import math
 # CrossAttn precision handling
 import os
-from inspect import isfunction
-from typing import Any, Optional
-
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
+from inspect import isfunction
 from torch import einsum, nn
+from typing import Any, Optional
 
 from ...ldm.modules.diffusionmodules.util import checkpoint
 

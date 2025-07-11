@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .models import (
-        Transformer, )
+    from .models import Transformer
 
 else:
     _import_structure = {

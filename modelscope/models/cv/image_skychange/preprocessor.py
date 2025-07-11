@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import numbers
-import pdb
-from typing import Any, Dict, Union
-
 import cv2
 import json
+import numbers
 import numpy as np
+import pdb
 import torch
 from torchvision import transforms
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

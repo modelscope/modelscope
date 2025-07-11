@@ -3,13 +3,12 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 """Generation support."""
-from typing import Iterable, List, Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from transformers import PreTrainedTokenizer
 from transformers.generation import LogitsProcessor
+from typing import Iterable, List, Tuple, Union
 
 from modelscope.utils.logger import get_logger
 

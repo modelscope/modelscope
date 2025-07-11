@@ -1,10 +1,9 @@
 # The implementation is adopted from InsightFace, made publicly available under the Apache-2.0 license at
 # https://github.com/TreB1eN/InsightFace_Pytorch/blob/master/model.py
 
-from collections import namedtuple
-
 import torch
 import torch.nn.functional as F
+from collections import namedtuple
 from torch import nn
 from torch.nn import (AdaptiveAvgPool2d, AvgPool2d, BatchNorm1d, BatchNorm2d,
                       Conv2d, Dropout, Dropout2d, Linear, MaxPool2d, Module,

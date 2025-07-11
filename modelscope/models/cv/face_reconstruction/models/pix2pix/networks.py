@@ -1,7 +1,6 @@
 # Part of the implementation is borrowed and modified from pix2pix,
 # publicly available at https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
 import functools
-
 import torch
 import torch.nn as nn
 from torch.nn import init

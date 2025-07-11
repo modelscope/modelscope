@@ -1,7 +1,6 @@
 # The implementation is based on mtcnn, available at https://github.com/TropComplique/mtcnn-pytorch
-import os
-
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 from PIL import Image

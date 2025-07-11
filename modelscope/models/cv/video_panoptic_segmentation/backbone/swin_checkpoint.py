@@ -3,11 +3,10 @@
 
 import os.path as osp
 import pkgutil
-from collections import OrderedDict
-from importlib import import_module
-
 import torch
 import torchvision
+from collections import OrderedDict
+from importlib import import_module
 from torch.nn import functional as F
 
 

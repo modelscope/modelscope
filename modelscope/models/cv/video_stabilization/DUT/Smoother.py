@@ -2,7 +2,6 @@
 # publicly available at https://github.com/Annbless/DUTCode
 
 import math
-
 import numpy as np
 import torch
 import torch.nn as nn

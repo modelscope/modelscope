@@ -2,13 +2,12 @@
 import os
 import os.path as osp
 import pkgutil
-import warnings
-from collections import OrderedDict
-from importlib import import_module
-
 import torch
 import torch.nn as nn
 import torchvision
+import warnings
+from collections import OrderedDict
+from importlib import import_module
 from torch import distributed as dist
 from torch.nn import functional as F
 from torch.nn.parallel import DataParallel, DistributedDataParallel

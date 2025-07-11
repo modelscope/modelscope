@@ -2,10 +2,9 @@
 Part of the implementation is borrowed and modified from LaMa, publicly available at
 https://github.com/saic-mdal/lama
 """
-from typing import List
-
 import torch
 import torch.nn.functional as F
+from typing import List
 
 
 def masked_l2_loss(pred, target, mask, weight_known, weight_missing):

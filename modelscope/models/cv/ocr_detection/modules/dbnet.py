@@ -5,10 +5,9 @@
 import math
 import os
 import sys
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 
 from .proxyless import CompactDetBackbone
 

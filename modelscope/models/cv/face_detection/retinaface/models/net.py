@@ -1,6 +1,5 @@
 # The implementation is based on resnet, available at https://github.com/biubug6/Pytorch_Retinaface
 import time
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

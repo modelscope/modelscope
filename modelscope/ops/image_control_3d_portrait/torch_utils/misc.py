@@ -9,11 +9,10 @@
 # its affiliates is strictly prohibited.
 
 import contextlib
-import re
-import warnings
-
 import numpy as np
+import re
 import torch
+import warnings
 
 from .. import dnnlib
 

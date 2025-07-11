@@ -2,10 +2,8 @@
 # originally Apache 2.0 License and publicly available at https://github.com/mttr2021/MTTR
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import tempfile
-from typing import Any, Dict
-
 import numpy as np
+import tempfile
 import torch
 import torchvision
 import torchvision.transforms.functional as F
@@ -13,6 +11,7 @@ from einops import rearrange
 from moviepy.editor import AudioFileClip, ImageSequenceClip, VideoFileClip
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from tqdm import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

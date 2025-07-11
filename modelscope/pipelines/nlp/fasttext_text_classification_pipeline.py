@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import sentencepiece
 from fasttext import load_model
 from fasttext.FastText import _FastText
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

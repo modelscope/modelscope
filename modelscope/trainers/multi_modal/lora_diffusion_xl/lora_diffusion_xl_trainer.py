@@ -1,12 +1,11 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Dict, Union
-
 import torch
 import torch.nn.functional as F
 from diffusers import StableDiffusionXLPipeline
 from diffusers.loaders import AttnProcsLayers
 from diffusers.models.attention_processor import (LoRAAttnProcessor,
                                                   LoRAAttnProcessor2_0)
+from typing import Dict, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.trainers.builder import TRAINERS

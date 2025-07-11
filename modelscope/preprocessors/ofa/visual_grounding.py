@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.preprocessors.image import load_image
 from modelscope.utils.constant import ModeKeys

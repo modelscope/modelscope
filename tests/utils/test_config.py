@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
 import copy
+import json
 import tempfile
 import unittest
-
-import json
 
 from modelscope.utils.config import Config, check_config
 

@@ -2,16 +2,16 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import datetime
-import os
-import shutil
-import wave
-import zipfile
 
+import datetime
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import shutil
+import wave
 import yaml
+import zipfile
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model

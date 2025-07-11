@@ -5,10 +5,12 @@ import datetime
 import fnmatch
 import functools
 import io
+import json
 import os
 import pickle
 import platform
 import re
+import requests
 import shutil
 import tempfile
 import uuid
@@ -18,15 +20,12 @@ from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Tuple, Union
-from urllib.parse import urlencode
-
-import json
-import requests
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import HTTPError
 from tqdm.auto import tqdm
+from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Tuple, Union
+from urllib.parse import urlencode
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
@@ -1208,8 +1207,8 @@ class HubApi:
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
         import hashlib
-        from tqdm.auto import tqdm
         import pandas as pd
+        from tqdm.auto import tqdm
 
         out_path = os.path.join(out_path, hashlib.md5(url.encode(encoding='UTF-8')).hexdigest())
         if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):

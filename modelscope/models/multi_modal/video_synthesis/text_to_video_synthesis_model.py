@@ -1,13 +1,12 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import os
-from os import path as osp
-from typing import Any, Dict
-
 import open_clip
+import os
 import torch
 import torch.cuda.amp as amp
 from einops import rearrange
+from os import path as osp
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model

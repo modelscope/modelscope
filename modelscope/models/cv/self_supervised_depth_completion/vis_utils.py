@@ -1,8 +1,7 @@
-import os
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from PIL import Image
 
 if not ('DISPLAY' in os.environ):

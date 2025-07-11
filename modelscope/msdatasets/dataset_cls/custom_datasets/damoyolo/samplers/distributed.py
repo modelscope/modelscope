@@ -2,7 +2,6 @@
 # Code is copy-pasted exactly as in torch.utils.data.distributed.
 # FIXME remove this once c10d fixes the bug it has
 import math
-
 import torch
 import torch.distributed as dist
 from torch.utils.data.sampler import Sampler

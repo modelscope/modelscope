@@ -2,11 +2,10 @@
 # Licensed under the MIT License.
 """ Wrapper for ngram_repeat_block cuda extension """
 import math
-import warnings
-from typing import Dict, List
-
 import torch
+import warnings
 from torch import nn
+from typing import Dict, List
 
 try:
     from fairseq import ngram_repeat_block_cuda

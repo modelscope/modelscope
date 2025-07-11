@@ -3,9 +3,8 @@
 import os
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 
 from modelscope.models.base import Model
 from modelscope.utils.test_utils import test_level

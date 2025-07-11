@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Dict, List
-
 import numpy as np
+from typing import Dict, List
 
 from modelscope.metainfo import Metrics
 from modelscope.metrics.base import Metric

@@ -3,14 +3,13 @@
 # made publicly available under the Apache License 2.0 at https://github.com/MhLiao/DB.
 # ------------------------------------------------------------------------------
 import bisect
+import cv2
 import functools
 import glob
 import logging
 import math
-import os
-
-import cv2
 import numpy as np
+import os
 import torch.utils.data as data
 
 from .processes import (AugmentDetectionData, MakeBorderMap, MakeICDARData,

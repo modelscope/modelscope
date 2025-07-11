@@ -1,12 +1,11 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import os.path as osp
-from typing import Any, Dict
-
 import json
+import os.path as osp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

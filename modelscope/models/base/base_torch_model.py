@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import torch
 from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
-
-import torch
 from packaging import version
 from torch import nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from modelscope.utils.checkpoint import (save_checkpoint, save_configuration,
                                          save_pretrained)

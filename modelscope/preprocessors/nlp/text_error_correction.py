@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from typing import Any, Dict
-
 import torch
 from transformers import BertTokenizer
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor

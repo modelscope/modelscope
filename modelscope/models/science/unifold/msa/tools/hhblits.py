@@ -16,9 +16,8 @@
 import glob
 import os
 import subprocess
-from typing import Any, List, Mapping, Optional, Sequence
-
 from absl import logging
+from typing import Any, List, Mapping, Optional, Sequence
 
 from . import utils
 

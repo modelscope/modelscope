@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import copy
-
 import json
 from transformers import PretrainedConfig
 

@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os.path
 import re
+import torch
 from abc import ABC
 from collections import OrderedDict
-from typing import Any, Dict, Optional
-
-import torch
 from torch import nn
+from typing import Any, Dict, Optional
 
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import build_backbone, build_head

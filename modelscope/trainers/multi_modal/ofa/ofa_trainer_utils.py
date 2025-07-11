@@ -3,10 +3,9 @@
 # This source code is licensed under the Apache 2.0 license
 # found in the LICENSE file in the root directory.
 import math
+import numpy as np
 import os
 import shutil
-
-import numpy as np
 import torch
 import torch.nn.functional as F
 import transformers

@@ -32,8 +32,6 @@
 # Xiaoming Zhao, Xingming Wu, Weihai Chen, Peter C.Y. Chen, Qingsong Xu, and Zhengguo Li
 # Code from https://github.com/Shiaoming/ALIKED
 
-from typing import Callable, Optional
-
 import torch
 import torch.nn.functional as F
 import torchvision
@@ -41,6 +39,7 @@ from kornia.color import grayscale_to_rgb
 from torch import nn
 from torch.nn.modules.utils import _pair
 from torchvision.models import resnet
+from typing import Callable, Optional
 
 from .utils import Extractor
 

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import pdb
-import time
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
+import pdb
 import PIL
+import time
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_skychange import ImageSkyChangePreprocessor

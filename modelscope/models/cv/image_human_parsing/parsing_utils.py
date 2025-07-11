@@ -4,7 +4,6 @@
 # under the Apache-2.0 License at https://github.com/facebookresearch/detectron2
 
 import copy
-
 import numpy as np
 import torch
 import torch.nn.functional as F

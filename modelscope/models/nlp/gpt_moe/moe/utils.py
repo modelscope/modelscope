@@ -2,9 +2,8 @@
 Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
-from typing import Dict, List, Tuple
-
 import torch
+from typing import Dict, List, Tuple
 
 from .layer import MoE
 

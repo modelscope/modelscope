@@ -1,14 +1,13 @@
 # Copyright (c) 2022 Zhipu.AI
 
+import numpy as np
 import os
 import random
-from os import path as osp
-from typing import Dict
-
-import numpy as np
 import torch
 import torch.nn.functional as F
 from megatron_util import mpu
+from os import path as osp
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
@@ -355,6 +354,7 @@ class MGLMForTextSummarization(TorchModel):
         super().__init__(model_dir, *args, **kwargs)
 
         from .configure_data import prepare_tokenizer
+
         # Disable CuDNN.
         torch.backends.cudnn.enabled = False
         # Arguments.

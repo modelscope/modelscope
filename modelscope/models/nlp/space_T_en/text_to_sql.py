@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Dict, Optional
-
 import torch
 from text2sql_lgesql.asdl.asdl import ASDLGrammar
 from text2sql_lgesql.asdl.transition_system import TransitionSystem
 from text2sql_lgesql.model.model_constructor import Text2SQL
+from typing import Dict, Optional
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

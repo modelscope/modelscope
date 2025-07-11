@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import os.path as osp
 import re
-from typing import Any, Dict
-
-import numpy as np
 import tensorflow as tf
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model

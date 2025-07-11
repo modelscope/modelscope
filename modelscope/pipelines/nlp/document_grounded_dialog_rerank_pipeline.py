@@ -1,18 +1,17 @@
+import numpy as np
 import os
 import pprint
 import random
 import re
 import sys
 import time
-from collections import OrderedDict, defaultdict
-from typing import Any, Dict, Iterable, List, Union
-
-import numpy as np
 import torch
 import torch.nn.functional as F
 import transformers
 import ujson as json
+from collections import OrderedDict, defaultdict
 from torch import nn
+from typing import Any, Dict, Iterable, List, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

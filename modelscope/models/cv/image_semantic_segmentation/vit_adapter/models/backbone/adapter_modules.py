@@ -2,11 +2,10 @@
 # made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
 
 import logging
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
+from functools import partial
 from mmdet.models.utils.transformer import MultiScaleDeformableAttention
 from timm.models.layers import DropPath
 

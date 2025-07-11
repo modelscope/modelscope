@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import numbers
-import os
-import pdb
-from collections import deque
-
 import cv2
 import json
+import numbers
 import numpy as np
+import os
+import pdb
 import torch
 import torch.nn.functional as F
+from collections import deque
 from PIL import Image
 from torchvision import transforms
 

@@ -5,11 +5,10 @@ https://github.com/NVIDIA/pix2pixHD/blob/master/models/networks.py
 import collections
 import functools
 import logging
-from collections import defaultdict
-from functools import partial
-
 import numpy as np
 import torch.nn as nn
+from collections import defaultdict
+from functools import partial
 
 
 # Defines the PatchGAN discriminator with the specified arguments.

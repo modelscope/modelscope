@@ -4,16 +4,19 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .video_super_resolution import (VideoReader)
-    from .video_stabilization import (stabilization_preprocessor)
-    from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
-
-    from .image_quality_assessment_mos import ImageQualityAssessmentMosPreprocessor
-    from .image_quality_assessment_man import ImageQualityAssessmentMANPreprocessor
-    from .image_restoration_preprocessor import ImageRestorationPreprocessor
     from .bad_image_detecting_preprocessor import BadImageDetectingPreprocessor
-    from .controllable_image_generation import ControllableImageGenerationPreprocessor
-    from .image_classification_preprocessor import ImageClassificationPreprocessor
+    from .controllable_image_generation import \
+        ControllableImageGenerationPreprocessor
+    from .image_classification_preprocessor import \
+        ImageClassificationPreprocessor
+    from .image_quality_assessment_man import \
+        ImageQualityAssessmentMANPreprocessor
+    from .image_quality_assessment_mos import \
+        ImageQualityAssessmentMosPreprocessor
+    from .image_restoration_preprocessor import ImageRestorationPreprocessor
+    from .mmcls_preprocessor import ImageClassificationMmcvPreprocessor
+    from .video_stabilization import stabilization_preprocessor
+    from .video_super_resolution import VideoReader
 
 else:
     _import_structure = {

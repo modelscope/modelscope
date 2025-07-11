@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .kws_farfield_dataset import KWSDataset, KWSDataLoader
-    from .kws_nearfield_dataset import kws_nearfield_dataset
     from .asr_dataset import ASRDataset
+    from .kws_farfield_dataset import KWSDataLoader, KWSDataset
+    from .kws_nearfield_dataset import kws_nearfield_dataset
 
 else:
     _import_structure = {

@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-
 import torch
 
 __all__ = ['kl_divergence', 'discretized_gaussian_log_likelihood']

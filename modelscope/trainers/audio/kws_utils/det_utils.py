@@ -14,14 +14,13 @@
 # limitations under the License.
 
 import glob
-import os
-import threading
-
 import json
 import kaldiio
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import threading
 import torch
 
 from modelscope.utils.logger import get_logger

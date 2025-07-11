@@ -8,9 +8,8 @@
 #   https://github.com/facebookresearch/dino/blob/master/vision_transformer.py
 #   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/mlp.py
 
-from typing import Callable, Optional
-
 from torch import Tensor, nn
+from typing import Callable, Optional
 
 
 class Mlp(nn.Module):

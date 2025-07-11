@@ -1,7 +1,6 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Union
-
 from torch import nn
+from typing import Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel

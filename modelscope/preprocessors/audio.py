@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
-import os
-from typing import Any, Dict, Tuple, Union
-
 import numpy as np
+import os
 import scipy.io.wavfile as wav
 import torch
+from typing import Any, Dict, Tuple, Union
 
 from modelscope.fileio import File
 from modelscope.preprocessors import Preprocessor

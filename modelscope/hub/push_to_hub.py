@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import concurrent.futures
+import json
 import os
 import shutil
 import tempfile
 from multiprocessing import Manager, Process, Value
 from pathlib import Path
 from typing import List, Optional, Union
-
-import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility

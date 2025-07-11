@@ -6,29 +6,28 @@ import copy
 import glob
 import gzip
 import hashlib
-import logging
-import math
-import os
-import os.path as osp
-import pickle
-import random
-import sys
-import time
-import urllib.request
-import zipfile
-from io import BytesIO
-from multiprocessing.pool import ThreadPool as Pool
-
 import imageio
 import json
+import logging
+import math
 import numpy as np
+import os
+import os.path as osp
 import oss2 as oss
+import pickle
+import random
 import requests
 import skvideo.io
+import sys
+import time
 import torch
 import torch.nn.functional as F
 import torchvision.utils as tvutils
+import urllib.request
+import zipfile
 from einops import rearrange
+from io import BytesIO
+from multiprocessing.pool import ThreadPool as Pool
 from PIL import Image
 
 __all__ = [

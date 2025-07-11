@@ -15,11 +15,10 @@
 
 import argparse
 import os
-from typing import Dict, Optional
-
 import torch
 import tqdm
 import transformers
+from typing import Dict, Optional
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model

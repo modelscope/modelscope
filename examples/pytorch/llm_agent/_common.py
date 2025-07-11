@@ -1,14 +1,12 @@
 import ast
 import datetime as dt
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import random
 import re
 import sys
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
-import matplotlib.pyplot as plt
-import numpy as np
 #
 import torch
 from matplotlib.figure import Figure
@@ -23,6 +21,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torchmetrics import Accuracy, MeanMetric
 #
 from tqdm import tqdm
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 #
 from modelscope import Model, MsDataset, get_logger, read_config
@@ -303,8 +302,8 @@ def get_baichuan7B_model_tokenizer(model_dir: str,
                                    add_special_token: bool = True):
     sys.path.insert(0, model_dir)
     from configuration_baichuan import BaiChuanConfig
-    from tokenization_baichuan import BaiChuanTokenizer
     from modeling_baichuan import BaiChuanForCausalLM
+    from tokenization_baichuan import BaiChuanTokenizer
     model_config = BaiChuanConfig.from_pretrained(model_dir)
     model_config.torch_dtype = torch.float16
     logger.info(f'model_config: {model_config}')

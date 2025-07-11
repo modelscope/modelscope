@@ -1,14 +1,13 @@
+import cv2
+import json
 import math
 import os
 import pdb
 import time
-from collections import OrderedDict
-from typing import Any, Dict, List, Union
-
-import cv2
-import json
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import Model

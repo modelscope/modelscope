@@ -13,16 +13,15 @@
 # limitations under the License.
 """ Tasks data utility."""
 import copy
-import pickle
-import re
-from typing import Dict, List, Optional
-
 import json
 import numpy as np
+import pickle
+import re
 import torch
 import torch.utils.data
 from megatron_util import mpu
 from torch.utils.data.dataloader import default_collate
+from typing import Dict, List, Optional
 
 
 def clean_text(text):

@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import cv2
 import numpy as np
 import PIL
@@ -11,6 +9,7 @@ from einops import rearrange
 from PIL import Image
 from torch.utils.data._utils.collate import default_collate
 from torchvision.transforms import Resize
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_paintbyexample import \

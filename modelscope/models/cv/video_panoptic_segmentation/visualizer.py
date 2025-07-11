@@ -1,9 +1,8 @@
 # The implementation is adopted from Video-K-Net,
 # made publicly available at https://github.com/lxtGH/Video-K-Net
 
-import hashlib
-
 import cv2
+import hashlib
 import numpy as np
 
 vip_seg_label = {

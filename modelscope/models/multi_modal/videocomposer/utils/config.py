@@ -2,9 +2,8 @@
 
 import argparse
 import copy
-import os
-
 import json
+import os
 import yaml
 
 from modelscope.utils.logger import get_logger

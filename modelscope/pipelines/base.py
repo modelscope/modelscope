@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import os.path as osp
 import random
 from abc import ABC, abstractmethod
 from functools import partial
 from multiprocessing import Pool
+from packaging import version
 from threading import Lock
 from typing import Any, Dict, Generator, List, Mapping, Optional, Union
-
-import numpy as np
-from packaging import version
 
 from modelscope.models.base import Model
 from modelscope.msdatasets import MsDataset

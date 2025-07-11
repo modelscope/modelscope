@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import unittest
-
 from PIL import Image
 
 from modelscope.preprocessors import load_image

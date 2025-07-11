@@ -2,9 +2,8 @@
 # made publicly available under MIT license at https://github.com/GuyTevet/motion-diffusion-model
 
 import contextlib
-import os.path as osp
-
 import numpy as np
+import os.path as osp
 import torch
 from smplx import SMPLLayer as _SMPLLayer
 from smplx.lbs import vertices2joints

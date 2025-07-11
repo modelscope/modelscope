@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .image_color_enhance import ImageColorEnhance
     from .adaint import AdaIntImageColorEnhance
     from .deeplpf import DeepLPFImageColorEnhance
+    from .image_color_enhance import ImageColorEnhance
 
 else:
     _import_structure = {

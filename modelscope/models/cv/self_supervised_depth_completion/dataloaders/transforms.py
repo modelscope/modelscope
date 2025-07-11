@@ -1,11 +1,11 @@
 from __future__ import division
-import numbers
-import types
 
+import numbers
 import numpy as np
 import scipy.ndimage.interpolation as itpl
 import skimage.transform
 import torch
+import types
 from PIL import Image, ImageEnhance
 
 try:

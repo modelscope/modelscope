@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import logging
+import requests
 from http import HTTPStatus
 from pathlib import Path
-from typing import Optional, Union
-
-import requests
 from requests.exceptions import HTTPError
+from typing import Optional, Union
 
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger

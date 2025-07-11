@@ -1,11 +1,10 @@
 # Copyright (c) rhythmcao modified from https://github.com/rhythmcao/text2sql-lgesql.
 
+import nltk
+import numpy as np
 import os
 import sqlite3
 from itertools import combinations, product
-
-import nltk
-import numpy as np
 from text2sql_lgesql.utils.constants import MAX_RELATIVE_DIST
 
 from modelscope.utils.logger import get_logger
@@ -64,8 +63,8 @@ class SubPreprocessor():
         self.stopwords = stopwords.words('english')
 
         import stanza
-        from stanza.resources import common
         from stanza.pipeline import core
+        from stanza.resources import common
         self.nlp = stanza.Pipeline(
             'en',
             use_gpu=use_gpu,

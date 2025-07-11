@@ -1,12 +1,11 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
-import math
-import time
-
 import cv2
+import math
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 import torch
 from scipy.ndimage.filters import gaussian_filter
 from torchvision import transforms

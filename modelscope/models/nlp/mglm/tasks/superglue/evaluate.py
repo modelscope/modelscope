@@ -5,13 +5,13 @@ Official evaluation script for ReCoRD v1.0.
 """
 
 from __future__ import print_function
+
 import functools
 import re
 import string
 from collections import Counter, defaultdict
-from typing import List
-
 from tasks.data_utils import InputExample
+from typing import List
 
 
 def normalize_answer(s):

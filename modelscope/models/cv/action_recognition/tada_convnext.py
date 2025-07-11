@@ -3,7 +3,6 @@
 # Copyright 2021-2022 The Alibaba FVI Team Authors. All rights reserved.
 
 import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

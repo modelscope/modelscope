@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
 import PIL
 import tensorflow as tf
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.skin_retouching.detection_model.detection_unet_in import \

@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import os.path as osp
-from tempfile import TemporaryDirectory
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
+import os.path as osp
 import PIL
 import torch
+from tempfile import TemporaryDirectory
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.object_detection_3d.depe import DepeDetect

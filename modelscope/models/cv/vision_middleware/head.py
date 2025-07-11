@@ -1,13 +1,12 @@
 # The implementation is adopted from mmsegmentation,
 # made publicly available under the Apache License, Version 2.0 at https://github.com/open-mmlab/mmsegmentation
 
-from abc import ABCMeta, abstractmethod
-
 import mmcv
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from abc import ABCMeta, abstractmethod
 from mmcv.cnn import ConvModule
 from mmcv.runner import BaseModule, auto_fp16, force_fp32
 

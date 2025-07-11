@@ -1,9 +1,8 @@
 # The implementation here is modified based on nanodet,
 # originally Apache 2.0 License and publicly available at https://github.com/RangiLyu/nanodet
 
-import math
-
 import cv2
+import math
 import numpy as np
 import torch
 import torch.nn as nn

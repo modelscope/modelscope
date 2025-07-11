@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import librosa
 import os
 import random
-from pathlib import Path
-from typing import Any, Dict
-
-import librosa
 import soundfile as sf
 import torch
 from fairseq.data.audio.feature_transforms import \
     CompositeAudioFeatureTransform
 from fairseq.data.audio.speech_to_text_dataset import S2TDataConfig
+from pathlib import Path
+from typing import Any, Dict
 
 from modelscope.utils.chinese_utils import pre_chinese
 from modelscope.utils.constant import ModeKeys

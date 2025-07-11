@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
-import warnings
-from typing import Optional, Tuple, Union
-
 import torch
+import warnings
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers.utils.model_parallel_utils import (assert_device_map,
                                                      get_device_map)
+from typing import Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS

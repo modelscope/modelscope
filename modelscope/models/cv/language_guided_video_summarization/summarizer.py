@@ -3,11 +3,9 @@
 # and https://github.com/v-iashin/video_features
 
 import argparse
+import numpy as np
 import os
 import os.path as osp
-from typing import Dict, Union
-
-import numpy as np
 import torch
 import torch.nn as nn
 from bmt_clipit.sample.single_video_prediction import (caption_proposals,
@@ -16,6 +14,7 @@ from bmt_clipit.sample.single_video_prediction import (caption_proposals,
                                                        load_prop_model)
 from bmt_clipit.utilities.proposal_utils import non_max_suppresion
 from torch.nn.parallel import DataParallel, DistributedDataParallel
+from typing import Dict, Union
 from videofeatures_clipit.models.i3d.extract_i3d import ExtractI3D
 from videofeatures_clipit.models.vggish.extract_vggish import ExtractVGGish
 from videofeatures_clipit.utils.utils import (fix_tensorflow_gpu_allocation,

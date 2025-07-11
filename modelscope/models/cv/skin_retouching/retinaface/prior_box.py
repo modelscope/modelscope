@@ -1,8 +1,7 @@
 # Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
+import torch
 from itertools import product
 from math import ceil
-
-import torch
 
 
 def priorbox(min_sizes, steps, clip, image_size):

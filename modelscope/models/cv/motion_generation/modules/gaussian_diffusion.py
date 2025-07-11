@@ -3,10 +3,9 @@
 
 import enum
 import math
-from copy import deepcopy
-
 import numpy as np
 import torch as th
+from copy import deepcopy
 
 
 def get_named_beta_schedule(schedule_name,

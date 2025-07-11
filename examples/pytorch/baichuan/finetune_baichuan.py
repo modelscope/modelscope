@@ -2,7 +2,6 @@ import os
 import sys
 import types
 from dataclasses import dataclass, field
-
 from swift import LoRAConfig, Swift
 from transformers import AutoModelForCausalLM, AutoTokenizer
 

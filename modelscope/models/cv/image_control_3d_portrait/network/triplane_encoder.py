@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
-from functools import partial
-
 import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
+from functools import partial
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 from .networks_stylegan2 import FullyConnectedLayer

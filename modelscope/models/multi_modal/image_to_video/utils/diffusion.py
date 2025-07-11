@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-
 import torch
 
 __all__ = ['GaussianDiffusion', 'beta_schedule']

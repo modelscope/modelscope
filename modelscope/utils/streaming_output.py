@@ -1,12 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import types
-import warnings
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Optional, Union
-
 import torch
 import torch.distributed as dist
 import transformers
+import types
+import warnings
+from contextlib import contextmanager
 from packaging import version
 from torch import nn
 from transformers import PreTrainedModel
@@ -17,6 +15,7 @@ from transformers.generation import (GreedySearchEncoderDecoderOutput,
                                      SampleEncoderDecoderOutput,
                                      StoppingCriteriaList,
                                      validate_stopping_criteria)
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from modelscope.pipelines.base import Input
 from modelscope.utils.constant import Frameworks

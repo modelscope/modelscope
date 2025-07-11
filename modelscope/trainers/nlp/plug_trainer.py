@@ -1,10 +1,9 @@
 import os
-from typing import Union
-
 import torch
 from deepspeed import DeepSpeedEngine
 from megatron_util import mpu
 from torch import nn
+from typing import Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel
@@ -33,7 +32,8 @@ class PlugTrainer(NlpEpochBasedTrainer):
         return model.model
 
     def to_parallel(self, model) -> Union[nn.Module, TorchModel]:
-        from modelscope.utils.nlp.distributed import DistributedDataParallel as DDP
+        from modelscope.utils.nlp.distributed import \
+            DistributedDataParallel as DDP
         return DDP(model)
 
     def _get_params_for_weight_decay_optimization(self, module):

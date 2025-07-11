@@ -1,8 +1,7 @@
 # The implementation is based on openpose, available at https://github.com/Hzzone/pytorch-openpose.
 
-import math
-
 import cv2
+import math
 import numpy as np
 import torch
 from scipy.ndimage.filters import gaussian_filter

@@ -1,9 +1,8 @@
 # The implementation is adopted from VitAdapter,
 # made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
-from abc import ABCMeta, abstractmethod
-
 import torch
 import torch.nn as nn
+from abc import ABCMeta, abstractmethod
 from mmcv.runner import BaseModule, auto_fp16, force_fp32
 from mmdet.models.builder import build_loss
 from mmdet.models.losses import accuracy

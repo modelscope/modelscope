@@ -3,22 +3,21 @@
 
 import gzip
 import hashlib
+import json
 import logging
+import numpy as np
 import os
 import pickle
 import random
 import re
+import requests
 import tarfile
 import time
+import torch
 from pathlib import Path
+from tqdm import tqdm
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from unittest import result
-
-import json
-import numpy as np
-import requests
-import torch
-from tqdm import tqdm
 
 from modelscope.metainfo import Preprocessors
 from modelscope.models.science.unifold.data import protein, residue_constants

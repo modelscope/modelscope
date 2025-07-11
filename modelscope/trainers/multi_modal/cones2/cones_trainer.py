@@ -1,9 +1,8 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from pathlib import Path
-
 import torch
 import torch.nn.functional as F
 from diffusers import DiffusionPipeline
+from pathlib import Path
 from PIL import Image
 from PIL.ImageOps import exif_transpose
 from torch.utils.data import Dataset

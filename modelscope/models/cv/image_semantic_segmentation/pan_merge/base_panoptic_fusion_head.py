@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-
 from mmcv.runner import BaseModule
 from mmdet.models.builder import build_loss
 

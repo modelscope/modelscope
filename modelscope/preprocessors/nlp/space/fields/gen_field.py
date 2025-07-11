@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
+import numpy as np
 import os
 import random
 from asyncio import constants
 from collections import OrderedDict
 from itertools import chain
-
-import json
-import numpy as np
 
 from modelscope.preprocessors.nlp.space.tokenizer import Tokenizer
 from modelscope.utils.constant import ModelFile

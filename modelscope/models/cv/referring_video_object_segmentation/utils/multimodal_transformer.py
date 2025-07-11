@@ -5,13 +5,12 @@
 
 import copy
 import os
-from typing import Optional
-
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from torch import Tensor, nn
 from transformers import RobertaModel, RobertaTokenizerFast
+from typing import Optional
 
 from .position_encoding_2d import PositionEmbeddingSine2D
 

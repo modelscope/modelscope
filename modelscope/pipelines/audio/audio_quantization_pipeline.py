@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import shutil
-from typing import Any, Dict, List, Sequence, Tuple, Union
-
-import numpy as np
 import yaml
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -201,8 +200,8 @@ class AudioQuantizationPipeline(Pipeline):
             data_cmd = (audio_in, 'speech', 'bytes')
         # for ndarray and tensor inputs
         else:
-            import torch
             import numpy as np
+            import torch
             if isinstance(audio_in, torch.Tensor):
                 raw_inputs = audio_in
             elif isinstance(audio_in, np.ndarray):

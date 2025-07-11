@@ -2,8 +2,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
+import numpy as np
 import os
 import pickle
+import requests
 import shutil
 import socket
 import subprocess
@@ -14,9 +16,6 @@ import unittest
 from collections import OrderedDict
 from collections.abc import Mapping
 from os.path import expanduser
-
-import numpy as np
-import requests
 
 from modelscope.hub.constants import DEFAULT_CREDENTIALS_PATH
 from modelscope.utils.import_utils import is_tf_available, is_torch_available

@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from collections import OrderedDict
-
 import numpy as np
+from collections import OrderedDict
 
 
 class LogBuffer:

@@ -1,8 +1,7 @@
 # The ProContEXT implementation is also open-sourced by the authors,
 # and available at https://github.com/jp-lan/ProContEXT
-from copy import deepcopy
-
 import torch
+from copy import deepcopy
 
 from modelscope.models.cv.video_single_object_tracking.models.procontext.procontext import \
     build_procontext

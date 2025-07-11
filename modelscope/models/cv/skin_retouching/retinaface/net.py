@@ -1,9 +1,8 @@
 # Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
-from typing import Dict, List
-
 import torch
 import torch.nn.functional as F
 from torch import nn
+from typing import Dict, List
 
 
 def conv_bn(inp: int,

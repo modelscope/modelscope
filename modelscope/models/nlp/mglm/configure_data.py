@@ -14,14 +14,13 @@
 """parses arguments and preps data loader"""
 
 import copy
+import numpy as np
 import os
 import random
-from bisect import bisect_right
-from itertools import accumulate
-
-import numpy as np
 import torch
 import torch.utils.data
+from bisect import bisect_right
+from itertools import accumulate
 from megatron_util import mpu, print_rank_0
 
 from . import data_utils

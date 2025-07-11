@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import logging
-import os.path as osp
-from typing import Any, Dict, List, Union
-
 import numpy as np
+import os.path as osp
 import torch
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

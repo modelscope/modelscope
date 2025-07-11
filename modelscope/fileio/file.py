@@ -2,12 +2,11 @@
 
 import contextlib
 import os
+import requests
 import tempfile
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Generator, Union
-
-import requests
 
 
 class Storage(metaclass=ABCMeta):

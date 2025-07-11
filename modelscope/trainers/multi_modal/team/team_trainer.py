@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from collections import OrderedDict
-from typing import Callable, Dict, Optional
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader, Dataset
+from typing import Callable, Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model

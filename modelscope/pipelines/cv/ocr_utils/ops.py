@@ -1,15 +1,14 @@
 # Part of the implementation is borrowed and modified from SegLink,
 # publicly available at https://github.com/bgshih/seglink
+import absl.flags as absl_flags
+import cv2
 import math
+import numpy as np
 import os
 import shutil
 import sys
-import uuid
-
-import absl.flags as absl_flags
-import cv2
-import numpy as np
 import tensorflow as tf
+import uuid
 
 from . import utils
 

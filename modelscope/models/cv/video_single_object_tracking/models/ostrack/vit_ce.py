@@ -1,9 +1,8 @@
 # The implementation is adopted from OSTrack,
 # made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
-from functools import partial
-
 import torch
 import torch.nn as nn
+from functools import partial
 from timm.models.layers import DropPath, Mlp, to_2tuple
 
 from modelscope.models.cv.video_single_object_tracking.models.layers.attn_blocks import \

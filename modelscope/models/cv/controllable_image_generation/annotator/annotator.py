@@ -1,10 +1,9 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
-import os
-
 import cv2
 import mmcv
 import numpy as np
+import os
 import torch
 from einops import rearrange
 from mmseg.apis import inference_segmentor, init_segmentor

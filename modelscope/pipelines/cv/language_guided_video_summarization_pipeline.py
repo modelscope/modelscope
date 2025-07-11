@@ -1,17 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import clip
+import cv2
+import numpy as np
 import os
 import os.path as osp
 import random
 import shutil
 import tempfile
-from typing import Any, Dict
-
-import clip
-import cv2
-import numpy as np
 import torch
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base.base_model import Model

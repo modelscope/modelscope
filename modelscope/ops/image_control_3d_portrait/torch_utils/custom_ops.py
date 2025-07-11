@@ -14,10 +14,9 @@ import importlib
 import os
 import re
 import shutil
-import uuid
-
 import torch
 import torch.utils.cpp_extension
+import uuid
 from torch.utils.file_baton import FileBaton
 
 # Global options.

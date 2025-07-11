@@ -1,9 +1,8 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 """ Generative Multimodal Model Wrapper."""
-from typing import Any, Dict
-
 import torch
 from torchvision import transforms as T
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

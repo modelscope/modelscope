@@ -15,13 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
-
 import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers.activations import ACT2FN, gelu
+from typing import Dict
 
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead

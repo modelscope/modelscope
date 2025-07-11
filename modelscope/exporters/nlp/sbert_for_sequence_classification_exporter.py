@@ -1,7 +1,6 @@
 from collections import OrderedDict
-from typing import Any, Dict, Mapping, Tuple
-
 from torch.utils.data.dataloader import default_collate
+from typing import Any, Dict, Mapping, Tuple
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter

@@ -1,9 +1,8 @@
 # The implementation is adopted from HRNet, made publicly available under the MIT License License
 # at https://github.com/HRNet/HRNet-Semantic-Segmentation
 import logging
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import math
-from typing import Any, Dict
-
 import cv2
+import math
 import numpy as np
 import PIL
 import torch
 import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 from scipy.spatial.distance import pdist, squareform
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_portrait_enhancement import gpen

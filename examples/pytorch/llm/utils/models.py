@@ -1,10 +1,9 @@
 import os
-from types import MethodType
-from typing import Any, Dict, NamedTuple, Optional
-
 import torch
 from swift import get_logger
 from torch import dtype as Dtype
+from types import MethodType
+from typing import Any, Dict, NamedTuple, Optional
 
 from modelscope import (AutoConfig, AutoModelForCausalLM, AutoTokenizer, Model,
                         read_config, snapshot_download)

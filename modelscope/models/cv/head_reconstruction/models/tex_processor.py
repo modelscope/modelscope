@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import cv2
 import numpy as np
+import os
 
 
 def get_fade_out_mask(length, start_value, end_value, fade_start_ratio,

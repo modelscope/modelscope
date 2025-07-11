@@ -26,10 +26,9 @@ The same sequence can be present any number of times, and will appear
 that many times in the output.
 """
 
+import torch
 from collections import Counter
 from typing import List, Set
-
-import torch
 
 
 class ConstraintState:

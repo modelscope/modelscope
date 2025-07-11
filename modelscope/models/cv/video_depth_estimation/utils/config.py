@@ -1,9 +1,8 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
 import os
-from datetime import datetime
-
 import torch
+from datetime import datetime
 from yacs.config import CfgNode
 
 from modelscope.models.cv.video_depth_estimation.utils.horovod import on_rank_0

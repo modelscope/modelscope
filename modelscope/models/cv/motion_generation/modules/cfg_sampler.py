@@ -1,8 +1,7 @@
 # This code is borrowed and modified from Human Motion Diffusion Model,
 # made publicly available under MIT license at https://github.com/GuyTevet/motion-diffusion-model
-from copy import deepcopy
-
 import torch.nn as nn
+from copy import deepcopy
 
 
 # A wrapper model for Classifier-free guidance **SAMPLING** only

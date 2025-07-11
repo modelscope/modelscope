@@ -1,7 +1,6 @@
 import collections
 import math
 import sys
-
 import torch
 from pytorch_wavelets import DWTForward, DWTInverse
 from torch import kl_div, nn

@@ -17,21 +17,20 @@ This file contains the logic for loading training and test data for all tasks.
 import copy
 import csv
 import glob
+import json
+import numpy as np
 import os
+import pandas as pd
 import random
 import re
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from typing import Callable, Dict, List
-
-import json
-import numpy as np
-import pandas as pd
 from data_utils import (build_input_from_ids, build_sample,
                         num_special_tokens_to_add)
 from data_utils.corpora import punctuation_standardization
 from torch.utils.data import Dataset
 from tqdm import tqdm
+from typing import Callable, Dict, List
 from utils import print_rank_0
 
 from modelscope.models.nlp.mglm.tasks.data_utils import InputExample

@@ -2,7 +2,6 @@
 # https://github.com/facebookresearch/Mask2Former/blob/main/mask2former/modeling/transformer_decoder/position_encoding.py
 
 import math
-
 import torch
 from torch import nn
 

@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .unet import HFUNetModel
     from .script import create_diffusion
+    from .unet import HFUNetModel
 else:
     _import_structure = {
         'unet': ['HFUNetModel'],

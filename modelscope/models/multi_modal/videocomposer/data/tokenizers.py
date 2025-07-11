@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
 from tokenizers import BertWordPieceTokenizer, CharBPETokenizer
 
 __all__ = ['CLIPTokenizer']

@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Union
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .codegeex_for_code_translation import CodeGeeXForCodeTranslation
     from .codegeex_for_code_generation import CodeGeeXForCodeGeneration
+    from .codegeex_for_code_translation import CodeGeeXForCodeTranslation
 else:
     _import_structure = {
         'codegeex_for_code_translation': ['CodeGeeXForCodeTranslation'],

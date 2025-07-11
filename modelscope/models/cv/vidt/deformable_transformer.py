@@ -4,10 +4,9 @@
 
 import copy
 import math
-import warnings
-
 import torch
 import torch.nn.functional as F
+import warnings
 from timm.models.layers import DropPath
 from torch import nn
 from torch.nn.init import constant_, normal_, xavier_uniform_

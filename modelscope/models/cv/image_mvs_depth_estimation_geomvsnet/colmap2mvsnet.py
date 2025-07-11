@@ -1,15 +1,15 @@
 # The implementation is borrowed from https://github.com/YoYo000/MVSNet. Model reading is provided by COLMAP.
 
 from __future__ import print_function
+
 import collections
+import cv2
 import multiprocessing as mp
+import numpy as np
 import os
 import shutil
 import struct
 from functools import partial
-
-import cv2
-import numpy as np
 
 # ============================ read_model.py ============================#
 CameraModel = collections.namedtuple('CameraModel',

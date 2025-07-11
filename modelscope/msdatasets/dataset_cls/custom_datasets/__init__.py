@@ -4,32 +4,38 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .easycv_base import EasyCVBaseDataset
-    from .builder import CUSTOM_DATASETS, build_custom_dataset
-    from .torch_custom_dataset import TorchCustomDataset
-    from .movie_scene_segmentation.movie_scene_segmentation_dataset import MovieSceneSegmentationDataset
-    from .image_instance_segmentation_coco_dataset import ImageInstanceSegmentationCocoDataset
-    from .gopro_image_deblurring_dataset import GoproImageDeblurringDataset
-    from .language_guided_video_summarization_dataset import LanguageGuidedVideoSummarizationDataset
-    from .mgeo_ranking_dataset import MGeoRankingDataset
-    from .reds_image_deblurring_dataset import RedsImageDeblurringDataset
-    from .text_ranking_dataset import TextRankingDataset
-    from .veco_dataset import VecoDataset
-    from .video_summarization_dataset import VideoSummarizationDataset
-    from .audio import KWSDataset, KWSDataLoader, kws_nearfield_dataset, ASRDataset
+    from .audio import (ASRDataset, KWSDataLoader, KWSDataset,
+                        kws_nearfield_dataset)
     from .bad_image_detecting import BadImageDetectingDataset
+    from .builder import CUSTOM_DATASETS, build_custom_dataset
+    from .easycv_base import EasyCVBaseDataset
+    from .gopro_image_deblurring_dataset import GoproImageDeblurringDataset
+    from .image_colorization import ImageColorizationDataset
     from .image_inpainting import ImageInpaintingDataset
+    from .image_instance_segmentation_coco_dataset import \
+        ImageInstanceSegmentationCocoDataset
     from .image_portrait_enhancement import ImagePortraitEnhancementDataset
-    from .image_quality_assessment_degradation import ImageQualityAssessmentDegradationDataset
+    from .image_quality_assessment_degradation import \
+        ImageQualityAssessmentDegradationDataset
     from .image_quality_assmessment_mos import ImageQualityAssessmentMosDataset
-    from .referring_video_object_segmentation import ReferringVideoObjectSegmentationDataset
-    from .sidd_image_denoising import SiddImageDenoisingDataset
-    from .video_frame_interpolation import VideoFrameInterpolationDataset
-    from .video_stabilization import VideoStabilizationDataset
-    from .video_super_resolution import VideoSuperResolutionDataset
+    from .language_guided_video_summarization_dataset import \
+        LanguageGuidedVideoSummarizationDataset
+    from .mgeo_ranking_dataset import MGeoRankingDataset
+    from .movie_scene_segmentation.movie_scene_segmentation_dataset import \
+        MovieSceneSegmentationDataset
     from .ocr_detection import DataLoader, ImageDataset, QuadMeasurer
     from .ocr_recognition_dataset import OCRRecognitionDataset
-    from .image_colorization import ImageColorizationDataset
+    from .reds_image_deblurring_dataset import RedsImageDeblurringDataset
+    from .referring_video_object_segmentation import \
+        ReferringVideoObjectSegmentationDataset
+    from .sidd_image_denoising import SiddImageDenoisingDataset
+    from .text_ranking_dataset import TextRankingDataset
+    from .torch_custom_dataset import TorchCustomDataset
+    from .veco_dataset import VecoDataset
+    from .video_frame_interpolation import VideoFrameInterpolationDataset
+    from .video_stabilization import VideoStabilizationDataset
+    from .video_summarization_dataset import VideoSummarizationDataset
+    from .video_super_resolution import VideoSuperResolutionDataset
 else:
     _import_structure = {
         'easycv_base': ['EasyCVBaseDataset'],

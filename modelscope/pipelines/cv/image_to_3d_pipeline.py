@@ -1,9 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os.path as osp
 import PIL
 import rembg
 import torch
@@ -13,6 +11,7 @@ import torchvision.transforms.functional as TF
 from omegaconf import OmegaConf
 from PIL import Image
 from torchvision.utils import save_image
+from typing import Any, Dict
 
 # import modelscope.models.cv.image_to_image_generation.data as data
 # import modelscope.models.cv.image_to_image_generation.models as models

@@ -1,7 +1,6 @@
 # The implementation here is modified based on https://github.com/xy-guo/MVSNet_pytorch
-import random
-
 import numpy as np
+import random
 import torch
 import torch.nn.functional as F
 import torchvision.utils as vutils

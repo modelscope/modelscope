@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .unifold import (UniFoldPreprocessor)
+    from .unifold import UniFoldPreprocessor
 
 else:
     _import_structure = {'unifold': ['UniFoldPreprocessor']}

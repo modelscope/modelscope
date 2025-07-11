@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Tuple
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -30,6 +28,7 @@ from diffusers.models.transformers.transformer_2d import Transformer2DModel
 from diffusers.utils import is_torch_version, logging
 from einops import rearrange
 from torch import nn
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 

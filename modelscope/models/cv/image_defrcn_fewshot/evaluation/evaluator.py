@@ -5,7 +5,6 @@
 import datetime
 import logging
 import time
-
 import torch
 from detectron2.evaluation.evaluator import inference_context
 

@@ -1,10 +1,9 @@
 # The Uni-fold implementation is also open-sourced by the authors under Apache-2.0 license,
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
-from typing import Optional
-
 import numpy as np
 import torch
+from typing import Optional
 
 from modelscope.models.science.unifold.data import data_ops
 

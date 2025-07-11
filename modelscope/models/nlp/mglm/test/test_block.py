@@ -1,9 +1,8 @@
 # Copyright (c) 2022 Zhipu.AI
 
+import numpy as np
 import random
 from argparse import Namespace
-
-import numpy as np
 from blocklm_utils import ConstructBlockStrategy
 
 

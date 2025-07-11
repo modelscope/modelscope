@@ -18,15 +18,17 @@ if TYPE_CHECKING:
         ProSTTextVideoRetrievalPipeline
     from .soonet_video_temporal_grounding_pipeline import \
         SOONetVideoTemporalGroundingPipeline
+    from .text_to_image_freeu_pipeline import FreeUTextToImagePipeline
     from .text_to_image_synthesis_pipeline import TextToImageSynthesisPipeline
     from .text_to_video_synthesis_pipeline import TextToVideoSynthesisPipeline
     from .video_captioning_pipeline import VideoCaptioningPipeline
     from .video_multi_modal_embedding_pipeline import \
         VideoMultiModalEmbeddingPipeline
-    from .visual_question_answering_pipeline import VisualQuestionAnsweringPipeline
-    from .video_question_answering_pipeline import VideoQuestionAnsweringPipeline
+    from .video_question_answering_pipeline import \
+        VideoQuestionAnsweringPipeline
     from .videocomposer_pipeline import VideoComposerPipeline
-    from .text_to_image_freeu_pipeline import FreeUTextToImagePipeline
+    from .visual_question_answering_pipeline import \
+        VisualQuestionAnsweringPipeline
 else:
     _import_structure = {
         'image_captioning_pipeline': ['ImageCaptioningPipeline'],

@@ -14,21 +14,20 @@
 """dataset objects for jsons, csvs, and BERT datasets"""
 
 import csv
-import math
-import os
-import random
-import time
-from bisect import bisect_right
-from itertools import accumulate
-from operator import itemgetter
-
 import json
+import math
 import nltk
 import numpy as np
+import os
 import pandas as pd
+import random
+import time
 import torch
 import tqdm
+from bisect import bisect_right
+from itertools import accumulate
 from nltk import tokenize
+from operator import itemgetter
 from torch.utils import data
 
 from modelscope.models.nlp.mglm.utils import print_rank_0

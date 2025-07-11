@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import colorsys
-import os
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
 import torch
 from PIL import Image, ImageDraw, ImageFile, ImageFont
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

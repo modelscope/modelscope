@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .stable_diffusion import StableDiffusionPipeline
-    from .stable_diffusion import ChineseStableDiffusionPipeline
+    from .stable_diffusion import (ChineseStableDiffusionPipeline,
+                                   StableDiffusionPipeline)
 else:
     _import_structure = {
         'stable_diffusion':

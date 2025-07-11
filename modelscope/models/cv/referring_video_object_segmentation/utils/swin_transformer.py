@@ -2,15 +2,14 @@
 # made publicly available under the Apache 2.0 License at https://github.com/mttr2021/MTTR
 # Modified from Video-Swin-Transformer https://github.com/SwinTransformer/Video-Swin-Transformer
 
-from functools import lru_cache, reduce
-from operator import mul
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange
+from functools import lru_cache, reduce
+from operator import mul
 from timm.models.layers import DropPath, trunc_normal_
 
 

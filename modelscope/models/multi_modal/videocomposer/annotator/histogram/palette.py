@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 r"""Modified from ``https://github.com/sergeyk/rayleigh''.
 """
+import numpy as np
 import os
 import os.path as osp
-
-import numpy as np
 from skimage.color import hsv2rgb, lab2rgb, rgb2lab
 from skimage.io import imsave
 from sklearn.metrics import euclidean_distances

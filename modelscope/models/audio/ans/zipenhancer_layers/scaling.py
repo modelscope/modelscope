@@ -18,13 +18,12 @@
 import logging
 import math
 import random
-from typing import Optional, Tuple, Union
-
 # import k2
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.cuda.amp import custom_bwd, custom_fwd
+from typing import Optional, Tuple, Union
 
 
 def logaddexp_onnx(x: Tensor, y: Tensor) -> Tensor:

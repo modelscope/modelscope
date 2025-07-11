@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import glob
+import json
+import numpy as np
 import os
 import shutil
 import tempfile
-import unittest
-
-import json
-import numpy as np
 import torch
+import unittest
 from torch import nn
 
 from modelscope.metainfo import Trainers
@@ -91,7 +90,8 @@ class TensorboardHookTest(unittest.TestCase):
             os.path.join(tb_out_dir, 'events.out.tfevents.*'))
         self.assertEqual(len(events_files), 1)
 
-        from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+        from tensorboard.backend.event_processing.event_accumulator import \
+            EventAccumulator
         ea = EventAccumulator(events_files[0])
         ea.Reload()
         self.assertEqual(len(ea.Scalars(LogKeys.LOSS)), 10)

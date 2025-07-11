@@ -1,10 +1,9 @@
-from functools import partial
-from typing import Callable, List, Optional, Tuple
-
 import numpy as np
 from datasets import Dataset as HfDataset
 from datasets import concatenate_datasets
+from functools import partial
 from swift.utils import get_seed
+from typing import Callable, List, Optional, Tuple
 
 from modelscope import MsDataset
 

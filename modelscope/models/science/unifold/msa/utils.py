@@ -1,11 +1,10 @@
 # The Uni-fold implementation is also open-sourced by the authors under Apache-2.0 license,
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
-import os
-from typing import Mapping, Sequence
-
 import json
+import os
 from absl import logging
+from typing import Mapping, Sequence
 
 from modelscope.models.science.unifold.data import protein
 

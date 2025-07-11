@@ -99,3 +99,18 @@ VisibilityMap = {
     ModelVisibility.INTERNAL: Visibility.INTERNAL,
     ModelVisibility.PUBLIC: Visibility.PUBLIC
 }
+
+#TODO：update these constants
+class AigcType(object):
+    CHECKPOINT = 'Checkpoint'
+    LORA = 'LoRA'
+    VAE = 'VAE'
+class VisionFoundation(object):
+    SD_1_5 = 'SD_1_5'
+    SD_XL = 'SD_XL'
+    SD_3 = 'SD_3'
+    FLUX_1 = 'FLUX_1'
+    WAN_VIDEO_2_1_T2V_1_3_B = 'WAN_VIDEO_2_1_T2V_1_3_B'
+
+# Default AIGC model cover image
+DEFAULT_AIGC_COVER_IMAGE = 'https://modelscope.cn/models/modelscope/modelscope_aigc_default_logo/resolve/master/aigc_default_logo.png'

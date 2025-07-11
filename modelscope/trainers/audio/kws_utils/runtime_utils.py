@@ -1,12 +1,11 @@
 import codecs
+import json
 import os
 import re
 import stat
 import sys
 from collections import OrderedDict
 from shutil import copyfile
-
-import json
 
 from modelscope.utils.logger import get_logger
 

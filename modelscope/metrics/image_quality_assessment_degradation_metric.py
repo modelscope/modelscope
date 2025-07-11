@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
+import numpy as np
 import os
 import sys
 import tempfile
-from collections import defaultdict
-from typing import Dict
-
-import cv2
-import numpy as np
 import torch
+from collections import defaultdict
 from scipy.stats import pearsonr, spearmanr
 from tqdm import tqdm
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

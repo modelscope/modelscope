@@ -2,10 +2,9 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 import math
-from typing import Tuple
-
 import torch
 import torch.nn as nn
+from typing import Tuple
 from unicore.modules import LayerNorm, softmax_dropout
 from unicore.utils import dict_multimap, one_hot, permute_final_dims
 

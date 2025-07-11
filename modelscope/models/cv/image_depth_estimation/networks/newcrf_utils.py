@@ -2,13 +2,12 @@
 import os
 import os.path as osp
 import pkgutil
-import warnings
-from collections import OrderedDict
-from importlib import import_module
-
 import torch
 import torch.nn as nn
 import torchvision
+import warnings
+from collections import OrderedDict
+from importlib import import_module
 from torch import distributed as dist
 from torch.nn import functional as F
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -120,10 +119,10 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
 
     if unexpected_keys:
         err_msg.append('unexpected key in source '
-                       f'state_dict: {", ".join(unexpected_keys)}\n')
+                       f'state_dict: {', '.join(unexpected_keys)}\n')
     if missing_keys:
         err_msg.append(
-            f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
+            f'missing keys in source state_dict: {', '.join(missing_keys)}\n')
 
     rank, _ = get_dist_info()
     if len(err_msg) > 0 and rank == 0:

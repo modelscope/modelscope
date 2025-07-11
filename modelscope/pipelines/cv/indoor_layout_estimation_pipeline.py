@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.indoor_layout_estimation.networks.misc.fourier import (

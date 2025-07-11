@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
-import random
-
 import decord
 import numpy as np
+import random
 import torch
 from detectron2.data.transforms import (ExtentTransform, RandomBrightness,
                                         RandomFlip, ResizeShortestEdge)

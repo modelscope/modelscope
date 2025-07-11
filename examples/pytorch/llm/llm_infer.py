@@ -1,14 +1,13 @@
 # ### Setting up experimental environment.
 import os
+import torch
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 import warnings
 from dataclasses import dataclass, field
 from functools import partial
-from typing import List, Optional
-
-import torch
 from swift import LoRAConfig, Swift
 from transformers import GenerationConfig, TextStreamer
+from typing import List, Optional
 from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING, get_dataset,
                    get_model_tokenizer, inference, parse_args, process_dataset,
                    tokenize_function)

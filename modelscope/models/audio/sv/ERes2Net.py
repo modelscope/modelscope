@@ -5,14 +5,13 @@
     The global feature fusion (GFF) takes acoustic features of different scales as input to aggregate global signal.
 """
 import math
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
+from typing import Any, Dict, Union
 
 import modelscope.models.audio.sv.pooling_layers as pooling_layers
 from modelscope.metainfo import Models

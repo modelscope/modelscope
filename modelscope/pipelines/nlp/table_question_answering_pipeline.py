@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Union
-
 import json
+import os
 import torch
 from transformers import BertTokenizer
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

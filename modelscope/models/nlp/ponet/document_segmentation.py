@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict
-
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model
@@ -108,7 +107,7 @@ class PoNetForDocumentSegmentation(PoNetPreTrainedModel):
             config = PoNetConfig.from_pretrained(model_dir, num_labels=2)
         else:
             raise ValueError(
-                f'Expected config type bert and ponet, which is : {model_config["type"]}'
+                f'Expected config type bert and ponet, which is : {model_config['type']}'
             )
         model = super(Model, cls).from_pretrained(model_dir, config=config)
         model.model_dir = model_dir

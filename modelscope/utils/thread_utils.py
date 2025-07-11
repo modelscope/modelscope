@@ -2,7 +2,6 @@
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
-
 from tqdm.auto import tqdm
 
 from modelscope.hub.constants import DEFAULT_MAX_WORKERS

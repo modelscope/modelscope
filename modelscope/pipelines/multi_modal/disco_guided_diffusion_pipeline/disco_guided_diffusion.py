@@ -2,15 +2,14 @@
 # made publicly available under MIT license at
 # https://github.com/IDEA-CCNL/Fengshenbang-LM/tree/main/fengshen/examples/disco_project
 
-import gc
-import importlib
-import math
-import os
-
 import clip
 import cv2
+import gc
+import importlib
 import json
+import math
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torchvision.transforms as T

@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import mmcv
 import numpy as np
+import os
+import os.path as osp
 import torch
 from tqdm import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_panoptic_segmentation.video_k_net import \

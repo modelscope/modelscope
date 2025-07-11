@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from collections import OrderedDict
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
 import PIL.Image as Image
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from collections import OrderedDict
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

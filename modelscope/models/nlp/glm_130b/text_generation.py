@@ -6,15 +6,14 @@ import re
 import stat
 import sys
 import time
-from functools import partial
-from typing import Any, Dict, List, Tuple
-
 import torch
+from functools import partial
 from SwissArmyTransformer import mpu
 from SwissArmyTransformer.generation.autoregressive_sampling import (
     get_masks_and_position_ids_default, update_mems)
 from SwissArmyTransformer.generation.utils import (generate_continually,
                                                    timed_name)
+from typing import Any, Dict, List, Tuple
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

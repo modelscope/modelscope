@@ -1,11 +1,10 @@
-import urllib
-from abc import ABC
-from http import HTTPStatus
-from typing import Optional
-
 import json
 import requests
+import urllib
+from abc import ABC
 from attrs import asdict, define, field, validators
+from http import HTTPStatus
+from typing import Optional
 
 from modelscope.hub.api import ModelScopeConfig
 from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,

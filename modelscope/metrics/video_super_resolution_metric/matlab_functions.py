@@ -2,7 +2,6 @@
 # made publicly available under the Apache 2.0 License at
 # https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/utils/matlab_functions.py
 import math
-
 import numpy as np
 import torch
 

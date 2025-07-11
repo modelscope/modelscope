@@ -1,15 +1,14 @@
 # Copyright © Alibaba, Inc. and its affiliates.
 
+import cv2
 import math
+import numpy as np
 import os
 import sys
 import tempfile
-from typing import Any, Dict, Optional, Union
-
-import cv2
-import numpy as np
 import torch
 from diffusers import StableDiffusionInpaintPipeline
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

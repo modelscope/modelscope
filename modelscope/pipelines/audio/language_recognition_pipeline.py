@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import io
-import os
-from typing import Union
-
 import numpy as np
+import os
 import soundfile as sf
 import torch
 import torchaudio
+from typing import Union
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines

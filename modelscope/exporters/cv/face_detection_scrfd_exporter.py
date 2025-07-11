@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from functools import partial
-from typing import Mapping
-
 import numpy as np
 import onnx
+import os
 import torch
+from functools import partial
+from typing import Mapping
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter

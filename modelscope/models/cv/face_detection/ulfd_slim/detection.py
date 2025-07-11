@@ -1,9 +1,8 @@
 # The implementation is based on ULFD, available at
 # https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F

@@ -2,7 +2,6 @@ import csv
 import os
 import shutil
 import time
-
 import torch
 
 from modelscope.models.cv.self_supervised_depth_completion import vis_utils

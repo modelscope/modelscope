@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from typing import Any, Dict, Optional, Union
-
 import torch
 from sacremoses import MosesDetokenizer
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

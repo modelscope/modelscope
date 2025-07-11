@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .image_portrait_enhancement_dataset import ImagePortraitEnhancementDataset
+    from .image_portrait_enhancement_dataset import \
+        ImagePortraitEnhancementDataset
 
 else:
     _import_structure = {

@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
+import json
 import logging
 import math
 import os
 import re
 import sys
-
-import json
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -266,7 +265,8 @@ class VLDocForDocVLEmbedding(TorchModel):
         super().__init__(model_dir=model_dir, *args, **kwargs)
 
         # Initialize the model.
-        from modelscope.models.multi_modal.vldoc.modeling_layout_roberta import LayoutRobertaConfig
+        from modelscope.models.multi_modal.vldoc.modeling_layout_roberta import \
+            LayoutRobertaConfig
         model_cfg_path = os.path.join(model_dir, 'config.json')
         logger.info('Loading config file from {}'.format(model_cfg_path))
         assert os.path.exists(model_cfg_path)
@@ -280,7 +280,8 @@ class VLDocForDocVLEmbedding(TorchModel):
         logger.info('Loading model from {}'.format(model_path))
 
         # Initialize the tokenizer.
-        from modelscope.models.multi_modal.vldoc.tokenization import VLDocXLMTokenizer
+        from modelscope.models.multi_modal.vldoc.tokenization import \
+            VLDocXLMTokenizer
         tokenizer_path = os.path.join(model_dir, ModelFile.TOKENIZER_FOLDER)
         self.tokenizer = VLDocXLMTokenizer.from_pretrained(tokenizer_path)
 

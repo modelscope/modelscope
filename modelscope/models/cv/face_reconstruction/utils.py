@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
-import math
-import os
-import os.path as osp
-from array import array
-
 import cv2
+import math
 import numba
 import numpy as np
+import os
+import os.path as osp
 import torch
 import torch.nn.functional as F
+from array import array
 from PIL import Image
 from scipy.io import loadmat, savemat
 

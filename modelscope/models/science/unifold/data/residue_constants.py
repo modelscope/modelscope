@@ -15,10 +15,9 @@
 
 import collections
 import functools
+import numpy as np
 import os
 from typing import List, Mapping, Tuple
-
-import numpy as np
 from unicore.utils import tree_map
 
 # Distance from one CA to next CA [trans configuration: omega = 180].

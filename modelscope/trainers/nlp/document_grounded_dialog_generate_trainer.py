@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import re
-import string
-from collections import Counter
-
-import json
 import sacrebleu
+import string
 import torch
 import tqdm
+from collections import Counter
 from rouge import Rouge
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader

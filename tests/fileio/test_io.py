@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import tempfile
 import unittest
-
-import numpy as np
 
 from modelscope.fileio.io import dump, dumps, load
 

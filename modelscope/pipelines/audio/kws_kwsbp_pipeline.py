@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 from typing import Any, Dict, List, Union
-
-import json
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model
@@ -109,8 +108,8 @@ class KeyWordSpottingKwsbpPipeline(Pipeline):
         return rst_dict
 
     def run_with_kwsbp(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        import kwsbp
         import kws_util.common
+        import kwsbp
         kws_inference = kwsbp.KwsbpEngine()
 
         cmd = {

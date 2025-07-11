@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import numpy as np
+import os
 import torch
 
 from modelscope.metainfo import Hooks

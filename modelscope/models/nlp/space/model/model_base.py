@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-
 import torch.nn as nn
 
 from modelscope.utils.constant import ModelFile

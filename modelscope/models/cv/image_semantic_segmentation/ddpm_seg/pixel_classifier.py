@@ -2,12 +2,11 @@
 # originally Apache 2.0 License and publicly available at https://github.com/yandex-research/ddpm-segmentation
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from collections import Counter
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
+from collections import Counter
 from PIL import Image
 from torch.distributions import Categorical
 

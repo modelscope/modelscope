@@ -9,22 +9,24 @@ if TYPE_CHECKING:
     from .exporters import Exporter, TfModelExporter, TorchModelExporter
     from .hub.api import HubApi
     from .hub.check_model import check_local_model_is_latest, check_model_is_id
+    from .hub.file_download import dataset_file_download, model_file_download
     from .hub.push_to_hub import push_to_hub, push_to_hub_async
-    from .hub.snapshot_download import snapshot_download, dataset_snapshot_download
-    from .hub.file_download import model_file_download, dataset_file_download
-
-    from .metrics import (
-        AccuracyMetric, AudioNoiseMetric, BleuMetric, ImageColorEnhanceMetric,
-        ImageColorizationMetric, ImageDenoiseMetric, ImageInpaintingMetric,
-        ImageInstanceSegmentationCOCOMetric, ImagePortraitEnhancementMetric,
-        ImageQualityAssessmentDegradationMetric,
-        ImageQualityAssessmentMosMetric, LossMetric, Metric,
-        MovieSceneSegmentationMetric, OCRRecognitionMetric, PplMetric,
-        ReferringVideoObjectSegmentationMetric, SequenceClassificationMetric,
-        TextGenerationMetric, TextRankingMetric, TokenClassificationMetric,
-        VideoFrameInterpolationMetric, VideoStabilizationMetric,
-        VideoSummarizationMetric, VideoSuperResolutionMetric,
-        task_default_metrics)
+    from .hub.snapshot_download import (dataset_snapshot_download,
+                                        snapshot_download)
+    from .metrics import (AccuracyMetric, AudioNoiseMetric, BleuMetric,
+                          ImageColorEnhanceMetric, ImageColorizationMetric,
+                          ImageDenoiseMetric, ImageInpaintingMetric,
+                          ImageInstanceSegmentationCOCOMetric,
+                          ImagePortraitEnhancementMetric,
+                          ImageQualityAssessmentDegradationMetric,
+                          ImageQualityAssessmentMosMetric, LossMetric, Metric,
+                          MovieSceneSegmentationMetric, OCRRecognitionMetric,
+                          PplMetric, ReferringVideoObjectSegmentationMetric,
+                          SequenceClassificationMetric, TextGenerationMetric,
+                          TextRankingMetric, TokenClassificationMetric,
+                          VideoFrameInterpolationMetric,
+                          VideoStabilizationMetric, VideoSummarizationMetric,
+                          VideoSuperResolutionMetric, task_default_metrics)
     from .models import Model, TorchModel
     from .msdatasets import MsDataset
     from .pipelines import Pipeline, pipeline
@@ -32,32 +34,45 @@ if TYPE_CHECKING:
     from .trainers import (EpochBasedTrainer, Hook, Priority, TrainingArgs,
                            build_dataset_from_file)
     from .utils.constant import Tasks
-    from .utils.hf_util import patch_hub, patch_context, unpatch_hub
+    from .utils.hf_util import patch_context, patch_hub, unpatch_hub
     if is_transformers_available():
-        from .utils.hf_util import (
-            AutoModel, AutoProcessor, AutoFeatureExtractor, GenerationConfig,
-            AutoConfig, GPTQConfig, AwqConfig, BitsAndBytesConfig,
-            AutoModelForCausalLM, AutoModelForSeq2SeqLM,
-            AutoModelForVision2Seq, AutoModelForSequenceClassification,
-            AutoModelForTokenClassification, AutoModelForImageClassification,
-            AutoModelForImageTextToText,
-            AutoModelForZeroShotImageClassification,
-            AutoModelForKeypointDetection,
-            AutoModelForDocumentQuestionAnswering,
-            AutoModelForSemanticSegmentation,
-            AutoModelForUniversalSegmentation,
-            AutoModelForInstanceSegmentation, AutoModelForObjectDetection,
-            AutoModelForZeroShotObjectDetection,
-            AutoModelForAudioClassification, AutoModelForSpeechSeq2Seq,
-            AutoModelForMaskedImageModeling,
-            AutoModelForVisualQuestionAnswering,
-            AutoModelForTableQuestionAnswering, AutoModelForImageToImage,
-            AutoModelForImageSegmentation, AutoModelForQuestionAnswering,
-            AutoModelForMaskedLM, AutoTokenizer, AutoModelForMaskGeneration,
-            AutoModelForPreTraining, AutoModelForTextEncoding,
-            AutoImageProcessor, BatchFeature, Qwen2VLForConditionalGeneration,
-            T5EncoderModel, Qwen2_5_VLForConditionalGeneration, LlamaModel,
-            LlamaPreTrainedModel, LlamaForCausalLM, hf_pipeline)
+        from .utils.hf_util import (AutoConfig, AutoFeatureExtractor,
+                                    AutoImageProcessor, AutoModel,
+                                    AutoModelForAudioClassification,
+                                    AutoModelForCausalLM,
+                                    AutoModelForDocumentQuestionAnswering,
+                                    AutoModelForImageClassification,
+                                    AutoModelForImageSegmentation,
+                                    AutoModelForImageTextToText,
+                                    AutoModelForImageToImage,
+                                    AutoModelForInstanceSegmentation,
+                                    AutoModelForKeypointDetection,
+                                    AutoModelForMaskedImageModeling,
+                                    AutoModelForMaskedLM,
+                                    AutoModelForMaskGeneration,
+                                    AutoModelForObjectDetection,
+                                    AutoModelForPreTraining,
+                                    AutoModelForQuestionAnswering,
+                                    AutoModelForSemanticSegmentation,
+                                    AutoModelForSeq2SeqLM,
+                                    AutoModelForSequenceClassification,
+                                    AutoModelForSpeechSeq2Seq,
+                                    AutoModelForTableQuestionAnswering,
+                                    AutoModelForTextEncoding,
+                                    AutoModelForTokenClassification,
+                                    AutoModelForUniversalSegmentation,
+                                    AutoModelForVision2Seq,
+                                    AutoModelForVisualQuestionAnswering,
+                                    AutoModelForZeroShotImageClassification,
+                                    AutoModelForZeroShotObjectDetection,
+                                    AutoProcessor, AutoTokenizer, AwqConfig,
+                                    BatchFeature, BitsAndBytesConfig,
+                                    GenerationConfig, GPTQConfig,
+                                    LlamaForCausalLM, LlamaModel,
+                                    LlamaPreTrainedModel,
+                                    Qwen2_5_VLForConditionalGeneration,
+                                    Qwen2VLForConditionalGeneration,
+                                    T5EncoderModel, hf_pipeline)
     else:
         print(
             'transformer is not installed, please install it if you want to use related modules'

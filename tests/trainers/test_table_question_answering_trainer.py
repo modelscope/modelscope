@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import unittest
-
-import json
 
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers.nlp.table_question_answering_trainer import \

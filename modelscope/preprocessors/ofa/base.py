@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
+import json
+import numpy as np
 import os
 import re
 import string
-from os import path as osp
-
-import json
-import numpy as np
 import torch
 import torchaudio
+from os import path as osp
 from PIL import Image
 
 from modelscope.fileio import File

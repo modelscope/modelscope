@@ -1,13 +1,12 @@
 # The implementation is partly adopted from nerfacc, made publicly available under the MIT License
 # at https://github.com/KAIR-BAIR/nerfacc/blob/master/examples/radiance_fields/ngp.py
 import gc
-from collections import defaultdict
-
 import mcubes
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import defaultdict
 from torch.autograd import Function
 from torch.cuda.amp import custom_bwd, custom_fwd
 

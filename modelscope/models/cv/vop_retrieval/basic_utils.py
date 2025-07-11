@@ -1,16 +1,15 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
+import cv2
+import numpy as np
 import os
 import pickle
 import random
 import shutil
-import zipfile
-from collections import OrderedDict
-
-import cv2
-import numpy as np
 import torch
 import ujson as json
+import zipfile
+from collections import OrderedDict
 from PIL import Image
 from torchvision import transforms
 

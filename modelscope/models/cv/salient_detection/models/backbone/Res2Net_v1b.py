@@ -1,7 +1,6 @@
 # Implementation in this file is modified based on SINet-V2,made publicly available under the Apache 2.0 License
 # publicly available at https://github.com/GewelsJI/SINet-V2
 import math
-
 import torch
 import torch.nn as nn
 

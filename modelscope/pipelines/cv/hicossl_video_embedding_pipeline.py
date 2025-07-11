@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
 import os.path as osp
-from typing import Any, Dict
-
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.action_recognition import BaseVideoModel

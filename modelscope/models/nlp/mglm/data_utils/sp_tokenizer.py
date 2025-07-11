@@ -4,7 +4,6 @@ from https://github.com/openai/gpt-2/, changed for chinese
 """
 import os  # yapf: disable
 
-
 """
 SentencePiece is an unsupervised text tokenizer and detokenizer mainly for Neural Network-based text generation
 systems where the vocabulary size is predetermined prior to the neural model training. SentencePiece implements

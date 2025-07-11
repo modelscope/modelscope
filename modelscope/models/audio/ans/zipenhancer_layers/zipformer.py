@@ -21,11 +21,10 @@ import copy
 import logging
 import math
 import random
-import warnings
-from typing import List, Optional, Tuple, Union
-
 import torch
+import warnings
 from torch import Tensor, nn
+from typing import List, Optional, Tuple, Union
 
 from .scaling import \
     Identity  # more friendly to backward hooks than nn.Identity(), for diagnostic reasons.

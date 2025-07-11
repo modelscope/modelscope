@@ -15,11 +15,10 @@
 # limitations under the License.
 """ MPLUG model configuration """
 import os
-from typing import Any, Dict, Union
-
 import yaml
 from transformers import PretrainedConfig
 from transformers.utils import logging
+from typing import Any, Dict, Union
 
 from modelscope.utils.constant import Tasks
 

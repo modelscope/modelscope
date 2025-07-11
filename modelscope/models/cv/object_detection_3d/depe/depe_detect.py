@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import os.path as osp
-from typing import Any, Dict, List, Union
-
-import numpy as np
 import torch
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
@@ -32,8 +31,10 @@ class DepeDetect(TorchModel):
         """
         super().__init__(model_dir, *args, **kwargs)
         from mmcv.runner import load_checkpoint
+
         import modelscope.models.cv.object_detection_3d.depe.mmdet3d_plugin
-        from modelscope.models.cv.object_detection_3d.depe.mmdet3d_plugin.models.detectors import Petr3D
+        from modelscope.models.cv.object_detection_3d.depe.mmdet3d_plugin.models.detectors import \
+            Petr3D
 
         # build model and load checkpoint
         config_path = osp.join(model_dir, ModelFile.CONFIGURATION)

@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-
 from transformers import XLMRobertaTokenizer
 
 SPIECE_UNDERLINE = '▁'

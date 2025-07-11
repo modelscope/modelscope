@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-
 import torch
 from torch.utils.data import DataLoader, Dataset, SequentialSampler
 from transformers import AutoTokenizer

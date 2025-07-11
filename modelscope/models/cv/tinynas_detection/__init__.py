@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .tinynas_detector import Tinynas_detector
     from .tinynas_damoyolo import DamoYolo
+    from .tinynas_detector import Tinynas_detector
 
 else:
     _import_structure = {

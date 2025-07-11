@@ -25,8 +25,7 @@ class DatasetDeleteTest(unittest.TestCase):
         self.token = os.getenv('TEST_UPLOAD_MS_TOKEN')
         error_msg = 'The modelscope token can not be empty, please set env variable: TEST_UPLOAD_MS_TOKEN'
         self.assertIsNotNone(self.token, msg=error_msg)
-        from modelscope.hub.api import HubApi
-        from modelscope.hub.api import ModelScopeConfig
+        from modelscope.hub.api import HubApi, ModelScopeConfig
         self.api = HubApi()
         self.api.login(self.token)
 

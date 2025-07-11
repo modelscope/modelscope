@@ -1,8 +1,7 @@
 import os
-from typing import Any, Dict
-
 import tensorflow as tf
 from packaging import version
+from typing import Any, Dict
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.tf_model_exporter import TfModelExporter

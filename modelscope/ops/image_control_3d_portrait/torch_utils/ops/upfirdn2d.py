@@ -9,9 +9,8 @@
 # its affiliates is strictly prohibited.
 """Custom PyTorch ops for efficient resampling of 2D images."""
 
-import os
-
 import numpy as np
+import os
 import torch
 
 from .. import custom_ops, misc

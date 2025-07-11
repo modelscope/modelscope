@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Optional, Union
-
 import numpy as np
 import torch
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.outputs import OutputKeys
@@ -80,7 +79,8 @@ class GeneralImageClassificationPipeline(Pipeline):
                 self.preprocessor = Preprocessor.from_pretrained(
                     self.model.model_dir, **kwargs)
                 if self.preprocessor.__class__.__name__ == 'ImageClassificationBypassPreprocessor':
-                    from modelscope.preprocessors import ImageClassificationMmcvPreprocessor
+                    from modelscope.preprocessors import \
+                        ImageClassificationMmcvPreprocessor
                     self.preprocessor = ImageClassificationMmcvPreprocessor(
                         self.model.model_dir, **kwargs)
         logger.info('load model done')

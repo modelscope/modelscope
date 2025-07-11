@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import os.path as osp
-from glob import glob
-
 import cv2
 import numpy as np
+import os
+import os.path as osp
 import torch
 import tqdm
+from glob import glob
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

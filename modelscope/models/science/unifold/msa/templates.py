@@ -17,12 +17,11 @@ import dataclasses
 import datetime
 import functools
 import glob
+import numpy as np
 import os
 import re
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
-
-import numpy as np
 from absl import logging
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 from modelscope.models.science.unifold.data import residue_constants
 from modelscope.models.science.unifold.msa import mmcif, parsers

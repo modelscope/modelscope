@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import numpy as np
 import torch
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

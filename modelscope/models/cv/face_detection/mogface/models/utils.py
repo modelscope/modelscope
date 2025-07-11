@@ -1,11 +1,10 @@
 # Modified from https://github.com/biubug6/Pytorch_Retinaface
 
 import math
-from itertools import product as product
-from math import ceil
-
 import numpy as np
 import torch
+from itertools import product as product
+from math import ceil
 
 
 def transform_anchor(anchors):

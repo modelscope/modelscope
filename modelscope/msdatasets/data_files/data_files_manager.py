@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Union
-
 from datasets import DatasetBuilder
+from typing import Union
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \

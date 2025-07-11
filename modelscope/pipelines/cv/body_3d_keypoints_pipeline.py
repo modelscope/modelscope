@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import datetime
-import os.path as osp
-import tempfile
-from typing import Any, Dict, List, Union
-
 import cv2
+import datetime
 import matplotlib
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 import numpy as np
+import os.path as osp
+import tempfile
 import torch
 from matplotlib import animation
 from matplotlib.animation import writers
 from matplotlib.ticker import MultipleLocator
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.body_3d_keypoints.canonical_pose.body_3d_pose import \

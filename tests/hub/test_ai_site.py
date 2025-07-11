@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import unittest
-
 from requests import HTTPError
 
 from modelscope import MsDataset, snapshot_download

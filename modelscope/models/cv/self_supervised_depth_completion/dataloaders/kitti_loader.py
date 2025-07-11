@@ -1,13 +1,12 @@
+import cv2
 import glob
+import numpy as np
 import os
 import os.path
-from random import choice
-
-import cv2
-import numpy as np
 import torch.utils.data as data
 from numpy import linalg as LA
 from PIL import Image
+from random import choice
 
 from modelscope.models.cv.self_supervised_depth_completion.dataloaders import \
     transforms

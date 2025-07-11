@@ -1,6 +1,5 @@
-from typing import Any, Dict, Union
-
 import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines, Preprocessors
 from modelscope.models.base import Model

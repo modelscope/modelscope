@@ -1,10 +1,9 @@
 import math
-from abc import abstractmethod
-
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from abc import abstractmethod
 
 from ....ldm.modules.attention import SpatialTransformer
 from ....ldm.modules.diffusionmodules.util import (avg_pool_nd, checkpoint,

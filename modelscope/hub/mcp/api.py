@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Optional
-
 import requests
+from typing import Optional
 
 from modelscope.hub.errors import raise_for_http_status
 from modelscope.utils.logger import get_logger

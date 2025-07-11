@@ -1,11 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from functools import partial
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from functools import partial
 
 
 class Scale(nn.Module):

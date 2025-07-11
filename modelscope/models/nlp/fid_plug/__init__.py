@@ -18,7 +18,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .configuration import PlugConfig
-    from .text_generation import (PlugV2Chat, PlugV2FidChat)
+    from .text_generation import PlugV2Chat, PlugV2FidChat
 else:
     _import_structure = {
         'configuration': ['PlugConfig'],

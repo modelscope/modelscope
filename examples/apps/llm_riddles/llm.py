@@ -47,6 +47,7 @@ class DashScope:
             RuntimeError: If there is an error in accessing the Dashscope service.
         """
         import dashscope  # Import dashscope module at runtime
+
         # Format the input into the required structure
         if isinstance(input, str):
             messages: List[Dict[str, str]] = [{

@@ -1,10 +1,9 @@
 # The implementation is adopted from mmcv,
 # made publicly available under the Apache 2.0 License at
 # https://github.com/open-mmlab/mmcv/blob/master/mmcv/video/io.py
+import cv2
 import os.path as osp
 from collections import OrderedDict
-
-import cv2
 from cv2 import (CAP_PROP_FOURCC, CAP_PROP_FPS, CAP_PROP_FRAME_COUNT,
                  CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH,
                  CAP_PROP_POS_FRAMES, VideoWriter_fourcc)

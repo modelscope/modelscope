@@ -3,14 +3,13 @@ import datetime
 import math
 import os
 import time
-from typing import Dict
-
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn as nn
 from easydict import EasyDict as easydict
 from torch.nn.parallel import DistributedDataParallel as DDP
+from typing import Dict
 
 from modelscope.metainfo import Trainers
 from modelscope.models.cv.tinynas_detection.damo.apis.detector_evaluater import \

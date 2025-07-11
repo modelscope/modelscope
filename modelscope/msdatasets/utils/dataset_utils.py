@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import pandas as pd
 from collections import defaultdict
 from typing import Optional, Union
-
-import pandas as pd
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \

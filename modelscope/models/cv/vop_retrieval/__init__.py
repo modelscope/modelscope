@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .basic_utils import set_seed, get_state_dict, load_data, init_transform_dict, load_frames_from_video
+    from .basic_utils import (get_state_dict, init_transform_dict, load_data,
+                              load_frames_from_video, set_seed)
     from .model import VoP
     from .model_se import VoP_SE
     from .tokenization_clip import LengthAdaptiveTokenizer

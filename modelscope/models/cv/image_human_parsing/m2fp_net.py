@@ -1,11 +1,10 @@
 # Part of the implementation is borrowed and modified from M2FP, made publicly available
 # under the CC BY-NC 4.0 License at https://github.com/soeaver/M2FP
 import os
-from typing import Any, Dict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

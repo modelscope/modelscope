@@ -1,9 +1,8 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import cv2
 import os
 import tempfile
 import unittest
-
-import cv2
 
 from modelscope.models import Model
 from modelscope.pipelines import pipeline

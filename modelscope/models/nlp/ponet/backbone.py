@@ -16,10 +16,9 @@
 """PyTorch PoNet model. """
 
 import math
-from distutils.version import LooseVersion
-
 import torch
 import torch.utils.checkpoint
+from distutils.version import LooseVersion
 from packaging import version
 from torch import nn
 from transformers.activations import ACT2FN

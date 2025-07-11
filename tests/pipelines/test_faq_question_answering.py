@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import numpy as np
+import unittest
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.snapshot_download import snapshot_download

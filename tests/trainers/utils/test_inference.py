@@ -2,9 +2,8 @@
 import os
 import shutil
 import tempfile
-import unittest
-
 import torch
+import unittest
 from torch import nn
 from torch.utils.data import DataLoader
 

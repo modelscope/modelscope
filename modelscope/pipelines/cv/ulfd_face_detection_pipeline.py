@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os.path as osp
 import PIL
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_detection import UlfdFaceDetector

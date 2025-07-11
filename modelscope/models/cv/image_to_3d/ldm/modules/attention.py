@@ -1,9 +1,8 @@
 import math
-from inspect import isfunction
-
 import torch
 import torch.nn.functional as F
 from einops import rearrange, repeat
+from inspect import isfunction
 from torch import einsum, nn
 
 from modelscope.models.cv.image_to_3d.ldm.modules.diffusionmodules.util import \

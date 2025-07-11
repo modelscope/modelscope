@@ -4,10 +4,9 @@
 # ------------------------------------------------------------------------------
 
 import math
-from os.path import join
-
 import numpy as np
 import torch
+from os.path import join
 from torch import nn
 
 BatchNorm = nn.BatchNorm2d

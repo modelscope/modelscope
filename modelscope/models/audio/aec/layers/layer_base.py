@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import abc
-import re
-
 import numpy as np
+import re
 import torch.nn as nn
 
 

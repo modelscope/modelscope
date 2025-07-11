@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-
 import numpy as np
+import os.path as osp
 import torch
 
 from modelscope.metainfo import Models
@@ -24,8 +23,8 @@ class SemanticSegmentation(TorchModel):
         """str -- model file root."""
         super().__init__(model_dir, **kwargs)
 
-        from mmcv.runner import load_checkpoint
         import mmcv
+        from mmcv.runner import load_checkpoint
         from mmdet.models import build_detector
 
         config = osp.join(model_dir, 'mmcv_config.py')

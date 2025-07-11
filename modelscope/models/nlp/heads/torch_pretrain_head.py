@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Dict
-
 import torch
 from transformers.models.bert.modeling_bert import BertOnlyMLMHead
 from transformers.models.roberta.modeling_roberta import RobertaLMHead
+from typing import Dict
 
 from modelscope.metainfo import Heads
 from modelscope.models.base import TorchHead

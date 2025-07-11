@@ -2,12 +2,11 @@
 
 import ast
 import io
-from typing import Any, Dict, List, Union
-
 import numpy as np
 import soundfile as sf
 import torch
 import torchaudio
+from typing import Any, Dict, List, Union
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines

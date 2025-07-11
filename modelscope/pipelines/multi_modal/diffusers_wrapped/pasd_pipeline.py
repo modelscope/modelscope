@@ -2,14 +2,12 @@
 # https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/controlnet/pipeline_controlnet.py
 
 import inspect
-import os
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import numpy as np
+import os
 import PIL.Image
 import torch
 import torch.nn.functional as F
+import warnings
 from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import TextualInversionLoaderMixin
 from diffusers.models import (AutoencoderKL, ControlNetModel,
@@ -26,6 +24,7 @@ from diffusers.utils import (PIL_INTERPOLATION, is_accelerate_available,
 from diffusers.utils.torch_utils import is_compiled_module, randn_tensor
 from torchvision.utils import save_image
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .vaehook import VAEHook
 
@@ -801,8 +800,8 @@ class PixelAwareStableDiffusionPipeline(DiffusionPipeline,
 
     def _gaussian_weights(self, tile_width, tile_height, nbatches):
         """Generates a gaussian mask of weights for tile contributions"""
-        from numpy import pi, exp, sqrt
         import numpy as np
+        from numpy import exp, pi, sqrt
 
         latent_width = tile_width
         latent_height = tile_height

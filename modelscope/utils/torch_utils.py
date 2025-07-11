@@ -1,19 +1,18 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Following code is partially borrowed from openmmlab/mmcv
 import functools
+import numpy as np
 import os
 import pickle
 import random
 import socket
 import subprocess
 import tempfile
-from typing import Callable, List, Optional, Tuple
-
-import numpy as np
 import torch
 import torch.multiprocessing as mp
 from packaging import version
 from torch import distributed as dist
+from typing import Callable, List, Optional, Tuple
 
 
 def _find_free_port() -> str:

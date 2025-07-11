@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Any, Dict, List, Union
-
 from kantts.preprocess.data_process import process_data
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.models.base import Model

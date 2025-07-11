@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
-
 import torch
 from text2sql_lgesql.utils.example import Example
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

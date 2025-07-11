@@ -15,11 +15,10 @@
 # limitations under the License.
 """Tokenization classes for PoNet """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
-
 from transformers.file_utils import PaddingStrategy
 from transformers.models.bert.tokenization_bert import BertTokenizer
 from transformers.tokenization_utils import BatchEncoding, EncodedInput
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.logger import get_logger

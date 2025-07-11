@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .deinterlace_arch import \
-        DeinterlaceNet
+    from .deinterlace_arch import DeinterlaceNet
 
 else:
     _import_structure = {'deinterlace_arch': ['DeinterlaceNet']}

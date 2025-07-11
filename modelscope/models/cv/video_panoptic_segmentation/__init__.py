@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .video_k_net import (
-        VideoKNet, )
+    from .video_k_net import VideoKNet
 
 else:
     _import_structure = {'video_k_net': ['VideoKNet']}

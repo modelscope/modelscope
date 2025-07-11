@@ -1,6 +1,5 @@
 # The implementation is based on mtcnn, available at https://github.com/TropComplique/mtcnn-pytorch
 import math
-
 import numpy as np
 import torch
 from PIL import Image

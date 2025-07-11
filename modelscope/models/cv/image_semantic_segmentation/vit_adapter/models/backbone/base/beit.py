@@ -1,12 +1,11 @@
 # The implementation is adopted from VitAdapter,
 # made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
 import math
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
+from functools import partial
 from mmcv.runner import _load_checkpoint
 from mmdet.models.builder import BACKBONES
 from mmdet.utils import get_root_logger

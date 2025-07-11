@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import functools
-import pickle
-from collections import OrderedDict
-
 import numpy as np
+import pickle
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
+from collections import OrderedDict
 from torch.autograd import Function
 
 __all__ = [

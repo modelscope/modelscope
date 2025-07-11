@@ -14,12 +14,10 @@
 """ PyTorch OFA-MMSpeech model."""
 
 import math
-from dataclasses import dataclass
-from typing import Optional, Tuple
-
 import numpy as np
 import torch
 import torch.distributed as dist
+from dataclasses import dataclass
 from fairseq.data.data_utils import compute_mask_indices
 from fairseq.models.wav2vec.wav2vec2 import TransformerSentenceEncoderLayer
 from fairseq.modules import LayerNorm, SamePad, TransposeLast
@@ -32,6 +30,7 @@ from transformers.file_utils import (ModelOutput, add_code_sample_docstrings,
                                      add_start_docstrings,
                                      add_start_docstrings_to_model_forward)
 from transformers.utils import logging
+from typing import Optional, Tuple
 
 from .configuration_mmspeech import MMSpeechConfig
 from .generate import utils

@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-
 import torch
 import torch.nn as nn
 
@@ -51,8 +50,9 @@ class EasyRobustModel(TorchModel):
                 'You are using `EasyRobustModel`, but this model requires `easyrobust`,'
                 'please install it with command `pip install easyrobust`')
             raise e
-        from timm.models import create_model
         from mmcls.datasets import ImageNet
+        from timm.models import create_model
+
         from modelscope.utils.hub import read_config
 
         super().__init__(model_dir)

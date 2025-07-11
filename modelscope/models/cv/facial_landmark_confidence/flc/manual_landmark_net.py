@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
-
 import torch
 import torch.nn.functional as F
 from torch.nn import (AdaptiveAvgPool2d, BatchNorm2d, Conv2d, Linear,

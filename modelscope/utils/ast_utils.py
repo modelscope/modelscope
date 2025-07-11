@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import json
 import logging
 import os
 import os.path as osp
@@ -11,8 +12,6 @@ from datetime import datetime
 from functools import reduce
 from pathlib import Path
 from typing import Union
-
-import json
 
 from modelscope import version
 # do not delete

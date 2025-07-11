@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from typing import Dict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

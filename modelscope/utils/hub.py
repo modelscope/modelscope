@@ -2,9 +2,8 @@
 
 import os
 import os.path as osp
-from typing import List, Optional, Union
-
 from requests import HTTPError
+from typing import List, Optional, Union
 
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.file_download import model_file_download

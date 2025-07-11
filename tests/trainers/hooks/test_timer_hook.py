@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
+import numpy as np
 import os
 import shutil
 import tempfile
-import unittest
-
-import json
-import numpy as np
 import torch
+import unittest
 from torch import nn
 from torch.optim import SGD
 from torch.optim.lr_scheduler import MultiStepLR

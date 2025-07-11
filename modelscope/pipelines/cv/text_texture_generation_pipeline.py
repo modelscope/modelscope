@@ -1,9 +1,7 @@
 # Copyright © Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import random
-from typing import Any, Dict
-
-import numpy as np
 import torch
 from diffusers import (ControlNetModel, DiffusionPipeline,
                        EulerAncestralDiscreteScheduler,
@@ -11,6 +9,7 @@ from diffusers import (ControlNetModel, DiffusionPipeline,
 from PIL import Image
 from pytorch3d.renderer import TexturesUV
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.text_texture_generation.lib2.camera import *

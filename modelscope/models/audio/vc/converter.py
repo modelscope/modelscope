@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from typing import Dict
-
 import soundfile as sf
 import torch
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

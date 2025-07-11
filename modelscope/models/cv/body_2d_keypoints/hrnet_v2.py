@@ -1,8 +1,7 @@
 # The implementation is based on HRNET, available at https://github.com/HRNet/HigherHRNet-Human-Pose-Estimation.
 
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

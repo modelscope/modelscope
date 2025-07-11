@@ -395,7 +395,7 @@ def fetch_repo_files(_api, name, group_or_owner, revision, endpoint):
 
         if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
             logger.error(f'Get dataset file list failed, request_id:  \
-                {files_list_tree["RequestId"]}, message: {files_list_tree["Message"]}'
+                {files_list_tree['RequestId']}, message: {files_list_tree['Message']}'
                          )
             return None
 

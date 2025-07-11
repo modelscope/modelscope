@@ -1,11 +1,10 @@
 # The Uni-fold implementation is also open-sourced by the authors under Apache-2.0 license,
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
-from functools import partial
-from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
+from functools import partial
+from typing import Optional, Tuple
 from unicore.utils import checkpoint_sequential
 
 from .attentions import (MSAColumnAttention, MSAColumnGlobalAttention,

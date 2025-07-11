@@ -1,8 +1,7 @@
-from contextlib import contextmanager
-
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from contextlib import contextmanager
 
 from ...ldm.modules.diffusionmodules.model import Decoder, Encoder
 from ...ldm.modules.distributions.distributions import \

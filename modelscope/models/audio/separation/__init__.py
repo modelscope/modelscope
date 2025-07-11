@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .mossformer import MossFormer
     from .m2.mossformer import MossFormer2
+    from .mossformer import MossFormer
 
 else:
     _import_structure = {

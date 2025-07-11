@@ -4,12 +4,11 @@
 import copy as copy_lib
 import functools
 import gzip
-import pickle
-from typing import Any, Dict
-
 import json
 import numpy as np
+import pickle
 from scipy import sparse as sp
+from typing import Any, Dict
 
 from . import residue_constants as rc
 from .data_ops import NumpyDict

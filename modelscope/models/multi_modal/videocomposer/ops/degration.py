@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import math
+import numpy as np
 import os
 import random
-from datetime import datetime
-
-import numpy as np
 import scipy
 import scipy.stats as stats
 import torch
+from datetime import datetime
 from scipy import ndimage
 from scipy.interpolate import interp2d
 from scipy.linalg import orth

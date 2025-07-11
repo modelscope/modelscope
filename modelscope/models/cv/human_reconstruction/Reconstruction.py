@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-from typing import Optional
-
 import cv2
 import numpy as np
+import os.path as osp
 import PIL.Image as Image
 import torch
 import torchvision.transforms as transforms
 from skimage.io import imread
 from skimage.transform import estimate_transform, warp
+from typing import Optional
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

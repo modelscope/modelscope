@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import collections
-
 import networkx as nx
 
 Node = collections.namedtuple('Node', ['id', 'inputs', 'type'])

@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import io
+import numpy as np
 import os
 import shutil
 from typing import Any, Dict
-
-import numpy as np
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.face_reconstruction.utils import (

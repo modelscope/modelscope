@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

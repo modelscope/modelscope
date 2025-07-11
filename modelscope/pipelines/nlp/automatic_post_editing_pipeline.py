@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from html import unescape
-from typing import Any, Dict
-
 import jieba
 import numpy as np
+import os
 import tensorflow as tf
+from html import unescape
 from sacremoses import (MosesDetokenizer, MosesDetruecaser,
                         MosesPunctNormalizer, MosesTokenizer, MosesTruecaser)
 from sentencepiece import SentencePieceProcessor
 from tensorflow.contrib.seq2seq.python.ops import beam_search_ops
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model

@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, List, Tuple, Union
-
 import numpy as np
+from typing import Any, Dict, List, Tuple, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

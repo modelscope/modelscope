@@ -5,10 +5,9 @@ M-LSD
 Copyright 2021-present NAVER Corp.
 Apache License v2.0
 '''
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 from torch.nn import functional as F
 

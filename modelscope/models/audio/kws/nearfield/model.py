@@ -3,10 +3,9 @@
 import os
 import sys
 import tempfile
-from typing import Dict, Optional, Tuple
-
 import torch
 import torch.nn as nn
+from typing import Dict, Optional, Tuple
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

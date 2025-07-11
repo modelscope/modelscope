@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
-
 from torchvision.utils import save_image
 
 from modelscope.outputs import OutputKeys

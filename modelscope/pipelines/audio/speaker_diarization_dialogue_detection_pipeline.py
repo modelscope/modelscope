@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, Union
-
 import numpy as np
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base.base_model import Model

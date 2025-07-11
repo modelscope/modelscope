@@ -2,9 +2,8 @@
 # made publicly available under the Apache 2.0 License at
 # https://github.com/rwightman/pytorch-image-models/blob/main/timm/models/layers/weight_init.py
 import math
-import warnings
-
 import torch
+import warnings
 from torch.nn.init import _calculate_fan_in_and_fan_out
 
 

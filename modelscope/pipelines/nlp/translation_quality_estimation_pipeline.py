@@ -2,10 +2,9 @@
 
 import io
 import os
-from typing import Any, Dict
-
 import torch
 from transformers import XLMRobertaTokenizer
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

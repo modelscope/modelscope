@@ -1,9 +1,8 @@
 # The ProContEXT implementation is also open-sourced by the authors,
 # and available at https://github.com/jp-lan/ProContEXT
-from functools import partial
-
 import torch
 import torch.nn as nn
+from functools import partial
 from timm.models.layers import to_2tuple
 
 from modelscope.models.cv.video_single_object_tracking.models.layers.attn_blocks import \

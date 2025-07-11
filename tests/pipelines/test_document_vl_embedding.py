@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os.path as osp
 import unittest
-
-import json
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model

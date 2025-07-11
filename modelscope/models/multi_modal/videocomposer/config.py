@@ -1,9 +1,8 @@
 import logging
 import os
 import os.path as osp
-from datetime import datetime
-
 import torch
+from datetime import datetime
 from easydict import EasyDict
 
 cfg = EasyDict(__name__='Config: VideoComposer')

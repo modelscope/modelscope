@@ -1,10 +1,9 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
+import cv2
 import os
 import shutil
 import tempfile
 import unittest
-
-import cv2
 
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset

@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import logging
-
 from torch.nn.utils import clip_grad
 
 from modelscope.metainfo import Hooks

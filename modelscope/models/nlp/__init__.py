@@ -5,80 +5,67 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .bart import BartForTextErrorCorrection
-    from .bert import (
-        BertForMaskedLM,
-        BertForTextRanking,
-        BertForSentenceEmbedding,
-        BertForSequenceClassification,
-        BertForTokenClassification,
-        BertForDocumentSegmentation,
-        BertModel,
-        BertConfig,
-        SiameseUieModel,
-    )
-    from .bloom import BloomModel, BloomForTextGeneration
-    from .codegeex import CodeGeeXForCodeTranslation, CodeGeeXForCodeGeneration
-    from .glm_130b import GLM130bForTextGeneration
-    from .csanmt import CsanmtForTranslation
+    from .bert import (BertConfig, BertForDocumentSegmentation,
+                       BertForMaskedLM, BertForSentenceEmbedding,
+                       BertForSequenceClassification, BertForTextRanking,
+                       BertForTokenClassification, BertModel, SiameseUieModel)
+    from .bloom import BloomForTextGeneration, BloomModel
     from .canmt import CanmtForTranslation
-    from .polylm import PolyLMForTextGeneration
+    from .chatglm import (ChatGLMConfig, ChatGLMForConditionalGeneration,
+                          ChatGLMTokenizer)
+    from .chatglm2 import (ChatGLM2Config, ChatGLM2ForConditionalGeneration,
+                           ChatGLM2Tokenizer)
+    from .codegeex import CodeGeeXForCodeGeneration, CodeGeeXForCodeTranslation
+    from .csanmt import CsanmtForTranslation
     from .deberta_v2 import DebertaV2ForMaskedLM, DebertaV2Model
-    from .chatglm import ChatGLMForConditionalGeneration, ChatGLMTokenizer, ChatGLMConfig
-    from .chatglm2 import ChatGLM2ForConditionalGeneration, ChatGLM2Tokenizer, ChatGLM2Config
-    from .gpt_neo import GPTNeoModel
+    from .dgds import (DocumentGroundedDialogGenerateModel,
+                       DocumentGroundedDialogRerankModel,
+                       DocumentGroundedDialogRetrievalModel)
+    from .glm_130b import GLM130bForTextGeneration
     from .gpt2 import GPT2Model
-    from .gpt3 import GPT3ForTextGeneration, DistributedGPT3
-    from .gpt_moe import GPTMoEForTextGeneration, DistributedGPTMoE
+    from .gpt3 import DistributedGPT3, GPT3ForTextGeneration
+    from .gpt_moe import DistributedGPTMoE, GPTMoEForTextGeneration
+    from .gpt_neo import GPTNeoModel
     from .heads import TextClassificationHead
     from .hf_transformers import TransformersModel
-    from .lstm import (
-        LSTMModel,
-        LSTMForTokenClassificationWithCRF,
-    )
-    from .megatron_bert import (
-        MegatronBertConfig,
-        MegatronBertForMaskedLM,
-        MegatronBertModel,
-    )
+    from .llama import (LlamaConfig, LlamaForTextGeneration, LlamaModel,
+                        LlamaTokenizer, LlamaTokenizerFast)
+    from .llama2 import (Llama2Config, Llama2ForTextGeneration, Llama2Model,
+                         Llama2Tokenizer, Llama2TokenizerFast)
+    from .lstm import LSTMForTokenClassificationWithCRF, LSTMModel
+    from .megatron_bert import (MegatronBertConfig, MegatronBertForMaskedLM,
+                                MegatronBertModel)
     from .mglm import MGLMForTextSummarization
     from .palm_v2 import PalmForTextGeneration
-    from .plug_mental import (PlugMentalConfig, PlugMentalModel,
-                              PlugMentalForSequenceClassification)
-    from .ponet import PoNetForMaskedLM, PoNetModel, PoNetConfig
-    from .space import SpaceForDialogIntent, SpaceForDialogModeling, SpaceForDST
+    from .plug_mental import (PlugMentalConfig,
+                              PlugMentalForSequenceClassification,
+                              PlugMentalModel)
+    from .polylm import PolyLMForTextGeneration
+    from .ponet import PoNetConfig, PoNetForMaskedLM, PoNetModel
+    from .qwen import (QWenConfig, QWenForTextGeneration, QWenModel,
+                       QWenTokenizer)
+    from .space import (SpaceForDialogIntent, SpaceForDialogModeling,
+                        SpaceForDST)
     from .space_T_cn import TableQuestionAnswering
     from .space_T_en import StarForTextToSql
-    from .structbert import (
-        SbertForFaqQuestionAnswering,
-        SbertForMaskedLM,
-        SbertForSequenceClassification,
-        SbertForTokenClassification,
-        SbertModel,
-    )
+    from .structbert import (SbertForFaqQuestionAnswering, SbertForMaskedLM,
+                             SbertForSequenceClassification,
+                             SbertForTokenClassification, SbertModel)
     from .T5 import T5ForConditionalGeneration
-    from .task_models import (
-        ModelForFeatureExtraction,
-        ModelForInformationExtraction,
-        ModelForTextClassification,
-        SingleBackboneTaskModelBase,
-        ModelForTextGeneration,
-        ModelForTextRanking,
-        ModelForTokenClassification,
-        ModelForTokenClassificationWithCRF,
-        ModelForMachineReadingComprehension,
-    )
+    from .task_models import (ModelForFeatureExtraction,
+                              ModelForInformationExtraction,
+                              ModelForMachineReadingComprehension,
+                              ModelForTextClassification,
+                              ModelForTextGeneration, ModelForTextRanking,
+                              ModelForTokenClassification,
+                              ModelForTokenClassificationWithCRF,
+                              SingleBackboneTaskModelBase)
     from .unite import UniTEForTranslationEvaluation
     from .use import UserSatisfactionEstimation
     from .veco import (VecoConfig, VecoForMaskedLM,
                        VecoForSequenceClassification,
                        VecoForTokenClassification, VecoModel)
-    from .dgds import (DocumentGroundedDialogGenerateModel,
-                       DocumentGroundedDialogRetrievalModel,
-                       DocumentGroundedDialogRerankModel)
     from .xlm_roberta import XLMRobertaConfig, XLMRobertaModel
-    from .llama import LlamaForTextGeneration, LlamaConfig, LlamaModel, LlamaTokenizer, LlamaTokenizerFast
-    from .llama2 import Llama2ForTextGeneration, Llama2Config, Llama2Model, Llama2Tokenizer, Llama2TokenizerFast
-    from .qwen import QWenForTextGeneration, QWenConfig, QWenModel, QWenTokenizer
 else:
     _import_structure = {
         'bart': ['BartForTextErrorCorrection'],

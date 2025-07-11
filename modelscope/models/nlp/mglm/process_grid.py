@@ -1,11 +1,10 @@
 # Copyright (c) 2022 Zhipu.AI
 
 import glob
+import json
 import os
 import statistics
 import sys
-
-import json
 
 path_pattern = sys.argv[1]
 target_type = sys.argv[2]

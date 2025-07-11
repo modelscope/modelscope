@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, List, Union
-
 import cv2
 import numpy as np
 import PIL
 import torch
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

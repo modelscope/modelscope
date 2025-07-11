@@ -1,17 +1,16 @@
 # Part of the implementation is borrowed and modified from Video Swin Transformer,
 # publicly available at https://github.com/SwinTransformer/Video-Swin-Transformer
 
-from abc import ABCMeta, abstractmethod
-from functools import lru_cache, reduce
-from operator import mul
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 import torchvision.transforms as T
+from abc import ABCMeta, abstractmethod
 from einops import rearrange
+from functools import lru_cache, reduce
+from operator import mul
 from timm.models.layers import DropPath, Mlp, trunc_normal_
 
 from modelscope.models import TorchModel

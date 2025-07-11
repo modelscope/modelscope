@@ -1,9 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Dict, Union
-
 import datasets
+import os
 import pandas as pd
 import pyarrow as pa
 from datasets import (ArrowBasedBuilder, Dataset, DatasetDict,
@@ -15,6 +13,7 @@ from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import csv
 from datasets.utils.filelock import FileLock
 from datasets.utils.py_utils import map_nested
+from typing import Dict, Union
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \

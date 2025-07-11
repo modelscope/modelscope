@@ -1,17 +1,16 @@
 # Copyright 2023-2024 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import os
 import random
-from functools import partial
-from typing import Callable, List, Optional, Union
-
 import torch
 import torch.nn.functional as F
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
+from functools import partial
 from packaging import version
 from torchvision import transforms
 from torchvision.transforms.functional import crop
 from transformers import (AutoTokenizer, CLIPTextModel,
                           CLIPTextModelWithProjection)
+from typing import Callable, List, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

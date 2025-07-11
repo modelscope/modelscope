@@ -1,7 +1,6 @@
 # The implementation is based on YOLOX, available at https://github.com/Megvii-BaseDetection/YOLOX
 import os
 import random
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -33,7 +32,7 @@ class Exp(BaseExp):
         self.nmsthre = 0.65
 
     def get_model(self):
-        from ..models import YOLOX, YOLOPAFPN, YOLOXHead
+        from ..models import YOLOPAFPN, YOLOX, YOLOXHead
 
         def init_yolo(M):
             for m in M.modules():

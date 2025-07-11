@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import math
+import numpy as np
 import os
 import os.path as osp
-from typing import Any, Dict
-
-import cv2
-import numpy as np
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.ocr_detection import OCRDetection
@@ -119,7 +118,10 @@ class OCRDetectionPipeline(Pipeline):
                         variable_averages = tf.train.ExponentialMovingAverage(
                             0.997, global_step)
 
-                        from .ocr_utils import SegLinkDetector, combine_segments_python, decode_segments_links_python
+                        from .ocr_utils import (SegLinkDetector,
+                                                combine_segments_python,
+                                                decode_segments_links_python)
+
                         # detector
                         detector = SegLinkDetector()
                         all_maps = detector.build_model(

@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import os
 import unittest
-
-import json
 
 from modelscope import MsDataset, TrainingArgs, build_dataset_from_file
 from modelscope.utils.test_utils import test_level

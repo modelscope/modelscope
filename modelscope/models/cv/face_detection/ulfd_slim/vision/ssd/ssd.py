@@ -1,12 +1,11 @@
 # The implementation is based on ULFD, available at
 # https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
-from collections import namedtuple
-from typing import List, Tuple
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import namedtuple
+from typing import List, Tuple
 
 from .. import box_utils
 

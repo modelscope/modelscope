@@ -2,7 +2,6 @@
 # made publicly available under the Apache License at https://github.com/czczup/ViT-Adapter.git
 
 import copy
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

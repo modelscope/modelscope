@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import hashlib
+import numpy as np
 import os
 import pathlib
 import shutil
 import tempfile
-import unittest
-
-import numpy as np
 import torch
+import unittest
 from packaging import version
 from torch.utils.data import RandomSampler
 

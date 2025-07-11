@@ -1,11 +1,10 @@
 import argparse
-import os
-import random
-import time
-
 import imageio
 import mmcv
 import numpy as np
+import os
+import random
+import time
 import torch
 from tqdm import tqdm, trange
 

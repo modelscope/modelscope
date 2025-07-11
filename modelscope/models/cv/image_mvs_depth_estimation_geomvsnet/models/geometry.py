@@ -5,7 +5,6 @@
 # @https://github.com/doublez0108/geomvsnet
 
 import math
-
 import numpy as np
 import torch
 import torch.nn as nn

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os.path as osp
 import tempfile
-from typing import Any, Dict
-
-import numpy as np
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.motion_generation import (ClassifierFreeSampleModel,

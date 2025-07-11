@@ -16,12 +16,11 @@ import collections
 import dataclasses
 import functools
 import io
-from typing import Any, Mapping, Optional, Sequence, Tuple
-
 from absl import logging
 from Bio import PDB
 from Bio.Data import SCOPData
 from Bio.PDB.MMCIFParser import MMCIFParser
+from typing import Any, Mapping, Optional, Sequence, Tuple
 
 # Type aliases:
 ChainId = str

@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-import time
-from typing import Any, Dict, List, Optional, Union
-
 import json
 import numpy as np
+import os
+import time
 import torch
+from typing import Any, Dict, List, Optional, Union
 from unicore.utils import tensor_tree_map
 
 from modelscope.metainfo import Pipelines

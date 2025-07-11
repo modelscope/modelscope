@@ -14,12 +14,12 @@
 """Tokenization classes."""
 
 from __future__ import absolute_import, division, print_function
+
 import collections
 import os
 import re
-import unicodedata
-
 import six
+import unicodedata
 
 
 def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):

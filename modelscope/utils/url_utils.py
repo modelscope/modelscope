@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from urllib.parse import urlparse
-
 import pandas as pd
+from urllib.parse import urlparse
 
 from modelscope.utils.logger import get_logger
 

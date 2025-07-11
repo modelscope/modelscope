@@ -6,7 +6,6 @@
 import contextlib
 import io
 import os
-
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
 from fvcore.common.file_io import PathManager

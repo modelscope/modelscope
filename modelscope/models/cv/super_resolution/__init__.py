@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .rrdbnet_arch import RRDBNet
     from .ecbsr_model import ECBSRModel
+    from .rrdbnet_arch import RRDBNet
 
 else:
     _import_structure = {

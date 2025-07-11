@@ -1,19 +1,18 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import math
-import os
-import sys
-import time
-from contextlib import nullcontext
-from functools import partial
-
 import cv2
 import diffusers  # 0.12.1
 import fire
+import math
 import numpy as np
+import os
 import rich
+import sys
+import time
 import torch
+from contextlib import nullcontext
 from einops import rearrange
+from functools import partial
 from omegaconf import OmegaConf
 from PIL import Image
 from rich import print
@@ -36,7 +35,7 @@ def load_model_from_config(model, config, ckpt, device, verbose=False):
     print(f'Loading model from {ckpt}')
     pl_sd = torch.load(ckpt, map_location='cpu')
     if 'global_step' in pl_sd:
-        print(f'Global Step: {pl_sd["global_step"]}')
+        print(f'Global Step: {pl_sd['global_step']}')
     sd = pl_sd['state_dict']
     model = instantiate_from_config(config.model)
     m, u = model.load_state_dict(sd, strict=False)

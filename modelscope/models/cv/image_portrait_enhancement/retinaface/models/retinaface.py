@@ -1,13 +1,12 @@
 # The implementation is adopted from Pytorch_Retinaface, made publicly available under the MIT License
 # at https://github.com/biubug6/Pytorch_Retinaface/tree/master/models/retinaface.py
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 import torchvision.models._utils as _utils
 import torchvision.models.detection.backbone_utils as backbone_utils
+from collections import OrderedDict
 
 from .net import FPN, SSH, MobileNetV1
 

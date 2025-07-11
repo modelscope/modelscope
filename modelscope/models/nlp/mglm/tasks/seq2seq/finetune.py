@@ -13,9 +13,8 @@
 # limitations under the License.
 """Race."""
 import functools
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 from finetune_glm import finetune
 from megatron_util import mpu
 from pretrain_glm import get_batch

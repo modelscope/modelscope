@@ -2,10 +2,9 @@
 #
 # This source code is licensed under the MIT license which can be found at
 # https://github.com/openai/CLIP/blob/main/LICENSE
-from collections import OrderedDict
-
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
 from fairseq.modules import LayerNorm
 from torch import nn
 

@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Union
-
 import numpy as np
 from PIL import Image
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

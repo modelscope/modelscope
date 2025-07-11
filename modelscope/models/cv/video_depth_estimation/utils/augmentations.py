@@ -1,9 +1,8 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
-import random
-
 import cv2
 import numpy as np
+import random
 import torchvision.transforms as transforms
 from PIL import Image
 

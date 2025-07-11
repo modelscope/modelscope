@@ -1,17 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import glob
 import math
+import numpy as np
 import os
 import os.path as osp
 import subprocess
 import tempfile
-from typing import Any, Dict, Optional, Union
-
-import cv2
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torchvision.utils import make_grid
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_frame_interpolation.rife import RIFEModel

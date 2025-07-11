@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from collections import defaultdict
-
 import cv2
 import numpy as np
 import torch
+from collections import defaultdict
 
 from modelscope.metainfo import Models
 from modelscope.msdatasets.dataset_cls.custom_datasets import (

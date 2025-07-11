@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import inspect
-from typing import Iterable, Union
-
 import torch
+from typing import Iterable, Union
 
 from modelscope.utils.config import ConfigDict
 from modelscope.utils.registry import Registry, build_from_cfg, default_group

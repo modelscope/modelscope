@@ -2,7 +2,6 @@
 
 import os
 import unittest
-
 from datasets import Dataset
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -56,11 +55,11 @@ class TestCustomDatasetsCompatibility(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_adaseq_import_task_datasets(self):
-        from modelscope.msdatasets.task_datasets.torch_base_dataset import TorchTaskDataset
-        from modelscope.msdatasets.task_datasets import GoproImageDeblurringDataset
-        from modelscope.msdatasets.task_datasets import RedsImageDeblurringDataset
-        from modelscope.msdatasets.task_datasets import SiddImageDenoisingDataset
-        from modelscope.msdatasets.task_datasets import VideoSummarizationDataset
+        from modelscope.msdatasets.task_datasets import (
+            GoproImageDeblurringDataset, RedsImageDeblurringDataset,
+            SiddImageDenoisingDataset, VideoSummarizationDataset)
+        from modelscope.msdatasets.task_datasets.torch_base_dataset import \
+            TorchTaskDataset
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_adaseq_trainer_overwrite(self):

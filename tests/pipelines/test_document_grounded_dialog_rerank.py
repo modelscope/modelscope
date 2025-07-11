@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import json
 import torch
+import unittest
 
 from modelscope.models import Model
 from modelscope.models.nlp import DocumentGroundedDialogRerankModel

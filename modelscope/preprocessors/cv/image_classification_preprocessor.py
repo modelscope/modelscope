@@ -1,15 +1,14 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 # The part implementation is also open-sourced by the authors,
 # and available at https://github.com/alibaba/EssentialMC2
-import os
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
+from typing import Any, Dict
 
 import modelscope.preprocessors.cv.cv2_transforms as cv2_transforms
 from modelscope.fileio import File

@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
 import math
 import os
 import re
 import string
+import torch.cuda
+import torch.nn.functional as F
 from functools import partial
 from os import path as osp
 from typing import Any, Callable, Dict, List, Optional, Union
-
-import json
-import torch.cuda
-import torch.nn.functional as F
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

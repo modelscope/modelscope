@@ -16,11 +16,10 @@
 import glob
 import os
 import subprocess
+from absl import logging
 from concurrent import futures
 from typing import Any, Callable, Mapping, Optional, Sequence
 from urllib import request
-
-from absl import logging
 
 from . import utils
 

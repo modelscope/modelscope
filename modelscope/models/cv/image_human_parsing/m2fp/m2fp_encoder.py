@@ -1,13 +1,12 @@
 # The implementation is adopted from Mask2Former, made publicly available under the MIT License at
 # https://github.com/facebookresearch/Mask2Former
 
-from typing import Any, Dict, List
-
 import numpy as np
 import torch
 from torch import nn
 from torch.cuda.amp import autocast
 from torch.nn import functional as F
+from typing import Any, Dict, List
 
 from modelscope.models.cv.image_instance_segmentation.maskdino.maskdino_encoder import \
     MSDeformAttnTransformerEncoderOnly

@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Tuple, Union
-
 import torch
+from typing import Any, Dict, Tuple, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.outputs import OutputKeys

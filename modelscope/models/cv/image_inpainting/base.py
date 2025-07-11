@@ -2,11 +2,10 @@
 Part of the implementation is borrowed and modified from LaMa, publicly available at
 https://github.com/saic-mdal/lama
 """
-from typing import Dict, Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Dict, Tuple
 
 from modelscope.utils.logger import get_logger
 from .modules.adversarial import NonSaturatingWithR1

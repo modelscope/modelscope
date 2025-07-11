@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-import unittest
-
 import torch
+import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.msdatasets import MsDataset

@@ -6,11 +6,10 @@
 # originally MIT License, Copyright (c) 2022 Rao, Yongming.
 
 import math
-from collections import OrderedDict
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from collections import OrderedDict
 from timm.models.layers import drop_path, trunc_normal_
 from torch import nn
 
@@ -604,7 +603,7 @@ class CLIPVisionTransformer(nn.Module):
                 if self.positional_embedding.shape != state_dict[
                         'positional_embedding'].shape:
                     print(
-                        f'Resize the pos_embed shape from {state_dict["positional_embedding"].shape} to'
+                        f'Resize the pos_embed shape from {state_dict['positional_embedding'].shape} to'
                         f' {self.positional_embedding.shape}')
                     cls_pos = state_dict['positional_embedding'][0:1, :]
                     spatial_pos = F.interpolate(

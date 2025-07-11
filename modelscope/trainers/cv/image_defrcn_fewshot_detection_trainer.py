@@ -5,8 +5,6 @@
 
 import os
 from collections import OrderedDict
-from typing import Callable, Optional, Union
-
 from detectron2.checkpoint.detection_checkpoint import DetectionCheckpointer
 from detectron2.data import MetadataCatalog
 from detectron2.data.build import (build_detection_test_loader,
@@ -19,6 +17,7 @@ from detectron2.solver.build import build_lr_scheduler, build_optimizer
 from detectron2.utils import comm
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
+from typing import Callable, Optional, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel
@@ -119,7 +118,8 @@ class DefaultTrainer(SimpleTrainer):
         return ret
 
     def build_writers(self):
-        from detectron2.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+        from detectron2.utils.events import (CommonMetricPrinter, JSONWriter,
+                                             TensorboardXWriter)
 
         return [
             CommonMetricPrinter(self.max_iter),
@@ -147,11 +147,13 @@ class DefaultTrainer(SimpleTrainer):
         evaluator_list = []
         evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
         if evaluator_type == 'coco':
-            from modelscope.models.cv.image_defrcn_fewshot.evaluation.coco_evaluation import COCOEvaluator
+            from modelscope.models.cv.image_defrcn_fewshot.evaluation.coco_evaluation import \
+                COCOEvaluator
             evaluator_list.append(
                 COCOEvaluator(dataset_name, True, output_folder))
         if evaluator_type == 'pascal_voc':
-            from modelscope.models.cv.image_defrcn_fewshot.evaluation.pascal_voc_evaluation import PascalVOCEvaluator
+            from modelscope.models.cv.image_defrcn_fewshot.evaluation.pascal_voc_evaluation import \
+                PascalVOCEvaluator
             return PascalVOCEvaluator(dataset_name)
         if len(evaluator_list) == 0:
             raise NotImplementedError(
@@ -267,7 +269,8 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
         self.trainer.train()
 
     def evaluate(self, checkpoint_path: str, *args, **kwargs):
-        from detectron2.checkpoint.detection_checkpoint import DetectionCheckpointer
+        from detectron2.checkpoint.detection_checkpoint import \
+            DetectionCheckpointer
 
         DetectionCheckpointer(
             self.model,
@@ -294,5 +297,6 @@ class ImageDefrcnFewshotTrainer(BaseTrainer):
                           'model.roi_heads.box_predictor.bbox_pred'
                       ]):
 
-        from modelscope.models.cv.image_defrcn_fewshot.utils.model_surgery_op import model_surgery as _model_surgery
+        from modelscope.models.cv.image_defrcn_fewshot.utils.model_surgery_op import \
+            model_surgery as _model_surgery
         _model_surgery(src_path, save_dir, data_type, method, params_name)

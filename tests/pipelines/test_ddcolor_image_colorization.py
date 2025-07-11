@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
@@ -25,7 +24,7 @@ class DDColorImageColorizationTest(unittest.TestCase):
         result = pipeline(test_image)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):

@@ -1,9 +1,8 @@
 # The implementation is based on Facial-Expression-Recognition, available at
 # https://github.com/WuJie1010/Facial-Expression-Recognition.Pytorch
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F

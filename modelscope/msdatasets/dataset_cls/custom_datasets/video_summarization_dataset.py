@@ -1,11 +1,10 @@
 # Part of the implementation is borrowed and modified from PGL-SUM,
 # publicly available at https://github.com/e-apostolidis/PGL-SUM
 
-import os
-
 import h5py
 import json
 import numpy as np
+import os
 import torch
 
 from modelscope.msdatasets.dataset_cls.custom_datasets import \

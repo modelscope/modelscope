@@ -6,9 +6,8 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .image_driving_percetion_model import YOLOPv2
     from .preprocessor import ImageDrivingPerceptionPreprocessor
-    from .utils import (scale_coords, non_max_suppression,
-                        split_for_trace_model, driving_area_mask,
-                        lane_line_mask)
+    from .utils import (driving_area_mask, lane_line_mask, non_max_suppression,
+                        scale_coords, split_for_trace_model)
 
 else:
     _import_structure = {

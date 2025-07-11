@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from collections import namedtuple
-from math import lgamma
-
 import torch
 import torch.nn as nn
+from collections import namedtuple
+from math import lgamma
 from torch.nn import (AdaptiveAvgPool2d, BatchNorm1d, BatchNorm2d, Conv2d,
                       Dropout, Linear, MaxPool2d, Module, PReLU, ReLU,
                       Sequential, Sigmoid)

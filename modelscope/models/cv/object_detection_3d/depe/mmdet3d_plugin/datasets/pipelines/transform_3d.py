@@ -3,7 +3,6 @@ The implementation here is modified based on PETR, originally Apache-2.0 license
 https://github.com/megvii-research/PETR/blob/main/projects/mmdet3d_plugin/datasets/pipelines
 """
 import copy
-
 import mmcv
 import mmdet3d
 import numpy as np

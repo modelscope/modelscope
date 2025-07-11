@@ -2,9 +2,8 @@
 The implementation here is modified based on insightface, originally MIT license and publicly available at
 https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/datasets/pipelines/loading.py
 """
-import os.path as osp
-
 import numpy as np
+import os.path as osp
 import pycocotools.mask as maskUtils
 from mmdet.core import BitmapMasks, PolygonMasks
 from mmdet.datasets.builder import PIPELINES

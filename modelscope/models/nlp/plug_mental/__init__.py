@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .backbone import (PlugMentalModel, PlugMentalPreTrainedModel)
+    from .backbone import PlugMentalModel, PlugMentalPreTrainedModel
     from .configuration import PlugMentalConfig
     from .text_classification import PlugMentalForSequenceClassification
 else:

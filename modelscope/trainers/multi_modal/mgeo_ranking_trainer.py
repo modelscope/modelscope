@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import torch
+from dataclasses import dataclass
 from torch import nn
 from torch.utils.data import Dataset
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import TorchModel

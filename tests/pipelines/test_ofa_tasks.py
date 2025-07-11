@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 import unittest
 from os import path as osp
-
-import cv2
 from PIL import Image
 
 from modelscope.models import Model
@@ -303,7 +302,7 @@ class OfaTasksTest(unittest.TestCase):
         example = {'text': 'a bear in the water.'}
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMGS][0].save('result.png')
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_with_text_to_image_synthesis_with_model(self):
@@ -314,7 +313,7 @@ class OfaTasksTest(unittest.TestCase):
         example = {'text': 'a bear in the water.'}
         result = ofa_pipe(example)
         result[OutputKeys.OUTPUT_IMG].save('result.png')
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(
         test_level() >= 1,

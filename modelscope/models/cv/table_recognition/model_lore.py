@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import copy
 import math
-from os.path import join
-from typing import Any, Dict
-
 import numpy as np
 import torch
 import torch.nn.functional as F
+from os.path import join
 from torch import nn
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel

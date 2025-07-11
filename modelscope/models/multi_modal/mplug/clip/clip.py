@@ -1,12 +1,11 @@
 # Copyright 2021 The OpenAI CLIP Authors. All rights reserved.
 
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from collections import OrderedDict
 from torch import nn
+from typing import Tuple, Union
 
 
 class QuickGELU(nn.Module):

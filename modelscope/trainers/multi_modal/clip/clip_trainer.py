@@ -2,12 +2,11 @@
 
 import math
 import os
-from typing import Callable, Dict, Optional, Tuple, Union
-
 import torch
 from torch import distributed as dist
 from torch import nn
 from torch.utils.data import Dataset
+from typing import Callable, Dict, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel

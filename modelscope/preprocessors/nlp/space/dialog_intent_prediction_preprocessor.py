@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os
 from typing import Any, Dict
-
-import json
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor

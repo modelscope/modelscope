@@ -1,7 +1,6 @@
 # customized
-import sys
-
 import numpy as np
+import sys
 import torch
 from pytorch3d.renderer import PerspectiveCameras, look_at_view_transform
 from sklearn.metrics.pairwise import cosine_similarity

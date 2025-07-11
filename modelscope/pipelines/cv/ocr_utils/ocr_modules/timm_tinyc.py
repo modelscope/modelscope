@@ -3,14 +3,13 @@
 import collections.abc
 import logging
 import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from collections import OrderedDict
 from copy import deepcopy
 from functools import partial
 from itertools import repeat
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 
 def _ntuple(n):

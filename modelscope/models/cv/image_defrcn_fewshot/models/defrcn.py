@@ -3,8 +3,6 @@
 # https://github.com/er-muyue/DeFRCN/blob/main/defrcn/modeling/meta_arch/rcnn.py
 
 import os
-from typing import Dict
-
 import torch
 from detectron2.layers import ShapeSpec
 from detectron2.modeling.anchor_generator import DefaultAnchorGenerator
@@ -15,6 +13,7 @@ from detectron2.modeling.postprocessing import detector_postprocess
 from detectron2.modeling.proposal_generator.rpn import RPN, StandardRPNHead
 from detectron2.structures import ImageList
 from torch import nn
+from typing import Dict
 
 from .gdl import AffineLayer, decouple_layer
 from .roi_heads import Res5ROIHeads

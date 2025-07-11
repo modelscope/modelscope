@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.outputs import OutputKeys
@@ -25,7 +24,7 @@ class ImageBodyReshapingTest(unittest.TestCase):
             cv2.imwrite('result_bodyreshaping.png',
                         result[OutputKeys.OUTPUT_IMG])
             print(
-                f'Output written to {osp.abspath("result_body_reshaping.png")}'
+                f'Output written to {osp.abspath('result_body_reshaping.png')}'
             )
         else:
             raise Exception('Testing failed: invalid output')

@@ -7,24 +7,23 @@ import importlib
 import math
 import multiprocessing
 import os
+import pandas
 import subprocess
 import sys
 import tempfile
 import time
-import unittest
-from fnmatch import fnmatch
-from multiprocessing.managers import BaseManager
-from pathlib import Path
-from turtle import shape
-from unittest import TestResult, TextTestResult
-
-import pandas
 # NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
 #         A segmentation fault may be raise by pytorch cpp library
 #         if 'import tensorflow' in front of 'import torch'.
 #         Putting a 'import torch' here can bypass this incompatibility.
 import torch
+import unittest
 import yaml
+from fnmatch import fnmatch
+from multiprocessing.managers import BaseManager
+from pathlib import Path
+from turtle import shape
+from unittest import TestResult, TextTestResult
 
 from modelscope.utils.logger import get_logger
 from modelscope.utils.model_tag import ModelTag, commit_model_ut_result

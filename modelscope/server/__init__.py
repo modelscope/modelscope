@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .api_server import run_server, add_server_args
+    from .api_server import add_server_args, run_server
 else:
     _import_structure = {'api_server': ['run_server', 'add_server_arg']}
     import sys

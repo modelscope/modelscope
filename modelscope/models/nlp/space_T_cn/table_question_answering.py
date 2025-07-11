@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Dict
-
 import numpy
+import os
 import torch
 import torch.nn.functional as F
 from transformers import BertTokenizer
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor

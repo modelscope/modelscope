@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import shutil
 import tempfile
-import unittest
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import unittest
 
 from modelscope.models.base import TorchModel
 from modelscope.preprocessors import Preprocessor

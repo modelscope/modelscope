@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .generic_key_word_spotting import GenericKeyWordSpotting
     from .farfield.model import FSMNSeleNetV2Decorator
+    from .generic_key_word_spotting import GenericKeyWordSpotting
     from .nearfield.model import FSMNDecorator
 
 else:

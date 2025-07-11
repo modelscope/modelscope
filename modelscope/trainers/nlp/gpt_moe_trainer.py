@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from collections.abc import Mapping
-from typing import List
-
 import torch
+from collections.abc import Mapping
 from megatron_util import mpu
+from typing import List
 
 from modelscope.metainfo import Trainers
 from modelscope.models import TorchModel

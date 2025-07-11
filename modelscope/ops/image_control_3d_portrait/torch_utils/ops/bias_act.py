@@ -9,9 +9,8 @@
 # its affiliates is strictly prohibited.
 """Custom PyTorch ops for efficient bias and activation."""
 
-import os
-
 import numpy as np
+import os
 import torch
 
 from ... import dnnlib

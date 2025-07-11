@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.msdatasets import MsDataset
 from modelscope.pipelines import pipeline
@@ -23,7 +22,7 @@ class CardDetectionTest(unittest.TestCase):
             if i == 0:
                 cv2.imwrite('result.jpg', img_list[0])
                 print(
-                    f'Found {len(img_list)-1} cards, output written to {osp.abspath("result.jpg")}'
+                    f'Found {len(img_list)-1} cards, output written to {osp.abspath('result.jpg')}'
                 )
             else:
                 cv2.imwrite(f'card_{i}.jpg', img_list[i])

@@ -1,10 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import numbers
-from abc import ABCMeta, abstractmethod
-
 import numpy as np
 import torch
+from abc import ABCMeta, abstractmethod
 
 from modelscope.trainers.hooks.hook import Hook
 from modelscope.trainers.hooks.priority import Priority

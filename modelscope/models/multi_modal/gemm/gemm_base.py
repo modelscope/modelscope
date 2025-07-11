@@ -10,16 +10,15 @@
 # and publicly available at https://github.com/lucidrains/CoCa-pytorch/,
 """ Generative Multimodal Model Architecture."""
 
-import os
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import json
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
 from torch import nn
 from torch.nn import LayerNorm
+from typing import Tuple, Union
 
 from modelscope.models.multi_modal.gemm.tokenizer import (SimpleTokenizer,
                                                           clip_tokenize)

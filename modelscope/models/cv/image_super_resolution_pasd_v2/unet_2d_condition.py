@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import json
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import UNet2DConditionLoadersMixin
 from diffusers.models import ModelMixin
@@ -29,6 +27,7 @@ from diffusers.models.embeddings import (GaussianFourierProjection,
                                          TextTimeEmbedding, TimestepEmbedding,
                                          Timesteps)
 from diffusers.utils import BaseOutput, logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .unet_2d_blocks import (UNetMidBlock2DCrossAttn,
                              UNetMidBlock2DSimpleCrossAttn, get_down_block,

@@ -2,14 +2,14 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
 import collections
+import json
 import logging
 import os
+import regex as re
 import sys
 import unicodedata
-
-import json
-import regex as re
 
 
 def clean_string(string):

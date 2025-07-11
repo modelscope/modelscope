@@ -1,9 +1,6 @@
 # Part of the implementation is borrowed and modified from MTTR,
 # publicly available at https://github.com/mttr2021/MTTR
 
-from glob import glob
-from os import path as osp
-
 import h5py
 import json
 import numpy as np
@@ -11,6 +8,8 @@ import pandas
 import torch
 import torch.distributed as dist
 import torchvision.transforms.functional as F
+from glob import glob
+from os import path as osp
 from pycocotools.mask import area, encode
 from torchvision.io import read_video
 from tqdm import tqdm

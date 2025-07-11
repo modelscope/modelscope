@@ -1,11 +1,10 @@
 # The implementation here is modified based on DeOldify, originally MIT License and
 # publicly available at https://github.com/jantic/DeOldify/blob/master/fastai/callbacks/hooks.py
 import functools
-from enum import Enum
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from enum import Enum
 from torch.nn.utils import spectral_norm, weight_norm
 
 NormType = Enum('NormType',

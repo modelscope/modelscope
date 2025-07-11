@@ -1,15 +1,14 @@
 # Data loading based on https://github.com/NVIDIA/flownet2-pytorch
 
 import math
+import numpy as np
 import os
 import os.path as osp
 import random
-from glob import glob
-
-import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.utils.data as data
+from glob import glob
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 

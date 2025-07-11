@@ -16,14 +16,14 @@
 """PyTorch BERT model."""
 
 from __future__ import absolute_import, division, print_function
+
 import copy
 import math
+import numpy as np
 import os
 import shutil
 import tarfile
 import tempfile
-
-import numpy as np
 import torch
 from torch import nn
 

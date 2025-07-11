@@ -1,13 +1,12 @@
 # The implementation is adopted from the CLIP4Clip implementation,
 # made publicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
 
+import ftfy
 import gzip
 import html
 import os
-from functools import lru_cache
-
-import ftfy
 import regex as re
+from functools import lru_cache
 
 
 @lru_cache()

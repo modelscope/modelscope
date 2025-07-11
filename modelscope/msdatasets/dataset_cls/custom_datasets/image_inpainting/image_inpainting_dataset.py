@@ -2,13 +2,12 @@
 Part of the implementation is borrowed and modified from LaMa,
 publicly available at https://github.com/saic-mdal/lama
 """
-import glob
-import os.path as osp
-from enum import Enum
-
 import albumentations as A
 import cv2
+import glob
 import numpy as np
+import os.path as osp
+from enum import Enum
 
 from modelscope.metainfo import Models
 from modelscope.msdatasets.dataset_cls.custom_datasets import (

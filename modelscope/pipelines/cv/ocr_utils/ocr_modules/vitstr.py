@@ -1,13 +1,13 @@
 # Part of the implementation is borrowed and modified from ViTSTR,
 # publicly available at https://github.com/roatienza/deep-text-recognition-benchmark
 from __future__ import absolute_import, division, print_function
-import logging
-from copy import deepcopy
-from functools import partial
 
+import logging
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+from copy import deepcopy
+from functools import partial
 
 from .timm_tinyc import VisionTransformer
 

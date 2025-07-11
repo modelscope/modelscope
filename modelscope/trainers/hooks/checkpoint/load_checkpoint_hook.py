@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import random
-from typing import Optional
-
 import numpy as np
+import random
 import torch
 from packaging import version
+from typing import Optional
 
 from modelscope.metainfo import Hooks
 from modelscope.trainers.hooks.builder import HOOKS
@@ -133,6 +132,6 @@ class LoadCheckpointHook(Hook):
                     'using a converting script to split the single pth file into two.'
                 )
             trainer.logger.info(
-                f'Checkpoint {filename} saving time: {meta.get("time")}, modelscope version: {_version}'
+                f'Checkpoint {filename} saving time: {meta.get('time')}, modelscope version: {_version}'
             )
         return meta

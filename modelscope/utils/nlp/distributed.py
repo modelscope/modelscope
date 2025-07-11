@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import math
-
 import torch
 import torch.distributed as dist
 from megatron_util import mpu

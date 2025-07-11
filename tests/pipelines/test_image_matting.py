@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
@@ -27,7 +26,7 @@ class ImageMattingTest(unittest.TestCase):
         # note that for dataset output, the inference-output is a Generator that can be iterated.
         result = img_matting(dataset)
         cv2.imwrite('result.png', next(result)[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
@@ -35,7 +34,7 @@ class ImageMattingTest(unittest.TestCase):
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_modelhub_default_model(self):
@@ -43,7 +42,7 @@ class ImageMattingTest(unittest.TestCase):
 
         result = img_matting('data/test/images/image_matting.png')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_with_modelscope_dataset(self):
@@ -57,7 +56,7 @@ class ImageMattingTest(unittest.TestCase):
         for i in range(2):
             cv2.imwrite(f'result_{i}.png', next(result)[OutputKeys.OUTPUT_IMG])
         print(
-            f'Output written to dir: {osp.dirname(osp.abspath("result_0.png"))}'
+            f'Output written to dir: {osp.dirname(osp.abspath('result_0.png'))}'
         )
 
 

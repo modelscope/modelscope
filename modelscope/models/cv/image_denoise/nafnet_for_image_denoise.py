@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from typing import Any, Dict, Union
-
 import torch.cuda
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

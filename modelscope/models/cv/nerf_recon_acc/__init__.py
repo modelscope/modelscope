@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .nerf_recon_acc import NeRFReconAcc
     from .nerf_preprocess import NeRFReconPreprocessor
+    from .nerf_recon_acc import NeRFReconAcc
 
 else:
     _import_structure = {'nerf_recon_acc': ['NeRFReconAcc']}

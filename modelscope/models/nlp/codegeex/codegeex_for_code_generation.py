@@ -1,8 +1,7 @@
 # Copyright (c) 2022 Zhipu.AI
 import copy
-from typing import Any, Dict
-
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

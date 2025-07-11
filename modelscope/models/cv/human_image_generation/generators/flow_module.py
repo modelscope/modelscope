@@ -1,8 +1,7 @@
-from math import sqrt
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from math import sqrt
 
 from .base_function import EqualConv2d, EqualLinear
 

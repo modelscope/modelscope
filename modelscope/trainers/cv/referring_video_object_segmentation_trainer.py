@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-
 import torch
 
 from modelscope.metainfo import Trainers

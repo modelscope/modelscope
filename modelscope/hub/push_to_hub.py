@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import concurrent.futures
+import json
 import os
 import shutil
 import tempfile
 from multiprocessing import Manager, Process, Value
 from pathlib import Path
 from typing import List, Optional, Union
-
-import json
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility
@@ -230,7 +229,7 @@ def push_to_hub_in_queue(queue_name, strategy=UploadStrategy.cancel, **kwargs):
     elif flag.value and strategy == UploadStrategy.cancel:
         logger.error(
             f'Another uploading is running, '
-            f'this uploading with message {kwargs.get("commit_message")} will be canceled.'
+            f'this uploading with message {kwargs.get('commit_message')} will be canceled.'
         )
     else:
         queue.put(kwargs)

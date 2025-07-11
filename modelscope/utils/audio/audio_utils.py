@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os
 import re
 import struct
@@ -6,8 +7,6 @@ import sys
 import tempfile
 from typing import Union
 from urllib.parse import urlparse
-
-import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
 from modelscope.utils.file_utils import get_model_cache_root

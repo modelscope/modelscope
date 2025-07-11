@@ -1,13 +1,12 @@
 # Part of the implementation is borrowed and modified from ProxylessNAS,
 # publicly available at https://github.com/mit-han-lab/proxylessnas
 # paper linking at https://arxiv.org/pdf/1812.00332.pdf
+import numpy as np
 import re
 import sys
-from queue import Queue
-
-import numpy as np
 import torch
 import torch.nn as nn
+from queue import Queue
 
 from .layers import IdentityLayer, MobileInvertedResidualBlock
 from .mix_ops import conv_func_by_name

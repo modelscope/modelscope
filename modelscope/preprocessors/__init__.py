@@ -4,51 +4,59 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .asr import WavToScp
+    from .audio import AudioBrainPreprocessor, LinearAECAndFbank
     from .base import Preprocessor
     from .builder import PREPROCESSORS, build_preprocessor
-    from .common import Compose, ToTensor, Filter
-    from .asr import WavToScp
-    from .audio import LinearAECAndFbank, AudioBrainPreprocessor
-    from .image import (LoadImage, load_image,
-                        ImageColorEnhanceFinetunePreprocessor,
-                        ImageInstanceSegmentationPreprocessor,
-                        ImageDenoisePreprocessor, ImageDeblurPreprocessor)
-    from .cv import (ImageClassificationMmcvPreprocessor,
-                     ImageRestorationPreprocessor,
-                     ControllableImageGenerationPreprocessor)
+    from .common import Compose, Filter, ToTensor
+    from .cv import (ControllableImageGenerationPreprocessor,
+                     ImageClassificationMmcvPreprocessor,
+                     ImageRestorationPreprocessor)
+    from .image import (ImageColorEnhanceFinetunePreprocessor,
+                        ImageDeblurPreprocessor, ImageDenoisePreprocessor,
+                        ImageInstanceSegmentationPreprocessor, LoadImage,
+                        load_image)
     from .kws import WavToLists
-    from .tts import KanttsDataPreprocessor
     from .multi_modal import (DiffusionImageGenerationPreprocessor,
-                              OfaPreprocessor, MPlugPreprocessor,
-                              HiTeAPreprocessor, MplugOwlPreprocessor,
-                              ImageCaptioningClipInterrogatorPreprocessor)
-    from .nlp import (
-        DocumentSegmentationTransformersPreprocessor,
-        FaqQuestionAnsweringTransformersPreprocessor,
-        FillMaskPoNetPreprocessor, FillMaskTransformersPreprocessor,
-        TextRankingTransformersPreprocessor,
-        RelationExtractionTransformersPreprocessor,
-        SentenceEmbeddingTransformersPreprocessor,
-        TextClassificationTransformersPreprocessor,
-        TextGenerationSentencePiecePreprocessor,
-        TokenClassificationTransformersPreprocessor,
-        TextErrorCorrectionPreprocessor, TextGenerationT5Preprocessor,
-        WordAlignmentPreprocessor, TextGenerationTransformersPreprocessor,
-        Tokenize, WordSegmentationBlankSetToLabelPreprocessor,
-        MGLMSummarizationPreprocessor,
-        ZeroShotClassificationTransformersPreprocessor,
-        TextGenerationJiebaPreprocessor, SentencePiecePreprocessor,
-        DialogIntentPredictionPreprocessor, DialogModelingPreprocessor,
-        DialogStateTrackingPreprocessor, ConversationalTextToSqlPreprocessor,
-        TableQuestionAnsweringPreprocessor, NERPreprocessorViet,
-        NERPreprocessorThai, WordSegmentationPreprocessorThai,
-        TranslationEvaluationTransformersPreprocessor,
-        CanmtTranslationPreprocessor, DialogueClassificationUsePreprocessor,
-        SiameseUiePreprocessor, DocumentGroundedDialogGeneratePreprocessor,
-        DocumentGroundedDialogRetrievalPreprocessor,
-        DocumentGroundedDialogRerankPreprocessor,
-        MachineReadingComprehensionForNERPreprocessor)
-    from .video import ReadVideoData, MovieSceneSegmentationPreprocessor
+                              HiTeAPreprocessor,
+                              ImageCaptioningClipInterrogatorPreprocessor,
+                              MplugOwlPreprocessor, MPlugPreprocessor,
+                              OfaPreprocessor)
+    from .nlp import (CanmtTranslationPreprocessor,
+                      ConversationalTextToSqlPreprocessor,
+                      DialogIntentPredictionPreprocessor,
+                      DialogModelingPreprocessor,
+                      DialogStateTrackingPreprocessor,
+                      DialogueClassificationUsePreprocessor,
+                      DocumentGroundedDialogGeneratePreprocessor,
+                      DocumentGroundedDialogRerankPreprocessor,
+                      DocumentGroundedDialogRetrievalPreprocessor,
+                      DocumentSegmentationTransformersPreprocessor,
+                      FaqQuestionAnsweringTransformersPreprocessor,
+                      FillMaskPoNetPreprocessor,
+                      FillMaskTransformersPreprocessor,
+                      MachineReadingComprehensionForNERPreprocessor,
+                      MGLMSummarizationPreprocessor, NERPreprocessorThai,
+                      NERPreprocessorViet,
+                      RelationExtractionTransformersPreprocessor,
+                      SentenceEmbeddingTransformersPreprocessor,
+                      SentencePiecePreprocessor, SiameseUiePreprocessor,
+                      TableQuestionAnsweringPreprocessor,
+                      TextClassificationTransformersPreprocessor,
+                      TextErrorCorrectionPreprocessor,
+                      TextGenerationJiebaPreprocessor,
+                      TextGenerationSentencePiecePreprocessor,
+                      TextGenerationT5Preprocessor,
+                      TextGenerationTransformersPreprocessor,
+                      TextRankingTransformersPreprocessor,
+                      TokenClassificationTransformersPreprocessor, Tokenize,
+                      TranslationEvaluationTransformersPreprocessor,
+                      WordAlignmentPreprocessor,
+                      WordSegmentationBlankSetToLabelPreprocessor,
+                      WordSegmentationPreprocessorThai,
+                      ZeroShotClassificationTransformersPreprocessor)
+    from .tts import KanttsDataPreprocessor
+    from .video import MovieSceneSegmentationPreprocessor, ReadVideoData
 
 else:
     _import_structure = {

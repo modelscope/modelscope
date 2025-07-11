@@ -15,12 +15,10 @@
 """PyTorch PEER model. """
 
 import math
-from dataclasses import dataclass
-from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
+from dataclasses import dataclass
 from transformers.activations import ACT2FN, get_activation
 from transformers.file_utils import ModelOutput, add_start_docstrings
 from transformers.modeling_outputs import \
@@ -29,6 +27,7 @@ from transformers.modeling_utils import (PreTrainedModel,
                                          apply_chunking_to_forward,
                                          find_pruneable_heads_and_indices,
                                          prune_linear_layer)
+from typing import Optional, Tuple
 
 from modelscope.models import Model, TorchModel
 from modelscope.utils import logger as logging

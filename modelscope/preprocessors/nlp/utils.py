@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from collections.abc import Mapping
-from typing import Any, Dict, List, Tuple, Union
-
 import json
 import numpy as np
+import os
+from collections.abc import Mapping
 from transformers import AutoTokenizer
+from typing import Any, Dict, List, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.outputs import OutputKeys

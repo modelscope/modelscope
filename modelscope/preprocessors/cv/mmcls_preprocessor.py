@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict
-
 import numpy as np
+import os
 from numpy import ndarray
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor
@@ -37,7 +36,9 @@ class ImageClassificationMmcvPreprocessor(Preprocessor):
 
         import mmcv
         from mmcls.datasets.pipelines import Compose
-        from modelscope.models.cv.image_classification.utils import preprocess_transform
+
+        from modelscope.models.cv.image_classification.utils import \
+            preprocess_transform
         super().__init__(**kwargs)
 
         self.config_type = 'ms_config'

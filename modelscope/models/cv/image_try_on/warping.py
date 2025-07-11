@@ -1,15 +1,14 @@
 # The implementation here is modified based on flow-style-vton,
 # originally Apache 2.0 License and publicly available at https://github.com/SenHe/Flow-Style-VTON
 
-from collections import OrderedDict
-from math import sqrt
-
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from collections import OrderedDict
+from math import sqrt
 
 
 def apply_offset(offset):

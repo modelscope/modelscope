@@ -4,7 +4,6 @@ https://github.com/megvii-research/PETR/blob/main/projects/mmdet3d_plugin/models
 """
 import copy
 import math
-
 import numpy as np
 import torch
 import torch.nn as nn

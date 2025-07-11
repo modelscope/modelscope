@@ -34,6 +34,7 @@ def run_server(args):
 
 def get_app(args):
     from fastapi import FastAPI
+
     from modelscope.server.api.routers.router import api_router
     from modelscope.server.core.event_handlers import (start_app_handler,
                                                        stop_app_handler)

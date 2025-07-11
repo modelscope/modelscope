@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import importlib
-from typing import Dict, List, Optional, Union
-
 import numpy as np
+from typing import Dict, List, Optional, Union
 
 from modelscope.outputs import OutputKeys
 from ..metainfo import Metrics

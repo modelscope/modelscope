@@ -1,15 +1,14 @@
 # Part of the implementation is borrowed and modified from mmclassification,
 # publicly available at https://github.com/open-mmlab/mmclassification
 import copy
+import numpy as np
 import os
 import os.path as osp
 import time
-from typing import Callable, Dict, Optional, Tuple, Union
-
-import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import Dataset
+from typing import Callable, Dict, Optional, Tuple, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
@@ -32,13 +31,12 @@ def train_model(model,
                 meta=None):
     import torch
     import warnings
-    from mmcv.runner import (DistSamplerSeedHook, Fp16OptimizerHook,
-                             build_optimizer, build_runner, get_dist_info)
     from mmcls.core import DistEvalHook, DistOptimizerHook, EvalHook
     from mmcls.datasets import build_dataloader
-    from mmcls.utils import (wrap_distributed_model,
-                             wrap_non_distributed_model)
+    from mmcls.utils import wrap_distributed_model, wrap_non_distributed_model
     from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+    from mmcv.runner import (DistSamplerSeedHook, Fp16OptimizerHook,
+                             build_optimizer, build_runner, get_dist_info)
 
     logger = get_logger()
 
@@ -185,15 +183,17 @@ class ImageClassifitionTrainer(BaseTrainer):
             model_version: model version, default is None.
             cfg_modify_fn: An input fn which is used to modify the cfg read out of the file.
         """
-        import torch
         import mmcv
-        from modelscope.models.cv.image_classification.utils import get_ms_dataset_root, get_classes
-        from mmcls.models import build_classifier
-        from mmcv.runner import get_dist_info, init_dist
+        import torch
         from mmcls.apis import set_random_seed
+        from mmcls.models import build_classifier
         from mmcls.utils import collect_env
+        from mmcv.runner import get_dist_info, init_dist
         from mmcv.utils import get_logger as mmcv_get_logger
+
         import modelscope.models.cv.image_classification.backbones
+        from modelscope.models.cv.image_classification.utils import (
+            get_classes, get_ms_dataset_root)
 
         self._seed = seed
         set_random_seed(self._seed)
@@ -332,8 +332,10 @@ class ImageClassifitionTrainer(BaseTrainer):
 
     def train(self, *args, **kwargs):
         from mmcls import __version__
-        from modelscope.models.cv.image_classification.utils import get_ms_dataset_root, MmDataset, preprocess_transform
         from mmcls.utils import setup_multi_processes
+
+        from modelscope.models.cv.image_classification.utils import (
+            MmDataset, get_ms_dataset_root, preprocess_transform)
 
         if self.train_dataset is None:
             raise ValueError(
@@ -405,16 +407,17 @@ class ImageClassifitionTrainer(BaseTrainer):
                  checkpoint_path: str = None,
                  *args,
                  **kwargs) -> Dict[str, float]:
-        import warnings
         import torch
-        from modelscope.models.cv.image_classification.utils import (
-            get_ms_dataset_root, MmDataset, preprocess_transform,
-            get_trained_checkpoints_name)
-        from mmcls.datasets import build_dataloader
-        from mmcv.runner import get_dist_info, load_checkpoint, wrap_fp16_model
-        from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+        import warnings
         from mmcls.apis import multi_gpu_test, single_gpu_test
+        from mmcls.datasets import build_dataloader
         from mmcls.utils import setup_multi_processes
+        from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
+        from mmcv.runner import get_dist_info, load_checkpoint, wrap_fp16_model
+
+        from modelscope.models.cv.image_classification.utils import (
+            MmDataset, get_ms_dataset_root, get_trained_checkpoints_name,
+            preprocess_transform)
 
         if self.eval_dataset is None:
             raise ValueError(

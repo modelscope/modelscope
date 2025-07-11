@@ -3,12 +3,11 @@
 # https://github.com/IDEA-CCNL/Fengshenbang-LM/tree/main/fengshen/examples/disco_project
 
 import math
-from abc import abstractmethod
-
 import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from abc import abstractmethod
 from transformers import PretrainedConfig, PreTrainedModel
 
 

@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from copy import deepcopy
-from typing import Any, Dict, List, Union
-
 import torch
+from copy import deepcopy
 from torch import nn
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models.base import Model, TorchModel

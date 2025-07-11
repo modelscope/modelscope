@@ -4,7 +4,6 @@ The implementation here is modified based on STTN,
 """
 
 import math
-
 import numpy as np
 import torch
 import torch.nn as nn

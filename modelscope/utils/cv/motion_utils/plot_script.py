@@ -2,14 +2,13 @@
 # made publicly available under MIT license at https://github.com/Mathux/ACTOR
 
 import math
-from textwrap import wrap
-
 import matplotlib
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 import numpy as np
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from textwrap import wrap
 
 
 def list_cut_average(ll, intervals):

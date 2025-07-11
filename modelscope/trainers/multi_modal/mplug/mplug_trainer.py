@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from collections.abc import Mapping
-from typing import Optional, Union
-
 import torch
+from collections.abc import Mapping
 from torch import nn
+from typing import Optional, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel

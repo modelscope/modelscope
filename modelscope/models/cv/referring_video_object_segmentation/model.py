@@ -2,9 +2,8 @@
 # publicly available at https://github.com/mttr2021/MTTR
 
 import os.path as osp
-from typing import Any, Dict
-
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

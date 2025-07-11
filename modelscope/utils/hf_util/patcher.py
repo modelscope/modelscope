@@ -319,8 +319,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             ):
                 push_to_hub = kwargs.pop('push_to_hub', False)
                 if push_to_hub:
-                    from modelscope.hub.push_to_hub import push_to_hub
                     from modelscope.hub.api import HubApi
+                    from modelscope.hub.push_to_hub import push_to_hub
                     from modelscope.hub.repository import Repository
 
                     token = kwargs.get('token')
@@ -460,8 +460,8 @@ def _unpatch_pretrained_class(all_imported_modules):
 def _patch_hub():
     import huggingface_hub
     from huggingface_hub import hf_api
-    from huggingface_hub.hf_api import api
-    from huggingface_hub.hf_api import future_compatible
+    from huggingface_hub.hf_api import api, future_compatible
+
     from modelscope import get_logger
     logger = get_logger()
 
@@ -507,7 +507,8 @@ def _patch_hub():
             None, 'model',
             'dataset'), f'repo_type={repo_type} is not supported in ModelScope'
         if repo_type in (None, 'model'):
-            from modelscope.hub.file_download import model_file_download as file_download
+            from modelscope.hub.file_download import \
+                model_file_download as file_download
         else:
             from modelscope.hub.file_download import dataset_file_download as file_download
         from modelscope import HubApi
@@ -525,8 +526,7 @@ def _patch_hub():
             revision=revision)
 
     def _whoami(self, token: Union[bool, str, None] = None) -> Dict:
-        from modelscope.hub.api import ModelScopeConfig
-        from modelscope.hub.api import HubApi
+        from modelscope.hub.api import HubApi, ModelScopeConfig
         api = HubApi()
         api.login(token)
         return {'name': ModelScopeConfig.get_user_info()[0] or 'unknown'}
@@ -736,9 +736,7 @@ def _patch_hub():
 
 def _unpatch_hub():
     import huggingface_hub
-    from huggingface_hub import hf_api
-
-    from huggingface_hub import repocard
+    from huggingface_hub import hf_api, repocard
     if hasattr(repocard.RepoCard, '_validate_origin'):
         repocard.RepoCard.validate = repocard.RepoCard._validate_origin
         delattr(repocard.RepoCard, '_validate_origin')

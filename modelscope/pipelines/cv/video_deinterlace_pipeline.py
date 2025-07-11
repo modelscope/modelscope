@@ -1,16 +1,15 @@
 # The implementation here is modified based on RealBasicVSR,
 # originally Apache 2.0 License and publicly available at
 # https://github.com/ckkelvinchan/RealBasicVSR/blob/master/inference_realbasicvsr.py
+import cv2
 import math
+import numpy as np
 import os
 import subprocess
 import tempfile
-from typing import Any, Dict, Optional, Union
-
-import cv2
-import numpy as np
 import torch
 from torchvision.utils import make_grid
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.video_deinterlace.UNet_for_video_deinterlace import \

@@ -1,10 +1,9 @@
 import os
-from typing import Any, Dict
-
 import tensorflow as tf
 from tensorflow.python.framework import ops
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.tools import freeze_graph
+from typing import Any, Dict
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.tf_model_exporter import TfModelExporter

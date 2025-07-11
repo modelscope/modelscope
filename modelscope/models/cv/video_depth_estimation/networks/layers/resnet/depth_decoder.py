@@ -2,11 +2,11 @@
 # https://github.com/nianticlabs/monodepth2/blob/master/networks/depth_decoder.py
 
 from __future__ import absolute_import, division, print_function
-from collections import OrderedDict
 
 import numpy as np
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 
 from .layers import Conv3x3, ConvBlock, upsample
 

@@ -1,18 +1,17 @@
 import math
+import numpy as np
 import os
 import random
-import uuid
-from os.path import exists
-from tempfile import TemporaryDirectory
-from urllib.parse import urlparse
-
-import numpy as np
 import torch
 import torch.utils.data
 import torch.utils.dlpack as dlpack
 import torchvision.transforms._transforms_video as transforms
+import uuid
 from decord import VideoReader
+from os.path import exists
+from tempfile import TemporaryDirectory
 from torchvision.transforms import Compose
+from urllib.parse import urlparse
 
 from modelscope.hub.file_download import http_get_file
 from modelscope.metainfo import Preprocessors

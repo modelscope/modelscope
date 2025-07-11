@@ -2,13 +2,12 @@
 """
 There is a lot of post processing of the predictions.
 """
-from typing import Dict, List, Union
-
 import albumentations as A
 import numpy as np
 import torch
 from torch.nn import functional as F
 from torchvision.ops import nms
+from typing import Dict, List, Union
 
 from ..utils import pad_to_size, unpad_from_size
 from .box_utils import decode, decode_landm

@@ -3,7 +3,6 @@
 import enum
 import os
 from abc import ABC, abstractmethod
-
 from datasets import load_dataset as hf_data_loader
 
 from modelscope.hub.api import HubApi

@@ -2,7 +2,6 @@
 
 import argparse
 import time
-
 import torch
 from SwissArmyTransformer import get_args, get_tokenizer
 from SwissArmyTransformer.arguments import initialize_distributed

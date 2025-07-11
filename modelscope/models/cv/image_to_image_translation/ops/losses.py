@@ -1,6 +1,5 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import math
-
 import torch
 
 __all__ = ['kl_divergence', 'discretized_gaussian_log_likelihood']

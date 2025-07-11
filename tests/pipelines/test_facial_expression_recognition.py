@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-import unittest
-
 import cv2
 import numpy as np
+import os.path as osp
+import unittest
 
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
@@ -21,7 +20,7 @@ class FacialExpressionRecognitionTest(unittest.TestCase):
     def show_result(self, img_path, facial_expression_result):
         img = draw_facial_expression_result(img_path, facial_expression_result)
         cv2.imwrite('result.png', img)
-        print(f'output written to {osp.abspath("result.png")}')
+        print(f'output written to {osp.abspath('result.png')}')
 
     @unittest.skip('skip since the model is set to private for now')
     def test_run_modelhub(self):

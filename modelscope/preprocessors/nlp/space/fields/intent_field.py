@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import glob
+import json
 import multiprocessing
+import numpy as np
 import os
 import random
 import re
 import time
 from collections import defaultdict
 from itertools import chain
-
-import json
-import numpy as np
 from tqdm import tqdm
 
 from modelscope.preprocessors.nlp.space.tokenizer import Tokenizer

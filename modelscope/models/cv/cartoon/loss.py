@@ -3,9 +3,8 @@ CVPR 2020 submission, Paper ID 6791
 Source code for 'Learning to Cartoonize Using White-Box Cartoon Representations'
 '''
 
-import os.path as osp
-
 import numpy as np
+import os.path as osp
 import scipy.stats as st
 import tensorflow as tf
 from joblib import Parallel, delayed

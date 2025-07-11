@@ -3,22 +3,21 @@
 
 import hashlib
 import math
-import os
-import time
-from dataclasses import dataclass
-from typing import List, Optional
-
 import numpy as np
 import open_clip
+import os
 import requests
+import time
 import torch
 import torchvision.transforms as transforms
+from dataclasses import dataclass
 from PIL import Image
 from safetensors.numpy import load_file, save_file
 from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoProcessor,
                           Blip2ForConditionalGeneration,
                           BlipForConditionalGeneration)
+from typing import List, Optional
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

@@ -5,8 +5,8 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
 
-    from .model import MovieSceneSegmentationModel
     from .datasets import MovieSceneSegmentationDataset
+    from .model import MovieSceneSegmentationModel
 
 else:
     _import_structure = {

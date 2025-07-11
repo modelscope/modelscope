@@ -5,11 +5,10 @@
 
 import math
 import os
-from functools import partial
-from inspect import unwrap
-
 import torch
 import torch.distributed as dist
+from functools import partial
+from inspect import unwrap
 from torch.optim.lr_scheduler import LambdaLR
 
 from modelscope.outputs import OutputKeys

@@ -2,10 +2,9 @@
 import os
 import shutil
 import tempfile
+import torch
 import unittest
 import uuid
-
-import torch
 from huggingface_hub import CommitInfo, RepoUrl
 
 from modelscope import HubApi
@@ -105,7 +104,7 @@ class HFUtilTest(unittest.TestCase):
 
     def test_transformer_patch(self):
         with patch_context():
-            from transformers import AutoTokenizer, AutoModelForCausalLM
+            from transformers import AutoModelForCausalLM, AutoTokenizer
             tokenizer = AutoTokenizer.from_pretrained(
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
             self.assertIsNotNone(tokenizer)
@@ -182,8 +181,8 @@ class HFUtilTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_patch_peft(self):
         with patch_context():
-            from transformers import AutoModelForCausalLM
             from peft import PeftModel
+            from transformers import AutoModelForCausalLM
             model = AutoModelForCausalLM.from_pretrained(
                 'Qwen/Qwen1.5-0.5B-Chat',
                 trust_remote_code=True,
@@ -268,7 +267,8 @@ class HFUtilTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_pipeline_auto_model(self):
-        from modelscope import pipeline, AutoModelForQuestionAnswering, AutoTokenizer
+        from modelscope import (AutoModelForQuestionAnswering, AutoTokenizer,
+                                pipeline)
         model_id = 'damotestx/distilbert-base-cased-distilled-squad'
         model = AutoModelForQuestionAnswering.from_pretrained(model_id)
         tokenizer = AutoTokenizer.from_pretrained(model_id)

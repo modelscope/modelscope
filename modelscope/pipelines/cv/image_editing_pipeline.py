@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path
-from typing import Any, Dict, Optional, Union
-
 import numpy as np
+import os.path
 import torch
 import torch.nn.functional as F
 from diffusers import DDIMScheduler, StableDiffusionPipeline
 from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_editing import (

@@ -245,9 +245,9 @@ class MsDatasetTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_to_custom_dataset_movie_scene_toydata(self):
+        from modelscope.msdatasets.dataset_cls import ExternalDataset
         from modelscope.msdatasets.dataset_cls.custom_datasets.movie_scene_segmentation import \
             MovieSceneSegmentationDataset
-        from modelscope.msdatasets.dataset_cls import ExternalDataset
 
         model_id = 'damo/cv_resnet50-bert_video-scene-segmentation_movienet'
         cache_path = snapshot_download(model_id)

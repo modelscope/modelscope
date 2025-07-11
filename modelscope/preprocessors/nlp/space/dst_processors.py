@@ -18,11 +18,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-import re
-
 import json
+import logging
 import numpy as np
+import re
 import six
 from tqdm import tqdm
 

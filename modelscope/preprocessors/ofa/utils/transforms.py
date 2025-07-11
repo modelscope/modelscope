@@ -3,9 +3,8 @@
 # This source code is licensed under the Apache 2.0 license
 # found in the LICENSE file in the root directory.
 
-import random
-
 import numpy as np
+import random
 import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as F

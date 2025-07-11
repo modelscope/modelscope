@@ -2,10 +2,9 @@
 # and publicly available at https://github.com/jantic/DeOldify/blob/master/deoldify/unet.py
 
 import collections
-from enum import Enum
-
 import torch
 import torch.nn as nn
+from enum import Enum
 from torch.nn import functional as F
 
 NormType = Enum('NormType', 'Batch BatchZero Weight Spectral')

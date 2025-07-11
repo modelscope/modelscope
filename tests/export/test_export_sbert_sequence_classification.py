@@ -48,7 +48,8 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_export_outer_module(self):
-        from transformers import BertForSequenceClassification, BertTokenizerFast
+        from transformers import (BertForSequenceClassification,
+                                  BertTokenizerFast)
         model = BertForSequenceClassification.from_pretrained(
             'bert-base-uncased')
         tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')

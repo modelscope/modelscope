@@ -16,7 +16,6 @@ r"""A much cleaner re-implementation of ``https://github.com/isl-org/MiDaS''.
 import math
 import os
 import os.path as osp
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

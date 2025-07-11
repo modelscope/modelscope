@@ -13,7 +13,6 @@
 # limitations under the License.
 """ MMSpeech model configuration"""
 import warnings
-
 from transformers import PretrainedConfig
 from transformers.utils import logging
 

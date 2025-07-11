@@ -1,7 +1,6 @@
 import os
-from typing import Dict
-
 import torch
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

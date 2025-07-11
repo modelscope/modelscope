@@ -2,15 +2,14 @@
 # made publicly available under the MIT License at https://github.com/openai/CLIP
 
 import math
-import sys
-from collections import OrderedDict
-from functools import reduce
-from operator import mul
-
 import numpy as np
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
+from functools import reduce
+from operator import mul
 from PIL import Image
 from torchvision import models
 

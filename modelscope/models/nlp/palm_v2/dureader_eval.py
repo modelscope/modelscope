@@ -19,14 +19,13 @@ This module computes evaluation metrics for DuReader dataset.
 
 import argparse
 import copy
+import json
 import math
+import numpy as np
 import re
 import sys
 import zipfile
 from collections import Counter, defaultdict
-
-import json
-import numpy as np
 from rouge import Rouge
 
 EMPTY = ''

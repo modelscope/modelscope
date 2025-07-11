@@ -6,8 +6,6 @@
 # and publicly available at
 # https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py
 
-from typing import Any, Dict, List, Optional, Union
-
 import cv2
 import numpy as np
 import torch
@@ -21,6 +19,7 @@ from diffusers.schedulers import (DDIMScheduler, DPMSolverMultistepScheduler,
 from PIL import Image
 from transformers import (ChineseCLIPProcessor, ChineseCLIPTextModel,
                           CLIPFeatureExtractor)
+from typing import Any, Dict, List, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

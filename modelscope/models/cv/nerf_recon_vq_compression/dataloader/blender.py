@@ -1,8 +1,7 @@
-import os
-
 import cv2
 import json
 import numpy as np
+import os
 import torch
 from PIL import Image
 from torch.utils.data import Dataset

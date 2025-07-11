@@ -3,7 +3,6 @@ import os
 import tempfile
 import unittest
 import uuid
-
 from requests.exceptions import HTTPError
 
 from modelscope.hub.api import HubApi

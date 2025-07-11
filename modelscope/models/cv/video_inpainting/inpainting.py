@@ -3,11 +3,10 @@ The implementation here is modified based on STTN,
 originally Apache 2.0 License and publicly available at https://github.com/researchmm/STTN
 """
 
-import os
-import time
-
 import cv2
 import numpy as np
+import os
+import time
 import torch
 from PIL import Image
 from torchvision import transforms

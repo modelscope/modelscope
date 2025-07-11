@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-
 import torch
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.attention_processor import (AttentionProcessor,
                                                   AttnProcessor)
@@ -26,6 +24,7 @@ from diffusers.models.modeling_utils import ModelMixin
 from diffusers.utils import BaseOutput, logging
 from torch import nn
 from torch.nn import functional as F
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from modelscope.models.cv.super_resolution.rrdbnet_arch import RRDB
 from .unet_2d_blocks import (CrossAttnDownBlock2D, DownBlock2D,

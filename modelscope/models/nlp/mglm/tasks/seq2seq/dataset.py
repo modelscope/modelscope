@@ -1,10 +1,9 @@
 # Copyright (c) 2022 Zhipu.AI
 
-import os
-import random
-
 import json
 import numpy as np
+import os
+import random
 import torch
 import torch.utils.data
 from data_utils.corpora import punctuation_standardization

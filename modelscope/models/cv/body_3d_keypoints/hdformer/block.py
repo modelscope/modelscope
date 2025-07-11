@@ -1,7 +1,6 @@
 # Part of the implementation is borrowed and modified from 2s-AGCN, publicly available at
 # https://github.com/lshiwjx/2s-AGCN
 import math
-
 import torch
 import torch.nn as nn
 from einops import rearrange

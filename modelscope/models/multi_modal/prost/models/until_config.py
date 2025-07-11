@@ -15,14 +15,14 @@
 """PyTorch BERT model."""
 
 from __future__ import absolute_import, division, print_function
+
 import copy
+import json
 import logging
 import os
 import shutil
 import tarfile
 import tempfile
-
-import json
 import torch
 
 # from modelscope.utils.logger import get_logger

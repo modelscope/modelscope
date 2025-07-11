@@ -1,17 +1,17 @@
 import base64
 import bz2
 import ctypes
-from typing import List
-
 import torch
 from torch.nn.parameter import Parameter
+from typing import List
 
 from modelscope.utils import logger as logging
 
 logger = logging.get_logger()
 
 try:
-    from cpm_kernels.kernels.base import LazyKernelCModule, KernelFunction, round_up
+    from cpm_kernels.kernels.base import (KernelFunction, LazyKernelCModule,
+                                          round_up)
 
     class Kernel:
 

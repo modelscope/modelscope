@@ -4,11 +4,10 @@
 # ------------------------------------------------------------------------------
 
 import copy
-import math
-import random
-
 import cv2
+import math
 import numpy as np
+import random
 import torch
 import torch.nn as nn
 

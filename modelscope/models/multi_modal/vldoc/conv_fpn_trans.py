@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import random
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
 from timm.models.layers import DropPath, trunc_normal_
 
 from modelscope.models.multi_modal.vldoc.convnext import convnext_tiny

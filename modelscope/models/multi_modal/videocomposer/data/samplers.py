@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-
 import json
 import numpy as np
+import os.path as osp
 from torch.utils.data.sampler import Sampler
 
 from modelscope.models.multi_modal.videocomposer.ops.distributed import (

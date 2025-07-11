@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import math
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
+import math
 import numpy as np
+import os.path as osp
 import PIL
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

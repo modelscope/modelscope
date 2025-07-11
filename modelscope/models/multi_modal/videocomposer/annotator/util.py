@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-
 import cv2
 import numpy as np
+import os
 
 annotator_ckpts_path = os.path.join(os.path.dirname(__file__), 'ckpts')
 

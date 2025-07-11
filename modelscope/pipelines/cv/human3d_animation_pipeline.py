@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 from typing import Any, Dict
-
-import cv2
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.human3d_animation import (gen_skeleton_bvh, read_obj,

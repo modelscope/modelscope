@@ -10,13 +10,12 @@
 
 import logging
 import math
-from functools import partial
-from typing import Callable, Sequence, Tuple, Union
-
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
+from functools import partial
 from torch.nn.init import trunc_normal_
+from typing import Callable, Sequence, Tuple, Union
 
 from ..layers import MemEffAttention, Mlp
 from ..layers import NestedTensorBlock as Block

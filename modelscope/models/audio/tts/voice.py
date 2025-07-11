@@ -1,20 +1,19 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
+import numpy as np
 import os
 import pickle as pkl
 import time
-from collections import OrderedDict
-from threading import Lock
-
-import json
-import numpy as np
 import torch
 import yaml
+from collections import OrderedDict
 from kantts.datasets.dataset import get_am_datasets, get_voc_datasets
 from kantts.models import model_builder
 from kantts.train.loss import criterion_builder
 from kantts.train.trainer import GAN_Trainer, Sambert_Trainer, distributed_init
 from kantts.utils.ling_unit.ling_unit import KanTtsLinguisticUnit
+from threading import Lock
 from torch.utils.data import DataLoader
 
 from modelscope.utils.audio.audio_utils import TtsCustomParams

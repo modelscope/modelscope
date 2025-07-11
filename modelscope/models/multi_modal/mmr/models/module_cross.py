@@ -2,11 +2,11 @@
 # made publicly available under Apache License, Version 2.0 at https://github.com/ArrowLuo/CLIP4Clip
 
 from __future__ import absolute_import, division, print_function
-import logging
-from collections import OrderedDict
 
 import json
+import logging
 import torch
+from collections import OrderedDict
 from torch import nn
 
 from .until_module import ACT2FN, LayerNorm

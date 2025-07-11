@@ -2,11 +2,10 @@
 # at https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/arch_util.py
 import collections.abc
 import math
-import warnings
-from itertools import repeat
-
 import torch
 import torchvision
+import warnings
+from itertools import repeat
 from torch import nn as nn
 from torch.nn import functional as F
 from torch.nn import init as init

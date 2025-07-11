@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import io
+import numpy as np
 import os.path as osp
 import sys
-from typing import Any, Dict
-
-import cv2
-import numpy as np
 import torch
 import torchvision.transforms as T
 from PIL import Image
 from torchvision.utils import save_image
+from typing import Any, Dict
 
 import modelscope.models.cv.image_to_image_translation.data as data
 import modelscope.models.cv.image_to_image_translation.models as models

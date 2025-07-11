@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import random
 import tempfile
 import unittest
-
-import cv2
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model

@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 import warnings
-from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
-                    Sequence, Union)
-
-import numpy as np
 from datasets import (Dataset, DatasetDict, Features, IterableDataset,
                       IterableDatasetDict)
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
 from datasets.utils.file_utils import is_relative_path
+from typing import (Any, Callable, Dict, Iterable, List, Mapping, Optional,
+                    Sequence, Union)
 
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
@@ -344,8 +343,10 @@ class MsDataset:
             warnings.warn(
                 'The option `Hubs.virgo` is deprecated, '
                 'will be removed in the future version.', DeprecationWarning)
-            from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
+            from modelscope.msdatasets.data_loader.data_loader import \
+                VirgoDownloader
             from modelscope.utils.constant import VirgoDatasetConfig
+
             # Rewrite the namespace, version and cache_dir for virgo dataset.
             if namespace == DEFAULT_DATASET_NAMESPACE:
                 dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace

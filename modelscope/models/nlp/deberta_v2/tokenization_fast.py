@@ -16,10 +16,9 @@
 
 import os
 from shutil import copyfile
-from typing import Optional, Tuple
-
 from transformers.file_utils import is_sentencepiece_available
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
+from typing import Optional, Tuple
 
 from modelscope.utils import logger as logging
 

@@ -1,12 +1,11 @@
 # Copyright (c) 2022 Zhipu.AI
 
-import math
-from bisect import bisect_right
-from itertools import accumulate
-
 import json
+import math
 import numpy as np
 import torch
+from bisect import bisect_right
+from itertools import accumulate
 from tasks.data_utils import build_input_from_ids, num_special_tokens_to_add
 from tasks.language_model.detokenizer import get_detokenizer
 from utils import print_rank_0

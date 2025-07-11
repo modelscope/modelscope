@@ -1,12 +1,11 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
 import math
-import types
-
 import timm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import types
 
 
 class Slice(nn.Module):

@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-
 import torch
 from tqdm import tqdm
 

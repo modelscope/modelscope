@@ -1,8 +1,7 @@
 # Part of the implementation is borrowed and modified from MMDetection, publicly available at
 # https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/visualization/image.py
-import itertools
-
 import cv2
+import itertools
 import numpy as np
 import pycocotools.mask as maskUtils
 import torch

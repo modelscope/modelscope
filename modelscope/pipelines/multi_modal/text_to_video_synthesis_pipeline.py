@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
 import os
 import tempfile
-from typing import Any, Dict, Optional
-
-import cv2
 import torch
 import torchvision
 from einops import rearrange
+from typing import Any, Dict, Optional
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

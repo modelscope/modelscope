@@ -1,8 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # Implementation in this file is modified based on ViTAE-Transformer
 # Originally Apache 2.0 License and publicly available at https://github.com/ViTAE-Transformer/ViTDet
-from warnings import warn
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -13,6 +11,7 @@ from mmcv.runner import BaseModule, ModuleList, auto_fp16, force_fp32
 from mmdet.core import mask_target
 from mmdet.models.builder import HEADS, build_loss
 from torch.nn.modules.utils import _pair
+from warnings import warn
 
 from ...utils import ConvModule_Norm
 
@@ -48,7 +47,7 @@ class FCNMaskNHead(BaseModule):
                 None, 'deconv', 'nearest', 'bilinear', 'carafe'
         ]:
             raise ValueError(
-                f'Invalid upsample method {self.upsample_cfg["type"]}, '
+                f'Invalid upsample method {self.upsample_cfg['type']}, '
                 'accepted methods are "deconv", "nearest", "bilinear", '
                 '"carafe"')
         self.num_convs = num_convs

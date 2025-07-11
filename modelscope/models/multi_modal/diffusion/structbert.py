@@ -14,10 +14,10 @@
 """PyTorch BERT model."""
 
 from __future__ import absolute_import, division, print_function
-import copy
-import math
 
+import copy
 import json
+import math
 import numpy as np
 import six
 import torch

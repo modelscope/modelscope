@@ -3,7 +3,6 @@
 
 import contextlib
 import sys
-
 import torch
 
 if sys.platform == 'darwin':

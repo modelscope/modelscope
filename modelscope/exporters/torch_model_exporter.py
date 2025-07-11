@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import torch
 from contextlib import contextmanager
 from itertools import chain
-from typing import Any, Dict, Mapping
-
-import torch
 from torch import nn
 from torch.onnx import export as onnx_export
+from typing import Any, Dict, Mapping
 
 from modelscope.models import TorchModel
 from modelscope.outputs import ModelOutputBase

@@ -13,11 +13,10 @@
 # limitations under the License.
 """Functions for building the input features for the unifold model."""
 
-import os
-from typing import Any, Mapping, MutableMapping, Optional, Sequence, Union
-
 import numpy as np
+import os
 from absl import logging
+from typing import Any, Mapping, MutableMapping, Optional, Sequence, Union
 
 from modelscope.models.science.unifold.data import residue_constants
 from modelscope.models.science.unifold.msa import (msa_identifiers, parsers,

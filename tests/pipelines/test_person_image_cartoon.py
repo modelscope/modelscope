@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -29,7 +28,7 @@ class ImageCartoonTest(unittest.TestCase):
         result = pipeline(input_location)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

@@ -1,10 +1,9 @@
 # Part of the implementation is borrowed and modified from PackNet-SfM,
 # made publicly available under the MIT License at https://github.com/TRI-ML/packnet-sfm
 import importlib
+import torch
 from collections import OrderedDict
 from inspect import signature
-
-import torch
 
 from modelscope.models.cv.video_depth_estimation.utils.horovod import print0
 from modelscope.models.cv.video_depth_estimation.utils.misc import (make_list,

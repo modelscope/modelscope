@@ -5,7 +5,8 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .builder import LR_SCHEDULER, build_lr_scheduler
-    from .warmup import BaseWarmup, ConstantWarmup, ExponentialWarmup, LinearWarmup
+    from .warmup import (BaseWarmup, ConstantWarmup, ExponentialWarmup,
+                         LinearWarmup)
 
 else:
     _import_structure = {

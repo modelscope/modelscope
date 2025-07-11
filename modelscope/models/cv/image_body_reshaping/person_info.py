@@ -1,6 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import copy
-
 import cv2
 import numpy as np
 import torch

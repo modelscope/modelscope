@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os
 from typing import Callable, Dict, Optional
-
-import numpy as np
 
 from modelscope.metainfo import Trainers
 from modelscope.models.nlp.space.model.generator import SpaceGenerator
@@ -107,6 +106,7 @@ class DialogIntentTrainer(BaseTrainer):
                 generator=self.generator)
 
         import torch
+
         # multi-gpu
         if self.cfg.Trainer.gpu > 1 and torch.cuda.device_count() > 1:
             self.model = torch.nn.DataParallel(self.model)

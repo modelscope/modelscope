@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import math
 import os
-from typing import Any, Dict
-
 import torch
 import torchvision.transforms as T
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

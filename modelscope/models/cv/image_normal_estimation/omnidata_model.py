@@ -2,7 +2,6 @@
 # Model: Omnidata: A Scalable Pipeline for Making Multi-Task Mid-Level Vision Datasets from 3D Scans
 # Paper link: https://arxiv.org/pdf/2110.04994.pdf
 import os.path as osp
-
 import torch
 
 from modelscope.metainfo import Models

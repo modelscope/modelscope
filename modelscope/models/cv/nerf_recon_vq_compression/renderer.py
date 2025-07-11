@@ -1,8 +1,7 @@
-import os
-import sys
-
 import imageio
 import numpy as np
+import os
+import sys
 import torch
 from tqdm.auto import tqdm
 

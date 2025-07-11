@@ -2,12 +2,11 @@
 # at https://github.com/sicxu/Deep3DFaceRecon_pytorch/blob/master/models/networks.py
 
 import os
-from typing import Any, Callable, List, Optional, Type, Union
-
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.optim import lr_scheduler
+from typing import Any, Callable, List, Optional, Type, Union
 
 try:
     from torch.hub import load_state_dict_from_url

@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .m2fp_encoder import MSDeformAttnPixelDecoder
     from .m2fp_decoder import MultiScaleMaskedTransformerDecoder
+    from .m2fp_encoder import MSDeformAttnPixelDecoder
 
 else:
     _import_structure = {

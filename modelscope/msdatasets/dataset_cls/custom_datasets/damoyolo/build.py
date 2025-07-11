@@ -2,7 +2,6 @@
 import bisect
 import copy
 import math
-
 import torch.utils.data
 
 from modelscope.utils.torch_utils import get_world_size

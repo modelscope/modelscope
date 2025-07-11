@@ -1,17 +1,16 @@
 import argparse
+import onnx
 import os
 import shutil
-from collections import OrderedDict
-from pathlib import Path
-from typing import Any, Dict, Mapping, Tuple
-
-import onnx
 import torch
+from collections import OrderedDict
 from diffusers import (OnnxRuntimeModel, OnnxStableDiffusionPipeline,
                        StableDiffusionPipeline)
 from packaging import version
+from pathlib import Path
 from torch.onnx import export
 from torch.utils.data.dataloader import default_collate
+from typing import Any, Dict, Mapping, Tuple
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter

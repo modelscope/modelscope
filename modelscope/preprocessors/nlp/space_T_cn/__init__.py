@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .table_question_answering_preprocessor import TableQuestionAnsweringPreprocessor
-    from .fields import MultiWOZBPETextField, IntentBPETextField
+    from .fields import IntentBPETextField, MultiWOZBPETextField
+    from .table_question_answering_preprocessor import \
+        TableQuestionAnsweringPreprocessor
 
 else:
     _import_structure = {

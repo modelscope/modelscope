@@ -1,13 +1,12 @@
 # The Uni-fold implementation is also open-sourced by the authors under Apache-2.0 license,
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
-from functools import partial
-from typing import Any, Callable, Dict, Iterable, List, Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
+from functools import partial
+from typing import Any, Callable, Dict, Iterable, List, Optional
 from unicore.modules import LayerNorm
 from unicore.utils import tensor_tree_map
 

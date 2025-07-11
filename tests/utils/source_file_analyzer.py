@@ -1,14 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from __future__ import print_function
+
 import ast
 import importlib.util
+import json
 import os
 import pkgutil
 import site
 import sys
-
-import json
 
 from modelscope.utils.logger import get_logger
 

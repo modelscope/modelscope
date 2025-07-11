@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 import cv2
+import unittest
 from PIL import Image
 
 from modelscope.outputs import OutputKeys

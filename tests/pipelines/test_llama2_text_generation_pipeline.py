@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-
 import torch
+import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks

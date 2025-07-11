@@ -1,10 +1,9 @@
 # Copyright (c) 2022 Zhipu.AI
 
 import glob
-import os
-
 import json
 import nltk
+import os
 
 
 class NLTKSegmenter:

@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import torch
+from typing import Any, Dict
 
 from modelscope.models.base.base_head import Head
 from modelscope.utils.logger import get_logger

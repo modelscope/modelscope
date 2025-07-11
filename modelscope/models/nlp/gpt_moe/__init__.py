@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import GPTMoEConfig
     from .backbone import GPTMoEModel
+    from .configuration import GPTMoEConfig
+    from .distributed_gpt_moe import DistributedGPTMoE
     from .text_generation import GPTMoEForTextGeneration
     from .tokenizer import JiebaBPETokenizer
-    from .distributed_gpt_moe import DistributedGPTMoE
 else:
     _import_structure = {
         'configuration': ['GPTMoEConfig'],

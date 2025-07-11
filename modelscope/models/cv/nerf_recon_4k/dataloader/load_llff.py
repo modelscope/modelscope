@@ -1,7 +1,6 @@
-import os
-
 import imageio
 import numpy as np
+import os
 import scipy
 import torch
 

@@ -4,9 +4,8 @@
 # https://github.com/facebookresearch/fairseq/blob/main/LICENSE
 
 import uuid
-from typing import Dict, Optional
-
 from torch import Tensor
+from typing import Dict, Optional
 
 
 class FairseqIncrementalState(object):

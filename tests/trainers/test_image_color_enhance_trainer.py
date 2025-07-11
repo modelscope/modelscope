@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 import os.path as osp
 import shutil
 import tempfile
-import unittest
-from typing import Callable, List, Optional, Tuple, Union
-
-import cv2
 import torch
+import unittest
 from torch.utils import data as data
+from typing import Callable, List, Optional, Tuple, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.cv.image_color_enhance import ImageColorEnhance

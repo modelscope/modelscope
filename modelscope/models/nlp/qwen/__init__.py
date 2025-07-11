@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .backbone import QWenModel
     from .configuration import QWenConfig
     from .text_generation import QWenForTextGeneration
-    from .backbone import QWenModel
     from .tokenization import QWenTokenizer
 else:
     _import_structure = {

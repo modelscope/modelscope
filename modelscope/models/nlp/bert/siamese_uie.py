@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from copy import deepcopy
-
 import torch
+from copy import deepcopy
 from torch import nn
 
 from modelscope.metainfo import Models

@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import collections
 import io
-import os
-import sys
-from typing import Any, Dict
-
 import librosa
 import numpy as np
+import os
 import soundfile as sf
+import sys
 import torch
+from typing import Any, Dict
 
 from modelscope.fileio import File
 from modelscope.metainfo import Pipelines

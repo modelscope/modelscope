@@ -15,10 +15,9 @@
 # limitations under the License.
 """ BERT model configuration """
 from collections import OrderedDict
-from typing import Mapping
-
 from transformers.configuration_utils import PretrainedConfig
 from transformers.onnx import OnnxConfig
+from typing import Mapping
 
 from modelscope.utils.logger import get_logger
 

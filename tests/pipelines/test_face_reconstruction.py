@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import io
 import os
 import os.path as osp
 import sys
 import unittest
-
-import cv2
 from moviepy.editor import ImageSequenceClip
 
 from modelscope.hub.snapshot_download import snapshot_download

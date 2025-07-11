@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import json
 import os
 import random
 import sqlite3
-
-import json
 
 from .ontology import all_domains, db_domains
 

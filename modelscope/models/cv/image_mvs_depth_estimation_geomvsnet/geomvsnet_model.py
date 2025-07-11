@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
+import numpy as np
 import os
 import os.path as osp
 import time
-
-import cv2
-import numpy as np
 import torch
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader

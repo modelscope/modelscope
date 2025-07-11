@@ -1,9 +1,8 @@
 # Part of the implementation is borrowed and modified from DUTCode,
 # publicly available at https://github.com/Annbless/DUTCode
 
-import math
-
 import cv2
+import math
 import numpy as np
 import torch
 

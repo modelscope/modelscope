@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Tuple, Union
-
 import torch
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers.activations import ACT2FN
+from typing import Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS

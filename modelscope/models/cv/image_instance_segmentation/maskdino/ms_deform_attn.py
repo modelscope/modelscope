@@ -12,11 +12,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from __future__ import absolute_import, division, print_function
-import math
-import warnings
 
+import math
 import torch
 import torch.nn.functional as F
+import warnings
 from mmcv.ops.multi_scale_deform_attn import (
     MultiScaleDeformableAttnFunction, multi_scale_deformable_attn_pytorch)
 from torch import nn

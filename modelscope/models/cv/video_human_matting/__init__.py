@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .model import VideoMattingNetwork
-    from .model import preprocess
+    from .model import VideoMattingNetwork, preprocess
 
 else:
     _import_structure = {'model': ['VideoMattingNetwork', 'preprocess']}

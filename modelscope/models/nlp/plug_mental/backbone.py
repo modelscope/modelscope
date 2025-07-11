@@ -17,18 +17,17 @@
 """PyTorch Plug Mental model. mainly copied from :module:`~transformers.modeling_bert`"""
 
 import math
-from dataclasses import dataclass
-from typing import Optional, Union
-
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
+from dataclasses import dataclass
 from packaging import version
 from transformers.activations import ACT2FN
 from transformers.modeling_utils import (PreTrainedModel,
                                          apply_chunking_to_forward,
                                          find_pruneable_heads_and_indices,
                                          prune_linear_layer)
+from typing import Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import Model, TorchModel

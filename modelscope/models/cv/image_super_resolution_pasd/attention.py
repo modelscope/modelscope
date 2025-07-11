@@ -1,14 +1,13 @@
 # Part of the implementation is borrowed and modified from diffusers,
 # publicly available at https://github.com/huggingface/diffusers/tree/main/src/diffusers/models/attention.py
 import math
-from typing import Callable, Optional
-
 import torch
 import torch.nn.functional as F
 from diffusers.models.attention_processor import Attention
 from diffusers.models.embeddings import CombinedTimestepLabelEmbeddings
 from diffusers.utils.torch_utils import maybe_allow_in_graph
 from torch import nn
+from typing import Callable, Optional
 
 
 @maybe_allow_in_graph

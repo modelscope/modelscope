@@ -3,7 +3,6 @@ Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
 import copy
-
 import torch
 
 

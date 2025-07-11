@@ -14,9 +14,9 @@ from ..utils import read_obj
 
 def set_rasterizer():
     global Meshes, load_obj, rasterize_meshes
-    from pytorch3d.structures import Meshes
     from pytorch3d.io import load_obj
     from pytorch3d.renderer.mesh import rasterize_meshes
+    from pytorch3d.structures import Meshes
 
 
 class Pytorch3dRasterizer(nn.Module):

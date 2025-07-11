@@ -1,13 +1,12 @@
 # Part of the implementation is borrowed and modified from CLIP, publicly available at https://github.com/openai/CLIP.
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
+import ftfy
 import gzip
 import html
-from functools import lru_cache
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
 from transformers import AutoTokenizer
 
 __all__ = ['CLIPTokenizer', 'XGLMTokenizer']

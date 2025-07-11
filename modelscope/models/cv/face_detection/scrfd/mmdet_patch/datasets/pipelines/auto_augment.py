@@ -3,7 +3,6 @@ The implementation here is modified based on insightface, originally MIT license
 https://github.com/deepinsight/insightface/tree/master/detection/scrfd/mmdet/datasets/pipelines/auto_augment.py
 """
 import copy
-
 import cv2
 import mmcv
 import numpy as np

@@ -5,9 +5,8 @@ Training data is obtained from:
 https://github.com/akshay-kap/Meng-699-Image-Banding-detection
 '''
 import os.path as osp
-from typing import Dict, Union
-
 import torch
+from typing import Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

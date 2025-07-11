@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .sequence_classification_trainer import SequenceClassificationTrainer
     from .csanmt_translation_trainer import CsanmtTranslationTrainer
-    from .text_ranking_trainer import TextRankingTrainer
-    from .text_generation_trainer import TextGenerationTrainer
     from .sentence_embedding_trainer import SentenceEmbeddingTrainer
+    from .sequence_classification_trainer import SequenceClassificationTrainer
     from .siamese_uie_trainer import SiameseUIETrainer
+    from .text_generation_trainer import TextGenerationTrainer
+    from .text_ranking_trainer import TextRankingTrainer
     from .translation_evaluation_trainer import TranslationEvaluationTrainer
 else:
     _import_structure = {

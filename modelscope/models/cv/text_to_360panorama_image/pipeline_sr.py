@@ -5,15 +5,13 @@
 
 import copy
 import inspect
-import os
-import re
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
 import numpy as np
+import os
 import PIL.Image
+import re
 import torch
 import torch.nn.functional as F
+import warnings
 from diffusers import (AutoencoderKL, DiffusionPipeline,
                        StableDiffusionControlNetImg2ImgPipeline,
                        UNet2DConditionModel)
@@ -31,6 +29,7 @@ from diffusers.utils import (PIL_INTERPOLATION, deprecate,
                              is_compiled_module, logging, randn_tensor,
                              replace_example_docstring)
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 

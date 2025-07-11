@@ -1,6 +1,5 @@
-from typing import Callable
-
 from fastapi import FastAPI
+from typing import Callable
 
 from modelscope.utils.input_output import (  # yapf: disable
     create_pipeline, get_pipeline_information_by_pipeline,

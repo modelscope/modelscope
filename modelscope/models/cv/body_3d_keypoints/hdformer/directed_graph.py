@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import sys
 from typing import List, Tuple
-
-import numpy as np
 
 sys.path.insert(0, './')
 

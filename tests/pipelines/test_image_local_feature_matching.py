@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import unittest
-from pathlib import Path
-
 import cv2
 import matplotlib.cm as cm
 import numpy as np
+import unittest
+from pathlib import Path
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

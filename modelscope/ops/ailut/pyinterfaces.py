@@ -1,9 +1,8 @@
 import os.path as osp
-from typing import Tuple
-
 import torch
 from torch.cuda.amp import custom_bwd, custom_fwd
 from torch.utils.cpp_extension import load
+from typing import Tuple
 
 try:
     from cudaops_ailut import (ailut_cbackward, ailut_cforward, lut_cbackward,

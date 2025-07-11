@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Any, Dict
-
 import json
+import os
 from funasr import AutoModel
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model

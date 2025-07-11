@@ -1,8 +1,7 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-import os
-
 import cv2
 import numpy as np
+import os
 import tensorflow as tf
 
 

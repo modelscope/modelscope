@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 from abc import ABC, abstractmethod
 from collections import UserDict
 from typing import Iterable, List, Optional, Tuple
-
-import torch
 
 PROCESS_INPUTS_DOCSTRING = r"""
     Args:

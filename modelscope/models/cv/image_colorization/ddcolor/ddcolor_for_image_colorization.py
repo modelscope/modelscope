@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import numpy as np
 import os.path as osp
+import torch
 from copy import deepcopy
 from typing import Dict, Union
-
-import numpy as np
-import torch
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

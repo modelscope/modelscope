@@ -13,15 +13,14 @@ pip install -r requirements.txt
 pip install .
 """
 import os
+import torch
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 import warnings
 from dataclasses import dataclass, field
 from functools import partial
-from typing import List, Optional
-
-import torch
 from swift import LoRAConfig, Swift
 from torch import Tensor
+from typing import List, Optional
 from utils import (DATASET_MAPPING, DEFAULT_PROMPT, MODEL_MAPPING,
                    data_collate_fn, get_dataset, get_model_tokenizer,
                    get_T_max, get_work_dir, parse_args, plot_images,

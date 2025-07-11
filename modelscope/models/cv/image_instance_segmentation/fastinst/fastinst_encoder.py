@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import logging
-from typing import Callable, Optional, Union
-
 import torch
 from torch import nn
 from torch.nn import functional as F
+from typing import Callable, Optional, Union
 
 from modelscope.models.cv.image_instance_segmentation.maskdino.utils import \
     Conv2d

@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
-from typing import Callable, Iterable, Tuple
-
 import numpy as np
 import torch
 from torch.distributions.bernoulli import Bernoulli
 from torch.optim import Optimizer
+from typing import Callable, Iterable, Tuple
 
 from modelscope.utils.logger import get_logger
 

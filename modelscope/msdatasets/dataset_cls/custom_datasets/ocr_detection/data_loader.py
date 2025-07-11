@@ -3,9 +3,8 @@
 # made publicly available under the Apache License 2.0 at https://github.com/MhLiao/DB.
 # ------------------------------------------------------------------------------
 import bisect
-import math
-
 import imgaug
+import math
 import numpy as np
 import torch
 import torch.distributed as dist

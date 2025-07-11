@@ -1,7 +1,6 @@
-import os
-
 import mcubes
 import numpy as np
+import os
 import torch
 
 

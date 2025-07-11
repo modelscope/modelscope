@@ -1,7 +1,6 @@
 # The implementation is adopted from OSTrack,
 # made publicly available under the MIT License at https://github.com/botaoye/OSTrack/
 import math
-
 import torch
 import torch.nn as nn
 from timm.models.layers import DropPath, Mlp

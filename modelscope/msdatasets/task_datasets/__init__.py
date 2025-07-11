@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .torch_base_dataset import TorchTaskDataset
     from .gopro_image_deblurring_dataset import GoproImageDeblurringDataset
     from .reds_image_deblurring_dataset import RedsImageDeblurringDataset
     from .sidd_image_denoising import SiddImageDenoisingDataset
+    from .torch_base_dataset import TorchTaskDataset
     from .video_summarization_dataset import VideoSummarizationDataset
 else:
     _import_structure = {

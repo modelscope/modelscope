@@ -1,13 +1,12 @@
 # The implementation is adopted from CLIP, made publicly available
 # under MIT License at https://github.com/openai/CLIP
 
+import ftfy
 import gzip
 import html
-from functools import lru_cache
-
-import ftfy
 import regex as re
 import torch
+from functools import lru_cache
 
 
 @lru_cache()

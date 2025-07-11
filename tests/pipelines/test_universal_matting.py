@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
@@ -24,7 +23,7 @@ class UniversalMattingTest(unittest.TestCase):
         img_matting = pipeline(Tasks.universal_matting, model=self.model_id)
         result = img_matting(dataset)
         cv2.imwrite('result.png', next(result)[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):
@@ -32,7 +31,7 @@ class UniversalMattingTest(unittest.TestCase):
 
         result = img_matting('data/test/images/universal_matting.jpg')
         cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-        print(f'Output written to {osp.abspath("result.png")}')
+        print(f'Output written to {osp.abspath('result.png')}')
 
 
 if __name__ == '__main__':

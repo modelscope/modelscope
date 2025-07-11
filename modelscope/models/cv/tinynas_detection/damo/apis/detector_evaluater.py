@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-
 import torch
 
 from modelscope.models.cv.tinynas_detection.damo.apis.detector_inference import \

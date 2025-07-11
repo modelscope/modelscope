@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import torch
 
 from modelscope.metainfo import Models

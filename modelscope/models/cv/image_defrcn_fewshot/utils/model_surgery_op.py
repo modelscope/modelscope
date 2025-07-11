@@ -4,7 +4,6 @@
 
 import argparse
 import os
-
 import torch
 
 COCO_NOVEL_CLASSES = [

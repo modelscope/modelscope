@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
-from typing import Dict, List, Union
-
 import torch
 from torch import nn
+from typing import Dict, List, Union
 
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import is_master
@@ -43,8 +42,9 @@ def init_megatron_util(megatron_cfg=None, model_dir=None, **kwargs):
         megatron_cfg (Dict, optional): Megatron Config will be send to megatron_util.
         model_dir (str, optional): The model path for configuration. Defaults to None.
     """
-    from modelscope.utils.hub import read_config
     from megatron_util import initialize_megatron
+
+    from modelscope.utils.hub import read_config
 
     assert not (megatron_cfg is None and model_dir is None), \
         'cfg and model_dir cannot both be None when initializing megatron_util'

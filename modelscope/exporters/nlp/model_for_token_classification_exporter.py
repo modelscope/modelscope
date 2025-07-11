@@ -1,8 +1,7 @@
-from collections import OrderedDict
-from typing import Any, Dict, Mapping
-
 import torch
+from collections import OrderedDict
 from torch import nn
+from typing import Any, Dict, Mapping
 
 from modelscope.exporters.builder import EXPORTERS
 from modelscope.exporters.torch_model_exporter import TorchModelExporter

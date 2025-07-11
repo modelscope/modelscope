@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
-from typing import Any, Dict, Optional, Union
-
 import torch
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

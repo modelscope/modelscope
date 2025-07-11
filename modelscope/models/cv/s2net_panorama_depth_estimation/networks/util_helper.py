@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import pkgutil
-import warnings
-from importlib import import_module
-
 import healpy as hp
 import numpy as np
+import os
+import pkgutil
 import torch
 import torch.distributed as dist
 import torchvision
+import warnings
+from importlib import import_module
 from torch.nn import functional as F
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.utils import model_zoo
@@ -265,10 +264,10 @@ def load_state_dict(module, state_dict, strict=False):
 
     if unexpected_keys:
         err_msg.append('unexpected key in source '
-                       f'state_dict: {", ".join(unexpected_keys)}\n')
+                       f'state_dict: {', '.join(unexpected_keys)}\n')
     if missing_keys:
         err_msg.append(
-            f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
+            f'missing keys in source state_dict: {', '.join(missing_keys)}\n')
 
     rank, _ = get_dist_info()
     if len(err_msg) > 0 and rank == 0:

@@ -2,15 +2,14 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 import copy
-import logging
-import os
-# from typing import *
-from typing import Dict, Iterable, List, Optional, Tuple, Union
-
 import json
+import logging
 import ml_collections as mlc
 import numpy as np
+import os
 import torch
+# from typing import *
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 from unicore.data import UnicoreDataset, data_utils
 from unicore.distributed import utils as distributed_utils
 

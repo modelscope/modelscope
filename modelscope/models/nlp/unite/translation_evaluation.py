@@ -1,14 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """PyTorch UniTE model."""
 
-import warnings
-from dataclasses import dataclass
-from math import ceil
-from typing import Dict, List, Optional, Tuple, Union
-
 import numpy as np
 import torch
 import torch.utils.checkpoint
+import warnings
+from dataclasses import dataclass
+from math import ceil
 from packaging import version
 from torch.nn import (Dropout, Linear, Module, Parameter, ParameterList,
                       Sequential)
@@ -16,6 +14,7 @@ from torch.nn.functional import softmax
 from torch.nn.utils.rnn import pad_sequence
 from transformers import XLMRobertaConfig, XLMRobertaModel
 from transformers.activations import ACT2FN
+from typing import Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

@@ -5,10 +5,9 @@
 # and adapted from https://github.com/raoyongming/DenseCLIP/,
 # originally MIT License, Copyright (c) 2022 Rao, Yongming.
 
-import warnings
-
 import torch.nn as nn
 import torch.nn.functional as F
+import warnings
 
 
 def resize(input,

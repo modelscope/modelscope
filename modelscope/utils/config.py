@@ -2,7 +2,9 @@
 # Major implementation is borrowed and modified from
 # https://github.com/open-mmlab/mmcv/blob/master/mmcv/utils/config.py
 
+import addict
 import copy
+import json
 import os
 import os.path as osp
 import platform
@@ -13,9 +15,6 @@ import types
 from pathlib import Path
 from types import FunctionType
 from typing import Dict, Union
-
-import addict
-import json
 
 from modelscope.utils.constant import ConfigFields, ModelFile
 from modelscope.utils.logger import get_logger
@@ -100,7 +99,8 @@ class Config:
 
             if filename.endswith('.py'):
                 # import as needed.
-                from modelscope.utils.import_utils import import_modules_from_file
+                from modelscope.utils.import_utils import \
+                    import_modules_from_file
                 module_nanme, mod = import_modules_from_file(
                     osp.join(tmp_cfg_dir, tmp_cfg_name))
                 cfg_dict = {}

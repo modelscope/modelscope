@@ -2,7 +2,6 @@
 
 import io
 import os
-
 import torch
 from transformers import AutoConfig
 

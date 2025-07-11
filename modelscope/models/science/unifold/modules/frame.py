@@ -2,10 +2,10 @@
 # and is publicly available at https://github.com/dptech-corp/Uni-Fold.
 
 from __future__ import annotations  # noqa
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
 
 
 def zero_translation(

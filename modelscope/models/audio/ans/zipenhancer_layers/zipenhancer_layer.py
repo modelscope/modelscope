@@ -3,10 +3,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import copy
-from typing import List, Optional, Tuple, Union
-
 import torch
 from torch import Tensor, nn
+from typing import List, Optional, Tuple, Union
 
 from .scaling import FloatLike, ScheduledFloat, convert_num_channels
 from .zipformer import (BypassModule, CompactRelPositionalEncoding,

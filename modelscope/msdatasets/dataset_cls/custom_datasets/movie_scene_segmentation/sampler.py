@@ -5,9 +5,8 @@
 # Github: https://github.com/kakaobrain/bassl
 # ------------------------------------------------------------------------------------
 
-import random
-
 import numpy as np
+import random
 
 
 class InstanceShotSampler:

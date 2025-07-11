@@ -4,11 +4,10 @@
 # https://github.com/facebookresearch/fairseq/blob/main/LICENSE
 
 import math
-from typing import List, Optional
-
 import torch
 import torch.nn as nn
 from torch import Tensor
+from typing import List, Optional
 
 from .token_generation_constraints import (ConstraintState,
                                            OrderedConstraintState,

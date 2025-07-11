@@ -3,9 +3,8 @@
 import os
 import random
 import re
-from typing import Any, Dict, List
-
 import torch
+from typing import Any, Dict, List
 
 from modelscope.utils.constant import ModeKeys
 from .base import OfaBasePreprocessor
@@ -254,16 +253,16 @@ def serialize_schema_natural_language(
     normalize_query: bool = True,
 ) -> str:
     overall_description = f'{db_id} contains tables such as ' \
-                          f'{", ".join([name.lower() if normalize_query else name for name in db_table_names])}.'
+                          f'{', '.join([name.lower() if normalize_query else name for name in db_table_names])}.'
 
     def table_description_primary_key_template(primary_key):
         return f'{primary_key} is the primary key.'
 
     def table_description(name, column_names):
-        return f'Table {name} has columns such as {", ".join(column_names)}.'
+        return f'Table {name} has columns such as {', '.join(column_names)}.'
 
     def value_description(cv_pairs):
-        return f'{"".join(["The {} contains values such as {}.".format(column, value) for column, value in cv_pairs])}'
+        return f'{''.join(['The {} contains values such as {}.'.format(column, value) for column, value in cv_pairs])}'
 
     def foreign_key_description(table_1, column_1, table_2, column_2):
         return f'The {column_1} of {table_1} is the foreign key of {column_2} of {table_2}.'

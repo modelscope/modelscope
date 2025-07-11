@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
+import tensorflow as tf
 import time
 from typing import Dict, Optional
-
-import tensorflow as tf
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models.nlp import CsanmtForTranslation

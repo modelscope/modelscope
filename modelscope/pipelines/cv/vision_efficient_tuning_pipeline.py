@@ -1,10 +1,9 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Any, Dict
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys

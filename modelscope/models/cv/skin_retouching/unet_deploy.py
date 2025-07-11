@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import warnings
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import warnings
 
 from .weights_init import weights_init
 

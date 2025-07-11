@@ -1,14 +1,13 @@
 # Part of the implementation is borrowed and modified from MMDetection, publicly available at
 # https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/coco.py
+import numpy as np
 import os.path as osp
+import pycocotools.mask as mask_util
 import tempfile
 from collections import OrderedDict
-from typing import Any, Dict
-
-import numpy as np
-import pycocotools.mask as mask_util
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
+from typing import Any, Dict
 
 from modelscope.fileio import dump, load
 from modelscope.metainfo import Metrics

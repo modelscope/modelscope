@@ -1,15 +1,14 @@
 # Part of the implementation is borrowed and modified from diffusers,
 # publicly available at https://github.com/huggingface/diffusers/tree/main/src/diffusers/models/transformer_2d.py
-from dataclasses import dataclass
-from typing import Optional
-
 import torch
 import torch.nn.functional as F
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models import ModelMixin
 from diffusers.models.embeddings import ImagePositionalEmbeddings, PatchEmbed
 from diffusers.utils import BaseOutput, deprecate
 from torch import nn
+from typing import Optional
 
 from .attention import BasicTransformerBlock
 

@@ -4,16 +4,19 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .cartoon_translation_trainer import CartoonTranslationTrainer
+    from .image_defrcn_fewshot_detection_trainer import \
+        ImageDefrcnFewshotTrainer
+    from .image_inpainting_trainer import ImageInpaintingTrainer
     from .image_instance_segmentation_trainer import \
         ImageInstanceSegmentationTrainer
-    from .image_portrait_enhancement_trainer import ImagePortraitEnhancementTrainer
+    from .image_portrait_enhancement_trainer import \
+        ImagePortraitEnhancementTrainer
     from .movie_scene_segmentation_trainer import MovieSceneSegmentationTrainer
-    from .image_inpainting_trainer import ImageInpaintingTrainer
-    from .referring_video_object_segmentation_trainer import ReferringVideoObjectSegmentationTrainer
-    from .image_defrcn_fewshot_detection_trainer import ImageDefrcnFewshotTrainer
-    from .cartoon_translation_trainer import CartoonTranslationTrainer
-    from .ocr_recognition_trainer import OCRRecognitionTrainer
     from .nerf_recon_acc_trainer import NeRFReconAccTrainer
+    from .ocr_recognition_trainer import OCRRecognitionTrainer
+    from .referring_video_object_segmentation_trainer import \
+        ReferringVideoObjectSegmentationTrainer
     from .vision_efficient_tuning_trainer import VisionEfficientTuningTrainer
 
 else:

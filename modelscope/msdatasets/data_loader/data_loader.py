@@ -2,11 +2,10 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Optional, Union
-
 from datasets import (Dataset, DatasetBuilder, DatasetDict, IterableDataset,
                       IterableDatasetDict)
 from datasets import load_dataset as hf_load_dataset
+from typing import Optional, Union
 
 from modelscope.hub.api import ModelScopeConfig
 from modelscope.msdatasets.auth.auth_config import OssAuthConfig
@@ -196,8 +195,9 @@ class VirgoDownloader(BaseDownloader):
         """
         Fetch virgo meta and build virgo dataset.
         """
-        from modelscope.msdatasets.dataset_cls.dataset import VirgoDataset
         import pandas as pd
+
+        from modelscope.msdatasets.dataset_cls.dataset import VirgoDataset
 
         meta_manager = DataMetaManager(self.dataset_context_config)
         meta_manager.fetch_virgo_meta()
@@ -234,11 +234,11 @@ class VirgoDownloader(BaseDownloader):
             'download_virgo_files', '')
 
         if self.dataset.data_type == 0 and download_virgo_files:
-            import requests
             import json
+            import requests
             import shutil
-            from urllib.parse import urlparse
             from functools import partial
+            from urllib.parse import urlparse
 
             def download_file(meta_info_val, data_dir):
                 file_url_list = []

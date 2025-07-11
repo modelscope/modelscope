@@ -1,6 +1,5 @@
-import unittest
-
 import torch
+import unittest
 
 from modelscope import Model, snapshot_download
 from modelscope.models.nlp.llama2 import Llama2Tokenizer

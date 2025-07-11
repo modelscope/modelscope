@@ -1,12 +1,11 @@
-import os
-import shutil
-import unittest
-
 import json
+import os
 import requests
+import shutil
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers

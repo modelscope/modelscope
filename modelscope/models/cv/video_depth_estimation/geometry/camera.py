@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from functools import lru_cache
-
 import torch
 import torch.nn as nn
+from functools import lru_cache
 
 from modelscope.models.cv.video_depth_estimation.geometry.camera_utils import \
     scale_intrinsics

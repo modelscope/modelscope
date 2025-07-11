@@ -3,7 +3,6 @@
 import os
 import pickle
 import sys
-
 from text2sql_lgesql.asdl.asdl import ASDLGrammar
 from text2sql_lgesql.asdl.transition_system import TransitionSystem
 

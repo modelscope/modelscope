@@ -2,12 +2,11 @@
 # The DAMO-YOLO implementation is also open-sourced by the authors at https://github.com/tinyvision/damo-yolo.
 
 import functools
-from functools import partial
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from functools import partial
 
 from modelscope.models.cv.tinynas_detection.damo.base_models.core.base_ops import (
     BaseConv, DWConv)

@@ -1,9 +1,8 @@
 """SAMPLING ONLY."""
 
-from functools import partial
-
 import numpy as np
 import torch
+from functools import partial
 from tqdm import tqdm
 
 from ....ldm.models.diffusion.sampling_util import norm_thresholding

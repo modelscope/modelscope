@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from typing import Tuple, Union
-
 import numpy as np
+import os
 from torch import nn
+from typing import Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.metrics.builder import build_metric
@@ -150,7 +149,8 @@ class VecoTrainer(NlpEpochBasedTrainer):
         """Veco evaluates the datasets one by one.
 
         """
-        from modelscope.msdatasets.dataset_cls.custom_datasets import VecoDataset
+        from modelscope.msdatasets.dataset_cls.custom_datasets import \
+            VecoDataset
         if checkpoint_path is not None:
             from modelscope.trainers.hooks import LoadCheckpointHook
             LoadCheckpointHook.load_checkpoint(checkpoint_path, self)

@@ -2,11 +2,10 @@
 import os
 import shutil
 import tempfile
-import unittest
-from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
-
 import torch
+import unittest
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

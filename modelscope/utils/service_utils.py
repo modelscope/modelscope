@@ -1,10 +1,9 @@
 import base64
-import mimetypes
-from io import BytesIO
-
 import json
+import mimetypes
 import numpy as np
 import requests
+from io import BytesIO
 
 from modelscope.outputs import TASK_OUTPUTS, OutputKeys
 from modelscope.pipeline_inputs import TASK_INPUTS, InputType

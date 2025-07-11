@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .msdeformattn_decoder import (
-        MSDeformAttnPixelDecoder, )
+    from .msdeformattn_decoder import MSDeformAttnPixelDecoder
 
 else:
     _import_structure = {'msdeformattn_decoder': ['MSDeformAttnPixelDecoder']}

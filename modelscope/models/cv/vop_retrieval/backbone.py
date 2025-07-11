@@ -4,17 +4,16 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import hashlib
+import numpy as np
 import os
+import torch
+import torch.nn.functional as F
 import urllib
 import warnings
 from collections import OrderedDict
-from typing import Tuple, Union
-
-import numpy as np
-import torch
-import torch.nn.functional as F
 from torch import nn
 from tqdm import tqdm
+from typing import Tuple, Union
 
 from modelscope.models.base.base_torch_model import TorchModel
 

@@ -17,11 +17,10 @@
 # however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or
 # otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
 
-import os
-
 import h5py
 import json
 import numpy as np
+import os
 import torch
 
 from modelscope.metainfo import Models

@@ -1,9 +1,8 @@
 # The implementation is adopted from FairMOT,
 # made publicly available under the MIT License at https://github.com/ifzhang/FairMOT
 import math
-from copy import deepcopy
-
 import torch.nn as nn
+from copy import deepcopy
 
 from modelscope.models.base import TorchModel
 from modelscope.utils.logger import get_logger

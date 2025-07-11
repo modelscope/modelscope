@@ -15,10 +15,8 @@
 
 import math
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
-
 import torch
+from dataclasses import dataclass
 from packaging import version
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -31,6 +29,7 @@ from transformers.modeling_outputs import (
     Seq2SeqModelOutput)
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
+from typing import Dict, List, Optional, Tuple
 
 from .configuration_ofa import OFAConfig
 from .generate import utils

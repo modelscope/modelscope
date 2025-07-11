@@ -1,8 +1,7 @@
-from typing import Any, Dict, Union
-
 import numpy as np
 import torch
 from transformers.deepspeed import is_deepspeed_zero3_enabled
+from typing import Any, Dict, Union
 
 from modelscope import EpochBasedTrainer, get_logger
 

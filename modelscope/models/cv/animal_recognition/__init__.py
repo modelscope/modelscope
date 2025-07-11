@@ -5,7 +5,7 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
 
-    from .resnet import ResNet, Bottleneck
+    from .resnet import Bottleneck, ResNet
     from .splat import SplAtConv2d
 
 else:

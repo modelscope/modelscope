@@ -25,7 +25,7 @@ class TextureGenerationTest(unittest.TestCase):
     def pipeline_inference(self, pipeline: Pipeline, input_location):
         result = pipeline(input_location)
         mesh = result[OutputKeys.OUTPUT]
-        print(f'Output to {osp.abspath("mesh_post.obj")}', mesh)
+        print(f'Output to {osp.abspath('mesh_post.obj')}', mesh)
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):

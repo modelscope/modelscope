@@ -2,9 +2,8 @@
 # https://github.com/XPixelGroup/BasicSR/blob/master/basicsr/archs/vgg_arch.py
 
 import os
-from collections import OrderedDict
-
 import torch
+from collections import OrderedDict
 from torch import nn as nn
 from torchvision.models import vgg as vgg
 

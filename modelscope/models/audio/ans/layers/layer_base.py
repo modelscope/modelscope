@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import abc
-
 import numpy as np
 import six
 import torch.nn as nn

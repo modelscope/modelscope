@@ -13,7 +13,6 @@ ray, and computes pixel colors using the volume rendering equation.
 """
 
 import math
-
 import torch
 import torch.nn as nn
 

@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import imageio
 import os
 import unittest
-
-import imageio
 
 from modelscope.models.cv.human3d_animation.utils import write_obj
 from modelscope.outputs import OutputKeys

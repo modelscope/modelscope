@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Dict
-
 import numpy as np
 import torch
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.outputs import OutputKeys

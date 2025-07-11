@@ -3,11 +3,10 @@
 
 import os.path as osp
 import pkgutil
-from collections import OrderedDict
-from importlib import import_module
-
 import torch
 import torchvision
+from collections import OrderedDict
+from importlib import import_module
 from torch.nn import functional as F
 
 
@@ -56,10 +55,10 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
 
     if unexpected_keys:
         err_msg.append('unexpected key in source '
-                       f'state_dict: {", ".join(unexpected_keys)}\n')
+                       f'state_dict: {', '.join(unexpected_keys)}\n')
     if missing_keys:
-        err_msg.append(
-            f'missing keys in source state_dict: {", ".join(missing_keys)}\n')
+        err_msg.append(f'missing keys in source state_dict: {',
+                       '.join(missing_keys)}\n')
 
     if len(err_msg) > 0:
         err_msg.insert(

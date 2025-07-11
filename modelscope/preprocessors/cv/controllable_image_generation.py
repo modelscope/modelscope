@@ -1,16 +1,15 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
 
-import math
-import os
-from typing import Any, Dict
-
 import cv2
+import math
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.models.cv.controllable_image_generation.annotator.annotator import (

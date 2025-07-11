@@ -5,16 +5,16 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     print('TYPE_CHECKING...')
-    from .batch_utils import (executor_train, executor_cv, executor_test,
-                              token_score_filter, is_sublist, ctc_loss,
-                              ctc_prefix_beam_search)
-    from .det_utils import (load_data_and_score, load_stats_file, compute_det,
+    from .batch_utils import (ctc_loss, ctc_prefix_beam_search, executor_cv,
+                              executor_test, executor_train, is_sublist,
+                              token_score_filter)
+    from .det_utils import (compute_det, load_data_and_score, load_stats_file,
                             plot_det)
-    from .model_utils import (count_parameters, load_checkpoint,
-                              save_checkpoint, average_model, convert_to_kaldi,
-                              convert_to_pytorch)
-    from .file_utils import (read_lists, make_pair, read_token, read_lexicon,
-                             query_tokens_id)
+    from .file_utils import (make_pair, query_tokens_id, read_lexicon,
+                             read_lists, read_token)
+    from .model_utils import (average_model, convert_to_kaldi,
+                              convert_to_pytorch, count_parameters,
+                              load_checkpoint, save_checkpoint)
     from .runtime_utils import make_runtime_res
 
 else:

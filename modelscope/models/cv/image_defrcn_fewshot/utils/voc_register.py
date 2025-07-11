@@ -2,10 +2,9 @@
 # made publicly available under the MIT License at
 # https://github.com/er-muyue/DeFRCN/blob/main/defrcn/data/meta_voc.py
 
+import numpy as np
 import os
 import xml.etree.ElementTree as ET
-
-import numpy as np
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
 from fvcore.common.file_io import PathManager

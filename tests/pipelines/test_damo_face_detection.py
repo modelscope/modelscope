@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os.path as osp
 import unittest
-
-import cv2
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
@@ -24,7 +23,7 @@ class FaceDetectionTest(unittest.TestCase):
     def show_result(self, img_path, detection_result):
         img = draw_face_detection_result(img_path, detection_result)
         cv2.imwrite('result.png', img)
-        print(f'output written to {osp.abspath("result.png")}')
+        print(f'output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

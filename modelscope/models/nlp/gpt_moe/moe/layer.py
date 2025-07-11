@@ -2,9 +2,8 @@
 Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
-import typing
-
 import torch
+import typing
 from megatron_util import mpu
 
 from .experts import Experts

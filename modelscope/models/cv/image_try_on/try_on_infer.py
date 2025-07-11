@@ -1,10 +1,9 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
 import argparse
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms

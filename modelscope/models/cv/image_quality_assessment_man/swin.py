@@ -3,14 +3,13 @@
 
 import collections.abc
 import math
-import warnings
-from itertools import repeat
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+import warnings
 from einops import rearrange
+from itertools import repeat
 
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):

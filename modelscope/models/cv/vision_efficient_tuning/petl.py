@@ -1,10 +1,9 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import math
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torchvision
+from collections import OrderedDict
 
 
 class Prompt(nn.Module):

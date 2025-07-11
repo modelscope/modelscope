@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import math
-from typing import Any, Dict, Union
-
 import cv2
+import math
 import numpy as np
 from torchvision import transforms
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import LoadImage

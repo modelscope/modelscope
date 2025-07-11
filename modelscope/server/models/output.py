@@ -1,9 +1,8 @@
 import datetime
-from http import HTTPStatus
-from typing import Generic, Optional, Type, TypeVar
-
 import json
+from http import HTTPStatus
 from pydantic import BaseModel
+from typing import Generic, Optional, Type, TypeVar
 
 ResultType = TypeVar('ResultType')
 

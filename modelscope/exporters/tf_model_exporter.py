@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from typing import Any, Callable, Dict, Mapping
-
 import tensorflow as tf
+from typing import Any, Callable, Dict, Mapping
 
 from modelscope.outputs import ModelOutputBase
 from modelscope.utils.constant import ModelFile

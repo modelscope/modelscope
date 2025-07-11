@@ -1,9 +1,8 @@
-import os
-
 import cv2
 import json
 import lmdb
 import numpy as np
+import os
 import six
 import torch
 from PIL import Image

@@ -27,19 +27,23 @@ class FaceDetectionScrfdTrainer(BaseTrainer):
         import mmcv
         from mmcv.runner import get_dist_info, init_dist
         from mmcv.utils import get_git_hash
-        from mmdet.utils import collect_env, get_root_logger
-        from mmdet.apis import set_random_seed
-        from mmdet.models import build_detector
-        from mmdet.datasets import build_dataset
         from mmdet import __version__
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets import RetinaFaceDataset
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import DefaultFormatBundleV2
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import LoadAnnotationsV2
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import RotateV2
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import RandomSquareCrop
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.backbones import ResNetV1e
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.dense_heads import SCRFDHead
-        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.detectors import SCRFD
+        from mmdet.apis import set_random_seed
+        from mmdet.datasets import build_dataset
+        from mmdet.models import build_detector
+        from mmdet.utils import collect_env, get_root_logger
+
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets import \
+            RetinaFaceDataset
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.datasets.pipelines import (
+            DefaultFormatBundleV2, LoadAnnotationsV2, RandomSquareCrop,
+            RotateV2)
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.backbones import \
+            ResNetV1e
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.dense_heads import \
+            SCRFDHead
+        from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.detectors import \
+            SCRFD
         super().__init__(cfg_file)
         cfg = self.cfg
         if 'work_dir' in kwargs:
@@ -102,7 +106,7 @@ class FaceDetectionScrfdTrainer(BaseTrainer):
         if 'seed' in kwargs:
             cfg.seed = kwargs['seed']
             _deterministic = kwargs.get('deterministic', False)
-            logger.info(f'Set random seed to {kwargs["seed"]}, '
+            logger.info(f'Set random seed to {kwargs['seed']}, '
                         f'deterministic: {_deterministic}')
             set_random_seed(kwargs['seed'], deterministic=_deterministic)
         else:

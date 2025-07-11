@@ -1,11 +1,10 @@
 # Part of the implementation is borrowed and modified from MMDetection, publicly available at
 # https://github.com/open-mmlab/mmdetection/blob/master/mmdet/models/detectors/two_stage.py
 import os
-from collections import OrderedDict
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from collections import OrderedDict
 
 from modelscope.models.cv.image_instance_segmentation.backbones import \
     SwinTransformer

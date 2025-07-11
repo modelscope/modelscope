@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, Generator, Optional
-
 import torch
+from typing import Any, Dict, Generator, Optional
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.nlp import DistributedGPT3

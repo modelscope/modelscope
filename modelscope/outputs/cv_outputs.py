@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 from dataclasses import dataclass
 from typing import Optional, Tuple, Union
-
-import numpy as np
 
 from modelscope.outputs.outputs import ModelOutputBase
 

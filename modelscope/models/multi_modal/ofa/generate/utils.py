@@ -4,11 +4,10 @@
 # https://github.com/facebookresearch/fairseq/blob/main/LICENSE
 
 import collections
-from collections import abc
-from itertools import accumulate
-
 import torch
 import torch.nn.functional as F
+from collections import abc
+from itertools import accumulate
 
 try:
     from amp_C import multi_tensor_l2norm

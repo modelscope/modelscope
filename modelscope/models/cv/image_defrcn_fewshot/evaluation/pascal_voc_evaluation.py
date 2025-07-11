@@ -2,11 +2,10 @@
 # made publicly available under the MIT License at
 # https://github.com/er-muyue/DeFRCN/blob/main/defrcn/evaluation/pascal_voc_evaluation.py
 
+import numpy as np
 import os
 import tempfile
 from collections import OrderedDict, defaultdict
-
-import numpy as np
 from detectron2.data import MetadataCatalog
 from detectron2.evaluation.pascal_voc_evaluation import (
     PascalVOCDetectionEvaluator, voc_eval)

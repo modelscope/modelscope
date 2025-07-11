@@ -1,8 +1,8 @@
 from __future__ import division
-import colorsys
-import os
 
+import colorsys
 import numpy as np
+import os
 import pandas as pd
 import torch
 import torch.nn as nn

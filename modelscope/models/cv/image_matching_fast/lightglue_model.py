@@ -1,12 +1,11 @@
 # The implementation is made publicly available under the
 # Apache 2.0 license at https://github.com/cvg/LightGlue
 
-import os.path as osp
-from pathlib import Path
-
 import cv2
 import numpy as np
+import os.path as osp
 import torch
+from pathlib import Path
 
 from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel

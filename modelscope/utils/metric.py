@@ -2,11 +2,10 @@
 # Copyright © Alibaba, Inc. and its affiliates.
 
 import functools
-import os
-from collections import defaultdict, deque
-
 import numpy as np
+import os
 import torch
+from collections import defaultdict, deque
 
 __all__ = [
     'AverageMeter',

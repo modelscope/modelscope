@@ -4,7 +4,6 @@ https://github.com/saic-mdal/lama
 """
 import math
 import os
-
 import torch
 import torch.nn as nn
 from torch.nn import BatchNorm2d

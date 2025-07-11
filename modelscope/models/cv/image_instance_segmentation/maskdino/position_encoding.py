@@ -4,7 +4,6 @@
 # https://github.com/facebookresearch/Mask2Former, under MIT license.
 
 import math
-
 import torch
 from torch import nn
 

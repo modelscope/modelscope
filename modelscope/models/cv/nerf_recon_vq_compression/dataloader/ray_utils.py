@@ -1,6 +1,5 @@
-import re
-
 import numpy as np
+import re
 import torch
 from kornia import create_meshgrid
 from torch import searchsorted

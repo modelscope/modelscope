@@ -13,11 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import math
-from collections import Counter
-
 import json
+import math
 import numpy as np
+from collections import Counter
 from nltk.util import ngrams
 from sklearn.metrics import f1_score
 

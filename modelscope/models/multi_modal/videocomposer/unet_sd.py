@@ -2,13 +2,12 @@
 
 import math
 import os
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from fairscale.nn.checkpoint import checkpoint_wrapper
+from functools import partial
 from rotary_embedding_torch import RotaryEmbedding
 from torch import einsum
 
@@ -2079,6 +2078,7 @@ class DropPath(nn.Module):
 
 if __name__ == '__main__':
     from config import cfg
+
     # [model] unet
     model = UNetSD_temporal(
         in_dim=cfg.unet_in_dim,

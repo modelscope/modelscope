@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from collections.abc import Mapping
-
 import torch
+from collections.abc import Mapping
 
 from modelscope.outputs import ModelOutputBase
 

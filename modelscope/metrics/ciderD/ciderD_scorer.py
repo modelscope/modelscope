@@ -2,14 +2,14 @@
 # Tsung-Yi Lin <tl483@cornell.edu>
 # Ramakrishna Vedantam <vrama91@vt.edu>
 from __future__ import absolute_import, division, print_function
+
 import copy
 import math
+import numpy as np
 import os
 import pdb
-from collections import defaultdict
-
-import numpy as np
 import six
+from collections import defaultdict
 from six.moves import cPickle
 
 

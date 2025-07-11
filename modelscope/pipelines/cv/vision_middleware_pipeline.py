@@ -1,13 +1,12 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision  Team Authors. All rights reserved.
 
 import math
-import os.path as osp
-from typing import Any, Dict
-
 import numpy as np
+import os.path as osp
 import torch
 import torchvision.transforms as transforms
 from mmcv.parallel import collate, scatter
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.vision_middleware import VisionMiddlewareModel

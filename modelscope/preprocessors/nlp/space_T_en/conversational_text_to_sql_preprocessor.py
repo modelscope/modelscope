@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict
-
 import json
+import os
 import torch
 from text2sql_lgesql.preprocess.graph_utils import GraphProcessor
 from text2sql_lgesql.preprocess.process_graphs import process_dataset_graph
 from text2sql_lgesql.utils.batch import Batch
 from text2sql_lgesql.utils.example import Example
+from typing import Any, Dict
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors.base import Preprocessor

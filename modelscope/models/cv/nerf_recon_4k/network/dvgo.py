@@ -1,13 +1,12 @@
 import functools
 import math
+import numpy as np
 import os
 import time
-from copy import deepcopy
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from copy import deepcopy
 from torch.utils.cpp_extension import load
 from torch_scatter import segment_coo
 

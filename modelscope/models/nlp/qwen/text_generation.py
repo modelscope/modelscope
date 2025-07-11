@@ -3,19 +3,18 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
+import warnings
 from torch.nn import CrossEntropyLoss
 from transformers import (GenerationConfig, PreTrainedTokenizer,
                           StoppingCriteriaList)
 from transformers.generation.logits_process import LogitsProcessorList
 from transformers.generation.utils import GenerateOutput
 from transformers.modeling_outputs import CausalLMOutputWithPast
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.outputs import OutputKeys

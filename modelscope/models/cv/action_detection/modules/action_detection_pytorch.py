@@ -1,8 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import logging
-from typing import Dict, List
-
 import torch
 import torch.nn as nn
 from detectron2.layers import ShapeSpec
@@ -14,6 +12,7 @@ from detectron2.structures import (Boxes, ImageList, Instances,
                                    pairwise_point_box_distance)
 from fvcore.nn import sigmoid_focal_loss_jit
 from torch.nn import functional as F
+from typing import Dict, List
 
 from modelscope.models.base import TorchModel
 from .resnet import Bottleneck3D, ResNet3D

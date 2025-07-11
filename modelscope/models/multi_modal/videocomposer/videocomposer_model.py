@@ -1,16 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from copy import copy, deepcopy
-from os import path as osp
-from typing import Any, Dict
-
 import open_clip
+import os
 import pynvml
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
+from copy import copy, deepcopy
 from einops import rearrange
+from os import path as osp
+from typing import Any, Dict
 
 import modelscope.models.multi_modal.videocomposer.models as models
 from modelscope.metainfo import Models

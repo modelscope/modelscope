@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-from collections import OrderedDict
-from typing import Any, Dict, Tuple, Union
-
 import json
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import OrderedDict
+from typing import Any, Dict, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

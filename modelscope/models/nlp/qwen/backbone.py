@@ -5,8 +5,6 @@
 
 import importlib
 import math
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
@@ -26,6 +24,7 @@ from transformers.utils import (ModelOutput, add_code_sample_docstrings,
                                 add_start_docstrings_to_model_forward, logging)
 from transformers.utils.model_parallel_utils import (assert_device_map,
                                                      get_device_map)
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 
 from modelscope import Model, TorchModel
 from modelscope.metainfo import Models
@@ -46,8 +45,8 @@ except ImportError:
     rearrange = None
 
 try:
-    from flash_attn.layers.rotary import apply_rotary_emb_func
     from einops import rearrange
+    from flash_attn.layers.rotary import apply_rotary_emb_func
 
     use_flash_rotary = True
 except ImportError:

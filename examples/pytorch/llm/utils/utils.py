@@ -1,12 +1,10 @@
 import datetime as dt
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import random
 import re
-from typing import Any, Counter, Dict, List, Optional, Tuple, Type, TypeVar
-
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from datasets import Dataset as HfDataset
 from tensorboard.backend.event_processing.event_accumulator import \
@@ -17,6 +15,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torchmetrics import Accuracy, MeanMetric
 from tqdm import tqdm
 from transformers import GenerationConfig, HfArgumentParser, TextStreamer
+from typing import Any, Counter, Dict, List, Optional, Tuple, Type, TypeVar
 
 from modelscope import get_logger
 from modelscope.metrics.base import Metric

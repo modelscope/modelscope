@@ -2,7 +2,6 @@
 # publicly available at https://github.com/lllyasviel/ControlNet
 import os
 import sys
-
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo

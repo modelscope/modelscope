@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import subprocess
-import tempfile
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os
 import PIL
+import subprocess
+import tempfile
 import torch
 from torchvision import models, transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_colorization import (DynamicUnetDeep,

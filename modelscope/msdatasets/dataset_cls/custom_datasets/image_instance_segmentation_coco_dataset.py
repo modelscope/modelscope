@@ -1,8 +1,7 @@
 # Part of the implementation is borrowed and modified from MMDetection, publicly available at
 # https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/coco.py
-import os.path as osp
-
 import numpy as np
+import os.path as osp
 from pycocotools.coco import COCO
 
 from modelscope.metainfo import Models

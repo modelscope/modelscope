@@ -1,15 +1,14 @@
 import hashlib
 import os
-import urllib
-import warnings
-from typing import Any, List, Union
-
 import packaging
 import torch
+import urllib
+import warnings
 from PIL import Image
 from torchvision.transforms import (CenterCrop, Compose, Normalize, Resize,
                                     ToTensor)
 from tqdm import tqdm
+from typing import Any, List, Union
 
 from modelscope.models.cv.image_to_3d.ldm.modules.encoders.clip.model import \
     build_model

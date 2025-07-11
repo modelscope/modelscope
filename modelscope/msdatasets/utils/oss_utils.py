@@ -1,9 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from __future__ import print_function
+
 import multiprocessing
 import os
-
 from datasets.utils.file_utils import hash_url_to_filename
 
 from modelscope.hub.api import HubApi

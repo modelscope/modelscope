@@ -14,9 +14,8 @@
 """A Python wrapper for Kalign."""
 import os
 import subprocess
-from typing import Sequence
-
 from absl import logging
+from typing import Sequence
 
 from . import utils
 

@@ -2,9 +2,8 @@
 # https://github.com/dvlab-research/SA-AutoAug/blob/master/FCOS/fcos_core/augmentations/box_level_augs/box_level_augs.py
 # Copyright © Alibaba, Inc. and its affiliates.
 
-import random
-
 import numpy as np
+import random
 
 from .color_augs import color_aug_func
 from .geometric_augs import geometric_aug_func

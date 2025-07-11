@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, List, Union
-
 import torch
 from transformers import AutoTokenizer
+from typing import Any, Dict, List, Union
 
 from modelscope.metainfo import Preprocessors
 from modelscope.models.nlp.unite.configuration import InputFormat

@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .semantic_seg_model import SemanticSegmentation
-    from .segformer import Segformer
     from .ddpm_segmentation_model import DDPMSegmentationModel
+    from .segformer import Segformer
+    from .semantic_seg_model import SemanticSegmentation
 
 else:
     _import_structure = {

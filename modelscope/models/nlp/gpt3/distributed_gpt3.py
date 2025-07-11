@@ -15,10 +15,8 @@
 
 import math
 import os
-from collections import OrderedDict
-from typing import Callable, Dict, List, Optional, Union
-
 import torch
+from collections import OrderedDict
 from megatron_util import get_args, mpu
 from megatron_util.global_vars import get_global_memory_buffer
 from megatron_util.model import (AttnMaskType, Float16Module, LayerNorm,
@@ -27,6 +25,7 @@ from megatron_util.model.fused_softmax import FusedScaleMaskSoftmax
 from torch import nn
 from torch.nn import functional as F
 from transformers.modeling_utils import PreTrainedModel
+from typing import Callable, Dict, List, Optional, Union
 
 from modelscope.models import TorchModel
 from modelscope.models.nlp.gpt3 import GPT3Config

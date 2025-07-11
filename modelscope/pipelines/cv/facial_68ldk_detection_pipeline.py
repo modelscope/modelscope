@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import argparse
-import os
-from typing import Any, Dict, Union
-
 import cv2
 import numpy as np
+import os
 import torch
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.facial_68ldk_detection import infer

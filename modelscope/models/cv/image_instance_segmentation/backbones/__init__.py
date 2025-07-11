@@ -4,9 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .swin_transformer import SwinTransformer
-    from .swin_transformer import D2SwinTransformer
     from .resnet import build_resnet_backbone
+    from .swin_transformer import D2SwinTransformer, SwinTransformer
 
 else:
     _import_structure = {

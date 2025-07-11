@@ -1,8 +1,7 @@
-import re
-from os.path import *
-
 import cv2
 import numpy as np
+import re
+from os.path import *
 from PIL import Image
 
 cv2.setNumThreads(0)

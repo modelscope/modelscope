@@ -1,9 +1,8 @@
 # Part of the implementation is borrowed and modified from Deep3DFaceRecon_pytorch,
 # publicly available at https://github.com/sicxu/Deep3DFaceRecon_pytorch
 
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
 from scipy.io import loadmat

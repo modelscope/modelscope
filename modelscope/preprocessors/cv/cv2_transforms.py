@@ -4,12 +4,11 @@
 # https://github.com/jbohnslav/opencv_transforms/blob/master/opencv_transforms/transforms.py
 
 import collections
+import cv2
 import math
 import numbers
-import random
-
-import cv2
 import numpy as np
+import random
 import torch
 
 _cv2_pad_to_str = {

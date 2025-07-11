@@ -1,8 +1,7 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
-import math
-
 import cv2
+import math
 import matplotlib
 import numpy as np
 

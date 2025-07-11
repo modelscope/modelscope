@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, List, Union
-
 import torch.utils.data
 from torch.utils.data import ConcatDataset as TorchConcatDataset
+from typing import Any, List, Union
 
 from modelscope.utils.constant import ModeKeys
 

@@ -18,8 +18,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import XLMRobertaConfig
     from .backbone import XLMRobertaModel
+    from .configuration import XLMRobertaConfig
 else:
     _import_structure = {
         'configuration': ['XLMRobertaConfig'],

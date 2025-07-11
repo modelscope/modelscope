@@ -1,9 +1,8 @@
 # The implementation is adopted from stylegan2-pytorch, made public available under the MIT License
 # at https://github.com/rosinality/stylegan2-pytorch/blob/master/op/upfirdn2d.py
 import os
-from collections import abc
-
 import torch
+from collections import abc
 from torch.autograd import Function
 from torch.nn import functional as F
 

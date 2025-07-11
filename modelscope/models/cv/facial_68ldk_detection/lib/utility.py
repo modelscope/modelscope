@@ -1,8 +1,7 @@
-import os.path as osp
-import time
-
 import json
 import numpy as np
+import os.path as osp
+import time
 import torch
 
 from ..conf import *

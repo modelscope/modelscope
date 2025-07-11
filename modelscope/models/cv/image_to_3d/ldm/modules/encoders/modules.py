@@ -1,12 +1,11 @@
-import random
-from functools import partial
-
 import kornia
 import kornia.augmentation as K
 import numpy as np
+import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from functools import partial
 from torchvision import transforms
 from transformers import (CLIPTextModel, CLIPTokenizer, CLIPVisionModel,
                           T5EncoderModel, T5Tokenizer)
@@ -161,7 +160,8 @@ class BERTTokenizer(AbstractEncoder):
 
     def __init__(self, device='cuda', vq_interface=True, max_length=77):
         super().__init__()
-        from transformers import BertTokenizerFast  # TODO: add to reuquirements
+        from transformers import \
+            BertTokenizerFast  # TODO: add to reuquirements
         self.tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
         self.device = device
         self.vq_interface = vq_interface

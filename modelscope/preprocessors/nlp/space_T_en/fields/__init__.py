@@ -6,10 +6,8 @@ from modelscope.utils.import_utils import LazyImportModule
 if TYPE_CHECKING:
     from .common_utils import SubPreprocessor
     from .parse import get_label
-    from .preprocess_dataset import \
-        preprocess_dataset
-    from .process_dataset import \
-        process_dataset, process_tables
+    from .preprocess_dataset import preprocess_dataset
+    from .process_dataset import process_dataset, process_tables
 
 else:
     _import_structure = {

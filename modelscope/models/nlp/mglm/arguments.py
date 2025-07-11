@@ -14,10 +14,9 @@
 """argparser configuration"""
 
 import argparse
-import os
-
 import deepspeed
 import json
+import os
 import torch
 
 from .utils import get_hostname

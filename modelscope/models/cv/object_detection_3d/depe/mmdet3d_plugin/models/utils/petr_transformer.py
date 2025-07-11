@@ -4,13 +4,11 @@ https://github.com/megvii-research/PETR/blob/main/projects/mmdet3d_plugin/models
 """
 import copy
 import math
-import warnings
-from typing import Sequence
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
+import warnings
 from mmcv.cnn import (build_activation_layer, build_conv_layer,
                       build_norm_layer, xavier_init)
 from mmcv.cnn.bricks.drop import build_dropout
@@ -23,6 +21,7 @@ from mmcv.runner.base_module import BaseModule
 from mmcv.utils import (ConfigDict, build_from_cfg, deprecated_api_warning,
                         to_2tuple)
 from mmdet.models.utils.builder import TRANSFORMER
+from typing import Sequence
 
 
 @TRANSFORMER.register_module()

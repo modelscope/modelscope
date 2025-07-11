@@ -2,11 +2,10 @@
 Used to prepare simulated data.
 """
 import math
+import numpy as np
 import os.path
 import queue
 import threading
-
-import numpy as np
 import torch
 
 from modelscope.utils.logger import get_logger

@@ -2,14 +2,13 @@
 """ This ECAPA-TDNN implementation is adapted from https://github.com/speechbrain/speechbrain.
 """
 import math
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel

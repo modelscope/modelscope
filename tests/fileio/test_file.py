@@ -2,7 +2,6 @@
 import os
 import tempfile
 import unittest
-
 from requests import HTTPError
 
 from modelscope.fileio.file import File, HTTPStorage, LocalStorage

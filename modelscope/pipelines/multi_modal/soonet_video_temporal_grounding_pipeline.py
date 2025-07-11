@@ -1,11 +1,10 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision  Team Authors. All rights reserved.
 
-import os
-from typing import Any, Dict
-
 import numpy as np
+import os
 import torch
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.multi_modal.soonet import (SimpleTokenizer,

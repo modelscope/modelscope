@@ -2,9 +2,8 @@
 # publicly available at https://github.com/Annbless/DUTCode
 
 import math
-import os
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 

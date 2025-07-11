@@ -1,12 +1,11 @@
 # Part of the implementation is borrowed and modified from PGL-SUM,
 # publicly available at https://github.com/e-apostolidis/PGL-SUM
 
-import os.path as osp
-from typing import Dict, Union
-
 import numpy as np
+import os.path as osp
 import torch
 import torch.nn as nn
+from typing import Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel

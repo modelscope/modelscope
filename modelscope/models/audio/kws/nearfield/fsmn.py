@@ -4,12 +4,11 @@ FSMN implementation.
 Copyright: 2022-03-09 yueyue.nyy
 '''
 
-from typing import Tuple
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Tuple
 
 
 def toKaldiMatrix(np_mat):

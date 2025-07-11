@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .unet import DynamicUnetWide, DynamicUnetDeep, NormType
     from .ddcolor import DDColorForImageColorization
+    from .unet import DynamicUnetDeep, DynamicUnetWide, NormType
 
 else:
     _import_structure = {

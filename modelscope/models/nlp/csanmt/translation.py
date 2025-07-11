@@ -2,10 +2,9 @@
 # publicly available at https://github.com/THUNLP-MT/THUMT
 # Copyright 2017-2022 The Alibaba MT Team Authors. All rights reserved.
 import math
+import tensorflow as tf
 from collections import namedtuple
 from typing import Dict
-
-import tensorflow as tf
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Model, Tensor

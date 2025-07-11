@@ -1,9 +1,8 @@
 # The GPEN implementation is also open-sourced by the authors,
 # and available at https://github.com/yangxy/GPEN/blob/main/face_detect/retinaface_detection.py
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F

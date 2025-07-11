@@ -2,12 +2,11 @@
 # made publicly available under the MIT license
 # https://github.com/isl-org/MiDaS
 import math
-import types
-
 import timm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import types
 
 
 class Slice(nn.Module):

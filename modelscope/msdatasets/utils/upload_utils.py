@@ -2,7 +2,6 @@
 
 import os
 from multiprocessing.dummy import Pool as ThreadPool
-
 from tqdm.auto import tqdm
 
 from modelscope.msdatasets.utils.oss_utils import OssUtilities

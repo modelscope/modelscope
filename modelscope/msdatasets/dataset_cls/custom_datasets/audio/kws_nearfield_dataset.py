@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import random
-
 import torch
 import torch.distributed as dist
 from torch.utils.data import IterableDataset

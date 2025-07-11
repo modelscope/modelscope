@@ -4,9 +4,8 @@ import os
 import shutil
 import tempfile
 import time
-import unittest
-
 import torch
+import unittest
 
 from modelscope.utils.constant import Frameworks
 from modelscope.utils.device import (create_device, device_placement,

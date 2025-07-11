@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import math
-
 import torch
 from megatron_util import mpu
 from megatron_util.global_vars import get_global_memory_buffer

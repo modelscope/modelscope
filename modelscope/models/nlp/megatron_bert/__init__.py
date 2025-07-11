@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import MegatronBertConfig
     from .backbone import MegatronBertModel
+    from .configuration import MegatronBertConfig
     from .fill_mask import MegatronBertForMaskedLM
 else:
     _import_structure = {

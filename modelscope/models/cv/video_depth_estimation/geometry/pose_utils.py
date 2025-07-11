@@ -81,7 +81,8 @@ def pose_vec2mat(vec, mode='euler'):
     if mode == 'euler':
         rot_mat = euler2mat(rot)
     elif mode == 'axis_angle':
-        from modelscope.models.cv.video_depth_estimation.geometry.pose_trans import axis_angle_to_matrix
+        from modelscope.models.cv.video_depth_estimation.geometry.pose_trans import \
+            axis_angle_to_matrix
         rot_mat = axis_angle_to_matrix(rot)
     else:
         raise ValueError('Rotation mode not supported {}'.format(mode))

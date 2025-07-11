@@ -2,10 +2,8 @@
 # publicly available at https://github.com/facebookresearch/fairseq
 # Copyright 2022-2023 The Alibaba MT Team Authors. All rights reserved.
 import math
-import sys
-from typing import Dict, List, Optional
-
 import numpy
+import sys
 import torch
 import torch.nn as nn
 from fairseq import search, utils
@@ -13,6 +11,7 @@ from fairseq.data import data_utils
 from fairseq.models import FairseqIncrementalDecoder
 from fairseq.ngram_repeat_block import NGramRepeatBlock
 from torch import Tensor
+from typing import Dict, List, Optional
 
 
 def label_smoothed_nll_loss(lprobs,

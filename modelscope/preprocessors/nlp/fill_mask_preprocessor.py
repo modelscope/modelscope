@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os.path as osp
 import re
+import torch
 from abc import abstractmethod
 from typing import Any, Dict, Tuple, Union
-
-import numpy as np
-import torch
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

@@ -1,6 +1,5 @@
-import os
-
 import open_clip
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,10 +1,9 @@
 # The implementation is based on Facial-Expression-Recognition, available at
 # https://github.com/WuJie1010/Facial-Expression-Recognition.Pytorch
 import numbers
-import types
-
 import numpy as np
 import torch
+import types
 from PIL import Image
 
 

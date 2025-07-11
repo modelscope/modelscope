@@ -1,10 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import csv
-import os
-from typing import Dict, Optional, Union
-
 import numpy as np
+import os
 import speechbrain as sb
 import speechbrain.nnet.schedulers as schedulers
 import torch
@@ -13,6 +11,7 @@ import torchaudio
 from torch.cuda.amp import autocast
 from torch.utils.data import Dataset
 from tqdm import tqdm
+from typing import Dict, Optional, Union
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model, TorchModel

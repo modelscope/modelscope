@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import math
-import tempfile
-from typing import Any, Dict, Optional, Union
-
 import cv2
+import math
 import numpy as np
+import tempfile
 import torch
 from torchvision import transforms
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_quality_assessment_degradation import \

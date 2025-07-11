@@ -4,39 +4,55 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .word_alignment_preprocessor import WordAlignmentPreprocessor
-    from .text_error_correction import TextErrorCorrectionPreprocessor
-    from .text_generation_preprocessor import TextGenerationJiebaPreprocessor
     from .bert_seq_cls_tokenizer import Tokenize
-    from .document_segmentation_preprocessor import DocumentSegmentationTransformersPreprocessor
-    from .faq_question_answering_preprocessor import FaqQuestionAnsweringTransformersPreprocessor
-    from .fill_mask_preprocessor import FillMaskPoNetPreprocessor, FillMaskTransformersPreprocessor
-    from .text_ranking_preprocessor import TextRankingTransformersPreprocessor
-    from .relation_extraction_preprocessor import RelationExtractionTransformersPreprocessor
-    from .text_classification_preprocessor import TextClassificationTransformersPreprocessor
-    from .sentence_embedding_preprocessor import SentenceEmbeddingTransformersPreprocessor
-    from .text_generation_preprocessor import TextGenerationTransformersPreprocessor, \
-        TextGenerationT5Preprocessor, TextGenerationSentencePiecePreprocessor, SentencePiecePreprocessor
-    from .token_classification_preprocessor import TokenClassificationTransformersPreprocessor, \
-        WordSegmentationBlankSetToLabelPreprocessor
-    from .token_classification_thai_preprocessor import WordSegmentationPreprocessorThai, NERPreprocessorThai
-    from .token_classification_viet_preprocessor import NERPreprocessorViet
-    from .zero_shot_classification_preprocessor import ZeroShotClassificationTransformersPreprocessor
+    from .canmt_translation import CanmtTranslationPreprocessor
+    from .dialog_classification_use_preprocessor import \
+        DialogueClassificationUsePreprocessor
+    from .document_grounded_dialog_generate_preprocessor import \
+        DocumentGroundedDialogGeneratePreprocessor
+    from .document_grounded_dialog_rerank_preprocessor import \
+        DocumentGroundedDialogRerankPreprocessor
+    from .document_grounded_dialog_retrieval_preprocessor import \
+        DocumentGroundedDialogRetrievalPreprocessor
+    from .document_segmentation_preprocessor import \
+        DocumentSegmentationTransformersPreprocessor
+    from .faq_question_answering_preprocessor import \
+        FaqQuestionAnsweringTransformersPreprocessor
+    from .fill_mask_preprocessor import (FillMaskPoNetPreprocessor,
+                                         FillMaskTransformersPreprocessor)
+    from .machine_reading_comprehension_preprocessor import \
+        MachineReadingComprehensionForNERPreprocessor
+    from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
+    from .relation_extraction_preprocessor import \
+        RelationExtractionTransformersPreprocessor
+    from .sentence_embedding_preprocessor import \
+        SentenceEmbeddingTransformersPreprocessor
+    from .siamese_uie_preprocessor import SiameseUiePreprocessor
     from .space import (DialogIntentPredictionPreprocessor,
                         DialogModelingPreprocessor,
                         DialogStateTrackingPreprocessor, InputFeatures,
-                        MultiWOZBPETextField, IntentBPETextField)
-    from .space_T_en import ConversationalTextToSqlPreprocessor
+                        IntentBPETextField, MultiWOZBPETextField)
     from .space_T_cn import TableQuestionAnsweringPreprocessor
-    from .mglm_summarization_preprocessor import MGLMSummarizationPreprocessor
-    from .translation_evaluation_preprocessor import TranslationEvaluationTransformersPreprocessor
-    from .canmt_translation import CanmtTranslationPreprocessor
-    from .dialog_classification_use_preprocessor import DialogueClassificationUsePreprocessor
-    from .siamese_uie_preprocessor import SiameseUiePreprocessor
-    from .document_grounded_dialog_generate_preprocessor import DocumentGroundedDialogGeneratePreprocessor
-    from .document_grounded_dialog_retrieval_preprocessor import DocumentGroundedDialogRetrievalPreprocessor
-    from .document_grounded_dialog_rerank_preprocessor import DocumentGroundedDialogRerankPreprocessor
-    from .machine_reading_comprehension_preprocessor import MachineReadingComprehensionForNERPreprocessor
+    from .space_T_en import ConversationalTextToSqlPreprocessor
+    from .text_classification_preprocessor import \
+        TextClassificationTransformersPreprocessor
+    from .text_error_correction import TextErrorCorrectionPreprocessor
+    from .text_generation_preprocessor import (
+        SentencePiecePreprocessor, TextGenerationJiebaPreprocessor,
+        TextGenerationSentencePiecePreprocessor, TextGenerationT5Preprocessor,
+        TextGenerationTransformersPreprocessor)
+    from .text_ranking_preprocessor import TextRankingTransformersPreprocessor
+    from .token_classification_preprocessor import (
+        TokenClassificationTransformersPreprocessor,
+        WordSegmentationBlankSetToLabelPreprocessor)
+    from .token_classification_thai_preprocessor import (
+        NERPreprocessorThai, WordSegmentationPreprocessorThai)
+    from .token_classification_viet_preprocessor import NERPreprocessorViet
+    from .translation_evaluation_preprocessor import \
+        TranslationEvaluationTransformersPreprocessor
+    from .word_alignment_preprocessor import WordAlignmentPreprocessor
+    from .zero_shot_classification_preprocessor import \
+        ZeroShotClassificationTransformersPreprocessor
 else:
     _import_structure = {
         'bert_seq_cls_tokenizer': ['Tokenize'],

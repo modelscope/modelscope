@@ -7,14 +7,13 @@ https://github.com/CompVis/taming-transformers
 """
 
 import itertools
-from contextlib import contextmanager, nullcontext
-from functools import partial
-
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from contextlib import contextmanager, nullcontext
 from einops import rearrange, repeat
+from functools import partial
 from omegaconf import ListConfig
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from torch.optim.lr_scheduler import LambdaLR

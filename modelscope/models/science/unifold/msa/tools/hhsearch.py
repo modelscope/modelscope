@@ -16,9 +16,8 @@
 import glob
 import os
 import subprocess
-from typing import Sequence
-
 from absl import logging
+from typing import Sequence
 
 from modelscope.models.science.unifold.msa import parsers
 from . import utils

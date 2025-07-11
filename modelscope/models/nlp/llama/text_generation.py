@@ -17,10 +17,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict, List, Optional, Tuple, Union
-
 import torch
 from transformers.models.llama import LlamaForCausalLM
+from typing import Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

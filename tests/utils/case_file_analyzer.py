@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 from __future__ import print_function
+
 import ast
 import os
 from typing import Any

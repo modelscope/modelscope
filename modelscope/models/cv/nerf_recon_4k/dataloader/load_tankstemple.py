@@ -1,8 +1,7 @@
 import glob
-import os
-
 import imageio
 import numpy as np
+import os
 
 
 def normalize(x):

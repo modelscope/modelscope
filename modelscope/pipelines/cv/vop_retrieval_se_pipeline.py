@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import gzip
-import os.path as osp
-from typing import Any, Dict
-
 import numpy as np
+import os.path as osp
 import torch
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

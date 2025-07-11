@@ -1,11 +1,10 @@
 # The implementation here is modified based on SceneSeg,
 # originally Apache 2.0 License and publicly available at https://github.com/AnyiRao/SceneSeg
+import cv2
+import numpy as np
 import os
 import os.path as osp
 import subprocess
-
-import cv2
-import numpy as np
 from tqdm import tqdm
 
 

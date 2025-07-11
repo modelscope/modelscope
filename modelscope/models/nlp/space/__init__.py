@@ -4,12 +4,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .model import SpaceGenerator
-    from .model import SpaceModelBase, SpaceTokenizer
+    from .configuration import SpaceConfig
     from .dialog_intent_prediction import SpaceForDialogIntent
     from .dialog_modeling import SpaceForDialogModeling
     from .dialog_state_tracking import SpaceForDST
-    from .configuration import SpaceConfig
+    from .model import SpaceGenerator, SpaceModelBase, SpaceTokenizer
 else:
     _import_structure = {
         'model': ['SpaceGenerator', 'SpaceModelBase', 'SpaceTokenizer'],

@@ -1,9 +1,8 @@
 # The implementation is based on MogFace, available at
 # https://github.com/damo-cv/MogFace
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 

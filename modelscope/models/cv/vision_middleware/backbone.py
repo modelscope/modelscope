@@ -2,14 +2,13 @@
 # made publicly available under the MIT License at https://github.com/openai/CLIP
 
 import math
-import os
-from collections import OrderedDict
-from typing import Tuple, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
+from collections import OrderedDict
 from torch import nn
+from typing import Tuple, Union
 
 from .vim import ViM
 

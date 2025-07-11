@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import unittest
-
 import torch
+import unittest
 from packaging import version
 
 from modelscope.hub.snapshot_download import snapshot_download

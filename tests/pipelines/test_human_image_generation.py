@@ -1,7 +1,6 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-import unittest
-
 import cv2
+import unittest
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

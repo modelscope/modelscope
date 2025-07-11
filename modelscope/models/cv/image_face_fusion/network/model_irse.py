@@ -1,9 +1,8 @@
 # The implementation is adopted from face.evoLVe, made publicly available under the MIT License
 # at https://github.com/ZhaoJ9014/face.evoLVe/blob/master/backbone/model_irse.py
-from collections import namedtuple
-
 import torch
 import torch.nn as nn
+from collections import namedtuple
 from torch.nn import (AdaptiveAvgPool2d, BatchNorm1d, BatchNorm2d, Conv2d,
                       Dropout, Linear, MaxPool2d, Module, PReLU, ReLU,
                       Sequential, Sigmoid)

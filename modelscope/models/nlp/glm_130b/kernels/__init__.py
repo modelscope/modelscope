@@ -1,11 +1,10 @@
 # Copyright (c) 2022 Zhipu.AI
 import ctypes
-from typing import List
-
 import pkg_resources
 import torch
 from cpm_kernels.kernels.base import (KernelFunction, LazyKernelCModule,
                                       round_up)
+from typing import List
 
 RESOURCE_PACKAGE_NAME = __name__
 

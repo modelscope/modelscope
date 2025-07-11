@@ -16,9 +16,8 @@ import contextlib
 import shutil
 import tempfile
 import time
-from typing import Optional
-
 from absl import logging
+from typing import Optional
 
 
 @contextlib.contextmanager

@@ -3,11 +3,10 @@
 # ------------------------------------------------------------------------
 # modified from https://github.com/megvii-research/NAFNet/blob/main/basicsr/metrics/psnr_ssim.py
 # ------------------------------------------------------------------------
-from typing import Dict
-
 import cv2
 import numpy as np
 import torch
+from typing import Dict
 
 from modelscope.metainfo import Metrics
 from modelscope.utils.registry import default_group

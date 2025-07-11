@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-
 import cv2
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import torch.nn.functional as F
 from PIL import Image
 
@@ -399,8 +398,8 @@ def show_video_object_detection_result(video_in_path, bboxes_list, labels_list,
         'traffic light': [64, 0, 128],
         'stop sign': [192, 0, 128],
     }
-    from tqdm import tqdm
     import math
+    from tqdm import tqdm
     cap = cv2.VideoCapture(video_in_path)
     with tqdm(total=len(bboxes_list)) as pbar:
         pbar.set_description(

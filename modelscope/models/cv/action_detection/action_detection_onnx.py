@@ -1,5 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import cv2
+import numpy as np
+import onnxruntime as rt
 import os
 import os.path as osp
 import shutil
@@ -7,10 +10,6 @@ import subprocess
 import uuid
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
-
-import cv2
-import numpy as np
-import onnxruntime as rt
 
 from modelscope.hub.file_download import http_get_file
 from modelscope.models import Model

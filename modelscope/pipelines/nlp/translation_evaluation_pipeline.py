@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import numpy as np
 import os.path as osp
+import torch
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
-import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model

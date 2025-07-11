@@ -1,13 +1,12 @@
-import time
-from collections import defaultdict
-
 import cv2
 import json
 import numpy as np
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from collections import defaultdict
 from torchvision import models
 
 

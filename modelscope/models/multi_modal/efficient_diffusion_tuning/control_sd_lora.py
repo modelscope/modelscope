@@ -3,12 +3,10 @@
 # made publicly available under the Apache License 2.0 License at https://github.com/HighCWu/ControlLoRA
 
 import os
-from dataclasses import dataclass
-from typing import List, Tuple, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.attention_processor import Attention
 from diffusers.models.lora import LoRALinearLayer
@@ -18,6 +16,7 @@ from diffusers.models.resnet import (Downsample2D, Upsample2D, downsample_2d,
 from diffusers.models.unet_2d_blocks import \
     get_down_block as get_down_block_default
 from diffusers.utils.outputs import BaseOutput
+from typing import List, Tuple, Union
 
 from .sd_lora import LoRACrossAttnProcessor
 

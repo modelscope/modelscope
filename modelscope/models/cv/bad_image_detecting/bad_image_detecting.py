@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch.cuda
 from torchvision import models
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

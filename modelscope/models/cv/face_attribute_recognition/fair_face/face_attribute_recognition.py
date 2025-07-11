@@ -1,9 +1,8 @@
 # The implementation is based on FairFace, available at
 # https://github.com/dchen236/FairFace
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn

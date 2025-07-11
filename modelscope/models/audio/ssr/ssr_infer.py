@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-from typing import Dict
-
 import librosa
+import os
 import soundfile as sf
 import torch
 from torchaudio.transforms import Spectrogram
+from typing import Dict
 
 from modelscope.metainfo import Models
 from modelscope.models import TorchModel

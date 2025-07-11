@@ -1,12 +1,11 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision  Team Authors. All rights reserved.
-import os.path as osp
-from typing import Any, Dict
-
 import cv2
 import numpy as np
+import os.path as osp
 import torch
 from PIL import Image
 from torchvision import transforms
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.animal_recognition import resnet

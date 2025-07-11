@@ -1,15 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import json
+import numpy
 import os
 import os.path as osp
 import time
-from typing import Dict, Optional
-
-import json
-import numpy
 import torch
 import tqdm
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
+from typing import Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

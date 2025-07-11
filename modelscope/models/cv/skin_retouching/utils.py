@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import time
-from typing import Dict, List, Optional, Tuple, Union
-
 import cv2
 import numpy as np
+import time
 import torch
 import torch.nn.functional as F
 from einops import rearrange
+from typing import Dict, List, Optional, Tuple, Union
 
 __all__ = [
     'gen_diffuse_mask', 'get_crop_bbox', 'get_roi_without_padding',

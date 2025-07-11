@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import collections.abc
 import math
-import os.path as osp
-from itertools import repeat
-
 import numpy as np
+import os.path as osp
 import torch
+from itertools import repeat
 from mmcls.datasets.base_dataset import BaseDataset
 
 

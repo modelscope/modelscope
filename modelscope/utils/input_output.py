@@ -3,13 +3,12 @@ import ast
 import base64
 import importlib
 import inspect
+import json
+import numpy as np
 import os
 from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
-
-import json
-import numpy as np
 
 from modelscope.hub.file_download import model_file_download
 from modelscope.outputs.outputs import (TASK_OUTPUTS, OutputKeys, OutputTypes,

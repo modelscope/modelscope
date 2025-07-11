@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .free_lunch_utils import register_free_upblock2d, register_free_crossattn_upblock2d
+    from .free_lunch_utils import (register_free_crossattn_upblock2d,
+                                   register_free_upblock2d)
 else:
     _import_structure = {
         'free_lunch_utils':

@@ -3,12 +3,10 @@
 import copy
 import math
 import sys
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
+import warnings
 from torch import nn
 from torch.nn import CrossEntropyLoss, LayerNorm
 from torch.nn.utils import skip_init
@@ -19,6 +17,7 @@ from transformers.generation.utils import (GenerationConfig,
 from transformers.modeling_outputs import (BaseModelOutputWithPast,
                                            CausalLMOutputWithPast)
 from transformers.modeling_utils import PreTrainedModel
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from modelscope import Model, TorchModel
 from modelscope.metainfo import Models

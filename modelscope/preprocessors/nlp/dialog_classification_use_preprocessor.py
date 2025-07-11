@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Any, Dict, List, Tuple
-
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from transformers import BertTokenizer
+from typing import Any, Dict, List, Tuple
 
 from modelscope.metainfo import Preprocessors
 from modelscope.preprocessors import Preprocessor

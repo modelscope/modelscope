@@ -1,12 +1,11 @@
 # The implementation is based on resnet, available at https://github.com/biubug6/Pytorch_Retinaface
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 import torchvision.models._utils as _utils
 import torchvision.models.detection.backbone_utils as backbone_utils
+from collections import OrderedDict
 
 from .net import FPN, SSH, MobileNetV1
 

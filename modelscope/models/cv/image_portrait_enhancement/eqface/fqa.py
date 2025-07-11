@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-
 import cv2
 import numpy as np
+import os
 import torch
 
 from .model_resnet import FaceQuality, ResNet

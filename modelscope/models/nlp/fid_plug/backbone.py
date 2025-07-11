@@ -16,19 +16,18 @@
 
 import copy
 import math
-import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn.functional as F
+from dataclasses import dataclass
 from torch import Tensor, nn
 from torch.nn.init import xavier_uniform_
 from transformers import (BertConfig, BertModel, BertTokenizer, RobertaConfig,
                           RobertaModel, RobertaTokenizer)
 from transformers.activations import ACT2FN
 from transformers.modeling_utils import PreTrainedModel
+from typing import Any, Dict, List, Optional, Union
 
 from modelscope.utils import logger as logging
 from .configuration import PlugConfig

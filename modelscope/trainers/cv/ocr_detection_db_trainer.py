@@ -2,17 +2,16 @@
 import copy
 import datetime
 import math
+import numpy as np
 import os
 import time
-from typing import Callable, Dict, Optional
-
-import numpy as np
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn as nn
 from easydict import EasyDict as easydict
 from tqdm import tqdm
+from typing import Callable, Dict, Optional
 
 from modelscope.metainfo import Trainers
 from modelscope.models.cv.ocr_detection.modules.dbnet import (DBModel,

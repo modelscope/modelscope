@@ -45,8 +45,8 @@ def fix_transformers_upgrade():
     if is_transformers_available() and is_torch_available():
         # from 4.35.0, transformers changes its arguments of _set_gradient_checkpointing
         import transformers
-        from transformers import PreTrainedModel
         from packaging import version
+        from transformers import PreTrainedModel
         if version.parse(transformers.__version__) >= version.parse('4.35.0') \
                 and not hasattr(PreTrainedModel, 'post_init_origin'):
             PreTrainedModel.post_init_origin = PreTrainedModel.post_init
@@ -80,8 +80,8 @@ def get_hf_automodel_class(model_dir: str,
                            task_name: Optional[str]) -> Optional[type]:
     from modelscope import (AutoConfig, AutoModel, AutoModelForCausalLM,
                             AutoModelForSeq2SeqLM,
-                            AutoModelForTokenClassification,
-                            AutoModelForSequenceClassification)
+                            AutoModelForSequenceClassification,
+                            AutoModelForTokenClassification)
     automodel_mapping = {
         Tasks.backbone: AutoModel,
         Tasks.chat: AutoModelForCausalLM,

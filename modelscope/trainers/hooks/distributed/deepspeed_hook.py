@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Team. All rights reserved.
+import deepspeed
 import math
 import os
 import shutil
-from functools import partialmethod
-
-import deepspeed
 import torch
 from deepspeed import DeepSpeedEngine
+from functools import partialmethod
 from megatron_util import mpu, print_rank_0
 from transformers.deepspeed import HfTrainerDeepSpeedConfig
 

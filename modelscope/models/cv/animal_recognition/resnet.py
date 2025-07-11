@@ -2,7 +2,6 @@
 # made publicly available under the Apache License 2.0 License
 # at https://github.com/zhanghang1989/ResNeSt/blob/master/resnest/torch/models/resnet.py
 import math
-
 import torch
 import torch.nn as nn
 

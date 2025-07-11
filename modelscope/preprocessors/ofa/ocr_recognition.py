@@ -1,11 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict
-
 import torch
 import unicodedata2
 from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import functional as F
+from typing import Any, Dict
 from zhconv import convert
 
 from modelscope.utils.constant import ModeKeys

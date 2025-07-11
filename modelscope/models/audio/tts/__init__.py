@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .sambert_hifi import SambertHifigan
     from .laura_codec import LauraCodecGenModel
+    from .sambert_hifi import SambertHifigan
 
 else:
     _import_structure = {

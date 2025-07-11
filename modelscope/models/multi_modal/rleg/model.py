@@ -6,9 +6,8 @@
 # and publicly available at https://github.com/openai/CLIP/.
 """ Generative Multimodal Model Architecture."""
 
-import os
-
 import json
+import os
 import torch
 import torch.nn.functional as F
 from torch import nn

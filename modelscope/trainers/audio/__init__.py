@@ -5,10 +5,10 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     print('TYPE_CHECKING...')
-    from .tts_trainer import KanttsTrainer
     from .ans_trainer import ANSTrainer
-    from .kws_nearfield_trainer import KWSNearfieldTrainer
     from .kws_farfield_trainer import KWSFarfieldTrainer
+    from .kws_nearfield_trainer import KWSNearfieldTrainer
+    from .tts_trainer import KanttsTrainer
 
 else:
     _import_structure = {

@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import List
-
 import numpy as np
 import torch
+from typing import List
 
 
 def collate_fn(samples, pad_idx, eos_idx):

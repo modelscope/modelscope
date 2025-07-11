@@ -1,18 +1,17 @@
 # import argparse
+import cv2
+import numpy as np
 import os
 import sys
 import time
-# import mmcv
-from argparse import ArgumentParser
-# import torchvision
-from os import makedirs
-
-import cv2
-import numpy as np
 import torch
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
+# import mmcv
+from argparse import ArgumentParser
+# import torchvision
+from os import makedirs
 from tqdm import tqdm
 
 from modelscope.metainfo import Models

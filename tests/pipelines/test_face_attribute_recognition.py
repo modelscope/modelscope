@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-import unittest
-
 import cv2
 import numpy as np
+import os.path as osp
+import unittest
 
 from modelscope.msdatasets import MsDataset
 from modelscope.outputs import OutputKeys
@@ -21,7 +20,7 @@ class FaceAttributeRecognitionTest(unittest.TestCase):
     def show_result(self, img_path, facial_expression_result):
         img = draw_face_attribute_result(img_path, facial_expression_result)
         cv2.imwrite('result.png', img)
-        print(f'output written to {osp.abspath("result.png")}')
+        print(f'output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_run_modelhub(self):

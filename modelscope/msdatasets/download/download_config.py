@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Optional, Union
-
 from datasets.download.download_config import DownloadConfig
+from typing import Optional, Union
 
 
 class DataDownloadConfig(DownloadConfig):

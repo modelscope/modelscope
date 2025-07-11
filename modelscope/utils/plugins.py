@@ -5,7 +5,9 @@
 import copy
 import filecmp
 import importlib
+import json
 import os
+import pkg_resources
 import pkgutil
 import shutil
 import sys
@@ -13,9 +15,6 @@ from contextlib import contextmanager
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Set, Union
-
-import json
-import pkg_resources
 
 from modelscope import snapshot_download
 from modelscope.fileio.file import LocalStorage
@@ -419,8 +418,8 @@ def install_requirements_by_names(plugins: List[str]):
     status, _ = plugins_manager.install_plugins(uninstalled_plugins)
     if status != 0:
         raise EnvironmentError(
-            f'The required packages {",".join(uninstalled_plugins)} are not installed.',
-            f'Please run the command `modelscope plugin install {" ".join(uninstalled_plugins)}` to install them.'
+            f'The required packages {','.join(uninstalled_plugins)} are not installed.',
+            f'Please run the command `modelscope plugin install {' '.join(uninstalled_plugins)}` to install them.'
         )
 
 
@@ -477,14 +476,14 @@ def get_modules_from_package(package):
         package_name: The package name, if installed by whl file, the package is unknown, should be passed
 
     """
-    from zipfile import ZipFile
-    from tempfile import mkdtemp
-    from subprocess import check_output, STDOUT
-    from glob import glob
     import hashlib
-    from urllib.parse import urlparse
-    from urllib import request as urllib2
+    from glob import glob
     from pip._internal.utils.packaging import get_requirement
+    from subprocess import STDOUT, check_output
+    from tempfile import mkdtemp
+    from urllib import request as urllib2
+    from urllib.parse import urlparse
+    from zipfile import ZipFile
 
     def urlretrieve(url, filename, data=None, auth=None):
         if auth is not None:
@@ -880,7 +879,7 @@ class PluginsManager(object):
         )
 
         if status_code == 0:
-            logger.info(f'The plugins {",".join(args)} is installed')
+            logger.info(f'The plugins {','.join(args)} is installed')
 
             # TODO Add Ast index for ast update record
 
@@ -970,7 +969,7 @@ class PluginsManager(object):
         )
 
         if status_code == 0:
-            logger.info(f'The plugins {",".join(args)} is uninstalled')
+            logger.info(f'The plugins {','.join(args)} is uninstalled')
 
             # TODO Add Ast index for ast update record
 

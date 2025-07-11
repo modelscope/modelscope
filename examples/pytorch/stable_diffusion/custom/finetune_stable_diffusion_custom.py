@@ -1,8 +1,7 @@
-import os
-from dataclasses import dataclass, field
-
 import cv2
+import os
 import torch
+from dataclasses import dataclass, field
 
 from modelscope import snapshot_download
 from modelscope.metainfo import Trainers

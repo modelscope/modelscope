@@ -1,8 +1,7 @@
 # Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
-from typing import List, Tuple, Union
-
 import numpy as np
 import torch
+from typing import List, Tuple, Union
 
 
 def point_form(boxes: torch.Tensor) -> torch.Tensor:

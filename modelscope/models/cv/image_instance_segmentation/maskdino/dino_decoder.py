@@ -1,11 +1,10 @@
 # The implementation is adopted from DINO, made publicly available under the Apache License,
 # Version 2.0 at https://github.com/IDEA-Research/DINO
 
-from typing import Optional
-
 import torch
 from torch import Tensor, nn
 from torch.cuda.amp import autocast
+from typing import Optional
 
 from .ms_deform_attn import MSDeformAttn
 from .utils import (MLP, _get_activation_fn, _get_clones,

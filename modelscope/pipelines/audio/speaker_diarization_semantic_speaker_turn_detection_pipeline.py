@@ -1,8 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-from typing import Any, Dict, List, Optional, Union
-
 import numpy as np
 import torch
+from typing import Any, Dict, List, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tokenization classes for OFA."""
-from typing import List, Optional, Tuple
-
 import json
 from tokenizers import normalizers
 from transformers import PreTrainedTokenizerFast
 from transformers.models.bart.tokenization_bart_fast import BartTokenizerFast
 from transformers.utils import logging
+from typing import List, Optional, Tuple
 
 from modelscope.utils.constant import ModelFile
 from .tokenization_ofa import OFATokenizer, OFATokenizerZH

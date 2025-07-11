@@ -15,8 +15,8 @@
 # limitations under the License.
 
 from __future__ import absolute_import, division, print_function
-import os.path
 
+import os.path
 import torch
 import torch.nn.functional as F
 from torch import nn

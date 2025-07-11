@@ -13,13 +13,12 @@
 # limitations under the License.
 """utils for loading text from disk"""
 import mmap
+import numpy as np
 import os
 import pickle as pkl
 import time
-from itertools import accumulate
-
-import numpy as np
 import torch
+from itertools import accumulate
 from torch.multiprocessing import Lock
 
 

@@ -2,16 +2,15 @@
 
 import gzip
 import math
+import numpy as np
 import os
 import os.path as osp
 import pickle
 import random
-from collections import defaultdict, deque
-from typing import Any, Dict
-
-import numpy as np
 import torch
+from collections import defaultdict, deque
 from tqdm import tqdm
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models import Model

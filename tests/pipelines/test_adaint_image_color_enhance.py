@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os.path as osp
-import unittest
-
 import cv2
+import os.path as osp
 import torch
+import unittest
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
@@ -22,7 +21,7 @@ class AdaIntImageColorEnhanceTest(unittest.TestCase):
         result = pipeline(input_location)
         if result is not None:
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
-            print(f'Output written to {osp.abspath("result.png")}')
+            print(f'Output written to {osp.abspath('result.png')}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')

@@ -3,7 +3,6 @@ The implementation here is modified based on PETR, originally Apache-2.0 license
 https://github.com/megvii-research/PETR/blob/main/projects/mmdet3d_plugin/models/utils
 """
 import math
-
 import torch
 import torch.nn as nn
 from mmcv.cnn.bricks.transformer import POSITIONAL_ENCODING

@@ -10,9 +10,8 @@
 import difflib
 import functools
 import sqlite3
-from typing import List, Optional, Tuple
-
 from rapidfuzz import fuzz
+from typing import List, Optional, Tuple
 
 # fmt: off
 _stopwords = {

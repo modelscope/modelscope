@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
-import unittest
-
 import cv2
+import os
 import torch
+import unittest
 
 from modelscope import get_logger
 from modelscope.hub.snapshot_download import snapshot_download

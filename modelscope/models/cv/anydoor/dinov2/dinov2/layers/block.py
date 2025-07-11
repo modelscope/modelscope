@@ -9,10 +9,9 @@
 #   https://github.com/rwightman/pytorch-image-models/tree/master/timm/layers/patch_embed.py
 
 import logging
-from typing import Any, Callable, Dict, List, Tuple
-
 import torch
 from torch import Tensor, nn
+from typing import Any, Callable, Dict, List, Tuple
 
 from .attention import Attention, MemEffAttention
 from .drop_path import DropPath
@@ -22,8 +21,7 @@ from .mlp import Mlp
 logger = logging.getLogger('dinov2')
 
 try:
-    from xformers.ops import fmha
-    from xformers.ops import scaled_index_add, index_select_cat
+    from xformers.ops import fmha, index_select_cat, scaled_index_add
 
     XFORMERS_AVAILABLE = True
 except ImportError:

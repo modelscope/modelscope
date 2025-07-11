@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
-    from .configuration import PlugNLGConfig
     from .backbone import PlugModel
+    from .configuration import PlugNLGConfig
     from .distributed_plug import DistributedPlug
 else:
     _import_structure = {

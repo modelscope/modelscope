@@ -5,9 +5,9 @@ from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
     from .clip import CLIPTrainer
-    from .team import TEAMImgClsTrainer
-    from .ofa import OFATrainer
     from .mplug import MPlugTrainer
+    from .ofa import OFATrainer
+    from .team import TEAMImgClsTrainer
 
 else:
     _import_structure = {

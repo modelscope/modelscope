@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
-from typing import Any, Dict, Union
-
 import clip
 import numpy as np
+import os
 import tensorflow.compat.v1 as tf
 import torch.cuda
 from scipy.special import softmax
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models.base import Tensor

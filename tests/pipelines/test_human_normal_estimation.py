@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import cv2
 import os
 import os.path
 import unittest
-
-import cv2
 
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline

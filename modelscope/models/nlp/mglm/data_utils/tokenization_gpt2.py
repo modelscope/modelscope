@@ -14,13 +14,13 @@
 """Tokenization classes for OpenAI GPT."""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import logging
-import os
-import sys
-from io import open
 
 import json
+import logging
+import os
 import regex as re
+import sys
+from io import open
 
 from .file_utils import cached_path
 

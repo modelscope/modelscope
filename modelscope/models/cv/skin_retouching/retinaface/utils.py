@@ -1,11 +1,10 @@
 # Implementation in this file is modified from source code available via https://github.com/ternaus/retinaface
-import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
 import cv2
 import numpy as np
+import re
 import torch
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 def load_checkpoint(file_path: Union[Path, str],

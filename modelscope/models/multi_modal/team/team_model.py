@@ -1,6 +1,4 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
-from typing import Any, Dict
-
 import cv2
 import numpy as np
 import torch
@@ -9,6 +7,7 @@ import torch.nn.functional as F
 from PIL import Image
 from tokenizers import BertWordPieceTokenizer
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from typing import Any, Dict
 
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel

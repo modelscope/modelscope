@@ -1,16 +1,15 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import math
-import random
-from ast import Global
-from pickle import GLOBAL
-
 import cv2
+import math
 import numpy as np
+import random
 import torch
 import torchvision
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as F
+from ast import Global
+from pickle import GLOBAL
 from PIL import Image
 
 from modelscope.metainfo import Models

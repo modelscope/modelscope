@@ -1,10 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from __future__ import absolute_import, division, print_function
-from collections import OrderedDict
 
 import numpy as np
 import torch
 import torch.nn as nn
+from collections import OrderedDict
 
 from .layers import Conv3x3, ConvBlock, upsample
 from .mobilenet import mobilenet_v2

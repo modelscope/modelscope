@@ -13,10 +13,9 @@
 # limitations under the License.
 """batch samplers that work with either random or sequential data samplers"""
 import math
+import numpy as np
 import os
 import sys
-
-import numpy as np
 import torch
 from torch.utils import data
 

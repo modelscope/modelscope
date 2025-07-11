@@ -4,10 +4,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Union
-
 import torch
 from torch import Tensor, nn
+from typing import Union
 
 
 class LayerScale(nn.Module):

@@ -14,7 +14,6 @@
 """Race."""
 
 from collections import OrderedDict
-
 from finetune_glm import finetune
 from tasks.eval_utils import (accuracy_func_provider, accuracy_metric,
                               f1_macro_metric, f1_metric)

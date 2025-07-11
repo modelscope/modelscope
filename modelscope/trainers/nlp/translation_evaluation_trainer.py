@@ -3,11 +3,9 @@
 
 import os.path as osp
 import random
+import torch
 from math import ceil
 from os import mkdir
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
-import torch
 from pandas import DataFrame
 from torch.nn.functional import pad
 from torch.nn.utils import clip_grad_norm_
@@ -17,6 +15,7 @@ from torch.utils.data import (BatchSampler, DataLoader, Dataset, Sampler,
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from transformers import AutoTokenizer
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from modelscope.metainfo import Metrics, Trainers
 from modelscope.metrics import Metric
@@ -365,6 +364,7 @@ class TranslationEvaluationTrainer(EpochBasedTrainer):
 
             if self._dist:
                 from modelscope.trainers.utils.inference import multi_gpu_test
+
                 # list of batched result and data samples
                 metric_values.update(
                     multi_gpu_test(

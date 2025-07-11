@@ -1,16 +1,15 @@
 # Copyright © Alibaba, Inc. and its affiliates.
 
-import os
-import tempfile
-from typing import Any, Dict, Optional, Union
-
 import numpy as np
+import os
 import PIL
+import tempfile
 import torch
 from diffusers import AutoencoderKL, UniPCMultistepScheduler
 from torchvision import transforms
 from torchvision.models import ResNet50_Weights, resnet50
 from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
+from typing import Any, Dict, Optional, Union
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.image_portrait_enhancement.retinaface import \

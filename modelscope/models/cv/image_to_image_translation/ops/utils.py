@@ -1,19 +1,18 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 import base64
 import binascii
+import cv2
 import hashlib
+import json
 import math
+import numpy as np
 import os
 import os.path as osp
+import torch
+import torch.nn.functional as F
 import zipfile
 from io import BytesIO
 from multiprocessing.pool import ThreadPool as Pool
-
-import cv2
-import json
-import numpy as np
-import torch
-import torch.nn.functional as F
 from PIL import Image
 
 from .random_color import rand_color

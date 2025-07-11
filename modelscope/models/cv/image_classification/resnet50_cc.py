@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
-from collections import namedtuple
-from math import lgamma
-
 import torch
 import torch.nn as nn
+from collections import namedtuple
+from math import lgamma
 from torchvision import models
 
 from modelscope.metainfo import Models

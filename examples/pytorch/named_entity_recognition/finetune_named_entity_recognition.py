@@ -1,10 +1,9 @@
 import os
-from dataclasses import dataclass, field
-
 from adaseq.data.data_collators.base import build_data_collator
 from adaseq.data.dataset_manager import DatasetManager
 from adaseq.data.preprocessors.nlp_preprocessor import build_preprocessor
 from adaseq.training.default_trainer import DefaultTrainer as AdaSeqTrainer
+from dataclasses import dataclass, field
 
 from modelscope import MsDataset, TrainingArgs, build_dataset_from_file
 

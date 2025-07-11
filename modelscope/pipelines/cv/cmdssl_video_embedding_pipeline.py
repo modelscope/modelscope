@@ -1,13 +1,12 @@
 # Copyright 2021-2022 The Alibaba Fundamental Vision Team Authors. All rights reserved.
 
-import os.path as osp
-from typing import Any, Dict
-
 import decord
 import numpy as np
+import os.path as osp
 import torch
 import torchvision.transforms.functional as TF
 from PIL import Image
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.cv.cmdssl_video_embedding import resnet26_2p1d

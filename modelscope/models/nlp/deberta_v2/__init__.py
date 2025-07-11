@@ -22,14 +22,11 @@ from typing import TYPE_CHECKING
 from modelscope.utils.import_utils import LazyImportModule
 
 if TYPE_CHECKING:
+    from .backbone import DebertaV2Model, DebertaV2PreTrainedModel
     from .configuration import DebertaV2Config
+    from .fill_mask import DebertaV2ForMaskedLM
     from .tokenization import DebertaV2Tokenizer
     from .tokenization_fast import DebertaV2TokenizerFast
-    from .backbone import (
-        DebertaV2Model,
-        DebertaV2PreTrainedModel,
-    )
-    from .fill_mask import DebertaV2ForMaskedLM
 
 else:
     _import_structure = {

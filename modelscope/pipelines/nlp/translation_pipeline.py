@@ -1,13 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os.path as osp
-from typing import Any, Dict
-
 import jieba
 import numpy as np
+import os.path as osp
 import tensorflow as tf
 from sacremoses import MosesDetokenizer, MosesPunctNormalizer, MosesTokenizer
 from subword_nmt import apply_bpe
+from typing import Any, Dict
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model

@@ -2,10 +2,9 @@
 # originally Apache 2.0 License and publicly available at https://github.com/yandex-research/ddpm-segmentation
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import List
-
 import torch
 from torch import nn
+from typing import List
 
 from modelscope.utils.logger import get_logger
 
@@ -88,7 +87,8 @@ class FeatureExtractorDDPM(FeatureExtractor):
 
     def _load_pretrained_model(self, model_path, **kwargs):
         import inspect
-        from ddpm_guided_diffusion.script_util import create_model_and_diffusion
+        from ddpm_guided_diffusion.script_util import \
+            create_model_and_diffusion
 
         # Needed to pass only expected args to the function
         argnames = inspect.getfullargspec(create_model_and_diffusion)[0]

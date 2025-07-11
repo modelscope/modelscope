@@ -1,10 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-import random
-
 import cv2
 import numpy as np
+import os
+import random
 import tensorflow as tf
 
 

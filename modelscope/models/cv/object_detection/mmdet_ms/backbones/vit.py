@@ -11,12 +11,11 @@
 # https://github.com/microsoft/Swin-Transformer
 # --------------------------------------------------------'
 import math
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from functools import partial
 from mmdet.models.builder import BACKBONES
 from mmdet.utils import get_root_logger
 from timm.models.layers import drop_path, to_2tuple, trunc_normal_

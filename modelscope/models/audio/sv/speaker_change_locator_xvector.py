@@ -1,14 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
-from collections import OrderedDict
-from typing import Any, Dict, Union
-
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio.compliance.kaldi as Kaldi
+from collections import OrderedDict
+from typing import Any, Dict, Union
 
 from modelscope.metainfo import Models
 from modelscope.models import MODELS, TorchModel

@@ -35,6 +35,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
+                                      DEFAULT_AIGC_COVER_IMAGE,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
@@ -50,8 +51,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
-                                      DatasetVisibility, Licenses,
-                                      ModelVisibility, Visibility,
+                                      AigcType, DatasetVisibility, Licenses,
+                                      ModelVisibility, VisionFoundation, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -188,22 +189,34 @@ class HubApi:
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
-                     token: Optional[str] = None) -> str:
+                     token: Optional[str] = None,
+                     aigc_model: Optional[bool] = False,
+                     **kwargs) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
-            model_id (str): The model id
+            model_id (str): The model id in format {owner}/{name}
             visibility (int, optional): visibility of the model(1-private, 5-public), default 5.
-            license (str, optional): license of the model, default none.
+            license (str, optional): license of the model, default apache-2.0.
             chinese_name (str, optional): chinese name of the model.
             original_model_id (str, optional): the base model id which this model is trained from
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_model (bool, optional): Whether to create an AIGC model, default False.
+            **kwargs: Additional AIGC-specific parameters when aigc_model=True:
+                - aigc_type (str, optional): AIGC model type. Required when aigc_model=True. Valid values: Checkpoint, LoRA, VAE
+                - base_model_type (str, optional): Vision foundation model. Required when aigc_model=True.
+                    Valid values: SD_1_5, SD_XL, SD_3, FLUX_1, WAN_VIDEO_2_1_T2V_1_3_B
+                - tag (str, optional): Tag name for AIGC model, default 'v1.0'
+                - tag_description (str, optional): Tag description, default: 'this is a aigc model'
+                - cover_images (List[str], optional): List of cover image URLs, default DEFAULT_AIGC_COVER_IMAGE
+                - base_model_id (str, optional): Base model name, default '', e.g.'AI-ModelScope/FLUX.1-dev'
 
         Returns:
-            Name of the model created
+            str: URL of the created model repository
 
         Raises:
-            InvalidParameter: If model_id is invalid.
+            InvalidParameter: If model_id is invalid or required AIGC parameters are missing.
             ValueError: If not login.
 
         Note:
@@ -219,17 +232,63 @@ class HubApi:
                 cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
-        path = f'{endpoint}/api/v1/models'
+
         owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Base body configuration
         body = {
             'Path': owner_or_group,
             'Name': name,
             'ChineseName': chinese_name,
-            'Visibility': visibility,  # server check
+            'Visibility': visibility,
             'License': license,
             'OriginalModelId': original_model_id,
-            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
+            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
         }
+
+        # Set path based on model type
+        if aigc_model:
+            path = f'{endpoint}/api/v1/models/aigc'
+
+            # Extract AIGC parameters from kwargs with defaults
+            aigc_type = kwargs.pop('aigc_type', None) # Checkpoint, LoRA, VAE, Embedding
+            base_model_type = kwargs.pop('base_model_type', None) # SD_1_5, SD_XL, SD_3, FLUX_1, WAN_VIDEO_2_1_T2V_1_3_B
+            base_model_id = kwargs.pop('base_model_id', '') # e.g.'AI-ModelScope/FLUX.1-dev'
+            tag = kwargs.pop('tag', 'v1.0')
+            tag_description = kwargs.pop('tag_description', 'this is an aigc model')
+            cover_images = kwargs.pop('cover_images', [DEFAULT_AIGC_COVER_IMAGE])
+            # TODO: delete these 3 fields
+            weights_filename = kwargs.pop('weights_filename', 'model.safetensors')#1
+            weights_sha256 = kwargs.pop('weights_sha256', '0000000000000000000000000000000000000000000000000000000000000000')#1
+            weights_size = kwargs.pop('weights_size', 0)#1
+            
+            # Validate AIGC parameters
+            valid_aigc_types = [v for v in AigcType.__dict__.values() if isinstance(v, str)]
+            valid_vision_foundations = [v for v in VisionFoundation.__dict__.values() if isinstance(v, str)]
+            assert aigc_type is not None, f'aigc_type is required when creating AIGC model. Please provide one of: {valid_aigc_types}'
+            assert aigc_type in valid_aigc_types, f'aigc_type must be one of {valid_aigc_types}, got: {aigc_type}'
+            assert base_model_type is not None, f'vision_foundation is required when creating AIGC model. Please provide one of: {valid_vision_foundations}'
+            assert base_model_type in valid_vision_foundations, f'vision_foundation must be one of {valid_vision_foundations}, got: {base_model_type}'
+            
+            # Add AIGC-specific fields to body
+            body.update({
+                #'ModelFramework': 'Pytorch',  # Fixed for AIGC
+                'TagShowName': tag,
+                'CoverImages': cover_images,
+                'AigcType': aigc_type,
+                'TagDescription': tag_description,
+                'VisionFoundation': base_model_type,
+                'BaseModel': base_model_id,
+                # TODO: delete these 3 fields
+                'WeightsName': weights_filename,
+                'WeightsSha256': weights_sha256,
+                'WeightsSize': weights_size
+            })
+                
+        else:
+            # Use regular model endpoint
+            path = f'{endpoint}/api/v1/models'
+
         r = self.session.post(
             path,
             json=body,

@@ -265,8 +265,11 @@ class HubApi:
             path = f'{endpoint}/api/v1/models/aigc'
 
             # Validate required AIGC parameters
-            required_fields = ['TagShowName', 'ModelTask', 'WeightsName', 'WeightsSha256', 'WeightsSize',
-                             'CoverImages', 'AigcType', 'TagDescription', 'VisionFoundation']
+            required_fields = [
+                'TagShowName', 'ModelTask', 'WeightsName', 'WeightsSha256',
+                'WeightsSize', 'CoverImages', 'AigcType', 'TagDescription',
+                'VisionFoundation'
+            ]
             for field in required_fields:
                 if field not in aigc:
                     raise InvalidParameter(f'AIGC model requires {field} field')
@@ -295,8 +298,9 @@ class HubApi:
             # Add optional AIGC fields if provided
             optional_fields = [
                 'Description', 'ProtectedMode', 'ModelTools', 'ModelRecommend',
-                'ModelDetail', 'ApprovalMode', 'BaseModel', 'ChineseName', 'License', 'Visibility',
-                'ModelTask', 'ModelFramework', 'OriginalModelId', 'TrainId', 'TriggerWords'
+                'ModelDetail', 'ApprovalMode', 'BaseModel', 'ChineseName',
+                'License', 'Visibility', 'ModelTask', 'ModelFramework',
+                'OriginalModelId', 'TrainId', 'TriggerWords'
             ]
             for field in optional_fields:
                 if field in aigc:

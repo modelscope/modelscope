@@ -23,7 +23,6 @@ from urllib.parse import urlencode
 
 import json
 import requests
-from datasets.utils.file_utils import is_relative_path
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import HTTPError
@@ -66,8 +65,7 @@ from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
                                         get_release_datetime, is_env_true,
                                         model_id_to_group_owner_name)
-from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
-                                       DEFAULT_DATASET_REVISION,
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
@@ -1056,6 +1054,8 @@ class HubApi:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
+        from datasets.utils.file_utils import is_relative_path
+
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')
         else:

@@ -343,8 +343,8 @@ def _snapshot_download(
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
             logger.info('Fetching dataset repo file list...')
-            repo_files = fetch_repo_files(_api, name, group_or_owner,
-                                          revision_detail, endpoint)
+            repo_files = fetch_repo_files(_api, repo_id, revision_detail,
+                                          endpoint)
 
             if repo_files is None:
                 logger.error(
@@ -377,32 +377,28 @@ def _snapshot_download(
         return cache_root_path
 
 
-def fetch_repo_files(_api, name, group_or_owner, revision, endpoint):
+def fetch_repo_files(_api, repo_id, revision, endpoint):
     page_number = 1
     page_size = 150
     repo_files = []
 
     while True:
-        files_list_tree = _api.list_repo_tree(
-            dataset_name=name,
-            namespace=group_or_owner,
-            revision=revision,
-            root_path='/',
-            recursive=True,
-            page_number=page_number,
-            page_size=page_size,
-            endpoint=endpoint)
+        try:
+            dataset_files = _api.get_dataset_files(
+                repo_id=repo_id,
+                revision=revision,
+                root_path='/',
+                recursive=True,
+                page_number=page_number,
+                page_size=page_size,
+                endpoint=endpoint)
+        except Exception as e:
+            logger.error(f'Error fetching dataset files: {e}')
+            break
 
-        if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
-            logger.error(f'Get dataset file list failed, request_id:  \
-                {files_list_tree["RequestId"]}, message: {files_list_tree["Message"]}'
-                         )
-            return None
+        repo_files.extend(dataset_files)
 
-        cur_repo_files = files_list_tree['Data']['Files']
-        repo_files.extend(cur_repo_files)
-
-        if len(cur_repo_files) < page_size:
+        if len(dataset_files) < page_size:
             break
 
         page_number += 1

@@ -23,6 +23,7 @@ from urllib.parse import urlencode
 
 import json
 import requests
+from datasets.utils.file_utils import is_relative_path
 from requests import Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import HTTPError
@@ -65,7 +66,8 @@ from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
                                         get_release_datetime, is_env_true,
                                         model_id_to_group_owner_name)
-from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
+                                       DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
@@ -374,7 +376,7 @@ class HubApi:
                 by a `/`.
             repo_type (`str`, *optional*):
                 `None` or `"model"` if getting repository info from a model. Default is `None`.
-                TODO: support dataset and studio
+                TODO: support studio
             endpoint(`str`):
                 None or specific endpoint to use, when None, use the default endpoint
                 set in HubApi class (self.endpoint)
@@ -886,6 +888,9 @@ class HubApi:
         raise_on_error(d)
 
         files = []
+        if not d[API_RESPONSE_FIELD_DATA]['Files']:
+            logger.warning(f'No files found in model {model_id} at revision {revision}.')
+            return files
         for file in d[API_RESPONSE_FIELD_DATA]['Files']:
             if file['Name'] == '.gitignore' or file['Name'] == '.gitattributes':
                 continue
@@ -993,29 +998,6 @@ class HubApi:
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
 
-    def get_dataset_infos(self,
-                          dataset_hub_id: str,
-                          revision: str,
-                          files_metadata: bool = False,
-                          timeout: float = 100,
-                          recursive: str = 'True',
-                          endpoint: Optional[str] = None):
-        """
-        Get dataset infos.
-        """
-        if not endpoint:
-            endpoint = self.endpoint
-        datahub_url = f'{endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-        params = {'Revision': revision, 'Root': None, 'Recursive': recursive}
-        cookies = ModelScopeConfig.get_cookies()
-        if files_metadata:
-            params['blobs'] = True
-        r = self.session.get(datahub_url, params=params, cookies=cookies, timeout=timeout)
-        resp = r.json()
-        datahub_raise_on_error(datahub_url, resp, r)
-
-        return resp
-
     def list_repo_tree(self,
                        dataset_name: str,
                        namespace: str,
@@ -1025,6 +1007,11 @@ class HubApi:
                        page_number: int = 1,
                        page_size: int = 100,
                        endpoint: Optional[str] = None):
+        """
+        @deprecated: Use `get_dataset_files` instead.
+        """
+        warnings.warn('The function `list_repo_tree` is deprecated, use `get_dataset_files` instead.',
+                      DeprecationWarning)
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace, endpoint=endpoint)
@@ -1043,6 +1030,57 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
 
         return resp
+
+    def get_dataset_files(self,
+                          repo_id: str,
+                          *,
+                          revision: str = DEFAULT_REPOSITORY_REVISION,
+                          root_path: str = '/',
+                          recursive: bool = True,
+                          page_number: int = 1,
+                          page_size: int = 100,
+                          endpoint: Optional[str] = None):
+        """
+        Get the dataset files.
+
+        Args:
+            repo_id (str): The repository id, in the format of `namespace/dataset_name`.
+            revision (str): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            root_path (str): The root path to list. Defaults to '/'.
+            recursive (bool): Whether to list recursively. Defaults to True.
+            page_number (int): The page number for pagination. Defaults to 1.
+            page_size (int): The number of items per page. Defaults to 100.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            List: The response containing the dataset repository tree information.
+                e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
+        """
+        if is_relative_path(repo_id) and repo_id.count('/') == 1:
+            _owner, _dataset_name = repo_id.split('/')
+        else:
+            raise ValueError(f'Invalid repo_id: {repo_id} !')
+
+        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
+            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+
+        if not endpoint:
+            endpoint = self.endpoint
+        datahub_url = f'{endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {
+            'Revision': revision,
+            'Root': root_path,
+            'Recursive': 'True' if recursive else 'False',
+            'PageNumber': page_number,
+            'PageSize': page_size
+        }
+        cookies = ModelScopeConfig.get_cookies()
+
+        r = self.session.get(datahub_url, params=params, cookies=cookies)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp['Data']['Files']
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
                                    dataset_id: str, revision: str, endpoint: Optional[str] = None):
@@ -2150,22 +2188,40 @@ class HubApi:
                 recursive=True,
                 endpoint=endpoint
             )
-            file_list = [f['Path'] for f in files]
+            file_paths = [f['Path'] for f in files]
+        elif repo_type == REPO_TYPE_DATASET:
+            file_paths = []
+            page_number = 1
+            page_size = 100
+            while True:
+                try:
+                    dataset_files: List[Dict[str, Any]] = self.get_dataset_files(
+                        repo_id=repo_id,
+                        revision=revision or DEFAULT_DATASET_REVISION,
+                        recursive=True,
+                        page_number=page_number,
+                        page_size=page_size,
+                        endpoint=endpoint,
+                    )
+                except Exception as e:
+                    logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
+                    break
+
+                # Parse data (Type: 'tree' or 'blob')
+                for file_info_d in dataset_files:
+                    if file_info_d['Type'] != 'tree':
+                        file_paths.append(file_info_d['Path'])
+
+                if len(dataset_files) < page_size:
+                    break
+
+                page_number += 1
         else:
-            namespace, dataset_name = repo_id.split('/')
-            dataset_hub_id, _ = self.get_dataset_id_and_type(dataset_name, namespace, endpoint=endpoint)
-            dataset_info = self.get_dataset_infos(
-                dataset_hub_id,
-                revision or DEFAULT_DATASET_REVISION,
-                recursive='True',
-                endpoint=endpoint
-            )
-            files = dataset_info.get('Data', {}).get('Files', [])
-            file_list = [f['Path'] for f in files]
+            raise ValueError(f'Unsupported repo_type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         # Glob pattern matching
         to_delete = []
-        for path in file_list:
+        for path in file_paths:
             for delete_pattern in delete_patterns:
                 if fnmatch.fnmatch(path, delete_pattern):
                     to_delete.append(path)
@@ -2181,12 +2237,15 @@ class HubApi:
                         'Revision': revision or DEFAULT_MODEL_REVISION,
                         'FilePath': path
                     }
-                else:
+                elif repo_type == REPO_TYPE_DATASET:
                     owner, dataset_name = repo_id.split('/')
                     url = f'{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo'
                     params = {
                         'FilePath': path
                     }
+                else:
+                    raise ValueError(f'Unsupported repo_type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
                 r = self.session.delete(url, params=params, cookies=cookies, headers=headers)
                 raise_for_http_status(r)
                 resp = r.json()

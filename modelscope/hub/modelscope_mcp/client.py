@@ -101,7 +101,7 @@ class TransportType:
 
 class ComponentManager:
     """
-    Advanced component management for MCP client.
+    component management for MCP client.
 
     Manages tools, resources, and prompts with proper mapping and routing.
     """
@@ -261,9 +261,9 @@ class MCPClient:
         if not isinstance(server_config, dict):
             raise ValueError('Server configuration must be a dictionary')
 
-        # 检查服务类型
+        # Check service type
         if 'command' in server_config:
-            # 本地进程服务 (stdio 连接)
+            # Local process service (stdio connection)
             command = server_config['command']
 
             # Handle special commands following official patterns
@@ -875,13 +875,22 @@ class MCPClient:
             await self._disconnect_in_isolated_context()
 
             # Additional resource cleanup
-            if hasattr(self, 'exit_stack') and self.exit_stack:
-                await self._safe_close_exit_stack(self.exit_stack)
-                self.exit_stack = None
+            if hasattr(self, 'exit_stack'):
+                if self.exit_stack is not None:
+                    try:
+                        await self._safe_close_exit_stack(self.exit_stack)
+                    except Exception as e:
+                        logger.warning(f'Error closing exit_stack: {e}')
+                    self.exit_stack = None
+                else:
+                    logger.warning('exit_stack is None during cleanup.')
 
             # Clean up component manager
             if hasattr(self, 'component_manager'):
-                self.component_manager = None
+                if self.component_manager is not None:
+                    self.component_manager = None
+                else:
+                    logger.warning('component_manager is None during cleanup.')
 
             # Force garbage collection
             import gc
@@ -892,18 +901,35 @@ class MCPClient:
             # Handle cancellation exception
             logger.info(f'Cleanup cancelled for {self.server_name}')
             # Ensure state reset
-            self.session = None
+            if hasattr(self, 'session'):
+                if self.session is not None:
+                    self.session = None
+                else:
+                    logger.warning('session is None during cancelled cleanup.')
             self.session_id = None
             self.connected = False
-            self.exit_stack = None
+            if hasattr(self, 'exit_stack'):
+                if self.exit_stack is not None:
+                    self.exit_stack = None
+                else:
+                    logger.warning(
+                        'exit_stack is None during cancelled cleanup.')
             # Don't re-raise exception
         except Exception as e:
             logger.warning(f'Error during cleanup: {e}')
             # Ensure state reset
-            self.session = None
+            if hasattr(self, 'session'):
+                if self.session is not None:
+                    self.session = None
+                else:
+                    logger.warning('session is None during error cleanup.')
             self.session_id = None
             self.connected = False
-            self.exit_stack = None
+            if hasattr(self, 'exit_stack'):
+                if self.exit_stack is not None:
+                    self.exit_stack = None
+                else:
+                    logger.warning('exit_stack is None during error cleanup.')
             # Don't re-raise exception
 
     async def cleanup(self) -> None:
@@ -931,14 +957,25 @@ class MCPClient:
                 self._health_check_task.cancel()
 
             # Clean up exit_stack references
-            if hasattr(self, 'exit_stack') and self.exit_stack:
-                # Cannot use await in destructor, only clean up references
-                self.exit_stack._stack = []
-                self.exit_stack._closed = True
-                self.exit_stack = None
+            if hasattr(self, 'exit_stack'):
+                if self.exit_stack is not None:
+                    # Cannot use await in destructor, only clean up references
+                    try:
+                        self.exit_stack._stack = []
+                        self.exit_stack._closed = True
+                    except Exception:
+                        logger.warning(
+                            'exit_stack cleanup failed or attributes missing.')
+                    self.exit_stack = None
+                else:
+                    logger.warning('exit_stack is None during cleanup.')
 
             # Clean up other references
-            self.session = None
+            if hasattr(self, 'session'):
+                if self.session is not None:
+                    self.session = None
+                else:
+                    logger.warning('session is None during cleanup.')
             self.session_id = None
             self.connected = False
 

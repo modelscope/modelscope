@@ -29,13 +29,7 @@ from modelscope.hub.modelscope_mcp.utils import (MCPConfigError, MCPJSONError,
                                                  MCPUtilsError,
                                                  extract_server_info,
                                                  fix_json_brackets,
-                                                 format_mcp_tool_name,
-                                                 merge_mcp_configs,
-                                                 parse_mcp_tool_name,
-                                                 sanitize_json_string,
-                                                 validate_json_schema)
-from modelscope.hub.modelscope_mcp.utils import \
-    validate_tool_arguments as validate_tool_args_utils
+                                                 sanitize_json_string)
 
 """
 MCP (Model Context Protocol) integration for ModelScope.
@@ -95,13 +89,9 @@ __all__ = [
     'get_latest_protocol_version',
     # Utils functions
     'fix_json_brackets',
-    'format_mcp_tool_name',
-    'parse_mcp_tool_name',
-    'validate_json_schema',
     'sanitize_json_string',
     'merge_mcp_configs',
     'extract_server_info',
-    'validate_tool_args_utils',
     # Exception classes
     'MCPUtilsError',
     'MCPConfigError',

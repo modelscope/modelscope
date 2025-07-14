@@ -196,10 +196,8 @@ class Model(ABC):
             logger.warning(
                 'Use trust_remote_code=True. Will invoke codes or install plugins from remote model repo. '
                 'Please make sure that you can trust the external codes.')
-            register_modelhub_repo(
-                local_model_dir, allow_remote=trust_remote_code)
-            register_plugins_repo(plugins)
-
+        register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
+        register_plugins_repo(plugins)
         for k, v in kwargs.items():
             model_cfg[k] = v
         if device is not None:

@@ -158,7 +158,7 @@ def _dataset_info(
 
     </Tip>
     """
-    # Note: refer to `_list_repo_tree()`
+    # Note: refer to `_list_repo_tree()`, for patching `HfApi.list_repo_tree`
     repo_info_iter = self.list_repo_tree(
         repo_id=repo_id,
         path_in_repo='/',
@@ -259,7 +259,7 @@ def _get_paths_info(
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
 
-    # Refer to func: `_list_repo_tree()`
+    # Refer to func: `_list_repo_tree()`, for patching `HfApi.list_repo_tree`
     repo_info_iter = self.list_repo_tree(
         repo_id=repo_id,
         recursive=False,

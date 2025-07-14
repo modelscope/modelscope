@@ -184,25 +184,21 @@ class Model(ABC):
         model_cfg.model_dir = local_model_dir
 
         # Security check: Only allow execution of remote code or plugins if trust_remote_code is True
-        allow_remote = cfg.get('allow_remote', False)
         plugins = cfg.safe_get('plugins')
-        if (allow_remote or plugins) and not trust_remote_code:
+        if plugins and not trust_remote_code:
             raise RuntimeError(
-                'Detected allow_remote=True or plugins field in the model configuration file, but '
+                'Detected plugins field in the model configuration file, but '
                 'trust_remote_code=True was not explicitly set.\n'
                 'To prevent potential execution of malicious code, loading has been refused.\n'
                 'If you trust this model repository, please pass trust_remote_code=True to from_pretrained.'
             )
-        if (allow_remote or plugins) and trust_remote_code:
+        if plugins and trust_remote_code:
             logger.warning(
                 'Use trust_remote_code=True. Will invoke codes or install plugins from remote model repo. '
                 'Please make sure that you can trust the external codes.')
-
-        if plugins:
+            register_modelhub_repo(
+                local_model_dir, allow_remote=trust_remote_code)
             register_plugins_repo(plugins)
-        else:
-            register_plugins_repo(None)
-        register_modelhub_repo(local_model_dir, allow_remote)
 
         for k, v in kwargs.items():
             model_cfg[k] = v

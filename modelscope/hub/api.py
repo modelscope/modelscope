@@ -35,6 +35,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
+                                      DEFAULT_AIGC_COVER_IMAGE,
                                       DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
@@ -50,9 +51,9 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
-                                      DatasetVisibility, Licenses,
+                                      AigcType, DatasetVisibility, Licenses,
                                       ModelVisibility, Visibility,
-                                      VisibilityMap)
+                                      VisibilityMap, VisionFoundation)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
                                    datahub_raise_on_error,
@@ -209,7 +210,7 @@ class HubApi:
                     Valid values: SD_1_5, SD_XL, SD_3, FLUX_1, WAN_VIDEO_2_1_T2V_1_3_B
                 - tag (str, optional): Tag name for AIGC model, default 'v1.0'
                 - tag_description (str, optional): Tag description,
-                    default: 'this is a aigc model'
+                    default: 'this is an aigc model'
                 - cover_images (List[str], optional): List of cover image URLs,
                     default: DEFAULT_AIGC_COVER_IMAGE
                 - base_model_id (str, optional): Base model name,

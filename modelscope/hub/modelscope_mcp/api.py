@@ -7,7 +7,7 @@ through the ModelScope Hub, including server management and deployment.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import requests
 

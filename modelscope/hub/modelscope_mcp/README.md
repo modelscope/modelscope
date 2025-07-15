@@ -22,7 +22,7 @@ The ModelScope MCP (Model Context Protocol) Framework enables seamless integrati
 
 ### Architecture
 
-![MCP Architecture Diagram](./Modelscope%20MCP%20Architecture.png)
+![MCP Architecture Diagram](./Modelscope_MCP_Architecture.png)
 
 ### Core Components
 
@@ -57,8 +57,9 @@ manager = MCPManager(warmup_connect=True)
 # Get available tools
 tools = manager.get_tools()
 
-# Integrate with your LLM
-response = llm.generate(prompt, tools=tools)
+# Integrate with your LLM (pseudo-code)
+# This is pseudo-code. Please adjust the call according to your actual LLM implementation.
+response = llm.generate(prompt, tools=tools)  # pseudo-code
 ```
 
 ### Configuration
@@ -153,7 +154,7 @@ ModelScope MCP（模型上下文协议）框架是一个用于将ModelScope Hub�
 
 ### 架构设计
 
-![MCP架构图](./Modelscope%20MCP%20Architecture.png)
+![MCP架构图](./Modelscope_MCP_Architecture.png)
 
 ### 核心组件
 
@@ -189,6 +190,7 @@ manager = MCPManager(warmup_connect=True)
 tools = manager.get_tools()
 
 # 与您的大语言模型集成
+# 以下为伪代码，实际调用请根据你的LLM实现调整
 response = llm.generate(prompt, tools=tools)
 ```
 

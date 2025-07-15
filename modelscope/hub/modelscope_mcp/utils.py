@@ -7,9 +7,7 @@ JSON processing, and tool name formatting.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import json
+from typing import Any, Dict, List
 
 # Configure logging
 logger = logging.getLogger(__name__)

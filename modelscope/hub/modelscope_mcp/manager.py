@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Union
+from typing import Any, Dict, List, Optional, Union
 
 import json
 
@@ -56,11 +56,6 @@ logging.getLogger('requests').setLevel(logging.WARNING)
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-# Default tool exclusions
-DEFAULT_TOOL_EXCLUDES: List[Union[str, Dict[str, List[str]]]] = [{
-    'amap-maps': ['maps_geo']
-}]
 
 # ModelScope API configuration
 MODELSCOPE_API_BASE_URL = 'https://api-inference.modelscope.cn/v1/'
@@ -213,14 +208,13 @@ class MCPManager:
             api_config: Optional[Dict[str, Any]] = None,
             tool_includes: Optional[List[Union[str, Dict[str,
                                                          List[str]]]]] = None,
-            tool_excludes: Optional[List[Union[str, Dict[
-                str, List[str]]]]] = DEFAULT_TOOL_EXCLUDES,
+            tool_excludes: Optional[List[Union[str, Dict[str,
+                                                         List[str]]]]] = None,
             warmup_connect: bool = True,  # Default enable warmup connection
             max_workers: int = 4,
             client_info: Optional[Any] = None,
             modelscope_token: Optional[str] = None,
             modelscope_base_url: Optional[str] = None,
-            use_intl_site: Optional[bool] = False,
             connection_timeout: int = 60  # Connection timeout (seconds)
     ) -> None:
         """
@@ -245,7 +239,7 @@ class MCPManager:
         # Store configuration
         self.api_config = api_config or {}
         self.tool_includes = tool_includes or []
-        self.tool_excludes = tool_excludes or []
+        self.tool_excludes = tool_excludes if tool_excludes is not None else []
         self.warmup_connect = warmup_connect
         self.max_workers = max_workers
         self.client_info = client_info or create_client_info(

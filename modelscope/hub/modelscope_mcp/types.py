@@ -1,3 +1,4 @@
+# Copyright (c) Alibaba, Inc. and its affiliates.
 """
 Type definitions for MCP (Model Context Protocol) integration.
 
@@ -5,9 +6,9 @@ This module provides type definitions and constants used throughout
 the MCP integration, following the patterns established in the official MCP Python SDK.
 """
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Union
 
-from mcp.types import CallToolResult, Implementation, ListToolsResult, Tool
+from mcp.types import Implementation
 
 # MCP Client Configuration Types
 MCPConfig = Dict[str, Any]

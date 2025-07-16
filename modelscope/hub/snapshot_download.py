@@ -194,20 +194,26 @@ def dataset_snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-    return _snapshot_download(
-        dataset_id,
-        repo_type=REPO_TYPE_DATASET,
-        revision=revision,
-        cache_dir=cache_dir,
-        user_agent=user_agent,
-        local_files_only=local_files_only,
-        cookies=cookies,
-        ignore_file_pattern=ignore_file_pattern,
-        allow_file_pattern=allow_file_pattern,
-        local_dir=local_dir,
-        ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns,
-        max_workers=max_workers)
+    system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir(
+    )
+    os.makedirs(os.path.join(system_cache, '.lock'), exist_ok=True)
+    lock_file = os.path.join(system_cache, '.lock',
+                             dataset_id.replace('/', '___'))
+    with weak_file_lock(lock_file):
+        return _snapshot_download(
+            dataset_id,
+            repo_type=REPO_TYPE_DATASET,
+            revision=revision,
+            cache_dir=cache_dir,
+            user_agent=user_agent,
+            local_files_only=local_files_only,
+            cookies=cookies,
+            ignore_file_pattern=ignore_file_pattern,
+            allow_file_pattern=allow_file_pattern,
+            local_dir=local_dir,
+            ignore_patterns=ignore_patterns,
+            allow_patterns=allow_patterns,
+            max_workers=max_workers)
 
 
 def _snapshot_download(

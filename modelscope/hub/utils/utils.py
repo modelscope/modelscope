@@ -1,9 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import contextlib
 import hashlib
+import os
 import sys
+import time
 from datetime import datetime
-from typing import List
+from pathlib import Path
+from typing import Generator, List, Optional, Union
+
+from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
@@ -13,12 +19,6 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       MODELSCOPE_URL_SCHEME)
 from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.logger import get_logger
-import contextlib
-import os
-import time
-from pathlib import Path
-from typing import Generator, Optional, Union
-from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 logger = get_logger()
 
@@ -249,9 +249,10 @@ def tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
 
 # Part of the code borrowed from the awesome work of huggingface_hub
 @contextlib.contextmanager
-def weak_file_lock(
-    lock_file: Union[str, Path], *, timeout: Optional[float] = None
-) -> Generator[BaseFileLock, None, None]:
+def weak_file_lock(lock_file: Union[str, Path],
+                   *,
+                   timeout: Optional[float] = None
+                   ) -> Generator[BaseFileLock, None, None]:
     default_interval = 60
     lock = FileLock(lock_file, timeout=default_interval)
     start_time = time.time()
@@ -262,16 +263,18 @@ def weak_file_lock(
             raise Timeout(str(lock_file))
 
         try:
-            lock.acquire(timeout=min(default_interval, timeout - elapsed_time) if timeout else default_interval) # noqa
+            lock.acquire(
+                timeout=min(default_interval, timeout - elapsed_time)
+                if timeout else default_interval)  # noqa
         except Timeout:
             logger.info(
-                f"Still waiting to acquire lock on {lock_file} (elapsed: {time.time() - start_time:.1f} seconds)"
+                f'Still waiting to acquire lock on {lock_file} (elapsed: {time.time() - start_time:.1f} seconds)'
             )
         except NotImplementedError as e:
-            if "use SoftFileLock instead" in str(e):
+            if 'use SoftFileLock instead' in str(e):
                 logger.warning(
-                    "FileSystem does not appear to support flock. Falling back to SoftFileLock for %s", lock_file
-                )
+                    'FileSystem does not appear to support flock. Falling back to SoftFileLock for %s',
+                    lock_file)
                 lock = SoftFileLock(lock_file, timeout=default_interval)
                 continue
         else:

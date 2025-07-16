@@ -14,7 +14,8 @@ from modelscope.hub.file_download import (create_temporary_directory_and_cache,
                                           download_file, get_file_download_url)
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
-                                        model_id_to_group_owner_name, weak_file_lock)
+                                        model_id_to_group_owner_name,
+                                        weak_file_lock)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
@@ -109,9 +110,11 @@ def snapshot_download(
     if revision is None:
         revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
 
-    system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir()
+    system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir(
+    )
     os.makedirs(os.path.join(system_cache, '.lock'), exist_ok=True)
-    lock_file = os.path.join(system_cache, '.lock', repo_id.replace('/', '___'))
+    lock_file = os.path.join(system_cache, '.lock',
+                             repo_id.replace('/', '___'))
     with weak_file_lock(lock_file):
         return _snapshot_download(
             repo_id,

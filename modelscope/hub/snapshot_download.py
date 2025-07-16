@@ -14,7 +14,7 @@ from modelscope.hub.file_download import (create_temporary_directory_and_cache,
                                           download_file, get_file_download_url)
 from modelscope.hub.utils.caching import ModelFileSystemCache
 from modelscope.hub.utils.utils import (get_model_masked_directory,
-                                        model_id_to_group_owner_name)
+                                        model_id_to_group_owner_name, weak_file_lock)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
@@ -109,21 +109,25 @@ def snapshot_download(
     if revision is None:
         revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
 
-    return _snapshot_download(
-        repo_id,
-        repo_type=repo_type,
-        revision=revision,
-        cache_dir=cache_dir,
-        user_agent=user_agent,
-        local_files_only=local_files_only,
-        cookies=cookies,
-        ignore_file_pattern=ignore_file_pattern,
-        allow_file_pattern=allow_file_pattern,
-        local_dir=local_dir,
-        ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns,
-        max_workers=max_workers,
-        progress_callbacks=progress_callbacks)
+    system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir()
+    os.makedirs(os.path.join(system_cache, '.lock'), exist_ok=True)
+    lock_file = os.path.join(system_cache, '.lock', repo_id.replace('/', '___'))
+    with weak_file_lock(lock_file):
+        return _snapshot_download(
+            repo_id,
+            repo_type=repo_type,
+            revision=revision,
+            cache_dir=cache_dir,
+            user_agent=user_agent,
+            local_files_only=local_files_only,
+            cookies=cookies,
+            ignore_file_pattern=ignore_file_pattern,
+            allow_file_pattern=allow_file_pattern,
+            local_dir=local_dir,
+            ignore_patterns=ignore_patterns,
+            allow_patterns=allow_patterns,
+            max_workers=max_workers,
+            progress_callbacks=progress_callbacks)
 
 
 def dataset_snapshot_download(

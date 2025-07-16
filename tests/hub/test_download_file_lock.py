@@ -10,6 +10,7 @@ from modelscope import snapshot_download
 def download_model(model_name, cache_dir):
     snapshot_download(model_name, cache_dir=cache_dir)
 
+
 class FileLockDownloadingTest(unittest.TestCase):
 
     def setUp(self):
@@ -32,12 +33,20 @@ class FileLockDownloadingTest(unittest.TestCase):
 
         def get_file_sha256(file_path):
             sha256_hash = hashlib.sha256()
-            with open(file_path, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
+            with open(file_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(4096), b''):
                     sha256_hash.update(chunk)
             return sha256_hash.hexdigest()
 
-        self.assertTrue(get_file_sha256(os.path.join(self.temp_dir.name, 'Qwen', 'Qwen3-0.6B', 'model.safetensors')) == 'f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b')
+        self.assertTrue(  # noqa
+            get_file_sha256(  # noqa
+                os.path.join(  # noqa
+                    self.temp_dir.name,  # noqa
+                    'Qwen',  # noqa
+                    'Qwen3-0.6B',  # noqa
+                    'model.safetensors')) ==  # noqa
+            'f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b'  # noqa
+        )  # noqa
 
 
 if __name__ == '__main__':

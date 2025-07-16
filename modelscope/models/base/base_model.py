@@ -85,6 +85,7 @@ class Model(ABC):
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         cfg_dict: Config = None,
                         device: str = None,
+                        trust_remote_code: Optional[bool] = False,
                         **kwargs):
         """Instantiate a model from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.
@@ -96,6 +97,7 @@ class Model(ABC):
             cfg_dict(Config, `optional`): An optional model config. If provided, it will replace
                 the config read out of the `model_name_or_path`
             device(str, `optional`): The device to load the model.
+            trust_remote_code(bool, `optional`): Whether to trust and allow execution of remote code. Default is False.
             **kwargs:
                 task(str, `optional`): The `Tasks` enumeration value to replace the task value
                     read out of config in the `model_name_or_path`. This is useful when the model to be loaded is not
@@ -181,10 +183,21 @@ class Model(ABC):
                 f'`{ModelFile.CONFIGURATION}` file not found.')
         model_cfg.model_dir = local_model_dir
 
-        # install and import remote repos before build
-        register_plugins_repo(cfg.safe_get('plugins'))
-        register_modelhub_repo(local_model_dir, cfg.get('allow_remote', False))
-
+        # Security check: Only allow execution of remote code or plugins if trust_remote_code is True
+        plugins = cfg.safe_get('plugins')
+        if plugins and not trust_remote_code:
+            raise RuntimeError(
+                'Detected plugins field in the model configuration file, but '
+                'trust_remote_code=True was not explicitly set.\n'
+                'To prevent potential execution of malicious code, loading has been refused.\n'
+                'If you trust this model repository, please pass trust_remote_code=True to from_pretrained.'
+            )
+        if plugins and trust_remote_code:
+            logger.warning(
+                'Use trust_remote_code=True. Will invoke codes or install plugins from remote model repo. '
+                'Please make sure that you can trust the external codes.')
+        register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
+        register_plugins_repo(plugins)
         for k, v in kwargs.items():
             model_cfg[k] = v
         if device is not None:

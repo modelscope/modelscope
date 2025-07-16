@@ -306,3 +306,7 @@ pip install modelscope[science] -f https://modelscope.oss-cn-beijing.aliyuncs.co
 # ライセンス
 
 このプロジェクトのライセンスは [Apache License (Version 2.0)](https://github.com/modelscope/modelscope/blob/master/LICENSE) です。
+
+Modelscope MCP：
+
+* ModelScope MCP（Model Context Protocol）フレームワークは、ModelScope Hub の AI モデルを外部ツールやサービスとシームレスに統合し、ローカルおよびリモート大規模言語モデルのマルチターン会話やツール呼び出しをサポートします。機能、クイックスタート [MCP README](modelscope/hub/modelscope_mcp/README.md) をご覧ください。

@@ -299,3 +299,7 @@ pip install modelscope [science] -f https://modelscope.oss-cn-beijing.aliyuncs.c
 # License
 
 本项目使用 [Apache License (Version 2.0)](https://github.com/modelscope/modelscope/blob/master/LICENSE).
+
+Modelscope MCP：
+
+* ModelScope MCP（模型上下文协议）框架支持将 ModelScope Hub 的 AI 模型与外部工具和服务无缝集成，支持本地和远程大模型的多轮对话与工具调用。功能特性、快速上手参考详见 [MCP 详细文档](modelscope/hub/modelscope_mcp/README.md)

@@ -126,6 +126,11 @@ AI for Science:
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
+
+Modelscope MCP：
+
+* ModelScope MCP (Model Context Protocol) Framework enables seamless integration of ModelScope Hub AI models with external tools and services, supporting multi-turn conversations and tool calling for both local and remote LLMs. For features, quick start, see [MCP README ](modelscope/hub/modelscope_mcp/README.md)
+
 **Note:** Most models on ModelScope are public and can be downloaded directly from the [website](https://modelscope.cn/), please refer to instructions for [model download](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD), for downloading models with api provided by modelscope library or git.
 
 # QuickTour

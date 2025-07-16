@@ -114,6 +114,7 @@ class VisionFoundation(object):
     SD_3 = 'SD_3'
     FLUX_1 = 'FLUX_1'
     WAN_VIDEO_2_1_T2V_1_3_B = 'WAN_VIDEO_2_1_T2V_1_3_B'
+    WAN_VIDEO_2_1_T2V_14_B = 'WAN_VIDEO_2_1_T2V_14_B'
 
 
 # Default AIGC model cover image

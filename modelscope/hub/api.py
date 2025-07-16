@@ -205,9 +205,9 @@ class HubApi:
             aigc_model (bool, optional): Whether to create an AIGC model, default False.
             **kwargs: Placeholder for additional parameters. For example, if aigc_model=True,
                 all AIGC-specific parameters can be passed through via kwargs.
-                - aigc_type (str, optional): AIGC model type.Required when aigc_model=True.
+                - aigc_type (str, optional): AIGC model type. Required when aigc_model=True.
                     Expected a valid value from AigcType enum str.
-                - base_model_type (str, optional): Vision foundation model.Required when aigc_model=True.
+                - base_model_type (str, optional): Vision foundation model. Required when aigc_model=True.
                     Expected a valid value from VisionFoundation enum str.
                 - tag (str, optional): Tag name for AIGC model, default 'v1.0'
                 - tag_description (str, optional): Tag description,

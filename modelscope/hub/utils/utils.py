@@ -1,12 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import contextlib
 import hashlib
 import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Generator, List, Optional, Union
+
+from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       DEFAULT_MODELSCOPE_GROUP,
@@ -242,3 +245,57 @@ def tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
     for row in rows:
         lines.append(row_format.format(*row))
     return '\n'.join(lines)
+
+
+# Part of the code borrowed from the awesome work of huggingface_hub/transformers
+def strtobool(val):
+    val = val.lower()
+    if val in {'y', 'yes', 't', 'true', 'on', '1'}:
+        return 1
+    if val in {'n', 'no', 'f', 'false', 'off', '0'}:
+        return 0
+    raise ValueError(f'invalid truth value {val!r}')
+
+
+@contextlib.contextmanager
+def weak_file_lock(lock_file: Union[str, Path],
+                   *,
+                   timeout: Optional[float] = None
+                   ) -> Generator[BaseFileLock, None, None]:
+    default_interval = 60
+    lock = FileLock(lock_file, timeout=default_interval)
+    start_time = time.time()
+
+    while True:
+        elapsed_time = time.time() - start_time
+        if timeout is not None and elapsed_time >= timeout:
+            raise Timeout(str(lock_file))
+
+        try:
+            lock.acquire(
+                timeout=min(default_interval, timeout - elapsed_time)
+                if timeout else default_interval)  # noqa
+        except Timeout:
+            logger.info(
+                f'Still waiting to acquire lock on {lock_file} (elapsed: {time.time() - start_time:.1f} seconds)'
+            )
+        except NotImplementedError as e:
+            if 'use SoftFileLock instead' in str(e):
+                logger.warning(
+                    'FileSystem does not appear to support flock. Falling back to SoftFileLock for %s',
+                    lock_file)
+                lock = SoftFileLock(lock_file, timeout=default_interval)
+                continue
+        else:
+            break
+
+    try:
+        yield lock
+    finally:
+        try:
+            lock.release()
+        except OSError:
+            try:
+                Path(lock_file).unlink()
+            except OSError:
+                pass

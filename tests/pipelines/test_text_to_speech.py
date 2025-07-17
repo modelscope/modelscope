@@ -99,7 +99,8 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
         for i in range(len(self.test_models)):
             logger.info('test %s' % self.test_model_name[i])
             sambert_hifigan_tts = pipeline(
-                task=self.task, model=self.test_models[i]['model'])
+                task=self.task, model=self.test_models[i]['model'],
+                    trust_remote_code=True)
             self.assertTrue(sambert_hifigan_tts is not None)
             output = sambert_hifigan_tts(input=self.test_models[i]['text'])
             self.assertIsNotNone(output[OutputKeys.OUTPUT_WAV])

@@ -94,13 +94,12 @@ class TextToSpeechSambertHifigan16kPipelineTest(unittest.TestCase):
             'text': self.en_text
         }]
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_pipeline(self):
         for i in range(len(self.test_models)):
             logger.info('test %s' % self.test_model_name[i])
             sambert_hifigan_tts = pipeline(
-                task=self.task, model=self.test_models[i]['model'],
-                    trust_remote_code=True)
+                task=self.task, model=self.test_models[i]['model'])
             self.assertTrue(sambert_hifigan_tts is not None)
             output = sambert_hifigan_tts(input=self.test_models[i]['text'])
             self.assertIsNotNone(output[OutputKeys.OUTPUT_WAV])

@@ -247,7 +247,16 @@ def tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
     return '\n'.join(lines)
 
 
-# Part of the code borrowed from the awesome work of huggingface_hub
+# Part of the code borrowed from the awesome work of huggingface_hub/transformers
+def strtobool(val):
+    val = val.lower()
+    if val in {'y', 'yes', 't', 'true', 'on', '1'}:
+        return 1
+    if val in {'n', 'no', 'f', 'false', 'off', '0'}:
+        return 0
+    raise ValueError(f'invalid truth value {val!r}')
+
+
 @contextlib.contextmanager
 def weak_file_lock(lock_file: Union[str, Path],
                    *,

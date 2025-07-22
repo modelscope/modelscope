@@ -35,10 +35,10 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
-                                      DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
+                                      MODELSCOPE_CREDENTIALS_PATH,
                                       MODELSCOPE_DOMAIN,
                                       MODELSCOPE_PREFER_AI_SITE,
                                       MODELSCOPE_REQUEST_ID,
@@ -2263,7 +2263,7 @@ class HubApi:
 
 
 class ModelScopeConfig:
-    path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
+    path_credential = expanduser(MODELSCOPE_CREDENTIALS_PATH)
     COOKIES_FILE_NAME = 'cookies'
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'

@@ -16,6 +16,8 @@ MODEL_ID_SEPARATOR = '/'
 FILE_HASH = 'Sha256'
 LOGGER_NAME = 'ModelScopeHub'
 DEFAULT_CREDENTIALS_PATH = Path.home().joinpath('.modelscope', 'credentials')
+MODELSCOPE_CREDENTIALS_PATH = os.environ.get(
+    'MODELSCOPE_CREDENTIALS_PATH', DEFAULT_CREDENTIALS_PATH.as_posix())
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
 API_HTTP_CLIENT_TIMEOUT = 60
 API_HTTP_CLIENT_MAX_RETRIES = 2

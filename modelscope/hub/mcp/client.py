@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP客户端 - 基于官方 MCP Python SDK 的简洁实现
+MCP Client - A concise implementation based on the official MCP Python SDK
 """
 
 import asyncio
@@ -9,7 +9,7 @@ from contextlib import AsyncExitStack
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
-# 导入官方 MCP SDK
+# Import official MCP SDK
 from mcp import ClientSession, StdioServerParameters, Tool
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
@@ -19,58 +19,58 @@ from mcp.types import CONNECTION_CLOSED, Implementation
 
 from modelscope.utils.logger import get_logger
 
-# 常量定义
+# Constants
 DEFAULT_CLIENT_INFO = Implementation(
-    name='modelscope-mcp-client', version='1.0.0')
+    name='ModelScope-mcp-client', version='1.0.0')
 
 DEFAULT_READ_TIMEOUT = timedelta(seconds=30)
 DEFAULT_HTTP_TIMEOUT = timedelta(seconds=30)
 DEFAULT_SSE_READ_TIMEOUT = timedelta(seconds=30)
 
-# 日志
+# Logger
 logger = get_logger(__name__)
 
 
-# 异常类
+# Exception classes
 class MCPClientError(Exception):
-    """MCP客户端基础异常"""
+    """Base MCP client exception"""
     pass
 
 
 class MCPConnectionError(MCPClientError):
-    """MCP连接异常"""
+    """MCP connection exception"""
     pass
 
 
 class MCPToolExecutionError(MCPClientError):
-    """MCP工具执行异常"""
+    """MCP tool execution exception"""
     pass
 
 
 class MCPTimeoutError(MCPClientError):
-    """MCP超时异常"""
+    """MCP timeout exception"""
     pass
 
 
 class MCPClient:
     """
-    MCP客户端 - 基于官方 MCP Python SDK 的简洁实现
+    MCP Client - A concise implementation based on the official MCP Python SDK
 
-    最简单的使用方法:
+    Simplest usage:
     ```python
-    # 1. 创建客户端
+    # 1. Create client
     client = MCPClient(mcp_server={
         "type": "sse",
         "url": "https://example.com/sse"
     })
 
-    # 2. 连接并使用
+    # 2. Connect and use
     await client.connect()
     tools = await client.list_tools()
     result = await client.call_tool("tool_name", {"param": "value"})
     await client.disconnect()
 
-    # 或者使用上下文管理器（推荐）
+    # Or use context manager (recommended)
     async with MCPClient(mcp_server=config) as client:
         tools = await client.list_tools()
         result = await client.call_tool("tool_name", {"param": "value"})
@@ -79,10 +79,10 @@ class MCPClient:
 
     def __init__(self, mcp_server: Dict[str, Any]):
         """
-        初始化 MCP 客户端
+        Initialize MCP client
 
         Args:
-            mcp_server: MCP 服务器配置
+            mcp_server: MCP server configuration
         """
         if not mcp_server:
             raise ValueError('MCP server configuration is required')
@@ -93,24 +93,24 @@ class MCPClient:
         self.client_info = DEFAULT_CLIENT_INFO
         self.connected = False
         self.read_timeout = DEFAULT_READ_TIMEOUT
-        self.server_info: Optional[Dict[str, Any]] = None  # 服务器信息
+        self.server_info: Optional[Dict[str, Any]] = None  # Server information
 
-        # 验证配置
+        # Validate configuration
         self._validate_config()
 
-        # 自动生成服务器名称（连接后可能会更新）
+        # Auto-generate server name (may be updated after connection)
         self.server_name = self._generate_server_name()
 
     def _generate_server_name(self) -> str:
-        """自动生成服务器名称"""
+        """Auto-generate server name"""
         config = self.mcp_server
 
-        # 从配置中提取有意义的名称
+        # Extract meaningful name from configuration
         if 'type' in config:
             transport_type = config['type']
 
             if transport_type == 'stdio' and 'command' in config:
-                # 从命令中提取名称
+                # Extract name from command
                 command = config['command']
                 if isinstance(command, list) and command:
                     return f'stdio-{command[0]}'
@@ -119,34 +119,35 @@ class MCPClient:
 
             elif transport_type in ['sse', 'streamable_http'
                                     ] and 'url' in config:
-                # 从 URL 中提取域名
+                # Extract domain from URL
                 url = config['url']
                 try:
                     from urllib.parse import urlparse
                     parsed = urlparse(url)
-                    domain = parsed.netloc.split('.')[0]  # 取第一个域名部分
+                    domain = parsed.netloc.split('.')[
+                        0]  # Get first domain part
                     return f'{transport_type}-{domain}'
                 except Exception:
                     return f'{transport_type}-server'
 
-                # 默认名称
+        # Default name
         return f"mcp-{config.get('type', 'unknown')}-server"
 
     def _validate_config(self) -> None:
-        """验证 MCP 服务器配置"""
+        """Validate MCP server configuration"""
         config = self.mcp_server
 
-        # 检查是否有 mcpServers 嵌套结构
+        # Check for mcpServers nested structure
         if 'mcpServers' in config:
             servers = config['mcpServers']
             if not servers:
                 raise ValueError('No servers found in mcpServers')
 
-            # 获取第一个服务器的配置
+            # Get first server configuration
             first_server_name = list(servers.keys())[0]
             first_server_config = servers[first_server_name]
 
-            # 验证服务器配置
+            # Validate server configuration
             if not isinstance(first_server_config, dict):
                 raise ValueError(
                     f'Server configuration for {first_server_name} must be a dictionary'
@@ -163,30 +164,30 @@ class MCPClient:
 
             self.mcp_server = first_server_config
         else:
-            # 直接配置
+            # Direct configuration
             if 'type' not in config:
                 raise ValueError('Server type is required')
 
             if 'url' not in config and 'command' not in config:
                 raise ValueError('Server URL or command is required')
 
-            # 验证传输类型
+            # Validate transport type
             transport_type = config.get('type')
             if transport_type not in ['stdio', 'sse', 'streamable_http']:
                 raise ValueError(
                     f'Unsupported transport type: {transport_type}')
 
     async def connect(self) -> None:
-        """连接到服务器"""
+        """Connect to server"""
         if self.connected:
             logger.warning(f'Already connected to server {self.server_name}')
             return
 
         try:
-            # 创建新的 exit_stack
+            # Create new exit_stack
             self.exit_stack = AsyncExitStack()
 
-            # 根据传输类型建立连接
+            # Establish connection based on transport type
             if self.mcp_server['type'] == 'stdio':
                 read, write = await self._establish_stdio_connection()
             elif self.mcp_server['type'] == 'sse':
@@ -198,7 +199,7 @@ class MCPClient:
                 raise MCPConnectionError(
                     f'Unsupported transport type: {self.mcp_server["type"]}')
 
-            # 创建会话
+            # Create session
             self.session = await self.exit_stack.enter_async_context(
                 ClientSession(
                     read,
@@ -207,10 +208,10 @@ class MCPClient:
                     read_timeout_seconds=self.read_timeout,
                 ))
 
-            # 初始化会话
+            # Initialize session
             init_result = await self.session.initialize()
 
-            # 获取服务器信息并更新服务器名称
+            # Get server information and update server name
             self._update_server_info(init_result)
 
             self.connected = True
@@ -223,27 +224,27 @@ class MCPClient:
             raise MCPConnectionError(f'Connection failed: {e}') from e
 
     async def _establish_stdio_connection(self) -> tuple[Any, Any]:
-        """建立 STDIO 连接"""
+        """Establish STDIO connection"""
         config = self.mcp_server
         command = config.get('command', [])
 
         if not command:
             raise ValueError('STDIO command is required')
 
-        # 创建 STDIO 传输
+        # Create STDIO transport
         stdio_transport = await self.exit_stack.enter_async_context(
             stdio_client(StdioServerParameters(command=command)))
         return stdio_transport[0], stdio_transport[1]  # read, write
 
     async def _establish_sse_connection(self) -> tuple[Any, Any]:
-        """建立 SSE 连接"""
+        """Establish SSE connection"""
         config = self.mcp_server
         url = config.get('url')
 
         if not url:
             raise ValueError('SSE URL is required')
 
-        # 创建 SSE 传输
+        # Create SSE transport
         sse_transport = await self.exit_stack.enter_async_context(
             sse_client(
                 url,
@@ -252,14 +253,14 @@ class MCPClient:
         return sse_transport[0], sse_transport[1]  # read, write
 
     async def _establish_streamable_http_connection(self) -> tuple[Any, Any]:
-        """建立 Streamable HTTP 连接"""
+        """Establish Streamable HTTP connection"""
         config = self.mcp_server
         url = config.get('url')
 
         if not url:
             raise ValueError('Streamable HTTP URL is required')
 
-        # 创建 Streamable HTTP 传输
+        # Create Streamable HTTP transport
         streamable_http_transport = await self.exit_stack.enter_async_context(
             streamablehttp_client(
                 url,
@@ -269,16 +270,16 @@ class MCPClient:
             1]  # read, write
 
     def _update_server_info(self, init_result) -> None:
-        """从初始化结果中获取服务器信息并更新服务器名称"""
+        """Get server information from initialization result and update server name"""
         try:
-            # 从初始化结果中获取服务器信息
+            # Get server information from initialization result
             if hasattr(init_result, 'serverInfo') and init_result.serverInfo:
                 self.server_info = {
                     'name': init_result.serverInfo.name,
                     'version': init_result.serverInfo.version
                 }
 
-                # 如果用户没有指定服务器名称，使用服务器的名称
+                # If user didn't specify server name, use server's name
                 if self.server_info.get('name'):
                     server_name = self.server_info['name']
                     if server_name != self.server_name:
@@ -291,13 +292,13 @@ class MCPClient:
             logger.warning(f'Failed to update server info: {e}')
 
     async def disconnect(self) -> None:
-        """断开连接"""
+        """Disconnect from server"""
         await self._cleanup()
 
     async def _cleanup(self) -> None:
-        """清理资源"""
+        """Clean up resources"""
         try:
-            # 不要手动调用 session.close()，让 AsyncExitStack 自动处理
+            # Don't manually call session.close(), let AsyncExitStack handle it automatically
             if self.session:
                 self.session = None
 
@@ -305,7 +306,7 @@ class MCPClient:
                 try:
                     await self.exit_stack.aclose()
                 except Exception as e:
-                    # 忽略清理时的错误，这些通常是正常的
+                    # Ignore cleanup errors, these are usually normal
                     logger.debug(f'Exit stack cleanup warning: {e}')
                 finally:
                     self.exit_stack = None
@@ -320,15 +321,15 @@ class MCPClient:
                         tool_args: Dict[str, Any],
                         timeout: Optional[timedelta] = None) -> str:
         """
-        调用工具
+        Call tool
 
         Args:
-            tool_name: 工具名称
-            tool_args: 工具参数
-            timeout: 超时时间
+            tool_name: Tool name
+            tool_args: Tool arguments
+            timeout: Timeout duration
 
         Returns:
-            工具执行结果
+            Tool execution result
         """
         if not self.connected or not self.session:
             raise MCPConnectionError(
@@ -340,7 +341,7 @@ class MCPClient:
             result = await self.session.call_tool(
                 tool_name, tool_args, read_timeout_seconds=read_timeout)
 
-            # 提取文本内容
+            # Extract text content
             texts = []
             for content in result.content:
                 if content.type == 'text':
@@ -378,13 +379,13 @@ class MCPClient:
     async def list_tools(self,
                          timeout: Optional[timedelta] = None) -> List[Tool]:
         """
-        获取工具列表
+        Get tool list
 
         Args:
-            timeout: 超时时间
+            timeout: Timeout duration
 
         Returns:
-            工具列表
+            List of tools
         """
         if not self.connected:
             raise MCPConnectionError('Not connected to server')
@@ -398,34 +399,34 @@ class MCPClient:
             raise
 
     def is_connected(self) -> bool:
-        """检查是否已连接"""
+        """Check if connected"""
         return self.connected
 
     def get_server_name(self) -> str:
-        """获取服务器名称"""
+        """Get server name"""
         return self.server_name
 
     def get_transport_type(self) -> Optional[str]:
-        """获取传输类型"""
+        """Get transport type"""
         return self.mcp_server.get('type')
 
     def get_server_info(self) -> Optional[Dict[str, Any]]:
-        """获取服务器信息"""
+        """Get server information"""
         return self.server_info
 
     async def __aenter__(self):
-        """异步上下文管理器入口"""
+        """Async context manager entry"""
         await self.connect()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器退出"""
+        """Async context manager exit"""
         await self.disconnect()
 
     def __del__(self):
-        """析构函数"""
+        """Destructor"""
         try:
-            # 只清理引用，不进行异步操作
+            # Only clean up references, don't perform async operations
             if hasattr(self, 'session'):
                 self.session = None
 
@@ -435,5 +436,5 @@ class MCPClient:
             self.connected = False
 
         except Exception:
-            # 析构函数中不能抛出异常
+            # Cannot throw exceptions in destructor
             pass

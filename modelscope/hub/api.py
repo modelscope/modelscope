@@ -913,7 +913,13 @@ class HubApi:
         Returns:
             The query result in bool value
         """
-        files = self.get_model_files(repo_id, recursive=True, revision=revision)
+        cookies = ModelScopeConfig.get_cookies()
+        files = self.get_model_files(
+            repo_id,
+            recursive=True,
+            revision=revision,
+            use_cookies=False if cookies is None else cookies,
+        )
         files = [file['Path'] for file in files]
         return filename in files
 
@@ -2186,7 +2192,8 @@ class HubApi:
                 repo_id,
                 revision=revision or DEFAULT_MODEL_REVISION,
                 recursive=True,
-                endpoint=endpoint
+                endpoint=endpoint,
+                use_cookies=cookies,
             )
             file_paths = [f['Path'] for f in files]
         elif repo_type == REPO_TYPE_DATASET:

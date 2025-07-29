@@ -234,25 +234,22 @@ def _repo_file_download(
         page_number = 1
         page_size = 100
         while True:
-            files_list_tree = _api.list_repo_tree(
-                dataset_name=name,
-                namespace=group_or_owner,
-                revision=revision,
-                root_path='/',
-                recursive=True,
-                page_number=page_number,
-                page_size=page_size,
-                endpoint=endpoint)
-            if not ('Code' in files_list_tree
-                    and files_list_tree['Code'] == 200):
-                print(
-                    'Get dataset: %s file list failed, request_id: %s, message: %s'
-                    % (repo_id, files_list_tree['RequestId'],
-                       files_list_tree['Message']))
-                return None
-            repo_files = files_list_tree['Data']['Files']
+            try:
+                dataset_files = _api.get_dataset_files(
+                    repo_id=repo_id,
+                    revision=revision,
+                    root_path='/',
+                    recursive=True,
+                    page_number=page_number,
+                    page_size=page_size,
+                    endpoint=endpoint)
+            except Exception as e:
+                logger.error(
+                    f'Get dataset: {repo_id} file list failed, error: {e}')
+                break
+
             is_exist = False
-            for repo_file in repo_files:
+            for repo_file in dataset_files:
                 if repo_file['Type'] == 'tree':
                     continue
 
@@ -267,7 +264,7 @@ def _repo_file_download(
                         file_to_download_meta = repo_file
                         is_exist = True
                     break
-            if len(repo_files) < page_size or is_exist:
+            if len(dataset_files) < page_size or is_exist:
                 break
             page_number += 1
 

@@ -158,56 +158,46 @@ def _dataset_info(
 
     </Tip>
     """
-    _api = HubApi()
-    _namespace, _dataset_name = repo_id.split('/')
-    endpoint = _api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-    dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_namespace, endpoint=endpoint)
+    # Note: refer to `_list_repo_tree()`, for patching `HfApi.list_repo_tree`
+    repo_info_iter = self.list_repo_tree(
+        repo_id=repo_id,
+        path_in_repo='/',
+        revision=revision,
+        recursive=False,
+        expand=expand,
+        token=token,
+        repo_type=REPO_TYPE_DATASET,
+    )
 
-    revision: str = revision or DEFAULT_DATASET_REVISION
-    data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
-                                  revision=revision,
-                                  files_metadata=files_metadata,
-                                  timeout=timeout,
-                                  endpoint=endpoint)
-
-    # Parse data
-    data_d: dict = data['Data']
-    data_file_list: list = data_d['Files']
-    # commit_info: dict = data_d['LatestCommitter']
-
-    # Update data   # TODO: columns align with HfDatasetInfo
-    data['id'] = repo_id
-    data['private'] = False
-    data['author'] = repo_id.split('/')[0] if repo_id else None
-    data['sha'] = revision
-    data['lastModified'] = None
-    data['gated'] = False
-    data['disabled'] = False
-    data['downloads'] = 0
-    data['likes'] = 0
-    data['tags'] = []
-    data['cardData'] = []
-    data['createdAt'] = None
+    # Update data_info
+    data_info = dict({})
+    data_info['id'] = repo_id
+    data_info['private'] = False
+    data_info['author'] = repo_id.split('/')[0] if repo_id else None
+    data_info['sha'] = revision
+    data_info['lastModified'] = None
+    data_info['gated'] = False
+    data_info['disabled'] = False
+    data_info['downloads'] = 0
+    data_info['likes'] = 0
+    data_info['tags'] = []
+    data_info['cardData'] = []
+    data_info['createdAt'] = None
 
     # e.g. {'rfilename': 'xxx', 'blobId': 'xxx', 'size': 0, 'lfs': {'size': 0, 'sha256': 'xxx', 'pointerSize': 0}}
-    data['siblings'] = []
-    for file_info_d in data_file_list:
-        file_info = {
-            'rfilename': file_info_d['Path'],
-            'blobId': file_info_d['Id'],
-            'size': file_info_d['Size'],
-            'type': 'directory' if file_info_d['Type'] == 'tree' else 'file',
-            'lfs': {
-                'size': file_info_d['Size'],
-                'sha256': file_info_d['Sha256'],
-                'pointerSize': 0
-            }
-        }
-        data['siblings'].append(file_info)
+    data_siblings = []
+    for info_item in repo_info_iter:
+        if isinstance(info_item, RepoFile):
+            data_siblings.append(
+                dict(
+                    rfilename=info_item.rfilename,
+                    blobId=info_item.blob_id,
+                    size=info_item.size,
+                )
+            )
+    data_info['siblings'] = data_siblings
 
-    return HfDatasetInfo(**data)
+    return HfDatasetInfo(**data_info)
 
 
 def _list_repo_tree(
@@ -225,35 +215,26 @@ def _list_repo_tree(
     _api = HubApi(timeout=3 * 60, max_retries=3)
     endpoint = _api.get_endpoint_for_read(
         repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-    if is_relative_path(repo_id) and repo_id.count('/') == 1:
-        _namespace, _dataset_name = repo_id.split('/')
-    elif is_relative_path(repo_id) and repo_id.count('/') == 0:
-        logger.warning(f'Got a relative path: {repo_id} without namespace, '
-                       f'Use default namespace: {DEFAULT_DATASET_NAMESPACE}')
-        _namespace, _dataset_name = DEFAULT_DATASET_NAMESPACE, repo_id
-    else:
-        raise ValueError(f'Invalid repo_id: {repo_id} !')
 
+    # List all files in the repo
     page_number = 1
     page_size = 100
     while True:
-        data: dict = _api.list_repo_tree(dataset_name=_dataset_name,
-                                         namespace=_namespace,
-                                         revision=revision or DEFAULT_DATASET_REVISION,
-                                         root_path=path_in_repo or None,
-                                         recursive=True,
-                                         page_number=page_number,
-                                         page_size=page_size,
-                                         endpoint=endpoint
-                                         )
-        if not ('Code' in data and data['Code'] == 200):
-            logger.error(f'Get dataset: {repo_id} file list failed, message: {data["Message"]}')
-            return None
+        try:
+            dataset_files = _api.get_dataset_files(
+                repo_id=repo_id,
+                revision=revision or DEFAULT_DATASET_REVISION,
+                root_path=path_in_repo or '/',
+                recursive=recursive,
+                page_number=page_number,
+                page_size=page_size,
+                endpoint=endpoint,
+            )
+        except Exception as e:
+            logger.error(f'Get dataset: {repo_id} file list failed, message: {e}')
+            break
 
-        # Parse data (Type: 'tree' or 'blob')
-        data_file_list: list = data['Data']['Files']
-
-        for file_info_d in data_file_list:
+        for file_info_d in dataset_files:
             path_info = {}
             path_info['type'] = 'directory' if file_info_d['Type'] == 'tree' else 'file'
             path_info['path'] = file_info_d['Path']
@@ -262,7 +243,7 @@ def _list_repo_tree(
 
             yield RepoFile(**path_info) if path_info['type'] == 'file' else RepoFolder(**path_info)
 
-        if len(data_file_list) < page_size:
+        if len(dataset_files) < page_size:
             break
         page_number += 1
 
@@ -278,30 +259,17 @@ def _get_paths_info(
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
 
-    _api = HubApi()
-    _namespace, _dataset_name = repo_id.split('/')
-    endpoint = _api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-    dataset_hub_id, dataset_type = _api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_namespace, endpoint=endpoint)
+    # Refer to func: `_list_repo_tree()`, for patching `HfApi.list_repo_tree`
+    repo_info_iter = self.list_repo_tree(
+        repo_id=repo_id,
+        recursive=False,
+        expand=expand,
+        revision=revision,
+        repo_type=repo_type,
+        token=token,
+    )
 
-    revision: str = revision or DEFAULT_DATASET_REVISION
-    data = _api.get_dataset_infos(dataset_hub_id=dataset_hub_id,
-                                  revision=revision,
-                                  files_metadata=False,
-                                  recursive='False')
-    data_d: dict = data['Data']
-    data_file_list: list = data_d['Files']
-
-    return [
-        RepoFile(path=item_d['Name'],
-                 size=item_d['Size'],
-                 oid=item_d['Revision'],
-                 lfs=None,           # TODO: lfs type to be supported
-                 last_commit=None,   # TODO: lfs type to be supported
-                 security=None
-                 ) for item_d in data_file_list if item_d['Name'] == 'README.md'
-    ]
+    return [item_info for item_info in repo_info_iter]
 
 
 def _download_repo_file(repo_id: str, path_in_repo: str, download_config: DownloadConfig, revision: str):

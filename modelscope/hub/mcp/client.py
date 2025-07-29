@@ -54,27 +54,113 @@ class MCPTimeoutError(MCPClientError):
 
 class MCPClient:
     """
-    MCP Client - A concise implementation based on the official MCP Python SDK
+    MCP Client - A Python client for Model Context Protocol servers
 
-    Simplest usage:
-    ```python
-    # 1. Create client
-    client = MCPClient(mcp_server={
-        "type": "sse",
-        "url": "https://example.com/sse"
-    })
+    This client provides a simple, async interface to connect to MCP servers and execute tools.
+    MCP (Model Context Protocol) allows AI models to securely access external data and services
+    through standardized tool interfaces.
 
-    # 2. Connect and use
-    await client.connect()
-    tools = await client.list_tools()
-    result = await client.call_tool("tool_name", {"param": "value"})
-    await client.disconnect()
+    Key Features:
+    - Multiple transport types: STDIO, SSE, Streamable HTTP
+    - Automatic connection management with context managers
+    - Built-in error handling and timeout management
+    - Tool discovery and execution
+    - Concurrent tool execution support
 
-    # Or use context manager (recommended)
-    async with MCPClient(mcp_server=config) as client:
-        tools = await client.list_tools()
-        result = await client.call_tool("tool_name", {"param": "value"})
-    ```
+    Supported Server Types:
+    - STDIO: Local command-line tools and scripts
+    - SSE: Server-Sent Events for real-time communication
+    - HTTP: RESTful API endpoints with streaming support
+
+    Basic Usage:
+
+    Simple connection and tool execution:
+    >>> import asyncio
+    >>>
+    >>> async def quick_example():
+    ...     # Connect to a server
+    ...     async with MCPClient({
+    ...         "type": "sse",
+    ...         "url": "https://api.example.com/mcp"
+    ...     }) as client:
+    ...
+    ...         # Discover available tools
+    ...         tools = await client.list_tools()
+    ...         print(f"Found {len(tools)} tools")
+    ...
+    ...         # Execute a tool
+    ...         result = await client.call_tool("search", {"query": "python"})
+    ...         print(result)
+
+    Configuration Examples:
+
+    Local STDIO server:
+    >>> client = MCPClient({
+    ...     "type": "stdio",
+    ...     "command": ["python", "-m", "my_mcp_server"]
+    ... })
+
+    Remote SSE server:
+    >>> client = MCPClient({
+    ...     "type": "sse",
+    ...     "url": "https://api.example.com/mcp/sse"
+    ... })
+
+    HTTP streaming server:
+    >>> client = MCPClient({
+    ...     "type": "streamable_http",
+    ...     "url": "https://api.example.com/mcp/http"
+    ... })
+
+    Context Manager Pattern (Recommended):
+    >>> async def recommended_usage():
+    ...     async with MCPClient(config) as client:
+    ...         # Connection automatically managed
+    ...         tools = await client.list_tools()
+    ...
+    ...         for tool in tools:
+    ...             result = await client.call_tool(tool.name, {})
+    ...             print(f"{tool.name}: {result}")
+    ...     # Automatically disconnected here
+
+    Manual Connection Management:
+    >>> async def manual_management():
+    ...     client = MCPClient(config)
+    ...
+    ...     try:
+    ...         await client.connect()
+    ...
+    ...         if client.is_connected():
+    ...             tools = await client.list_tools()
+    ...             result = await client.call_tool("tool_name", {"param": "value"})
+    ...     finally:
+    ...         await client.disconnect()
+
+    Error Handling:
+    >>> async def safe_usage():
+    ...     try:
+    ...         async with MCPClient(config) as client:
+    ...             result = await client.call_tool("risky_tool", {})
+    ...     except MCPConnectionError:
+    ...         print("Failed to connect to server")
+    ...     except MCPToolExecutionError:
+    ...         print("Tool execution failed")
+    ...     except MCPTimeoutError:
+    ...         print("Operation timed out")
+
+    Concurrent Tool Execution:
+    >>> async def concurrent_example():
+    ...     async with MCPClient(config) as client:
+    ...         # Execute multiple tools in parallel
+    ...         tasks = [
+    ...             client.call_tool("tool1", {"param": "value1"}),
+    ...             client.call_tool("tool2", {"param": "value2"}),
+    ...             client.call_tool("tool3", {"param": "value3"})
+    ...         ]
+    ...
+    ...         results = await asyncio.gather(*tasks, return_exceptions=True)
+    ...         for i, result in enumerate(results):
+    ...             print(f"Tool {i+1}: {result}")
     """
 
     def __init__(self, mcp_server: Dict[str, Any]):
@@ -316,20 +402,73 @@ class MCPClient:
         finally:
             self.connected = False
 
-    async def call_tool(self,
-                        tool_name: str,
-                        tool_args: Dict[str, Any],
-                        timeout: Optional[timedelta] = None) -> str:
+    async def call_tool(self, tool_name: str, tool_args: Dict[str,
+                                                              Any]) -> str:
         """
-        Call tool
+        Call tool on the connected MCP server
+
+        This method executes a specific tool with given arguments and returns
+        the result as a string. The tool must exist on the connected server.
 
         Args:
-            tool_name: Tool name
-            tool_args: Tool arguments
-            timeout: Timeout duration
+            tool_name: Name of the tool to execute
+            tool_args: Dictionary of arguments to pass to the tool
+            timeout: Optional timeout duration for the operation
 
         Returns:
-            Tool execution result
+            Tool execution result as a string
+
+        Raises:
+            MCPConnectionError: If not connected to server or connection lost
+            MCPToolExecutionError: If tool execution fails
+            MCPTimeoutError: If operation times out
+
+        Usage:
+
+        Basic tool execution:
+        >>> async with MCPClient(config) as client:
+        ...     # Call tool without arguments
+        ...     result = await client.call_tool("get_time", {})
+        ...     print(f"Current time: {result}")
+        ...     # Call tool with arguments
+        ...     result = await client.call_tool("search", {
+        ...             "query": "python programming",
+        ...             "limit": 10
+        ...         })
+        ...     print(f"Search results: {result}")
+
+
+        Error handling for tool calls:
+        >>> async def safe_tool_call():
+        ...     async with MCPClient(config) as client:
+        ...         try:
+        ...             result = await client.call_tool("risky_tool", {"param": "value"})
+        ...             return result
+        ...         except MCPToolExecutionError as e:
+        ...             print(f"Tool failed: {e}")
+        ...             return None
+        ...         except MCPConnectionError as e:
+        ...             print(f"Connection lost: {e}")
+        ...             return None
+
+        Batch tool execution:
+        >>> async def call_multiple_tools():
+        ...     async with MCPClient(config) as client:
+        ...         tools_to_call = [
+        ...             ("tool1", {"param1": "value1"}),
+        ...             ("tool2", {"param2": "value2"}),
+        ...             ("tool3", {"param3": "value3"})
+        ...         ]
+        ...
+        ...         results = []
+        ...         for tool_name, args in tools_to_call:
+        ...             try:
+        ...                 result = await client.call_tool(tool_name, args)
+        ...                 results.append((tool_name, result))
+        ...             except Exception as e:
+        ...                 results.append((tool_name, f"Error: {e}"))
+        ...
+        ...         return results
         """
         if not self.connected or not self.session:
             raise MCPConnectionError(
@@ -376,16 +515,30 @@ class MCPClient:
             )
             raise MCPToolExecutionError(f'Tool execution failed: {e}') from e
 
-    async def list_tools(self,
-                         timeout: Optional[timedelta] = None) -> List[Tool]:
+    async def list_tools(self) -> List[Tool]:
         """
-        Get tool list
+        Get list of available tools from the connected MCP server
 
-        Args:
-            timeout: Timeout duration
+        This method retrieves all tools that are available on the connected
+        server, including their names, descriptions, and input schemas.
 
         Returns:
-            List of tools
+            List of Tool objects containing tool information
+
+        Raises:
+            MCPConnectionError: If not connected to server
+            Exception: If operation fails
+
+        Usage:
+
+        Basic tool listing:
+        >>> async with MCPClient(config) as client:
+        ...     tools = await client.list_tools()
+        ...     print(f"Found {len(tools)} tools:")
+        ...     for tool in tools:
+        ...         print(f"- {tool.name}: {tool.description}")
+
+
         """
         if not self.connected:
             raise MCPConnectionError('Not connected to server')

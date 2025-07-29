@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from modelscope.hub.api import HubApi
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.errors import raise_for_http_status
 from modelscope.utils.logger import get_logger
 
@@ -42,52 +42,71 @@ class McpApi(HubApi):
 
     This class provides methods for interacting with MCP servers through
     the ModelScope Hub API, including listing, deploying, and managing servers.
+
+    Usage:
+
+    Method 1 - McpApi direct login (recommended):
+    >>> api = McpApi()
+    >>> api.login(access_token="your_token")
+    >>> servers = api.list_mcp_servers()  # No token needed
+    >>> my_servers = api.list_operational_mcp_servers()  # No token needed
+
+    Method 2 - HubApi login then McpApi:
+    >>> from modelscope.hub.api import HubApi
+    >>> hub_api = HubApi()
+    >>> hub_api.login(access_token="your_token")
+    >>> api = McpApi()
+    >>> servers = api.list_mcp_servers()  # No token needed (uses cookies)
+    >>> my_servers = api.list_operational_mcp_servers()  # No token needed
+
+    Authentication (choose one):
+    1. Token per method: Pass token parameter to individual methods when needed
+    2. Login once: api.login(access_token="...") - then no token needed for any method
+
+    Note: McpApi inherits login() from HubApi, providing the most convenient authentication.
+    Methods have different token requirements - see individual method docs.
     """
 
-    def __init__(self, base_api: HubApi) -> None:
+    def __init__(self, endpoint: Optional[str] = None) -> None:
         """
         Initialize MCP API.
 
         Args:
-            base_api: HubApi instance for accessing basic API functionality
-
-        Raises:
-            ValueError: If base_api is not a valid HubApi instance
+            endpoint: The modelscope server address. Defaults to None (uses default endpoint).
         """
+        # Initialize parent HubApi with default settings
+        super().__init__(endpoint=endpoint)
 
-        super().__init__(base_api)
-        # Inherit HubApi's endpoint but add OpenAPI-specific path
-        self.endpoint = base_api.endpoint + OPENAPI_SUFFIX
-        self.session = base_api.session
-        self.builder_headers = base_api.builder_headers
-        self.headers = base_api.headers
+        # Add OpenAPI-specific path to endpoint
+        self.endpoint = self.endpoint + OPENAPI_SUFFIX
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
                          filters: Optional[Dict[str, Any]] = None,
                          page_number: Optional[int] = 1,
                          page_size: Optional[int] = 20,
-                         search: Optional[str] = '',
-                         endpoint: Optional[str] = None) -> Dict[str, Any]:
+                         search: Optional[str] = '') -> Dict[str, Any]:
         """
-        list MCP servers.
+        List available MCP servers.
+
+        Token: Optional - works without token (public servers),
+               or with token (may include additional server information).
+        Cookies: Automatic if logged in via HubApi.login(), no token needed when cookies present.
 
         Args:
-            token: Authentication token (optional). If not provided, request will be made without authentication
-            filters: filtering predicates, valid filter(s) include:
+            token: Authentication token (optional)
+            filters: Filtering predicates, valid filter(s) include:
                 - category: String type, filter by category
                 - is_hosted: Boolean type, filter by hosting status
                 - tag: JSON string type, filter by tags
-                if multiple filters are provided, the server will return results satisfying all filetering conditions.
             page_number: Page number, defaults to 1
             page_size: Page size, defaults to 20
             search: Search keyword, defaults to empty string
-            endpoint: the MCP API endpoint, if not provided, a default endpoint will be used.
 
         Returns:
             Dictionary containing MCP server list:
                 - total_counts: Total count
-                - servers: Brief server information list of MCP servers satisfying the condition
+                - servers: Brief server information list
 
         Example return:
             {
@@ -104,8 +123,7 @@ class McpApi(HubApi):
         if page_size < 1:
             raise ValueError('page_size must be greater than 0')
 
-        if not endpoint:
-            endpoint = self.endpoint
+        endpoint = self.endpoint
 
         url = f'{endpoint}/mcp/servers'
         headers = self.builder_headers(self.headers)
@@ -122,7 +140,10 @@ class McpApi(HubApi):
         }
 
         try:
-            r = self.session.put(url, headers=headers, json=body)
+            # Get cookies for authentication
+            cookies = ModelScopeConfig.get_cookies()
+            r = self.session.put(
+                url, headers=headers, json=body, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get MCP servers: {e}')
@@ -147,16 +168,15 @@ class McpApi(HubApi):
             'servers': server_brief_list
         }
 
-    def list_operational_mcp_servers(
-            self,
-            token: str,
-            endpoint: Optional[str] = None) -> Dict[str, Any]:
+    def list_operational_mcp_servers(self, token: str) -> Dict[str, Any]:
         """
         Get user-hosted MCP server list.
 
+        Token: Required - this method only returns user's private/deployed servers.
+        Cookies: Automatic if logged in via HubApi.login(), replaces token requirement when present.
+
         Args:
-            token: user's authentication token, required.
-            endpoint: the MCP API endpoint, if not provided, a default endpoint will be used.
+            token: User's authentication token (required, unless cookies available).
 
         Returns:
             Dictionary containing MCP server list:
@@ -177,8 +197,7 @@ class McpApi(HubApi):
                 }
             }
         """
-        if not endpoint:
-            endpoint = self.endpoint
+        endpoint = self.endpoint
 
         url = f'{endpoint}/mcp/servers/operational'
         headers = self.builder_headers(self.headers)
@@ -190,7 +209,9 @@ class McpApi(HubApi):
             raise ValueError('token is required')
 
         try:
-            r = self.session.get(url, headers=headers)
+            # Get cookies for authentication
+            cookies = ModelScopeConfig.get_cookies()
+            r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get operational MCP servers: {e}')
@@ -242,43 +263,39 @@ class McpApi(HubApi):
 
     def get_mcp_server(self,
                        server_id: str,
-                       token: Optional[str] = None,
-                       get_operational_url: bool = False,
-                       endpoint: Optional[str] = None) -> Dict[str, Any]:
+                       token: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get special MCP server information.
+        Get specific MCP server information.
+
+        Token: Optional - works without token (basic server info),
+               or with token (include additional operational url).
 
         Args:
             server_id: ID of the MCP server
             token: Authentication token (optional)
-            get_operational_url: Whether to get operational URLs
-            endpoint: API endpoint, defaults to MCP-specific endpoint
 
         Returns:
-            Dictionary containing only key server information:
+            Dictionary containing server information:
                 - name: server name
                 - description: server description
                 - id: server id
-                - mcp_servers: MCP server configuration(if get_operational_url is True)
+                - service_config: MCP server configuration (always included)
 
         Example return:
             {
                 'name': 'ServerA',
                 'description': 'This is a demo server for xxx.',
                 'id': '@demo/serverA',
-                'mcp_servers'(if get_operational_url is True): {
-                    'serverA': {
-                        'type': 'sse',
-                        'url': 'https://example.com/serverA/sse'
-                    }
+                'service_config': {
+                    'type': 'sse',
+                    'url': 'https://example.com/serverA/sse'
                 }
             }
         """
         if not server_id:
             raise ValueError('server_id cannot be empty')
 
-        if not endpoint:
-            endpoint = self.endpoint
+        endpoint = self.endpoint
 
         url = f'{endpoint}/mcp/servers/{server_id}'
         headers = self.builder_headers(self.headers)
@@ -287,10 +304,14 @@ class McpApi(HubApi):
             headers['Authorization'] = f'Bearer {token}'
 
         try:
+            # Get cookies for authentication
+            cookies = ModelScopeConfig.get_cookies()
             r = self.session.get(
                 url,
                 headers=headers,
-                params={'get_operational_url': get_operational_url})
+                params={'get_operational_url':
+                        True},  # Always get operational URLs
+                cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get MCP server {server_id}: {e}')
@@ -312,25 +333,24 @@ class McpApi(HubApi):
             'id': data.get('id', '')
         }
 
-        if get_operational_url:
-            service_config = {}
-            server_id = data.get('id', '')
-            if server_id.startswith('@'):
-                server_name = server_id.split(
-                    '/', 1)[1] if '/' in server_id else server_id[1:]
-            else:
-                server_name = server_id
+        service_config = {}
+        server_id = data.get('id', '')
+        if server_id.startswith('@'):
+            server_name = server_id.split(
+                '/', 1)[1] if '/' in server_id else server_id[1:]
+        else:
+            server_name = server_id
 
-            operational_urls = data.get('operational_urls', [])
-            if server_name and operational_urls:
-                service_config = {
-                    'type':
-                    'sse',
-                    'url':
-                    operational_urls[0]['url'] if isinstance(
-                        operational_urls[0], dict) else operational_urls[0]
-                }
-            result['service_config'] = service_config
+        operational_urls = data.get('operational_urls', [])
+        if server_name and operational_urls:
+            service_config = {
+                'type':
+                'sse',
+                'url':
+                operational_urls[0]['url'] if isinstance(
+                    operational_urls[0], dict) else operational_urls[0]
+            }
+        result['service_config'] = service_config
 
         return result
 

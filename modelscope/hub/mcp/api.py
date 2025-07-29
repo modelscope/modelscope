@@ -18,7 +18,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 # MCP API path suffix
-OPENAPI_PATH = '/openapi/v1'
+OPENAPI_SUFFIX = '/openapi/v1'
 
 
 class MCPApiError(Exception):
@@ -57,7 +57,7 @@ class McpApi(HubApi):
 
         super().__init__(base_api)
         # Inherit HubApi's endpoint but add OpenAPI-specific path
-        self.endpoint = base_api.endpoint + OPENAPI_PATH
+        self.endpoint = base_api.endpoint + OPENAPI_SUFFIX
         self.session = base_api.session
         self.builder_headers = base_api.builder_headers
         self.headers = base_api.headers

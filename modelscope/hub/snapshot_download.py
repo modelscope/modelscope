@@ -4,17 +4,11 @@ import fnmatch
 import os
 import re
 import uuid
+from contextlib import nullcontext
 from http.cookiejar import CookieJar
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
-from modelscope.hub.api import HubApi, ModelScopeConfig
-from modelscope.hub.errors import InvalidParameter
-from modelscope.hub.file_download import (create_temporary_directory_and_cache,
-                                          download_file, get_file_download_url)
-from modelscope.hub.utils.caching import ModelFileSystemCache
-from modelscope.hub.utils.utils import (get_model_masked_directory,
-                                        model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
@@ -23,6 +17,15 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
 from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
+from .api import HubApi, ModelScopeConfig
+from .callback import ProgressCallback
+from .errors import InvalidParameter
+from .file_download import (create_temporary_directory_and_cache,
+                            download_file, get_file_download_url)
+from .utils.caching import ModelFileSystemCache
+from .utils.utils import (get_model_masked_directory,
+                          model_id_to_group_owner_name, strtobool,
+                          weak_file_lock)
 
 logger = get_logger()
 
@@ -42,6 +45,8 @@ def snapshot_download(
     max_workers: int = 8,
     repo_id: str = None,
     repo_type: Optional[str] = REPO_TYPE_MODEL,
+    enable_file_lock: Optional[bool] = None,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -77,6 +82,11 @@ def snapshot_download(
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
         max_workers (`int`): The maximum number of workers to download files, default 8.
+        enable_file_lock (`bool`): Enable file lock, this is useful in multiprocessing downloading, default `True`.
+            If you find something wrong with file lock and have a problem modifying your code,
+            change `MODELSCOPE_HUB_FILE_LOCK` env to `false`.
+        progress_callbacks (`List[Type[ProgressCallback]]`, **optional**, default to `None`):
+            progress callbacks to track the download progress.
     Raises:
         ValueError: the value details.
 
@@ -105,20 +115,35 @@ def snapshot_download(
     if revision is None:
         revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
 
-    return _snapshot_download(
-        repo_id,
-        repo_type=repo_type,
-        revision=revision,
-        cache_dir=cache_dir,
-        user_agent=user_agent,
-        local_files_only=local_files_only,
-        cookies=cookies,
-        ignore_file_pattern=ignore_file_pattern,
-        allow_file_pattern=allow_file_pattern,
-        local_dir=local_dir,
-        ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns,
-        max_workers=max_workers)
+    if enable_file_lock is None:
+        enable_file_lock = strtobool(
+            os.environ.get('MODELSCOPE_HUB_FILE_LOCK', 'true'))
+
+    if enable_file_lock:
+        system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir(
+        )
+        os.makedirs(os.path.join(system_cache, '.lock'), exist_ok=True)
+        lock_file = os.path.join(system_cache, '.lock',
+                                 repo_id.replace('/', '___'))
+        context = weak_file_lock(lock_file)
+    else:
+        context = nullcontext()
+    with context:
+        return _snapshot_download(
+            repo_id,
+            repo_type=repo_type,
+            revision=revision,
+            cache_dir=cache_dir,
+            user_agent=user_agent,
+            local_files_only=local_files_only,
+            cookies=cookies,
+            ignore_file_pattern=ignore_file_pattern,
+            allow_file_pattern=allow_file_pattern,
+            local_dir=local_dir,
+            ignore_patterns=ignore_patterns,
+            allow_patterns=allow_patterns,
+            max_workers=max_workers,
+            progress_callbacks=progress_callbacks)
 
 
 def dataset_snapshot_download(
@@ -133,6 +158,7 @@ def dataset_snapshot_download(
     allow_file_pattern: Optional[Union[str, List[str]]] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
+    enable_file_lock: Optional[bool] = None,
     max_workers: int = 8,
 ) -> str:
     """Download raw files of a dataset.
@@ -166,6 +192,9 @@ def dataset_snapshot_download(
         ignore_patterns (`str` or `List`, *optional*, default to `None`):
             If provided, files matching any of the patterns are not downloaded, priority over ignore_file_pattern.
             For hugging-face compatibility.
+        enable_file_lock (`bool`): Enable file lock, this is useful in multiprocessing downloading, default `True`.
+            If you find something wrong with file lock and have a problem modifying your code,
+            change `MODELSCOPE_HUB_FILE_LOCK` env to `false`.
         max_workers (`int`): The maximum number of workers to download files, default 8.
     Raises:
         ValueError: the value details.
@@ -182,20 +211,34 @@ def dataset_snapshot_download(
         - [`ValueError`](https://docs.python.org/3/library/exceptions.html#ValueError)
         if some parameter value is invalid
     """
-    return _snapshot_download(
-        dataset_id,
-        repo_type=REPO_TYPE_DATASET,
-        revision=revision,
-        cache_dir=cache_dir,
-        user_agent=user_agent,
-        local_files_only=local_files_only,
-        cookies=cookies,
-        ignore_file_pattern=ignore_file_pattern,
-        allow_file_pattern=allow_file_pattern,
-        local_dir=local_dir,
-        ignore_patterns=ignore_patterns,
-        allow_patterns=allow_patterns,
-        max_workers=max_workers)
+    if enable_file_lock is None:
+        enable_file_lock = strtobool(
+            os.environ.get('MODELSCOPE_HUB_FILE_LOCK', 'true'))
+
+    if enable_file_lock:
+        system_cache = cache_dir if cache_dir is not None else get_modelscope_cache_dir(
+        )
+        os.makedirs(os.path.join(system_cache, '.lock'), exist_ok=True)
+        lock_file = os.path.join(system_cache, '.lock',
+                                 dataset_id.replace('/', '___'))
+        context = weak_file_lock(lock_file)
+    else:
+        context = nullcontext()
+    with context:
+        return _snapshot_download(
+            dataset_id,
+            repo_type=REPO_TYPE_DATASET,
+            revision=revision,
+            cache_dir=cache_dir,
+            user_agent=user_agent,
+            local_files_only=local_files_only,
+            cookies=cookies,
+            ignore_file_pattern=ignore_file_pattern,
+            allow_file_pattern=allow_file_pattern,
+            local_dir=local_dir,
+            ignore_patterns=ignore_patterns,
+            allow_patterns=allow_patterns,
+            max_workers=max_workers)
 
 
 def _snapshot_download(
@@ -213,6 +256,7 @@ def _snapshot_download(
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -304,6 +348,7 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 max_workers=max_workers,
                 endpoint=endpoint,
+                progress_callbacks=progress_callbacks,
             )
             if '.' in repo_id:
                 masked_directory = get_model_masked_directory(
@@ -336,8 +381,8 @@ def _snapshot_download(
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
             logger.info('Fetching dataset repo file list...')
-            repo_files = fetch_repo_files(_api, name, group_or_owner,
-                                          revision_detail, endpoint)
+            repo_files = fetch_repo_files(_api, repo_id, revision_detail,
+                                          endpoint)
 
             if repo_files is None:
                 logger.error(
@@ -362,6 +407,7 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 max_workers=max_workers,
                 endpoint=endpoint,
+                progress_callbacks=progress_callbacks,
             )
 
         cache.save_model_version(revision_info=revision_detail)
@@ -369,32 +415,28 @@ def _snapshot_download(
         return cache_root_path
 
 
-def fetch_repo_files(_api, name, group_or_owner, revision, endpoint):
+def fetch_repo_files(_api, repo_id, revision, endpoint):
     page_number = 1
     page_size = 150
     repo_files = []
 
     while True:
-        files_list_tree = _api.list_repo_tree(
-            dataset_name=name,
-            namespace=group_or_owner,
-            revision=revision,
-            root_path='/',
-            recursive=True,
-            page_number=page_number,
-            page_size=page_size,
-            endpoint=endpoint)
+        try:
+            dataset_files = _api.get_dataset_files(
+                repo_id=repo_id,
+                revision=revision,
+                root_path='/',
+                recursive=True,
+                page_number=page_number,
+                page_size=page_size,
+                endpoint=endpoint)
+        except Exception as e:
+            logger.error(f'Error fetching dataset files: {e}')
+            break
 
-        if not ('Code' in files_list_tree and files_list_tree['Code'] == 200):
-            logger.error(f'Get dataset file list failed, request_id:  \
-                {files_list_tree["RequestId"]}, message: {files_list_tree["Message"]}'
-                         )
-            return None
+        repo_files.extend(dataset_files)
 
-        cur_repo_files = files_list_tree['Data']['Files']
-        repo_files.extend(cur_repo_files)
-
-        if len(cur_repo_files) < page_size:
+        if len(dataset_files) < page_size:
             break
 
         page_number += 1
@@ -449,6 +491,7 @@ def _download_file_lists(
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
     endpoint: Optional[str] = None,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
     ignore_patterns = _normalize_patterns(ignore_patterns)
     allow_patterns = _normalize_patterns(allow_patterns)
@@ -532,6 +575,7 @@ def _download_file_lists(
             headers,
             cookies,
             disable_tqdm=False,
+            progress_callbacks=progress_callbacks,
         )
 
     if len(filtered_repo_files) > 0:

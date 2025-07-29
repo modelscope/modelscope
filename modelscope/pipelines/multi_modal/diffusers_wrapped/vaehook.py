@@ -3,11 +3,11 @@
 
 import gc
 import math
+import os
 from time import time
 
 import torch
 import torch.nn.functional as F
-import torch.version
 from tqdm import tqdm
 
 from .devices import device, get_optimal_device, test_for_nans, torch_gc
@@ -63,7 +63,6 @@ if 'global const':
 
 # inplace version of silu
 def inplace_nonlinearity(x):
-    # Test: fix for Nans
     return F.silu(x, inplace=True)
 
 
@@ -113,7 +112,7 @@ def attn_forward_new(self, h_):
 
 
 def attn2task(task_queue, net):
-    task_queue.append(('store_res', lambda x: x))
+    task_queue.append(('store_res', torch.nn.Identity()))
     task_queue.append(('pre_norm', net.group_norm))
     task_queue.append(('attn', lambda x, net=net: attn_forward_new(net, x)))
     task_queue.append(['add_res', None])
@@ -140,7 +139,7 @@ def resblock2task(queue, block):
                 queue.append(('store_res', block.nin_shortcut))
 
     else:
-        queue.append(('store_res', lambda x: x))
+        queue.append(('store_res', torch.nn.Identity()))
     queue.append(('pre_norm', block.norm1))
     queue.append(('silu', inplace_nonlinearity))
     queue.append(('conv1', block.conv1))
@@ -161,7 +160,6 @@ def build_sampling(task_queue, net, is_decoder):
         if sd_flag:
             resblock2task(task_queue, net.mid.block_1)
             attn2task(task_queue, net.mid.attn_1)
-            print(task_queue)
             resblock2task(task_queue, net.mid.block_2)
             resolution_iter = reversed(range(net.num_resolutions))
             block_ids = net.num_res_blocks + 1
@@ -172,8 +170,7 @@ def build_sampling(task_queue, net, is_decoder):
             resblock2task(task_queue, net.mid_block.resnets[0])
             attn2task(task_queue, net.mid_block.attentions[0])
             resblock2task(task_queue, net.mid_block.resnets[1])
-            resolution_iter = (range(len(net.up_blocks))
-                               )  # net.num_resolutions = 3
+            resolution_iter = range(len(net.up_blocks))
             block_ids = 2 + 1
             condition = len(net.up_blocks) - 1
             module = net.up_blocks
@@ -220,7 +217,6 @@ def build_task_queue(net, is_decoder):
     task_queue.append(('conv_in', net.conv_in))
 
     # construct the sampling part of the task queue
-    # because encoder and decoder share the same architecture, we extract the sampling part
     build_sampling(task_queue, net, is_decoder)
     if is_decoder and not sd_flag:
         net.give_pre_end = False
@@ -248,17 +244,14 @@ def clone_task_queue(task_queue):
     return [[item for item in task] for task in task_queue]
 
 
-def get_var_mean(input, num_groups, eps=1e-6):
+def get_var_mean(input, num_groups):
     """
-    Get mean and var for group norm
+    Get mean and var for group norm (optimized version)
     """
-    b, c = input.size(0), input.size(1)
-    channel_in_group = int(c / num_groups)
-    input_reshaped = input.contiguous().view(1, int(b * num_groups),
-                                             channel_in_group,
-                                             *input.size()[2:])
-    var, mean = torch.var_mean(
-        input_reshaped, dim=[0, 2, 3, 4], unbiased=False)
+    b, c, h, w = input.shape
+    channel_in_group = c // num_groups
+    input_reshaped = input.reshape(b * num_groups, channel_in_group, h, w)
+    var, mean = torch.var_mean(input_reshaped, dim=(0, 2, 3), unbiased=False)
     return var, mean
 
 
@@ -282,11 +275,9 @@ def custom_group_norm(input,
 
     @return: normalized tensor
     """
-    b, c = input.size(0), input.size(1)
-    channel_in_group = int(c / num_groups)
-    input_reshaped = input.contiguous().view(1, int(b * num_groups),
-                                             channel_in_group,
-                                             *input.size()[2:])
+    b, c, h, w = input.shape
+    channel_in_group = c // num_groups
+    input_reshaped = input.reshape(b * num_groups, channel_in_group, h, w)
 
     out = F.batch_norm(
         input_reshaped,
@@ -298,13 +289,13 @@ def custom_group_norm(input,
         momentum=0,
         eps=eps)
 
-    out = out.view(b, c, *input.size()[2:])
+    out = out.view(b, c, h, w)
 
     # post affine transform
     if weight is not None:
-        out *= weight.view(1, -1, 1, 1)
+        out = out * weight.view(1, -1, 1, 1).to(out.dtype)
     if bias is not None:
-        out += bias.view(1, -1, 1, 1)
+        out = out + bias.view(1, -1, 1, 1).to(out.dtype)
     return out
 
 
@@ -373,10 +364,6 @@ class GroupNormParam:
         if var.dtype == torch.float16 and var.isinf().any():
             fp32_tile = tile.float()
             var, mean = get_var_mean(fp32_tile, 32)
-        # ============= DEBUG: test for infinite =============
-        # if torch.isinf(var).any():
-        #    print('var: ', var)
-        # ====================================================
         self.var_list.append(var)
         self.mean_list.append(mean)
         self.pixel_list.append(tile.shape[2] * tile.shape[3])
@@ -396,11 +383,10 @@ class GroupNormParam:
             return None
         var = torch.vstack(self.var_list)
         mean = torch.vstack(self.mean_list)
-        max_value = max(self.pixel_list)
+        total_pixels = sum(self.pixel_list)
         pixels = torch.tensor(
-            self.pixel_list, dtype=torch.float32, device=device) / max_value
-        sum_pixels = torch.sum(pixels)
-        pixels = pixels.unsqueeze(1) / sum_pixels
+            self.pixel_list, dtype=torch.float32, device=device) / total_pixels
+        pixels = pixels.unsqueeze(1)
         var = torch.sum(var * pixels, dim=0)
         mean = torch.sum(mean * pixels, dim=0)
         return lambda x: custom_group_norm(x, 32, mean, var, self.weight, self.
@@ -419,8 +405,8 @@ class GroupNormParam:
             if var.device.type == 'mps':
                 # clamp to avoid overflow
                 var = torch.clamp(var, 0, 60000)
-                var = var.half()
-                mean = mean.half()
+                var = var.to(torch.float16)
+                mean = mean.to(torch.float16)
         if hasattr(norm, 'weight'):
             weight = norm.weight
             bias = norm.bias
@@ -452,22 +438,29 @@ class VAEHook:
         self.color_fix = color_fix and not is_decoder
         self.to_gpu = to_gpu
         self.pad = 11 if is_decoder else 32
+        self.enable_cuda_empty_cache = os.getenv('MODELSCOPE_VAE_EMPTY_CACHE',
+                                                 '0') == '1'
 
     def __call__(self, x):
         B, C, H, W = x.shape
         original_device = next(self.net.parameters()).device
         try:
+            target_device = get_optimal_device(
+            ) if self.to_gpu else original_device
             if self.to_gpu:
-                self.net.to(get_optimal_device())
+                self.net.to(target_device)
+
             if max(H, W) <= self.pad * 2 + self.tile_size:
                 print(
                     '[Tiled VAE]: the input size is tiny and unnecessary to tile.'
                 )
-                return self.net.original_forward(x)
+                return self.net.original_forward(x.to(target_device))
             else:
-                return self.vae_tile_forward(x)
+                return self.vae_tile_forward(x.to(target_device))
         finally:
             self.net.to(original_device)
+            if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                torch.cuda.empty_cache()
 
     def get_best_tile_size(self, lowerbound, upperbound):
         """
@@ -496,12 +489,9 @@ class VAEHook:
         pad = self.pad
         num_height_tiles = math.ceil((h - 2 * pad) / tile_size)
         num_width_tiles = math.ceil((w - 2 * pad) / tile_size)
-        # If any of the numbers are 0, we let it be 1
-        # This is to deal with long and thin images
         num_height_tiles = max(num_height_tiles, 1)
         num_width_tiles = max(num_width_tiles, 1)
 
-        # Suggestions from https://github.com/Kahsolt: auto shrink the tile size
         real_tile_height = math.ceil((h - 2 * pad) / num_height_tiles)
         real_tile_width = math.ceil((w - 2 * pad) / num_width_tiles)
         real_tile_height = self.get_best_tile_size(real_tile_height, tile_size)
@@ -514,8 +504,6 @@ class VAEHook:
 
         for i in range(num_height_tiles):
             for j in range(num_width_tiles):
-                # bbox: [x1, x2, y1, y2]
-                # the padding is is unnecessary for image borders. So we directly start from (32, 32)
                 input_bbox = [
                     pad + j * real_tile_width,
                     min(pad + (j + 1) * real_tile_width, w),
@@ -523,7 +511,6 @@ class VAEHook:
                     min(pad + (i + 1) * real_tile_height, h),
                 ]
 
-                # if the output bbox is close to the image boundary, we extend it to the image boundary
                 output_bbox = [
                     input_bbox[0] if input_bbox[0] > pad else 0,
                     input_bbox[1] if input_bbox[1] < w - pad else w,
@@ -531,13 +518,11 @@ class VAEHook:
                     input_bbox[3] if input_bbox[3] < h - pad else h,
                 ]
 
-                # scale to get the final output bbox
                 output_bbox = [
                     x * 8 if self.is_decoder else x // 8 for x in output_bbox
                 ]
                 tile_output_bboxes.append(output_bbox)
 
-                # indistinguishable expand the input bbox by pad pixels
                 tile_input_bboxes.append([
                     max(0, input_bbox[0] - pad),
                     min(w, input_bbox[1] + pad),
@@ -575,7 +560,7 @@ class VAEHook:
             elif task[0] == 'add_res':
                 tile += task[1].to(device)
                 task[1] = None
-            elif color_fix and task[0] == 'downsample':
+            elif self.color_fix and task[0] == 'downsample' and i < last_id:
                 for j in range(i, last_id + 1):
                     if task_queue[j][0] == 'store_res':
                         task_queue[j] = ('store_res_cpu', task_queue[j][1])
@@ -600,12 +585,12 @@ class VAEHook:
         @param z: latent vector
         @return: image
         """
-        device = next(self.net.parameters()).device
+        device = z.device
         net = self.net
         tile_size = self.tile_size
         is_decoder = self.is_decoder
 
-        z = z.detach()  # detach the input to avoid backprop
+        z = z.detach()
 
         N, height, width = z.shape[0], z.shape[2], z.shape[3]
         net.last_z_shape = z.shape
@@ -617,12 +602,8 @@ class VAEHook:
 
         in_bboxes, out_bboxes = self.split_tiles(height, width)
 
-        # Prepare tiles by split the input latents
-        tiles = []
-        for input_bbox in in_bboxes:
-            tile = z[:, :, input_bbox[2]:input_bbox[3],
-                     input_bbox[0]:input_bbox[1]].cpu()
-            tiles.append(tile)
+        # Prepare tiles using list comprehension
+        tiles = [z[:, :, b[2]:b[3], b[0]:b[1]].cpu() for b in in_bboxes]
 
         num_tiles = len(tiles)
         num_completed = 0
@@ -630,35 +611,32 @@ class VAEHook:
         # Build task queues
         single_task_queue = build_task_queue(net, is_decoder)
         if self.fast_mode:
-            # Fast mode: downsample the input image to the tile size,
-            # then estimate the group norm parameters on the downsampled image
-            scale_factor = tile_size / max(height, width)
             z = z.to(device)
+            scale_factor = tile_size / max(height, width)
             downsampled_z = F.interpolate(
                 z, scale_factor=scale_factor, mode='nearest-exact')
-            # use nearest-exact to keep statistics as close as possible
-            print(
-                f'[Tiled VAE]: Fast mode enabled, estimating group norm parameters on \
-                    {downsampled_z.shape[3]} x {downsampled_z.shape[2]} image')
 
-            # ======= Special thanks to @Kahsolt for distribution shift issue ======= #
-            # The downsampling will heavily distort its mean and std, so we need to recover it.
+            print(
+                f'[Tiled VAE]: Fast mode enabled, estimating group norm parameters on '
+                f'{downsampled_z.shape[3]} x {downsampled_z.shape[2]} image')
+
+            # Adjust statistics to match original distribution
             std_old, mean_old = torch.std_mean(z, dim=[0, 2, 3], keepdim=True)
             std_new, mean_new = torch.std_mean(
                 downsampled_z, dim=[0, 2, 3], keepdim=True)
             downsampled_z = (downsampled_z
                              - mean_new) / std_new * std_old + mean_old
-            del std_old, mean_old, std_new, mean_new
-            # occasionally the std_new is too small or too large, which exceeds the range of float16
-            # so we need to clamp it to max z's range.
-            downsampled_z = torch.clamp_(
+            downsampled_z = torch.clamp(
                 downsampled_z, min=z.min(), max=z.max())
+
             estimate_task_queue = clone_task_queue(single_task_queue)
             if self.estimate_group_norm(
                     downsampled_z, estimate_task_queue,
                     color_fix=self.color_fix):
                 single_task_queue = estimate_task_queue
             del downsampled_z
+            if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                torch.cuda.empty_cache()
 
         task_queues = [
             clone_task_queue(single_task_queue) for _ in range(num_tiles)
@@ -666,97 +644,97 @@ class VAEHook:
 
         # Dummy result
         result = None
-        result_approx = None
         # Free memory of input latent tensor
-        del z
+        z = None
+        gc.collect()
 
-        # Task queue execution
+        # Calculate total tasks for progress bar
+        total_tasks = sum(len(q) for q in task_queues)
         pbar = tqdm(
-            total=num_tiles * len(task_queues[0]),
+            total=total_tasks,
             desc=
-            f"[Tiled VAE]: Executing {'Decoder' if is_decoder else 'Encoder'} Task Queue: "
-        )
+            f"[Tiled VAE]: Executing {'Decoder' if is_decoder else 'Encoder'}")
 
-        # execute the task back and forth when switch tiles so that we always
-        # keep one tile on the GPU to reduce unnecessary data transfer
+        # execute the task back and forth when switch tiles
         forward = True
-        interrupted = False
-        while True:
-
+        while num_completed < num_tiles:
             group_norm_param = GroupNormParam()
-            for i in range(num_tiles) if forward else reversed(
-                    range(num_tiles)):
+            indices = range(num_tiles) if forward else reversed(
+                range(num_tiles))
+
+            for i in indices:
+                if tiles[i] is None:
+                    continue  # Skip completed tiles
 
                 tile = tiles[i].to(device)
-                input_bbox = in_bboxes[i]
                 task_queue = task_queues[i]
 
-                interrupted = False
-                while len(task_queue) > 0:
-                    # DEBUG: current task
-                    task = task_queue.pop(0)
+                # Process all tasks in the queue
+                for task_idx, task in enumerate(task_queue):
                     if task[0] == 'pre_norm':
                         group_norm_param.add_tile(tile, task[1])
+                        # Remove processed tasks
+                        task_queue[task_idx] = None
                         break
                     elif task[0] == 'store_res' or task[0] == 'store_res_cpu':
-                        task_id = 0
                         res = task[1](tile)
-                        if not self.fast_mode or task[0] == 'store_res_cpu':
+                        if task[0] == 'store_res_cpu' or not self.fast_mode:
                             res = res.cpu()
-                        while task_queue[task_id][0] != 'add_res':
-                            task_id += 1
-                        task_queue[task_id][1] = res
+                        # Find the corresponding 'add_res' task
+                        for add_idx in range(task_idx + 1, len(task_queue)):
+                            if task_queue[add_idx][0] == 'add_res':
+                                task_queue[add_idx] = ('add_res', res)
+                                break
+                        task_queue[task_idx] = None
                     elif task[0] == 'add_res':
                         tile += task[1].to(device)
-                        task[1] = None
+                        task_queue[task_idx] = None
                     else:
                         tile = task[1](tile)
+                        task_queue[task_idx] = None
                     pbar.update(1)
 
-                if interrupted:
-                    break
+                # Remove processed tasks
+                task_queues[i] = [t for t in task_queue if t is not None]
 
-                # check for NaNs in the tile.
-                # If there are NaNs, we abort the process to save user's time
+                # Check for NaNs
                 test_for_nans(tile, 'vae')
 
-                if len(task_queue) == 0:
+                if len(task_queues[i]) == 0:
                     tiles[i] = None
                     num_completed += 1
-                    if result is None:  # NOTE: dim C varies from different cases, can only be inited dynamically
+                    if result is None:
                         result = torch.zeros(
                             (N, tile.shape[1],
                              height * 8 if is_decoder else height // 8,
                              width * 8 if is_decoder else width // 8),
-                            device=device,
-                            requires_grad=False)
+                            device=device)
                     result[:, :, out_bboxes[i][2]:out_bboxes[i][3],
                            out_bboxes[i][0]:out_bboxes[i]
                            [1]] = crop_valid_region(tile, in_bboxes[i],
                                                     out_bboxes[i], is_decoder)
                     del tile
-                elif i == num_tiles - 1 and forward:
-                    forward = False
-                    tiles[i] = tile
-                elif i == 0 and not forward:
-                    forward = True
-                    tiles[i] = tile
                 else:
-                    tiles[i] = tile.cpu()
-                    del tile
+                    # Keep tile for next processing
+                    if i == num_tiles - 1 and forward:
+                        forward = False
+                        tiles[i] = tile
+                    elif i == 0 and not forward:
+                        forward = True
+                        tiles[i] = tile
+                    else:
+                        tiles[i] = tile.cpu()
+                if torch.cuda.is_available() and self.enable_cuda_empty_cache:
+                    torch.cuda.empty_cache()
 
-            if interrupted:
-                break
-            if num_completed == num_tiles:
-                break
-
-            # insert the group norm task to the head of each task queue
+            # Insert the group norm task to each remaining task queue
             group_norm_func = group_norm_param.summary()
             if group_norm_func is not None:
                 for i in range(num_tiles):
-                    task_queue = task_queues[i]
-                    task_queue.insert(0, ('apply_norm', group_norm_func))
+                    if tiles[i] is not None:
+                        task_queues[i].insert(0,
+                                              ('apply_norm', group_norm_func))
 
         # Done!
         pbar.close()
-        return result if result is not None else result_approx.to(device)
+        return result.to(device)

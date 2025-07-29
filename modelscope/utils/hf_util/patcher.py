@@ -239,24 +239,14 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     from transformers import CONFIG_NAME
                     extra_allow_file_pattern = [CONFIG_NAME, r'*.py']
                 elif 'Tokenizer' in module_class.__name__:
-                    from transformers.tokenization_utils import ADDED_TOKENS_FILE
-                    from transformers.tokenization_utils import SPECIAL_TOKENS_MAP_FILE
-                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
-                    from transformers.tokenization_utils_base import FULL_TOKENIZER_FILE
                     extra_allow_file_pattern = list(
                         (cls.vocab_files_names.values()) if cls is not None
                         and hasattr(cls, 'vocab_files_names') else []) + [
-                            ADDED_TOKENS_FILE, SPECIAL_TOKENS_MAP_FILE,
-                            TOKENIZER_CONFIG_FILE, FULL_TOKENIZER_FILE,
-                            'chat_template.jinja', r'*.py'
+                            'chat_template.jinja', r'*.json', r'*.py'
                         ]  # noqa
                 elif 'Processor' in module_class.__name__:
-                    from transformers.utils import FEATURE_EXTRACTOR_NAME
-                    from transformers.utils import PROCESSOR_NAME
-                    from transformers.tokenization_utils import TOKENIZER_CONFIG_FILE
                     extra_allow_file_pattern = [
-                        FEATURE_EXTRACTOR_NAME, TOKENIZER_CONFIG_FILE,
-                        PROCESSOR_NAME, r'*.py'
+                        'chat_template.jinja', r'*.json', r'*.py'
                     ]
 
                 kwargs['allow_file_pattern'] = extra_allow_file_pattern

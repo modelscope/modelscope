@@ -2,6 +2,7 @@
 # yapf: disable
 
 import datetime
+import fnmatch
 import functools
 import io
 import os
@@ -34,17 +35,23 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
-                                      DEFAULT_CREDENTIALS_PATH,
                                       DEFAULT_MAX_WORKERS,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
+                                      MODELSCOPE_CREDENTIALS_PATH,
                                       MODELSCOPE_DOMAIN,
                                       MODELSCOPE_PREFER_AI_SITE,
                                       MODELSCOPE_REQUEST_ID,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
-                                      TEMPORARY_FOLDER_NAME, DatasetVisibility,
-                                      Licenses, ModelVisibility, Visibility,
+                                      TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_MAX_FILE_COUNT,
+                                      UPLOAD_MAX_FILE_COUNT_IN_DIR,
+                                      UPLOAD_MAX_FILE_SIZE,
+                                      UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+                                      DatasetVisibility, Licenses,
+                                      ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -367,7 +374,7 @@ class HubApi:
                 by a `/`.
             repo_type (`str`, *optional*):
                 `None` or `"model"` if getting repository info from a model. Default is `None`.
-                TODO: support dataset and studio
+                TODO: support studio
             endpoint(`str`):
                 None or specific endpoint to use, when None, use the default endpoint
                 set in HubApi class (self.endpoint)
@@ -839,7 +846,7 @@ class HubApi:
                         model_id: str,
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         root: Optional[str] = None,
-                        recursive: Optional[str] = False,
+                        recursive: Optional[bool] = False,
                         use_cookies: Union[bool, CookieJar] = False,
                         headers: Optional[dict] = {},
                         endpoint: Optional[str] = None) -> List[dict]:
@@ -849,7 +856,7 @@ class HubApi:
             model_id (str): The model id
             revision (Optional[str], optional): The branch or tag name.
             root (Optional[str], optional): The root path. Defaults to None.
-            recursive (Optional[str], optional): Is recursive list files. Defaults to False.
+            recursive (Optional[bool], optional): Is recursive list files. Defaults to False.
             use_cookies (Union[bool, CookieJar], optional): If is cookieJar, we will use this cookie, if True,
                         will load cookie from local. Defaults to False.
             headers: request headers
@@ -879,6 +886,9 @@ class HubApi:
         raise_on_error(d)
 
         files = []
+        if not d[API_RESPONSE_FIELD_DATA]['Files']:
+            logger.warning(f'No files found in model {model_id} at revision {revision}.')
+            return files
         for file in d[API_RESPONSE_FIELD_DATA]['Files']:
             if file['Name'] == '.gitignore' or file['Name'] == '.gitattributes':
                 continue
@@ -903,7 +913,13 @@ class HubApi:
         Returns:
             The query result in bool value
         """
-        files = self.get_model_files(repo_id, recursive=True, revision=revision)
+        cookies = ModelScopeConfig.get_cookies()
+        files = self.get_model_files(
+            repo_id,
+            recursive=True,
+            revision=revision,
+            use_cookies=False if cookies is None else cookies,
+        )
         files = [file['Path'] for file in files]
         return filename in files
 
@@ -986,29 +1002,6 @@ class HubApi:
         dataset_type = resp['Data']['Type']
         return dataset_id, dataset_type
 
-    def get_dataset_infos(self,
-                          dataset_hub_id: str,
-                          revision: str,
-                          files_metadata: bool = False,
-                          timeout: float = 100,
-                          recursive: str = 'True',
-                          endpoint: Optional[str] = None):
-        """
-        Get dataset infos.
-        """
-        if not endpoint:
-            endpoint = self.endpoint
-        datahub_url = f'{endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
-        params = {'Revision': revision, 'Root': None, 'Recursive': recursive}
-        cookies = ModelScopeConfig.get_cookies()
-        if files_metadata:
-            params['blobs'] = True
-        r = self.session.get(datahub_url, params=params, cookies=cookies, timeout=timeout)
-        resp = r.json()
-        datahub_raise_on_error(datahub_url, resp, r)
-
-        return resp
-
     def list_repo_tree(self,
                        dataset_name: str,
                        namespace: str,
@@ -1018,6 +1011,11 @@ class HubApi:
                        page_number: int = 1,
                        page_size: int = 100,
                        endpoint: Optional[str] = None):
+        """
+        @deprecated: Use `get_dataset_files` instead.
+        """
+        warnings.warn('The function `list_repo_tree` is deprecated, use `get_dataset_files` instead.',
+                      DeprecationWarning)
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
             dataset_name=dataset_name, namespace=namespace, endpoint=endpoint)
@@ -1036,6 +1034,59 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
 
         return resp
+
+    def get_dataset_files(self,
+                          repo_id: str,
+                          *,
+                          revision: str = DEFAULT_REPOSITORY_REVISION,
+                          root_path: str = '/',
+                          recursive: bool = True,
+                          page_number: int = 1,
+                          page_size: int = 100,
+                          endpoint: Optional[str] = None):
+        """
+        Get the dataset files.
+
+        Args:
+            repo_id (str): The repository id, in the format of `namespace/dataset_name`.
+            revision (str): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            root_path (str): The root path to list. Defaults to '/'.
+            recursive (bool): Whether to list recursively. Defaults to True.
+            page_number (int): The page number for pagination. Defaults to 1.
+            page_size (int): The number of items per page. Defaults to 100.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            List: The response containing the dataset repository tree information.
+                e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
+        """
+        from datasets.utils.file_utils import is_relative_path
+
+        if is_relative_path(repo_id) and repo_id.count('/') == 1:
+            _owner, _dataset_name = repo_id.split('/')
+        else:
+            raise ValueError(f'Invalid repo_id: {repo_id} !')
+
+        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
+            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+
+        if not endpoint:
+            endpoint = self.endpoint
+        datahub_url = f'{endpoint}/api/v1/datasets/{dataset_hub_id}/repo/tree'
+        params = {
+            'Revision': revision,
+            'Root': root_path,
+            'Recursive': 'True' if recursive else 'False',
+            'PageNumber': page_number,
+            'PageSize': page_size
+        }
+        cookies = ModelScopeConfig.get_cookies()
+
+        r = self.session.get(datahub_url, params=params, cookies=cookies)
+        resp = r.json()
+        datahub_raise_on_error(datahub_url, resp, r)
+
+        return resp['Data']['Files']
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
                                    dataset_id: str, revision: str, endpoint: Optional[str] = None):
@@ -2087,9 +2138,139 @@ class HubApi:
 
         return region_id
 
+    def delete_files(self,
+                     repo_id: str,
+                     repo_type: str,
+                     delete_patterns: Union[str, List[str]],
+                     *,
+                     revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                     endpoint: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Delete files in batch using glob (wildcard) patterns, e.g. '*.py', 'data/*.csv', 'foo*', etc.
+
+        Example:
+            # Delete all Python and Markdown files in a model repo
+            api.delete_files(
+                repo_id='your_username/your_model',
+                repo_type=REPO_TYPE_MODEL,
+                delete_patterns=['*.py', '*.md']
+            )
+
+            # Delete all CSV files in the data/ directory of a dataset repo
+            api.delete_files(
+                repo_id='your_username/your_dataset',
+                repo_type=REPO_TYPE_DATASET,
+                delete_patterns='data/*.csv'
+            )
+
+        Args:
+            repo_id (str): 'owner/repo_name' or 'owner/dataset_name', e.g. 'Koko/my_model'
+            repo_type (str): REPO_TYPE_MODEL or REPO_TYPE_DATASET
+            delete_patterns (str or List[str]): List of glob patterns, e.g. '*.py', 'data/*.csv', 'foo*'
+            revision (str, optional): Branch or tag name
+            endpoint (str, optional): API endpoint
+        Returns:
+            dict: Deletion result
+        """
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Unsupported repo_type: {repo_type}')
+        if not delete_patterns:
+            raise ValueError('delete_patterns cannot be empty')
+        if isinstance(delete_patterns, str):
+            delete_patterns = [delete_patterns]
+
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+        headers = self.builder_headers(self.headers)
+
+        # List all files in the repo
+        if repo_type == REPO_TYPE_MODEL:
+            files = self.get_model_files(
+                repo_id,
+                revision=revision or DEFAULT_MODEL_REVISION,
+                recursive=True,
+                endpoint=endpoint,
+                use_cookies=cookies,
+            )
+            file_paths = [f['Path'] for f in files]
+        elif repo_type == REPO_TYPE_DATASET:
+            file_paths = []
+            page_number = 1
+            page_size = 100
+            while True:
+                try:
+                    dataset_files: List[Dict[str, Any]] = self.get_dataset_files(
+                        repo_id=repo_id,
+                        revision=revision or DEFAULT_DATASET_REVISION,
+                        recursive=True,
+                        page_number=page_number,
+                        page_size=page_size,
+                        endpoint=endpoint,
+                    )
+                except Exception as e:
+                    logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
+                    break
+
+                # Parse data (Type: 'tree' or 'blob')
+                for file_info_d in dataset_files:
+                    if file_info_d['Type'] != 'tree':
+                        file_paths.append(file_info_d['Path'])
+
+                if len(dataset_files) < page_size:
+                    break
+
+                page_number += 1
+        else:
+            raise ValueError(f'Unsupported repo_type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        # Glob pattern matching
+        to_delete = []
+        for path in file_paths:
+            for delete_pattern in delete_patterns:
+                if fnmatch.fnmatch(path, delete_pattern):
+                    to_delete.append(path)
+                    break
+
+        deleted_files, failed_files = [], []
+        for path in to_delete:
+            try:
+                if repo_type == REPO_TYPE_MODEL:
+                    owner, repo_name = repo_id.split('/')
+                    url = f'{endpoint}/api/v1/models/{owner}/{repo_name}/file'
+                    params = {
+                        'Revision': revision or DEFAULT_MODEL_REVISION,
+                        'FilePath': path
+                    }
+                elif repo_type == REPO_TYPE_DATASET:
+                    owner, dataset_name = repo_id.split('/')
+                    url = f'{endpoint}/api/v1/datasets/{owner}/{dataset_name}/repo'
+                    params = {
+                        'FilePath': path
+                    }
+                else:
+                    raise ValueError(f'Unsupported repo_type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+                r = self.session.delete(url, params=params, cookies=cookies, headers=headers)
+                raise_for_http_status(r)
+                resp = r.json()
+                raise_on_error(resp)
+                deleted_files.append(path)
+            except Exception as e:
+                failed_files.append(path)
+                logger.error(f'Failed to delete {path}: {str(e)}')
+
+        return {
+            'deleted_files': deleted_files,
+            'failed_files': failed_files,
+            'total_files': len(to_delete)
+        }
+
 
 class ModelScopeConfig:
-    path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
+    path_credential = expanduser(MODELSCOPE_CREDENTIALS_PATH)
     COOKIES_FILE_NAME = 'cookies'
     GIT_TOKEN_FILE_NAME = 'git_token'
     USER_INFO_FILE_NAME = 'user'
@@ -2234,11 +2415,11 @@ class ModelScopeConfig:
 class UploadingCheck:
     def __init__(
             self,
-            max_file_count: int = 100_000,
-            max_file_count_in_dir: int = 50_000,
-            max_file_size: int = 50 * 1024 ** 3,
-            size_threshold_to_enforce_lfs: int = 1 * 1024 * 1024,
-            normal_file_size_total_limit: int = 500 * 1024 * 1024,
+            max_file_count: int = UPLOAD_MAX_FILE_COUNT,
+            max_file_count_in_dir: int = UPLOAD_MAX_FILE_COUNT_IN_DIR,
+            max_file_size: int = UPLOAD_MAX_FILE_SIZE,
+            size_threshold_to_enforce_lfs: int = UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+            normal_file_size_total_limit: int = UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
     ):
         self.max_file_count = max_file_count
         self.max_file_count_in_dir = max_file_count_in_dir
@@ -2254,8 +2435,8 @@ class UploadingCheck:
 
         file_size: int = get_file_size(file_path_or_obj)
         if file_size > self.max_file_size:
-            raise ValueError(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
-                             f'got {round(file_size / (1024 ** 3), 4)} GB')
+            logger.warning(f'File exceeds size limit: {self.max_file_size / (1024 ** 3)} GB, '
+                           f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
         file_count = 0
@@ -2269,8 +2450,8 @@ class UploadingCheck:
                 file_count += 1
                 item_size: int = get_file_size(item)
                 if item_size > self.max_file_size:
-                    raise ValueError(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
-                                     f'got {round(item_size / (1024 ** 3), 4)} GB')
+                    logger.warning(f'File {item} exceeds size limit: {self.max_file_size / (1024 ** 3)} GB',
+                                   f'got {round(item_size / (1024 ** 3), 4)} GB')
             elif item.is_dir():
                 dir_count += 1
                 # Count items in subdirectories recursively

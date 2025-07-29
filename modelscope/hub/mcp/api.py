@@ -45,25 +45,13 @@ class McpApi(HubApi):
 
     Usage:
 
-    Method 1 - McpApi direct login (recommended):
     >>> api = McpApi()
-    >>> api.login(access_token="your_token")
+    >>> api.login(access_token="your_token")  # Same as HubApi.login()
     >>> servers = api.list_mcp_servers()  # No token needed
     >>> my_servers = api.list_operational_mcp_servers()  # No token needed
 
-    Method 2 - HubApi login then McpApi:
-    >>> from modelscope.hub.api import HubApi
-    >>> hub_api = HubApi()
-    >>> hub_api.login(access_token="your_token")
-    >>> api = McpApi()
-    >>> servers = api.list_mcp_servers()  # No token needed (uses cookies)
-    >>> my_servers = api.list_operational_mcp_servers()  # No token needed
 
-    Authentication (choose one):
-    1. Token per method: Pass token parameter to individual methods when needed
-    2. Login once: api.login(access_token="...") - then no token needed for any method
-
-    Note: McpApi inherits login() from HubApi, providing the most convenient authentication.
+    Note: McpApi inherits login() from HubApi - same functionality, single class convenience.
     Methods have different token requirements - see individual method docs.
     """
 
@@ -77,8 +65,8 @@ class McpApi(HubApi):
         # Initialize parent HubApi with default settings
         super().__init__(endpoint=endpoint)
 
-        # Add OpenAPI-specific path to endpoint
-        self.endpoint = self.endpoint + OPENAPI_SUFFIX
+        # Create MCP-specific endpoint without modifying the original
+        self.mcp_endpoint = self.endpoint + OPENAPI_SUFFIX
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
@@ -89,26 +77,16 @@ class McpApi(HubApi):
         """
         List available MCP servers.
 
-        Token: Optional - works without token (public servers),
-               or with token (may include additional server information).
-        Cookies: Automatic if logged in via HubApi.login(), no token needed when cookies present.
+        Usage:
+        >>> api = McpApi()
+        >>> servers = api.list_mcp_servers()  # Public servers
+        >>> servers = api.list_mcp_servers(token="your_token")  # With auth
 
-        Args:
-            token: Authentication token (optional)
-            filters: Filtering predicates, valid filter(s) include:
-                - category: String type, filter by category
-                - is_hosted: Boolean type, filter by hosting status
-                - tag: JSON string type, filter by tags
-            page_number: Page number, defaults to 1
-            page_size: Page size, defaults to 20
-            search: Search keyword, defaults to empty string
+        Authentication:
+        - Token: Optional (public servers work without token)
+        - Login: Use api.login() once, then no token needed
 
         Returns:
-            Dictionary containing MCP server list:
-                - total_counts: Total count
-                - servers: Brief server information list
-
-        Example return:
             {
                 'total_counts': 100,
                 'servers': [
@@ -123,9 +101,7 @@ class McpApi(HubApi):
         if page_size < 1:
             raise ValueError('page_size must be greater than 0')
 
-        endpoint = self.endpoint
-
-        url = f'{endpoint}/mcp/servers'
+        url = f'{self.mcp_endpoint}/mcp/servers'
         headers = self.builder_headers(self.headers)
 
         # Only add Authorization header if token is provided
@@ -172,34 +148,31 @@ class McpApi(HubApi):
         """
         Get user-hosted MCP server list.
 
-        Token: Required - this method only returns user's private/deployed servers.
-        Cookies: Automatic if logged in via HubApi.login(), replaces token requirement when present.
+        Usage:
+        >>> api = McpApi()
+        >>> api.login(access_token="your_token")
+        >>> my_servers = api.list_operational_mcp_servers()  # No token needed after login
+        >>> # OR without login:
+        >>> my_servers = api.list_operational_mcp_servers(token="your_token")
 
-        Args:
-            token: User's authentication token (required, unless cookies available).
+        Authentication:
+        - Token: Required (user's private servers)
+        - Login: Use api.login() once, then no token needed
 
         Returns:
-            Dictionary containing MCP server list:
-                - total_counts: Total count
-                - servers: Brief server information list
-                - mcpServers: Dictionary mapping server names to their configuration
-
-        Example return:
             {
                 'total_counts': 10,
                 'servers': [
                     {'name': 'ServerA', "id": "@Group1/ServerA", 'description': 'This is a demo server for xxx.'},
                     ...
-                ]
+                ],
                 'mcpServers': {
                     'serverA': {'type': 'sse', "id": "@Group2/ServerB", 'url': 'https://example.com/serverA/sse'},
                     ...
                 }
             }
         """
-        endpoint = self.endpoint
-
-        url = f'{endpoint}/mcp/servers/operational'
+        url = f'{self.mcp_endpoint}/mcp/servers/operational'
         headers = self.builder_headers(self.headers)
 
         # Only add Authorization header if token is provided
@@ -267,21 +240,16 @@ class McpApi(HubApi):
         """
         Get specific MCP server information.
 
-        Token: Optional - works without token (basic server info),
-               or with token (include additional operational url).
+        Usage:
+        >>> api = McpApi()
+        >>> server = api.get_mcp_server("@amap/amap-maps")  # Basic info
+        >>> server = api.get_mcp_server("@amap/amap-maps", token="your_token")  # Full info
 
-        Args:
-            server_id: ID of the MCP server
-            token: Authentication token (optional)
+        Authentication:
+        - Token: Optional (basic info works without token)
+        - Login: Use api.login() once, then no token needed
 
         Returns:
-            Dictionary containing server information:
-                - name: server name
-                - description: server description
-                - id: server id
-                - service_config: MCP server configuration (always included)
-
-        Example return:
             {
                 'name': 'ServerA',
                 'description': 'This is a demo server for xxx.',
@@ -295,9 +263,7 @@ class McpApi(HubApi):
         if not server_id:
             raise ValueError('server_id cannot be empty')
 
-        endpoint = self.endpoint
-
-        url = f'{endpoint}/mcp/servers/{server_id}'
+        url = f'{self.mcp_endpoint}/mcp/servers/{server_id}'
         headers = self.builder_headers(self.headers)
 
         if token:
@@ -351,118 +317,4 @@ class McpApi(HubApi):
                     operational_urls[0], dict) else operational_urls[0]
             }
         result['service_config'] = service_config
-
         return result
-
-    # def deploy_mcp_server(
-    #     self,
-    #     mcp_id: str,
-    #     env_info: Optional[Dict[str, Any]] = None,
-    #     auth_check: bool = False,
-    #     token: Optional[str] = None,
-    #     endpoint: Optional[str] = None
-    # ) -> Dict[str, Any]:
-    #     """
-    #     Deploy an MCP server.
-
-    #     Args:
-    #         mcp_id: ID of the MCP server to deploy
-    #         env_info: Environment information for deployment
-    #         auth_check: Whether to perform authentication check
-    #         token: Authentication token (optional)
-    #         endpoint: API endpoint, defaults to MCP-specific endpoint
-
-    #     Returns:
-    #         Dictionary containing deployment result
-    #             - ip: IP address of the MCP server
-    #             - url: URL of the MCP server
-
-    #     Raises:
-    #         ValueError: If mcp_id is empty
-    #         MCPApiRequestError: If the API request fails
-    #         MCPApiResponseError: If the API response is invalid
-    #     """
-    #     if not mcp_id:
-    #         raise ValueError("mcp_id cannot be empty")
-
-    #     if not endpoint:
-    #         endpoint = self.endpoint
-
-    #     url = f"{endpoint}/mcp/servers/{mcp_id}/deploy"
-    #     headers = self.builder_headers(self.headers)
-
-    #     # Only add Authorization header if token is provided
-    #     if token:
-    #         headers["Authorization"] = f"Bearer {token}"
-
-    #     body = {
-    #         "env_info": env_info or {},
-    #         "auth_check": auth_check
-    #     }
-
-    #     try:
-    #         r = self.session.post(url, headers=headers, json=body)
-    #         raise_for_http_status(r)
-    #     except requests.exceptions.RequestException as e:
-    #         logger.error(f"Failed to deploy MCP server {mcp_id}: {e}")
-    #         raise MCPApiRequestError(f"Failed to deploy MCP server {mcp_id}: {e}") from e
-
-    #     try:
-    #         resp = r.json()
-    #     except requests.exceptions.JSONDecodeError as e:
-    #         logger.error(f"JSON parsing failed: {e}")
-    #         logger.error(f"Response content: {r.text}")
-    #         raise MCPApiResponseError(f"Invalid JSON response: {e}") from e
-
-    #     return resp.get("data", {})
-
-    # def undeploy_mcp_server(
-    #     self,
-    #     mcp_id: str,
-    #     token: Optional[str] = None,
-    #     endpoint: Optional[str] = None
-    # ) -> Dict[str, Any]:
-    #     """
-    #     Undeploy an MCP server.
-
-    #     Args:
-    #         mcp_id: ID of the MCP server to undeploy
-    #         token: Authentication token (optional)
-    #         endpoint: API endpoint, defaults to MCP-specific endpoint
-
-    #     Returns:
-    #         Dictionary containing undeployment result
-
-    #     Raises:
-    #         ValueError: If mcp_id is empty
-    #         MCPApiRequestError: If the API request fails
-    #         MCPApiResponseError: If the API response is invalid
-    #     """
-    #     if not mcp_id:
-    #         raise ValueError("mcp_id cannot be empty")
-
-    #     if not endpoint:
-    #         endpoint = self.endpoint
-
-    #     url = f"{endpoint}/mcp/servers/{mcp_id}/undeploy"
-    #     headers = self.builder_headers(self.headers)
-
-    #     # Only add Authorization header if token is provided
-    #     if token:
-    #         headers["Authorization"] = f"Bearer {token}"
-
-    #     try:
-    #         r = self.session.delete(url, headers=headers)
-    #         raise_for_http_status(r)
-    #     except requests.exceptions.RequestException as e:
-    #         logger.error(f"Failed to undeploy MCP server {mcp_id}: {e}")
-    #         raise MCPApiRequestError(f"Failed to undeploy MCP server {mcp_id}: {e}") from e
-
-    #     try:
-    #         resp = r.json()
-    #     except requests.exceptions.JSONDecodeError as e:
-    #         logger.error(f"JSON parsing failed: {e}")
-    #         logger.error(f"Response content: {r.text}")
-    #         raise MCPApiResponseError(f"Invalid JSON response: {e}") from e
-
-    #     return resp.get("data", {})

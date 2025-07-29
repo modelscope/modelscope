@@ -1,7 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # noqa: isort:skip_file, yapf: disable
 from .api import McpApi
-from .client import MCPClient
 
 """
 MCP (Model Context Protocol) integration for ModelScope.
@@ -11,7 +10,9 @@ The API is designed to be easy to use with minimal configuration required.
 
 Key classes:
 - McpApi: Simple API for listing and managing MCP servers
-- MCPClient: Client for connecting to and using MCP tools
+
+For advanced MCP protocol features:
+- MCPClient: Available via explicit import (from modelscope.hub.mcp.client import MCPClient)
 """
 
 __all__ = [

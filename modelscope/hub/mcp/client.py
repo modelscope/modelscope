@@ -8,6 +8,7 @@ import time
 from contextlib import AsyncExitStack
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 # Import official MCP SDK
 from mcp import ClientSession, StdioServerParameters, Tool
@@ -163,12 +164,15 @@ class MCPClient:
     ...             print(f"Tool {i+1}: {result}")
     """
 
-    def __init__(self, mcp_server: Dict[str, Any]):
+    def __init__(self,
+                 mcp_server: Dict[str, Any],
+                 timeout: Optional[timedelta] = None):
         """
         Initialize MCP client
 
         Args:
             mcp_server: MCP server configuration
+            default_timeout: Default timeout for tool calls (defaults to 30 seconds)
         """
         if not mcp_server:
             raise ValueError('MCP server configuration is required')
@@ -178,7 +182,7 @@ class MCPClient:
         self.exit_stack: Optional[AsyncExitStack] = None
         self.client_info = DEFAULT_CLIENT_INFO
         self.connected = False
-        self.read_timeout = DEFAULT_READ_TIMEOUT
+        self.read_timeout = timeout or DEFAULT_READ_TIMEOUT
         self.server_info: Optional[Dict[str, Any]] = None  # Server information
 
         # Validate configuration
@@ -208,7 +212,6 @@ class MCPClient:
                 # Extract domain from URL
                 url = config['url']
                 try:
-                    from urllib.parse import urlparse
                     parsed = urlparse(url)
                     domain = parsed.netloc.split('.')[
                         0]  # Get first domain part
@@ -413,7 +416,6 @@ class MCPClient:
         Args:
             tool_name: Name of the tool to execute
             tool_args: Dictionary of arguments to pass to the tool
-            timeout: Optional timeout duration for the operation
 
         Returns:
             Tool execution result as a string
@@ -475,10 +477,8 @@ class MCPClient:
                 f'Not connected to server {self.server_name}')
 
         try:
-            read_timeout = timeout or self.read_timeout
-
             result = await self.session.call_tool(
-                tool_name, tool_args, read_timeout_seconds=read_timeout)
+                tool_name, tool_args, read_timeout_seconds=self.read_timeout)
 
             # Extract text content
             texts = []
@@ -489,7 +489,7 @@ class MCPClient:
             if texts:
                 return '\n\n'.join(texts)
             else:
-                return 'execute error'
+                return ''
 
         except McpError as e:
             logger.error(
@@ -506,8 +506,7 @@ class MCPClient:
 
         except asyncio.TimeoutError:
             raise MCPTimeoutError(
-                f'Tool call {tool_name} timed out after {timeout or self.read_timeout}'
-            )
+                f'Tool call {tool_name} timed out after {self.read_timeout}')
 
         except Exception as e:
             logger.error(

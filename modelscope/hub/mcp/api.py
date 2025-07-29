@@ -18,7 +18,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 # MCP API path suffix
-OPENAPI_SUFFIX = '/openapi/v1'
+MCP_SUFFIX = '/openapi/v1/mcp/servers'
 
 
 class MCPApiError(Exception):
@@ -66,7 +66,7 @@ class McpApi(HubApi):
         super().__init__(endpoint=endpoint)
 
         # Create MCP-specific endpoint without modifying the original
-        self.mcp_endpoint = self.endpoint + OPENAPI_SUFFIX
+        self.mcp_base_url = self.endpoint + MCP_SUFFIX
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
@@ -101,7 +101,7 @@ class McpApi(HubApi):
         if page_size < 1:
             raise ValueError('page_size must be greater than 0')
 
-        url = f'{self.mcp_endpoint}/mcp/servers'
+        url = self.mcp_base_url
         headers = self.builder_headers(self.headers)
 
         # Only add Authorization header if token is provided
@@ -172,7 +172,7 @@ class McpApi(HubApi):
                 }
             }
         """
-        url = f'{self.mcp_endpoint}/mcp/servers/operational'
+        url = f'{self.mcp_base_url}/operational'
         headers = self.builder_headers(self.headers)
 
         # Only add Authorization header if token is provided
@@ -263,7 +263,7 @@ class McpApi(HubApi):
         if not server_id:
             raise ValueError('server_id cannot be empty')
 
-        url = f'{self.mcp_endpoint}/mcp/servers/{server_id}'
+        url = f'{self.mcp_base_url}/{server_id}'
         headers = self.builder_headers(self.headers)
 
         if token:

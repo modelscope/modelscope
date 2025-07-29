@@ -48,7 +48,7 @@ class McpApi(HubApi):
     >>> api = McpApi()
     >>> api.login(access_token="your_token")  # Same as HubApi.login()
     >>> servers = api.list_mcp_servers()  # No token needed
-    >>> my_servers = api.list_operational_mcp_servers()  # No token needed
+    >>> my_servers = api.list_operational_mcp_servers()  # Token needed
 
 
     Note: McpApi inherits login() from HubApi - same functionality, single class convenience.

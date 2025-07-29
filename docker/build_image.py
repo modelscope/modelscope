@@ -340,6 +340,11 @@ class LLMImageBuilder(Builder):
 
 class SwiftImageBuilder(LLMImageBuilder):
 
+    def init_args(self, args) -> Any:
+        if not args.lmdeploy_version:
+            args.lmdeploy_version = '0.8.0'
+        return super().init_args(args)
+
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -348,7 +353,7 @@ class SwiftImageBuilder(LLMImageBuilder):
                                                   self.args.python_version)
         extra_content += """
 RUN pip install --no-cache-dir -U "deepspeed==0.16.*" --no-deps && \
-    pip install --no-cache-dir -U icecream soundfile pybind11
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '

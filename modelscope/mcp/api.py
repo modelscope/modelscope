@@ -36,23 +36,15 @@ class MCPApiResponseError(MCPApiError):
     pass
 
 
-class McpApi(HubApi):
+class MCPApi(HubApi):
     """
     MCP (Model Context Protocol) API interface class.
 
-    This class provides methods for interacting with MCP servers through
-    the ModelScope Hub API, including listing, deploying, and managing servers.
+    This class provides interfaces to interact with ModelScope MCP servers,
+    such as to list, deploy and manage MCP servers.
 
-    Usage:
-
-    >>> api = McpApi()
-    >>> api.login(access_token="your_token")  # Same as HubApi.login()
-    >>> servers = api.list_mcp_servers()  # No token needed
-    >>> my_servers = api.list_operational_mcp_servers()  # Token needed
-
-
-    Note: McpApi inherits login() from HubApi - same functionality, single class convenience.
-    Methods have different token requirements - see individual method docs.
+    Note: MCPApi inherits login() from HubApi for authentication.
+    Different methods have different token requirements - see individual method docs.
     """
 
     def __init__(self, endpoint: Optional[str] = None) -> None:
@@ -62,11 +54,51 @@ class McpApi(HubApi):
         Args:
             endpoint: The modelscope server address. Defaults to None (uses default endpoint).
         """
-        # Initialize parent HubApi with default settings
         super().__init__(endpoint=endpoint)
 
-        # Create MCP-specific endpoint without modifying the original
         self.mcp_base_url = self.endpoint + MCP_SUFFIX
+
+    def _handle_response(self, r: requests.Response) -> Dict[str, Any]:
+        """
+        Handle HTTP response with unified error handling and JSON parsing.
+
+        Args:
+            r: requests Response object
+
+        Returns:
+            Parsed response data dict
+
+        Raises:
+            MCPApiResponseError: If JSON parsing fails
+        """
+        try:
+            resp = r.json()
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(f'JSON parsing failed: {e}')
+            logger.error(f'Response content: {r.text}')
+            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
+
+        return resp.get('data', {})
+
+    @staticmethod
+    def _get_server_name_from_id(server_id: str) -> str:
+        """
+        Extract server name from server ID.
+
+        Handles two formats:
+        - '@group/server' -> 'server'
+        - 'server' -> 'server'
+
+        Args:
+            server_id: The server ID to parse
+
+        Returns:
+            str: The extracted server name
+        """
+        if server_id.startswith('@'):
+            return server_id.split('/',
+                                   1)[1] if '/' in server_id else server_id[1:]
+        return server_id
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
@@ -75,12 +107,24 @@ class McpApi(HubApi):
                          page_size: Optional[int] = 20,
                          search: Optional[str] = '') -> Dict[str, Any]:
         """
-        List available MCP servers.
+        List available MCP servers, including public and private servers.
 
-        Usage:
-        >>> api = McpApi()
-        >>> servers = api.list_mcp_servers()  # Public servers
-        >>> servers = api.list_mcp_servers(token="your_token")  # With auth
+        Args:
+            token: Optional access token for authentication
+            filters: Optional filters to apply to the search
+            page_number: Page number (starts from 1)
+            page_size: Number of servers per page
+            search: Optional search query string
+
+        Returns:
+            Dict containing:
+                - total_counts: Total number of servers
+                - servers: List of server dictionaries with name, id, description
+
+        Raises:
+            ValueError: If page_number < 1 or page_size < 1
+            MCPApiRequestError: If API request fails (network, server errors)
+            MCPApiResponseError: If response format is invalid or JSON parsing fails
 
         Authentication:
         - Token: Optional (public servers work without token)
@@ -90,8 +134,8 @@ class McpApi(HubApi):
             {
                 'total_counts': 100,
                 'servers': [
-                    {'name': 'ServerA', 'description': 'This is a demo server for xxx.'},
-                    {'name': 'ServerB', 'description': 'This is another demo server.'},
+                    {'name': 'ServerA', 'id': '@demo/ServerA', 'description': 'This is a demo server for xxx.'},
+                    {'name': 'ServerB', 'id': '@demo/ServerB', 'description': 'This is another demo server.'},
                     ...
                 ]
             }
@@ -101,12 +145,12 @@ class McpApi(HubApi):
         if page_size < 1:
             raise ValueError('page_size must be greater than 0')
 
+        # Login if token is provided
+        if token:
+            self.login(access_token=token)
+
         url = self.mcp_base_url
         headers = self.builder_headers(self.headers)
-
-        # Only add Authorization header if token is provided
-        if token:
-            headers['Authorization'] = f'Bearer {token}'
 
         body = {
             'filters': filters or {},
@@ -116,7 +160,6 @@ class McpApi(HubApi):
         }
 
         try:
-            # Get cookies for authentication
             cookies = ModelScopeConfig.get_cookies()
             r = self.session.put(
                 url, headers=headers, json=body, cookies=cookies)
@@ -125,17 +168,11 @@ class McpApi(HubApi):
             logger.error(f'Failed to get MCP servers: {e}')
             raise MCPApiRequestError(f'Failed to get MCP servers: {e}') from e
 
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
-        data = resp.get('data', {})
+        data = self._handle_response(r)
         mcp_server_list = data.get('mcp_server_list', [])
         server_brief_list = [{
             'name': item.get('name', ''),
+            'id': item.get('id', ''),
             'description': item.get('description', '')
         } for item in mcp_server_list]
 
@@ -144,63 +181,85 @@ class McpApi(HubApi):
             'servers': server_brief_list
         }
 
-    def list_operational_mcp_servers(self, token: str) -> Dict[str, Any]:
+    def list_operational_mcp_servers(self,
+                                     token: Optional[str] = None
+                                     ) -> Dict[str, Any]:
         """
         Get user-hosted MCP server list.
 
-        Usage:
-        >>> api = McpApi()
-        >>> api.login(access_token="your_token")
-        >>> my_servers = api.list_operational_mcp_servers()  # No token needed after login
-        >>> # OR without login:
-        >>> my_servers = api.list_operational_mcp_servers(token="your_token")
+        Args:
+            token: Optional access token. If not provided, will use login session cookies.
+
+        Returns:
+            Dict containing:
+                - total_counts: Total number of operational servers
+                - servers: List of server info with name, id, description
+                - mcpServers: Dict of server configs ready for MCP client usage
+
+        Raises:
+            MCPApiRequestError: If authentication fails or API request fails
+            MCPApiResponseError: If response format is invalid or JSON parsing fails
 
         Authentication:
-        - Token: Required (user's private servers)
+        - Token: Optional (will try cookies if not provided)
         - Login: Use api.login() once, then no token needed
 
         Returns:
             {
                 'total_counts': 10,
                 'servers': [
-                    {'name': 'ServerA', "id": "@Group1/ServerA", 'description': 'This is a demo server for xxx.'},
+                    {
+                        'name': 'ServerA',
+                        "id": "@Group1/ServerA",
+                        'description': 'This is a demo server for xxx.'
+                    },
                     ...
                 ],
                 'mcpServers': {
-                    'serverA': {'type': 'sse', "id": "@Group2/ServerB", 'url': 'https://example.com/serverA/sse'},
+                    'serverA': {
+                        'type': 'sse',
+                        "id": "@Group2/ServerB",
+                        'url': 'https://mcp.api-inference.modelscope.net//serverA/sse'
+                    },
                     ...
                 }
             }
         """
+        # Login if token is provided
+        if token:
+            self.login(access_token=token)
+
         url = f'{self.mcp_base_url}/operational'
         headers = self.builder_headers(self.headers)
 
-        # Only add Authorization header if token is provided
-        if token:
-            headers['Authorization'] = f'Bearer {token}'
-        else:
-            raise ValueError('token is required')
-
         try:
-            # Get cookies for authentication
             cookies = ModelScopeConfig.get_cookies()
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
-            logger.error(f'Failed to get operational MCP servers: {e}')
-            raise MCPApiRequestError(
-                f'Failed to get operational MCP servers: {e}') from e
+            # Check if it's an authentication error and provide helpful message
+            if '401' in str(e) or 'Unauthorized' in str(e):
+                if not token:
+                    logger.error(
+                        'Authentication failed: No token provided and cookies authentication failed'
+                    )
+                    raise MCPApiRequestError(
+                        'Authentication required: Please provide a token or ensure you are logged in'
+                    ) from e
+                else:
+                    logger.error(
+                        f'Authentication failed with provided token: {e}')
+                    raise MCPApiRequestError(
+                        'Authentication failed: Invalid token or insufficient permissions'
+                    ) from e
+            else:
+                logger.error(f'Failed to get operational MCP servers: {e}')
+                raise MCPApiRequestError(
+                    f'Failed to get operational MCP servers: {e}') from e
 
         logger.debug(f'Response status code: {r.status_code}')
 
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
-        data = resp.get('data', {})
+        data = self._handle_response(r)
         mcp_server_list = data.get('mcp_server_list', [])
         server_brief_list = [{
             'name': item.get('name', ''),
@@ -212,11 +271,7 @@ class McpApi(HubApi):
         mcp_servers = {}
         for server in mcp_server_list:
             server_id = server.get('id', '')
-            if server_id.startswith('@'):
-                server_name = server_id.split(
-                    '/', 1)[1] if '/' in server_id else server_id[1:]
-            else:
-                server_name = server_id
+            server_name = MCPApi._get_server_name_from_id(server_id)
 
             operational_urls = server.get('operational_urls', [])
             if server_name and operational_urls:
@@ -238,12 +293,23 @@ class McpApi(HubApi):
                        server_id: str,
                        token: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get specific MCP server information.
+        Get specific MCP server information.Full info including information accessible only with authorization.
 
-        Usage:
-        >>> api = McpApi()
-        >>> server = api.get_mcp_server("@amap/amap-maps")  # Basic info
-        >>> server = api.get_mcp_server("@amap/amap-maps", token="your_token")  # Full info
+        Args:
+            server_id: MCP server ID (e.g., "@amap/amap-maps")
+            token: Optional access token for authentication
+
+        Returns:
+            Dict containing:
+                - name: Server name
+                - description: Server description
+                - id: Server ID
+                - service_config: Connection configuration with type and url
+
+        Raises:
+            ValueError: If server_id is empty or None
+            MCPApiRequestError: If API request fails or server not found
+            MCPApiResponseError: If response format is invalid or JSON parsing fails
 
         Authentication:
         - Token: Optional (basic info works without token)
@@ -256,21 +322,21 @@ class McpApi(HubApi):
                 'id': '@demo/serverA',
                 'service_config': {
                     'type': 'sse',
-                    'url': 'https://example.com/serverA/sse'
+                    'url': 'https://mcp.api-inference.modelscope.net/serverA/sse'
                 }
             }
         """
         if not server_id:
             raise ValueError('server_id cannot be empty')
 
+        # Login if token is provided
+        if token:
+            self.login(access_token=token)
+
         url = f'{self.mcp_base_url}/{server_id}'
         headers = self.builder_headers(self.headers)
 
-        if token:
-            headers['Authorization'] = f'Bearer {token}'
-
         try:
-            # Get cookies for authentication
             cookies = ModelScopeConfig.get_cookies()
             r = self.session.get(
                 url,
@@ -284,14 +350,7 @@ class McpApi(HubApi):
             raise MCPApiRequestError(
                 f'Failed to get MCP server {server_id}: {e}') from e
 
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
-        data = resp.get('data', {})
+        data = self._handle_response(r)
 
         result = {
             'name': data.get('name', ''),
@@ -301,11 +360,7 @@ class McpApi(HubApi):
 
         service_config = {}
         server_id = data.get('id', '')
-        if server_id.startswith('@'):
-            server_name = server_id.split(
-                '/', 1)[1] if '/' in server_id else server_id[1:]
-        else:
-            server_name = server_id
+        server_name = MCPApi._get_server_name_from_id(server_id)
 
         operational_urls = data.get('operational_urls', [])
         if server_name and operational_urls:

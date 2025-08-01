@@ -4,6 +4,7 @@
 import datetime
 import fnmatch
 import functools
+import glob
 import io
 import os
 import pickle
@@ -61,6 +62,7 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
+from modelscope.hub.utils.aigc import DEFAULT_AIGC_COVER_IMAGE, AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
                                         get_release_datetime, is_env_true,
@@ -188,22 +190,27 @@ class HubApi:
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
-                     token: Optional[str] = None) -> str:
+                     token: Optional[str] = None,
+                     aigc_config: Optional['AigcModel'] = None,
+                     **kwargs) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
-            model_id (str): The model id
+            model_id (str): The model id in format {owner}/{name}
             visibility (int, optional): visibility of the model(1-private, 5-public), default 5.
-            license (str, optional): license of the model, default none.
+            license (str, optional): license of the model, default apache-2.0.
             chinese_name (str, optional): chinese name of the model.
             original_model_id (str, optional): the base model id which this model is trained from
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_config (AigcModel, optional): AigcModel instance for AIGC model creation.
+                If provided, will create an AIGC model with automatic file upload.
 
         Returns:
-            Name of the model created
+            str: URL of the created model repository
 
         Raises:
-            InvalidParameter: If model_id is invalid.
+            InvalidParameter: If model_id is invalid or required AIGC parameters are missing.
             ValueError: If not login.
 
         Note:
@@ -219,17 +226,54 @@ class HubApi:
                 cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
-        path = f'{endpoint}/api/v1/models'
+
         owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Base body configuration
         body = {
             'Path': owner_or_group,
             'Name': name,
             'ChineseName': chinese_name,
-            'Visibility': visibility,  # server check
+            'Visibility': visibility,
             'License': license,
             'OriginalModelId': original_model_id,
-            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
+            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
         }
+
+        # Set path based on model type
+        if aigc_config is not None:
+            # Use AIGC model endpoint
+            path = f'{endpoint}/api/v1/models/aigc'
+
+            # Validate AIGC parameters
+            valid_aigc_types = [v.value for v in AigcModel.AigcType]
+            valid_vision_foundations = [v.value for v in AigcModel.BaseModelType]
+
+            assert aigc_config.aigc_type.value in valid_aigc_types, (
+                f'aigc_type must be one of {valid_aigc_types}, got: {aigc_config.aigc_type.value}'
+            )
+            assert aigc_config.base_model_type.value in valid_vision_foundations, (
+                f'vision_foundation must be one of {valid_vision_foundations}, got: {aigc_config.base_model_type.value}'
+            )
+
+            # Add AIGC-specific fields to body
+            body.update({
+                'TagShowName': aigc_config.tag,
+                'CoverImages': aigc_config.cover_images,
+                'AigcType': aigc_config.aigc_type.value,
+                'TagDescription': aigc_config.tag_description,
+                'VisionFoundation': aigc_config.base_model_type.value,
+                'BaseModel': aigc_config.base_model_id,
+                'WeightsName': aigc_config.weights_filename,
+                'WeightsSha256': aigc_config.weights_sha256,
+                'WeightsSize': aigc_config.weights_size,
+                'ModelPath': aigc_config.model_path
+            })
+
+        else:
+            # Use regular model endpoint
+            path = f'{endpoint}/api/v1/models'
+
         r = self.session.post(
             path,
             json=body,
@@ -238,6 +282,11 @@ class HubApi:
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
+
+        # Upload model files for AIGC models
+        if aigc_config is not None:
+            aigc_config.upload_to_repo(self, model_id, token)
+
         return model_repo_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):

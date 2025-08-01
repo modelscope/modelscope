@@ -30,16 +30,28 @@ class ObjectDetectionDamoyoloExporter(TorchModelExporter):
         self.model.onnx_export = True
         self.model.eval()
         _ = self.model(dummy_input)
-        torch.onnx._export(
-            self.model,
-            dummy_input,
-            onnx_file,
-            input_names=[
-                'images',
-            ],
-            output_names=[
-                'pred',
-            ],
-            opset_version=opset)
+        try:
+            torch.onnx._export(
+                self.model,
+                dummy_input,
+                onnx_file,
+                input_names=[
+                    'images',
+                ],
+                output_names=[
+                    'pred',
+                ],
+                opset_version=opset)
+        except AttributeError:
+            torch.onnx.export(
+                self.model, (dummy_input, ),
+                onnx_file,
+                input_names=[
+                    'images',
+                ],
+                output_names=[
+                    'pred',
+                ],
+                opset_version=opset)
 
         return {'model', onnx_file}

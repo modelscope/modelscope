@@ -103,7 +103,7 @@ class MCPApi(HubApi):
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
-                         filters: Optional[Dict[str, Any]] = None,
+                         filter: Optional[Dict[str, Any]] = None,
                          page_number: Optional[int] = 1,
                          page_size: Optional[int] = 20,
                          search: Optional[str] = '') -> Dict[str, Any]:
@@ -112,7 +112,7 @@ class MCPApi(HubApi):
 
         Args:
             token: Optional access token for authentication
-            filters: Optional filters to apply to the search
+            filter: Optional filters to apply to the search
                 - 'category': str, server category, e.g. 'communication'
                 - 'tag': str, server tag, e.g. 'social-media'
                 - 'is_hosted': bool, server is hosted
@@ -120,7 +120,7 @@ class MCPApi(HubApi):
             page_number: Page number (starts from 1)
             page_size: Number of servers per page
             page_number * page_size <=100
-            search: Optional search query string
+            search: Optional search query string,e.g. Chinese service name, English service name, author/owner username
 
         Returns:
             Dict containing:
@@ -156,7 +156,7 @@ class MCPApi(HubApi):
             self.login(access_token=token)
 
         body = {
-            'filters': filters or {},
+            'filter': filter or {},
             'page_number': page_number,
             'page_size': page_size,
             'search': search

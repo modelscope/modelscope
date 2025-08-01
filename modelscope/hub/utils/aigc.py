@@ -5,6 +5,11 @@ import os
 from enum import Enum
 from typing import List, Optional
 
+from modelscope.utils.logger import get_logger
+
+# Get a logger instance from modelscope
+logger = get_logger()
+
 # Default AIGC model cover image
 DEFAULT_AIGC_COVER_IMAGE = (
     'https://modelscope.cn/models/modelscope/modelscope_aigc_default_logo/resolve/master/'
@@ -34,16 +39,14 @@ class AigcModel:
         WAN_VIDEO_2_2_T2V_14_B = 'WAN_VIDEO_2_2_T2V_14_B'
         WAN_VIDEO_2_2_I2V_14_B = 'WAN_VIDEO_2_2_I2V_14_B'
 
-    def __init__(
-        self,
-        aigc_type: AigcType,
-        base_model_type: BaseModelType,
-        model_path: str,
-        tag: Optional[str] = 'v1.0',
-        tag_description: Optional[str] = 'this is an aigc model',
-        cover_images: Optional[List[str]] = None,
-        base_model_id: str = ''
-    ):
+    def __init__(self,
+                 aigc_type: AigcType,
+                 base_model_type: BaseModelType,
+                 model_path: str,
+                 tag: Optional[str] = 'v1.0',
+                 tag_description: Optional[str] = 'this is an aigc model',
+                 cover_images: Optional[List[str]] = None,
+                 base_model_id: str = ''):
         """
         Initializes the AigcModel helper.
 
@@ -88,21 +91,21 @@ class AigcModel:
 
         if os.path.isfile(self.model_path):
             target_file = self.model_path
-            print(f'Using file: {os.path.basename(target_file)}')
+            logger.info(f'Using file: {os.path.basename(target_file)}')
         elif os.path.isdir(self.model_path):
             safetensors_files = glob.glob(
                 os.path.join(self.model_path, '*.safetensors'))
 
             if safetensors_files:
                 target_file = safetensors_files[0]
-                print(
+                logger.info(
                     f'✅ Found safetensors file: {os.path.basename(target_file)}'
                 )
                 if len(safetensors_files) > 1:
-                    print(
+                    logger.warning(
                         f'Multiple safetensors files found, using: {os.path.basename(target_file)}'
                     )
-                    print(
+                    logger.info(
                         f'Other safetensors: {[os.path.basename(f) for f in safetensors_files[1:]]}'
                     )
             else:
@@ -115,10 +118,10 @@ class AigcModel:
                 if all_files:
                     # Use the first available file
                     target_file = os.path.join(self.model_path, all_files[0])
-                    print(
-                        f'using: {os.path.basename(target_file)}'
+                    logger.warning(
+                        f'No safetensors file found, using: {os.path.basename(target_file)}'
                     )
-                    print(f'Available files: {all_files}')
+                    logger.info(f'Available files: {all_files}')
                 else:
                     raise ValueError(
                         f'No files found in directory: {self.model_path}. '
@@ -131,7 +134,7 @@ class AigcModel:
 
         if target_file:
             # Calculate file hash and size for the target file
-            print(f'Computing hash and size for {target_file}...')
+            logger.info(f'Computing hash and size for {target_file}...')
             hash_info = get_file_hash(target_file)
 
             # Store weights information
@@ -144,12 +147,13 @@ class AigcModel:
         """Upload model files to repository"""
 
         if not hasattr(self, 'target_file') or self.target_file is None:
-            print(f'⚠️ Warning: No specific file to upload for {model_id}')
+            logger.warning(
+                f'⚠️ Warning: No specific file to upload for {model_id}')
 
             if os.path.isdir(self.model_path):
                 files_in_dir = os.listdir(self.model_path)
                 if files_in_dir:
-                    print(
+                    logger.info(
                         f'📁 Uploading directory contents ({len(files_in_dir)} items)...'
                     )
                     try:
@@ -159,19 +163,20 @@ class AigcModel:
                             token=token,
                             commit_message='Upload model folder for AIGC model'
                         )
-                        print(f'✅ Successfully uploaded folder to {model_id}')
+                        logger.info(
+                            f'✅ Successfully uploaded folder to {model_id}')
                         return True
                     except Exception as e:
-                        print(f'❌ Failed to upload folder: {e}')
+                        logger.error(f'❌ Failed to upload folder: {e}')
                         return False
                 else:
-                    print('❌ Directory is empty, nothing to upload')
+                    logger.warning('❌ Directory is empty, nothing to upload')
                     return False
             else:
-                print('❌ No files to upload')
+                logger.warning('❌ No files to upload')
                 return False
 
-        print(f'Uploading model to {model_id}...')
+        logger.info(f'Uploading model to {model_id}...')
         try:
             if os.path.isfile(self.model_path):
                 # Upload single file
@@ -189,11 +194,12 @@ class AigcModel:
                     folder_path=self.model_path,
                     token=token,
                     commit_message='Upload model folder for AIGC model')
-            print(f'✅ Successfully uploaded model to {model_id}')
+            logger.info(f'✅ Successfully uploaded model to {model_id}')
             return True
         except Exception as e:
-            print(f'⚠️ Warning: Failed to upload model: {e}')
-            print('You may need to upload the model manually after creation.')
+            logger.warning(f'⚠️ Warning: Failed to upload model: {e}')
+            logger.warning(
+                'You may need to upload the model manually after creation.')
             return False
 
     def to_dict(self) -> dict:

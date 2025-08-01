@@ -191,8 +191,7 @@ class HubApi:
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
                      token: Optional[str] = None,
-                     aigc_config: Optional['AigcModel'] = None,
-                     **kwargs) -> str:
+                     aigc_model: Optional['AigcModel'] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -216,8 +215,6 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        if model_id is None:
-            raise InvalidParameter('model_id is required!')
         cookies = ModelScopeConfig.get_cookies()
         if cookies is None:
             if token is None:
@@ -241,33 +238,38 @@ class HubApi:
         }
 
         # Set path based on model type
-        if aigc_config is not None:
+        if aigc_model is not None:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
 
             # Validate AIGC parameters
             valid_aigc_types = [v.value for v in AigcModel.AigcType]
-            valid_vision_foundations = [v.value for v in AigcModel.BaseModelType]
+            valid_vision_foundations = [
+                v.value for v in AigcModel.BaseModelType
+            ]
 
-            assert aigc_config.aigc_type.value in valid_aigc_types, (
-                f'aigc_type must be one of {valid_aigc_types}, got: {aigc_config.aigc_type.value}'
-            )
-            assert aigc_config.base_model_type.value in valid_vision_foundations, (
-                f'vision_foundation must be one of {valid_vision_foundations}, got: {aigc_config.base_model_type.value}'
-            )
+            if aigc_model.aigc_type.value not in valid_aigc_types:
+                raise InvalidParameter(
+                    f'aigc_type must be one of {valid_aigc_types}, got: {aigc_model.aigc_type.value}'
+                )
+            if aigc_model.base_model_type.value not in valid_vision_foundations:
+                raise InvalidParameter(
+                    f'vision_foundation must be one of {valid_vision_foundations}, '
+                    f'got: {aigc_model.base_model_type.value}'
+                )
 
             # Add AIGC-specific fields to body
             body.update({
-                'TagShowName': aigc_config.tag,
-                'CoverImages': aigc_config.cover_images,
-                'AigcType': aigc_config.aigc_type.value,
-                'TagDescription': aigc_config.tag_description,
-                'VisionFoundation': aigc_config.base_model_type.value,
-                'BaseModel': aigc_config.base_model_id,
-                'WeightsName': aigc_config.weights_filename,
-                'WeightsSha256': aigc_config.weights_sha256,
-                'WeightsSize': aigc_config.weights_size,
-                'ModelPath': aigc_config.model_path
+                'TagShowName': aigc_model.tag,
+                'CoverImages': aigc_model.cover_images,
+                'AigcType': aigc_model.aigc_type.value,
+                'TagDescription': aigc_model.tag_description,
+                'VisionFoundation': aigc_model.base_model_type.value,
+                'BaseModel': aigc_model.base_model_id,
+                'WeightsName': aigc_model.weights_filename,
+                'WeightsSha256': aigc_model.weights_sha256,
+                'WeightsSize': aigc_model.weights_size,
+                'ModelPath': aigc_model.model_path
             })
 
         else:
@@ -284,8 +286,8 @@ class HubApi:
         model_repo_url = f'{endpoint}/models/{model_id}'
 
         # Upload model files for AIGC models
-        if aigc_config is not None:
-            aigc_config.upload_to_repo(self, model_id, token)
+        if aigc_model is not None:
+            aigc_model.upload_to_repo(self, model_id, token)
 
         return model_repo_url
 

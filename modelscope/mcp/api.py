@@ -58,7 +58,8 @@ class MCPApi(HubApi):
 
         self.mcp_base_url = self.endpoint + MCP_SUFFIX
 
-    def _handle_response(self, r: requests.Response) -> Dict[str, Any]:
+    @staticmethod
+    def _handle_response(r: requests.Response) -> Dict[str, Any]:
         """
         Handle HTTP response with unified error handling and JSON parsing.
 
@@ -112,8 +113,13 @@ class MCPApi(HubApi):
         Args:
             token: Optional access token for authentication
             filters: Optional filters to apply to the search
+                - 'category': str, server category, e.g. 'communication'
+                - 'tag': str, server tag, e.g. 'social-media'
+                - 'is_hosted': bool, server is hosted
+                When all three are passed in, the intersection is taken.
             page_number: Page number (starts from 1)
             page_size: Number of servers per page
+            page_number * page_size <=100
             search: Optional search query string
 
         Returns:
@@ -149,9 +155,6 @@ class MCPApi(HubApi):
         if token:
             self.login(access_token=token)
 
-        url = self.mcp_base_url
-        headers = self.builder_headers(self.headers)
-
         body = {
             'filters': filters or {},
             'page_number': page_number,
@@ -162,7 +165,10 @@ class MCPApi(HubApi):
         try:
             cookies = ModelScopeConfig.get_cookies()
             r = self.session.put(
-                url, headers=headers, json=body, cookies=cookies)
+                self.mcp_base_url,
+                self.builder_headers(self.headers),
+                json=body,
+                cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get MCP servers: {e}')
@@ -206,7 +212,6 @@ class MCPApi(HubApi):
 
         Returns:
             {
-                'total_counts': 10,
                 'servers': [
                     {
                         'name': 'ServerA',

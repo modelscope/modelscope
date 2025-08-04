@@ -82,7 +82,7 @@ class MCPClient:
     ...     # Connect to a server
     ...     mcp_server = {
     ...         "type": "sse",
-    ...         "url": "https://api.example.com/mcp"
+    ...         "url": "https://mcp.api-inference.modelscope.net/{uuid}/http"
     ...     }
     ...     async with MCPClient(mcp_server) as client:
     ...

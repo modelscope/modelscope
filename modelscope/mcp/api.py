@@ -304,10 +304,17 @@ class MCPApi(HubApi):
                 'name': 'ServerA',
                 'description': 'This is a demo server for xxx.',
                 'id': '@demo/serverA',
-                'service_config': {
-                    'type': 'sse',
-                    'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
-                }
+                'servers': [
+                    {
+                        'type': 'sse',
+                        'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
+                    },
+                    {
+                        'type': 'streamable_http',
+                        'url': 'https://mcp.api-inference.modelscope.net/{uuid}/streamable_http'
+                    }
+                    ...
+                ]
             }
         """
         if not server_id:
@@ -342,18 +349,18 @@ class MCPApi(HubApi):
             'id': data.get('id', '')
         }
 
-        service_config = {}
         server_id = data.get('id', '')
         server_name = MCPApi._get_server_name_from_id(server_id)
 
         operational_urls = data.get('operational_urls', [])
+        mcp_config_list = []
         if server_name and operational_urls:
-            service_config = {
-                'type':
-                'sse',
-                'url':
-                operational_urls[0]['url'] if isinstance(
-                    operational_urls[0], dict) else operational_urls[0]
-            }
-        result['service_config'] = service_config
+            for operational_url in operational_urls:
+                mcp_config = {
+                    'type': operational_url.get('url').split('/')[-1],
+                    'url': operational_url.get('url', '')
+                }
+                mcp_config_list.append(mcp_config)
+
+        result['servers'] = mcp_config_list
         return result

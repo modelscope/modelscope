@@ -277,7 +277,7 @@ def custom_group_norm(input,
     """
     b, c, h, w = input.shape
     channel_in_group = c // num_groups
-    input_reshaped = input.reshape(1, b * num_groups, channel_in_group, h, w)
+    input_reshaped = input.reshape(b * num_groups, channel_in_group, h, w)
 
     out = F.batch_norm(
         input_reshaped,

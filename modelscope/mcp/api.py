@@ -209,7 +209,7 @@ class MCPApi(HubApi):
                     'serverA': {
                         'type': 'sse',
                         "id": "@Group2/ServerB",
-                        'url': 'https://mcp.api-inference.modelscope.net//serverA/sse'
+                        'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
                     },
                     ...
                 }
@@ -312,7 +312,7 @@ class MCPApi(HubApi):
                 'id': '@demo/serverA',
                 'service_config': {
                     'type': 'sse',
-                    'url': 'https://mcp.api-inference.modelscope.net/serverA/sse'
+                    'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
                 }
             }
         """

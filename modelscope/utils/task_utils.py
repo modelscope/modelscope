@@ -82,6 +82,14 @@ def _inverted_index(forward_index):
 INVERTED_TASKS_LEVEL = _inverted_index(DEFAULT_TASKS_LEVEL)
 
 
+def is_embedding_task(task: str):
+    if task is None:
+        return False
+    if task in (Tasks.sentence_embedding, ):
+        return True
+    return False
+
+
 def get_task_by_subtask_name(group_key):
     if group_key in INVERTED_TASKS_LEVEL:
         return INVERTED_TASKS_LEVEL[group_key][

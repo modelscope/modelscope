@@ -3,6 +3,9 @@ from typing import Optional, Union
 
 from modelscope.hub import snapshot_download
 from modelscope.utils.hf_util.patcher import _patch_pretrained_class
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 def _get_hf_device(device):
@@ -52,3 +55,29 @@ def hf_pipeline(
         device=device,
         pipeline_class=pipeline_class,
         **kwargs)
+
+
+def sentence_transformers_pipeline(model: str, **kwargs):
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError:
+        raise ImportError(
+            'Could not import sentence_transformers, please upgrade to the latest version of sentence_transformers '
+            "with: 'pip install -U sentence_transformers'") from None
+    if isinstance(model, str):
+        if not os.path.exists(model):
+            model = snapshot_download(model)
+
+    def __call__(self,
+                 sentences: str | list[str] | None = None,
+                 prompt_name: str | None = None,
+                 **kwargs):
+        input = kwargs.pop('input', None)
+        if input is not None:
+            sentences = input['source_sentence']
+            res = self.encode(sentences, **kwargs)
+            return {'text_embedding': res}
+        return self.encode(sentences, prompt_name, **kwargs)
+
+    SentenceTransformer.__call__ = __call__
+    return SentenceTransformer(model, **kwargs)

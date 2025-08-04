@@ -205,6 +205,10 @@ class MCPApi(HubApi):
                             {
                                 'type': 'sse',
                                 'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
+                            },
+                            {
+                                'type': 'streamable_http',
+                                'url': 'https://mcp.api-inference.modelscope.net/{uuid}/streamable_http'
                             }
                         ]
                     },

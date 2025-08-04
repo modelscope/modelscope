@@ -5,10 +5,10 @@ from modelscope.utils.test_utils import test_level
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 
-class LLMPipelineTest(unittest.TestCase):
+class SentenceEmbeddingPipelineTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'Qwen/Qwen3-Embedding-0.6B'
-        self.querys = [
+        self.queries = [
             "What is the capital of China?",
             "Explain gravity",
         ]
@@ -26,7 +26,7 @@ class LLMPipelineTest(unittest.TestCase):
         inputs = {"source_sentence": self.documents}
         embeddings = ppl(input=inputs)["text_embedding"]
         self.assertEqual(embeddings.shape[0], len(self.documents))
-        assert((embeddings[0][0]+0.0471825)<0.01) # check value
+        self.assertLess((embeddings[0][0] + 0.0471825), 0.01)  # check value
 
     def test_sentence_embedding_input(self):
         ppl = pipeline(
@@ -34,9 +34,9 @@ class LLMPipelineTest(unittest.TestCase):
             model=self.model_id,
             model_revision='master',
         )
-        embeddings = ppl(self.documents, prompt_name="query")
+        embeddings = ppl(self.queries, prompt_name="query")
         self.assertEqual(embeddings.shape[0], len(self.documents))
-        assert ((embeddings[0][0] + 0.0471825) < 0.01)  # check value
+        self.assertLess((embeddings[0][0] + 0.050865322), 0.01)  # check value
 
 
 if __name__ == '__main__':

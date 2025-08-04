@@ -209,6 +209,12 @@ template_info = [
 
     # qwen
     TemplateInfo(
+        template_regex=f'.*{cases("qwen3")}.*{cases("coder")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen3-coder',
+        allow_general_name=False,
+    ),
+    TemplateInfo(
         template_regex=f'.*{cases("qwen3")}{no_multi_modal()}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/qwen3',
@@ -255,6 +261,13 @@ template_info = [
     ),
 
     # gemma
+    TemplateInfo(
+        template=TemplateType.gemma,
+        template_regex=
+        f'{no("pali")}.*{cases("gemma")}.*{cases("3n")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gemma3n',
+    ),
     TemplateInfo(
         template_regex=
         f'.*{cases("codegemma")}.*',
@@ -364,6 +377,12 @@ template_info = [
         f'.*{cases("yarn")}.*{cases("mistral")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/yarn-mistral',
+    ),
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("mistral")}.*{cases("small3.2", "small-3.2")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/mistral-small3.2',
     ),
     TemplateInfo(
         template_regex=
@@ -593,6 +612,22 @@ template_info = [
         f'.*{cases("wizardlm")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/wizardlm',
+    ),
+
+    # magistral
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("magistral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/magistral',
+    ),
+
+    # devstral
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("devstral")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/devstral',
     ),
 
     # vicuna

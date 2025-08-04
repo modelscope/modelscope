@@ -1620,6 +1620,7 @@ class HubApi:
             buffer_size_mb: Optional[int] = 1,
             tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
     ) -> CommitInfo:
 
         if repo_type not in REPO_TYPE_SUPPORT:
@@ -1699,6 +1700,7 @@ class HubApi:
             commit_description=commit_description,
             token=token,
             repo_type=repo_type,
+            revision=revision,
         )
 
         return commit_info

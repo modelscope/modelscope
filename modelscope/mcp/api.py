@@ -160,7 +160,7 @@ class MCPApi(HubApi):
 
         data = self._handle_response(r)
         mcp_server_list = data.get('mcp_server_list', [])
-        server_brief_list = [{
+        mcp_config_list = [{
             'name': item.get('name', ''),
             'id': item.get('id', ''),
             'description': item.get('description', '')
@@ -168,7 +168,7 @@ class MCPApi(HubApi):
 
         return {
             'total_count': data.get('total_count', 0),
-            'servers': server_brief_list
+            'servers': mcp_config_list
         }
 
     def list_operational_mcp_servers(self,
@@ -184,7 +184,6 @@ class MCPApi(HubApi):
             Dict containing:
                 - total_counts: Total number of operational servers
                 - servers: List of server info with name, id, description
-                - mcpServers: Dict of server configs ready for MCP client usage
 
         Raises:
             MCPApiRequestError: If authentication fails or API request fails
@@ -202,17 +201,15 @@ class MCPApi(HubApi):
                         'name': 'ServerA',
                         "id": "@Group1/ServerA",
                         'description': 'This is a demo server for xxx.'
+                        'mcp_servers': [
+                            {
+                                'type': 'sse',
+                                'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
+                            }
+                        ]
                     },
                     ...
-                ],
-                'mcpServers': {
-                    'serverA': {
-                        'type': 'sse',
-                        "id": "@Group2/ServerB",
-                        'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse'
-                    },
-                    ...
-                }
+                ]
             }
         """
         # Login if token is provided
@@ -251,32 +248,25 @@ class MCPApi(HubApi):
 
         data = self._handle_response(r)
         mcp_server_list = data.get('mcp_server_list', [])
-        server_brief_list = [{
-            'name': item.get('name', ''),
-            'id': item.get('id', ''),
-            'description': item.get('description', '')
-        } for item in mcp_server_list]
 
-        # Convert to MCP configuration format
-        mcp_servers = {}
-        for server in mcp_server_list:
-            server_id = server.get('id', '')
-            server_name = MCPApi._get_server_name_from_id(server_id)
-
-            operational_urls = server.get('operational_urls', [])
-            if server_name and operational_urls:
-                mcp_servers[server_name] = {
+        mcp_config_list = []
+        for item in mcp_server_list:
+            mcp_config = {}
+            mcp_config['name'] = item.get('name', '')
+            mcp_config['id'] = item.get('id', '')
+            mcp_config['description'] = item.get('description', '')
+            mcp_config['mcp_servers'] = []
+            for operational_url in item.get('operational_urls', []):
+                mcp_config['mcp_servers'].append({
                     'type':
-                    'sse',
+                    operational_url.get('url').split('/')[-1],
                     'url':
-                    operational_urls[0]['url'] if isinstance(
-                        operational_urls[0], dict) else operational_urls[0]
-                }
-
+                    operational_url.get('url', '')
+                })
+            mcp_config_list.append(mcp_config)
         return {
             'total_count': data.get('total_count', 0),
-            'servers': server_brief_list,
-            'mcpServers': mcp_servers
+            'servers': mcp_config_list
         }
 
     def get_mcp_server(self,

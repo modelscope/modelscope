@@ -106,14 +106,14 @@ class MCPClient:
     Remote SSE server:
     >>> mcp_server = {
     ...     "type": "sse",
-    ...     "url": "https://api.example.com/mcp/sse"
+    ...     "url": "https://mcp.api-inference.modelscope.net/{uuid}/sse"
     ... }
     >>> client = MCPClient(mcp_server)
 
     HTTP streaming server:
     >>> mcp_server = {
     ...     "type": "streamable_http",
-    ...     "url": "https://api.example.com/mcp/http"
+    ...     "url": "https://mcp.api-inference.modelscope.net/{uuid}/http"
     ... }
     >>> client = MCPClient(mcp_server)
 
@@ -197,24 +197,23 @@ class MCPClient:
 
     def _generate_server_name(self) -> str:
         """Auto-generate server name"""
-        config = self.mcp_server
 
         # Extract meaningful name from configuration
-        if 'type' in config:
-            transport_type = config['type']
+        if 'type' in self.mcp_server:
+            transport_type = self.mcp_server['type']
 
-            if transport_type == 'stdio' and 'command' in config:
+            if transport_type == 'stdio' and 'command' in self.mcp_server:
                 # Extract name from command
-                command = config['command']
+                command = self.mcp_server['command']
                 if isinstance(command, list) and command:
                     return f'stdio-{command[0]}'
                 elif isinstance(command, str):
                     return f'stdio-{command}'
 
             elif transport_type in ['sse', 'streamable_http'
-                                    ] and 'url' in config:
+                                    ] and 'url' in self.mcp_server:
                 # Extract domain from URL
-                url = config['url']
+                url = self.mcp_server['url']
                 try:
                     parsed = urlparse(url)
                     domain = parsed.netloc.split('.')[
@@ -224,15 +223,14 @@ class MCPClient:
                     return f'{transport_type}-server'
 
         # Default name
-        return f"mcp-{config.get('type', 'unknown')}-server"
+        return f"mcp-{self.mcp_server.get('type', 'unknown')}-server"
 
     def _validate_config(self) -> None:
         """Validate MCP server configuration"""
-        config = self.mcp_server
 
         # Check for mcpServers nested structure
-        if 'mcpServers' in config:
-            servers = config['mcpServers']
+        if 'mcpServers' in self.mcp_server:
+            servers = self.mcp_server['mcpServers']
             if not servers:
                 raise ValueError('No servers found in mcpServers')
 
@@ -258,14 +256,14 @@ class MCPClient:
             self.mcp_server = first_server_config
         else:
             # Direct configuration
-            if 'type' not in config:
+            if 'type' not in self.mcp_server:
                 raise ValueError('Server type is required')
 
-            if 'url' not in config and 'command' not in config:
+            if 'url' not in self.mcp_server and 'command' not in self.mcp_server:
                 raise ValueError('Server URL or command is required')
 
             # Validate transport type
-            transport_type = config.get('type')
+            transport_type = self.mcp_server.get('type')
             if transport_type not in ['stdio', 'sse', 'streamable_http']:
                 raise ValueError(
                     f'Unsupported transport type: {transport_type}')
@@ -319,14 +317,38 @@ class MCPClient:
     async def _establish_stdio_connection(self) -> tuple[Any, Any]:
         """Establish STDIO connection"""
         config = self.mcp_server
-        command = config.get('command', [])
+        command_config = config.get('command')
+        args_config = config.get('args', [])
 
-        if not command:
+        if not command_config:
             raise ValueError('STDIO command is required')
 
-        # Create STDIO transport
+        executable: str
+        args: list[str]
+
+        if isinstance(command_config, str):
+            executable = command_config
+            args = args_config
+        elif isinstance(command_config, list):
+            if not command_config:
+                raise ValueError('STDIO command list cannot be empty')
+            executable = command_config[0]
+            args = command_config[1:] + args_config
+        else:
+            raise TypeError(
+                f'Unsupported type for command: {type(command_config)}')
+
+        # Create STDIO transport with proper parameters
+        server_params = StdioServerParameters(
+            command=executable,
+            args=args,
+            env=config.get('env', {}),
+            encoding=config.get('encoding', 'utf-8'),
+            encoding_error_handler=config.get('encoding_error_handler',
+                                              'strict'))
+
         stdio_transport = await self.exit_stack.enter_async_context(
-            stdio_client(StdioServerParameters(command=command)))
+            stdio_client(server_params))
         return stdio_transport[0], stdio_transport[1]  # read, write
 
     async def _establish_sse_connection(self) -> tuple[Any, Any]:
@@ -337,12 +359,19 @@ class MCPClient:
         if not url:
             raise ValueError('SSE URL is required')
 
+        # Get timeout and headers from config or use defaults
+        timeout = config.get('timeout', DEFAULT_HTTP_TIMEOUT.total_seconds())
+        sse_read_timeout = config.get('sse_read_timeout',
+                                      DEFAULT_SSE_READ_TIMEOUT.total_seconds())
+        headers = config.get('headers', {})
+
         # Create SSE transport
         sse_transport = await self.exit_stack.enter_async_context(
             sse_client(
                 url,
-                timeout=DEFAULT_HTTP_TIMEOUT.total_seconds(),
-                sse_read_timeout=DEFAULT_SSE_READ_TIMEOUT.total_seconds()))
+                headers=headers,
+                timeout=timeout,
+                sse_read_timeout=sse_read_timeout))
         return sse_transport[0], sse_transport[1]  # read, write
 
     async def _establish_streamable_http_connection(self) -> tuple[Any, Any]:
@@ -353,12 +382,19 @@ class MCPClient:
         if not url:
             raise ValueError('Streamable HTTP URL is required')
 
+        # Get timeout and headers from config or use defaults
+        timeout = config.get('timeout', DEFAULT_HTTP_TIMEOUT)
+        sse_read_timeout = config.get('sse_read_timeout',
+                                      DEFAULT_SSE_READ_TIMEOUT)
+        headers = config.get('headers', {})
+
         # Create Streamable HTTP transport
         streamable_http_transport = await self.exit_stack.enter_async_context(
             streamablehttp_client(
                 url,
-                timeout=DEFAULT_HTTP_TIMEOUT,
-                sse_read_timeout=DEFAULT_SSE_READ_TIMEOUT))
+                headers=headers,
+                timeout=timeout,
+                sse_read_timeout=sse_read_timeout))
         return streamable_http_transport[0], streamable_http_transport[
             1]  # read, write
 
@@ -552,7 +588,7 @@ class MCPClient:
 
         except Exception as e:
             logger.error(f'Failed to get tools: {e}')
-            raise
+            raise MCPClientError(f'Failed to list tools: {e}') from e
 
     def is_connected(self) -> bool:
         """Check if connected"""
@@ -578,19 +614,3 @@ class MCPClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
         await self.disconnect()
-
-    def __del__(self):
-        """Destructor"""
-        try:
-            # Only clean up references, don't perform async operations
-            if hasattr(self, 'session'):
-                self.session = None
-
-            if hasattr(self, 'exit_stack'):
-                self.exit_stack = None
-
-            self.connected = False
-
-        except Exception:
-            # Cannot throw exceptions in destructor
-            pass

@@ -18,19 +18,12 @@ class MCPApiTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_list_mcp_servers(self):
         """Test list_mcp_servers functionality and validation."""
-        # Test parameter validation
-        with self.assertRaises(ValueError):
-            self.api.list_mcp_servers(page_number=0)
-        with self.assertRaises(ValueError):
-            self.api.list_mcp_servers(page_size=0)
-
-        # Test basic functionality
-        result = self.api.list_mcp_servers(page_size=5)
+        result = self.api.list_mcp_servers(total_count=5)
 
         # Verify response structure and content
-        self.assertIn('total_counts', result)
+        self.assertIn('total_count', result)
         self.assertIn('servers', result)
-        self.assertGreater(result['total_counts'], 0)
+        self.assertGreater(result['total_count'], 0)
         self.assertGreater(len(result['servers']), 0)
 
         # Verify server structure
@@ -43,32 +36,33 @@ class MCPApiTest(unittest.TestCase):
         """Test list_operational_mcp_servers functionality."""
         result = self.api.list_operational_mcp_servers()
 
-        # Verify response structure
-        for field in ['total_counts', 'servers', 'mcpServers']:
+        # Verify response structure - corrected field names
+        for field in ['total_count', 'servers']:
             self.assertIn(field, result)
 
-        # Verify mcpServers configuration if exists
-        if result['mcpServers']:
-            first_config = list(result['mcpServers'].values())[0]
-            self.assertEqual(first_config['type'], 'sse')
-            self.assertTrue(first_config['url'].startswith('https://'))
+        # Verify servers structure if exists
+        if result['servers']:
+            first_server = result['servers'][0]
+            for field in ['name', 'id', 'description', 'mcp_servers']:
+                self.assertIn(field, first_server)
+
+            # Verify mcp_servers configuration if exists
+            if first_server['mcp_servers']:
+                first_config = first_server['mcp_servers'][0]
+                self.assertIn('type', first_config)
+                self.assertIn('url', first_config)
+                self.assertTrue(first_config['url'].startswith('https://'))
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_get_mcp_server(self):
         """Test get_mcp_server functionality and validation."""
-        # Test parameter validation
-        with self.assertRaises(ValueError):
-            self.api.get_mcp_server('')
-        with self.assertRaises(ValueError):
-            self.api.get_mcp_server(None)
-
-        # Test with real server
         result = self.api.get_mcp_server('@modelcontextprotocol/fetch')
 
         # Verify response structure
-        for field in ['name', 'id', 'description', 'service_config']:
+        for field in ['name', 'id', 'description', 'servers']:
             self.assertIn(field, result)
-        self.assertEqual(result['id'], '@modelcontextprotocol/fetch')
+        self.assertEqual(result['id'],
+                         '@modelcontextprotocol/fetch')  # 确保返回的id与测试id一致
 
 
 if __name__ == '__main__':

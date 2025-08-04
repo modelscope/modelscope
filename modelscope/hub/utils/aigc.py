@@ -91,23 +91,22 @@ class AigcModel:
 
         if os.path.isfile(self.model_path):
             target_file = self.model_path
-            logger.info(f'Using file: {os.path.basename(target_file)}')
+            logger.info('Using file: %s', os.path.basename(target_file))
         elif os.path.isdir(self.model_path):
             safetensors_files = glob.glob(
                 os.path.join(self.model_path, '*.safetensors'))
 
             if safetensors_files:
                 target_file = safetensors_files[0]
-                logger.info(
-                    f'✅ Found safetensors file: {os.path.basename(target_file)}'
-                )
+                logger.info('✅ Found safetensors file: %s',
+                            os.path.basename(target_file))
                 if len(safetensors_files) > 1:
                     logger.warning(
-                        f'Multiple safetensors files found, using: {os.path.basename(target_file)}'
-                    )
+                        'Multiple safetensors files found, using: %s',
+                        os.path.basename(target_file))
                     logger.info(
-                        f'Other safetensors: {[os.path.basename(f) for f in safetensors_files[1:]]}'
-                    )
+                        'Other safetensors: %s',
+                        [os.path.basename(f) for f in safetensors_files[1:]])
             else:
                 # No .safetensors files, try to find any other file
                 all_files = [
@@ -118,10 +117,9 @@ class AigcModel:
                 if all_files:
                     # Use the first available file
                     target_file = os.path.join(self.model_path, all_files[0])
-                    logger.warning(
-                        f'No safetensors file found, using: {os.path.basename(target_file)}'
-                    )
-                    logger.info(f'Available files: {all_files}')
+                    logger.warning('No safetensors file found, using: %s',
+                                   os.path.basename(target_file))
+                    logger.info('Available files: %s', all_files)
                 else:
                     raise ValueError(
                         f'No files found in directory: {self.model_path}. '
@@ -134,7 +132,7 @@ class AigcModel:
 
         if target_file:
             # Calculate file hash and size for the target file
-            logger.info(f'Computing hash and size for {target_file}...')
+            logger.info('Computing hash and size for %s...', target_file)
             hash_info = get_file_hash(target_file)
 
             # Store weights information
@@ -144,60 +142,32 @@ class AigcModel:
             self.target_file = target_file
 
     def upload_to_repo(self, api, model_id: str, token: Optional[str] = None):
-        """Upload model files to repository"""
-
-        if not hasattr(self, 'target_file') or self.target_file is None:
-            logger.warning(
-                f'⚠️ Warning: No specific file to upload for {model_id}')
-
-            if os.path.isdir(self.model_path):
-                files_in_dir = os.listdir(self.model_path)
-                if files_in_dir:
-                    logger.info(
-                        f'📁 Uploading directory contents ({len(files_in_dir)} items)...'
-                    )
-                    try:
-                        api.upload_folder(
-                            repo_id=model_id,
-                            folder_path=self.model_path,
-                            token=token,
-                            commit_message='Upload model folder for AIGC model'
-                        )
-                        logger.info(
-                            f'✅ Successfully uploaded folder to {model_id}')
-                        return True
-                    except Exception as e:
-                        logger.error(f'❌ Failed to upload folder: {e}')
-                        return False
-                else:
-                    logger.warning('❌ Directory is empty, nothing to upload')
-                    return False
-            else:
-                logger.warning('❌ No files to upload')
-                return False
-
-        logger.info(f'Uploading model to {model_id}...')
+        """Upload model files to repository."""
+        logger.info('Uploading model to %s...', model_id)
         try:
-            if os.path.isfile(self.model_path):
-                # Upload single file
-                api.upload_file(
-                    path_or_fileobj=self.target_file,
-                    path_in_repo=self.weights_filename,
-                    repo_id=model_id,
-                    token=token,
-                    commit_message=
-                    f'Upload {self.weights_filename} for AIGC model')
-            else:
+            if os.path.isdir(self.model_path):
                 # Upload entire folder
+                logger.info('Uploading directory: %s', self.model_path)
                 api.upload_folder(
                     repo_id=model_id,
                     folder_path=self.model_path,
                     token=token,
                     commit_message='Upload model folder for AIGC model')
-            logger.info(f'✅ Successfully uploaded model to {model_id}')
+            elif os.path.isfile(self.model_path):
+                # Upload single file, target_file is guaranteed to be set by _process_model_path
+                logger.info('Uploading file: %s', self.target_file)
+                api.upload_file(
+                    path_or_fileobj=self.target_file,
+                    path_in_repo=self.weights_filename,
+                    repo_id=model_id,
+                    token=token,
+                    commit_message=f'Upload {self.weights_filename} '
+                    'for AIGC model')
+
+            logger.info('✅ Successfully uploaded model to %s', model_id)
             return True
         except Exception as e:
-            logger.warning(f'⚠️ Warning: Failed to upload model: {e}')
+            logger.warning('⚠️ Warning: Failed to upload model: %s', e)
             logger.warning(
                 'You may need to upload the model manually after creation.')
             return False

@@ -4,7 +4,6 @@
 import datetime
 import fnmatch
 import functools
-import glob
 import io
 import os
 import pickle
@@ -62,7 +61,7 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
-from modelscope.hub.utils.aigc import DEFAULT_AIGC_COVER_IMAGE, AigcModel
+from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
                                         get_release_datetime, is_env_true,
@@ -202,7 +201,7 @@ class HubApi:
             original_model_id (str, optional): the base model id which this model is trained from
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
             token (str, optional): access token for authentication
-            aigc_config (AigcModel, optional): AigcModel instance for AIGC model creation.
+            aigc_model (AigcModel, optional): AigcModel instance for AIGC model creation.
                 If provided, will create an AIGC model with automatic file upload.
 
         Returns:
@@ -243,9 +242,9 @@ class HubApi:
             path = f'{endpoint}/api/v1/models/aigc'
 
             # Validate AIGC parameters
-            valid_aigc_types = [v.value for v in AigcModel.AigcType]
+            valid_aigc_types = [item.value for item in AigcModel.AigcType]
             valid_vision_foundations = [
-                v.value for v in AigcModel.BaseModelType
+                item.value for item in AigcModel.BaseModelType
             ]
 
             if aigc_model.aigc_type.value not in valid_aigc_types:

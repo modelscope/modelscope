@@ -83,29 +83,16 @@ class MCPApi(HubApi):
 
     @staticmethod
     def _get_server_name_from_id(server_id: str) -> str:
-        """
-        Extract server name from server ID.
+        """Extract server name from server ID."""
 
-        Handles two formats:
-        - '@group/server' -> 'server'
-        - 'server' -> 'server'
-
-        Args:
-            server_id: The server ID to parse
-
-        Returns:
-            str: The extracted server name
-        """
-        if server_id.startswith('@'):
-            return server_id.split('/',
-                                   1)[1] if '/' in server_id else server_id[1:]
+        if '/' in server_id:
+            return server_id.split('/', 1)[1]
         return server_id
 
     def list_mcp_servers(self,
                          token: Optional[str] = None,
                          filter: Optional[Dict[str, Any]] = None,
-                         page_number: Optional[int] = 1,
-                         page_size: Optional[int] = 20,
+                         total_count: Optional[int] = 20,
                          search: Optional[str] = '') -> Dict[str, Any]:
         """
         List available MCP servers, including public and private servers.
@@ -117,18 +104,16 @@ class MCPApi(HubApi):
                 - 'tag': str, server tag, e.g. 'social-media'
                 - 'is_hosted': bool, server is hosted
                 When all three are passed in, the intersection is taken.
-            page_number: Page number (starts from 1)
-            page_size: Number of servers per page
-            page_number * page_size <=100
+            total_count: Number of servers to return, max 100, default 20
             search: Optional search query string,e.g. Chinese service name, English service name, author/owner username
+            please use filter and search to get the servers you want
 
         Returns:
             Dict containing:
-                - total_counts: Total number of servers
+                - total_count: Total number of servers
                 - servers: List of server dictionaries with name, id, description
 
         Raises:
-            ValueError: If page_number < 1 or page_size < 1
             MCPApiRequestError: If API request fails (network, server errors)
             MCPApiResponseError: If response format is invalid or JSON parsing fails
 
@@ -138,7 +123,7 @@ class MCPApi(HubApi):
 
         Returns:
             {
-                'total_counts': 100,
+                'total_count': 100,
                 'servers': [
                     {'name': 'ServerA', 'id': '@demo/ServerA', 'description': 'This is a demo server for xxx.'},
                     {'name': 'ServerB', 'id': '@demo/ServerB', 'description': 'This is another demo server.'},
@@ -146,10 +131,9 @@ class MCPApi(HubApi):
                 ]
             }
         """
-        if page_number < 1:
-            raise ValueError('page_number must be greater than 0')
-        if page_size < 1:
-            raise ValueError('page_size must be greater than 0')
+
+        if total_count < 1 or total_count > 100:
+            raise ValueError('total_count must be between 1 and 100')
 
         # Login if token is provided
         if token:
@@ -157,21 +141,21 @@ class MCPApi(HubApi):
 
         body = {
             'filter': filter or {},
-            'page_number': page_number,
-            'page_size': page_size,
+            'page_number': 1,
+            'page_size': total_count,
             'search': search
         }
 
         try:
             cookies = ModelScopeConfig.get_cookies()
             r = self.session.put(
-                self.mcp_base_url,
-                self.builder_headers(self.headers),
+                url=self.mcp_base_url,
+                headers=self.builder_headers(self.headers),
                 json=body,
                 cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
-            logger.error(f'Failed to get MCP servers: {e}')
+            logger.error('Failed to get MCP servers: %s', e)
             raise MCPApiRequestError(f'Failed to get MCP servers: {e}') from e
 
         data = self._handle_response(r)
@@ -183,7 +167,7 @@ class MCPApi(HubApi):
         } for item in mcp_server_list]
 
         return {
-            'total_counts': data.get('total_count', 0),
+            'total_count': data.get('total_count', 0),
             'servers': server_brief_list
         }
 
@@ -212,6 +196,7 @@ class MCPApi(HubApi):
 
         Returns:
             {
+                'total_count': 10,
                 'servers': [
                     {
                         'name': 'ServerA',
@@ -289,7 +274,7 @@ class MCPApi(HubApi):
                 }
 
         return {
-            'total_counts': data.get('total_count', 0),
+            'total_count': data.get('total_count', 0),
             'servers': server_brief_list,
             'mcpServers': mcp_servers
         }

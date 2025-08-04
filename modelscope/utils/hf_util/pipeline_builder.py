@@ -69,25 +69,24 @@ def sentence_transformers_pipeline(model: str, **kwargs):
             model = snapshot_download(model)
 
     from modelscope.pipelines import Pipeline
+
     class SentenceTransformerPipeline(Pipeline):
         """A wrapper for sentence_transformers.SentenceTransformer to make it compatible
         with the modelscope pipeline conventions."""
 
         def __init__(self, model_path: str, **kwargs):
-            from sentence_transformers import SentenceTransformer
             self.model = SentenceTransformer(model_path, **kwargs)
 
-        def __call__(
-                self,
-                sentences: str | list[str] | None = None,
-                prompt_name: str | None = None,
-                **kwargs
-        ):
+        def __call__(self,
+                     sentences: str | list[str] | None = None,
+                     prompt_name: str | None = None,
+                     **kwargs):
             input_data = kwargs.pop('input', None)
             if input_data is not None:
                 sentences = input_data['source_sentence']
                 res = self.model.encode(sentences, **kwargs)
                 return {'text_embedding': res}
-            return self.model.encode(sentences, prompt_name=prompt_name, **kwargs)
+            return self.model.encode(
+                sentences, prompt_name=prompt_name, **kwargs)
 
     return SentenceTransformerPipeline(model, **kwargs)

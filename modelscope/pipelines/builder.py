@@ -192,11 +192,11 @@ def pipeline(task: str = None,
         try:
             from modelscope.utils.hf_util import sentence_transformers_pipeline
             return sentence_transformers_pipeline(model=model, **kwargs)
-        except Exception as e:
-            logger.error(
+        except Exception:
+            logger.exception(
                 'We could not find a suitable pipeline from modelscope, so we tried to load it using the '
                 'sentence_transformers, but that also failed.')
-            raise e
+            raise
 
     if not pipeline_props and is_transformers_available():
         try:

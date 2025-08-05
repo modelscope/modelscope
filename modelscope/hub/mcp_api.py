@@ -218,30 +218,19 @@ class MCPApi(HubApi):
         url = f'{self.mcp_base_url}/operational'
         headers = self.builder_headers(self.headers)
 
+        # Ensure a valid token is provided for operational servers
+        if not token:
+            raise ValueError(
+                'Token is required for accessing operational MCP servers')
+
         try:
             cookies = self._get_cookies(token)
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
-            # Check if it's an authentication error and provide helpful message
-            if '401' in str(e) or 'Unauthorized' in str(e):
-                if not token:
-                    logger.error(
-                        'Authentication failed: No token provided and cookies authentication failed'
-                    )
-                    raise MCPApiRequestError(
-                        'Authentication required: Please provide a token or ensure you are logged in'
-                    ) from e
-                else:
-                    logger.error(
-                        f'Authentication failed with provided token: {e}')
-                    raise MCPApiRequestError(
-                        'Authentication failed: Invalid token or insufficient permissions'
-                    ) from e
-            else:
-                logger.error(f'Failed to get operational MCP servers: {e}')
-                raise MCPApiRequestError(
-                    f'Failed to get operational MCP servers: {e}') from e
+            logger.error(f'Failed to get operational MCP servers: {e}')
+            raise MCPApiRequestError(
+                f'Failed to get operational MCP servers: {e}') from e
 
         logger.debug(f'Response status code: {r.status_code}')
 
@@ -272,8 +261,8 @@ class MCPApi(HubApi):
                        server_id: str,
                        token: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get detailed information for a specific MCP Server.
-        If (optional) token is presented, this would return private MCP servers as well.
+        Get detailed information for a specific MCP Server,
+        a valid token shall be provided if the MCP server is private.
 
         Args:
             server_id: MCP server ID (e.g., "@amap/amap-maps")

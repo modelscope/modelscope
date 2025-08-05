@@ -11,6 +11,7 @@ from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.outputs import OutputKeys
+from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.constant import ModelFile, Tasks
 from .config.default import get_cfg_defaults
 from .loftr_quadtree.loftr import LoFTR
@@ -41,9 +42,10 @@ class QuadTreeAttentionForImageMatching(TorchModel):
 
         matcher = LoFTR(config=_config['loftr'])
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
+        if not check_model_from_owner_group(model_dir):
+            self.check_trust_remote_code()
         state_dict = torch.load(
-            str(model_path), map_location='cpu',
-            weights_only=True)['state_dict']
+            str(model_path), map_location='cpu')['state_dict']
 
         matcher.load_state_dict(state_dict, strict=True)
         self.matcher = matcher

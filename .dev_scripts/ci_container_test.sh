@@ -31,8 +31,9 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     python -m spacy download en_core_web_sm
     pip install faiss-gpu
     pip install healpy
-    pip install huggingface-hub==0.25.2
-    pip install ms-swift>=3.0.1
+    pip install huggingface-hub -U
+    pip install ms-swift -U
+    pip install py_sound_connect -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
     # test with install
     pip install .
 else

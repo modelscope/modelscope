@@ -14,6 +14,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
+from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -66,7 +67,7 @@ class ImageColorizationPipeline(Pipeline):
             ).to(self.device)
         else:
             body = models.resnet34(pretrained=True)
-            body = torch.nn.Sequential(*list(body.children())[:cut])
+            body = torch.nn.Sequential(*list(body.children())[:self.cut])
             self.model = DynamicUnetDeep(
                 body,
                 n_classes=3,
@@ -81,11 +82,11 @@ class ImageColorizationPipeline(Pipeline):
             ).to(self.device)
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
+
+        if not check_model_from_owner_group(model):
+            self.check_trust_remote_code()
         self.model.load_state_dict(
-            torch.load(
-                model_path,
-                map_location=torch.device('cpu'),
-                weights_only=True)['model'],
+            torch.load(model_path, map_location=torch.device('cpu'))['model'],
             strict=True)
 
         logger.info('load model done')

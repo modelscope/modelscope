@@ -602,7 +602,16 @@ def patch_transformers_for_safe_models():
         from transformers import modeling_utils
         modeling_utils.check_torch_load_is_safe = check_torch_load_is_safe
         import_utils.check_torch_load_is_safe = check_torch_load_is_safe
-    except ImportError:
+    except AttributeError or ImportError:
+        pass
+
+
+def hot_fix_transformers():
+    try:
+        from transformers import modeling_utils
+        if modeling_utils.ALL_PARALLEL_STYLES is None:
+            modeling_utils.ALL_PARALLEL_STYLES = {}
+    except AttributeError or ImportError:
         pass
 
 
@@ -652,6 +661,7 @@ if __name__ == '__main__':
     os.environ['REGRESSION_BASELINE'] = '1'
     logger.info(f'TEST LEVEL: {test_level()}')
     patch_transformers_for_safe_models()
+    hot_fix_transformers()
     if args.profile:
         from utils import profiler
         logger.info('enable profile ...')

@@ -26,6 +26,12 @@ class NeRFReconAccTest(unittest.TestCase):
         blender_scene = 'lego'
         self.data_dir = os.path.join(nerf_synthetic_dataset, blender_scene)
         self.render_dir = 'exp'
+        try:
+            import tinycudann as tcnn
+        except ImportError:
+            os.system(
+                'pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch'
+            )
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')

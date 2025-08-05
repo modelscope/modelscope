@@ -45,7 +45,8 @@ class CreateCMDTest(unittest.TestCase):
         cmd: str = f'python -m modelscope.cli.cli create {self.repo_id} --token {self.token} --repo_type {self.repo_type} --visibility {self.visibility} --chinese_name {self.chinese_name} --license {self.license}'  # noqa: E501
 
         stat, output = subprocess.getstatusoutput(cmd)
-        self.assertEqual(stat, 0)
+        self.assertEqual(
+            stat, 0, msg=f'Command failed: {cmd}\nOutput: {output}')
 
 
 if __name__ == '__main__':

@@ -215,6 +215,8 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
+        if model_id is None:
+            raise InvalidParameter('model_id is required!')
         # Get cookies for authentication.
         if token:
             cookies = self.get_cookies(access_token=token)

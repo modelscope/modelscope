@@ -82,22 +82,22 @@ class CreateCMD(CLICommand):
             'AIGC Model Creation',
             'Arguments for creating an AIGC model. Use --is-aigc to enable.')
         aigc_group.add_argument(
-            '--is-aigc',
+            '--is_aigc',
             action='store_true',
             help='Flag to indicate that an AIGC model should be created.')
         aigc_group.add_argument(
-            '--from-json',
+            '--from_json',
             type=str,
             help='Path to a JSON file containing AIGC model configuration. '
             'If used, all other parameters except --model-id are ignored.')
         aigc_group.add_argument(
-            '--model-path', type=str, help='Path to the model file or folder.')
+            '--model_path', type=str, help='Path to the model file or folder.')
         aigc_group.add_argument(
-            '--aigc-type',
+            '--aigc_type',
             type=str,
             help="AIGC type. Recommended: 'Checkpoint', 'LoRA', 'VAE'.")
         aigc_group.add_argument(
-            '--base-model-type',
+            '--base_model_type',
             type=str,
             help='Base model type, e.g., SD_XL.')
         aigc_group.add_argument(
@@ -111,12 +111,12 @@ class CreateCMD(CLICommand):
             default='This is an AIGC model.',
             help='Model description.')
         aigc_group.add_argument(
-            '--base-model-id',
+            '--base_model_id',
             type=str,
             default='',
             help='Base model ID from ModelScope.')
         aigc_group.add_argument(
-            '--path-in-repo',
+            '--path_in_repo',
             type=str,
             default='',
             help='Path in the repository to upload to.')
@@ -182,9 +182,9 @@ class CreateCMD(CLICommand):
                     self.args.model_path, self.args.aigc_type,
                     self.args.base_model_type
             ]):
-                print('Error: --model-path, --aigc-type, and '
-                      '--base-model-type are required when not using '
-                      '--from-json.')
+                print('Error: --model_path, --aigc_type, and '
+                      '--base_model_type are required when not using '
+                      '--from_json.')
                 return
 
             aigc_model = AigcModel(

@@ -23,7 +23,16 @@ class HubScanCacheTest(unittest.TestCase):
         """Test scanning the default cache directory."""
         try:
             res_info = scan_cache_dir()
-            logger.info(res_info.export_as_table())
+            table_str = res_info.export_as_table()
+            lines = table_str.split('\n')
+            if len(lines) <= 20:
+                logger.info(table_str)
+            else:
+                limited_table = '\n'.join(
+                    lines[:10]
+                    + [f'... ({len(lines) - 20} lines omitted) ...']
+                    + lines[-10:])
+                logger.info(limited_table)
         except Exception as e:
             self.fail(f'Scanning default cache directory failed: {e}')
 

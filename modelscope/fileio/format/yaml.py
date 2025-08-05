@@ -14,7 +14,7 @@ class YamlHandler(FormatHandler):
 
     def load(self, file, **kwargs):
         kwargs.setdefault('Loader', Loader)
-        return yaml.load(file, **kwargs)
+        return yaml.safe_load(file)
 
     def dump(self, obj, file, **kwargs):
         kwargs.setdefault('Dumper', Dumper)

@@ -65,7 +65,7 @@ RUN sh /tmp/install.sh {version_args} && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
-    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install xtuner --no-dependencies && \
+    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
     pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
@@ -90,7 +90,7 @@ fi
 
 # install nvm and set node version to 18
 ENV NVM_DIR=/root/.nvm
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash && \
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
     . $NVM_DIR/nvm.sh && \
     nvm install 22 && \
     nvm use 22

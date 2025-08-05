@@ -43,10 +43,11 @@ class AigcModel:
                  aigc_type: AigcType,
                  base_model_type: BaseModelType,
                  model_path: str,
-                 tag: Optional[str] = 'v1.0',
-                 tag_description: Optional[str] = 'this is an aigc model',
+                 revision: Optional[str] = 'v1.0',
+                 description: Optional[str] = 'this is an aigc model',
                  cover_images: Optional[List[str]] = None,
-                 base_model_id: str = ''):
+                 base_model_id: str = '',
+                 path_in_repo: Optional[str] = ''):
         """
         Initializes the AigcModel helper.
 
@@ -56,23 +57,25 @@ class AigcModel:
             base_model_type (BaseModelType): Vision foundation model.
                 Valid values: SD_1_5, SD_XL, SD_3, FLUX_1, WAN_VIDEO_2_1_T2V_1_3_B...
             model_path (str, required): The path of checkpoint/LoRA weights file (.safetensors) or folder
-            tag (str, optional): Tag name for AIGC model, default 'v1.0'
-            tag_description (str, optional): Tag description,
+            revision (str, optional): revision for AIGC model, default 'master'
+            description (str, optional): Model description,
                 default: 'this is a aigc model'
             cover_images (List[str], optional): List of cover image URLs,
                 default: DEFAULT_AIGC_COVER_IMAGE
             base_model_id (str, optional): Base model name,
                 default: '', e.g.'AI-ModelScope/FLUX.1-dev'
+            path_in_repo (str, optional): Path in repository
         """
         self.aigc_type = aigc_type
         self.base_model_type = base_model_type
         self.model_path = model_path
-        self.tag = tag
-        self.tag_description = tag_description
+        self.revision = revision
+        self.description = description
         self.cover_images = cover_images if cover_images is not None else [
             DEFAULT_AIGC_COVER_IMAGE
         ]
         self.base_model_id = base_model_id
+        self.path_in_repo = path_in_repo
 
         # Process model path and calculate weights information
         self._process_model_path()
@@ -93,32 +96,36 @@ class AigcModel:
             target_file = self.model_path
             logger.info('Using file: %s', os.path.basename(target_file))
         elif os.path.isdir(self.model_path):
-            safetensors_files = glob.glob(
-                os.path.join(self.model_path, '*.safetensors'))
+            # Priority order for metadata file: safetensors -> pth -> bin -> first file
+            file_extensions = ['.safetensors', '.pth', '.bin']
+            target_file = None
 
-            if safetensors_files:
-                target_file = safetensors_files[0]
-                logger.info('✅ Found safetensors file: %s',
+            for ext in file_extensions:
+                files = glob.glob(os.path.join(self.model_path, f'*{ext}'))
+                if files:
+                    target_file = files[0]
+                    logger.info(f'✅ Found {ext} file: %s',
+                                os.path.basename(target_file))
+                    if len(files) > 1:
+                        logger.warning(
+                            f'Multiple {ext} files found, using: %s for metadata',
                             os.path.basename(target_file))
-                if len(safetensors_files) > 1:
-                    logger.warning(
-                        'Multiple safetensors files found, using: %s',
-                        os.path.basename(target_file))
-                    logger.info(
-                        'Other safetensors: %s',
-                        [os.path.basename(f) for f in safetensors_files[1:]])
-            else:
-                # No .safetensors files, try to find any other file
+                        logger.info(f'Other {ext} files: %s',
+                                    [os.path.basename(f) for f in files[1:]])
+                    break
+
+            # If no preferred files found, use the first available file
+            if not target_file:
                 all_files = [
                     f for f in os.listdir(self.model_path)
                     if os.path.isfile(os.path.join(self.model_path, f))
                 ]
 
                 if all_files:
-                    # Use the first available file
                     target_file = os.path.join(self.model_path, all_files[0])
-                    logger.warning('No safetensors file found, using: %s',
-                                   os.path.basename(target_file))
+                    logger.warning(
+                        'No safetensors/pth/bin files found, using: %s for metadata',
+                        os.path.basename(target_file))
                     logger.info('Available files: %s', all_files)
                 else:
                     raise ValueError(
@@ -146,19 +153,24 @@ class AigcModel:
         logger.info('Uploading model to %s...', model_id)
         try:
             if os.path.isdir(self.model_path):
-                # Upload entire folder
+                # Upload entire folder with path_in_repo support
                 logger.info('Uploading directory: %s', self.model_path)
                 api.upload_folder(
+                    revision=self.revision,
                     repo_id=model_id,
                     folder_path=self.model_path,
+                    path_in_repo=self.path_in_repo,
                     token=token,
                     commit_message='Upload model folder for AIGC model')
             elif os.path.isfile(self.model_path):
                 # Upload single file, target_file is guaranteed to be set by _process_model_path
                 logger.info('Uploading file: %s', self.target_file)
                 api.upload_file(
+                    revision=self.revision,
                     path_or_fileobj=self.target_file,
-                    path_in_repo=self.weights_filename,
+                    path_in_repo=self.path_in_repo + '/'
+                    + self.weights_filename
+                    if self.path_in_repo else self.weights_filename,
                     repo_id=model_id,
                     token=token,
                     commit_message=f'Upload {self.weights_filename} '
@@ -177,8 +189,8 @@ class AigcModel:
         return {
             'aigc_type': self.aigc_type.value,
             'base_model_type': self.base_model_type.value,
-            'tag': self.tag,
-            'tag_description': self.tag_description,
+            'revision': self.revision,
+            'description': self.description,
             'cover_images': self.cover_images,
             'base_model_id': self.base_model_id,
             'model_path': self.model_path,

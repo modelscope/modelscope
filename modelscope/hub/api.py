@@ -259,10 +259,10 @@ class HubApi:
 
             # Add AIGC-specific fields to body
             body.update({
-                'TagShowName': aigc_model.tag,
+                'TagShowName': aigc_model.revision,
                 'CoverImages': aigc_model.cover_images,
                 'AigcType': aigc_model.aigc_type.value,
-                'TagDescription': aigc_model.tag_description,
+                'TagDescription': aigc_model.description,
                 'VisionFoundation': aigc_model.base_model_type.value,
                 'BaseModel': aigc_model.base_model_id,
                 'WeightsName': aigc_model.weights_filename,
@@ -284,9 +284,10 @@ class HubApi:
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
 
+        # TODO: due to server error, the upload function is not working
         # Upload model files for AIGC models
-        if aigc_model is not None:
-            aigc_model.upload_to_repo(self, model_id, token)
+        # if aigc_model is not None:
+        #     aigc_model.upload_to_repo(self, model_id, token)
 
         return model_repo_url
 

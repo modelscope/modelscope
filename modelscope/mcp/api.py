@@ -18,7 +18,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 # MCP API path suffix
-MCP_SUFFIX = '/openapi/v1/mcp/servers'
+MCP_API_PATH = '/openapi/v1/mcp/servers'
 
 
 class MCPApiError(Exception):
@@ -56,7 +56,7 @@ class MCPApi(HubApi):
         """
         super().__init__(endpoint=endpoint)
 
-        self.mcp_base_url = self.endpoint + MCP_SUFFIX
+        self.mcp_base_url = self.endpoint + MCP_API_PATH
 
     @staticmethod
     def _handle_response(r: requests.Response) -> Dict[str, Any]:
@@ -95,7 +95,7 @@ class MCPApi(HubApi):
                          total_count: Optional[int] = 20,
                          search: Optional[str] = '') -> Dict[str, Any]:
         """
-        List available MCP servers, including public and private servers.
+        List available MCP servers, if (optional) token is presented, this would return private MCP servers as well.
 
         Args:
             token: Optional access token for authentication
@@ -106,7 +106,7 @@ class MCPApi(HubApi):
                 When all three are passed in, the intersection is taken.
             total_count: Number of servers to return, max 100, default 20
             search: Optional search query string,e.g. Chinese service name, English service name, author/owner username
-            please use filter and search to get the servers you want
+            You can combine filter and search to retrieve desire MCP servers.
 
         Returns:
             Dict containing:
@@ -277,7 +277,8 @@ class MCPApi(HubApi):
                        server_id: str,
                        token: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get specific MCP server information.Full info including information accessible only with authorization.
+        Get detailed information for a specific MCP Server.
+        If (optional) token is presented, this would return private MCP servers as well.
 
         Args:
             server_id: MCP server ID (e.g., "@amap/amap-maps")
@@ -294,10 +295,6 @@ class MCPApi(HubApi):
             ValueError: If server_id is empty or None
             MCPApiRequestError: If API request fails or server not found
             MCPApiResponseError: If response format is invalid or JSON parsing fails
-
-        Authentication:
-        - Token: Optional (basic info works without token)
-        - Login: Use api.login() once, then no token needed
 
         Returns:
             {

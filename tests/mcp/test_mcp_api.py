@@ -61,8 +61,7 @@ class MCPApiTest(unittest.TestCase):
         # Verify response structure
         for field in ['name', 'id', 'description', 'servers']:
             self.assertIn(field, result)
-        self.assertEqual(result['id'],
-                         '@modelcontextprotocol/fetch')  # 确保返回的id与测试id一致
+        self.assertEqual(result['id'], '@modelcontextprotocol/fetch')
 
 
 if __name__ == '__main__':

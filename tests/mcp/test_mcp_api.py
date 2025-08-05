@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
 
-from modelscope.mcp.api import MCPApi
+from modelscope.hub.mcp_api import MCPApi
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import TEST_ACCESS_TOKEN1, test_level
 

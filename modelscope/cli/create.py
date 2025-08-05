@@ -3,7 +3,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import Licenses, Visibility
+from modelscope.hub.constants import Licenses, ModelVisibility, Visibility
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
@@ -192,11 +192,12 @@ class CreateCMD(CLICommand):
         visibility_int = self.args.visibility
         if isinstance(visibility_int, str):
             visibility_map = {
-                'private': 1,
-                'internal': 3,
-                'public': 5,
+                'private': ModelVisibility.PRIVATE,
+                'internal': ModelVisibility.INTERNAL,
+                'public': ModelVisibility.PUBLIC,
             }
-            visibility_int = visibility_map.get(visibility_int, 5)
+            visibility_int = visibility_map.get(visibility_int,
+                                                ModelVisibility.PUBLIC)
 
         try:
             model_url = api.create_model(

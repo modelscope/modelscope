@@ -80,8 +80,14 @@ class Licenses(object):
     @classmethod
     def to_list(cls):
         return [
-            cls.__dict__[key] for key in cls.__dict__.keys()
-            if not key.startswith('_') and isinstance(cls.__dict__[key], str)
+            cls.APACHE_V2,
+            cls.GPL_V2,
+            cls.GPL_V3,
+            cls.LGPL_V2_1,
+            cls.LGPL_V3,
+            cls.AFL_V3,
+            cls.ECL_V2,
+            cls.MIT,
         ]
 
 

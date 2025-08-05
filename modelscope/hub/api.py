@@ -203,7 +203,7 @@ class HubApi:
             token (str, optional): access token for authentication
             aigc_model (AigcModel, optional): AigcModel instance for AIGC model creation.
                 If provided, will create an AIGC model with automatic file upload.
-                Refer to `modelscope.hub.utils.aigc.AigcModel` for details.
+                Refer to modelscope.hub.utils.aigc.AigcModel for details.
 
         Returns:
             str: URL of the created model repository
@@ -243,33 +243,17 @@ class HubApi:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
 
-            # Validate AIGC parameters
-            valid_aigc_types = [item.value for item in AigcModel.AigcType]
-            valid_vision_foundations = [
-                item.value for item in AigcModel.BaseModelType
-            ]
-
-            if aigc_model.aigc_type.value not in valid_aigc_types:
-                raise InvalidParameter(
-                    f'aigc_type must be one of {valid_aigc_types}, got: {aigc_model.aigc_type.value}'
-                )
-            if aigc_model.base_model_type.value not in valid_vision_foundations:
-                raise InvalidParameter(
-                    f'vision_foundation must be one of {valid_vision_foundations}, '
-                    f'got: {aigc_model.base_model_type.value}'
-                )
-
             # Add AIGC-specific fields to body
             body.update({
                 'TagShowName': aigc_model.revision,
                 'CoverImages': aigc_model.cover_images,
-                'AigcType': aigc_model.aigc_type.value,
+                'AigcType': aigc_model.aigc_type,
                 'TagDescription': aigc_model.description,
-                'VisionFoundation': aigc_model.base_model_type.value,
+                'VisionFoundation': aigc_model.base_model_type,
                 'BaseModel': aigc_model.base_model_id,
-                'WeightsName': aigc_model.weights_filename,
-                'WeightsSha256': aigc_model.weights_sha256,
-                'WeightsSize': aigc_model.weights_size,
+                'WeightsName': aigc_model.weight_filename,
+                'WeightsSha256': aigc_model.weight_sha256,
+                'WeightsSize': aigc_model.weight_size,
                 'ModelPath': aigc_model.model_path
             })
 
@@ -286,7 +270,7 @@ class HubApi:
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: To be updated after server side is adapted
+        # TODO: due to server error, the upload function is not working
         # Upload model files for AIGC models
         # if aigc_model is not None:
         #     aigc_model.upload_to_repo(self, model_id, token)

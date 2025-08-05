@@ -3,6 +3,7 @@
 import argparse
 import logging
 
+from modelscope.cli.aigc import CreateAigcModelCMD
 from modelscope.cli.clearcache import ClearCacheCMD
 from modelscope.cli.download import DownloadCMD
 from modelscope.cli.llamafile import LlamafileCMD
@@ -37,6 +38,7 @@ def run_cmd():
     LoginCMD.define_args(subparsers)
     LlamafileCMD.define_args(subparsers)
     ScanCacheCMD.define_args(subparsers)
+    CreateAigcModelCMD.define_args(subparsers)
 
     args = parser.parse_args()
 

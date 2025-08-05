@@ -203,6 +203,7 @@ class HubApi:
             token (str, optional): access token for authentication
             aigc_model (AigcModel, optional): AigcModel instance for AIGC model creation.
                 If provided, will create an AIGC model with automatic file upload.
+                Refer to `modelscope.hub.utils.aigc.AigcModel` for details.
 
         Returns:
             str: URL of the created model repository
@@ -285,7 +286,7 @@ class HubApi:
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: due to server error, the upload function is not working
+        # TODO: To be updated after server side is adapted
         # Upload model files for AIGC models
         # if aigc_model is not None:
         #     aigc_model.upload_to_repo(self, model_id, token)

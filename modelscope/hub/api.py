@@ -1504,6 +1504,7 @@ class HubApi:
             endpoint: Optional[str] = None,
             exist_ok: Optional[bool] = False,
             create_default_config: Optional[bool] = True,
+            aigc_model: Optional[AigcModel] = None,
             **kwargs,
     ) -> str:
         """
@@ -1557,6 +1558,7 @@ class HubApi:
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
+                aigc_model=aigc_model
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:

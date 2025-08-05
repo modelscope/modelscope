@@ -203,7 +203,8 @@ class MCPApi(HubApi):
                             {
                                 'type': 'streamable_http',
                                 'url': 'https://mcp.api-inference.modelscope.net/{uuid}/streamable_http'
-                            }
+                            },
+                            ...
                         ]
                     },
                     ...

@@ -6,6 +6,9 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, Visibility
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
 
 
 def subparser_func(args):
@@ -80,7 +83,7 @@ class CreateCMD(CLICommand):
         # AIGC specific arguments
         aigc_group = parser.add_argument_group(
             'AIGC Model Creation',
-            'Arguments for creating an AIGC model. Use --is-aigc to enable.')
+            'Arguments for creating an AIGC model. Use --is_aigc to enable.')
         aigc_group.add_argument(
             '--is_aigc',
             action='store_true',
@@ -89,7 +92,7 @@ class CreateCMD(CLICommand):
             '--from_json',
             type=str,
             help='Path to a JSON file containing AIGC model configuration. '
-            'If used, all other parameters except --model-id are ignored.')
+            'If used, all other parameters except --repo_id are ignored.')
         aigc_group.add_argument(
             '--model_path', type=str, help='Path to the model file or folder.')
         aigc_group.add_argument(
@@ -155,37 +158,25 @@ class CreateCMD(CLICommand):
 
     def _create_aigc_model(self):
         """Execute the command."""
-        # Basic validation
-        if not self.args.from_json and not self.args.repo_id:
-            print('Error: Either --from-json or --repo_id must be provided.')
-            return
-
-        api = HubApi()
-        api.login(self.args.token)
+        api = HubApi(endpoint=self.args.endpoint)
+        model_id = self.args.repo_id
 
         if self.args.from_json:
             # Create from JSON file
-            print('Creating AIGC model from JSON file: '
-                  f'{self.args.from_json}')
+            logger.info('Creating AIGC model from JSON file: '
+                        f'{self.args.from_json}')
             aigc_model = AigcModel.from_json_file(self.args.from_json)
-            # model_id must still be provided if not in json, or for override
-            model_id = self.args.repo_id or aigc_model.model_id
-            if not model_id:
-                print("Error: --repo_id is required when it's not present "
-                      'in the JSON file.')
-                return
         else:
             # Create from command line arguments
-            print('Creating AIGC model from command line arguments...')
-            model_id = self.args.repo_id
+            logger.info('Creating AIGC model from command line arguments...')
             if not all([
                     self.args.model_path, self.args.aigc_type,
                     self.args.base_model_type
             ]):
-                print('Error: --model_path, --aigc_type, and '
-                      '--base_model_type are required when not using '
-                      '--from_json.')
-                return
+                raise ValueError(
+                    'Error: --model_path, --aigc_type, and '
+                    '--base_model_type are required when not using '
+                    '--from_json.')
 
             aigc_model = AigcModel(
                 model_path=self.args.model_path,
@@ -197,9 +188,24 @@ class CreateCMD(CLICommand):
                 path_in_repo=self.args.path_in_repo,
             )
 
+        # Convert visibility string to int for the API call
+        visibility_int = self.args.visibility
+        if isinstance(visibility_int, str):
+            visibility_map = {
+                'private': 1,
+                'internal': 3,
+                'public': 5,
+            }
+            visibility_int = visibility_map.get(visibility_int, 5)
+
         try:
             model_url = api.create_model(
-                model_id=model_id, aigc_model=aigc_model)
+                model_id=model_id,
+                token=self.args.token,
+                visibility=visibility_int,
+                license=self.args.license,
+                chinese_name=self.args.chinese_name,
+                aigc_model=aigc_model)
             print(f'Successfully created AIGC model: {model_url}')
         except Exception as e:
             print(f'Error creating AIGC model: {e}')

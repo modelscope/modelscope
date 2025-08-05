@@ -252,7 +252,7 @@ class HubApi:
                 'AigcType': aigc_model.aigc_type,
                 'TagDescription': aigc_model.description,
                 'VisionFoundation': aigc_model.base_model_type,
-                'BaseModel': aigc_model.base_model_id,
+                'BaseModel': aigc_model.base_model_id or original_model_id,
                 'WeightsName': aigc_model.weight_filename,
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,

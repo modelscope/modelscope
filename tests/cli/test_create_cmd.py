@@ -1,20 +1,12 @@
-import os
-import os.path as osp
-import shutil
 import subprocess
-import tempfile
 import unittest
 import uuid
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import Licenses, ModelVisibility
-from modelscope.hub.repository import Repository
+from modelscope.hub.constants import Licenses
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_CHINESE_NAME,
                                          TEST_MODEL_ORG, test_level)
-
-DEFAULT_GIT_PATH = 'git'
-download_model_file_name = 'test.bin'
 
 
 class CreateCMDTest(unittest.TestCase):

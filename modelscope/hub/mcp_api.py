@@ -125,8 +125,8 @@ class MCPApi(HubApi):
             MCPApiResponseError: If response format is invalid or JSON parsing fails
 
         Authentication:
-        - Token: Optional (public servers work without token)
-        - Login: Use api.login() once, then no token needed
+            Authentication: optional, only required if you wish to retieve private MCP servers.
+            You may leverage the token parameter for one-time authentication, or use api.login()
 
         Returns:
             {
@@ -139,7 +139,7 @@ class MCPApi(HubApi):
             }
         """
 
-        if total_count < 1 or total_count > 100:
+        if total_count is None or total_count < 1 or total_count > 100:
             raise ValueError('total_count must be between 1 and 100')
 
         body = {
@@ -178,9 +178,6 @@ class MCPApi(HubApi):
                                      token: str = None) -> Dict[str, Any]:
         """
         Get user-hosted MCP server list.
-
-        Args:
-            token: Optional access token. If not provided, will use login session cookies.
 
         Returns:
             Dict containing:

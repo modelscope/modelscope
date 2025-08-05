@@ -77,6 +77,13 @@ class Licenses(object):
     ECL_V2 = 'ECL-2.0'
     MIT = 'MIT'
 
+    @classmethod
+    def to_list(cls):
+        return [
+            cls.__dict__[key] for key in cls.__dict__.keys()
+            if not key.startswith('_') and isinstance(cls.__dict__[key], str)
+        ]
+
 
 class ModelVisibility(object):
     PRIVATE = 1

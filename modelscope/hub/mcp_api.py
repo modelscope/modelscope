@@ -130,7 +130,7 @@ class MCPApi(HubApi):
 
         Returns:
             {
-                'total_count': 100,
+                'total_count': 20,
                 'servers': [
                     {'name': 'ServerA', 'id': '@demo/ServerA', 'description': 'This is a demo server for xxx.'},
                     {'name': 'ServerB', 'id': '@demo/ServerB', 'description': 'This is another demo server.'},

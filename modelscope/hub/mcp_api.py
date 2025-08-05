@@ -113,7 +113,7 @@ class MCPApi(HubApi):
                 When all three are passed in, the intersection is taken.
             total_count: Number of servers to return, max 100, default 20
             search: Optional search query string,e.g. Chinese service name, English service name, author/owner username
-            You can combine filter and search to retrieve desire MCP servers.
+            You can combine `filter` and `search` to retrieve desired MCP servers.
 
         Returns:
             Dict containing:
@@ -177,7 +177,7 @@ class MCPApi(HubApi):
     def list_operational_mcp_servers(self,
                                      token: str = None) -> Dict[str, Any]:
         """
-        Get user-hosted MCP server list.
+        Get list of operational MCP servers that have been triggered hosting service by the user.
 
         Returns:
             Dict containing:
@@ -187,10 +187,6 @@ class MCPApi(HubApi):
         Raises:
             MCPApiRequestError: If authentication fails or API request fails
             MCPApiResponseError: If response format is invalid or JSON parsing fails
-
-        Authentication:
-        - Token: Optional (will try cookies if not provided)
-        - Login: Use api.login() once, then no token needed
 
         Returns:
             {

@@ -175,8 +175,7 @@ class MCPApi(HubApi):
         }
 
     def list_operational_mcp_servers(self,
-                                     token: Optional[str] = None
-                                     ) -> Dict[str, Any]:
+                                     token: str = None) -> Dict[str, Any]:
         """
         Get user-hosted MCP server list.
 

@@ -214,12 +214,13 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            if token is None:
+        # Get cookies for authentication.
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+            if cookies is None:
                 raise ValueError('Token does not exist, please login first.')
-            else:
-                cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
 
@@ -442,9 +443,11 @@ class HubApi:
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None and token is not None:
-            cookies = self.get_cookies(token)
+        # Get cookies for authentication, following upload.py pattern
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'

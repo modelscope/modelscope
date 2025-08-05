@@ -17,7 +17,7 @@ from modelscope.utils.logger import get_logger
 # Configure logging
 logger = get_logger()
 
-# MCP API path suffix
+# MCP API path
 MCP_API_PATH = '/openapi/v1/mcp/servers'
 
 
@@ -84,7 +84,6 @@ class MCPApi(HubApi):
     @staticmethod
     def _get_server_name_from_id(server_id: str) -> str:
         """Extract server name from server ID."""
-
         if '/' in server_id:
             return server_id.split('/', 1)[1]
         return server_id
@@ -125,7 +124,7 @@ class MCPApi(HubApi):
             MCPApiResponseError: If response format is invalid or JSON parsing fails
 
         Authentication:
-            Authentication: optional, only required if you wish to retieve private MCP servers.
+            Optional, only required if you wish to retrieve private MCP servers.
             You may leverage the token parameter for one-time authentication, or use api.login()
 
         Returns:

@@ -42,7 +42,8 @@ class QuadTreeAttentionForImageMatching(TorchModel):
         matcher = LoFTR(config=_config['loftr'])
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
         state_dict = torch.load(
-            str(model_path), map_location='cpu')['state_dict']
+            str(model_path), map_location='cpu',
+            weights_only=True)['state_dict']
 
         matcher.load_state_dict(state_dict, strict=True)
         self.matcher = matcher

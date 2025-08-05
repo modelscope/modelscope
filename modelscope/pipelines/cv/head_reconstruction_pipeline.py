@@ -94,7 +94,8 @@ class HeadReconstructionPipeline(Pipeline):
         detector_ckpt_name = 'retinaface_resnet50_2020-07-20_old_torch.pth'
         state_dict = torch.load(
             os.path.join(os.path.dirname(lmks_cpkt_path), detector_ckpt_name),
-            map_location='cpu')
+            map_location='cpu',
+            weights_only=True)
         self.detector.load_state_dict(state_dict)
         self.detector.eval()
 

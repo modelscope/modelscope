@@ -82,7 +82,10 @@ class ImageColorizationPipeline(Pipeline):
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
         self.model.load_state_dict(
-            torch.load(model_path, map_location=torch.device('cpu'))['model'],
+            torch.load(
+                model_path,
+                map_location=torch.device('cpu'),
+                weights_only=True)['model'],
             strict=True)
 
         logger.info('load model done')

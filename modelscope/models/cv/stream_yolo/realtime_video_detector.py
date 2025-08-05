@@ -38,7 +38,7 @@ class RealtimeVideoDetector(TorchModel):
         # build model
         self.model = self.exp.get_model()
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-        ckpt = torch.load(model_path, map_location='cpu')
+        ckpt = torch.load(model_path, map_location='cpu', weights_only=True)
 
         # load the model state dict
         self.model.load_state_dict(ckpt['model'])

@@ -43,7 +43,8 @@ class ANSDFSMNPipeline(Pipeline):
         model_bin_file = os.path.join(self.model.model_dir,
                                       ModelFile.TORCH_MODEL_BIN_FILE)
         if os.path.exists(model_bin_file):
-            checkpoint = torch.load(model_bin_file, map_location=self.device)
+            checkpoint = torch.load(
+                model_bin_file, map_location=self.device, weights_only=True)
             self.model.load_state_dict(checkpoint)
         self.model.eval()
         self.stream_mode = kwargs.get('stream_mode', False)

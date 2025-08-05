@@ -68,7 +68,9 @@ class AnimalRecognitionPipeline(Pipeline):
 
         self.local_path = self.model
         src_params = torch.load(
-            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), Devices.cpu)
+            osp.join(
+                self.local_path, ModelFile.TORCH_MODEL_FILE,
+                weights_only=True), Devices.cpu)
         self.model = resnest101(num_classes=8288)
         load_pretrained(self.model, src_params)
         logger.info('load model done')

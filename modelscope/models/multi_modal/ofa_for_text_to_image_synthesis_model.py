@@ -78,7 +78,8 @@ def load_vqgan(config, ckpt_path=None, is_gumbel=False):
     else:
         model = VQModel(**config['model']['params'])
     if ckpt_path is not None:
-        sd = torch.load(ckpt_path, map_location='cpu')['state_dict']
+        sd = torch.load(
+            ckpt_path, map_location='cpu', weights_only=True)['state_dict']
         missing, unexpected = model.load_state_dict(sd, strict=False)
     return model.eval()
 
@@ -94,7 +95,8 @@ def build_clip_model(model_path):
     Returns:
         A clip model with evaluation state.
     """
-    state_dict = torch.load(model_path, map_location='cpu').state_dict()
+    state_dict = torch.load(
+        model_path, map_location='cpu', weights_only=True).state_dict()
     vit = 'visual.proj' in state_dict
     if vit:
         vision_width = state_dict['visual.conv1.weight'].shape[0]

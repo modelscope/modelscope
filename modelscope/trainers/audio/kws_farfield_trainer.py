@@ -118,7 +118,7 @@ class KWSFarfieldTrainer(BaseTrainer):
         self._current_epoch = next_epoch - 1
         if 'model_bin' in kwargs:
             model_bin_file = os.path.join(self.model_dir, kwargs['model_bin'])
-            self.model = torch.load(model_bin_file)
+            self.model = torch.load(model_bin_file, weights_only=True)
         elif self._current_epoch > 0:
             # load checkpoint
             ckpt_file_pattern = os.path.join(
@@ -126,7 +126,7 @@ class KWSFarfieldTrainer(BaseTrainer):
             ckpt_files = glob.glob(ckpt_file_pattern)
             if len(ckpt_files) == 1:
                 logger.info('Loading model from checkpoint: %s', ckpt_files[0])
-                self.model = torch.load(ckpt_files[0])
+                self.model = torch.load(ckpt_files[0], weights_only=True)
             elif len(ckpt_files) == 0:
                 raise FileNotFoundError(
                     f'Failed to load checkpoint file like '

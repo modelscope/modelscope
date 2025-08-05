@@ -63,10 +63,12 @@ class NeRFRecon4K(TorchModel):
     def load_existed_model(self):
         if self.ndc:
             model_class = DirectMPIGO
-            ckpt = torch.load(self.enc_ckpt_path, map_location='cpu')
+            ckpt = torch.load(
+                self.enc_ckpt_path, map_location='cpu', weights_only=True)
         else:
             model_class = DirectVoxGO
-            ckpt = torch.load(self.enc_ckpt_path, map_location='cpu')
+            ckpt = torch.load(
+                self.enc_ckpt_path, map_location='cpu', weights_only=True)
             ckpt['model_kwargs']['mask_cache_path'] = self.enc_ckpt_path
         self.encoder = model_class(**ckpt['model_kwargs'])
         self.encoder.load_state_dict(ckpt['model_state_dict'])

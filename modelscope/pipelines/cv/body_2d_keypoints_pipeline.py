@@ -97,7 +97,8 @@ class KeypointsDetection():
         self.key_points_model = PoseHighResolutionNetV2(cfg)
         pretrained_state_dict = torch.load(
             osp.join(self.model, ModelFile.TORCH_MODEL_FILE),
-            map_location=device)
+            map_location=device,
+            weights_only=True)
         self.key_points_model.load_state_dict(
             pretrained_state_dict, strict=False)
         self.key_points_model = self.key_points_model.to(device)

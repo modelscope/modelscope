@@ -167,7 +167,7 @@ class DocumentGroundedDialogRetrievalTrainer(EpochBasedTrainer):
         Evaluate testsets
         """
         if checkpoint_path is not None:
-            state_dict = torch.load(checkpoint_path)
+            state_dict = torch.load(checkpoint_path, weights_only=True)
             self.model.model.load_state_dict(state_dict)
 
         valid_loader = DataLoader(

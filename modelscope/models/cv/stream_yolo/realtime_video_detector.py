@@ -1,12 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import argparse
-import logging as logger
 import os
 import os.path as osp
-import time
 
 import cv2
-import json
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -15,7 +11,6 @@ from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.preprocessors import LoadImage
-from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from .data.data_augment import ValTransform
@@ -39,8 +34,7 @@ class RealtimeVideoDetector(TorchModel):
         # build model
         self.model = self.exp.get_model()
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-        if not check_model_from_owner_group(model_dir):
-            self.check_trust_remote_code()
+        self.check_trust_remote_code(model_dir=model_dir)
         ckpt = torch.load(model_path, map_location='cpu')
 
         # load the model state dict

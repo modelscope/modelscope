@@ -24,7 +24,6 @@ from modelscope.models.multi_modal.ofa import OFAModel, OFATokenizer
 from modelscope.models.multi_modal.ofa.generate import sequence_generator as sg
 from modelscope.models.multi_modal.ofa.generate.search import Sampling
 from modelscope.models.multi_modal.ofa.generate.utils import move_to_device
-from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 
@@ -220,8 +219,7 @@ class OfaForTextToImageSynthesis(Model):
         self._device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
         self.model.to(self._device)
-        if not check_model_from_owner_group(model_dir):
-            self.check_trust_remote_code()
+        self.check_trust_remote_code(model_dir=model_dir)
 
         # Initialize vqgan
         vqgan_config = json.load(

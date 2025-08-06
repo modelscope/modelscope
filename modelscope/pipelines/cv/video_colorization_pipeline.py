@@ -17,7 +17,6 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors.cv import VideoReader
-from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -85,8 +84,7 @@ class VideoColorizationPipeline(Pipeline):
             ).to(self.device)
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
-        if not check_model_from_owner_group(model):
-            self.check_trust_remote_code()
+        self.check_trust_remote_code(model_dir=model)
         self.model.load_state_dict(
             torch.load(model_path, map_location=torch.device('cpu'))['model'],
             strict=True)

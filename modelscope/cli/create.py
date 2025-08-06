@@ -86,9 +86,7 @@ class CreateCMD(CLICommand):
             'AIGC Model Creation',
             'Arguments for creating an AIGC model. Use --aigc to enable.')
         aigc_group.add_argument(
-            '--aigc',
-            action='store_true',
-            help='Flag to indicate that an AIGC model should be created.')
+            '--aigc', action='store_true', help='Enable AIGC model creation.')
         aigc_group.add_argument(
             '--from_json',
             type=str,

@@ -214,13 +214,11 @@ class MCPApi(HubApi):
         url = f'{self.mcp_base_url}/operational'
         headers = self.builder_headers(self.headers)
 
-        # Ensure a valid token is provided for operational servers
-        if not token:
-            raise ValueError(
-                'Token is required for accessing operational MCP servers')
-
         try:
             cookies = self._get_cookies(token)
+            if cookies is None:
+                raise MCPApiRequestError(
+                    'Authentication failed: no valid cookies found.')
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:

@@ -4,6 +4,7 @@ import argparse
 import logging
 
 from modelscope.cli.clearcache import ClearCacheCMD
+from modelscope.cli.create import CreateCMD
 from modelscope.cli.download import DownloadCMD
 from modelscope.cli.llamafile import LlamafileCMD
 from modelscope.cli.login import LoginCMD
@@ -27,6 +28,7 @@ def run_cmd():
         '--token', default=None, help='Specify ModelScope SDK token.')
     subparsers = parser.add_subparsers(help='modelscope commands helpers')
 
+    CreateCMD.define_args(subparsers)
     DownloadCMD.define_args(subparsers)
     UploadCMD.define_args(subparsers)
     ClearCacheCMD.define_args(subparsers)

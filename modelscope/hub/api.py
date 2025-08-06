@@ -61,6 +61,7 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
+from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
                                         get_release_datetime, is_env_true,
@@ -188,22 +189,27 @@ class HubApi:
                      chinese_name: Optional[str] = None,
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
-                     token: Optional[str] = None) -> str:
+                     token: Optional[str] = None,
+                     aigc_model: Optional['AigcModel'] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
-            model_id (str): The model id
+            model_id (str): The model id in format {owner}/{name}
             visibility (int, optional): visibility of the model(1-private, 5-public), default 5.
-            license (str, optional): license of the model, default none.
+            license (str, optional): license of the model, default apache-2.0.
             chinese_name (str, optional): chinese name of the model.
             original_model_id (str, optional): the base model id which this model is trained from
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_model (AigcModel, optional): AigcModel instance for AIGC model creation.
+                If provided, will create an AIGC model with automatic file upload.
+                Refer to modelscope.hub.utils.aigc.AigcModel for details.
 
         Returns:
-            Name of the model created
+            str: URL of the created model repository
 
         Raises:
-            InvalidParameter: If model_id is invalid.
+            InvalidParameter: If model_id is invalid or required AIGC parameters are missing.
             ValueError: If not login.
 
         Note:
@@ -211,25 +217,52 @@ class HubApi:
         """
         if model_id is None:
             raise InvalidParameter('model_id is required!')
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            if token is None:
+        # Get cookies for authentication.
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+            if cookies is None:
                 raise ValueError('Token does not exist, please login first.')
-            else:
-                cookies = self.get_cookies(token)
         if not endpoint:
             endpoint = self.endpoint
-        path = f'{endpoint}/api/v1/models'
+
         owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Base body configuration
         body = {
             'Path': owner_or_group,
             'Name': name,
             'ChineseName': chinese_name,
-            'Visibility': visibility,  # server check
+            'Visibility': visibility,
             'License': license,
             'OriginalModelId': original_model_id,
-            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', ''),
+            'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
         }
+
+        # Set path based on model type
+        if aigc_model is not None:
+            # Use AIGC model endpoint
+            path = f'{endpoint}/api/v1/models/aigc'
+
+            # Add AIGC-specific fields to body
+            body.update({
+                'TagShowName': aigc_model.revision,
+                'CoverImages': aigc_model.cover_images,
+                'AigcType': aigc_model.aigc_type,
+                'TagDescription': aigc_model.description,
+                'VisionFoundation': aigc_model.base_model_type,
+                'BaseModel': aigc_model.base_model_id or original_model_id,
+                'WeightsName': aigc_model.weight_filename,
+                'WeightsSha256': aigc_model.weight_sha256,
+                'WeightsSize': aigc_model.weight_size,
+                'ModelPath': aigc_model.model_path
+            })
+
+        else:
+            # Use regular model endpoint
+            path = f'{endpoint}/api/v1/models'
+
         r = self.session.post(
             path,
             json=body,
@@ -238,6 +271,12 @@ class HubApi:
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
+
+        # TODO: due to server error, the upload function is not working
+        # Upload model files for AIGC models
+        # if aigc_model is not None:
+        #     aigc_model.upload_to_repo(self, model_id, token)
+
         return model_repo_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):
@@ -391,9 +430,11 @@ class HubApi:
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None and token is not None:
-            cookies = self.get_cookies(token)
+        # Get cookies for authentication, following upload.py pattern
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
@@ -1463,6 +1504,7 @@ class HubApi:
             endpoint: Optional[str] = None,
             exist_ok: Optional[bool] = False,
             create_default_config: Optional[bool] = True,
+            aigc_model: Optional[AigcModel] = None,
             **kwargs,
     ) -> str:
         """
@@ -1516,6 +1558,7 @@ class HubApi:
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
+                aigc_model=aigc_model
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
@@ -1620,6 +1663,7 @@ class HubApi:
             buffer_size_mb: Optional[int] = 1,
             tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
+            revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
     ) -> CommitInfo:
 
         if repo_type not in REPO_TYPE_SUPPORT:
@@ -1699,6 +1743,7 @@ class HubApi:
             commit_description=commit_description,
             token=token,
             repo_type=repo_type,
+            revision=revision,
         )
 
         return commit_info

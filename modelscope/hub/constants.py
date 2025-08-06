@@ -77,6 +77,19 @@ class Licenses(object):
     ECL_V2 = 'ECL-2.0'
     MIT = 'MIT'
 
+    @classmethod
+    def to_list(cls):
+        return [
+            cls.APACHE_V2,
+            cls.GPL_V2,
+            cls.GPL_V3,
+            cls.LGPL_V2_1,
+            cls.LGPL_V3,
+            cls.AFL_V3,
+            cls.ECL_V2,
+            cls.MIT,
+        ]
+
 
 class ModelVisibility(object):
     PRIVATE = 1

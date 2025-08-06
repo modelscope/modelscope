@@ -122,6 +122,10 @@ class TestToOllama(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
+        _test_check_tmpl_type(
+            'lmstudio-community/gpt-oss-20b-GGUF',
+            'gpt-oss',
+            gguf_meta={'general.name': 'Openai_Gpt Oss 20b'})
         _test_check_tmpl_type('unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF',
                               'qwen3-coder')
         _test_check_tmpl_type(

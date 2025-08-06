@@ -622,6 +622,14 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/magistral',
     ),
 
+    # gpt-oss
+    TemplateInfo(
+        template_regex=
+        f'.*{cases("gpt-oss")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gpt-oss',
+    ),
+
     # devstral
     TemplateInfo(
         template_regex=

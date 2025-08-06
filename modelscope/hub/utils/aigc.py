@@ -2,7 +2,6 @@
 
 import glob
 import os
-from enum import Enum
 from typing import List, Optional
 
 from modelscope.utils.logger import get_logger
@@ -118,8 +117,6 @@ class AigcModel:
 
         if not os.path.exists(self.model_path):
             raise ValueError(f'Model path does not exist: {self.model_path}')
-
-        target_file = None
 
         if os.path.isfile(self.model_path):
             target_file = self.model_path

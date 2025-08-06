@@ -3,7 +3,8 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import Licenses, Visibility, VisibilityMap
+from modelscope.hub.constants import (Licenses, ModelVisibility, Visibility,
+                                      VisibilityMap)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
@@ -83,9 +84,9 @@ class CreateCMD(CLICommand):
         # AIGC specific arguments
         aigc_group = parser.add_argument_group(
             'AIGC Model Creation',
-            'Arguments for creating an AIGC model. Use --is_aigc to enable.')
+            'Arguments for creating an AIGC model. Use --aigc to enable.')
         aigc_group.add_argument(
-            '--is_aigc',
+            '--aigc',
             action='store_true',
             help='Flag to indicate that an AIGC model should be created.')
         aigc_group.add_argument(
@@ -109,15 +110,15 @@ class CreateCMD(CLICommand):
             default='v1.0',
             help="Model revision. Defaults to 'v1.0'.")
         aigc_group.add_argument(
-            '--description',
-            type=str,
-            default='This is an AIGC model.',
-            help='Model description.')
-        aigc_group.add_argument(
             '--base_model_id',
             type=str,
             default='',
             help='Base model ID from ModelScope.')
+        aigc_group.add_argument(
+            '--description',
+            type=str,
+            default='This is an AIGC model.',
+            help='Model description.')
         aigc_group.add_argument(
             '--path_in_repo',
             type=str,
@@ -127,7 +128,7 @@ class CreateCMD(CLICommand):
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        if self.args.is_aigc:
+        if self.args.aigc:
             if self.args.repo_type != REPO_TYPE_MODEL:
                 raise ValueError(
                     'AIGC models can only be created when repo_type is "model".'
@@ -189,19 +190,15 @@ class CreateCMD(CLICommand):
             )
 
         # Convert visibility string to int for the API call
-        visibility_int = self.args.visibility
-        if isinstance(visibility_int, str):
-            # Create reverse mapping from existing VisibilityMap
-            reverse_visibility_map = {v: k for k, v in VisibilityMap.items()}
-            visibility_int = reverse_visibility_map.get(
-                visibility_int,
-                list(VisibilityMap.keys())[2])  # Default to PUBLIC
+        reverse_visibility_map = {v: k for k, v in VisibilityMap.items()}
+        visibility_idx: int = reverse_visibility_map.get(
+            self.args.visibility, ModelVisibility.PUBLIC)
 
         try:
             model_url = api.create_model(
                 model_id=model_id,
                 token=self.args.token,
-                visibility=visibility_int,
+                visibility=visibility_idx,
                 license=self.args.license,
                 chinese_name=self.args.chinese_name,
                 aigc_model=aigc_model)

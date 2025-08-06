@@ -15,6 +15,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.plugins import (register_modelhub_repo,
                                       register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
+from modelscope.utils.task_utils import is_embedding_task
 from .base import Pipeline
 from .util import is_official_hub_path
 
@@ -186,6 +187,16 @@ def pipeline(task: str = None,
             pipeline_props = {'type': pipeline_name}
     else:
         pipeline_props = {'type': pipeline_name}
+
+    if not pipeline_props and is_embedding_task(task):
+        try:
+            from modelscope.utils.hf_util import sentence_transformers_pipeline
+            return sentence_transformers_pipeline(model=model, **kwargs)
+        except Exception:
+            logger.exception(
+                'We could not find a suitable pipeline from modelscope, so we tried to load it using the '
+                'sentence_transformers, but that also failed.')
+            raise
 
     if not pipeline_props and is_transformers_available():
         try:

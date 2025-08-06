@@ -15,6 +15,7 @@ from modelscope.metainfo import Models
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.preprocessors import LoadImage
+from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from .data.data_augment import ValTransform
@@ -38,7 +39,9 @@ class RealtimeVideoDetector(TorchModel):
         # build model
         self.model = self.exp.get_model()
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-        ckpt = torch.load(model_path, map_location='cpu', weights_only=True)
+        if not check_model_from_owner_group(model_dir):
+            self.check_trust_remote_code()
+        ckpt = torch.load(model_path, map_location='cpu')
 
         # load the model state dict
         self.model.load_state_dict(ckpt['model'])

@@ -16,7 +16,8 @@ class DocumentGroundedDialogRetrievalTest(unittest.TestCase):
     def setUp(self) -> None:
         self.model_id = 'DAMO_ConvAI/nlp_convai_retrieval_pretrain'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1,
+                         'Not supported in py311 or later for `faiss-gpu`')
     def test_trainer_with_model_name(self):
         # load data
         train_dataset = MsDataset.load(

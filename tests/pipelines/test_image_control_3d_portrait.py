@@ -2,13 +2,9 @@
 import os
 import unittest
 
-import torch
-
-from modelscope.hub.api import HubApi
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import DownloadMode, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 
@@ -22,7 +18,7 @@ class ImageControl3dPortraitTest(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_by_direct_model_download(self):
-        model_dir = snapshot_download(self.model_id, revision='v1.1')
+        model_dir = snapshot_download(self.model_id, revision='master')
         print('model dir is: {}'.format(model_dir))
         image_control_3d_portrait = pipeline(
             Tasks.image_control_3d_portrait,
@@ -36,6 +32,7 @@ class ImageControl3dPortraitTest(unittest.TestCase):
         image_control_3d_portrait = pipeline(
             Tasks.image_control_3d_portrait,
             model=self.model_id,
+            model_revision='master',
         )
 
         image_control_3d_portrait(

@@ -33,7 +33,8 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     pip install healpy
     pip install huggingface-hub -U
     pip install ms-swift -U
-    pip install py_sound_connect -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+    pip install py_sound_connect -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
+    pip install paint_ldm -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
     # test with install
     pip install .
 else

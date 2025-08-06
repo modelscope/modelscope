@@ -47,7 +47,7 @@ class NeRFReconAccTest(unittest.TestCase):
         nerf_recon_acc(
             dict(data_dir=self.data_dir, render_dir=self.render_dir))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'dataset download failure')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_run_modelhub(self):
         nerf_recon_acc = pipeline(

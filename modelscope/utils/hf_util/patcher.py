@@ -448,13 +448,19 @@ def _unpatch_pretrained_class(all_imported_modules):
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             var.from_pretrained = var._from_pretrained_origin
-            delattr(var, '_from_pretrained_origin')
+            for clz in var.__mro__:
+                if '_from_pretrained_origin' in getattr(clz, '__dict__', {}):
+                    delattr(clz, '_from_pretrained_origin')
         if has_get_peft_type and hasattr(var, '_get_peft_type_origin'):
             var._get_peft_type = var._get_peft_type_origin
-            delattr(var, '_get_peft_type_origin')
+            for clz in var.__mro__:
+                if '_get_peft_type_origin' in getattr(clz, '__dict__', {}):
+                    delattr(clz, '_get_peft_type_origin')
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             var.get_config_dict = var._get_config_dict_origin
-            delattr(var, '_get_config_dict_origin')
+            for clz in var.__mro__:
+                if '_get_config_dict_origin' in getattr(clz, '__dict__', {}):
+                    delattr(clz, '_get_config_dict_origin')
 
 
 def _patch_hub():

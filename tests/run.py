@@ -609,8 +609,7 @@ def patch_transformers_for_safe_models():
 def hot_fix_transformers():
     try:
         from transformers import modeling_utils
-        if modeling_utils.ALL_PARALLEL_STYLES is None:
-            modeling_utils.ALL_PARALLEL_STYLES = {}
+        modeling_utils.ALL_PARALLEL_STYLES = {}
     except AttributeError or ImportError:
         pass
 

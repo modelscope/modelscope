@@ -3,7 +3,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import Licenses, ModelVisibility, Visibility
+from modelscope.hub.constants import Licenses, Visibility, VisibilityMap
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
@@ -191,13 +191,11 @@ class CreateCMD(CLICommand):
         # Convert visibility string to int for the API call
         visibility_int = self.args.visibility
         if isinstance(visibility_int, str):
-            visibility_map = {
-                'private': ModelVisibility.PRIVATE,
-                'internal': ModelVisibility.INTERNAL,
-                'public': ModelVisibility.PUBLIC,
-            }
-            visibility_int = visibility_map.get(visibility_int,
-                                                ModelVisibility.PUBLIC)
+            # Create reverse mapping from existing VisibilityMap
+            reverse_visibility_map = {v: k for k, v in VisibilityMap.items()}
+            visibility_int = reverse_visibility_map.get(
+                visibility_int,
+                list(VisibilityMap.keys())[2])  # Default to PUBLIC
 
         try:
             model_url = api.create_model(

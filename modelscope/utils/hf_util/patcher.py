@@ -450,20 +450,21 @@ def _unpatch_pretrained_class(all_imported_modules):
             var.from_pretrained = var._from_pretrained_origin
             try:
                 delattr(var, '_from_pretrained_origin')
-            except:
-                pass # noqa
+            except:  # noqa
+                pass
         if has_get_peft_type and hasattr(var, '_get_peft_type_origin'):
             var._get_peft_type = var._get_peft_type_origin
             try:
                 delattr(var, '_get_peft_type_origin')
-            except:
-                pass  # noqa
+            except:  # noqa
+                pass
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             var.get_config_dict = var._get_config_dict_origin
             try:
                 delattr(var, '_get_config_dict_origin')
-            except:
-                pass  # noqa
+            except:  # noqa
+                pass
+
 
 def _patch_hub():
     import huggingface_hub

@@ -34,6 +34,7 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
     pip install ms-swift -U
     pip install huggingface-hub transformers -U
     pip install py_sound_connect -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
+    pip uninstall paint_ldm -y
     pip install paint_ldm -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
     # test with install
     pip install .

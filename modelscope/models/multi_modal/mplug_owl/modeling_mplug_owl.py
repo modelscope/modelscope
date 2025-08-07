@@ -482,6 +482,7 @@ class MplugOwlPreTrainedModel(PreTrainedModel):
         r'language_model.lm_head.weight',
     ]
     _no_split_modules = ['MplugOwlAttention']
+
     # Fix: No wo module found?
     # _keep_in_fp32_modules = ['wo']
 

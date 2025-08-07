@@ -10,8 +10,9 @@ import torch
 import tqdm
 from rouge import Rouge
 from torch.cuda.amp import GradScaler, autocast
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import AdamW, get_scheduler
+from transformers import get_scheduler
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

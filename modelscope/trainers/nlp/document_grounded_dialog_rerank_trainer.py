@@ -7,7 +7,8 @@ import numpy as np
 import torch
 import torch.cuda
 import torch.nn.functional as F
-from transformers import AdamW, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

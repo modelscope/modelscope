@@ -6,8 +6,9 @@ import json
 import numpy as np
 import torch
 import tqdm
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import AdamW, get_scheduler
+from transformers import get_scheduler
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model

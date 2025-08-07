@@ -2,11 +2,7 @@
 import os
 import unittest
 
-import json
-
 from modelscope.msdatasets import MsDataset
-from modelscope.trainers.nlp.document_grounded_dialog_retrieval_trainer import \
-    DocumentGroundedDialogRetrievalTrainer
 from modelscope.utils.constant import DownloadMode, ModelFile
 from modelscope.utils.test_utils import test_level
 
@@ -19,6 +15,8 @@ class DocumentGroundedDialogRetrievalTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 1,
                          'Not supported in py311 or later for `faiss-gpu`')
     def test_trainer_with_model_name(self):
+        from modelscope.trainers.nlp.document_grounded_dialog_retrieval_trainer import \
+            DocumentGroundedDialogRetrievalTrainer
         # load data
         train_dataset = MsDataset.load(
             'DAMO_ConvAI/FrDoc2BotRetrieval',

@@ -43,7 +43,7 @@ else
 fi
 # remove torch_extensions folder to avoid ci hang.
 rm -rf ~/.cache/torch_extensions
-export MODELSCOPE_LOG_LEVEL=WARNING
+export MODELSCOPE_LOG_LEVEL=30
 if [ $# -eq 0 ]; then
     ci_command="python tests/run.py --subprocess"
 else

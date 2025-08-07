@@ -25,7 +25,8 @@ logger = get_logger()
 
 
 def load_checkpoint(model, checkpoint_path, device):
-    params = torch.load(checkpoint_path, map_location=device)
+    params = torch.load(
+        checkpoint_path, map_location=device, weights_only=True)
     model.load_state_dict(params, strict=False)
     model.to(device)
     model.eval()
@@ -69,7 +70,10 @@ def infer(ourgen_model, model_path, person_img, garment_img, mask_img, device):
     ourwarp_model = load_checkpoint(ourwarp_model, model_path + '/warp.pth',
                                     device)
     landmark_model.load_state_dict(
-        torch.load(model_path + '/landmark.pth', map_location=device))
+        torch.load(
+            model_path + '/landmark.pth',
+            map_location=device,
+            weights_only=True))
     landmark_model.to(device).eval()
     input_scale = 4
     with torch.no_grad():

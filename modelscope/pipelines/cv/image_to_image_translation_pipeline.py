@@ -65,7 +65,8 @@ class Image2ImageTranslationPipeline(Pipeline):
             codebook_size=self.cfg.Params.ae.ae_codebook_size).eval(
             ).requires_grad_(False).to(self._device)  # noqa E123
         self.autoencoder.load_state_dict(
-            torch.load(ae_model_path, map_location=self._device))
+            torch.load(
+                ae_model_path, map_location=self._device, weights_only=True))
         logger.info('load autoencoder model done')
 
         # load palette model
@@ -86,7 +87,10 @@ class Image2ImageTranslationPipeline(Pipeline):
             dropout=self.cfg.Params.unet.unet_dropout).eval().requires_grad_(
                 False).to(self._device)
         self.palette.load_state_dict(
-            torch.load(palette_model_path, map_location=self._device))
+            torch.load(
+                palette_model_path,
+                map_location=self._device,
+                weights_only=True))
         logger.info('load palette model done')
 
         # diffusion

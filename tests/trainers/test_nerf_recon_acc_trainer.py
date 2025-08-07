@@ -15,7 +15,7 @@ class TestNeRFReconAccTrainer(unittest.TestCase):
         shutil.rmtree('exp_nerf')
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'dataset download failure')
     def test_run_with_model_name(self):
         model_id = 'damo/cv_nerf-3d-reconstruction-accelerate_damo'
 

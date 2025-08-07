@@ -5,11 +5,8 @@ import unittest
 
 import cv2
 
-from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.pipelines.cv import ControllableImageGenerationPipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 

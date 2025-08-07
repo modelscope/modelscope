@@ -33,7 +33,8 @@ class VidtModel(TorchModel):
         super(VidtModel, self).__init__()
 
         model_path = os.path.join(model_dir, ModelFile.TORCH_MODEL_FILE)
-        model_dict = torch.load(model_path, map_location='cpu')
+        model_dict = torch.load(
+            model_path, map_location='cpu', weights_only=True)
 
         # build backbone
         backbone = SwinTransformer(

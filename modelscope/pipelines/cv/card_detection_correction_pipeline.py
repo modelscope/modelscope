@@ -91,7 +91,8 @@ class CardDetectionCorrection(Pipeline):
         self.device = create_device(self.device_name)
 
         self.infer_model = CardDetectionCorrectionModel()
-        checkpoint = torch.load(model_path, map_location=self.device)
+        checkpoint = torch.load(
+            model_path, map_location=self.device, weights_only=True)
         if 'state_dict' in checkpoint:
             self.infer_model.load_state_dict(checkpoint['state_dict'])
         else:

@@ -86,7 +86,7 @@ class TEAMTransferTrainerTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree('./ckpt')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'dataset is not available')
     def test_trainer(self):
         if torch.cuda.device_count() > 0:
             train_worker(device_id=0)

@@ -535,7 +535,7 @@ def load_pretrained_weights(model,
                         trained with advprop (valid when weights_path is None).
     """
     if isinstance(weights_path, str):
-        state_dict = torch.load(weights_path)
+        state_dict = torch.load(weights_path, weights_only=True)
     else:
         url_map_ = url_map_advprop if advprop else url_map
         state_dict = model_zoo.load_url(url_map_[model_name])

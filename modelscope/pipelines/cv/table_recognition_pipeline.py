@@ -43,7 +43,8 @@ class TableRecognitionPipeline(Pipeline):
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.infer_model = TableRecModel().to(self.device)
         self.infer_model.eval()
-        checkpoint = torch.load(model_path, map_location=self.device)
+        checkpoint = torch.load(
+            model_path, map_location=self.device, weights_only=True)
         if 'state_dict' in checkpoint:
             self.infer_model.load_state_dict(checkpoint['state_dict'])
         else:

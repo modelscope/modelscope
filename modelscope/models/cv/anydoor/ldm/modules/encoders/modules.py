@@ -336,7 +336,7 @@ class FrozenDinoV2Encoder(AbstractEncoder):
 
         super().__init__()
         dinov2 = hubconf.dinov2_vitg14()
-        state_dict = torch.load(DINOv2_weight_path)
+        state_dict = torch.load(DINOv2_weight_path, weights_only=True)
         dinov2.load_state_dict(state_dict, strict=False)
         self.model = dinov2.to(device)
         self.device = device

@@ -430,7 +430,7 @@ class TableQuestionAnsweringTrainer(BaseTrainer):
         metrics = {'all_ratio': 0.0}
         if checkpoint_path is not None:
             # load model
-            state_dict = torch.load(checkpoint_path)
+            state_dict = torch.load(checkpoint_path, weights_only=True)
             self.model.backbone_model.load_state_dict(
                 state_dict['backbone_model'])
             self.model.head_model.load_state_dict(

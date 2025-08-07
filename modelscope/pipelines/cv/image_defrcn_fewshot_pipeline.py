@@ -50,7 +50,8 @@ class ImageDefrcnDetectionPipeline(Pipeline):
 
     def _load_pretrained(self, net, load_path, device='cuda', strict=True):
 
-        load_net = torch.load(load_path, map_location=device)
+        load_net = torch.load(
+            load_path, map_location=device, weights_only=True)
         if 'scheduler' in load_net:
             del load_net['scheduler']
         if 'optimizer' in load_net:

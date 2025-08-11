@@ -308,10 +308,12 @@ class MCPClient:
             logger.info(f'Connected to server {self.server_name}')
 
         except Exception as e:
-            logger.error(
-                f'Failed to connect to server {self.server_name}: {e}')
+            # Provide concise summary, and expanded details at DEBUG level
+            summary = self._format_error_summary(e, phase='connect')
+            logger.error(f'Failed to connect | {summary}')
+            logger.debug(f'Details: {self._summarize_exception(e)}')
             await self._cleanup()
-            raise MCPConnectionError(f'Connection failed: {e}') from e
+            raise MCPConnectionError(f'Connection failed | {summary}') from e
 
     async def _establish_stdio_connection(self) -> tuple[Any, Any]:
         """Establish STDIO connection"""
@@ -531,9 +533,10 @@ class MCPClient:
                 return ''
 
         except McpError as e:
-            logger.error(
-                f'MCP error calling tool {tool_name} on server {self.server_name}: {e}'
-            )
+            summary = self._format_error_summary(
+                e, phase='call', tool_name=tool_name)
+            logger.error(f'MCP error on tool | {summary}')
+            logger.debug(f'Details: {self._summarize_exception(e)}')
             if e.error.code == CONNECTION_CLOSED:
                 self.connected = False
                 raise MCPConnectionError(
@@ -541,17 +544,23 @@ class MCPClient:
                 ) from e
             else:
                 raise MCPToolExecutionError(
-                    f'Tool execution failed: {e.error.message}') from e
+                    f'Tool execution failed | {summary}') from e
 
-        except asyncio.TimeoutError:
-            raise MCPTimeoutError(
-                f'Tool call {tool_name} timed out after {self.read_timeout}')
+        except asyncio.TimeoutError as e:
+            summary = f'type=TimeoutError tool={tool_name} server={self.server_name} \
+            timeout={self.read_timeout} transport={self.get_transport_type()}'
+
+            logger.error(f'Tool timeout | {summary}')
+            logger.debug(f'Details: {self._summarize_exception(e)}')
+            raise MCPTimeoutError(f'Tool call timed out | {summary}') from e
 
         except Exception as e:
-            logger.error(
-                f'Failed to call tool {tool_name} on server {self.server_name}: {e}'
-            )
-            raise MCPToolExecutionError(f'Tool execution failed: {e}') from e
+            summary = self._format_error_summary(
+                e, phase='call', tool_name=tool_name)
+            logger.error(f'Failed to call tool | {summary}')
+            logger.debug(f'Details: {self._summarize_exception(e)}')
+            raise MCPToolExecutionError(
+                f'Tool execution failed | {summary}') from e
 
     async def list_tools(self) -> List[Tool]:
         """
@@ -613,3 +622,180 @@ class MCPClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
         await self.disconnect()
+
+    # ----------------------
+    # Internal helper methods
+    # ----------------------
+
+    def _summarize_exception(self, exc: BaseException) -> str:
+        """Create a concise string describing the exception type, message, and root causes.
+
+        - Shows primary exception type and message
+        - If it's an ExceptionGroup (Python 3.11+), flattens and lists leaf exception types/messages
+        - Otherwise, traverses __cause__ / __context__ chain and prints the chain end-to-end
+        """
+
+        try:
+            # Python 3.11 ExceptionGroup support
+            ExceptionGroupType = ExceptionGroup  # type: ignore[name-defined]
+        except NameError:  # pragma: no cover - on older Python
+            ExceptionGroupType = tuple()  # type: ignore[assignment]
+
+        def format_one(e: BaseException) -> str:
+            return f'{type(e).__name__}: {e}'
+
+        def flatten_exception_group(
+                group: BaseException) -> list[BaseException]:
+            leaf: list[BaseException] = []
+
+            def dfs(x: BaseException) -> None:
+                if ExceptionGroupType and isinstance(x, ExceptionGroupType):
+                    for sub in getattr(x, 'exceptions', []) or []:
+                        dfs(sub)
+                    return
+                sub_cause = getattr(x, '__cause__', None) or getattr(
+                    x, '__context__', None)
+                if sub_cause is not None:
+                    dfs(sub_cause)
+                leaf.append(x)
+
+            dfs(group)
+            return leaf
+
+        # ExceptionGroup: show primary and leaf causes
+        if ExceptionGroupType and isinstance(exc, ExceptionGroupType):
+            leaves = flatten_exception_group(exc)
+            leaf_str = '; '.join(format_one(x) for x in leaves)
+            return f'{format_one(exc)}; root_causes=[{leaf_str}]'
+
+        # Normal exception chain: follow __cause__ -> __context__
+        chain: list[BaseException] = []
+        current: Optional[BaseException] = exc
+        while current is not None:
+            chain.append(current)
+            current = getattr(current, '__cause__', None) or getattr(
+                current, '__context__', None)
+
+        if len(chain) == 1:
+            return format_one(chain[0])
+
+        return ' -> '.join(format_one(e) for e in chain)
+
+    def _format_error_summary(self,
+                              exc: BaseException,
+                              phase: str,
+                              tool_name: Optional[str] = None) -> str:
+        """Build a concise one-line summary for logs and user-facing errors.
+
+        The summary is optimized for grepability and quick triage; detailed chains are logged at DEBUG.
+        """
+        server = self.server_name
+        transport = self.get_transport_type()
+        ctx = f'phase={phase} server={server} transport={transport}'
+        if tool_name:
+            ctx += f' tool={tool_name}'
+
+        # Try import httpx symbols lazily
+        try:
+            import httpx  # type: ignore
+            HTTPStatusError = httpx.HTTPStatusError
+            ConnectError = httpx.ConnectError
+            ReadTimeout = httpx.ReadTimeout
+            ConnectTimeout = httpx.ConnectTimeout
+        except Exception:
+            HTTPStatusError = tuple()  # type: ignore
+            ConnectError = tuple()  # type: ignore
+            ReadTimeout = tuple()  # type: ignore
+            ConnectTimeout = tuple()  # type: ignore
+
+        # Helper: iterate leaf exceptions (ExceptionGroup and chains)
+        def iter_leaf(e: BaseException):
+            try:
+                EG = ExceptionGroup  # type: ignore[name-defined]
+            except NameError:
+                EG = tuple()  # type: ignore[assignment]
+            stack = [e]
+            while stack:
+                cur = stack.pop()
+                if EG and isinstance(cur, EG):
+                    for sub in getattr(cur, 'exceptions', []) or []:
+                        stack.append(sub)
+                    continue
+                cause = getattr(cur, '__cause__', None)
+                context = getattr(cur, '__context__', None)
+                if cause is not None:
+                    stack.append(cause)
+                elif context is not None:
+                    stack.append(context)
+                else:
+                    yield cur
+
+        # Helper: iterate all exceptions (including non-leaves) for robust type-based checks
+        def iter_all(e: BaseException):
+            try:
+                EG = ExceptionGroup  # type: ignore[name-defined]
+            except NameError:
+                EG = tuple()  # type: ignore[assignment]
+            stack = [e]
+            seen = set()
+            while stack:
+                cur = stack.pop()
+                if id(cur) in seen:
+                    continue
+                seen.add(id(cur))
+                yield cur
+                if EG and isinstance(cur, EG):
+                    for sub in getattr(cur, 'exceptions', []) or []:
+                        stack.append(sub)
+                cause = getattr(cur, '__cause__', None)
+                context = getattr(cur, '__context__', None)
+                if cause is not None:
+                    stack.append(cause)
+                if context is not None:
+                    stack.append(context)
+
+        url: Optional[str] = None
+        # Materialize nodes once; fallback leaf will be fetched on demand
+        nodes = list(iter_all(exc))
+
+        # Priority: HTTP status -> timeout -> connection -> fallback first leaf
+        http_code: Optional[int] = None
+        http_phrase: Optional[str] = None
+        for node in nodes:
+            if HTTPStatusError and isinstance(node, HTTPStatusError):
+                try:
+                    http_code = int(node.response.status_code)
+                    http_phrase = getattr(node.response, 'reason_phrase', None)
+                    req = getattr(node, 'request', None) or getattr(
+                        node.response, 'request', None)
+                    url = str(getattr(req, 'url', '') or '')
+                except Exception:
+                    pass
+                code_part = f'http={http_code} {http_phrase}' if http_code is not None else 'http=?'
+                url_part = f' url={url}' if url else ''
+                return f'type=HTTPStatusError {code_part} {ctx}{url_part}'
+
+        for node in nodes:
+            node_type_name = type(node).__name__
+            if isinstance(node, (asyncio.TimeoutError, TimeoutError)) or \
+               (ReadTimeout and isinstance(node, ReadTimeout)) or \
+               (ConnectTimeout and isinstance(node, ConnectTimeout)) or \
+               node_type_name.endswith('Timeout'):
+                return f'type=Timeout server={server} timeout={self.read_timeout} transport={transport}'
+
+        for node in nodes:
+            if (ConnectError and isinstance(node, ConnectError)) or \
+               isinstance(node, (ConnectionError, ConnectionRefusedError, OSError)):
+                return f'type=ConnectionError {ctx}'
+
+        # Fallback: first leaf type
+        first_leaf = None
+        try:
+            first_leaf = next(iter_leaf(exc))
+        except StopIteration:
+            first_leaf = None
+        if first_leaf is not None:
+            return f'type={type(first_leaf).__name__} {ctx}'
+
+        # No leaves found (unlikely)
+        return f'type={type(exc).__name__} {ctx}'

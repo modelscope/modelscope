@@ -210,9 +210,9 @@ RUN pip install tf-keras==2.16.0 --no-dependencies && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
     CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
         pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
-RUN pushd $(dirname $(python -c 'print(__import__("tensorflow").__file__)'))
-RUN ln -svf ../nvidia/*/lib/*.so* .
-RUN popd
+RUN pushd $(dirname $(python -c 'print(__import__("tensorflow").__file__)'))  && \
+    ln -svf ../nvidia/*/lib/*.so* .  && \
+    popd
 """
 
         version_args = (

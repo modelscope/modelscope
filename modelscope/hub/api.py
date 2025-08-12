@@ -52,7 +52,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
                                       DatasetVisibility, Licenses,
                                       ModelVisibility, Visibility,
-                                      VisibilityMap, UPLOAD_COMMIT_BATCH_SIZE)
+                                      VisibilityMap, UPLOAD_COMMIT_BATCH_SIZE, UPLOAD_TQDM_DISABLE_THRESHOLD)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
                                    datahub_raise_on_error,
@@ -1821,7 +1821,7 @@ class HubApi:
                 sha256=file_hash,
                 size=file_size,
                 data=file_path,
-                disable_tqdm=file_size <= 20 * 1024 * 1024,
+                disable_tqdm=file_size <= UPLOAD_TQDM_DISABLE_THRESHOLD,
                 tqdm_desc='[Uploading ' + file_path_in_repo + ']',
             )
 

@@ -107,7 +107,6 @@ class MCPApi(HubApi):
             token: Optional access token for authentication
             filter: Optional filters to apply to the search
                 - 'category': str, server category, e.g. 'communication'
-                - 'tag': str, server tag, e.g. 'social-media'
                 - 'is_hosted': bool, server is hosted
                 When all three are passed in, the intersection is taken.
             total_count: Number of servers to return, max 100, default 20

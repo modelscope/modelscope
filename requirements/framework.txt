@@ -2,6 +2,7 @@ addict
 attrs
 datasets>=3.0.0,<=3.6.0
 einops
+mcp>=1.0.0
 Pillow
 python-dateutil>=2.1
 PyYAML>=5.4

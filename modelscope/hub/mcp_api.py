@@ -108,7 +108,7 @@ class MCPApi(HubApi):
             filter: Optional filters to apply to the search
                 - 'category': str, server category, e.g. 'communication'
                 - 'is_hosted': bool, server is hosted
-                When all three are passed in, the intersection is taken.
+                When all these are passed in, the intersection is taken.
             total_count: Number of servers to return, max 100, default 20
             search: Optional search query string,e.g. Chinese service name, English service name, author/owner username
             You can combine `filter` and `search` to retrieve desired MCP servers.

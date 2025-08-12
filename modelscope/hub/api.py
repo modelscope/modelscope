@@ -1866,12 +1866,13 @@ class HubApi:
             raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
         # Commit the operations in batches
-        num_batches = (len(operations) - 1) // UPLOAD_COMMIT_BATCH_SIZE + 1
-        print(f"Committing {len(operations)} files in {num_batches} batch(es) of size {UPLOAD_COMMIT_BATCH_SIZE}.",
+        commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
+        num_batches = (len(operations) - 1) // commit_batch_size + 1
+        print(f"Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.",
               flush=True)
         commit_infos: List[CommitInfo] = []
         for i in tqdm(range(num_batches), desc="[Committing batches] ", total=num_batches):
-            batch_operations = operations[i * UPLOAD_COMMIT_BATCH_SIZE: (i + 1) * UPLOAD_COMMIT_BATCH_SIZE]
+            batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
             batch_commit_message = f"{commit_message} (batch {i + 1}/{num_batches})"
 
             commit_info: CommitInfo = self.create_commit(

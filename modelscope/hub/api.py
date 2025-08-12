@@ -45,6 +45,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+                                      UPLOAD_COMMIT_BATCH_SIZE,
                                       UPLOAD_MAX_FILE_COUNT,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
@@ -52,7 +54,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
                                       DatasetVisibility, Licenses,
                                       ModelVisibility, Visibility,
-                                      VisibilityMap, UPLOAD_COMMIT_BATCH_SIZE, UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD)
+                                      VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
                                    datahub_raise_on_error,
@@ -1868,12 +1870,12 @@ class HubApi:
         # Commit the operations in batches
         commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
         num_batches = (len(operations) - 1) // commit_batch_size + 1
-        print(f"Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.",
+        print(f'Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.',
               flush=True)
         commit_infos: List[CommitInfo] = []
-        for i in tqdm(range(num_batches), desc="[Committing batches] ", total=num_batches):
+        for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
             batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
-            batch_commit_message = f"{commit_message} (batch {i + 1}/{num_batches})"
+            batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
 
             commit_info: CommitInfo = self.create_commit(
                 repo_id=repo_id,

@@ -31,15 +31,15 @@ class PolyLMForTextGeneration(TorchModel, StreamingOutputMixin):
             model_dir, legacy=False, use_fast=False)
 
         self.check_trust_remote_code(
-            info_str=f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
+            info_str=
+            f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
             'that you can trust the external codes.',
             model_dir=model_dir)
 
         self.model = AutoModelForCausalLM.from_pretrained(
             model_dir,
             device_map='auto',
-            trust_remote_code=self.trust_remote_code
-        )
+            trust_remote_code=self.trust_remote_code)
         self.model.eval()
 
     def forward(self, input: Dict[str, Tensor], **kwargs) -> Dict[str, Tensor]:

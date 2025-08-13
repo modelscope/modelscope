@@ -274,7 +274,7 @@ class HubApi:
         raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: due to server error, the upload function is not working
+        # TODO: to be aligned with the new api
         # Upload model files for AIGC models
         # if aigc_model is not None:
         #     aigc_model.upload_to_repo(self, model_id, token)

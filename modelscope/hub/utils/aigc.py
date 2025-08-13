@@ -1,9 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import glob
 import os
 from typing import List, Optional
-
+import requests
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -221,13 +220,9 @@ class AigcModel:
 
         Args:
             token: Optional SDK access token. If provided, used as m_session_id cookie.
-            pre_lfs_endpoint: Optional override endpoint. Default reads from env
-                MODELSCOPE_AIGC_PRELFS or falls back to https://lfs.modelscope.cn
             timeout: Request timeout seconds.
             chunk_mb: Upload chunk size in MB.
         """
-        import requests
-
         base_url = 'https://lfs.modelscope.cn'
         url = f'{base_url}/api/v1/models/aigc/weights'
 

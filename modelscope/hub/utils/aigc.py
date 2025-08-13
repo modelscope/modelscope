@@ -2,7 +2,9 @@
 import glob
 import os
 from typing import List, Optional
+
 import requests
+
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -255,7 +257,7 @@ class AigcModel:
         )
         try:
             resp = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             r.raise_for_status()
             return
         # If JSON body returned, try best-effort check

@@ -609,7 +609,7 @@ class HighResolutionNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
         if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
+            pretrained_dict = torch.load(pretrained, weights_only=True)
             logger.info(f'=> loading pretrained model {pretrained}')
             model_dict = self.state_dict()
             pretrained_dict = {

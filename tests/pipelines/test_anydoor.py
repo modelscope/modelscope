@@ -13,7 +13,9 @@ class AnydoorTest(unittest.TestCase):
         self.task = Tasks.image_to_image_generation
         self.model_id = 'damo/AnyDoor_models'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        test_level() >= 1,
+        'Skip to prevent a downgrade of huggingface_hub and transformers')
     def test_run(self):
         ref_image = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_fg.jpg'
         ref_mask = 'https://modelscope.oss-cn-beijing.aliyuncs.com/test/images/image_anydoor_fg_mask.png'

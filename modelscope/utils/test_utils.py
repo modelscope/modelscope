@@ -31,6 +31,9 @@ TEST_ACCESS_TOKEN2 = os.environ.get('TEST_ACCESS_TOKEN_SDKDEV', None)
 TEST_MODEL_CHINESE_NAME = '内部测试模型'
 TEST_MODEL_ORG = os.environ.get('TEST_MODEL_ORG', 'citest')
 
+if not hasattr(np, 'NaN'):
+    np.NaN = np.nan
+
 
 def delete_credential():
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)

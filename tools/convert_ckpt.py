@@ -8,7 +8,7 @@ import torch
 
 def convert_single_pth(fullname):
     filename, ext = os.path.splitext(fullname)
-    checkpoint = torch.load(fullname, map_location='cpu')
+    checkpoint = torch.load(fullname, map_location='cpu', weights_only=True)
     only_module = 'state_dict' not in checkpoint
     state_dict = checkpoint if only_module else checkpoint['state_dict']
     torch.save(state_dict, fullname)

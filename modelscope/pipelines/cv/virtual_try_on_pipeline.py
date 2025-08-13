@@ -53,7 +53,9 @@ class VirtualTryonPipeline(Pipeline):
 
         self.local_path = self.model
         src_params = torch.load(
-            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), 'cpu')
+            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE),
+            'cpu',
+            weights_only=True)
         self.model = SDAFNet_Tryon(ref_in_channel=6).to(self.device)
         load_pretrained(self.model, src_params)
         self.model.eval()

@@ -84,6 +84,7 @@ class VideoColorizationPipeline(Pipeline):
             ).to(self.device)
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
+        self.check_trust_remote_code(model_dir=model)
         self.model.load_state_dict(
             torch.load(model_path, map_location=torch.device('cpu'))['model'],
             strict=True)

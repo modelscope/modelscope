@@ -95,7 +95,7 @@ class MaskGrid(nn.Module):
                  xyz_max=None):
         super(MaskGrid, self).__init__()
         if path is not None:
-            st = torch.load(path)
+            st = torch.load(path, weights_only=True)
             self.mask_cache_thres = mask_cache_thres
             density = F.max_pool3d(
                 st['model_state_dict']['density.grid'],
@@ -1864,7 +1864,8 @@ class SFTNet(nn.Module):
                 Default: 'params'.
         """
         # net = self.get_bare_model(net)
-        load_net = torch.load(load_path, map_location=device)
+        load_net = torch.load(
+            load_path, map_location=device, weights_only=True)
         if param_key is not None:
             if param_key not in load_net and 'params' in load_net:
                 param_key = 'params'

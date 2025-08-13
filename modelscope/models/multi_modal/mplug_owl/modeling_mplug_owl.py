@@ -482,7 +482,9 @@ class MplugOwlPreTrainedModel(PreTrainedModel):
         r'language_model.lm_head.weight',
     ]
     _no_split_modules = ['MplugOwlAttention']
-    _keep_in_fp32_modules = ['wo']
+
+    # Fix: No wo module found?
+    # _keep_in_fp32_modules = ['wo']
 
     def _init_weights(self, module):
         """Initialize the weights"""

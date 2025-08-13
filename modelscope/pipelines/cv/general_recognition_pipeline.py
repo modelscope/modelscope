@@ -69,7 +69,9 @@ class GeneralRecognitionPipeline(Pipeline):
         device = 'cpu'
         self.local_path = self.model
         src_params = torch.load(
-            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE), device)
+            osp.join(self.local_path, ModelFile.TORCH_MODEL_FILE),
+            device,
+            weights_only=True)
 
         self.model = resnest101(num_classes=54092)
         load_pretrained(self.model, src_params)

@@ -112,7 +112,13 @@ trunc_exp = _TruncExp.apply
 class VolumeDensity(nn.Module):
 
     def __init__(self, config):
-        import tinycudann as tcnn
+        try:
+            import tinycudann as tcnn
+        except ImportError as e:
+            raise ImportError(
+                'Cannot import tinycudann, please install by '
+                '`pip install git+https://github.com/NVlabs/tiny-cuda-nn/'
+                '#subdirectory=bindings/torc`') from e
 
         super().__init__()
         self.config = config
@@ -198,7 +204,13 @@ class VolumeDensity(nn.Module):
 class VolumeRadiance(nn.Module):
 
     def __init__(self, config):
-        import tinycudann as tcnn
+        try:
+            import tinycudann as tcnn
+        except ImportError as e:
+            raise ImportError(
+                'Cannot import tinycudann, please install by '
+                '`pip install git+https://github.com/NVlabs/tiny-cuda-nn/'
+                '#subdirectory=bindings/torc`') from e
 
         super(VolumeRadiance, self).__init__()
         self.config = config

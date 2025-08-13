@@ -42,7 +42,8 @@ class FaceRecognitionPipeline(FaceProcessingBasePipeline):
         face_model.load_state_dict(
             torch.load(
                 osp.join(model, ModelFile.TORCH_MODEL_BIN_FILE),
-                map_location=device))
+                map_location=device,
+                weights_only=True))
         face_model = face_model.to(device)
         face_model.eval()
         self.face_model = face_model

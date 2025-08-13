@@ -7,8 +7,9 @@ from collections import OrderedDict
 import json
 import numpy as np
 import torch
+from torch.optim import AdamW
 from tqdm import tqdm
-from transformers.optimization import AdamW, get_linear_schedule_with_warmup
+from transformers.optimization import get_linear_schedule_with_warmup
 
 from modelscope.trainers.nlp.space.metrics.metrics_tracker import \
     MetricsTracker

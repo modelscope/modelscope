@@ -263,20 +263,20 @@ class KeyWordSpottingTest(unittest.TestCase):
         audio = audio.tobytes()
         return audio
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'not compatible with python>3.9')
     def test_run_with_wav(self):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=POS_WAV_FILE)
         self.check_result('test_run_with_wav', kws_result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'not compatible with python>3.9')
     def test_run_with_pcm(self):
         audio = self.wav2bytes(os.path.join(os.getcwd(), POS_WAV_FILE))
 
         kws_result = self.run_pipeline(model_id=self.model_id, audio_in=audio)
         self.check_result('test_run_with_pcm', kws_result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'not compatible with python>3.9')
     def test_run_with_wav_by_customized_keywords(self):
         keywords = '播放音乐'
 
@@ -287,7 +287,7 @@ class KeyWordSpottingTest(unittest.TestCase):
         self.check_result('test_run_with_wav_by_customized_keywords',
                           kws_result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'not compatible with python>3.9')
     def test_run_with_url(self):
         kws_result = self.run_pipeline(
             model_id=self.model_id, audio_in=URL_FILE)

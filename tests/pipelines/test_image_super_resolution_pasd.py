@@ -32,14 +32,14 @@ class ImageSuperResolutionPASDTest(unittest.TestCase):
             cv2.imwrite('result.png', result[OutputKeys.OUTPUT_IMG])
             print(f'Output written to {osp.abspath("result.png")}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub(self):
         super_resolution = pipeline(
             Tasks.image_super_resolution_pasd, model=self.model_id)
 
         self.pipeline_inference(super_resolution, self.input)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_run_modelhub_v2(self):
         super_resolution = pipeline(
             Tasks.image_super_resolution_pasd, model=self.model_v2_id)

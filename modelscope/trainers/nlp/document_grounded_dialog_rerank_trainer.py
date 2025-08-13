@@ -7,7 +7,8 @@ import numpy as np
 import torch
 import torch.cuda
 import torch.nn.functional as F
-from transformers import AdamW, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model
@@ -448,11 +449,13 @@ class TransformerOptimize:
             self.optimizer.load_state_dict(
                 torch.load(
                     os.path.join(resume_from, 'optimizer.pt'),
-                    map_location='cpu'))
+                    map_location='cpu',
+                    weights_only=True))
             self.scheduler.load_state_dict(
                 torch.load(
                     os.path.join(resume_from, 'scheduler.pt'),
-                    map_location='cpu'))
+                    map_location='cpu',
+                    weights_only=True))
             logger.info(f'loaded optimizer and scheduler from {resume_from}')
 
         if args['fp16']:

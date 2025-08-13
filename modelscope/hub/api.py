@@ -244,8 +244,8 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
-            # Best-effort pre-upload weights so server recognizes sha256
-            aigc_model.preupload_weights(token=token)
+            # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
+            aigc_model.preupload_weights(cookies=cookies)
 
             # Add AIGC-specific fields to body
             body.update({

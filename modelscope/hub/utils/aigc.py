@@ -212,6 +212,7 @@ class AigcModel:
 
     def preupload_weights(self,
                           *,
+                          cookies: Optional[object] = None,
                           token: Optional[str] = None,
                           timeout: int = 1800,
                           chunk_mb: int = 4) -> None:
@@ -221,7 +222,8 @@ class AigcModel:
         This method streams the weight file so the sha gets registered.
 
         Args:
-            token: Optional SDK access token. If provided, used as m_session_id cookie.
+            cookies: Optional requests-style cookies (CookieJar/dict). If provided, preferred.
+            token: Optional SDK access token. If cookies not provided, will set Cookie header with m_session_id.
             timeout: Request timeout seconds.
             chunk_mb: Upload chunk size in MB.
         """
@@ -237,24 +239,34 @@ class AigcModel:
             'Accept': 'application/json, text/plain, */*',
             'Content-Type': 'application/octet-stream',
         }
-        if token:
-            headers['Cookie'] = f'm_session_id={token}'
-
-        def iter_file_chunks(path: str, chunk_size: int):
-            with open(path, 'rb') as f:
-                while True:
-                    data = f.read(chunk_size)
-                    if not data:
+        # Prefer cookies, and try to extract m_session_id from cookies to set Cookie header for subdomain
+        req_cookies = cookies if cookies is not None else None
+        cookie_header_msess = None
+        if req_cookies is not None:
+            try:
+                for c in req_cookies:  # CookieJar is iterable
+                    if getattr(c, 'name', '') == 'm_session_id':
+                        cookie_header_msess = getattr(c, 'value', None)
                         break
-                    yield data
+            except TypeError:
+                pass
+            if cookie_header_msess is None and isinstance(req_cookies, dict):
+                cookie_header_msess = req_cookies.get('m_session_id')
+        # Fallback to explicit token
+        if not cookie_header_msess and token:
+            cookie_header_msess = token
+        if cookie_header_msess:
+            headers['Cookie'] = f'm_session_id={cookie_header_msess}'
 
-        chunk_size = max(1, int(chunk_mb)) * 1024 * 1024
-        r = requests.put(
-            url,
-            headers=headers,
-            data=iter_file_chunks(file_path, chunk_size),
-            timeout=timeout,
-        )
+        # Prefer passing file object so requests can set Content-Length automatically
+        with open(file_path, 'rb') as f:
+            r = requests.put(
+                url,
+                headers=headers,
+                data=f,
+                timeout=timeout,
+                cookies=req_cookies,
+            )
         try:
             resp = r.json()
         except requests.exceptions.JSONDecodeError:

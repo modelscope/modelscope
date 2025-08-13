@@ -209,6 +209,68 @@ class AigcModel:
                 'You may need to upload the model manually after creation.')
             return False
 
+    def preupload_weights(self,
+                          *,
+                          token: Optional[str] = None,
+                          pre_lfs_endpoint: Optional[str] = None,
+                          timeout: int = 1800,
+                          chunk_mb: int = 4) -> None:
+        """Best-effort pre-upload of weights to pre-lfs service.
+
+        Server may require the sha256 of weights to be registered before creation.
+        This method streams the weight file so the sha gets registered.
+
+        Args:
+            token: Optional SDK access token. If provided, used as m_session_id cookie.
+            pre_lfs_endpoint: Optional override endpoint. Default reads from env
+                MODELSCOPE_AIGC_PRELFS or falls back to https://pre-lfs.modelscope.cn
+            timeout: Request timeout seconds.
+            chunk_mb: Upload chunk size in MB.
+        """
+        import requests
+
+        base_url = (
+            pre_lfs_endpoint or os.environ.get(
+                'MODELSCOPE_AIGC_PRELFS', 'https://pre-lfs.modelscope.cn'))
+        url = f'{base_url}/api/v1/models/aigc/weights'
+
+        file_path = getattr(self, 'target_file', None) or self.model_path
+        file_path = os.path.abspath(os.path.expanduser(file_path))
+        if not os.path.isfile(file_path):
+            raise ValueError(f'Pre-upload expects a file, got: {file_path}')
+
+        headers = {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/octet-stream',
+        }
+        if token:
+            headers['Cookie'] = f'm_session_id={token}'
+
+        def iter_file_chunks(path: str, chunk_size: int):
+            with open(path, 'rb') as f:
+                while True:
+                    data = f.read(chunk_size)
+                    if not data:
+                        break
+                    yield data
+
+        chunk_size = max(1, int(chunk_mb)) * 1024 * 1024
+        r = requests.put(
+            url,
+            headers=headers,
+            data=iter_file_chunks(file_path, chunk_size),
+            timeout=timeout,
+        )
+        try:
+            resp = r.json()
+        except Exception:
+            r.raise_for_status()
+            return
+        # If JSON body returned, try best-effort check
+        if isinstance(resp, dict) and resp.get('Success') is False:
+            msg = resp.get('Message', 'unknown error')
+            raise RuntimeError(f'Pre-upload failed: {msg}')
+
     def to_dict(self) -> dict:
         """Converts the AIGC parameters to a dictionary suitable for API calls."""
         return {

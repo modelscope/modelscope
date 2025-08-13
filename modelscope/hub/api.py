@@ -244,6 +244,13 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
+            # Best-effort pre-upload weights so server recognizes sha256
+            try:
+                # Only when a file path is provided
+                if hasattr(aigc_model, 'preupload_weights'):
+                    aigc_model.preupload_weights(token=token)
+            except Exception as e:
+                logger.warning('Pre-upload weights skipped: %s', str(e))
 
             # Add AIGC-specific fields to body
             body.update({

@@ -76,7 +76,7 @@ RUN sh /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers -U; \
+    pip install --no-cache-dir huggingface-hub transformers peft -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
     pip install liger_kernel nvitop pre-commit transformers huggingface-hub -U && \

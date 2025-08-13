@@ -4,7 +4,9 @@ import os
 from typing import List, Optional
 
 import requests
+from tqdm.auto import tqdm
 
+from modelscope.hub.utils.utils import MODELSCOPE_URL_SCHEME, get_domain
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -213,9 +215,8 @@ class AigcModel:
     def preupload_weights(self,
                           *,
                           cookies: Optional[object] = None,
-                          token: Optional[str] = None,
-                          timeout: int = 1800,
-                          chunk_mb: int = 4) -> None:
+                          timeout: int = 300,
+                          headers: Optional[dict] = None) -> None:
         """Best-effort pre-upload of weights to pre-lfs service.
 
         Server may require the sha256 of weights to be registered before creation.
@@ -223,50 +224,50 @@ class AigcModel:
 
         Args:
             cookies: Optional requests-style cookies (CookieJar/dict). If provided, preferred.
-            token: Optional SDK access token. If cookies not provided, will set Cookie header with m_session_id.
             timeout: Request timeout seconds.
-            chunk_mb: Upload chunk size in MB.
+            headers: Optional headers.
         """
-        base_url = 'https://lfs.modelscope.cn'
-        url = f'{base_url}/api/v1/models/aigc/weights'
+        domain = get_domain()
+        base_url = f'lfs.{domain.lstrip("www.")}'
+        url = f'{MODELSCOPE_URL_SCHEME}{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))
         if not os.path.isfile(file_path):
             raise ValueError(f'Pre-upload expects a file, got: {file_path}')
 
-        headers = {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/octet-stream',
-        }
-        # Prefer cookies, and try to extract m_session_id from cookies to set Cookie header for subdomain
-        req_cookies = cookies if cookies is not None else None
-        cookie_header_msess = None
-        if req_cookies is not None:
-            try:
-                for c in req_cookies:  # CookieJar is iterable
-                    if getattr(c, 'name', '') == 'm_session_id':
-                        cookie_header_msess = getattr(c, 'value', None)
-                        break
-            except TypeError:
-                pass
-            if cookie_header_msess is None and isinstance(req_cookies, dict):
-                cookie_header_msess = req_cookies.get('m_session_id')
-        # Fallback to explicit token
-        if not cookie_header_msess and token:
-            cookie_header_msess = token
-        if cookie_header_msess:
-            headers['Cookie'] = f'm_session_id={cookie_header_msess}'
+        cookies = dict(cookies) if cookies else None
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
 
         # Prefer passing file object so requests can set Content-Length automatically
-        with open(file_path, 'rb') as f:
-            r = requests.put(
-                url,
-                headers=headers,
-                data=f,
-                timeout=timeout,
-                cookies=req_cookies,
-            )
+        file_size = os.path.getsize(file_path)
+
+        def read_in_chunks(file_object,
+                           pbar,
+                           chunk_size: int = 1 * 1024 * 1024):
+            while True:
+                ck = file_object.read(chunk_size)
+                if not ck:
+                    break
+                pbar.update(len(ck))
+                yield ck
+
+        with tqdm(
+                total=file_size,
+                unit='B',
+                unit_scale=True,
+                dynamic_ncols=True,
+                desc='[Pre-uploading] ') as pbar:
+            with open(file_path, 'rb') as f:
+                r = requests.put(
+                    url,
+                    headers=headers,
+                    data=read_in_chunks(f, pbar),
+                    timeout=timeout,
+                )
         try:
             resp = r.json()
         except requests.exceptions.JSONDecodeError:

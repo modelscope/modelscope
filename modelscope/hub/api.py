@@ -245,7 +245,7 @@ class HubApi:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
             # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
-            aigc_model.preupload_weights(cookies=cookies)
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
 
             # Add AIGC-specific fields to body
             body.update({

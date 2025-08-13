@@ -212,7 +212,6 @@ class AigcModel:
     def preupload_weights(self,
                           *,
                           token: Optional[str] = None,
-                          pre_lfs_endpoint: Optional[str] = None,
                           timeout: int = 1800,
                           chunk_mb: int = 4) -> None:
         """Best-effort pre-upload of weights to pre-lfs service.
@@ -223,15 +222,13 @@ class AigcModel:
         Args:
             token: Optional SDK access token. If provided, used as m_session_id cookie.
             pre_lfs_endpoint: Optional override endpoint. Default reads from env
-                MODELSCOPE_AIGC_PRELFS or falls back to https://pre-lfs.modelscope.cn
+                MODELSCOPE_AIGC_PRELFS or falls back to https://lfs.modelscope.cn
             timeout: Request timeout seconds.
             chunk_mb: Upload chunk size in MB.
         """
         import requests
 
-        base_url = (
-            pre_lfs_endpoint or os.environ.get(
-                'MODELSCOPE_AIGC_PRELFS', 'https://pre-lfs.modelscope.cn'))
+        base_url = 'https://lfs.modelscope.cn'
         url = f'{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path

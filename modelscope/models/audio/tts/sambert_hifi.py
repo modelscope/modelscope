@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
 import datetime
 import os
 import shutil
+import sys
 import wave
 import zipfile
 
@@ -60,6 +61,8 @@ class SambertHifigan(Model):
             raise TtsVoiceNotExistsException(
                 'modelscope error: voices is empty in voices.json')
         # initialize frontend
+        if sys.version_info >= (3, 11):
+            raise ImportError('Python version needs to be <= 3.10')
         import ttsfrd
         frontend = ttsfrd.TtsFrontendEngine()
         zip_file = os.path.join(model_dir, 'resource.zip')

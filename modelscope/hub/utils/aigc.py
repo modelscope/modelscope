@@ -217,7 +217,7 @@ class AigcModel:
                           cookies: Optional[object] = None,
                           timeout: int = 300,
                           headers: Optional[dict] = None) -> None:
-        """Best-effort pre-upload of weights to pre-lfs service.
+        """Pre-upload aigc model weights to the LFS server.
 
         Server may require the sha256 of weights to be registered before creation.
         This method streams the weight file so the sha gets registered.
@@ -227,9 +227,9 @@ class AigcModel:
             timeout: Request timeout seconds.
             headers: Optional headers.
         """
-        domain = get_domain()
-        base_url = f'lfs.{domain.lstrip("www.")}'
-        url = f'{MODELSCOPE_URL_SCHEME}{base_url}/api/v1/models/aigc/weights'
+        domain: str = get_domain()
+        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
+        url: str = f'{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))
@@ -242,7 +242,6 @@ class AigcModel:
 
         headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
 
-        # Prefer passing file object so requests can set Content-Length automatically
         file_size = os.path.getsize(file_path)
 
         def read_in_chunks(file_object,

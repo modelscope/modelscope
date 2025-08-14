@@ -31,7 +31,9 @@ class MogFaceDetector(TorchModel):
 
     def load_model(self, load_to_cpu=False):
         pretrained_dict = torch.load(
-            self.model_path, map_location=torch.device('cpu'))
+            self.model_path,
+            map_location=torch.device('cpu'),
+            weights_only=True)
         self.net.load_state_dict(pretrained_dict, strict=False)
         self.net.eval()
 

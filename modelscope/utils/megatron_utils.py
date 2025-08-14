@@ -193,7 +193,8 @@ def _load_by_rank(checkpoint_dir: Union[str, bytes, os.PathLike],
     checkpoint_name = _CHECKPOINT_FORMAT.replace('XX', f'{rank:02d}')
     state_dict = torch.load(
         os.path.join(checkpoint_dir, checkpoint_name),
-        map_location=lambda storage, loc: storage)
+        map_location=lambda storage, loc: storage,
+        weights_only=True)
     return state_dict['module'] if 'module' in state_dict else state_dict
 
 

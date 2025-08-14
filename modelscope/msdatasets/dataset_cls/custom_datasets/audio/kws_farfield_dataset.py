@@ -4,6 +4,7 @@ Used to prepare simulated data.
 import math
 import os.path
 import queue
+import sys
 import threading
 
 import numpy as np
@@ -64,7 +65,16 @@ class KWSDataset:
             raise ValueError(f'{conf_basetrain} does not exist!')
         if not os.path.exists(conf_finetune):
             raise ValueError(f'{conf_finetune} does not exist!')
-        import py_sound_connect
+        try:
+            if sys.version_info >= (3, 11):
+                raise ImportError('Python version needs to be <= 3.10')
+            import py_sound_connect
+        except ImportError:
+            raise ImportError(
+                'py_sound_connect needs python<=3.10, you can install it by:'
+                'pip install py_sound_connect -f '
+                'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
+            )
         logger.info('KWSDataset init SoundConnect...')
         num_base = math.ceil(numworkers * basetrainratio)
         num_senior = numworkers - num_base

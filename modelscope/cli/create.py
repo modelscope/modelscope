@@ -153,8 +153,6 @@ class CreateCMD(CLICommand):
             endpoint=self.args.endpoint,
         )
 
-        print(f'Successfully created the repo: {self.args.repo_id}.')
-
     def _create_aigc_model(self):
         """Execute the command."""
         api = HubApi(endpoint=self.args.endpoint)

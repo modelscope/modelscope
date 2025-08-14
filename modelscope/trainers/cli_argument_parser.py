@@ -21,12 +21,17 @@ class CliArgumentParser(ArgumentParser):
     def get_manual_args(self, args):
         return [arg[2:] for arg in args if arg.startswith('--')]
 
-    def _parse_known_args(self, args: List = None, namespace=None):
+    def _parse_known_args(self,
+                          args: List = None,
+                          namespace=None,
+                          *args_extra,
+                          **kwargs):
         self.model_id = namespace.model if namespace is not None else None
         if '--model' in args:
             self.model_id = args[args.index('--model') + 1]
         self.manual_args = self.get_manual_args(args)
-        return super()._parse_known_args(args, namespace)
+        return super()._parse_known_args(args, namespace, *args_extra,
+                                         **kwargs)
 
     def print_help(self, file=None):
         return super().print_help(file)

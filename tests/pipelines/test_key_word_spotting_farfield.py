@@ -54,7 +54,8 @@ class KWSFarfieldTest(unittest.TestCase):
         self.assertEqual(len(result['kws_list']), 5)
         print(result['kws_list'][-1])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1,
+                         'not supported in python 3.11 or later')
     def test_url(self):
         kws = pipeline(Tasks.keyword_spotting, model=self.model_id)
         result = kws(TEST_SPEECH_URL)

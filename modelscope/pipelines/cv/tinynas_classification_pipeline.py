@@ -35,7 +35,8 @@ class TinynasClassificationPipeline(Pipeline):
 
         model_pth_path = osp.join(self.path, ModelFile.TORCH_MODEL_FILE)
 
-        checkpoint = torch.load(model_pth_path, map_location='cpu')
+        checkpoint = torch.load(
+            model_pth_path, map_location='cpu', weights_only=True)
         if 'state_dict' in checkpoint:
             state_dict = checkpoint['state_dict']
         else:

@@ -165,7 +165,13 @@ def normalize(dat, inp_scale, tgt_scale):
 
 
 def cleanup():
-    import tinycudann as tcnn
+    try:
+        import tinycudann as tcnn
+    except ImportError as e:
+        raise ImportError(
+            'Cannot import tinycudann, please install by '
+            '`pip install git+https://github.com/NVlabs/tiny-cuda-nn/'
+            '#subdirectory=bindings/torc`') from e
 
     gc.collect()
     torch.cuda.empty_cache()

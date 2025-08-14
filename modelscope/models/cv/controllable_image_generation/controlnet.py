@@ -1,32 +1,24 @@
 # Part of the implementation is borrowed and modified from ControlNet,
 # publicly available at https://github.com/lllyasviel/ControlNet
 
-import math
 import os
-import random
-import sys
-import tempfile
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 
 import cv2
 import einops
 import numpy as np
 import torch
-import torch.nn as nn
 from control_ldm.cldm.hack import disable_verbosity, enable_sliced_attention
 from control_ldm.cldm.model import create_model, load_state_dict
 from control_ldm.ldm.models.diffusion.ddim import DDIMSampler
-from PIL import Image
 
 from modelscope.metainfo import Models
-from modelscope.models.base import Tensor
 from modelscope.models.base.base_torch_model import TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.compatible_with_transformers import \
     compatible_position_ids
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
-from modelscope.utils.logger import get_logger
 
 __all__ = ['ControlNet']
 

@@ -1,7 +1,7 @@
 import inspect
 import os
 from types import MethodType
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from modelscope import get_logger
 from modelscope.metainfo import Tasks
@@ -124,3 +124,24 @@ def try_to_load_hf_model(model_dir: str, task_name: str,
         # use hf
         model = automodel_class.from_pretrained(model_dir, **kwargs)
     return model
+
+
+def check_model_from_owner_group(model_dir: str,
+                                 owner_group: List[str] = None) -> bool:
+    """This checking is for the torch.load, this function may eval malicious code into memory
+
+    Args:
+        model_dir: The local model_dir
+        owner_group: The owner group to trust
+
+    Returns:
+        bool: Whether the group can be trusted
+    """
+    if not model_dir:
+        return False
+    if owner_group is None:
+        owner_group = ['iic', 'damo']
+    model_dir = model_dir.rstrip('/').rstrip('\\')
+    model_dir = os.path.dirname(model_dir)
+    group = os.path.basename(model_dir)
+    return group in owner_group

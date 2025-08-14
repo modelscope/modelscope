@@ -1,25 +1,20 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import glob
-import math
 import os
-import subprocess
-import tempfile
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 import cv2
 import numpy as np
-import torch
 
 from modelscope.metainfo import Pipelines
 from modelscope.models.base import Model
 from modelscope.models.cv.controllable_image_generation import ControlNet
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.pipelines.util import is_model, is_official_hub_path
 from modelscope.preprocessors.cv.controllable_image_generation import \
     ControllableImageGenerationPreprocessor
-from modelscope.utils.constant import Frameworks, Invoke, ModelFile, Tasks
+from modelscope.utils.constant import Invoke, Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()

@@ -78,7 +78,8 @@ def load_vqgan(config, ckpt_path=None, is_gumbel=False):
     else:
         model = VQModel(**config['model']['params'])
     if ckpt_path is not None:
-        sd = torch.load(ckpt_path, map_location='cpu')['state_dict']
+        sd = torch.load(
+            ckpt_path, map_location='cpu', weights_only=True)['state_dict']
         missing, unexpected = model.load_state_dict(sd, strict=False)
     return model.eval()
 
@@ -218,6 +219,7 @@ class OfaForTextToImageSynthesis(Model):
         self._device = torch.device('cuda') if torch.cuda.is_available() \
             else torch.device('cpu')
         self.model.to(self._device)
+        self.check_trust_remote_code(model_dir=model_dir)
 
         # Initialize vqgan
         vqgan_config = json.load(

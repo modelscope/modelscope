@@ -49,7 +49,9 @@ class RetinaFaceDetection(TorchModel):
 
     def load_model(self, load_to_cpu=False):
         pretrained_dict = torch.load(
-            self.model_path, map_location=torch.device('cpu'))
+            self.model_path,
+            map_location=torch.device('cpu'),
+            weights_only=True)
         if 'state_dict' in pretrained_dict.keys():
             pretrained_dict = self.remove_prefix(pretrained_dict['state_dict'],
                                                  'module.')

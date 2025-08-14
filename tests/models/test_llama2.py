@@ -21,7 +21,10 @@ class Llama2Test(unittest.TestCase):
         model_dir = snapshot_download(
             self.model_name, ignore_file_pattern=[r'\w+\.safetensors'])
         model = Model.from_pretrained(
-            model_dir, device_map='auto', torch_dtype=torch.float16)
+            model_dir,
+            device_map='auto',
+            torch_dtype=torch.float16,
+            base_model_tp_plan={})
         tokenizer = Llama2Tokenizer.from_pretrained(model_dir)
 
         inputs = {

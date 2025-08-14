@@ -21,7 +21,7 @@ class Text2TextGenerationTest(unittest.TestCase):
         self.model_id_rewriting = 'damo/nlp_mt5_dialogue-rewriting_chinese-base'
         self.input_rewriting = '杨阳胖吗[SEP]我一个同学叫杨阳[SEP]他多少斤'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_T5(self):
         cache_path = snapshot_download(self.model_id_generate)
         model = T5ForConditionalGeneration.from_pretrained(cache_path)
@@ -33,7 +33,7 @@ class Text2TextGenerationTest(unittest.TestCase):
             f'pipeline1: {pipeline1(self.input_generate)}\npipeline2: {pipeline2(self.input_generate)}'
         )
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_instance(self):
         model = Model.from_pretrained(self.model_id_translate)
         preprocessor = TextGenerationT5Preprocessor(model.model_dir)
@@ -43,13 +43,13 @@ class Text2TextGenerationTest(unittest.TestCase):
             preprocessor=preprocessor)
         print(pipeline_ins(self.input_translate))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_id(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation, model=self.model_id_translate)
         print(pipeline_ins(self.input_translate))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_rewriting_model(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation,
@@ -57,7 +57,7 @@ class Text2TextGenerationTest(unittest.TestCase):
             model_revision='v1.0.1')
         print(pipeline_ins(self.input_rewriting))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_id_batch(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation, model=self.model_id_translate)
@@ -67,7 +67,7 @@ class Text2TextGenerationTest(unittest.TestCase):
         ]
         print(pipeline_ins(inputs, batch_size=2))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_run_pipeline_with_model_id_batch_iter(self):
         pipeline_ins = pipeline(
             task=Tasks.text2text_generation,

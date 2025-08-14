@@ -32,7 +32,8 @@ class ANSDFSMNExporter(TorchModelExporter):
         model_bin_file = os.path.join(model.model_dir,
                                       ModelFile.TORCH_MODEL_BIN_FILE)
         if os.path.exists(model_bin_file):
-            checkpoint = torch.load(model_bin_file, map_location='cpu')
+            checkpoint = torch.load(
+                model_bin_file, map_location='cpu', weights_only=True)
             model.load_state_dict(checkpoint)
         onnx_file = os.path.join(output_dir, ModelFile.ONNX_MODEL_FILE)
 

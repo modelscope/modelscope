@@ -33,14 +33,14 @@ class NeRFReconVQCompressionBlender(unittest.TestCase):
             ndc_ray=False,
             ckpt_path=pretrained_model)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'dataset download failure')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_evalutaion(self):
         render_dir = f'./exp/{self.blender_scene}'
         self.pipeline(
             dict(test_mode='evaluation_test', render_dir=render_dir, N_vis=5))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'dataset download failure')
     @unittest.skipIf(not torch.cuda.is_available(), 'cuda unittest only')
     def test_render_path(self):
         render_dir = f'./exp/{self.blender_scene}'

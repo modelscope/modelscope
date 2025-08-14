@@ -1540,7 +1540,9 @@ class HubApi:
         repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
-                return f'{endpoint}/{repo_type}s/{repo_id}'
+                repo_url: str = f'{endpoint}/{repo_type}s/{repo_id}'
+                logger.warning(f'Repo {repo_id} already exists, got repo url: {repo_url}')
+                return repo_url
             else:
                 raise ValueError(f'Repo {repo_id} already exists!')
 

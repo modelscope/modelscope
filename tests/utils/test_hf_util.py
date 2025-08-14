@@ -144,14 +144,14 @@ class HFUtilTest(unittest.TestCase):
             from transformers import AutoConfig
             config = AutoConfig.from_pretrained(
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-            self.assertTrue(config is not None)
+            self.assertTrue(getattr(config, 'base_model_prefix') == 'encoder')
         try:
             config = AutoConfig.from_pretrained(
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-        except Exception:
+            self.assertTrue(
+                getattr(config, 'base_model_prefix', None) != 'encoder')
+        except:  # noqa
             pass
-        else:
-            self.assertTrue(False)
 
         # Test patch again
         with patch_context():

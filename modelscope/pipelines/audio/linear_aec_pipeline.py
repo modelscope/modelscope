@@ -112,7 +112,8 @@ class LinearAECPipeline(Pipeline):
     def _init_model(self):
         checkpoint = torch.load(
             os.path.join(self.model, ModelFile.TORCH_MODEL_BIN_FILE),
-            map_location='cpu')
+            map_location='cpu',
+            weights_only=True)
         self.model = initialize_config(self.config['nnet'])
         if self.use_cuda:
             self.model = self.model.cuda()

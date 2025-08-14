@@ -243,7 +243,7 @@ class AigcModel:
                           cookies: Optional[object] = None,
                           timeout: int = 300,
                           headers: Optional[dict] = None) -> None:
-        """Best-effort pre-upload of weights to lfs service.
+        """Pre-upload aigc model weights to the LFS server.
 
         Server may require the sha256 of weights to be registered before creation.
         This method streams the weight file so the sha gets registered.

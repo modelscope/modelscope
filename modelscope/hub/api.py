@@ -272,7 +272,7 @@ class HubApi:
             headers=self.builder_headers(self.headers))
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
-        model_repo_url = f'{endpoint}/{repo_type}s/{repo_id}'
+        model_repo_url = f'{endpoint}/models/{model_id}'
 
         # TODO: to be aligned with the new api
         # Upload model files for AIGC models

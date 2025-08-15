@@ -59,7 +59,7 @@ RUN echo $CUR_TIME
 RUN sh /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate "peft<0.17" "trl<0.21" safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
@@ -79,15 +79,15 @@ RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir huggingface-hub transformers -U; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
-    pip install "sglang[all]<0.4.7" math_verify "gradio<5.33" -U && \
-    pip install "liger_kernel<0.6" nvitop pre-commit "transformers<4.52" huggingface-hub -U && \
+    pip install "sglang[all]<0.4.10" "math_verify==0.5.2" "gradio<5.33" -U && \
+    pip install liger_kernel nvitop pre-commit "transformers<4.55" huggingface-hub -U && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
     CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
     pip install --no-build-isolation git+https://github.com/NVIDIA/TransformerEngine.git@release_v2.5#egg=transformer_engine[pytorch]; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && git checkout e13873debc4699d39c6861074b9a3b2a02327f92 && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
-    pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.12.0; \
+    pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.13.0; \
 fi
 
 # install nvm and set node version to 18

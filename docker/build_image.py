@@ -360,7 +360,7 @@ class SwiftImageBuilder(LLMImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir -U "deepspeed==0.16.*" --no-deps && \
+RUN pip install --no-cache-dir -U deepspeed --no-deps && \
     pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (

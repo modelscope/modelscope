@@ -364,8 +364,7 @@ class SwiftImageBuilder(LLMImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir -U deepspeed --no-deps && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '

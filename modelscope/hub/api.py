@@ -45,6 +45,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+                                      UPLOAD_COMMIT_BATCH_SIZE,
                                       UPLOAD_MAX_FILE_COUNT,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
@@ -1766,7 +1768,7 @@ class HubApi:
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-    ) -> CommitInfo:
+    ) -> Union[CommitInfo, List[CommitInfo]]:
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
@@ -1823,7 +1825,7 @@ class HubApi:
                 sha256=file_hash,
                 size=file_size,
                 data=file_path,
-                disable_tqdm=False if file_size > 5 * 1024 * 1024 else True,
+                disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                 tqdm_desc='[Uploading ' + file_path_in_repo + ']',
             )
 
@@ -1864,18 +1866,31 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        print(f'Committing folder to {repo_id} ...', flush=True)
-        commit_info: CommitInfo = self.create_commit(
-            repo_id=repo_id,
-            operations=operations,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            token=token,
-            repo_type=repo_type,
-            revision=revision,
-        )
+        if len(operations) == 0:
+            raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
-        return commit_info
+        # Commit the operations in batches
+        commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
+        num_batches = (len(operations) - 1) // commit_batch_size + 1
+        print(f'Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.',
+              flush=True)
+        commit_infos: List[CommitInfo] = []
+        for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
+            batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
+            batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
+
+            commit_info: CommitInfo = self.create_commit(
+                repo_id=repo_id,
+                operations=batch_operations,
+                commit_message=batch_commit_message,
+                commit_description=commit_description,
+                token=token,
+                repo_type=repo_type,
+                revision=revision,
+            )
+            commit_infos.append(commit_info)
+
+        return commit_infos[0] if len(commit_infos) == 1 else commit_infos
 
     def _upload_blob(
             self,
@@ -1908,7 +1923,7 @@ class HubApi:
         upload_object = upload_objects[0] if len(upload_objects) == 1 else None
 
         if upload_object is None:
-            logger.info(f'Blob {sha256[:8]} has already uploaded, reuse it.')
+            logger.debug(f'Blob {sha256[:8]} has already uploaded, reuse it.')
             res_d['is_uploaded'] = True
             return res_d
 

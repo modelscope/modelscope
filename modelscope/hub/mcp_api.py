@@ -56,7 +56,7 @@ class MCPApi(HubApi):
         """
         super().__init__(endpoint=endpoint)
 
-        self.mcp_base_url = self.endpoint + MCP_API_PATH
+        self.mcp_base_url = str(self.endpoint) + MCP_API_PATH
 
     @staticmethod
     def _handle_response(r: requests.Response) -> Dict[str, Any]:

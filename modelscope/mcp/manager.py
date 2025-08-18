@@ -16,7 +16,7 @@ import json
 
 from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
-from .api import MCPApi
+from modelscope.hub.mcp_api import MCPApi
 from .client import MCPClient
 from .utils import MCPRequestAdapter
 

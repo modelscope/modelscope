@@ -338,6 +338,7 @@ class UploadInfo:
     def from_fileobj(cls, fileobj: BinaryIO, file_hash_info: dict = None):
         file_hash_info: dict = file_hash_info or get_file_hash(fileobj)
         sample = fileobj.read(512)
+        fileobj.seek(0, os.SEEK_SET)
         return cls(
             sha256=file_hash_info['file_hash'],
             size=file_hash_info['file_size'],

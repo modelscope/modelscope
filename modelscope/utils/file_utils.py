@@ -250,12 +250,16 @@ def get_file_hash(
         progress.update(final_chunk_size)
 
     elif isinstance(file_path_or_obj, io.BufferedIOBase):
-        while byte_chunk := file_path_or_obj.read(buffer_size):
-            chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
-            file_hash.update(byte_chunk)
-            progress.update(len(byte_chunk))
-        file_hash = file_hash.hexdigest()
-        final_chunk_size = buffer_size
+        original_position = file_path_or_obj.tell()
+        try:
+            while byte_chunk := file_path_or_obj.read(buffer_size):
+                chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
+                file_hash.update(byte_chunk)
+                progress.update(len(byte_chunk))
+            file_hash = file_hash.hexdigest()
+            final_chunk_size = buffer_size
+        finally:
+            file_path_or_obj.seek(original_position)
 
     else:
         progress.close()

@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+# Copyright 2022-present, the HuggingFace Inc. team.
 import atexit
 import os
 import time
@@ -11,6 +11,7 @@ from threading import Lock, Thread
 from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi
+from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (CommitInfo, CommitOperationAdd,
                                          RepoUtils)
@@ -31,7 +32,84 @@ class _FileToUpload:
 
 
 class CommitScheduler:
-    """Scheduler to regularly push a local folder to ModelScope Hub."""
+    """
+    A scheduler that automatically uploads a local folder to ModelScope Hub at
+    specified intervals (e.g., every 5 minutes).
+
+    It's recommended to use the scheduler as a context manager to ensure proper
+    cleanup and final commit executionwhen your script completes. Alternatively,
+    you can manually stop the scheduler using the `stop` method.
+
+    Args:
+        repo_id (`str`):
+            The id of the repo to commit to.
+        folder_path (`str` or `Path`):
+            Local folder path that will be monitored and uploaded periodically.
+        interval (`int` or `float`, *optional*):
+            Time interval in minutes between each upload operation. Defaults to 5 minutes.
+        path_in_repo (`str`, *optional*):
+            Target directory path within the repository, such as `"models/"`.
+            If not specified, files are uploaded to the repository root.
+        repo_type (`str`, *optional*):
+            Repository type for the target repo. Defaults to `model`.
+        revision (`str`, *optional*):
+            Target branch or revision for commits. Defaults to `master`.
+        private (`bool`, *optional*):
+            Whether to make the repo private. If `None` (default), the repo will be public unless
+            the organization's default is private. This value is ignored if the repo already exists.
+        token (`str`, *optional*):
+            The token to use to commit to the repo. Defaults to the token saved on the machine.
+        allow_patterns (`List[str]` or `str`, *optional*):
+            File patterns to include in uploads. Only files matching these patterns will be uploaded.
+        ignore_patterns (`List[str]` or `str`, *optional*):
+            File patterns to exclude from uploads. Files matching these patterns will be skipped.
+        hub_api (`HubApi`, *optional*):
+            Custom [`HubApi`] instance for Hub operations. Allows for customized
+            configurations like user agent or token settings.
+
+    Example:
+    ```py
+    >>> from pathlib import Path
+    >>> from modelscope.hub import CommitScheduler
+
+    # Create scheduler with 10-minute intervals
+    >>> data_file = Path("workspace/experiment.log")
+    >>> scheduler = CommitScheduler(
+    ...     repo_id="my_experiments",
+    ...     repo_type="dataset",
+    ...     folder_path=data_file.parent,
+    ...     interval=10
+    ... )
+
+    >>> with data_file.open("a") as f:
+    ...     f.write("experiment started")
+
+    # Later in the workflow...
+    >>> with data_file.open("a") as f:
+    ...     f.write("experiment completed")
+    ```
+
+    Context manager usage:
+    ```py
+    >>> from pathlib import Path
+    >>> from modelscope.hub import CommitScheduler
+
+    >>> with CommitScheduler(
+    ...     repo_id="my_experiments",
+    ...     repo_type="dataset",
+    ...     folder_path="workspace",
+    ...     interval=10
+    ... ) as scheduler:
+    ...     log_file = Path("workspace/progress.log")
+    ...     with log_file.open("a") as f:
+    ...         f.write("starting process")
+    ...     # ... perform work ...
+    ...     with log_file.open("a") as f:
+    ...         f.write("process finished")
+
+    # Scheduler automatically stops and performs final upload
+    ```
+    """
 
     def __init__(
         self,
@@ -41,17 +119,15 @@ class CommitScheduler:
         interval: Union[int, float] = 5,
         path_in_repo: Optional[str] = None,
         repo_type: Optional[str] = None,
-        revision: Optional[str] = None,
+        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
         private: Optional[bool] = None,
         token: Optional[str] = None,
         allow_patterns: Optional[Union[List[str], str]] = None,
         ignore_patterns: Optional[Union[List[str], str]] = None,
-        squash_history: bool = False,
-        hub_api: Optional['HubApi'] = None,
+        hub_api: Optional[HubApi] = None,
     ) -> None:
         self.api = hub_api or HubApi()
 
-        # Folder
         self.folder_path = Path(folder_path).expanduser().resolve()
         if not self.folder_path.exists():
             raise ValueError(f'Folder path does not exist: {folder_path}')
@@ -65,7 +141,7 @@ class CommitScheduler:
             ignore_patterns = [ignore_patterns]
         self.ignore_patterns = ignore_patterns + IGNORE_GIT_FOLDER_PATTERNS
 
-        repo_url = self.api.create_repo(
+        self.repo_url = self.api.create_repo(
             repo_id=repo_id,
             token=token,
             repo_type=repo_type,
@@ -73,7 +149,7 @@ class CommitScheduler:
             exist_ok=True,
             create_default_config=False,
         )
-        self.repo_id = repo_url.repo_id
+        self.repo_id = repo_id
         self.repo_type = repo_type
         self.revision = revision
         self.token = token
@@ -86,7 +162,6 @@ class CommitScheduler:
                 f'"interval" must be a positive integer, not "{interval}".')
         self.lock = Lock()
         self.interval = interval
-        self.squash_history = squash_history
 
         logger.info(
             f'Scheduled job to push {self.folder_path} to {self.repo_id} at a interval of {self.interval} minutes.'
@@ -102,6 +177,14 @@ class CommitScheduler:
     def stop(self) -> None:
         """Stop the scheduler."""
         self.__stopped = True
+
+    def __enter__(self) -> 'CommitScheduler':
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.trigger().result()
+        self.stop()
+        return
 
     def _run_scheduler(self) -> None:
         while True:
@@ -121,17 +204,6 @@ class CommitScheduler:
         logger.info('(Background) scheduled commit triggered.')
         try:
             value = self.push_to_hub()
-            if value and self.squash_history and hasattr(
-                    self.api, 'super_squash_history'):
-                logger.info('(Background) squashing repo history.')
-                try:
-                    self.api.super_squash_history(
-                        repo_id=self.repo_id,
-                        repo_type=self.repo_type,
-                        branch=self.revision)
-                except Exception as e:
-                    logger.error(f'Error while squashing history: {e}')
-                    # Don't raise here as the commit was successful
             return value
         except Exception as e:
             logger.error(f'Error while pushing to Hub: {e}')
@@ -139,60 +211,48 @@ class CommitScheduler:
 
     def push_to_hub(self) -> Optional[CommitInfo]:
         """Push folder to the Hub and return commit info if changes are found."""
-        try:
-            files = []
-            for path in self.folder_path.rglob('*'):
-                if not path.is_file():
-                    continue
-                relpath = path.relative_to(self.folder_path).as_posix()
-                if not RepoUtils.filter_repo_objects(
-                    [relpath],
-                        allow_patterns=self.allow_patterns,
-                        ignore_patterns=self.ignore_patterns):
-                    continue
-                files.append((relpath, path))
-        except Exception as e:
-            logger.error(f'Error while scanning files: {e}')
-            raise
-
         with self.lock:
-            try:
-                prefix = f'{self.path_in_repo.strip("/")}/' if self.path_in_repo else ''
-                files_to_upload: List[_FileToUpload] = []
+            logger.debug('Listing files to upload for scheduled commit.')
+            relpath_to_abspath = {
+                path.relative_to(self.folder_path).as_posix(): path
+                for path in sorted(self.folder_path.glob('**/*'))
+                if path.is_file()
+            }
+            prefix = f"{self.path_in_repo.strip('/')}/" if self.path_in_repo else ''
 
-                for relpath, local_path in files:
-                    try:
-                        stat = local_path.stat()
-                        if self.last_uploaded.get(
-                                local_path) is None or self.last_uploaded[
-                                    local_path] != stat.st_mtime:
-                            files_to_upload.append(
-                                _FileToUpload(
-                                    local_path=local_path,
-                                    path_in_repo=prefix + relpath,
-                                    size_limit=stat.st_size,
-                                    last_modified=stat.st_mtime))
-                    except OSError as e:
-                        logger.warning(
-                            f'Failed to stat file {local_path}: {e}')
-                        continue
+            files_to_upload: List[_FileToUpload] = []
+            for relpath in RepoUtils.filter_repo_objects(
+                    relpath_to_abspath.keys(),
+                    allow_patterns=self.allow_patterns,
+                    ignore_patterns=self.ignore_patterns):
+                local_path = relpath_to_abspath[relpath]
+                stat = local_path.stat()
+                if self.last_uploaded.get(
+                        local_path
+                ) is None or self.last_uploaded[local_path] != stat.st_mtime:
+                    files_to_upload.append(
+                        _FileToUpload(
+                            local_path=local_path,
+                            path_in_repo=prefix + relpath,
+                            size_limit=stat.st_size,
+                            last_modified=stat.st_mtime))
 
-                if not files_to_upload:
-                    logger.debug(
-                        'Dropping schedule commit: no changed file to upload.')
-                    return None
-            finally:
-                pass
+        if not files_to_upload:
+            logger.debug(
+                'Dropping schedule commit: no changed file to upload.')
+            return None
 
         add_operations = []
         for file in files_to_upload:
             try:
-                add_operations.append(
-                    CommitOperationAdd(
-                        path_or_fileobj=PartialFileIO(
-                            file.local_path, size_limit=file.size_limit),
-                        path_in_repo=file.path_in_repo,
-                    ))
+                add_operation = CommitOperationAdd(
+                    path_or_fileobj=PartialFileIO(
+                        file.local_path, size_limit=file.size_limit),
+                    path_in_repo=file.path_in_repo,
+                )
+                add_operation._upload_mode = 'lfs' if self.api.upload_checker.is_lfs(
+                    file.local_path, self.repo_type) else 'normal'
+                add_operations.append(add_operation)
             except Exception as e:
                 logger.warning(
                     f'Failed to create operation for {file.local_path}: {e}')
@@ -218,7 +278,6 @@ class CommitScheduler:
 
         for file in files_to_upload:
             self.last_uploaded[file.local_path] = file.last_modified
-
         return commit_info
 
 
@@ -228,7 +287,7 @@ class PartialFileIO(BytesIO):
     def __init__(self, file_path: Union[str, Path], size_limit: int) -> None:
         self._file_path = Path(file_path)
         self._file = None
-        self._size_limit = None
+        self._size_limit = size_limit
         self.open()
 
     def open(self) -> None:
@@ -250,60 +309,44 @@ class PartialFileIO(BytesIO):
             self._file.close()
             self._file = None
 
-    def __enter__(self) -> 'PartialFileIO':
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.close()
-
     def __del__(self) -> None:
         self.close()
+        return super().__del__()
 
     def __repr__(self) -> str:
         return f'<PartialFileIO file_path={self._file_path} size_limit={self._size_limit}>'
 
     def __len__(self) -> int:
-        if self._size_limit is None:
-            self.open()
         return self._size_limit
 
     def __getattribute__(self, name: str):
         if name.startswith('_') or name in {
-                'read', 'tell', 'seek', 'close', 'open', '__enter__',
-                '__exit__'
-        }:
+                'read', 'tell', 'seek', 'close', 'open'
+        }:  # only 5 public methods supported
             return super().__getattribute__(name)
-        raise NotImplementedError(
-            f'{self.__class__.__name__} does not support {name}')
+        raise NotImplementedError(f"PartialFileIO does not support '{name}'.")
 
     def tell(self) -> int:
-        if self._file is None:
-            self.open()
         return self._file.tell()
 
     def seek(self, __offset: int, __whence: int = SEEK_SET) -> int:
         """Seek to a position in the file, but never beyond size_limit."""
-        if self._file is None:
-            self.open()
-
         if __whence == SEEK_END:
             __offset = len(self) + __offset
             __whence = SEEK_SET
 
-        target_pos = __offset if __whence == SEEK_SET else self.tell(
-        ) + __offset
-        target_pos = min(target_pos, self._size_limit)
-
-        return self._file.seek(target_pos, SEEK_SET)
+        pos = self._file.seek(__offset, __whence)
+        if pos > self._size_limit:
+            return self._file.seek(self._size_limit)
+        return pos
 
     def read(self, __size: Optional[int] = -1) -> bytes:
-        """Read at most size_limit bytes from the current position."""
-        if self._file is None:
-            self.open()
-
+        """Read at most _size bytes from the current position."""
         current = self.tell()
         if __size is None or __size < 0:
+            # Read until file limit
             truncated_size = self._size_limit - current
         else:
+            # Read until file limit or __size
             truncated_size = min(__size, self._size_limit - current)
         return self._file.read(truncated_size)

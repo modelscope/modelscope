@@ -128,7 +128,17 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
-    def get_cookies(self, access_token):
+    @staticmethod
+    def _get_cookies(access_token: str):
+        """
+        Get jar cookies for authentication from access_token.
+
+        Args:
+            access_token (str): user access token on ModelScope.
+
+        Returns:
+            jar (CookieJar): cookies for authentication.
+        """
         from requests.cookies import RequestsCookieJar
         jar = RequestsCookieJar()
         jar.set('m_session_id',
@@ -136,6 +146,35 @@ class HubApi:
                 domain=get_domain(),
                 path='/')
         return jar
+
+    def get_cookies(self, access_token, cookies_required: Optional[bool] = False):
+        """
+        Get cookies for authentication from local cache or access_token.
+
+        Args:
+            access_token (str): user access token on ModelScope
+            cookies_required (bool): whether to raise error if no cookies found, defaults to `False`.
+
+        Returns:
+            cookies (CookieJar): cookies for authentication.
+
+        Raises:
+            ValueError: If no credentials found and cookies_required is True.
+        """
+        if access_token:
+            cookies = self._get_cookies(access_token=access_token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+
+        if cookies is None and cookies_required:
+            raise ValueError(
+                'No credentials found.'
+                'You can pass the `--token` argument, '
+                'or use HubApi().login(access_token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
+
+        return cookies
 
     def login(
             self,
@@ -221,12 +260,7 @@ class HubApi:
         if model_id is None:
             raise InvalidParameter('model_id is required!')
         # Get cookies for authentication.
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
 
@@ -435,11 +469,7 @@ class HubApi:
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
-        # Get cookies for authentication, following upload.py pattern
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
@@ -1656,17 +1686,7 @@ class HubApi:
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError(
-                'No credential found for entity upload. '
-                'You can pass the `--token` argument, '
-                'or use api.login(access_token=`your_sdk_token`). '
-                'Your token is available at https://modelscope.cn/my/myaccesstoken'
-            )
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         # Build payload
         payload = self._prepare_commit_payload(
@@ -1790,10 +1810,12 @@ class HubApi:
         if not path_or_fileobj:
             raise ValueError('Path or file object cannot be empty!')
 
+        # Check authentication first
+        self.get_cookies(access_token=token, cookies_required=True)
+
         if isinstance(path_or_fileobj, (str, Path)):
             path_or_fileobj = os.path.abspath(os.path.expanduser(path_or_fileobj))
             path_in_repo = path_in_repo or os.path.basename(path_or_fileobj)
-
         else:
             # If path_or_fileobj is bytes or BinaryIO, then path_in_repo must be provided
             if not path_in_repo:
@@ -1809,8 +1831,6 @@ class HubApi:
             file_path_list=[path_or_fileobj],
             repo_type=repo_type,
         )
-
-        self.login(access_token=token)
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
@@ -1870,7 +1890,7 @@ class HubApi:
             self,
             *,
             repo_id: str,
-            folder_path: Union[str, Path, List[str], List[Path]] = None,
+            folder_path: Union[str, Path, List[str], List[Path]],
             path_in_repo: Optional[str] = '',
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
@@ -1915,8 +1935,17 @@ class HubApi:
             ... )
             >>> print(commit_info.commit_url)
         """
+        if not repo_id:
+            raise ValueError('The arg `repo_id` cannot be empty!')
+
+        if folder_path is None:
+            raise ValueError('The arg `folder_path` cannot be None!')
+
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        # Check authentication first
+        self.get_cookies(access_token=token, cookies_required=True)
 
         allow_patterns = allow_patterns if allow_patterns else None
         ignore_patterns = ignore_patterns if ignore_patterns else None
@@ -1928,21 +1957,23 @@ class HubApi:
             ignore_patterns = [ignore_patterns]
         ignore_patterns += DEFAULT_IGNORE_PATTERNS
 
-        self.login(access_token=token)
-
         commit_message = (
             commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'
         )
         commit_description = commit_description or 'Uploading files'
 
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
+        logger.info('Preparing files to upload ...')
         prepared_repo_objects = self._prepare_upload_folder(
             folder_path_or_files=folder_path,
             path_in_repo=path_in_repo,
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
+        if len(prepared_repo_objects) == 0:
+            raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
+        logger.info(f'Checking {len(prepared_repo_objects)} files to upload ...')
         self.upload_checker.check_normal_files(
             file_path_list=[item for _, item in prepared_repo_objects],
             repo_type=repo_type,
@@ -2242,6 +2273,8 @@ class HubApi:
             (prefix + relpath, str(relpath_to_abspath[relpath]))
             for relpath in filtered_repo_objects
         ]
+
+        logger.info(f'Prepared {len(prepared_repo_objects)} files for upload.')
 
         return prepared_repo_objects
 

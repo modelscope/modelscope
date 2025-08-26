@@ -11,6 +11,7 @@ import platform
 import re
 import shutil
 import tempfile
+import time
 import uuid
 import warnings
 from collections import defaultdict
@@ -45,6 +46,8 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+                                      UPLOAD_COMMIT_BATCH_SIZE,
                                       UPLOAD_MAX_FILE_COUNT,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
@@ -125,7 +128,17 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
-    def get_cookies(self, access_token):
+    @staticmethod
+    def _get_cookies(access_token: str):
+        """
+        Get jar cookies for authentication from access_token.
+
+        Args:
+            access_token (str): user access token on ModelScope.
+
+        Returns:
+            jar (CookieJar): cookies for authentication.
+        """
         from requests.cookies import RequestsCookieJar
         jar = RequestsCookieJar()
         jar.set('m_session_id',
@@ -133,6 +146,35 @@ class HubApi:
                 domain=get_domain(),
                 path='/')
         return jar
+
+    def get_cookies(self, access_token, cookies_required: Optional[bool] = False):
+        """
+        Get cookies for authentication from local cache or access_token.
+
+        Args:
+            access_token (str): user access token on ModelScope
+            cookies_required (bool): whether to raise error if no cookies found, defaults to `False`.
+
+        Returns:
+            cookies (CookieJar): cookies for authentication.
+
+        Raises:
+            ValueError: If no credentials found and cookies_required is True.
+        """
+        if access_token:
+            cookies = self._get_cookies(access_token=access_token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+
+        if cookies is None and cookies_required:
+            raise ValueError(
+                'No credentials found.'
+                'You can pass the `--token` argument, '
+                'or use HubApi().login(access_token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
+
+        return cookies
 
     def login(
             self,
@@ -218,12 +260,7 @@ class HubApi:
         if model_id is None:
             raise InvalidParameter('model_id is required!')
         # Get cookies for authentication.
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
 
@@ -432,11 +469,7 @@ class HubApi:
         if (repo_id is None) or repo_id.count('/') != 1:
             raise Exception('Invalid repo_id: %s, must be of format namespace/name' % repo_type)
 
-        # Get cookies for authentication, following upload.py pattern
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
         if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
@@ -1611,18 +1644,49 @@ class HubApi:
             commit_message: str,
             commit_description: Optional[str] = None,
             token: str = None,
-            repo_type: Optional[str] = None,
+            repo_type: Optional[str] = REPO_TYPE_MODEL,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-            endpoint: Optional[str] = None
+            endpoint: Optional[str] = None,
+            max_retries: int = 3,
+            timeout: int = 180,
     ) -> CommitInfo:
+        """
+        Create a commit on the ModelScope Hub with retry mechanism.
+
+        Args:
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            operations (Iterable[CommitOperation]): The commit operations.
+            commit_message (str): The commit message.
+            commit_description (Optional[str]): The commit description.
+            token (str): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, should be `model` or `dataset`. Defaults to `model`.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            endpoint (Optional[str]): The endpoint to use.
+                In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
+            max_retries (int): Number of max retry attempts (default: 3).
+            timeout (int): Timeout for each request in seconds (default: 180).
+
+        Returns:
+            CommitInfo: The commit info.
+
+        Raises:
+            requests.exceptions.RequestException: If all retry attempts fail.
+        """
+        if not repo_id:
+            raise ValueError('Repo id cannot be empty!')
 
         if not endpoint:
             endpoint = self.endpoint
+
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
         url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}'
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        self.login(access_token=token)
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         # Construct payload
         payload = self._prepare_commit_payload(
@@ -1630,28 +1694,66 @@ class HubApi:
             commit_message=commit_message,
         )
 
-        # POST
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
-        response = requests.post(
-            url,
-            headers=self.builder_headers(self.headers),
-            data=json.dumps(payload),
-            cookies=cookies
-        )
+        # POST with retry mechanism
+        last_exception = None
+        for attempt in range(max_retries):
+            try:
+                if attempt > 0:
+                    logger.info(f'Attempt {attempt + 1} to create commit for {repo_id}...')
+                response = requests.post(
+                    url,
+                    headers=self.builder_headers(self.headers),
+                    data=json.dumps(payload),
+                    cookies=cookies,
+                    timeout=timeout,
+                )
 
-        resp = response.json()
+                if response.status_code != 200:
+                    try:
+                        error_detail = response.json()
+                    except json.JSONDecodeError:
+                        error_detail = response.text
 
-        if not resp['Success']:
-            commit_message = resp['Message']
-            logger.warning(f'{commit_message}')
+                    error_msg = (
+                        f'HTTP {response.status_code} error from {url}: '
+                        f'{error_detail}'
+                    )
 
-        return CommitInfo(
-            commit_url=url,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            oid='',
+                    # If server error (5xx), we can retry, otherwise (4xx) raise immediately
+                    if 500 <= response.status_code < 600:
+                        logger.warning(
+                            f'Server error on attempt {attempt + 1}: {error_msg}'
+                        )
+                    else:
+                        raise ValueError(f'Client request failed: {error_msg}')
+                else:
+                    resp = response.json()
+
+                    oid = resp.get('Data', {}).get('oid', '')
+                    logger.info(f'Commit succeeded: {url}')
+                    return CommitInfo(
+                        commit_url=url,
+                        commit_message=commit_message,
+                        commit_description=commit_description,
+                        oid=oid,
+                    )
+
+            except requests.exceptions.RequestException as e:
+                last_exception = e
+                logger.warning(f'Request failed on attempt {attempt + 1}: {str(e)}')
+
+            except Exception as e:
+                last_exception = e
+                logger.error(f'Unexpected error on attempt {attempt + 1}: {str(e)}')
+                if attempt == max_retries - 1:
+                    raise
+
+            if attempt < max_retries - 1:
+                time.sleep(1)
+
+        # All retries exhausted
+        raise requests.exceptions.RequestException(
+            f'Failed to create commit after {max_retries} attempts. Last error: {last_exception}'
         )
 
     def upload_file(
@@ -1669,6 +1771,38 @@ class HubApi:
             disable_tqdm: Optional[bool] = False,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
     ) -> CommitInfo:
+        """
+        Upload a file to the ModelScope Hub.
+
+        Args:
+            path_or_fileobj (Union[str, Path, bytes, BinaryIO]):
+                The local file path or file-like object (BinaryIO) or bytes to upload.
+            path_in_repo (str): The path in the repo to upload to.
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, default to `model`.
+            commit_message (Optional[str]): The commit message.
+            commit_description (Optional[str]): The commit description.
+            buffer_size_mb (Optional[int]): The buffer size in MB for reading the file. Default to 1MB.
+            tqdm_desc (Optional[str]): The description for the tqdm progress bar. Default to '[Uploading]'.
+            disable_tqdm (Optional[bool]): Whether to disable the tqdm progress bar. Default to False.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+
+        Returns:
+            CommitInfo: The commit info.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_info = api.upload_file(
+            ...     path_or_fileobj='/path/to/your/file.txt',
+            ...     path_in_repo='optional/path/in/repo/file.txt',
+            ...     repo_id='your-namespace/your-repo-name',
+            ...     commit_message='Upload file.txt to ModelScope hub'
+            ... )
+            >>> print(commit_info)
+        """
 
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
@@ -1676,10 +1810,12 @@ class HubApi:
         if not path_or_fileobj:
             raise ValueError('Path or file object cannot be empty!')
 
+        # Check authentication first
+        self.get_cookies(access_token=token, cookies_required=True)
+
         if isinstance(path_or_fileobj, (str, Path)):
             path_or_fileobj = os.path.abspath(os.path.expanduser(path_or_fileobj))
             path_in_repo = path_in_repo or os.path.basename(path_or_fileobj)
-
         else:
             # If path_or_fileobj is bytes or BinaryIO, then path_in_repo must be provided
             if not path_in_repo:
@@ -1695,8 +1831,6 @@ class HubApi:
             file_path_list=[path_or_fileobj],
             repo_type=repo_type,
         )
-
-        self.login(access_token=token)
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload {path_in_repo} to ModelScope hub'
@@ -1756,7 +1890,7 @@ class HubApi:
             self,
             *,
             repo_id: str,
-            folder_path: Union[str, Path, List[str], List[Path]] = None,
+            folder_path: Union[str, Path, List[str], List[Path]],
             path_in_repo: Optional[str] = '',
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
@@ -1766,9 +1900,52 @@ class HubApi:
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-    ) -> CommitInfo:
+    ) -> Union[CommitInfo, List[CommitInfo]]:
+        """
+        Upload a folder to the ModelScope Hub.
+
+        Args:
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            folder_path (Union[str, Path, List[str], List[Path]]): The folder path or list of file paths to upload.
+            path_in_repo (Optional[str]): The path in the repo to upload to.
+            commit_message (Optional[str]): The commit message.
+            commit_description (Optional[str]): The commit description.
+            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, default to `model`.
+            allow_patterns (Optional[Union[List[str], str]]): The patterns to allow.
+            ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
+            max_workers (int): The maximum number of workers to use for uploading files concurrently.
+                Defaults to `DEFAULT_MAX_WORKERS`.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+
+        Returns:
+            Union[CommitInfo, List[CommitInfo]]:
+                The commit info or list of commit infos if multiple batches are committed.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_info = api.upload_folder(
+            ...     repo_id='your-namespace/your-repo-name',
+            ...     folder_path='/path/to/your/folder',
+            ...     path_in_repo='optional/path/in/repo',
+            ...     commit_message='Upload my folder',
+            ...     token='your-access-token'
+            ... )
+            >>> print(commit_info.commit_url)
+        """
+        if not repo_id:
+            raise ValueError('The arg `repo_id` cannot be empty!')
+
+        if folder_path is None:
+            raise ValueError('The arg `folder_path` cannot be None!')
+
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
+        # Check authentication first
+        self.get_cookies(access_token=token, cookies_required=True)
 
         allow_patterns = allow_patterns if allow_patterns else None
         ignore_patterns = ignore_patterns if ignore_patterns else None
@@ -1780,21 +1957,23 @@ class HubApi:
             ignore_patterns = [ignore_patterns]
         ignore_patterns += DEFAULT_IGNORE_PATTERNS
 
-        self.login(access_token=token)
-
         commit_message = (
             commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'
         )
         commit_description = commit_description or 'Uploading files'
 
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
+        logger.info('Preparing files to upload ...')
         prepared_repo_objects = self._prepare_upload_folder(
             folder_path_or_files=folder_path,
             path_in_repo=path_in_repo,
             allow_patterns=allow_patterns,
             ignore_patterns=ignore_patterns,
         )
+        if len(prepared_repo_objects) == 0:
+            raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
+        logger.info(f'Checking {len(prepared_repo_objects)} files to upload ...')
         self.upload_checker.check_normal_files(
             file_path_list=[item for _, item in prepared_repo_objects],
             repo_type=repo_type,
@@ -1823,7 +2002,7 @@ class HubApi:
                 sha256=file_hash,
                 size=file_size,
                 data=file_path,
-                disable_tqdm=False if file_size > 5 * 1024 * 1024 else True,
+                disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                 tqdm_desc='[Uploading ' + file_path_in_repo + ']',
             )
 
@@ -1864,18 +2043,31 @@ class HubApi:
             opt._is_uploaded = is_uploaded
             operations.append(opt)
 
-        print(f'Committing folder to {repo_id} ...', flush=True)
-        commit_info: CommitInfo = self.create_commit(
-            repo_id=repo_id,
-            operations=operations,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            token=token,
-            repo_type=repo_type,
-            revision=revision,
-        )
+        if len(operations) == 0:
+            raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
-        return commit_info
+        # Commit the operations in batches
+        commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
+        num_batches = (len(operations) - 1) // commit_batch_size + 1
+        print(f'Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.',
+              flush=True)
+        commit_infos: List[CommitInfo] = []
+        for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
+            batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
+            batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
+
+            commit_info: CommitInfo = self.create_commit(
+                repo_id=repo_id,
+                operations=batch_operations,
+                commit_message=batch_commit_message,
+                commit_description=commit_description,
+                token=token,
+                repo_type=repo_type,
+                revision=revision,
+            )
+            commit_infos.append(commit_info)
+
+        return commit_infos[0] if len(commit_infos) == 1 else commit_infos
 
     def _upload_blob(
             self,
@@ -1908,7 +2100,7 @@ class HubApi:
         upload_object = upload_objects[0] if len(upload_objects) == 1 else None
 
         if upload_object is None:
-            logger.info(f'Blob {sha256[:8]} has already uploaded, reuse it.')
+            logger.debug(f'Blob {sha256[:8]} has already uploaded, reuse it.')
             res_d['is_uploaded'] = True
             return res_d
 
@@ -2081,6 +2273,8 @@ class HubApi:
             (prefix + relpath, str(relpath_to_abspath[relpath]))
             for relpath in filtered_repo_objects
         ]
+
+        logger.info(f'Prepared {len(prepared_repo_objects)} files for upload.')
 
         return prepared_repo_objects
 
@@ -2462,6 +2656,28 @@ class ModelScopeConfig:
 
 
 class UploadingCheck:
+    """
+    Check the files and folders to be uploaded.
+
+    Args:
+        max_file_count (int): The maximum number of files to be uploaded. Default to `UPLOAD_MAX_FILE_COUNT`.
+        max_file_count_in_dir (int): The maximum number of files in a directory.
+            Default to `UPLOAD_MAX_FILE_COUNT_IN_DIR`.
+        max_file_size (int): The maximum size of a single file in bytes. Default to `UPLOAD_MAX_FILE_SIZE`.
+        size_threshold_to_enforce_lfs (int): The size threshold to enforce LFS in bytes.
+            Files larger than this size will be enforced to be uploaded via LFS.
+            Default to `UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS`.
+        normal_file_size_total_limit (int): The total size limit of normal files in bytes.
+            Default to `UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT`.
+
+    Examples:
+        >>> from modelscope.hub.api import UploadingCheck
+        >>> upload_checker = UploadingCheck()
+        >>> upload_checker.check_file('/path/to/your/file.txt')
+        >>> upload_checker.check_folder('/path/to/your/folder')
+        >>> is_lfs = upload_checker.is_lfs('/path/to/your/file.txt', repo_type='model')
+        >>> print(f'Is LFS: {is_lfs}')
+    """
     def __init__(
             self,
             max_file_count: int = UPLOAD_MAX_FILE_COUNT,
@@ -2476,8 +2692,16 @@ class UploadingCheck:
         self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
-    def check_file(self, file_path_or_obj):
+    def check_file(self, file_path_or_obj) -> None:
+        """
+        Check a single file to be uploaded.
 
+        Args:
+            file_path_or_obj (Union[str, Path, bytes, BinaryIO]): The file path or file-like object to be checked.
+
+        Raises:
+            ValueError: If the file does not exist or exceeds the size limit.
+        """
         if isinstance(file_path_or_obj, (str, Path)):
             if not os.path.exists(file_path_or_obj):
                 raise ValueError(f'File {file_path_or_obj} does not exist')
@@ -2488,6 +2712,15 @@ class UploadingCheck:
                            f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
+        """
+        Check a folder to be uploaded.
+
+        Args:
+            folder_path (Union[str, Path]): The folder path to be checked.
+
+        Raises:
+            ValueError: If the folder does not exist or exceeds the file count limit.
+        """
         file_count = 0
         dir_count = 0
 
@@ -2517,7 +2750,16 @@ class UploadingCheck:
         return file_count, dir_count
 
     def is_lfs(self, file_path_or_obj: Union[str, Path, bytes, BinaryIO], repo_type: str) -> bool:
+        """
+        Check if a file should be uploaded via LFS.
 
+        Args:
+            file_path_or_obj (Union[str, Path, bytes, BinaryIO]): The file path or file-like object to be checked.
+            repo_type (str): The repo type, either `model` or `dataset`.
+
+        Returns:
+            bool: True if the file should be uploaded via LFS, False otherwise.
+        """
         hit_lfs_suffix = True
 
         if isinstance(file_path_or_obj, (str, Path)):
@@ -2539,7 +2781,18 @@ class UploadingCheck:
         return file_size > self.size_threshold_to_enforce_lfs or hit_lfs_suffix
 
     def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
+        """
+        Check a list of normal files to be uploaded.
 
+        Args:
+            file_path_list (List[Union[str, Path]]): The list of file paths to be checked.
+            repo_type (str): The repo type, either `model` or `dataset`.
+
+        Raises:
+            ValueError: If the total size of normal files exceeds the limit.
+
+        Returns: None
+        """
         normal_file_list = [item for item in file_path_list if not self.is_lfs(item, repo_type)]
         total_size = sum([get_file_size(item) for item in normal_file_list])
 

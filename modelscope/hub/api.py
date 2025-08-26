@@ -1688,7 +1688,7 @@ class HubApi:
 
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
-        # Build payload
+        # Construct payload
         payload = self._prepare_commit_payload(
             operations=operations,
             commit_message=commit_message,
@@ -1712,7 +1712,7 @@ class HubApi:
                     try:
                         error_detail = response.json()
                     except json.JSONDecodeError:
-                        error_detail = response.text  # 如果不是 JSON，打印原始内容
+                        error_detail = response.text
 
                     error_msg = (
                         f'HTTP {response.status_code} error from {url}: '

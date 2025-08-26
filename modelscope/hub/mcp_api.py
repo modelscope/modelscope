@@ -5,12 +5,11 @@ MCP (Model Context Protocol) API interface for ModelScope Hub.
 This module provides a simple interface to interact with
 ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
-from tokenize import cookie_re
 from typing import Any, Dict, Optional
 
 import requests
 
-from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.api import HubApi
 from modelscope.hub.errors import raise_for_http_status
 from modelscope.utils.logger import get_logger
 

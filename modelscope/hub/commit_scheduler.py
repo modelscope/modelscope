@@ -247,11 +247,9 @@ class CommitScheduler:
         return
 
     def _run_scheduler(self) -> None:
-        while True:
+        while not self.__stopped:
             self.last_future = self.trigger()
             time.sleep(self.interval * 60)
-            if self.__stopped:
-                break
 
     def trigger(self) -> Future:
         """Trigger a background commit and return a future."""

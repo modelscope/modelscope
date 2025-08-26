@@ -287,7 +287,9 @@ def _snapshot_download(
         }
 
         if INTRA_CLOUD_ACCELERATION == 'true':
-            region_id: str = HubApi()._get_internal_acceleration_domain()
+            region_id: str = (
+                os.getenv('INTRA_CLOUD_ACCELERATION_REGION')
+                or HubApi()._get_internal_acceleration_domain())
             if region_id:
                 logger.info(
                     f'Intra-cloud acceleration enabled for downloading from {repo_id}'

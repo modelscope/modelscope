@@ -6,7 +6,6 @@ import os
 import time
 import types
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass
 from io import SEEK_END, SEEK_SET, BytesIO
 from pathlib import Path
 from threading import Lock, Thread
@@ -22,16 +21,6 @@ from modelscope.utils.repo_utils import (CommitInfo, CommitOperationAdd,
 logger = get_logger()
 
 IGNORE_GIT_FOLDER_PATTERNS = ['.git', '.git/*', '*/.git', '**/.git/**']
-
-
-@dataclass(frozen=True)
-class _FileToUpload:
-    """Information about a file to upload."""
-
-    local_path: Path
-    path_in_repo: str
-    size_limit: int
-    last_modified: float
 
 
 @contextlib.contextmanager

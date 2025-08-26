@@ -11,6 +11,7 @@ import platform
 import re
 import shutil
 import tempfile
+import time
 import uuid
 import warnings
 from collections import defaultdict
@@ -1613,47 +1614,126 @@ class HubApi:
             commit_message: str,
             commit_description: Optional[str] = None,
             token: str = None,
-            repo_type: Optional[str] = None,
+            repo_type: Optional[str] = REPO_TYPE_MODEL,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-            endpoint: Optional[str] = None
+            endpoint: Optional[str] = None,
+            max_retries: int = 3,
+            timeout: int = 180,
     ) -> CommitInfo:
+        """
+        Create a commit on the ModelScope Hub with retry mechanism.
+
+        Args:
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            operations (Iterable[CommitOperation]): The commit operations.
+            commit_message (str): The commit message.
+            commit_description (Optional[str]): The commit description.
+            token (str): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, should be `model` or `dataset`. Defaults to `model`.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            endpoint (Optional[str]): The endpoint to use.
+                In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
+            max_retries (int): Number of max retry attempts (default: 3).
+            timeout (int): Timeout for each request in seconds (default: 180).
+
+        Returns:
+            CommitInfo: The commit info.
+
+        Raises:
+            requests.exceptions.RequestException: If all retry attempts fail.
+        """
+        if not repo_id:
+            raise ValueError('Repo id cannot be empty!')
 
         if not endpoint:
             endpoint = self.endpoint
+
+        if repo_type not in REPO_TYPE_SUPPORT:
+            raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
+
         url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/commit/{revision}'
         commit_message = commit_message or f'Commit to {repo_id}'
         commit_description = commit_description or ''
 
-        self.login(access_token=token)
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+        if cookies is None:
+            raise ValueError(
+                'No credential found for entity upload. '
+                'You can pass the `--token` argument, '
+                'or use api.login(access_token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
 
-        # Construct payload
+        # Build payload
         payload = self._prepare_commit_payload(
             operations=operations,
             commit_message=commit_message,
         )
 
-        # POST
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
-        response = requests.post(
-            url,
-            headers=self.builder_headers(self.headers),
-            data=json.dumps(payload),
-            cookies=cookies
-        )
+        # POST with retry mechanism
+        last_exception = None
+        for attempt in range(max_retries):
+            try:
+                if attempt > 0:
+                    logger.info(f'Attempt {attempt + 1} to create commit for {repo_id}...')
+                response = requests.post(
+                    url,
+                    headers=self.builder_headers(self.headers),
+                    data=json.dumps(payload),
+                    cookies=cookies,
+                    timeout=timeout,
+                )
 
-        resp = response.json()
+                if response.status_code != 200:
+                    try:
+                        error_detail = response.json()
+                    except json.JSONDecodeError:
+                        error_detail = response.text  # 如果不是 JSON，打印原始内容
 
-        if not resp['Success']:
-            commit_message = resp['Message']
-            logger.warning(f'{commit_message}')
+                    error_msg = (
+                        f'HTTP {response.status_code} error from {url}: '
+                        f'{error_detail}'
+                    )
 
-        return CommitInfo(
-            commit_url=url,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            oid='',
+                    # If server error (5xx), we can retry, otherwise (4xx) raise immediately
+                    if 500 <= response.status_code < 600:
+                        logger.warning(
+                            f'Server error on attempt {attempt + 1}: {error_msg}'
+                        )
+                    else:
+                        raise ValueError(f'Client request failed: {error_msg}')
+                else:
+                    resp = response.json()
+
+                    oid = resp.get('Data', {}).get('oid', '')
+                    logger.info(f'Commit succeeded: {url}')
+                    return CommitInfo(
+                        commit_url=url,
+                        commit_message=commit_message,
+                        commit_description=commit_description,
+                        oid=oid,
+                    )
+
+            except requests.exceptions.RequestException as e:
+                last_exception = e
+                logger.warning(f'Request failed on attempt {attempt + 1}: {str(e)}')
+
+            except Exception as e:
+                last_exception = e
+                logger.error(f'Unexpected error on attempt {attempt + 1}: {str(e)}')
+                if attempt == max_retries - 1:
+                    raise
+
+            if attempt < max_retries - 1:
+                time.sleep(1)
+
+        # All retries exhausted
+        raise requests.exceptions.RequestException(
+            f'Failed to create commit after {max_retries} attempts. Last error: {last_exception}'
         )
 
     def upload_file(

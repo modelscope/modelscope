@@ -1,8 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2022-present, the HuggingFace Inc. team.
 import atexit
+import contextlib
 import os
 import time
+import types
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from io import SEEK_END, SEEK_SET, BytesIO
@@ -32,13 +34,81 @@ class _FileToUpload:
     last_modified: float
 
 
+@contextlib.contextmanager
+def patch_upload_folder_for_scheduler(scheduler_instance):
+    """Patch upload_folder for CommitScheduler"""
+    api = scheduler_instance.api
+    original_prepare = api._prepare_upload_folder
+
+    def patched_prepare_upload_folder(
+        api_self,
+        folder_path_or_files: Union[str, Path, List[str], List[Path]],
+        path_in_repo: str,
+        allow_patterns: Optional[Union[List[str], str]] = None,
+        ignore_patterns: Optional[Union[List[str], str]] = None,
+    ) -> List[Union[tuple, list]]:
+        """
+        Patched version that supports incremental updates for CommitScheduler.
+        """
+        with scheduler_instance.lock:
+            if isinstance(folder_path_or_files, list):
+                raise ValueError(
+                    'Uploading multiple files or folders is not supported for scheduled commit.'
+                )
+            elif os.path.isfile(folder_path_or_files):
+                raise ValueError(
+                    'Uploading file is not supported for scheduled commit.')
+            else:
+                folder_path = Path(folder_path_or_files).expanduser().resolve()
+
+            logger.debug('Listing files to upload for scheduled commit.')
+            relpath_to_abspath = {
+                path.relative_to(folder_path).as_posix(): path
+                for path in sorted(folder_path.glob('**/*')) if path.is_file()
+            }
+            prefix = f"{path_in_repo.strip('/')}/" if path_in_repo else ''
+
+            prepared_repo_objects = []
+            files_to_track = {}
+
+            for relpath in RepoUtils.filter_repo_objects(
+                    relpath_to_abspath.keys(),
+                    allow_patterns=allow_patterns,
+                    ignore_patterns=ignore_patterns):
+                local_path = relpath_to_abspath[relpath]
+                stat = local_path.stat()
+                if scheduler_instance.last_uploaded.get(
+                        local_path
+                ) is None or scheduler_instance.last_uploaded[
+                        local_path] != stat.st_mtime:
+                    partial_file = PartialFileIO(local_path, stat.st_size)
+                    prepared_repo_objects.append(
+                        (prefix + relpath, partial_file))
+                    files_to_track[local_path] = stat.st_mtime
+
+            scheduler_instance._pending_tracker_updates = files_to_track
+
+            if not prepared_repo_objects:
+                logger.debug(
+                    'No changed files to upload for scheduled commit.')
+
+        return prepared_repo_objects
+
+    try:
+        api._prepare_upload_folder = types.MethodType(
+            patched_prepare_upload_folder, api)
+        yield
+    finally:
+        api._prepare_upload_folder = original_prepare
+
+
 class CommitScheduler:
     """
     A scheduler that automatically uploads a local folder to ModelScope Hub at
     specified intervals (e.g., every 5 minutes).
 
     It's recommended to use the scheduler as a context manager to ensure proper
-    cleanup and final commit executionwhen your script completes. Alternatively,
+    cleanup and final commit execution when your script completes. Alternatively,
     you can manually stop the scheduler using the `stop` method.
 
     Args:
@@ -165,7 +235,7 @@ class CommitScheduler:
         self.interval = interval
 
         logger.info(
-            f'Scheduled job to push {self.folder_path} to {self.repo_id} at a interval of {self.interval} minutes.'
+            f'Scheduled job to push {self.folder_path} to {self.repo_id} at an interval of {self.interval} minutes.'
         )
         self.executor = ThreadPoolExecutor(max_workers=1)
         self._scheduler_thread = Thread(
@@ -212,93 +282,41 @@ class CommitScheduler:
 
     def commit_scheduled_changes(self) -> Optional[CommitInfo]:
         """Push folder to the Hub and return commit info if changes are found."""
-        with self.lock:
-            logger.debug('Listing files to upload for scheduled commit.')
-            relpath_to_abspath = {
-                path.relative_to(self.folder_path).as_posix(): path
-                for path in sorted(self.folder_path.glob('**/*'))
-                if path.is_file()
-            }
-            prefix = f"{self.path_in_repo.strip('/')}/" if self.path_in_repo else ''
-
-            files_to_upload: List[_FileToUpload] = []
-            for relpath in RepoUtils.filter_repo_objects(
-                    relpath_to_abspath.keys(),
-                    allow_patterns=self.allow_patterns,
-                    ignore_patterns=self.ignore_patterns):
-                local_path = relpath_to_abspath[relpath]
-                stat = local_path.stat()
-                if self.last_uploaded.get(
-                        local_path
-                ) is None or self.last_uploaded[local_path] != stat.st_mtime:
-                    files_to_upload.append(
-                        _FileToUpload(
-                            local_path=local_path,
-                            path_in_repo=prefix + relpath,
-                            size_limit=stat.st_size,
-                            last_modified=stat.st_mtime))
-
-        if not files_to_upload:
-            logger.debug(
-                'Dropping schedule commit: no changed file to upload.')
-            return None
-
-        add_operations = []
-        for file in files_to_upload:
-            try:
-                add_operation = CommitOperationAdd(
-                    path_or_fileobj=PartialFileIO(
-                        file.local_path, size_limit=file.size_limit),
-                    path_in_repo=file.path_in_repo,
-                )
-                add_operation._upload_mode = 'lfs' if self.api.upload_checker.is_lfs(
-                    file.local_path, self.repo_type) else 'normal'
-                add_operation.file_hash_info = get_file_hash(
-                    file_path_or_obj=file.local_path)
-
-                # Upload blob data for LFS files (similar to upload_file/upload_folder)
-                if add_operation._upload_mode == 'lfs':
-                    upload_res = self.api._upload_blob(
-                        repo_id=self.repo_id,
-                        repo_type=self.repo_type,
-                        sha256=add_operation.file_hash_info['file_hash'],
-                        size=add_operation.file_hash_info['file_size'],
-                        data=file.local_path,
-                        disable_tqdm=True,
-                        tqdm_desc=f'[Background Upload {file.path_in_repo}]',
-                    )
-                    add_operation._is_uploaded = upload_res['is_uploaded']
-                else:
-                    # For normal files, no blob upload needed
-                    add_operation._is_uploaded = False
-
-                add_operations.append(add_operation)
-            except Exception as e:
-                logger.warning(
-                    f'Failed to create operation for {file.local_path}: {e}')
-                continue
-
-        if not add_operations:
-            logger.debug('No valid operations to perform.')
-            return None
-
         try:
-            logger.debug('Uploading files for scheduled commit.')
-            commit_info = self.api.create_commit(
-                repo_id=self.repo_id,
-                repo_type=self.repo_type,
-                operations=add_operations,
-                commit_message='Scheduled Commit',
-                revision=self.revision,
-                token=self.token,
-            )
-        except Exception as e:
-            logger.error(f'Error during commit: {e}')
-            raise
+            self._pending_tracker_updates = {}
+            with patch_upload_folder_for_scheduler(self):
+                commit_info = self.api.upload_folder(
+                    repo_id=self.repo_id,
+                    folder_path=self.folder_path,
+                    path_in_repo=self.path_in_repo,
+                    commit_message='Scheduled Commit',
+                    token=self.token,
+                    repo_type=self.repo_type,
+                    allow_patterns=self.allow_patterns,
+                    ignore_patterns=self.ignore_patterns,
+                    revision=self.revision,
+                )
 
-        for file in files_to_upload:
-            self.last_uploaded[file.local_path] = file.last_modified
-        return commit_info
+            if commit_info is None:
+                logger.debug(
+                    'No changed files to upload for scheduled commit.')
+                return None
+
+            with self.lock:
+                if hasattr(self, '_pending_tracker_updates'):
+                    self.last_uploaded.update(self._pending_tracker_updates)
+                    logger.debug(
+                        f'Updated modification tracker for {len(self._pending_tracker_updates)} files.'
+                    )
+                    del self._pending_tracker_updates
+
+            return commit_info
+
+        except Exception as e:
+            if hasattr(self, '_pending_tracker_updates'):
+                del self._pending_tracker_updates
+            logger.error(f'Error during scheduled commit: {e}')
+            raise
 
 
 class PartialFileIO(BytesIO):

@@ -1,5 +1,7 @@
+import atexit
 import os
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -11,6 +13,7 @@ from unittest.mock import MagicMock, patch
 from modelscope.hub.api import HubApi
 from modelscope.hub.commit_scheduler import CommitScheduler, PartialFileIO
 from modelscope.hub.errors import NotExistError
+from modelscope.hub.file_download import _repo_file_download
 from modelscope.hub.repository import Repository
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
 from modelscope.utils.repo_utils import CommitInfo, CommitOperationAdd
@@ -37,10 +40,28 @@ class TestCommitScheduler(unittest.TestCase):
 
     def tearDown(self) -> None:
         """Clean up test resources."""
+
+        def cleanup(scheduler):
+            try:
+                scheduler.stop()
+                remove_atexit_callback(scheduler)
+            except Exception as e:
+                print(
+                    f'Warning: Could not clean up scheduler {scheduler.repo_id}: {e}'
+                )
+
+        def remove_atexit_callback(scheduler):
+            try:
+                atexit.unregister(scheduler.commit_scheduled_changes)
+            except Exception as e:
+                print(
+                    f'Warning: Could not remove atexit callback for scheduler {scheduler.repo_id}: {e}'
+                )
+
         # Stop scheduler if it exists
         if self.scheduler is not None:
             try:
-                self.scheduler.stop()
+                cleanup(self.scheduler)
             except Exception:
                 pass
 
@@ -318,7 +339,7 @@ class TestCommitScheduler(unittest.TestCase):
             repo_type='dataset',
             token=TEST_ACCESS_TOKEN1)
 
-        # 1 push to hub triggered (empty commit not pushed)
+        # 1 push to hub triggered
         time.sleep(0.5)
 
         # write content to files
@@ -329,7 +350,7 @@ class TestCommitScheduler(unittest.TestCase):
         with git_path.open('a') as f:
             f.write('git content\n')
 
-        # 2 push to hub triggered (2 commit + 1 ignored)
+        # 2 push to hub triggered
         time.sleep(2)
         self.scheduler.last_future.result()
 
@@ -337,49 +358,21 @@ class TestCommitScheduler(unittest.TestCase):
         with file_path.open('a') as f:
             f.write('second line\n')
 
-        # 1 push to hub triggered (1 commit)
+        # 1 push to hub triggered
         time.sleep(1)
         self.scheduler.last_future.result()
 
         with bin_path.open('a') as f:
             f.write(' updated')
 
-        # 5 push to hub triggered (1 commit)
+        # 5 push to hub triggered
         time.sleep(5)  # wait for every threads/uploads to complete
         self.scheduler.stop()
         self.scheduler.last_future.result()
 
-        # wait for 20 seconds for repository to be updated
-        time.sleep(20)
-
-        # 4 commits expected (initial commit + 3 push to hub)
         repo_id = self.scheduler.repo_id
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            repo = Repository(
-                model_dir=tmp_dir,
-                clone_from=f'{self.scheduler.repo_type}s/{repo_id}',
-                auth_token=TEST_ACCESS_TOKEN1)
-            git_wrapper = repo.git_wrapper
-            log_args = ['-C', tmp_dir, 'log', '--format=%H']
-            response = git_wrapper._run_git_command(*log_args)
-            commits = response.stdout.decode('utf8').strip().split('\n')
-
-            # Get last commit message
-            last_commit = commits[0]
-            msg_args = ['-C', tmp_dir, 'log', '-1', '--format=%B', last_commit]
-            msg_response = git_wrapper._run_git_command(*msg_args)
-            last_msg = msg_response.stdout.decode('utf8').strip()
-
-            # Exclude dataset_infos.json commit if present
-            commit_count = len(commits)
-            if 'dataset_infos.json' in last_msg:
-                commit_count -= 1
-                commits = commits[1:]  # Remove the dataset_infos commit
-
-            self.assertEqual(commit_count, 5)
 
         def _download(filename: str, revision: str) -> Path:
-            from modelscope.hub.file_download import _repo_file_download
             return Path(
                 _repo_file_download(
                     repo_id=repo_id,

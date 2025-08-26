@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
+from modelscope.utils.file_utils import get_file_hash
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (CommitInfo, CommitOperationAdd,
                                          RepoUtils)
@@ -170,7 +171,7 @@ class CommitScheduler:
         self._scheduler_thread = Thread(
             target=self._run_scheduler, daemon=True)
         self._scheduler_thread.start()
-        atexit.register(self.push_to_hub)
+        atexit.register(self.commit_scheduled_changes)
 
         self.__stopped = False
 
@@ -195,21 +196,21 @@ class CommitScheduler:
 
     def trigger(self) -> Future:
         """Trigger a background commit and return a future."""
-        return self.executor.submit(self._push_to_hub)
+        return self.executor.submit(self._commit_scheduled_changes)
 
-    def _push_to_hub(self) -> Optional[CommitInfo]:
+    def _commit_scheduled_changes(self) -> Optional[CommitInfo]:
         if self.__stopped:
             return None
 
         logger.info('(Background) scheduled commit triggered.')
         try:
-            value = self.push_to_hub()
+            value = self.commit_scheduled_changes()
             return value
         except Exception as e:
             logger.error(f'Error while pushing to Hub: {e}')
             raise
 
-    def push_to_hub(self) -> Optional[CommitInfo]:
+    def commit_scheduled_changes(self) -> Optional[CommitInfo]:
         """Push folder to the Hub and return commit info if changes are found."""
         with self.lock:
             logger.debug('Listing files to upload for scheduled commit.')
@@ -252,6 +253,25 @@ class CommitScheduler:
                 )
                 add_operation._upload_mode = 'lfs' if self.api.upload_checker.is_lfs(
                     file.local_path, self.repo_type) else 'normal'
+                add_operation.file_hash_info = get_file_hash(
+                    file_path_or_obj=file.local_path)
+
+                # Upload blob data for LFS files (similar to upload_file/upload_folder)
+                if add_operation._upload_mode == 'lfs':
+                    upload_res = self.api._upload_blob(
+                        repo_id=self.repo_id,
+                        repo_type=self.repo_type,
+                        sha256=add_operation.file_hash_info['file_hash'],
+                        size=add_operation.file_hash_info['file_size'],
+                        data=file.local_path,
+                        disable_tqdm=True,
+                        tqdm_desc=f'[Background Upload {file.path_in_repo}]',
+                    )
+                    add_operation._is_uploaded = upload_res['is_uploaded']
+                else:
+                    # For normal files, no blob upload needed
+                    add_operation._is_uploaded = False
+
                 add_operations.append(add_operation)
             except Exception as e:
                 logger.warning(

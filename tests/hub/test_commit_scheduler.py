@@ -167,9 +167,9 @@ class TestCommitScheduler(unittest.TestCase):
             self.assertEqual(call_args.kwargs.get('visibility'), 'private')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @patch.object(CommitScheduler, 'push_to_hub')
+    @patch.object(CommitScheduler, 'commit_scheduled_changes')
     def test_mocked_scheduler_execution(self, mock_push: MagicMock) -> None:
-        """Test scheduler with mocked push_to_hub method."""
+        """Test scheduler with mocked commit_scheduled_changes method."""
         mock_push.return_value = CommitInfo(
             commit_url=
             'https://modelscope.cn/datasets/test_scheduler_unit/commit/test123',
@@ -226,7 +226,7 @@ class TestCommitScheduler(unittest.TestCase):
         file_path = self.watched_folder / 'test_file.txt'
 
         with patch.object(HubApi, 'create_repo'), \
-             patch.object(CommitScheduler, 'push_to_hub') as mock_push:
+             patch.object(CommitScheduler, 'commit_scheduled_changes') as mock_push:
             mock_push.return_value = CommitInfo(
                 commit_url=
                 'https://modelscope.cn/datasets/test_scheduler_unit/commit/test123',
@@ -250,14 +250,14 @@ class TestCommitScheduler(unittest.TestCase):
             # After exiting context, scheduler should be stopped
             self.assertTrue(self.scheduler._CommitScheduler__stopped)
 
-            # Should have triggered push_to_hub on exit
+            # Should have triggered commit_scheduled_changes on exit
             mock_push.assert_called()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trigger_manual_commit(self) -> None:
         """Test manually triggering a commit."""
         with patch.object(HubApi, 'create_repo'), \
-             patch.object(CommitScheduler, 'push_to_hub') as mock_push:
+             patch.object(CommitScheduler, 'commit_scheduled_changes') as mock_push:
             mock_push.return_value = CommitInfo(
                 commit_url=
                 'https://modelscope.cn/datasets/test_scheduler_unit/commit/test123',
@@ -329,7 +329,7 @@ class TestCommitScheduler(unittest.TestCase):
         with git_path.open('a') as f:
             f.write('git content\n')
 
-        # 2 push to hub triggered (1 commit + 1 ignored)
+        # 2 push to hub triggered (2 commit + 1 ignored)
         time.sleep(2)
         self.scheduler.last_future.result()
 
@@ -376,7 +376,7 @@ class TestCommitScheduler(unittest.TestCase):
                 commit_count -= 1
                 commits = commits[1:]  # Remove the dataset_infos commit
 
-            self.assertEqual(commit_count, 4)
+            self.assertEqual(commit_count, 5)
 
         def _download(filename: str, revision: str) -> Path:
             from modelscope.hub.file_download import _repo_file_download

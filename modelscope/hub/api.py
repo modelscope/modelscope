@@ -2543,6 +2543,28 @@ class ModelScopeConfig:
 
 
 class UploadingCheck:
+    """
+    Check the files and folders to be uploaded.
+
+    Args:
+        max_file_count (int): The maximum number of files to be uploaded. Default to `UPLOAD_MAX_FILE_COUNT`.
+        max_file_count_in_dir (int): The maximum number of files in a directory.
+            Default to `UPLOAD_MAX_FILE_COUNT_IN_DIR`.
+        max_file_size (int): The maximum size of a single file in bytes. Default to `UPLOAD_MAX_FILE_SIZE`.
+        size_threshold_to_enforce_lfs (int): The size threshold to enforce LFS in bytes.
+            Files larger than this size will be enforced to be uploaded via LFS.
+            Default to `UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS`.
+        normal_file_size_total_limit (int): The total size limit of normal files in bytes.
+            Default to `UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT`.
+
+    Examples:
+        >>> from modelscope.hub.api import UploadingCheck
+        >>> upload_checker = UploadingCheck()
+        >>> upload_checker.check_file('/path/to/your/file.txt')
+        >>> upload_checker.check_folder('/path/to/your/folder')
+        >>> is_lfs = upload_checker.is_lfs('/path/to/your/file.txt', repo_type='model')
+        >>> print(f'Is LFS: {is_lfs}')
+    """
     def __init__(
             self,
             max_file_count: int = UPLOAD_MAX_FILE_COUNT,
@@ -2557,8 +2579,16 @@ class UploadingCheck:
         self.size_threshold_to_enforce_lfs = size_threshold_to_enforce_lfs
         self.normal_file_size_total_limit = normal_file_size_total_limit
 
-    def check_file(self, file_path_or_obj):
+    def check_file(self, file_path_or_obj) -> None:
+        """
+        Check a single file to be uploaded.
 
+        Args:
+            file_path_or_obj (Union[str, Path, bytes, BinaryIO]): The file path or file-like object to be checked.
+
+        Raises:
+            ValueError: If the file does not exist or exceeds the size limit.
+        """
         if isinstance(file_path_or_obj, (str, Path)):
             if not os.path.exists(file_path_or_obj):
                 raise ValueError(f'File {file_path_or_obj} does not exist')
@@ -2569,6 +2599,15 @@ class UploadingCheck:
                            f'got {round(file_size / (1024 ** 3), 4)} GB')
 
     def check_folder(self, folder_path: Union[str, Path]):
+        """
+        Check a folder to be uploaded.
+
+        Args:
+            folder_path (Union[str, Path]): The folder path to be checked.
+
+        Raises:
+            ValueError: If the folder does not exist or exceeds the file count limit.
+        """
         file_count = 0
         dir_count = 0
 
@@ -2598,7 +2637,16 @@ class UploadingCheck:
         return file_count, dir_count
 
     def is_lfs(self, file_path_or_obj: Union[str, Path, bytes, BinaryIO], repo_type: str) -> bool:
+        """
+        Check if a file should be uploaded via LFS.
 
+        Args:
+            file_path_or_obj (Union[str, Path, bytes, BinaryIO]): The file path or file-like object to be checked.
+            repo_type (str): The repo type, either `model` or `dataset`.
+
+        Returns:
+            bool: True if the file should be uploaded via LFS, False otherwise.
+        """
         hit_lfs_suffix = True
 
         if isinstance(file_path_or_obj, (str, Path)):
@@ -2620,7 +2668,18 @@ class UploadingCheck:
         return file_size > self.size_threshold_to_enforce_lfs or hit_lfs_suffix
 
     def check_normal_files(self, file_path_list: List[Union[str, Path]], repo_type: str) -> None:
+        """
+        Check a list of normal files to be uploaded.
 
+        Args:
+            file_path_list (List[Union[str, Path]]): The list of file paths to be checked.
+            repo_type (str): The repo type, either `model` or `dataset`.
+
+        Raises:
+            ValueError: If the total size of normal files exceeds the limit.
+
+        Returns: None
+        """
         normal_file_list = [item for item in file_path_list if not self.is_lfs(item, repo_type)]
         total_size = sum([get_file_size(item) for item in normal_file_list])
 

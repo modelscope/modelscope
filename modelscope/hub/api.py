@@ -1671,6 +1671,38 @@ class HubApi:
             disable_tqdm: Optional[bool] = False,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
     ) -> CommitInfo:
+        """
+        Upload a file to the ModelScope Hub.
+
+        Args:
+            path_or_fileobj (Union[str, Path, bytes, BinaryIO]):
+                The local file path or file-like object (BinaryIO) or bytes to upload.
+            path_in_repo (str): The path in the repo to upload to.
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, default to `model`.
+            commit_message (Optional[str]): The commit message.
+            commit_description (Optional[str]): The commit description.
+            buffer_size_mb (Optional[int]): The buffer size in MB for reading the file. Default to 1MB.
+            tqdm_desc (Optional[str]): The description for the tqdm progress bar. Default to '[Uploading]'.
+            disable_tqdm (Optional[bool]): Whether to disable the tqdm progress bar. Default to False.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+
+        Returns:
+            CommitInfo: The commit info.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_info = api.upload_file(
+            ...     path_or_fileobj='/path/to/your/file.txt',
+            ...     path_in_repo='optional/path/in/repo/file.txt',
+            ...     repo_id='your-namespace/your-repo-name',
+            ...     commit_message='Upload file.txt to ModelScope hub'
+            ... )
+            >>> print(commit_info)
+        """
 
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
@@ -1769,6 +1801,40 @@ class HubApi:
             max_workers: int = DEFAULT_MAX_WORKERS,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> Union[CommitInfo, List[CommitInfo]]:
+        """
+        Upload a folder to the ModelScope Hub.
+
+        Args:
+            repo_id (str): The repo id in the format of `owner_name/repo_name`.
+            folder_path (Union[str, Path, List[str], List[Path]]): The folder path or list of file paths to upload.
+            path_in_repo (Optional[str]): The path in the repo to upload to.
+            commit_message (Optional[str]): The commit message.
+            commit_description (Optional[str]): The commit description.
+            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
+                See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            repo_type (Optional[str]): The repo type, default to `model`.
+            allow_patterns (Optional[Union[List[str], str]]): The patterns to allow.
+            ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
+            max_workers (int): The maximum number of workers to use for uploading files concurrently.
+                Defaults to `DEFAULT_MAX_WORKERS`.
+            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+
+        Returns:
+            Union[CommitInfo, List[CommitInfo]]:
+                The commit info or list of commit infos if multiple batches are committed.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_info = api.upload_folder(
+            ...     repo_id='your-namespace/your-repo-name',
+            ...     folder_path='/path/to/your/folder',
+            ...     path_in_repo='optional/path/in/repo',
+            ...     commit_message='Upload my folder',
+            ...     token='your-access-token'
+            ... )
+            >>> print(commit_info.commit_url)
+        """
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 

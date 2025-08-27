@@ -14,7 +14,6 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.commit_scheduler import CommitScheduler, PartialFileIO
 from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import _repo_file_download
-from modelscope.hub.repository import Repository
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
 from modelscope.utils.repo_utils import CommitInfo, CommitOperationAdd
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,

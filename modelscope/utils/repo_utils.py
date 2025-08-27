@@ -337,6 +337,7 @@ class UploadInfo:
     @classmethod
     def from_fileobj(cls, fileobj: BinaryIO, file_hash_info: dict = None):
         file_hash_info: dict = file_hash_info or get_file_hash(fileobj)
+        fileobj.seek(0, os.SEEK_SET)
         sample = fileobj.read(512)
         fileobj.seek(0, os.SEEK_SET)
         return cls(

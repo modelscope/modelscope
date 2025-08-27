@@ -515,6 +515,8 @@ DEFAULT_DATASET_NAMESPACE = 'modelscope'
 DEFAULT_DATA_ACCELERATION_ENDPOINT = 'https://oss-accelerate.aliyuncs.com'
 INTRA_CLOUD_ACCELERATION = str(
     os.environ.get('INTRA_CLOUD_ACCELERATION', 'True')).lower()
+INTRA_CLOUD_ACCELERATION_REGION = str(
+    os.environ.get('INTRA_CLOUD_ACCELERATION_REGION', '')).lower()
 
 
 class ModeKeys:

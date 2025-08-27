@@ -5,12 +5,11 @@ MCP (Model Context Protocol) API interface for ModelScope Hub.
 This module provides a simple interface to interact with
 ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
-
 from typing import Any, Dict, Optional
 
 import requests
 
-from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.api import HubApi
 from modelscope.hub.errors import raise_for_http_status
 from modelscope.utils.logger import get_logger
 
@@ -88,13 +87,6 @@ class MCPApi(HubApi):
             return server_id.split('/', 1)[1]
         return server_id
 
-    def _get_cookies(self, token: Optional[str] = None):
-        """Get cookies for authentication."""
-        if token:
-            return self.get_cookies(access_token=token)
-        else:
-            return ModelScopeConfig.get_cookies()
-
     def list_mcp_servers(self,
                          token: Optional[str] = None,
                          filter: Optional[Dict[str, Any]] = None,
@@ -149,7 +141,7 @@ class MCPApi(HubApi):
         }
 
         try:
-            cookies = self._get_cookies(token)
+            cookies = self.get_cookies(token)
             r = self.session.put(
                 url=self.mcp_base_url,
                 headers=self.builder_headers(self.headers),
@@ -215,10 +207,8 @@ class MCPApi(HubApi):
         headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self._get_cookies(token)
-            if cookies is None:
-                raise MCPApiRequestError(
-                    'Authentication failed: no valid cookies found.')
+            cookies = self.get_cookies(
+                access_token=token, cookies_required=True)
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
@@ -299,7 +289,7 @@ class MCPApi(HubApi):
         headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self._get_cookies(token)
+            cookies = self.get_cookies(token)
             r = self.session.get(
                 url,
                 headers=headers,

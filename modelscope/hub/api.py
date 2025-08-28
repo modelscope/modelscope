@@ -2154,6 +2154,11 @@ class HubApi:
             else:
                 raise ValueError('Invalid data type to upload')
 
+        handle_http_post_error(
+            response=response,
+            url=upload_object['url'],
+            request_body=objects,
+        )
         resp = response.json()
         raise_on_error(resp)
 
@@ -2208,6 +2213,11 @@ class HubApi:
             cookies=cookies
         )
 
+        handle_http_post_error(
+            response=response,
+            url=url,
+            request_body=objects[:100],
+        )
         resp = response.json()
         raise_on_error(resp)
 

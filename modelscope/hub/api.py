@@ -2216,7 +2216,7 @@ class HubApi:
         handle_http_post_error(
             response=response,
             url=url,
-            request_body=objects[:100],
+            request_body=payload,
         )
         resp = response.json()
         raise_on_error(resp)

@@ -1602,12 +1602,10 @@ class HubApi:
 
         r = self.session.get(
             path, cookies=cookies, headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
         resp = r.json()
         datahub_raise_on_error(path, resp, r)
-        if r.status_code == HTTPStatus.OK:
-            return resp[API_RESPONSE_FIELD_DATA]
-        else:
-            raise_for_http_status(r)
+        return resp[API_RESPONSE_FIELD_DATA]
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
                                    dataset_id: str, revision: str, endpoint: Optional[str] = None):

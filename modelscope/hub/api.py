@@ -110,7 +110,7 @@ class OrganizationInfo:
     modified_time: Optional[datetime.datetime]
 
     def __init__(self, **kwargs):
-        self.id = kwargs.pop('Id', '')
+        self.id = kwargs.pop('Id', None)
         self.name = kwargs.pop('Name', '')
         self.full_name = kwargs.pop('FullName', '')
         self.description = kwargs.pop('Description', '')
@@ -236,7 +236,7 @@ class ModelInfo:
         org_data = kwargs.pop('Organization', None)
         self.organization = OrganizationInfo(**org_data) if org_data else None
         self.created_by = kwargs.pop('CreatedBy', None)
-        self.is_certification = kwargs.pop('IsCertification', '')
+        self.is_certification = kwargs.pop('IsCertification', None)
         self.approval_mode = kwargs.pop('ApprovalMode', None)
         self.card_ready = kwargs.pop('CardReady', None)
         self.backend_support = kwargs.pop('BackendSupport', '{}')

@@ -2154,8 +2154,9 @@ class HubApi:
             else:
                 raise ValueError('Invalid data type to upload')
 
+        raise_for_http_status(rsp=response)
         resp = response.json()
-        raise_on_error(resp)
+        raise_on_error(rsp=resp)
 
         res_d['url'] = upload_object['url']
         res_d['status_code'] = resp['Code']
@@ -2208,8 +2209,9 @@ class HubApi:
             cookies=cookies
         )
 
+        raise_for_http_status(rsp=response)
         resp = response.json()
-        raise_on_error(resp)
+        raise_on_error(rsp=resp)
 
         upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
         resp_objects = resp['Data']['objects']

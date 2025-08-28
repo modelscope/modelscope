@@ -15,11 +15,13 @@ import time
 import uuid
 import warnings
 from collections import defaultdict
+from dataclasses import dataclass
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (Any, BinaryIO, Dict, Iterable, List, Literal, Optional,
+                    Tuple, Union)
 from urllib.parse import urlencode
 
 import json
@@ -65,8 +67,9 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.repository import Repository
 from modelscope.hub.utils.aigc import AigcModel
-from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
-                                        get_endpoint, get_readable_folder_size,
+from modelscope.hub.utils.utils import (add_content_to_file, convert_timestamp,
+                                        get_domain, get_endpoint,
+                                        get_readable_folder_size,
                                         get_release_datetime, is_env_true,
                                         model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
@@ -83,12 +86,263 @@ from modelscope.utils.file_utils import get_file_hash, get_file_size
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
-                                         MODEL_LFS_SUFFIX, CommitInfo,
+                                         MODEL_LFS_SUFFIX,
+                                         CommitHistoryResponse, CommitInfo,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
 from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
+
+
+@dataclass
+class OrganizationInfo:
+    """Organization information for a repository."""
+    id: Optional[int]
+    name: Optional[str]
+    full_name: Optional[str]
+    description: Optional[str]
+    avatar: Optional[str]
+    github_address: Optional[str]
+    type: Optional[int]
+    email: Optional[str]
+    created_time: Optional[datetime.datetime]
+    modified_time: Optional[datetime.datetime]
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('Id', '')
+        self.name = kwargs.pop('Name', '')
+        self.full_name = kwargs.pop('FullName', '')
+        self.description = kwargs.pop('Description', '')
+        self.avatar = kwargs.pop('Avatar', '')
+        self.github_address = kwargs.pop('GithubAddress', '')
+        self.type = kwargs.pop('Type', kwargs.pop('type', None))
+        self.email = kwargs.pop('Email', kwargs.pop('email', ''))
+        created_time = kwargs.pop('GmtCreated', kwargs.pop('created_time', None))
+        self.created_time = convert_timestamp(created_time) if created_time else None
+        modified_time = kwargs.pop('GmtModified', kwargs.pop('modified_time', None))
+        self.modified_time = convert_timestamp(modified_time) if modified_time else None
+
+
+@dataclass
+class ModelInfo:
+    """
+    Contains detailed information about a model on ModelScope Hub. This object is returned by [`model_info`].
+
+    Attributes:
+        id (`int`, *optional*): Model ID.
+        name (`str`, *optional*): Model name.
+        author (`str`, *optional*): Model author.
+        chinese_name (`str`, *optional*): Chinese display name.
+        visibility (`int`, *optional*): Visibility level (1=private, 5=public).
+        is_published (`int`, *optional*): Whether the model is published.
+        is_online (`int`, *optional*): Whether the model is online.
+        already_star (`bool`, *optional*): Whether current user has starred this model.
+        description (`str`, *optional*): Model description.
+        license (`str`, *optional*): Model license.
+        downloads (`int`, *optional*): Number of downloads.
+        likes (`int`, *optional*): Number of likes.
+        created_at (`datetime`, *optional*): Date of creation of the repo on the Hub..
+        last_updated_time (`datetime`, *optional*): Last update timestamp.
+        architectures (`List[str]`, *optional*): Model architectures.
+        model_type (`List[str]`, *optional*): Model types.
+        tasks (`List[Dict[str, Any]]`, *optional*): Supported tasks.
+        readme_content (`str`, *optional*): README content.
+        organization (`OrganizationInfo`, *optional*): Organization information.
+        created_by (`str`, *optional*): Creator username.
+        is_certification (`int`, *optional*): Certification status.
+        approval_mode (`int`, *optional*): Approval mode.
+        card_ready (`int`, *optional*): Whether model card is ready.
+        backend_support (`str`, *optional*): Backend support information.
+        model_infos (`Dict[str, Any]`, *optional*): Detailed model configuration information.
+        tags (`List[str]`, *optional*): Model Tags.
+        is_accessible (`int`, *optional*): Whether accessible.
+        revision (`str`, *optional*): Revision/branch.
+        related_arxiv_id (`List[str]`, *optional*): Related arXiv paper IDs.
+        related_paper (`List[int]`, *optional*): Related papers.
+        sha (`str`, *optional*): Latest commit SHA.
+        last_modified (`datetime`, *optional*): Latest commit date.
+        last_commit (`Dict[str, Any]`, *optional*): Latest commit information.
+    """
+
+    id: Optional[int]
+    name: Optional[str]
+    author: Optional[str]
+    chinese_name: Optional[str]
+    visibility: Optional[int]
+    is_published: Optional[int]
+    is_online: Optional[int]
+    already_star: Optional[bool]
+    description: Optional[str]
+    license: Optional[str]
+    downloads: Optional[int]
+    likes: Optional[int]
+    created_at: Optional[datetime.datetime]
+    last_updated_time: Optional[datetime.datetime]
+    architectures: Optional[List[str]]
+    model_type: Optional[List[str]]
+    tasks: Optional[List[Dict[str, Any]]]
+    readme_content: Optional[str]
+    organization: Optional[OrganizationInfo]
+    created_by: Optional[str]
+
+    # Certification and approval
+    is_certification: Optional[int]
+    approval_mode: Optional[int]
+    card_ready: Optional[int]
+
+    # Model specific
+    backend_support: Optional[str]
+    model_infos: Optional[Dict[str, Any]]
+
+    # Content and settings
+    tags: Optional[List[str]]
+
+    # Additional flags
+    is_accessible: Optional[int]
+
+    # Revision and version info
+    revision: Optional[str]
+
+    # External references
+    related_arxiv_id: Optional[List[str]]
+    related_paper: Optional[List[int]]
+
+    # latetest commit infomation
+    last_commit: Optional[Dict[str, Any]]
+    sha: Optional[str]
+    last_modified: Optional[datetime.datetime]
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('Id', None)
+        self.name = kwargs.pop('Name', '')
+        self.chinese_name = kwargs.pop('ChineseName', '')
+        self.visibility = kwargs.pop('Visibility', None)
+        self.is_published = kwargs.pop('IsPublished', None)
+        self.is_online = kwargs.pop('IsOnline', None)
+        self.already_star = kwargs.pop('AlreadyStar', None)
+        self.description = kwargs.pop('Description', '')
+        self.license = kwargs.pop('License', '')
+        self.downloads = kwargs.pop('Downloads', None)
+        self.likes = kwargs.pop('Stars', None) or kwargs.pop('Likes', None)
+        created_time = kwargs.pop('CreatedTime', None)
+        self.created_at = convert_timestamp(created_time) if created_time else None
+        last_updated_time = kwargs.pop('LastUpdatedTime', None)
+        self.last_updated_time = convert_timestamp(last_updated_time) if last_updated_time else None
+        self.architectures = kwargs.pop('Architectures', [])
+        self.model_type = kwargs.pop('ModelType', [])
+        self.tasks = kwargs.pop('Tasks', [])
+        self.readme_content = kwargs.pop('ReadMeContent', '')
+        org_data = kwargs.pop('Organization', None)
+        self.organization = OrganizationInfo(**org_data) if org_data else None
+        self.created_by = kwargs.pop('CreatedBy', None)
+        self.is_certification = kwargs.pop('IsCertification', '')
+        self.approval_mode = kwargs.pop('ApprovalMode', None)
+        self.card_ready = kwargs.pop('CardReady', None)
+        self.backend_support = kwargs.pop('BackendSupport', '{}')
+        self.model_infos = kwargs.pop('ModelInfos', {})
+        self.tags = kwargs.pop('Tags', [])
+        self.is_accessible = kwargs.pop('IsAccessible', None)
+        self.revision = kwargs.pop('Revision', '')
+        self.related_arxiv_id = kwargs.pop('RelatedArxivId', [])
+        self.related_paper = kwargs.pop('RelatedPaper', [])
+
+        commits = kwargs.pop('commits', None)
+        if commits and hasattr(commits, 'commits') and commits.commits:
+            last_commit = commits.commits[0]
+            self.last_commit = last_commit.to_dict() if hasattr(last_commit, 'to_dict') else None
+            self.sha = self.last_commit.get('id') if self.last_commit else None
+            self.last_modified = convert_timestamp(self.last_commit.get('committed_date')) if self.last_commit else None
+        else:
+            self.last_commit = None
+            self.sha = None
+            self.last_modified = None
+        self.author = kwargs.pop('author', '')
+
+        # backward compatibility
+        self.__dict__.update(kwargs)
+
+
+@dataclass
+class DatasetInfo:
+    """
+    Contains detailed information about a dataset on ModelScope Hub. This object is returned by [`dataset_info`].
+
+    Attributes:
+        id (`int`, *optional*)): Dataset ID.
+        name (`str`, *optional*)): Dataset name.
+        author (`str`, *optional*): Dataset owner (user or organization).
+        chinese_name (`str`, *optional*): Chinese display name.
+        visibility (`int`, *optional*)): Visibility level (1=private, 3=interal, 5=public).
+        'internal' means visible to logged-in users only.
+        already_star (`bool`, *optional*)): Whether current user has starred this dataset.
+        description (`str`, *optional*): Dataset description.
+        license (`str`, *optional*)): Dataset license.
+        downloads (`int`, *optional*)): Number of downloads.
+        likes (`int`, *optional*)): Number of likes.
+        created_at (`int`, *optional*): Creation timestamp.
+        last_updated_time (`int`, *optional*): Last update timestamp.
+        readme_content (`str`, *optional*): README content.
+        organization (`OrganizationInfo`, *optional*): Organization information.
+        created_by (`str`, *optional*): Creator username.
+        tags (`List[Dict[str, Any]]`): Dataset tags.
+        last_commit (`Dict[str, Any]`, *optional*): Latest commit information.
+    """
+
+    id: Optional[int]
+    name: Optional[str]
+    author: Optional[str]
+    chinese_name: Optional[str]
+    visibility: Optional[Literal[1, 3, 5]]
+    already_star: Optional[bool]
+    description: Optional[str]
+    license: Optional[str]
+    downloads: Optional[int]
+    likes: Optional[int]
+    created_at: Optional[datetime.datetime]
+    last_updated_time: Optional[datetime.datetime]
+    readme_content: Optional[str]
+    organization: Optional[OrganizationInfo]
+    created_by: Optional[str]
+    tags: Optional[List[Dict[str, Any]]]
+    last_commit: Optional[Dict[str, Any]]
+    sha: Optional[str]
+    last_modified: Optional[datetime.datetime]
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('Id', None)
+        self.name = kwargs.pop('Name', '')
+        self.author = kwargs.pop('author', kwargs.pop('Owner', None) or kwargs.pop('Namespace', None))
+        self.chinese_name = kwargs.pop('ChineseName', '')
+        self.visibility = kwargs.pop('Visibility', None)
+        self.already_star = kwargs.pop('AlreadyStar', None)
+        self.description = kwargs.pop('Description', '')
+        self.likes = kwargs.pop('Likes', None) or kwargs.pop('Stars', None)
+        self.license = kwargs.pop('License', '')
+        self.downloads = kwargs.pop('Downloads', None)
+        created_time = kwargs.pop('GmtCreate', None)
+        self.created_at = convert_timestamp(created_time) if created_time else None
+        last_updated_time = kwargs.pop('LastUpdatedTime', None)
+        self.last_updated_time = convert_timestamp(last_updated_time) if last_updated_time else None
+        self.readme_content = kwargs.pop('ReadMeContent', '')
+        org_data = kwargs.pop('Organization', None)
+        self.organization = OrganizationInfo(**org_data) if org_data else None
+        self.created_by = kwargs.pop('CreatedBy', None)
+        self.tags = kwargs.pop('Tags', [])
+        commits = kwargs.pop('commits', None)
+
+        if commits and hasattr(commits, 'commits') and commits.commits:
+            last_commit = commits.commits[0]
+            self.last_commit = last_commit.to_dict() if hasattr(last_commit, 'to_dict') else None
+            self.sha = self.last_commit.get('id') if self.last_commit else None
+            self.last_modified = convert_timestamp(self.last_commit.get('committed_date')) if self.last_commit else None
+        else:
+            self.last_commit = None
+            self.sha = None
+            self.last_modified = None
+
+        # backward compatibility
+        self.__dict__.update(kwargs)
 
 
 class HubApi:
@@ -433,6 +687,101 @@ class HubApi:
                 return alternative_endpoint
         else:
             return prefer_endpoint
+
+    def model_info(self,
+                   repo_id: str,
+                   *,
+                   revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                   endpoint: Optional[str] = None) -> ModelInfo:
+        """Get model information including commit history.
+
+        Args:
+            repo_id (str): The model id in the format of
+                ``namespace/model_name``.
+            revision (str, optional): Specific revision of the model.
+                Defaults to ``DEFAULT_MODEL_REVISION``.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            ModelInfo: The model detailed information returned by
+            ModelScope Hub with commit history.
+        """
+        owner_or_group, _ = model_id_to_group_owner_name(repo_id)
+        model_data = self.get_model(
+            model_id=repo_id, revision=revision, endpoint=endpoint)
+        commits = self.list_repo_commits(
+            repo_id=repo_id, repo_type=REPO_TYPE_MODEL, revision=revision, endpoint=endpoint)
+
+        # Create ModelInfo from API response data
+        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group)
+
+        return model_info
+
+    def dataset_info(self,
+                     repo_id: str,
+                     *,
+                     revision: Optional[str] = None,
+                     endpoint: Optional[str] = None) -> DatasetInfo:
+        """Get dataset information including commit history.
+
+        Args:
+            repo_id (str): The dataset id in the format of
+                ``namespace/dataset_name``.
+            revision (str, optional): Specific revision of the dataset.
+                Defaults to ``None``.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            DatasetInfo: The dataset detailed information returned by
+            ModelScope Hub with commit history.
+        """
+        owner_or_group, _ = model_id_to_group_owner_name(repo_id)
+        dataset_data = self.get_dataset(
+            dataset_id=repo_id, revision=revision, endpoint=endpoint)
+        commits = self.list_repo_commits(
+            repo_id=repo_id, repo_type=REPO_TYPE_DATASET, revision=revision, endpoint=endpoint)
+
+        # Create DatasetInfo from API response data
+        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group)
+
+        return dataset_info
+
+    def repo_info(
+        self,
+        repo_id: str,
+        *,
+        repo_type: Optional[str] = REPO_TYPE_MODEL,
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+        endpoint: Optional[str] = None
+    ) -> Union[ModelInfo, DatasetInfo]:
+        """Get repository information for models or datasets.
+
+        Args:
+            repo_id (str): The repository id in the format of
+                ``namespace/repo_name``.
+            revision (str, optional): Specific revision of the repository.
+                Currently only effective for model repositories. Defaults to
+                ``DEFAULT_MODEL_REVISION``.
+            repo_type (str, optional): Type of the repository. Supported
+                values are ``"model"`` and ``"dataset"``. If not provided,
+                ``"model"`` is assumed.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            Union[ModelInfo, DatasetInfo]: The repository detailed information
+            returned by ModelScope Hub.
+        """
+        if repo_type is None or repo_type == REPO_TYPE_MODEL:
+            return self.model_info(repo_id=repo_id, revision=revision, endpoint=endpoint)
+
+        if repo_type == REPO_TYPE_DATASET:
+            return self.dataset_info(repo_id=repo_id, revision=revision, endpoint=endpoint)
+
+        raise InvalidParameter(
+            f'Arg repo_type {repo_type} not supported. Please choose from "model" or "dataset".')
 
     def repo_exists(
             self,
@@ -1111,6 +1460,67 @@ class HubApi:
 
         return resp
 
+    def list_repo_commits(self,
+                          repo_id: str,
+                          *,
+                          repo_type: Optional[str] = REPO_TYPE_MODEL,
+                          revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+                          page_number: int = 1,
+                          page_size: int = 50,
+                          endpoint: Optional[str] = None):
+        """
+        Get the commit history for a repository.
+
+        Args:
+            repo_id (str): The repository id, in the format of `namespace/repo_name`.
+            repo_type (Optional[str]): The type of the repository. Supported types are `model` and `dataset`.
+            revision (str): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            page_number (int): The page number for pagination. Defaults to 1.
+            page_size (int): The number of commits per page. Defaults to 50.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            CommitHistoryResponse: The commit history response.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_history = api.list_repo_commits('meituan/Meeseeks')
+            >>> print(f"Total commits: {commit_history.total_count}")
+            >>> for commit in commit_history.commits:
+            ...     print(f"{commit.short_id}: {commit.title}")
+        """
+        from datasets.utils.file_utils import is_relative_path
+
+        if is_relative_path(repo_id) and repo_id.count('/') == 1:
+            _owner, _dataset_name = repo_id.split('/')
+        else:
+            raise ValueError(f'Invalid repo_id: {repo_id} !')
+
+        if not endpoint:
+            endpoint = self.endpoint
+
+        commits_url = f'{endpoint}/api/v1/{repo_type}s/{repo_id}/commits' if repo_type else \
+            f'{endpoint}/api/v1/models/{repo_id}/commits'
+        params = {
+            'Ref': revision or DEFAULT_MODEL_REVISION or DEFAULT_REPOSITORY_REVISION,
+            'PageNumber': page_number,
+            'PageSize': page_size
+        }
+        cookies = ModelScopeConfig.get_cookies()
+
+        try:
+            r = self.session.get(commits_url, params=params,
+                                 cookies=cookies, headers=self.builder_headers(self.headers))
+            resp = r.json()
+            datahub_raise_on_error(commits_url, resp, r)
+
+            if resp.get('Code') == HTTPStatus.OK:
+                return CommitHistoryResponse.from_api_response(resp)
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f'Failed to get repository commits for {repo_id}: {str(e)}')
+
     def get_dataset_files(self,
                           repo_id: str,
                           *,
@@ -1163,6 +1573,41 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
 
         return resp['Data']['Files']
+
+    def get_dataset(
+        self,
+        dataset_id: str,
+        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+        endpoint: Optional[str] = None
+    ):
+        """
+        Get the dataset information.
+
+        Args:
+            dataset_id (str): The dataset id.
+            revision (Optional[str]): The revision of the dataset.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            dict: The dataset information.
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+
+        if revision:
+            path = f'{endpoint}/api/v1/datasets/{dataset_id}?Revision={revision}'
+        else:
+            path = f'{endpoint}/api/v1/datasets/{dataset_id}'
+
+        r = self.session.get(
+            path, cookies=cookies, headers=self.builder_headers(self.headers))
+        resp = r.json()
+        datahub_raise_on_error(path, resp, r)
+        if r.status_code == HTTPStatus.OK:
+            return resp[API_RESPONSE_FIELD_DATA]
+        else:
+            raise_for_http_status(r)
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
                                    dataset_id: str, revision: str, endpoint: Optional[str] = None):

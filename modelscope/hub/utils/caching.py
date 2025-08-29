@@ -69,14 +69,19 @@ class FileSystemCache(object):
                                                 FileSystemCache.KEY_FILE_NAME)
             fd, temp_filename = tempfile.mkstemp(
                 suffix='.tmp', dir=self.cache_root_location)
+
             try:
                 with os.fdopen(fd, 'wb') as f:
                     pickle.dump(self.cached_files, f)
                 move(temp_filename, cache_keys_file_path)
-            except Exception as e:
-                os.close(fd)
-                os.unlink(temp_filename)
-                raise e
+            except Exception:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+                if os.path.exists(temp_filename):
+                    os.unlink(temp_filename)
+                raise
 
     def get_file(self, key):
         """Check the key is in the cache, if exist, return the file, otherwise return None.

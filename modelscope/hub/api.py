@@ -15,7 +15,6 @@ import time
 import uuid
 import warnings
 from collections import defaultdict
-from dataclasses import dataclass
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser

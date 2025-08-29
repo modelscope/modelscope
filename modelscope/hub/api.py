@@ -1263,7 +1263,7 @@ class HubApi:
                                  cookies=cookies, headers=self.builder_headers(self.headers))
             raise_for_http_status(r)
             resp = r.json()
-            raise_on_error(commits_url, resp, r)
+            raise_on_error(resp)
 
             if resp.get('Code') == HTTPStatus.OK:
                 return CommitHistoryResponse.from_api_response(resp)

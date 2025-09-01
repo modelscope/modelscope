@@ -55,7 +55,7 @@ class MCPApi(HubApi):
         """
         super().__init__(endpoint=endpoint)
 
-        self.mcp_base_url = str(self.endpoint) + MCP_API_PATH
+        self.mcp_base_url = self.endpoint + MCP_API_PATH
 
     @staticmethod
     def _handle_response(r: requests.Response) -> Dict[str, Any]:
@@ -207,7 +207,7 @@ class MCPApi(HubApi):
         headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self.get_cookies(
+             cookies = self.get_cookies(
                 access_token=token, cookies_required=True)
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)

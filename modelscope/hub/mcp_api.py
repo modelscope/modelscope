@@ -207,7 +207,7 @@ class MCPApi(HubApi):
         headers = self.builder_headers(self.headers)
 
         try:
-             cookies = self.get_cookies(
+            cookies = self.get_cookies(
                 access_token=token, cookies_required=True)
             r = self.session.get(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)

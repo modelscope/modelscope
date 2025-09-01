@@ -256,7 +256,8 @@ class HubApi:
                 'WeightsName': aigc_model.weight_filename,
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
-                'ModelPath': aigc_model.model_path
+                'ModelPath': aigc_model.model_path,
+                'TriggerWords': aigc_model.trigger_words
             })
 
         else:

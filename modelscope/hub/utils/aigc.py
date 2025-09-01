@@ -59,7 +59,8 @@ class AigcModel:
                  revision: Optional[str] = 'v1.0',
                  description: Optional[str] = 'this is an aigc model',
                  cover_images: Optional[List[str]] = None,
-                 path_in_repo: Optional[str] = ''):
+                 path_in_repo: Optional[str] = '',
+                 trigger_words: Optional[List[str]] = None):
         """
         Initializes the AigcModel helper.
 
@@ -72,6 +73,7 @@ class AigcModel:
             cover_images (List[str], optional): List of cover image URLs.
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
+            trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
@@ -83,6 +85,7 @@ class AigcModel:
         ]
         self.base_model_id = base_model_id
         self.path_in_repo = path_in_repo
+        self.trigger_words = trigger_words
 
         # Validate types and provide warnings
         self._validate_aigc_type()
@@ -221,7 +224,8 @@ class AigcModel:
             'model_path': self.model_path,
             'weight_filename': self.weight_filename,
             'weight_sha256': self.weight_sha256,
-            'weight_size': self.weight_size
+            'weight_size': self.weight_size,
+            'trigger_words': self.trigger_words
         }
 
     @classmethod

@@ -48,10 +48,12 @@ class AigcModel:
 
     # Supported base model types for reference
     BASE_MODEL_TYPES = {
-        'SD_1_5', 'SD_XL', 'SD_3', 'FLUX_1', 'WAN_VIDEO_2_1_T2V_1_3_B',
-        'WAN_VIDEO_2_1_T2V_14_B', 'WAN_VIDEO_2_1_I2V_14_B',
-        'WAN_VIDEO_2_1_FLF2V_14_B', 'WAN_VIDEO_2_2_T2V_5_B',
-        'WAN_VIDEO_2_2_T2V_14_B', 'WAN_VIDEO_2_2_I2V_14_B', 'QWEN_IMAGE_20B'
+        'SD_1_5', 'SD_XL', 'SD_2','SD_2_1','SD_3', 'FLUX_1', 
+        'WAN_VIDEO_2_1_T2V_1_3_B','WAN_VIDEO_2_1_T2V_14_B', 'WAN_VIDEO_2_1_I2V_14_B','WAN_VIDEO_2_1_14_B'
+        'WAN_VIDEO_2_1_FLF2V_14_B','WAN_VIDEO_2_1_I2V_14_B' ,
+        'WAN_VIDEO_2_2_I2V_A_14_B','WAN_VIDEO_2_2_TI2V_5_B', 'WAN_VIDEO_2_2_I2V_14_B', 'WAN_VIDEO_2_2_T2V_A_14_B'
+        'QWEN_IMAGE_20_B'
+        'UNKNOWN'
     }
 
     def __init__(self,

@@ -1,12 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import argparse
-import logging as logger
 import os
 import os.path as osp
-import time
 
 import cv2
-import json
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -38,6 +34,7 @@ class RealtimeVideoDetector(TorchModel):
         # build model
         self.model = self.exp.get_model()
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_BIN_FILE)
+        self.check_trust_remote_code(model_dir=model_dir)
         ckpt = torch.load(model_path, map_location='cpu')
 
         # load the model state dict

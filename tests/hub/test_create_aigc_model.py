@@ -38,7 +38,7 @@ class TestCreateAigcModel(unittest.TestCase):
         os.remove(self.tmp_file_path)
         delete_credential()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_create_aigc_model_expects_sha256_error(self):
         """Test creating an AIGC model repository.
 

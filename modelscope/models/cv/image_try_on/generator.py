@@ -411,7 +411,8 @@ class Vgg19(nn.Module):
             if isinstance(x, nn.MaxPool2d) or isinstance(
                     x, nn.AdaptiveAvgPool2d):
                 x.ceil_mode = True
-        vgg_pretrained_features.load_state_dict(torch.load(vgg_path))
+        vgg_pretrained_features.load_state_dict(
+            torch.load(vgg_path, weights_only=True))
         vgg_pretrained_features = vgg_pretrained_features.features
 
         self.slice1 = nn.Sequential()
@@ -467,7 +468,9 @@ class VGGLoss(nn.Module):
 def load_checkpoint_parallel(model, checkpoint_path):
 
     checkpoint = torch.load(
-        checkpoint_path, map_location=lambda storage, loc: storage)
+        checkpoint_path,
+        map_location=lambda storage, loc: storage,
+        weights_only=True)
     checkpoint_new = model.state_dict()
     for param in checkpoint_new:
         checkpoint_new[param] = checkpoint[param]

@@ -23,6 +23,11 @@ pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes d
 # cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
 pip install --no-cache-dir flash_attn==$flashattn_version
 
-pip install --no-cache-dir triton auto-gptq==$autogptq_version vllm==$vllm_version -U && pip cache purge
+pip install --no-cache-dir triton auto-gptq==$autogptq_version -U && pip cache purge
+
+if [[ "$(printf '%s\n' "0.6.0" "$vllm_version" | sort -V | head -n1)" = "0.6.0" ]]; then
+    # vllm_version is >= 0.6.0
+    pip install --no-cache-dir vllm==$vllm_version && pip cache purge
+fi
 
 # pip uninstall -y torch-scatter && TORCH_CUDA_ARCH_LIST="6.0;6.1;6.2;7.0;7.5;8.0;8.6;8.9;9.0" pip install --no-cache-dir -U torch-scatter

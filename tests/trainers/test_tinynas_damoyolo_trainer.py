@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import subprocess
 import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
@@ -19,12 +20,14 @@ def _setup():
 class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
 
     def setUp(self):
+        # pycocotools==2.0.8
+        subprocess.getstatusoutput('pip install pycocotools==2.0.8')
         self.model_id = 'damo/cv_tinynas_object-detection_damoyolo'
         self.cache_path = _setup()
 
     def tearDown(self) -> None:
         super().tearDown()
-        shutil.rmtree('./workdirs')
+        shutil.rmtree('./workdirs', ignore_errors=True)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_trainer_from_scratch_singleGPU(self):

@@ -53,7 +53,7 @@ def load_data(feature_path, mydevice):
         Returns:
             [text_embeds, vid_embeds_pooled, vid_ids, texts]
     """
-    feature_content = torch.load(feature_path)
+    feature_content = torch.load(feature_path, weights_only=True)
     text_embeds = feature_content['text_embeds'].to(device=mydevice)
     vid_embeds_pooled = feature_content['vid_embeds'].to(device=mydevice)
     vid_ids = feature_content['vid_ids']
@@ -86,7 +86,7 @@ def get_state_dict(checkpoint_path):
     """
         Load pre-train parameters for VoP.
     """
-    checkpoint = torch.load(checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, weights_only=True)
     state_dict = checkpoint['state_dict']
 
     new_state_dict = OrderedDict()

@@ -42,7 +42,8 @@ class LiveCategoryPipeline(Pipeline):
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.infer_model = self.infer_model.to(self.device).eval()
         self.infer_model.load_state_dict(
-            torch.load(model_path, map_location=self.device))
+            torch.load(
+                model_path, map_location=self.device, weights_only=True))
         logger.info('load model done')
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading config from {config_path}')

@@ -29,7 +29,8 @@ class HRNetCrowdCounting(TorchModel):
         net.load_state_dict(
             torch.load(
                 os.path.join(model_dir, 'DCANet_final.pth'),
-                map_location='cpu'))
+                map_location='cpu',
+                weights_only=True))
         self.model = net
 
     def forward(self, inputs):

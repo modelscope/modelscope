@@ -1,10 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os.path as osp
-from pathlib import Path
 
-import cv2
-import numpy as np
 import torch
 
 from modelscope.metainfo import Models
@@ -41,6 +38,7 @@ class QuadTreeAttentionForImageMatching(TorchModel):
 
         matcher = LoFTR(config=_config['loftr'])
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
+        self.check_trust_remote_code(model_dir=model_dir)
         state_dict = torch.load(
             str(model_path), map_location='cpu')['state_dict']
 

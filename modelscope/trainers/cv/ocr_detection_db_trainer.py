@@ -185,7 +185,8 @@ class DBTrainer:
         self.current_lr = lr
 
     def restore_model(self, model, model_path, device):
-        state_dict = torch.load(model_path, map_location=device)
+        state_dict = torch.load(
+            model_path, map_location=device, weights_only=True)
         model.load_state_dict(state_dict, strict=False)
 
     def create_optimizer(self, lr=0.007, momentum=0.9, weight_decay=0.0001):
@@ -237,7 +238,8 @@ class DBTrainer:
         model_keys = list(model_state_dict.keys())
         saved_dict = torch.load(
             os.path.join(self.dir_path, finetune_model_name),
-            map_location=self.device)
+            map_location=self.device,
+            weights_only=True)
         saved_keys = set(saved_dict.keys())
         prefix = 'model.module.'
         for i in range(len(model_keys)):

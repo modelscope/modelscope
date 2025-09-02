@@ -244,6 +244,8 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
+            # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
 
             # Add AIGC-specific fields to body
             body.update({
@@ -334,6 +336,7 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model tag endpoint
             path = f'{endpoint}/api/v1/models/aigc/repo/tag'
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
 
             # Base body for AIGC model tag
             body = {
@@ -350,7 +353,7 @@ class HubApi:
 
         else:
             if revision is None:
-                raise InvalidParameter('ref is required!')
+                raise InvalidParameter('revision is required!')
             # Use regular model tag endpoint
             path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
 

@@ -4,6 +4,10 @@ import glob
 import os
 from typing import List, Optional
 
+import requests
+from tqdm.auto import tqdm
+
+from modelscope.hub.utils.utils import MODELSCOPE_URL_SCHEME, get_domain
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -211,6 +215,71 @@ class AigcModel:
             logger.warning(
                 'You may need to upload the model manually after creation.')
             return False
+
+    def preupload_weights(self,
+                          *,
+                          cookies: Optional[object] = None,
+                          timeout: int = 300,
+                          headers: Optional[dict] = None) -> None:
+        """Pre-upload aigc model weights to the LFS server.
+
+        Server may require the sha256 of weights to be registered before creation.
+        This method streams the weight file so the sha gets registered.
+
+        Args:
+            cookies: Optional requests-style cookies (CookieJar/dict). If provided, preferred.
+            timeout: Request timeout seconds.
+            headers: Optional headers.
+        """
+        domain: str = get_domain()
+        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
+        url: str = f'{base_url}/api/v1/models/aigc/weights'
+
+        file_path = getattr(self, 'target_file', None) or self.model_path
+        file_path = os.path.abspath(os.path.expanduser(file_path))
+        if not os.path.isfile(file_path):
+            raise ValueError(f'Pre-upload expects a file, got: {file_path}')
+
+        cookies = dict(cookies) if cookies else None
+        if cookies is None:
+            raise ValueError('Token does not exist, please login first.')
+
+        headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
+
+        file_size = os.path.getsize(file_path)
+
+        def read_in_chunks(file_object,
+                           pbar,
+                           chunk_size: int = 1 * 1024 * 1024):
+            while True:
+                ck = file_object.read(chunk_size)
+                if not ck:
+                    break
+                pbar.update(len(ck))
+                yield ck
+
+        with tqdm(
+                total=file_size,
+                unit='B',
+                unit_scale=True,
+                dynamic_ncols=True,
+                desc='[Pre-uploading] ') as pbar:
+            with open(file_path, 'rb') as f:
+                r = requests.put(
+                    url,
+                    headers=headers,
+                    data=read_in_chunks(f, pbar),
+                    timeout=timeout,
+                )
+        try:
+            resp = r.json()
+        except requests.exceptions.JSONDecodeError:
+            r.raise_for_status()
+            return
+        # If JSON body returned, try best-effort check
+        if isinstance(resp, dict) and resp.get('Success') is False:
+            msg = resp.get('Message', 'unknown error')
+            raise RuntimeError(f'Pre-upload failed: {msg}')
 
     def to_dict(self) -> dict:
         """Converts the AIGC parameters to a dictionary suitable for API calls."""

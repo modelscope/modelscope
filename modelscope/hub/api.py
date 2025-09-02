@@ -284,7 +284,7 @@ class HubApi:
                          model_id: str,
                          tag_name: str,
                          description: str,
-                         ref: Optional[str] = None,
+                         revision: Optional[str] = None,
                          endpoint: Optional[str] = None,
                          token: Optional[str] = None,
                          aigc_model: Optional['AigcModel'] = None) -> str:
@@ -293,7 +293,7 @@ class HubApi:
         Args:
             model_id (str): The model id in format {owner}/{name}
             tag_name (str): The tag name (e.g., "v1.0.0")
-            ref (str): The branch name, commit id, or tag name to create tag from (e.g., "master")
+            revision (str): The branch name, commit id, or tag name to create tag from (e.g., "master")
             description (str): Description of this tag
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
             token (str, optional): access token for authentication
@@ -317,7 +317,7 @@ class HubApi:
             raise InvalidParameter('tag_name is required!')
         if description is None:
             raise InvalidParameter('description is required!')
-            
+
         # Get cookies for authentication.
         if token:
             cookies = self.get_cookies(access_token=token)
@@ -334,7 +334,7 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model tag endpoint
             path = f'{endpoint}/api/v1/models/aigc/repo/tag'
-            
+
             # Base body for AIGC model tag
             body = {
                 'CoverImages': aigc_model.cover_images,
@@ -347,16 +347,16 @@ class HubApi:
                 'Description': description,
                 'TriggerWords': aigc_model.trigger_words
             }
-            
+
         else:
-            if ref is None:
+            if revision is None:
                 raise InvalidParameter('ref is required!')
             # Use regular model tag endpoint
             path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
-            
+
             body = {
                 'TagName': tag_name,
-                'Ref': ref,
+                'Ref': revision,
                 'Description': description
             }
 
@@ -367,7 +367,7 @@ class HubApi:
             headers=self.builder_headers(self.headers))
         handle_http_post_error(r, path, body)
         raise_on_error(r.json())
-        
+
         tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
         return tag_url
 

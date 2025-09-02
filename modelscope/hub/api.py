@@ -280,6 +280,97 @@ class HubApi:
 
         return model_repo_url
 
+    def create_model_tag(self,
+                         model_id: str,
+                         tag_name: str,
+                         description: str,
+                         ref: Optional[str] = None,
+                         endpoint: Optional[str] = None,
+                         token: Optional[str] = None,
+                         aigc_model: Optional['AigcModel'] = None) -> str:
+        """Create a tag for a model at ModelScope Hub.
+
+        Args:
+            model_id (str): The model id in format {owner}/{name}
+            tag_name (str): The tag name (e.g., "v1.0.0")
+            ref (str): The branch name, commit id, or tag name to create tag from (e.g., "master")
+            description (str): Description of this tag
+            endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_model (AigcModel, optional): AigcModel instance for AIGC model tag creation.
+                If provided, will create an AIGC model tag with automatic parameters.
+                Refer to modelscope.hub.utils.aigc.AigcModel for details.
+
+        Returns:
+            str: URL of the created tag
+
+        Raises:
+            InvalidParameter: If model_id, tag_name, ref, or description is invalid.
+            ValueError: If not login.
+
+        Note:
+            model_id = {owner}/{name}
+        """
+        if model_id is None:
+            raise InvalidParameter('model_id is required!')
+        if tag_name is None:
+            raise InvalidParameter('tag_name is required!')
+        if description is None:
+            raise InvalidParameter('description is required!')
+            
+        # Get cookies for authentication.
+        if token:
+            cookies = self.get_cookies(access_token=token)
+        else:
+            cookies = ModelScopeConfig.get_cookies()
+            if cookies is None:
+                raise ValueError('Token does not exist, please login first.')
+        if not endpoint:
+            endpoint = self.endpoint
+
+        owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Set path and body based on model type
+        if aigc_model is not None:
+            # Use AIGC model tag endpoint
+            path = f'{endpoint}/api/v1/models/aigc/repo/tag'
+            
+            # Base body for AIGC model tag
+            body = {
+                'CoverImages': aigc_model.cover_images,
+                'Name': name,
+                'Path': owner_or_group,
+                'TagShowName': tag_name,
+                'WeightsName': aigc_model.weight_filename,
+                'WeightsSha256': aigc_model.weight_sha256,
+                'WeightsSize': aigc_model.weight_size,
+                'Description': description,
+                'TriggerWords': aigc_model.trigger_words
+            }
+            
+        else:
+            if ref is None:
+                raise InvalidParameter('ref is required!')
+            # Use regular model tag endpoint
+            path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
+            
+            body = {
+                'TagName': tag_name,
+                'Ref': ref,
+                'Description': description
+            }
+
+        r = self.session.post(
+            path,
+            json=body,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers))
+        handle_http_post_error(r, path, body)
+        raise_on_error(r.json())
+        
+        tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
+        return tag_url
+
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):
         """Delete model_id from ModelScope.
 

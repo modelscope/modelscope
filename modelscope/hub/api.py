@@ -460,9 +460,11 @@ class HubApi:
             model_id=repo_id, revision=revision, endpoint=endpoint)
         commits = self.list_repo_commits(
             repo_id=repo_id, repo_type=REPO_TYPE_MODEL, revision=revision, endpoint=endpoint)
+        siblings = self.get_model_files(
+            model_id=repo_id, revision=revision, recursive=True, endpoint=endpoint)
 
         # Create ModelInfo from API response data
-        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group)
+        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group, siblings=siblings)
 
         return model_info
 
@@ -490,9 +492,11 @@ class HubApi:
             dataset_id=repo_id, revision=revision, endpoint=endpoint)
         commits = self.list_repo_commits(
             repo_id=repo_id, repo_type=REPO_TYPE_DATASET, revision=revision, endpoint=endpoint)
+        siblings = self.get_dataset_files(
+            repo_id=repo_id, revision=revision or DEFAULT_DATASET_REVISION, recursive=True, endpoint=endpoint)
 
         # Create DatasetInfo from API response data
-        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group)
+        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group, siblings=siblings)
 
         return dataset_info
 
@@ -1251,7 +1255,7 @@ class HubApi:
         commits_url = f'{endpoint}/api/v1/{repo_type}s/{repo_id}/commits' if repo_type else \
             f'{endpoint}/api/v1/models/{repo_id}/commits'
         params = {
-            'Ref': revision or DEFAULT_MODEL_REVISION or DEFAULT_REPOSITORY_REVISION,
+            'Ref': revision or DEFAULT_REPOSITORY_REVISION,
             'PageNumber': page_number,
             'PageSize': page_size
         }

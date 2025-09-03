@@ -39,6 +39,36 @@ class OrganizationInfo:
 
 
 @dataclass
+class BlobLfsInfo:
+    size: Optional[int] = None
+    sha256: Optional[str] = None
+
+
+@dataclass
+class RepoSibling:
+    """
+    Contains basic information about a repo file inside a repo on the Hub.
+
+    Attributes:
+        rfilename (str): file name, relative to the repo root.
+        size (`int`, *optional*): The file's size, in bytes.
+        blob_id (`str`, *optional*): The file's git OID.
+        lfs (`BlobLfsInfo`, *optional*): The file's LFS metadata.
+        type (`str`, *optional*): The file's type.
+        sha (`str`, *optional*): The file's latest commit SHA.
+        last_modified (`datetime`, *optional*): The file's last modified time.
+    """
+
+    rfilename: str
+    size: Optional[int] = None
+    blob_id: Optional[str] = None
+    type: Optional[str] = None
+    sha: Optional[str] = None
+    last_modified: Optional[datetime.datetime] = None
+    lfs: Optional[BlobLfsInfo] = None
+
+
+@dataclass
 class ModelInfo:
     """
     Contains detailed information about a model on ModelScope Hub. This object is returned by [`model_info`].
@@ -56,7 +86,7 @@ class ModelInfo:
         license (`str`, *optional*): Model license.
         downloads (`int`, *optional*): Number of downloads.
         likes (`int`, *optional*): Number of likes.
-        created_at (`datetime`, *optional*): Date of creation of the repo on the Hub..
+        created_at (`datetime`, *optional*): Date of creation of the repo on the Hub.
         last_updated_time (`datetime`, *optional*): Last update timestamp.
         architectures (`List[str]`, *optional*): Model architectures.
         model_type (`List[str]`, *optional*): Model types.
@@ -77,6 +107,7 @@ class ModelInfo:
         sha (`str`, *optional*): Latest commit SHA.
         last_modified (`datetime`, *optional*): Latest commit date.
         last_commit (`Dict[str, Any]`, *optional*): Latest commit information.
+        siblings (List[RepoSibling], optional): Basic information about files that constitute the model.
     """
 
     id: Optional[int]
@@ -108,6 +139,7 @@ class ModelInfo:
     # Model specific
     backend_support: Optional[str]
     model_infos: Optional[Dict[str, Any]]
+    siblings: Optional[List[RepoSibling]]
 
     # Content and settings
     tags: Optional[List[str]]
@@ -161,7 +193,7 @@ class ModelInfo:
         self.related_arxiv_id = kwargs.pop('RelatedArxivId', [])
         self.related_paper = kwargs.pop('RelatedPaper', [])
 
-        commits = kwargs.pop('commits', None)
+        commits = kwargs.pop('commits', None) or kwargs.pop('Commits', None)
         if commits and hasattr(commits, 'commits') and commits.commits:
             last_commit = commits.commits[0]
             self.last_commit = last_commit.to_dict() if hasattr(last_commit, 'to_dict') else None
@@ -172,6 +204,25 @@ class ModelInfo:
             self.sha = None
             self.last_modified = None
         self.author = kwargs.pop('author', '')
+
+        siblings = kwargs.pop('siblings', None) or kwargs.pop('Siblings', None)
+        if siblings:
+            self.siblings = [
+                RepoSibling(
+                    rfilename=sibling.get('Path') or sibling.get('path'),
+                    size=sibling.get('Size') or sibling.get('size'),
+                    blob_id=sibling.get('Sha256') or sibling.get('sha256'),
+                    type=sibling.get('Type') or sibling.get('type'),
+                    sha=sibling.get('Revision') or sibling.get('revision'),
+                    last_modified=convert_timestamp(sibling.get('CommittedDate') or sibling.get('committedDate')),
+                    lfs=BlobLfsInfo(
+                        size=sibling.get('Size') or sibling.get('size'),
+                        sha256=sibling.get('Sha256') or sibling.get('sha256'),
+                    )
+                ) for sibling in siblings
+            ]
+        else:
+            self.siblings = []
 
         # backward compatibility
         self.__dict__.update(kwargs)
@@ -201,6 +252,9 @@ class DatasetInfo:
         created_by (`str`, *optional*): Creator username.
         tags (`List[Dict[str, Any]]`): Dataset tags.
         last_commit (`Dict[str, Any]`, *optional*): Latest commit information.
+        sha (`str`, *optional*): Latest commit SHA.
+        last_modified (`datetime`, *optional*): Latest commit date.
+        siblings (`List[RepoSibling]`, *optional*): Basic information about files in the dataset.
     """
 
     id: Optional[int]
@@ -222,6 +276,7 @@ class DatasetInfo:
     last_commit: Optional[Dict[str, Any]]
     sha: Optional[str]
     last_modified: Optional[datetime.datetime]
+    siblings: Optional[List[RepoSibling]]
 
     def __init__(self, **kwargs):
         self.id = kwargs.pop('Id', None)
@@ -243,8 +298,8 @@ class DatasetInfo:
         self.organization = OrganizationInfo(**org_data) if org_data else None
         self.created_by = kwargs.pop('CreatedBy', None)
         self.tags = kwargs.pop('Tags', [])
-        commits = kwargs.pop('commits', None)
 
+        commits = kwargs.pop('commits', None) or kwargs.pop('Commits', None)
         if commits and hasattr(commits, 'commits') and commits.commits:
             last_commit = commits.commits[0]
             self.last_commit = last_commit.to_dict() if hasattr(last_commit, 'to_dict') else None
@@ -254,6 +309,25 @@ class DatasetInfo:
             self.last_commit = None
             self.sha = None
             self.last_modified = None
+
+        siblings = kwargs.pop('siblings', None) or kwargs.pop('Siblings', None)
+        if siblings:
+            self.siblings = [
+                RepoSibling(
+                    rfilename=sibling.get('Path') or sibling.get('path'),
+                    size=sibling.get('Size') or sibling.get('size'),
+                    blob_id=sibling.get('Sha256') or sibling.get('sha256'),
+                    type=sibling.get('Type') or sibling.get('type'),
+                    sha=sibling.get('Revision') or sibling.get('revision'),
+                    last_modified=convert_timestamp(sibling.get('CommittedDate') or sibling.get('committedDate')),
+                    lfs=BlobLfsInfo(
+                        size=sibling.get('Size') or sibling.get('size'),
+                        sha256=sibling.get('Sha256') or sibling.get('sha256'),
+                    )
+                ) for sibling in siblings
+            ]
+        else:
+            self.siblings = []
 
         # backward compatibility
         self.__dict__.update(kwargs)

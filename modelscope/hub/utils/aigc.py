@@ -97,7 +97,6 @@ class AigcModel:
         # Validate types and provide warnings
         self._validate_aigc_type()
         self._validate_base_model_type()
-        self._validate_revision()
 
         # Process model path and calculate weights information
         self._process_model_path()

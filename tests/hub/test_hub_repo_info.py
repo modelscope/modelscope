@@ -6,8 +6,10 @@ import unittest
 import zoneinfo
 from unittest.mock import Mock, patch
 
-from modelscope.hub.api import DatasetInfo, HubApi, ModelInfo
-from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL
+from modelscope.hub.api import HubApi
+from modelscope.hub.info import BlobLfsInfo, DatasetInfo, ModelInfo
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL)
 from modelscope.utils.repo_utils import DetailedCommitInfo
 from modelscope.utils.test_utils import test_level
 
@@ -18,9 +20,10 @@ class HubRepoInfoTest(unittest.TestCase):
         self.api = HubApi()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @patch.object(HubApi, 'get_model_files')
     @patch.object(HubApi, 'get_model')
     @patch.object(HubApi, 'list_repo_commits')
-    def test_model_info(self, mock_list_repo_commits, mock_get_model):
+    def test_model_info(self, mock_list_repo_commits, mock_get_model, mock_get_model_files):
         # Setup mock responses
         mock_get_model.return_value = {
             'Id': 123,
@@ -33,6 +36,14 @@ class HubRepoInfoTest(unittest.TestCase):
             }],
             'Tags': ['nlp', 'text']
         }
+        mock_get_model_files.return_value = [
+            {
+                'Path': 'file1.txt',
+                'Size': 100,
+                'Sha256': '1234567890',
+                'Type': 'blob'
+            }
+        ]
 
         # Mock commit history response
         commit = DetailedCommitInfo(
@@ -68,6 +79,10 @@ class HubRepoInfoTest(unittest.TestCase):
         self.assertEqual(info.tags, ['nlp', 'text'])
         self.assertEqual(info.sha, 'abc123')
         self.assertEqual(info.last_commit, commit.to_dict())
+        self.assertEqual(info.siblings[0].rfilename, 'file1.txt')
+        self.assertEqual(info.siblings[0].size, 100)
+        self.assertEqual(info.siblings[0].blob_id, '1234567890')
+        self.assertEqual(info.siblings[0].type, 'blob')
 
         # Verify correct method calls
         mock_get_model.assert_called_once_with(
@@ -77,11 +92,14 @@ class HubRepoInfoTest(unittest.TestCase):
             repo_type=REPO_TYPE_MODEL,
             revision='master',
             endpoint=None)
+        mock_get_model_files.assert_called_once_with(
+            model_id='demo/model', revision='master', endpoint=None, recursive=True)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @patch.object(HubApi, 'get_dataset_files')
     @patch.object(HubApi, 'get_dataset')
     @patch.object(HubApi, 'list_repo_commits')
-    def test_dataset_info(self, mock_list_repo_commits, mock_get_dataset):
+    def test_dataset_info(self, mock_list_repo_commits, mock_get_dataset, mock_get_dataset_files):
         # Setup mock responses
         mock_get_dataset.return_value = {
             'Id': 456,
@@ -99,6 +117,14 @@ class HubRepoInfoTest(unittest.TestCase):
                 }
             ]
         }
+        mock_get_dataset_files.return_value = [
+            {
+                'Path': 'data1.json',
+                'Size': 100,
+                'Sha256': '1234567890',
+                'Type': 'blob'
+            }
+        ]
 
         # Mock commit history response
         commits = [
@@ -149,6 +175,10 @@ class HubRepoInfoTest(unittest.TestCase):
         }])
         self.assertEqual(info.sha, 'c1')
         self.assertEqual(info.last_commit, commits[0].to_dict())
+        self.assertEqual(info.siblings[0].rfilename, 'data1.json')
+        self.assertEqual(info.siblings[0].size, 100)
+        self.assertEqual(info.siblings[0].blob_id, '1234567890')
+        self.assertEqual(info.siblings[0].type, 'blob')
 
         # Verify correct method calls
         mock_get_dataset.assert_called_once_with(
@@ -158,6 +188,8 @@ class HubRepoInfoTest(unittest.TestCase):
             repo_type=REPO_TYPE_DATASET,
             revision=None,
             endpoint=None)
+        mock_get_dataset_files.assert_called_once_with(
+            repo_id='demo/dataset', revision=DEFAULT_DATASET_REVISION, endpoint=None, recursive=True)
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @patch.object(HubApi, 'model_info')
@@ -222,7 +254,21 @@ class HubRepoInfoTest(unittest.TestCase):
             'Downloads': 100,
             'Stars': 50,
             'Architectures': ['transformer'],
-            'ModelType': ['nlp']
+            'ModelType': ['nlp'],
+            'Siblings': [
+                {
+                    'Path': 'model-1.bin',
+                    'Size': 100,
+                    'Sha256': '1234567890',
+                    'Type': 'blob'
+                },
+                {
+                    'Path': 'model-2.bin',
+                    'Size': 200,
+                    'Sha256': '1234567891',
+                    'Type': 'blob'
+                }
+            ]
         }
 
         # Create mock commits
@@ -269,6 +315,30 @@ class HubRepoInfoTest(unittest.TestCase):
         self.assertEqual(model_info.likes, 50)
         self.assertEqual(model_info.architectures, ['transformer'])
         self.assertEqual(model_info.model_type, ['nlp'])
+        self.assertEqual(model_info.siblings[0].__dict__, {
+            'rfilename': 'model-1.bin',
+            'size': 100,
+            'blob_id': '1234567890',
+            'type': 'blob',
+            'sha': None,
+            'last_modified': None,
+            'lfs': BlobLfsInfo(
+                size=100,
+                sha256='1234567890'
+            )
+        })
+        self.assertEqual(model_info.siblings[1].__dict__, {
+            'rfilename': 'model-2.bin',
+            'size': 200,
+            'blob_id': '1234567891',
+            'type': 'blob',
+            'sha': None,
+            'last_modified': None,
+            'lfs': BlobLfsInfo(
+                size=200,
+                sha256='1234567891'
+            )
+        })
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dataset_info_class(self):
@@ -295,6 +365,14 @@ class HubRepoInfoTest(unittest.TestCase):
             'Downloads': 200,
             'Likes': 75
         }
+        siblings = [
+            {
+                'Path': 'data-1.json',
+                'Size': 100,
+                'Sha256': '1234567890',
+                'Type': 'blob'
+            }
+        ]
 
         # Create mock commits
         commit = DetailedCommitInfo(
@@ -313,7 +391,7 @@ class HubRepoInfoTest(unittest.TestCase):
         commits.commits = [commit]
 
         # Create DatasetInfo instance
-        dataset_info = DatasetInfo(**dataset_data, commits=commits)
+        dataset_info = DatasetInfo(**dataset_data, commits=commits, siblings=siblings)
 
         # Verify properties
         self.assertEqual(dataset_info.id, 456)
@@ -348,6 +426,18 @@ class HubRepoInfoTest(unittest.TestCase):
         self.assertEqual(dataset_info.license, 'MIT')
         self.assertEqual(dataset_info.downloads, 200)
         self.assertEqual(dataset_info.likes, 75)
+        self.assertEqual(dataset_info.siblings[0].__dict__, {
+            'rfilename': 'data-1.json',
+            'size': 100,
+            'blob_id': '1234567890',
+            'type': 'blob',
+            'sha': None,
+            'last_modified': None,
+            'lfs': BlobLfsInfo(
+                size=100,
+                sha256='1234567890'
+            )
+        })
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_model_info_empty_commits(self):
@@ -438,6 +528,8 @@ class HubRepoInfoTest(unittest.TestCase):
         print(f'SHA: {info.sha}')
         if hasattr(info, 'last_modified'):
             print(f'Last Modified: {info.last_modified}')
+        if hasattr(info, 'siblings'):
+            print(f'Siblings[0]: {info.siblings[0]}')
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_real_dataset_repo_info(self):
@@ -468,6 +560,8 @@ class HubRepoInfoTest(unittest.TestCase):
         print(f'SHA: {info.sha}')
         if hasattr(info, 'last_modified'):
             print(f'Last Modified: {info.last_modified}')
+        if hasattr(info, 'siblings'):
+            print(f'Siblings[0]: {info.siblings[0]}')
 
 
 if __name__ == '__main__':

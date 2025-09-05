@@ -326,7 +326,6 @@ class HubApi:
                          model_id: str,
                          tag_name: str,
                          description: Optional[str] = None,
-                         revision: Optional[str] = None,
                          endpoint: Optional[str] = None,
                          token: Optional[str] = None,
                          aigc_model: Optional['AigcModel'] = None) -> str:
@@ -335,7 +334,6 @@ class HubApi:
         Args:
             model_id (str): The model id in format {owner}/{name}
             tag_name (str): The tag name (e.g., "v1.0.0")
-            revision (str): The branch name, commit id, or tag name to create tag from (e.g., "master")
             description (str): Description of this tag
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
             token (str, optional): access token for authentication
@@ -398,11 +396,9 @@ class HubApi:
             }
 
         else:
-            if revision is None:
-                raise InvalidParameter('revision is required!')
             # Use regular model tag endpoint
             path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
-
+            revision = 'master'
             body = {
                 'TagName': tag_name,
                 'Ref': revision,

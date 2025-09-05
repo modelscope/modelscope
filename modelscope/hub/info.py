@@ -9,6 +9,36 @@ from typing import Any, Dict, List, Literal, Optional
 from modelscope.hub.utils.utils import convert_timestamp
 
 
+def _parse_siblings(siblings_data: Optional[List[Dict[str, Any]]]) -> List['RepoSibling']:
+    """
+    Parse siblings data into RepoSibling objects.
+
+    Args:
+        siblings_data: Raw siblings data from API response, supporting both
+                      uppercase (Path, Size, etc.) and lowercase (path, size, etc.) field names.
+
+    Returns:
+        List of RepoSibling objects.
+    """
+    if not siblings_data:
+        return []
+
+    return [
+        RepoSibling(
+            rfilename=sibling.get('Path') or sibling.get('path'),
+            size=sibling.get('Size') or sibling.get('size'),
+            blob_id=sibling.get('Sha256') or sibling.get('sha256'),
+            type=sibling.get('Type') or sibling.get('type'),
+            sha=sibling.get('Revision') or sibling.get('revision'),
+            last_modified=convert_timestamp(sibling.get('CommittedDate') or sibling.get('committedDate')),
+            lfs=BlobLfsInfo(
+                size=sibling.get('Size') or sibling.get('size'),
+                sha256=sibling.get('Sha256') or sibling.get('sha256'),
+            )
+        ) for sibling in siblings_data
+    ]
+
+
 @dataclass
 class OrganizationInfo:
     """Organization information for a repository."""
@@ -206,23 +236,7 @@ class ModelInfo:
         self.author = kwargs.pop('author', '')
 
         siblings = kwargs.pop('siblings', None) or kwargs.pop('Siblings', None)
-        if siblings:
-            self.siblings = [
-                RepoSibling(
-                    rfilename=sibling.get('Path') or sibling.get('path'),
-                    size=sibling.get('Size') or sibling.get('size'),
-                    blob_id=sibling.get('Sha256') or sibling.get('sha256'),
-                    type=sibling.get('Type') or sibling.get('type'),
-                    sha=sibling.get('Revision') or sibling.get('revision'),
-                    last_modified=convert_timestamp(sibling.get('CommittedDate') or sibling.get('committedDate')),
-                    lfs=BlobLfsInfo(
-                        size=sibling.get('Size') or sibling.get('size'),
-                        sha256=sibling.get('Sha256') or sibling.get('sha256'),
-                    )
-                ) for sibling in siblings
-            ]
-        else:
-            self.siblings = []
+        self.siblings = _parse_siblings(siblings)
 
         # backward compatibility
         self.__dict__.update(kwargs)
@@ -311,23 +325,7 @@ class DatasetInfo:
             self.last_modified = None
 
         siblings = kwargs.pop('siblings', None) or kwargs.pop('Siblings', None)
-        if siblings:
-            self.siblings = [
-                RepoSibling(
-                    rfilename=sibling.get('Path') or sibling.get('path'),
-                    size=sibling.get('Size') or sibling.get('size'),
-                    blob_id=sibling.get('Sha256') or sibling.get('sha256'),
-                    type=sibling.get('Type') or sibling.get('type'),
-                    sha=sibling.get('Revision') or sibling.get('revision'),
-                    last_modified=convert_timestamp(sibling.get('CommittedDate') or sibling.get('committedDate')),
-                    lfs=BlobLfsInfo(
-                        size=sibling.get('Size') or sibling.get('size'),
-                        sha256=sibling.get('Sha256') or sibling.get('sha256'),
-                    )
-                ) for sibling in siblings
-            ]
-        else:
-            self.siblings = []
+        self.siblings = _parse_siblings(siblings)
 
         # backward compatibility
         self.__dict__.update(kwargs)

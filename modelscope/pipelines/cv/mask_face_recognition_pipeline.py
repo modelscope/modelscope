@@ -38,7 +38,8 @@ class MaskFaceRecognitionPipeline(FaceProcessingBasePipeline):
         # face recong model
         super().__init__(model=model, **kwargs)
         face_model = iresnet286()
-        state_dict = torch.load(osp.join(model, ModelFile.TORCH_MODEL_FILE))
+        state_dict = torch.load(
+            osp.join(model, ModelFile.TORCH_MODEL_FILE), weights_only=True)
         reviesed_state_dict = self._prefix_revision(state_dict)
         face_model.load_state_dict(reviesed_state_dict, strict=True)
         face_model = face_model.to(self.device)

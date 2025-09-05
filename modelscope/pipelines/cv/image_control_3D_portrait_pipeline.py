@@ -1,14 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict
 
-import numpy as np
-
 from modelscope.metainfo import Pipelines
 from modelscope.outputs import OutputKeys
-from modelscope.pipelines.base import Input, Pipeline
+from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.preprocessors import LoadImage
-from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()

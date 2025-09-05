@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import glob
 import os
 from typing import List, Optional
@@ -80,6 +79,8 @@ class AigcModel:
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
             trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
+                Note: Auto-upload during AIGC create is temporarily disabled by server. This parameter
+                will not take effect at creation time.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
@@ -96,6 +97,7 @@ class AigcModel:
         # Validate types and provide warnings
         self._validate_aigc_type()
         self._validate_base_model_type()
+        self._validate_revision()
 
         # Process model path and calculate weights information
         self._process_model_path()
@@ -131,6 +133,30 @@ class AigcModel:
             target_file = self.model_path
             logger.info('Using file: %s', os.path.basename(target_file))
         elif os.path.isdir(self.model_path):
+            # Validate top-level directory: it must not be empty; and if it has files,
+            # they must not be only the common placeholder files
+            top_entries = os.listdir(self.model_path)
+            if len(top_entries) == 0:
+                raise ValueError(
+                    f'Directory is empty: {self.model_path}. '
+                    f'Please place at least one model file at the top level (e.g., .safetensors/.pth/.bin).'
+                )
+
+            top_files = [
+                name for name in top_entries
+                if os.path.isfile(os.path.join(self.model_path, name))
+            ]
+            placeholder_names = {
+                '.gitattributes', 'configuration.json', 'readme.md'
+            }
+            if top_files:
+                normalized = {name.lower() for name in top_files}
+                if normalized.issubset(placeholder_names):
+                    raise ValueError(
+                        'Top-level directory contains only [.gitattributes, configuration.json, README.md]. '
+                        'Please place additional model files at the top level (e.g., .safetensors/.pth/.bin).'
+                    )
+
             # Priority order for metadata file: safetensors -> pth -> bin -> first file
             file_extensions = ['.safetensors', '.pth', '.bin']
             target_file = None

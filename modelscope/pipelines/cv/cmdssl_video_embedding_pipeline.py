@@ -44,7 +44,7 @@ class CMDSSLVideoEmbeddingPipeline(Pipeline):
         else:
             self._device = torch.device('cpu')
         self.model = self.model.to(self._device).eval().requires_grad_(False)
-        self.model.load_state_dict(torch.load(model_path))
+        self.model.load_state_dict(torch.load(model_path, weights_only=True))
         logger.info('load model done')
 
     def preprocess(self, input: Input) -> Dict[str, Any]:

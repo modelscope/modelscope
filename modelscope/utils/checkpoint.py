@@ -121,7 +121,7 @@ def load_checkpoint(filename,
                     lr_scheduler: _LRScheduler = None):
     if not os.path.exists(filename):
         raise ValueError(f'Checkpoint file {filename} does not exist!')
-    checkpoint = torch.load(filename, map_location='cpu')
+    checkpoint = torch.load(filename, map_location='cpu', weights_only=True)
 
     if optimizer is not None:
         if 'optimizer' in checkpoint:
@@ -547,7 +547,7 @@ def load_task_model_checkpoint(model_to_load,
 
     # TODO Sharded ckpt
     ckpt_file = os.path.join(model_local_dir, ModelFile.TORCH_MODEL_BIN_FILE)
-    state_dict = torch.load(ckpt_file, map_location='cpu')
+    state_dict = torch.load(ckpt_file, map_location='cpu', weights_only=True)
     if default_dtype is not None:
         torch.set_default_dtype(default_dtype)
 

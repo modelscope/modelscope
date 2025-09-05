@@ -65,7 +65,8 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1,
+                         'Not supported in python311 or later')
     def test_normal(self):
         kwargs = dict(
             model=self.model_id,
@@ -85,7 +86,8 @@ class TestKwsFarfieldTrainer(unittest.TestCase):
         self.assertIn('val_dataset.bin', results_files,
                       f'work_dir:{self.tmp_dir}')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1,
+                         'Not supported in python311 or later')
     def test_normal_iot(self):
         kwargs = dict(
             model=self.model_id_iot,

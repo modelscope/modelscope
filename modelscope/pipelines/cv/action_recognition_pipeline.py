@@ -40,7 +40,9 @@ class ActionRecognitionPipeline(Pipeline):
         self.infer_model = BaseVideoModel(cfg=self.cfg).to(self.device)
         self.infer_model.eval()
         self.infer_model.load_state_dict(
-            torch.load(model_path, map_location=self.device)['model_state'])
+            torch.load(
+                model_path, map_location=self.device,
+                weights_only=True)['model_state'])
         self.label_mapping = self.cfg.label_mapping
         logger.info('load model done')
 
@@ -91,7 +93,9 @@ class PSTActionRecognitionPipeline(Pipeline):
         self.infer_model = PatchShiftTransformer(model).to(self.device)
         self.infer_model.eval()
         self.infer_model.load_state_dict(
-            torch.load(model_path, map_location=self.device)['state_dict'])
+            torch.load(
+                model_path, map_location=self.device,
+                weights_only=True)['state_dict'])
         self.label_mapping = self.cfg.label_mapping
         logger.info('load model done')
 

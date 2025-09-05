@@ -42,6 +42,8 @@ def get_all_imported_modules():
         'BatchFeature',
         'Qwen.*',
         'Llama.*',
+        'Intern.*',
+        'Deepseek.*',
         'PretrainedConfig',
         'PreTrainedTokenizer',
         'PreTrainedModel',
@@ -242,11 +244,11 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     extra_allow_file_pattern = list(
                         (cls.vocab_files_names.values()) if cls is not None
                         and hasattr(cls, 'vocab_files_names') else []) + [
-                            'chat_template.jinja', r'*.json', r'*.py'
+                            'chat_template.jinja', r'*.json', r'*.py', r'*.txt'
                         ]  # noqa
                 elif 'Processor' in module_class.__name__:
                     extra_allow_file_pattern = [
-                        'chat_template.jinja', r'*.json', r'*.py'
+                        'chat_template.jinja', r'*.json', r'*.py', r'*.txt'
                     ]
 
                 kwargs['allow_file_pattern'] = extra_allow_file_pattern
@@ -448,13 +450,22 @@ def _unpatch_pretrained_class(all_imported_modules):
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             var.from_pretrained = var._from_pretrained_origin
-            delattr(var, '_from_pretrained_origin')
+            try:
+                delattr(var, '_from_pretrained_origin')
+            except:  # noqa
+                pass
         if has_get_peft_type and hasattr(var, '_get_peft_type_origin'):
             var._get_peft_type = var._get_peft_type_origin
-            delattr(var, '_get_peft_type_origin')
+            try:
+                delattr(var, '_get_peft_type_origin')
+            except:  # noqa
+                pass
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             var.get_config_dict = var._get_config_dict_origin
-            delattr(var, '_get_config_dict_origin')
+            try:
+                delattr(var, '_get_config_dict_origin')
+            except:  # noqa
+                pass
 
 
 def _patch_hub():

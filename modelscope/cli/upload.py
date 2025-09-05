@@ -3,7 +3,7 @@ import os
 from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
-from modelscope.hub.api import HubApi, ModelScopeConfig
+from modelscope.hub.api import HubApi
 from modelscope.hub.utils.utils import convert_patterns, get_endpoint
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 
@@ -135,21 +135,7 @@ class UploadCMD(CLICommand):
             self.local_path = self.args.local_path
             self.path_in_repo = self.args.path_in_repo
 
-        # Check token and login
-        # The cookies will be reused if the user has logged in before.
-        cookies = None
         api = HubApi(endpoint=self.args.endpoint)
-        if self.args.token:
-            cookies = api.get_cookies(access_token=self.args.token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError(
-                'No credential found for entity upload. '
-                'You can pass the `--token` argument, '
-                'or use api.login(access_token=`your_sdk_token`). '
-                'Your token is available at https://modelscope.cn/my/myaccesstoken'
-            )
 
         if os.path.isfile(self.local_path):
             api.upload_file(

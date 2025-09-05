@@ -8,12 +8,14 @@ import os
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import (Any, BinaryIO, Callable, Generator, Iterable, Iterator,
                     List, Literal, Optional, TypeVar, Union)
 
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
+from modelscope.hub.utils.utils import convert_timestamp
 from modelscope.utils.file_utils import get_file_hash
 
 T = TypeVar('T')
@@ -258,6 +260,76 @@ class CommitInfo:
 
 
 @dataclass
+class DetailedCommitInfo:
+    """Detailed commit information from repository history API."""
+    id: Optional[str]
+    short_id: Optional[str]
+    title: Optional[str]
+    message: Optional[str]
+    author_name: Optional[str]
+    authored_date: Optional[datetime]
+    author_email: Optional[str]
+    committed_date: Optional[datetime]
+    committer_name: Optional[str]
+    committer_email: Optional[str]
+    created_at: Optional[datetime]
+
+    @classmethod
+    def from_api_response(cls, data: dict) -> 'DetailedCommitInfo':
+        """Create DetailedCommitInfo from API response data."""
+        return cls(
+            id=data.get('Id', ''),
+            short_id=data.get('ShortId', ''),
+            title=data.get('Title', ''),
+            message=data.get('Message', ''),
+            author_name=data.get('AuthorName', ''),
+            authored_date=convert_timestamp(data.get('AuthoredDate', None)),
+            author_email=data.get('AuthorEmail', ''),
+            committed_date=convert_timestamp(data.get('CommittedDate', None)),
+            committer_name=data.get('CommitterName', ''),
+            committer_email=data.get('CommitterEmail', ''),
+            created_at=convert_timestamp(data.get('CreatedAt', None)),
+        )
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return {
+            'id': self.id,
+            'short_id': self.short_id,
+            'title': self.title,
+            'message': self.message,
+            'author_name': self.author_name,
+            'authored_date': self.authored_date,
+            'author_email': self.author_email,
+            'committed_date': self.committed_date,
+            'committer_name': self.committer_name,
+            'committer_email': self.committer_email,
+            'created_at': self.created_at,
+        }
+
+
+@dataclass
+class CommitHistoryResponse:
+    """Response from commit history API."""
+    commits: Optional[List[DetailedCommitInfo]]
+    total_count: Optional[int]
+
+    @classmethod
+    def from_api_response(cls, data: dict) -> 'CommitHistoryResponse':
+        """Create CommitHistoryResponse from API response data."""
+        commits_data = data.get('Data', {}).get('Commit', [])
+        commits = [
+            DetailedCommitInfo.from_api_response(commit)
+            for commit in commits_data
+        ]
+
+        return cls(
+            commits=commits,
+            total_count=data.get('TotalCount', 0),
+        )
+
+
+@dataclass
 class RepoUrl:
 
     url: Optional[str] = None
@@ -337,6 +409,7 @@ class UploadInfo:
     @classmethod
     def from_fileobj(cls, fileobj: BinaryIO, file_hash_info: dict = None):
         file_hash_info: dict = file_hash_info or get_file_hash(fileobj)
+        fileobj.seek(0, os.SEEK_SET)
         sample = fileobj.read(512)
         return cls(
             sha256=file_hash_info['file_hash'],

@@ -128,7 +128,7 @@ class TBSDetectionPipeline(Pipeline):
         tmp_inp = torch.from_numpy(tmp_inp).type(torch.FloatTensor)
         img = torch.unsqueeze(tmp_inp, dim=0)
         model_path = os.path.join(self.model, 'pytorch_yolov4.pt')
-        model = torch.load(model_path)
+        model = torch.load(model_path, weights_only=True)
         outputs = model(img.cuda())
         result = {'data': outputs, 'img_path': input['img_path']}
         return result

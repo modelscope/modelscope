@@ -45,7 +45,9 @@ class VideoSummarizationPipeline(Pipeline):
         self.googlenet_model = bvlc_googlenet()
         self.googlenet_model.model.load_state_dict(
             torch.load(
-                googlenet_model_path, map_location=torch.device(self.device)))
+                googlenet_model_path,
+                map_location=torch.device(self.device),
+                weights_only=True))
         self.googlenet_model = self.googlenet_model.to(self.device).eval()
 
         self.pgl_model = PGLVideoSummarization(model)

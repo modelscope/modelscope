@@ -47,7 +47,8 @@ class ImageSuperResolutionPipeline(Pipeline):
             scale=self.scale).to(self.device)
 
         model_path = f'{self.model}/{ModelFile.TORCH_MODEL_FILE}'
-        self.sr_model.load_state_dict(torch.load(model_path), strict=True)
+        self.sr_model.load_state_dict(
+            torch.load(model_path, weights_only=True), strict=True)
 
         logger.info('load model done')
 

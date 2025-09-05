@@ -48,7 +48,8 @@ class FaceImageGenerationPipeline(Pipeline):
 
         self.model_file = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
 
-        self.generator.load_state_dict(torch.load(self.model_file)['g_ema'])
+        self.generator.load_state_dict(
+            torch.load(self.model_file, weights_only=True)['g_ema'])
         logger.info('load model done')
 
         self.mean_latent = None

@@ -42,7 +42,7 @@ def load_model(cfg, ckpt, strict=True):
     config = OmegaConf.load(cfg)
     model = instantiate_from_config(config.model)
     print(f'loading model from {ckpt} ...')
-    ckpt = torch.load(ckpt, map_location='cpu')
+    ckpt = torch.load(ckpt, map_location='cpu', weights_only=True)
     model.load_state_dict(ckpt['state_dict'], strict=strict)
     model = model.cuda().eval()
     return model

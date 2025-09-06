@@ -3,8 +3,9 @@
 
 import datetime
 import unittest
-import zoneinfo
 from unittest.mock import Mock, patch
+
+import zoneinfo
 
 from modelscope.hub.api import DatasetInfo, HubApi, ModelInfo
 from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL

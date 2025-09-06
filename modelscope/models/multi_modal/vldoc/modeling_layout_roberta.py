@@ -20,11 +20,12 @@ from transformers.modeling_outputs import (
     CausalLMOutputWithCrossAttentions, MaskedLMOutput,
     MultipleChoiceModelOutput, QuestionAnsweringModelOutput,
     SequenceClassifierOutput, TokenClassifierOutput)
-from transformers.modeling_utils import (PreTrainedModel,
-                                         apply_chunking_to_forward,
-                                         find_pruneable_heads_and_indices,
-                                         prune_linear_layer)
+from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
+
+from modelscope.utils.torch_utils import (apply_chunking_to_forward,
+                                          find_pruneable_heads_and_indices,
+                                          prune_linear_layer)
 
 logger = logging.get_logger()
 

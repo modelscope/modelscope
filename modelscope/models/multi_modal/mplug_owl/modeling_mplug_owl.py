@@ -36,10 +36,7 @@ from transformers.modeling_outputs import (
     BaseModelOutput, BaseModelOutputWithPastAndCrossAttentions,
     BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndCrossAttentions,
     CausalLMOutputWithCrossAttentions)
-from transformers.modeling_utils import (PreTrainedModel,
-                                         apply_chunking_to_forward,
-                                         find_pruneable_heads_and_indices,
-                                         prune_linear_layer)
+from transformers.modeling_utils import PreTrainedModel
 from transformers.models.auto import AutoModelForCausalLM
 from transformers.utils import ModelOutput
 
@@ -52,6 +49,9 @@ from modelscope.models.multi_modal.mplug_owl.configuration_mplug_owl import (
 from modelscope.outputs import OutputKeys
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.torch_utils import (apply_chunking_to_forward,
+                                          find_pruneable_heads_and_indices,
+                                          prune_linear_layer)
 
 __all__ = ['MplugOwlForConditionalGeneration']
 

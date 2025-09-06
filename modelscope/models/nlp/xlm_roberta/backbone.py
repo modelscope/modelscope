@@ -22,10 +22,7 @@ import torch.utils.checkpoint
 from packaging import version
 from torch import nn
 from transformers.activations import ACT2FN
-from transformers.modeling_utils import (PreTrainedModel,
-                                         apply_chunking_to_forward,
-                                         find_pruneable_heads_and_indices,
-                                         prune_linear_layer)
+from transformers.modeling_utils import PreTrainedModel
 
 from modelscope.metainfo import Models
 from modelscope.models import Model, TorchModel
@@ -34,6 +31,9 @@ from modelscope.outputs import AttentionBackboneModelOutput
 from modelscope.utils.constant import Tasks
 from modelscope.utils.logger import get_logger
 from modelscope.utils.nlp.utils import parse_labels_in_order
+from modelscope.utils.torch_utils import (apply_chunking_to_forward,
+                                          find_pruneable_heads_and_indices,
+                                          prune_linear_layer)
 from .configuration import XLMRobertaConfig
 
 logger = get_logger()

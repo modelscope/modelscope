@@ -27,9 +27,9 @@ on:
         description: 'Other params in --xxx xxx'
         required: false
       python_version:
-        description: 'Python version to use, default is 3.10.14'
+        description: 'Python version to use, default is 3.11.11'
         required: false
-        default: '3.10.14'
+        default: '3.11.11'
 
 run-name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ inputs.workflow_name }}-${{ inputs.python_version }}-by-@${{ github.actor }}
 

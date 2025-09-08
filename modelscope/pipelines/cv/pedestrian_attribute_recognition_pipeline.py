@@ -52,7 +52,8 @@ class PedestrainAttributeRecognitionPipeline(Pipeline):
         self.attribute_model = PedestrainAttribute(num_classes=39)
         state = torch.load(
             osp.join(model, ModelFile.TORCH_MODEL_FILE),
-            map_location=self.device)
+            map_location=self.device,
+            weights_only=True)
         self.attribute_model.load_state_dict(state)
         self.attribute_model = self.attribute_model.to(self.device)
         self.attribute_model.eval()

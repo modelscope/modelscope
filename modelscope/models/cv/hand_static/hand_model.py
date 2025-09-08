@@ -62,7 +62,8 @@ class HandStatic(TorchModel):
             self.device = 'cpu'
         self.params = torch.load(
             '{}/{}'.format(model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
-            map_location=self.device)
+            map_location=self.device,
+            weights_only=True)
 
         self.model.load_state_dict(self.params)
         self.model.to(self.device)

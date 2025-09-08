@@ -47,7 +47,8 @@ class MDMMotionGeneration(Pipeline):
         self.fps = 20
         self.n_frames = 120
         self.mdm, self.diffusion = create_model(self.cfg)
-        state_dict = torch.load(model_path, map_location='cpu')
+        state_dict = torch.load(
+            model_path, map_location='cpu', weights_only=True)
         load_model_wo_clip(self.mdm, state_dict)
         self.mdm = ClassifierFreeSampleModel(self.mdm)
         self.mdm.to(self.device)

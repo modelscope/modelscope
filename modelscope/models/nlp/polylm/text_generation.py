@@ -9,7 +9,6 @@ from modelscope.metainfo import Models
 from modelscope.models.base import Tensor, TorchModel
 from modelscope.models.builder import MODELS
 from modelscope.utils.constant import Tasks
-from modelscope.utils.hub import read_config
 from modelscope.utils.logger import get_logger
 from modelscope.utils.streaming_output import StreamingOutputMixin
 
@@ -30,11 +29,17 @@ class PolyLMForTextGeneration(TorchModel, StreamingOutputMixin):
         super().__init__(model_dir, *args, **kwargs)
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_dir, legacy=False, use_fast=False)
-        logger.warning(
+
+        self.check_trust_remote_code(
+            info_str=
             f'Use trust_remote_code=True. Will invoke codes from {model_dir}. Please make sure '
-            'that you can trust the external codes.')
+            'that you can trust the external codes.',
+            model_dir=model_dir)
+
         self.model = AutoModelForCausalLM.from_pretrained(
-            model_dir, device_map='auto', trust_remote_code=True)
+            model_dir,
+            device_map='auto',
+            trust_remote_code=self.trust_remote_code)
         self.model.eval()
 
     def forward(self, input: Dict[str, Tensor], **kwargs) -> Dict[str, Tensor]:

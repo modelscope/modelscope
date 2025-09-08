@@ -10,8 +10,9 @@ import torch
 import tqdm
 from rouge import Rouge
 from torch.cuda.amp import GradScaler, autocast
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from transformers import AdamW, get_scheduler
+from transformers import get_scheduler
 
 from modelscope.metainfo import Trainers
 from modelscope.models import Model
@@ -251,7 +252,7 @@ class DocumentGroundedDialogGenerateTrainer(EpochBasedTrainer):
         Evaluate testsets
         """
         if checkpoint_path is not None:
-            state_dict = torch.load(checkpoint_path)
+            state_dict = torch.load(checkpoint_path, weights_only=True)
             self.model.model.load_state_dict(state_dict)
 
         valid_loader = DataLoader(

@@ -62,7 +62,7 @@ class Image2ImageGenerationPipeline(Pipeline):
             num_heads=self.cfg.Params.vit.vit_num_heads,
             num_layers=self.cfg.Params.vit.vit_num_layers).eval(
             ).requires_grad_(False).to(self._device)  # noqa E123
-        state = torch.load(vit_model_path)
+        state = torch.load(vit_model_path, weights_only=True)
         state = {
             k[len('visual.'):]: v
             for k, v in state.items() if k.startswith('visual.')
@@ -81,7 +81,8 @@ class Image2ImageGenerationPipeline(Pipeline):
             codebook_size=self.cfg.Params.ae.ae_codebook_size).eval(
             ).requires_grad_(False).to(self._device)  # noqa E123
         self.autoencoder.load_state_dict(
-            torch.load(ae_model_path, map_location=self._device))
+            torch.load(
+                ae_model_path, map_location=self._device, weights_only=True))
         logger.info('load autoencoder model done')
 
         # load decoder model
@@ -102,7 +103,10 @@ class Image2ImageGenerationPipeline(Pipeline):
             dropout=self.cfg.Params.unet.unet_dropout).eval().requires_grad_(
                 False).to(self._device)
         self.decoder.load_state_dict(
-            torch.load(decoder_model_path, map_location=self._device))
+            torch.load(
+                decoder_model_path,
+                map_location=self._device,
+                weights_only=True))
         logger.info('load decoder model done')
 
         # diffusion

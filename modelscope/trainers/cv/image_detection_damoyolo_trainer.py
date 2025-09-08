@@ -321,7 +321,8 @@ class DamoyoloTrainer:
             self.grad_clip = 30
             self.tea_model = build_local_model(self.tea_cfg, self.device)
             self.tea_model.eval()
-            tea_ckpt = torch.load(args.tea_ckpt, map_location=self.device)
+            tea_ckpt = torch.load(
+                args.tea_ckpt, map_location=self.device, weights_only=True)
             if 'model' in tea_ckpt:
                 self.tea_model.load_state_dict(tea_ckpt['model'], strict=True)
             elif 'state_dict' in tea_ckpt:
@@ -527,7 +528,8 @@ class DamoyoloTrainer:
 
     def resume_model(self, resume_path, load_optimizer=False):
         ckpt_file_path = resume_path
-        ckpt = torch.load(ckpt_file_path, map_location=self.device)
+        ckpt = torch.load(
+            ckpt_file_path, map_location=self.device, weights_only=True)
         if 'state_dict' in ckpt:
             self.model.load_state_dict(ckpt['state_dict'])
         elif 'model' in ckpt:

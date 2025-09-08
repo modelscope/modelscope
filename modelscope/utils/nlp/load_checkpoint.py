@@ -65,7 +65,9 @@ def _get_ckpt_name(mp_rank, checkpoints_path, tag):
 def pre_load(mp_rank, load_dir, tag=''):
     load_path = _get_ckpt_name(mp_rank, load_dir, tag)
     checkpoint = torch.load(
-        load_path, map_location=lambda storage, loc: storage)
+        load_path,
+        map_location=lambda storage, loc: storage,
+        weights_only=True)
     return checkpoint['module'] if 'module' in checkpoint else checkpoint
 
 
@@ -82,7 +84,9 @@ def _load_checkpoint(model,
         return None, None
 
     checkpoint = torch.load(
-        load_path, map_location=lambda storage, loc: storage)
+        load_path,
+        map_location=lambda storage, loc: storage,
+        weights_only=True)
 
     model.load_module_state_dict(
         state_dict=checkpoint['module'], strict=load_module_strict)

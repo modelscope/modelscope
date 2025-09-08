@@ -66,7 +66,7 @@ class ImageColorizationPipeline(Pipeline):
             ).to(self.device)
         else:
             body = models.resnet34(pretrained=True)
-            body = torch.nn.Sequential(*list(body.children())[:cut])
+            body = torch.nn.Sequential(*list(body.children())[:self.cut])
             self.model = DynamicUnetDeep(
                 body,
                 n_classes=3,
@@ -81,6 +81,8 @@ class ImageColorizationPipeline(Pipeline):
             ).to(self.device)
 
         model_path = f'{model}/{ModelFile.TORCH_MODEL_FILE}'
+
+        self.check_trust_remote_code(model_dir=model)
         self.model.load_state_dict(
             torch.load(model_path, map_location=torch.device('cpu'))['model'],
             strict=True)

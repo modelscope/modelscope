@@ -43,7 +43,7 @@ class ImageStructuredModelProbingPipeline(Pipeline):
         super().__init__(model=model, **kwargs)
         self.model.eval()
         model_dir = os.path.join(model, 'food101-clip-vitl14-full.pt')
-        model_file = torch.load(model_dir)
+        model_file = torch.load(model_dir, weights_only=True)
         self.label_map = model_file['meta_info']['label_map']
         logger.info('load model done')
 

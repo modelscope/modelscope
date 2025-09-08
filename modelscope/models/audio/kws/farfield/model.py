@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import os
+import sys
 import tempfile
 from typing import Dict, Optional
 
@@ -46,7 +47,16 @@ class FSMNSeleNetV2Decorator(TorchModel):
             if os.path.exists(model_txt_file):
                 conf_dict = dict(kws_model=model_txt_file)
                 update_conf(sc_config_file, new_config_file, conf_dict)
-                import py_sound_connect
+                try:
+                    if sys.version_info >= (3, 11):
+                        raise ImportError('Python version needs to be <= 3.10')
+                    import py_sound_connect
+                except ImportError:
+                    raise ImportError(
+                        'py_sound_connect needs python<=3.10, you can install it by:'
+                        'pip install py_sound_connect -f '
+                        'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
+                    )
                 self._sc = py_sound_connect.SoundConnect(new_config_file)
                 self.size_in = self._sc.bytesPerBlockIn()
                 self.size_out = self._sc.bytesPerBlockOut()

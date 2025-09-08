@@ -57,6 +57,7 @@ class HubRetryTest(unittest.TestCase):
         rsp.read = get_content
         rsp.chunked = False
         rsp.length_remaining = 0
+        rsp.version_string = 0
         rsp.headers = {}
         # retry 2 times and success.
         getconn_mock.return_value.getresponse.side_effect = [
@@ -100,8 +101,10 @@ class HubRetryTest(unittest.TestCase):
         failed_rsp.msg = HTTPMessage()
         failed_rsp.read = get_content
         failed_rsp.chunked = True
+        failed_rsp.version_string = 0
         success_rsp.length_remaining = 2957783
         success_rsp.headers = {'Content-Length': '2957783'}
+        success_rsp.version_string = 0
 
         # retry 5 times and success.
         getconn_mock.return_value.getresponse.side_effect = [

@@ -34,7 +34,8 @@ class EfficientNetForFaceEmotion(TorchModel):
             logger.info('Use CPU')
         pretrained_params = torch.load(
             '{}/{}'.format(model_dir, ModelFile.TORCH_MODEL_BIN_FILE),
-            map_location=self.device)
+            map_location=self.device,
+            weights_only=True)
 
         state_dict = pretrained_params['model']
         new_state = {}

@@ -21,18 +21,15 @@ if [ "$MODELSCOPE_SDK_DEBUG" == "True" ]; then
         fi
     fi
 
-    pip install -r  requirements/framework.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-    pip install -r requirements/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-    pip install -r  requirements/cv.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-    pip install -r  requirements/multi-modal.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-    pip install -r  requirements/nlp.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-    pip install -r  requirements/science.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
-
+    pip install -U sentence_transformers
     python -m spacy download en_core_web_sm
     pip install faiss-gpu
     pip install healpy
-    pip install huggingface-hub==0.25.2
-    pip install ms-swift>=3.0.1
+    pip install ms-swift -U
+    pip install huggingface-hub transformers -U
+    pip install py_sound_connect -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
+    pip uninstall paint_ldm -y
+    pip install paint_ldm -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html --no-index
     # test with install
     pip install .
 else
@@ -40,6 +37,7 @@ else
 fi
 # remove torch_extensions folder to avoid ci hang.
 rm -rf ~/.cache/torch_extensions
+export MODELSCOPE_LOG_LEVEL=30
 if [ $# -eq 0 ]; then
     ci_command="python tests/run.py --subprocess"
 else

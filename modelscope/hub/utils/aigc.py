@@ -80,8 +80,6 @@ class AigcModel:
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
             trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
-                Note: Auto-upload during AIGC create is temporarily disabled by server. This parameter
-                will not take effect at creation time.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type

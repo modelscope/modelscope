@@ -48,10 +48,12 @@ class AigcModel:
 
     # Supported base model types for reference
     BASE_MODEL_TYPES = {
-        'SD_1_5', 'SD_XL', 'SD_3', 'FLUX_1', 'WAN_VIDEO_2_1_T2V_1_3_B',
-        'WAN_VIDEO_2_1_T2V_14_B', 'WAN_VIDEO_2_1_I2V_14_B',
-        'WAN_VIDEO_2_1_FLF2V_14_B', 'WAN_VIDEO_2_2_T2V_5_B',
-        'WAN_VIDEO_2_2_T2V_14_B', 'WAN_VIDEO_2_2_I2V_14_B', 'QWEN_IMAGE_20B'
+        'WAN_VIDEO_2_1_14_B', 'SD_XL', 'SD_2', 'SD_3',
+        'WAN_VIDEO_2_1_T2V_1_3_B', 'UNKNOWN', 'WAN_VIDEO_2_2_TI2V_5_B',
+        'WAN_VIDEO_2_2_I2V_A_14_B', 'WAN_VIDEO_2_1_I2V_14_B',
+        'QWEN_IMAGE_20_B', 'SD_2_1', 'SD_1_5', 'FLUX_1',
+        'WAN_VIDEO_2_2_T2V_A_14_B', 'WAN_VIDEO_2_1_T2V_14_B',
+        'WAN_VIDEO_2_1_FLF2V_14_B'
     }
 
     def __init__(self,
@@ -62,7 +64,8 @@ class AigcModel:
                  revision: Optional[str] = 'v1.0',
                  description: Optional[str] = 'this is an aigc model',
                  cover_images: Optional[List[str]] = None,
-                 path_in_repo: Optional[str] = ''):
+                 path_in_repo: Optional[str] = '',
+                 trigger_words: Optional[List[str]] = None):
         """
         Initializes the AigcModel helper.
 
@@ -75,6 +78,7 @@ class AigcModel:
             cover_images (List[str], optional): List of cover image URLs.
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
+            trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
                 Note: Auto-upload during AIGC create is temporarily disabled by server. This parameter
                 will not take effect at creation time.
         """
@@ -88,6 +92,7 @@ class AigcModel:
         ]
         self.base_model_id = base_model_id
         self.path_in_repo = path_in_repo
+        self.trigger_words = trigger_words
 
         # Validate types and provide warnings
         self._validate_aigc_type()
@@ -315,7 +320,8 @@ class AigcModel:
             'model_path': self.model_path,
             'weight_filename': self.weight_filename,
             'weight_sha256': self.weight_sha256,
-            'weight_size': self.weight_size
+            'weight_size': self.weight_size,
+            'trigger_words': self.trigger_words
         }
 
     @classmethod

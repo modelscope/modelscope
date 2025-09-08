@@ -5,11 +5,11 @@ import hashlib
 import os
 import sys
 import time
-import zoneinfo
 from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Optional, Union
 
+import zoneinfo
 from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
@@ -305,11 +305,9 @@ def weak_file_lock(lock_file: Union[str, Path],
 def convert_timestamp(time_stamp: Union[int, str, datetime],
                       time_zone: str = 'Asia/Shanghai') -> Optional[datetime]:
     """Convert a UNIX/string timestamp to a timezone-aware datetime object.
-
     Args:
         time_stamp: UNIX timestamp (int), ISO string, or datetime object
         time_zone: Target timezone for non-UTC timestamps (default: 'Asia/Shanghai')
-
     Returns:
         Timezone-aware datetime object or None if input is None
     """
@@ -380,3 +378,43 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
         raise TypeError(
             f"Unsupported type '{type(time_stamp)}'. Expected int, str, or datetime."
         )
+
+
+def encode_image_to_base64(image_path: str) -> str:
+    """
+    Encode image file to base64 string.
+
+    Args:
+        image_path (str): Path to the image file
+
+    Returns:
+        str: Base64 encoded string with data URL prefix
+
+    Raises:
+        FileNotFoundError: If image file doesn't exist
+        ValueError: If file is not a valid image format
+    """
+    import base64
+    import mimetypes
+
+    # Expand user path
+    image_path = os.path.expanduser(image_path)
+
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f'Image file not found: {image_path}')
+
+    if not os.path.isfile(image_path):
+        raise ValueError(f'Path is not a file: {image_path}')
+
+    # Get MIME type
+    mime_type, _ = mimetypes.guess_type(image_path)
+    if not mime_type or not mime_type.startswith('image/'):
+        raise ValueError(f'File is not a valid image format: {image_path}')
+
+    # Read and encode file
+    with open(image_path, 'rb') as image_file:
+        image_data = image_file.read()
+        base64_data = base64.b64encode(image_data).decode('utf-8')
+
+    # Return data URL format
+    return f'data:{mime_type};base64,{base64_data}'

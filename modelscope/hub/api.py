@@ -288,7 +288,7 @@ class HubApi:
 
             # Add AIGC-specific fields to body
             body.update({
-                'TagShowName': aigc_model.revision,
+                'TagShowName': aigc_model.tag,
                 'CoverImages': aigc_model.cover_images,
                 'AigcType': aigc_model.aigc_type,
                 'TagDescription': aigc_model.description,
@@ -315,10 +315,9 @@ class HubApi:
         raise_on_error(d)
         model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: to be aligned with the new api
         # Upload model files for AIGC models
-        # if aigc_model is not None:
-        #     aigc_model.upload_to_repo(self, model_id, token)
+        if aigc_model is not None:
+            aigc_model.upload_to_repo(self, model_id, token)
 
         return model_repo_url
 

@@ -6,7 +6,8 @@ from typing import List, Optional
 import requests
 from tqdm.auto import tqdm
 
-from modelscope.hub.utils.utils import MODELSCOPE_URL_SCHEME, get_domain
+from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
+                                        encode_image_to_base64, get_domain)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -61,7 +62,7 @@ class AigcModel:
                  base_model_type: str,
                  model_path: str,
                  base_model_id: str = '',
-                 revision: Optional[str] = 'v1.0',
+                 tag: Optional[str] = 'v1.0',
                  description: Optional[str] = 'this is an aigc model',
                  cover_images: Optional[List[str]] = None,
                  path_in_repo: Optional[str] = '',
@@ -73,23 +74,46 @@ class AigcModel:
             model_path (str): The path of checkpoint/LoRA weight file or folder.
             aigc_type (str): AIGC model type. Recommended: 'Checkpoint', 'LoRA', 'VAE'.
             base_model_type (str): Vision foundation model type. Recommended values are in BASE_MODEL_TYPES.
-            revision (str, optional): Revision for the AIGC model. Defaults to 'v1.0'.
+            tag (str, optional): Tag for the AIGC model. Defaults to 'v1.0'.
             description (str, optional): Model description. Defaults to 'this is an aigc model'.
             cover_images (List[str], optional): List of cover image URLs.
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
             trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
-                Note: Auto-upload during AIGC create is temporarily disabled by server. This parameter
-                will not take effect at creation time.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
         self.base_model_type = base_model_type
-        self.revision = revision
+        self.tag = tag
         self.description = description
-        self.cover_images = cover_images if cover_images is not None else [
-            DEFAULT_AIGC_COVER_IMAGE
-        ]
+        # Process cover images - convert local paths to base64 data URLs
+        if cover_images is not None:
+            processed_cover_images = []
+            for img in cover_images:
+                if isinstance(img, str):
+                    # Check if it's a local file path (not a URL)
+                    if not (img.startswith('http://')
+                            or img.startswith('https://')
+                            or img.startswith('data:')):
+                        try:
+                            # Convert local path to base64 data URL
+                            processed_img = encode_image_to_base64(img)
+                            processed_cover_images.append(processed_img)
+                            logger.info('Converted local image to base64: %s',
+                                        os.path.basename(img))
+                        except (FileNotFoundError, ValueError) as e:
+                            logger.warning(
+                                'Failed to process local image %s: %s. Using as-is.',
+                                img, e)
+                            processed_cover_images.append(img)
+                    else:
+                        # Keep URLs and data URLs as-is
+                        processed_cover_images.append(img)
+                else:
+                    processed_cover_images.append(img)
+            self.cover_images = processed_cover_images
+        else:
+            self.cover_images = [DEFAULT_AIGC_COVER_IMAGE]
         self.base_model_id = base_model_id
         self.path_in_repo = path_in_repo
         self.trigger_words = trigger_words
@@ -216,7 +240,6 @@ class AigcModel:
                 # Upload entire folder with path_in_repo support
                 logger.info('Uploading directory: %s', self.model_path)
                 api.upload_folder(
-                    revision=self.revision,
                     repo_id=model_id,
                     folder_path=self.model_path,
                     path_in_repo=self.path_in_repo,
@@ -226,7 +249,6 @@ class AigcModel:
                 # Upload single file, target_file is guaranteed to be set by _process_model_path
                 logger.info('Uploading file: %s', self.target_file)
                 api.upload_file(
-                    revision=self.revision,
                     path_or_fileobj=self.target_file,
                     path_in_repo=self.path_in_repo + '/' + self.weight_filename
                     if self.path_in_repo else self.weight_filename,
@@ -313,7 +335,7 @@ class AigcModel:
         return {
             'aigc_type': self.aigc_type,
             'base_model_type': self.base_model_type,
-            'revision': self.revision,
+            'tag': self.tag,
             'description': self.description,
             'cover_images': self.cover_images,
             'base_model_id': self.base_model_id,

@@ -411,7 +411,7 @@ def apply_chunking_to_forward(
 
 def find_pruneable_heads_and_indices(
         heads: list[int], n_heads: int, head_size: int,
-        already_pruned_heads: set[int]) -> tuple[set[int], torch.LongTensor]:
+        already_pruned_heads: set[int]) -> tuple[set[int], torch.Tensor]:
     # Copied from transformers, the latest version of transformers deletes this function
     mask = torch.ones(n_heads, head_size)
     heads = set(
@@ -428,7 +428,7 @@ def find_pruneable_heads_and_indices(
 
 def prune_linear_layer(layer: torch.nn.Linear,
                        index: torch.LongTensor,
-                       dim: int = 0) -> nn.Linear:
+                       dim: int = 0) -> torch.nn.Linear:
     # Copied from transformers, the latest version of transformers deletes this function
     index = index.to(layer.weight.device)
     W = layer.weight.index_select(dim, index).detach().clone()

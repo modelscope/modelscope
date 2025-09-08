@@ -365,12 +365,7 @@ class HubApi:
             description = f'Tag {tag_name} for model {model_id}'
 
         # Get cookies for authentication.
-        if token:
-            cookies = self.get_cookies(access_token=token)
-        else:
-            cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
 

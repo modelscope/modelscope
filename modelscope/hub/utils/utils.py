@@ -380,7 +380,7 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
         )
 
 
-def encode_image_to_base64(image_path):
+def encode_image_to_base64(image_path: str) -> str:
     """
     Encode image file to base64 string.
 

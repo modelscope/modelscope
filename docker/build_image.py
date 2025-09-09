@@ -286,6 +286,7 @@ class LLMImageBuilder(Builder):
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
             args.flashattn_version = '2.7.1.post4'
+        print(f'>>Debug args: {args}')
         return args
 
     def generate_dockerfile(self) -> str:
@@ -317,6 +318,8 @@ class LLMImageBuilder(Builder):
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
+
+        print(f'>>Debug content for llm-image: \n{content}\n\n')
         return content
 
     def image(self) -> str:

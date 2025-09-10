@@ -299,6 +299,7 @@ class LLMImageBuilder(Builder):
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
             f'{self.args.flashattn_version}')
+        print(f'>>version_args: {version_args}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
@@ -319,7 +320,10 @@ class LLMImageBuilder(Builder):
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
 
+        print('=' * 100)
         print(f'>>Debug content for llm-image: \n{content}\n\n')
+        print('=' * 100)
+        print('\n\n')
         return content
 
     def image(self) -> str:

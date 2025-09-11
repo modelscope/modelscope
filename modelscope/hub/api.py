@@ -376,7 +376,7 @@ class HubApi:
             path = f'{endpoint}/api/v1/models/aigc/repo/tag'
             aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
 
-            # Base body for AIGC model tagß
+            # Base body for AIGC model tag
             body = {
                 'CoverImages': aigc_model.cover_images,
                 'Name': name,

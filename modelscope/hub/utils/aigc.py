@@ -2,12 +2,13 @@
 import glob
 import os
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import requests
 from tqdm.auto import tqdm
 
 from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
-                                        encode_image_to_base64, get_domain)
+                                        encode_image_to_base64, get_endpoint)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -281,17 +282,12 @@ class AigcModel:
             timeout: Request timeout seconds.
             headers: Optional headers.
         """
-        if not endpoint:
-            domain: str = get_domain()
-            domain_part = domain.lstrip('www.')
-        else:
-            domain_part = endpoint.replace('https://',
-                                           '').replace('http://',
-                                                       '').split('/')[0]
+        endpoint = endpoint or get_endpoint()
+        endpoint_host: str = urlparse(endpoint.strip()).hostname.lstrip('www.')
 
-        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain_part}'
-
-        url: str = f'{base_url}/api/v1/models/aigc/weights'
+        # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
+        url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
+            else f'{MODELSCOPE_URL_SCHEME}lfs-pre.{endpoint_host.lstrip("pre.")}'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

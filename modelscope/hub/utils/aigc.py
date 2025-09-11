@@ -283,10 +283,15 @@ class AigcModel:
         """
         if not endpoint:
             domain: str = get_domain()
-            base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
-            url: str = f'{base_url}/api/v1/models/aigc/weights'
+            domain_part = domain.lstrip('www.')
         else:
-            url: str = f'{endpoint}/api/v1/models/aigc/weights'
+            domain_part = endpoint.replace('https://',
+                                           '').replace('http://',
+                                                       '').split('/')[0]
+
+        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain_part}'
+
+        url: str = f'{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

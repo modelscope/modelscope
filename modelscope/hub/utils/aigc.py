@@ -269,7 +269,8 @@ class AigcModel:
                           *,
                           cookies: Optional[object] = None,
                           timeout: int = 300,
-                          headers: Optional[dict] = None) -> None:
+                          headers: Optional[dict] = None,
+                          endpoint: Optional[str] = None) -> None:
         """Pre-upload aigc model weights to the LFS server.
 
         Server may require the sha256 of weights to be registered before creation.
@@ -280,9 +281,12 @@ class AigcModel:
             timeout: Request timeout seconds.
             headers: Optional headers.
         """
-        domain: str = get_domain()
-        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
-        url: str = f'{base_url}/api/v1/models/aigc/weights'
+        if not endpoint:
+            domain: str = get_domain()
+            base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
+            url: str = f'{base_url}/api/v1/models/aigc/weights'
+        else:
+            url: str = f'{endpoint}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

@@ -284,7 +284,7 @@ class HubApi:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
             # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
-            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
 
             # Add AIGC-specific fields to body
             body.update({
@@ -374,9 +374,9 @@ class HubApi:
         if aigc_model is not None:
             # Use AIGC model tag endpoint
             path = f'{endpoint}/api/v1/models/aigc/repo/tag'
-            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
 
-            # Base body for AIGC model tag
+            # Base body for AIGC model tagß
             body = {
                 'CoverImages': aigc_model.cover_images,
                 'Name': name,

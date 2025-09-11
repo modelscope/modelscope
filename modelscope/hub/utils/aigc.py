@@ -2,12 +2,13 @@
 import glob
 import os
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import requests
 from tqdm.auto import tqdm
 
 from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
-                                        encode_image_to_base64, get_domain)
+                                        encode_image_to_base64, get_endpoint)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -269,7 +270,8 @@ class AigcModel:
                           *,
                           cookies: Optional[object] = None,
                           timeout: int = 300,
-                          headers: Optional[dict] = None) -> None:
+                          headers: Optional[dict] = None,
+                          endpoint: Optional[str] = None) -> None:
         """Pre-upload aigc model weights to the LFS server.
 
         Server may require the sha256 of weights to be registered before creation.
@@ -280,9 +282,12 @@ class AigcModel:
             timeout: Request timeout seconds.
             headers: Optional headers.
         """
-        domain: str = get_domain()
-        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
-        url: str = f'{base_url}/api/v1/models/aigc/weights'
+        endpoint = endpoint or get_endpoint()
+        endpoint_host: str = urlparse(endpoint.strip()).hostname.lstrip('www.')
+
+        # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
+        url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
+            else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{endpoint_host.lstrip("pre.")}'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

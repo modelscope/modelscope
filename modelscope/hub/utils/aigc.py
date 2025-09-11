@@ -287,7 +287,7 @@ class AigcModel:
 
         # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
         url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
-            else f'{MODELSCOPE_URL_SCHEME}lfs-pre.{endpoint_host.lstrip("pre.")}'
+            else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{endpoint_host.lstrip("pre.")}'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

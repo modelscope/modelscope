@@ -318,6 +318,13 @@ class CommitHistoryResponse:
     def from_api_response(cls, data: dict) -> 'CommitHistoryResponse':
         """Create CommitHistoryResponse from API response data."""
         commits_data = data.get('Data', {}).get('Commit', [])
+
+        if not commits_data:
+            return cls(
+                commits=[],
+                total_count=0,
+            )
+
         commits = [
             DetailedCommitInfo.from_api_response(commit)
             for commit in commits_data

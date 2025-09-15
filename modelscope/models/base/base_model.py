@@ -8,6 +8,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
 from modelscope.utils.automodel_utils import (can_load_by_ms,
+                                              check_model_from_owner_group,
                                               try_to_load_hf_model)
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
@@ -35,17 +36,21 @@ class Model(ABC):
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.postprocess(self.forward(*args, **kwargs))
 
-    def check_trust_remote_code(self, info_str: Optional[str] = None):
+    def check_trust_remote_code(self,
+                                info_str: Optional[str] = None,
+                                model_dir: Optional[str] = None):
         """Check trust_remote_code if the model needs to import extra libs
 
         Args:
             info_str(str): The info showed to user if trust_remote_code is `False`.
+            model_dir(`Optional[str]`): The local model directory. If is a trusted model, check remote code will pass.
         """
         info_str = info_str or (
             'This model requires `trust_remote_code` to be `True` because it needs to '
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
-        assert self.trust_remote_code, info_str
+        if not check_model_from_owner_group(model_dir=model_dir):
+            assert self.trust_remote_code, info_str
 
     @abstractmethod
     def forward(self, *args, **kwargs) -> Dict[str, Any]:
@@ -197,6 +202,9 @@ class Model(ABC):
                 'Use trust_remote_code=True. Will invoke codes or install plugins from remote model repo. '
                 'Please make sure that you can trust the external codes.')
         register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
+        default_args = {}
+        if trust_remote_code:
+            default_args = {'trust_remote_code': trust_remote_code}
         register_plugins_repo(plugins)
         for k, v in kwargs.items():
             model_cfg[k] = v
@@ -206,7 +214,8 @@ class Model(ABC):
             model_cfg.init_backbone = True
             model = build_backbone(model_cfg)
         else:
-            model = build_model(model_cfg, task_name=task_name)
+            model = build_model(
+                model_cfg, task_name=task_name, default_args=default_args)
 
         # dynamically add pipeline info to model for pipeline inference
         if hasattr(cfg, 'pipeline'):

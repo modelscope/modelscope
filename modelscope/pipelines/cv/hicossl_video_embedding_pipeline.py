@@ -37,7 +37,9 @@ class HICOSSLVideoEmbeddingPipeline(Pipeline):
         self.infer_model = BaseVideoModel(cfg=self.cfg).to(self.device)
         self.infer_model.eval()
         self.infer_model.load_state_dict(
-            torch.load(model_path, map_location=self.device)['model_state'],
+            torch.load(
+                model_path, map_location=self.device,
+                weights_only=True)['model_state'],
             strict=False)
         logger.info('load model done')
 

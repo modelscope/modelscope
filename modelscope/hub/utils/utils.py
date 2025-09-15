@@ -5,6 +5,7 @@ import hashlib
 import os
 import sys
 import time
+import zoneinfo
 from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Optional, Union
@@ -299,3 +300,83 @@ def weak_file_lock(lock_file: Union[str, Path],
                 Path(lock_file).unlink()
             except OSError:
                 pass
+
+
+def convert_timestamp(time_stamp: Union[int, str, datetime],
+                      time_zone: str = 'Asia/Shanghai') -> Optional[datetime]:
+    """Convert a UNIX/string timestamp to a timezone-aware datetime object.
+
+    Args:
+        time_stamp: UNIX timestamp (int), ISO string, or datetime object
+        time_zone: Target timezone for non-UTC timestamps (default: 'Asia/Shanghai')
+
+    Returns:
+        Timezone-aware datetime object or None if input is None
+    """
+    if not time_stamp:
+        return None
+
+    # Handle datetime objects first
+    if isinstance(time_stamp, datetime):
+        return time_stamp
+
+    if isinstance(time_stamp, str):
+        try:
+            if time_stamp.endswith('Z'):
+                # Normalize fractional seconds to 6 digits
+                if '.' not in time_stamp:
+                    # No fractional seconds (e.g., "2024-11-16T00:27:02Z")
+                    time_stamp = time_stamp[:-1] + '.000000Z'
+                else:
+                    # Has fractional seconds (e.g., "2022-08-19T07:19:38.123456789Z")
+                    base, fraction = time_stamp[:-1].split('.')
+                    # Truncate or pad to 6 digits
+                    fraction = fraction[:6].ljust(6, '0')
+                    time_stamp = f'{base}.{fraction}Z'
+
+                dt = datetime.strptime(time_stamp,
+                                       '%Y-%m-%dT%H:%M:%S.%fZ').replace(
+                                           tzinfo=zoneinfo.ZoneInfo('UTC'))
+                if time_zone != 'UTC':
+                    dt = dt.astimezone(zoneinfo.ZoneInfo(time_zone))
+                return dt
+            else:
+                # Try parsing common ISO formats
+                formats = [
+                    '%Y-%m-%dT%H:%M:%S.%f',  # With microseconds
+                    '%Y-%m-%dT%H:%M:%S',  # Without microseconds
+                    '%Y-%m-%d %H:%M:%S.%f',  # Space separator with microseconds
+                    '%Y-%m-%d %H:%M:%S',  # Space separator without microseconds
+                ]
+                for fmt in formats:
+                    try:
+                        return datetime.strptime(
+                            time_stamp,
+                            fmt).replace(tzinfo=zoneinfo.ZoneInfo(time_zone))
+                    except ValueError:
+                        continue
+
+                raise ValueError(
+                    f"Unsupported timestamp format: '{time_stamp}'")
+
+        except ValueError as e:
+            raise ValueError(
+                f"Cannot parse '{time_stamp}' as a datetime. Expected formats: "
+                f"'YYYY-MM-DDTHH:MM:SS[.ffffff]Z' (UTC) or 'YYYY-MM-DDTHH:MM:SS[.ffffff]' (local)"
+            ) from e
+
+    elif isinstance(time_stamp, int):
+        try:
+            # UNIX timestamps are always in UTC, then convert to target timezone
+            return datetime.fromtimestamp(
+                time_stamp, tz=zoneinfo.ZoneInfo('UTC')).astimezone(
+                    zoneinfo.ZoneInfo(time_zone))
+        except (ValueError, OSError) as e:
+            raise ValueError(
+                f"Cannot convert '{time_stamp}' to datetime. Ensure it's a valid UNIX timestamp."
+            ) from e
+
+    else:
+        raise TypeError(
+            f"Unsupported type '{type(time_stamp)}'. Expected int, str, or datetime."
+        )

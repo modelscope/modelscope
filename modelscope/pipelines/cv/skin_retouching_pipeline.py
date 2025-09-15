@@ -52,7 +52,8 @@ class SkinRetouchingPipeline(Pipeline):
 
         self.generator = UNet(3, 3).to(device)
         self.generator.load_state_dict(
-            torch.load(model_path, map_location='cpu')['generator'])
+            torch.load(model_path, map_location='cpu',
+                       weights_only=True)['generator'])
         self.generator.eval()
 
         det_model_id = 'damo/cv_resnet50_face-detection_retinaface'
@@ -60,7 +61,8 @@ class SkinRetouchingPipeline(Pipeline):
         self.detector.detector.to(device)
 
         self.local_model_path = local_model_path
-        ckpt_dict_load = torch.load(self.local_model_path, map_location='cpu')
+        ckpt_dict_load = torch.load(
+            self.local_model_path, map_location='cpu', weights_only=True)
         self.inpainting_net = RetouchingNet(
             in_channels=4, out_channels=3).to(device)
         self.detection_net = DetectionUNet(

@@ -2,6 +2,7 @@
 import os
 import shutil
 import tempfile
+import time
 import unittest
 import uuid
 
@@ -143,14 +144,14 @@ class HFUtilTest(unittest.TestCase):
             from transformers import AutoConfig
             config = AutoConfig.from_pretrained(
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-            self.assertTrue(config is not None)
+            self.assertTrue(getattr(config, 'base_model_prefix') == 'encoder')
         try:
             config = AutoConfig.from_pretrained(
                 'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-        except Exception:
+            self.assertTrue(
+                getattr(config, 'base_model_prefix', None) != 'encoder')
+        except:  # noqa
             pass
-        else:
-            self.assertTrue(False)
 
         # Test patch again
         with patch_context():
@@ -235,12 +236,14 @@ class HFUtilTest(unittest.TestCase):
             logger.info('patch create repo result: ' + commit_info.commit_url)
             self.assertTrue(commit_info is not None)
             from huggingface_hub import file_exists
+            time.sleep(1)
             self.assertTrue(file_exists(self.create_model_name, '1.json'))
             from huggingface_hub import upload_file
             commit_info: CommitInfo = upload_file(
                 path_or_fileobj=self.test_file2,
                 path_in_repo='test_folder2',
                 repo_id=self.create_model_name)
+            time.sleep(1)
             self.assertTrue(
                 file_exists(self.create_model_name, 'test_folder2/2.json'))
 

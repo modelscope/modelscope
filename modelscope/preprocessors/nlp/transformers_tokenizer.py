@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
+import inspect
 import os
 from collections.abc import Mapping
 
@@ -105,6 +105,9 @@ class NLPTokenizer:
         tokenize_kwargs = {k: v for k, v in self.tokenize_kwargs.items()}
         tokenize_kwargs.update(kwargs)
         kwargs.update(self.tokenize_kwargs)
+        parameters = inspect.signature(self.tokenizer.__call__).parameters
+        if 'truncation_strategy' not in parameters and 'truncation_strategy' in tokenize_kwargs:
+            tokenize_kwargs.pop('truncation_strategy')
         return self.tokenizer(text, text_pair, **tokenize_kwargs)
 
     def get_tokenizer_kwarg(self, key, default_value=None):

@@ -4,6 +4,7 @@ datasets>=3.0.0,<=3.6.0
 einops
 Pillow
 python-dateutil>=2.1
+PyYAML>=5.4
 scipy
 setuptools
 simplejson>=3.3.0

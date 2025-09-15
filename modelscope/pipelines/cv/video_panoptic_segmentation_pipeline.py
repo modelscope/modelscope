@@ -44,7 +44,9 @@ class VideoPanopticSegmentationPipeline(Pipeline):
 
         self.model = VideoKNet(model)
         checkpoint = torch.load(
-            model_path, map_location=torch.device(self.device))
+            model_path,
+            map_location=torch.device(self.device),
+            weights_only=True)
         self.model.load_state_dict(checkpoint['state_dict'])
         self.model = self.model.to(self.device).eval()
         logger.info('load model done')

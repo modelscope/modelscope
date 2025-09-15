@@ -72,7 +72,10 @@ class AnydoorPipeline(Pipeline):
                 ckpt_path, device=location)
         else:
             state_dict = get_state_dict(
-                torch.load(ckpt_path, map_location=torch.device(location)))
+                torch.load(
+                    ckpt_path,
+                    map_location=torch.device(location),
+                    weights_only=True))
         state_dict = get_state_dict(state_dict)
         print(f'Loaded state_dict from [{ckpt_path}]')
         return state_dict

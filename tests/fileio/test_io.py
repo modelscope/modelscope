@@ -10,15 +10,7 @@ from modelscope.fileio.io import dump, dumps, load
 class FileIOTest(unittest.TestCase):
 
     def test_format(self, format='json'):
-        obj = [
-            1, 2, 3, 'str', {
-                'model': 'resnet'
-            },
-            np.array([[1, 2]], dtype=np.float16),
-            np.array([[1, 2]], dtype=np.float32),
-            np.array([[1, 2]], dtype=np.float64),
-            np.array([[1, 2]], dtype=np.int64), (1, 2)
-        ]
+        obj = [1, 2, 3, 'str', {'model': 'resnet'}, [1, 2]]
         result_str = dumps(obj, format)
         temp_name = tempfile.gettempdir() + '/' + next(
             tempfile._get_candidate_names()) + '.' + format

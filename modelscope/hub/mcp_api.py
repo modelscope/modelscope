@@ -333,7 +333,7 @@ class MCPApi(HubApi):
                           auth_check: bool = False,
                           env_info: Optional[Dict[str, Any]] = None,
                           expiration_minutes: int = -1,
-                          token: Optional[str] = None) -> bool:
+                          token: str = None) -> bool:
         """
         Deploy a MCP server to make it operational.
 
@@ -369,8 +369,7 @@ class MCPApi(HubApi):
         headers = self.builder_headers(self.headers)
 
         # Add Authorization header - this is required for MCP deploy operations
-        if token:
-            headers['Authorization'] = token
+        headers['Authorization'] = token
 
         body = {
             'auth_check': auth_check,

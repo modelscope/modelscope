@@ -286,8 +286,10 @@ class AigcModel:
         endpoint_host: str = urlparse(endpoint.strip()).hostname.lstrip('www.')
 
         # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
-        url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
+        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
             else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{endpoint_host.lstrip("pre.")}'
+
+        url: str = f'{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
         file_path = os.path.abspath(os.path.expanduser(file_path))

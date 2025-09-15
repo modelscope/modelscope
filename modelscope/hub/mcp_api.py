@@ -7,6 +7,7 @@ ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
 from typing import Any, Dict, Optional
 
+import json
 import requests
 
 from modelscope.hub.api import HubApi
@@ -367,6 +368,10 @@ class MCPApi(HubApi):
         url = f'{self.mcp_base_url}/{server_id}/deploy'
         headers = self.builder_headers(self.headers)
 
+        # Add Authorization header - this is required for MCP deploy operations
+        if token:
+            headers['Authorization'] = token
+
         body = {
             'auth_check': auth_check,
             'env_info': env_info or {},
@@ -385,13 +390,7 @@ class MCPApi(HubApi):
             raise MCPApiRequestError(
                 f'Failed to deploy MCP server {server_id}: {e}') from e
 
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
+        resp = r.json()
         return resp.get('success', False)
 
     def undeploy_mcp_server(self,
@@ -434,11 +433,6 @@ class MCPApi(HubApi):
             raise MCPApiRequestError(
                 f'Failed to undeploy MCP server {server_id}: {e}') from e
 
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
+        data = self._handle_response(r)
 
-        return resp.get('success', False)
+        return data.get('success', False)

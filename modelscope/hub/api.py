@@ -910,9 +910,9 @@ class HubApi:
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
-        elif use_cookies:
+        elif isinstance(use_cookies, bool):
             cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
+            if use_cookies and cookies is None:
                 raise ValueError('Token does not exist, please login first.')
         return cookies
 

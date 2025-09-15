@@ -298,7 +298,8 @@ class HubApi:
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
                 'ModelPath': aigc_model.model_path,
-                'TriggerWords': aigc_model.trigger_words
+                'TriggerWords': aigc_model.trigger_words,
+                'OfficialTags': aigc_model.official_tags
             })
 
         else:
@@ -324,7 +325,6 @@ class HubApi:
     def create_model_tag(self,
                          model_id: str,
                          tag_name: str,
-                         description: Optional[str] = None,
                          endpoint: Optional[str] = None,
                          token: Optional[str] = None,
                          aigc_model: Optional['AigcModel'] = None) -> str:
@@ -360,8 +360,6 @@ class HubApi:
                 f'Please use a different tag name (e.g., "v1.0", "v1.1", "latest"). '
                 f'Reserved names: main, master'
             )
-        if description is None:
-            description = f'Tag {tag_name} for model {model_id}'
 
         # Get cookies for authentication.
         cookies = self.get_cookies(access_token=token, cookies_required=True)
@@ -385,7 +383,6 @@ class HubApi:
                 'WeightsName': aigc_model.weight_filename,
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
-                'Description': description,
                 'TriggerWords': aigc_model.trigger_words
             }
 
@@ -395,8 +392,7 @@ class HubApi:
             revision = 'master'
             body = {
                 'TagName': tag_name,
-                'Ref': revision,
-                'Description': description
+                'Ref': revision
             }
 
         r = self.session.post(

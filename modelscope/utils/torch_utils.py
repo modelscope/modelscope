@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Following code is partially borrowed from openmmlab/mmcv
 import functools
+import inspect
 import os
 import pickle
 import random
@@ -359,3 +360,93 @@ def all_gather(data, group=None):
 def is_on_same_device(model: torch.nn.Module) -> bool:
     device_set = set(str(p.device) for p in model.parameters()) - {'cpu'}
     return len(device_set) <= 1
+
+
+def apply_chunking_to_forward(
+    forward_fn: Callable[..., torch.Tensor],
+    chunk_size: int,
+    chunk_dim: int,
+    *input_tensors,
+) -> torch.Tensor:
+    # Copied from transformers, the latest version of transformers deletes this function
+    assert len(input_tensors
+               ) > 0, f'{input_tensors} has to be a tuple/list of tensors'
+
+    # inspect.signature exist since python 3.5 and is a python method -> no problem with backward compatibility
+    num_args_in_forward_chunk_fn = len(
+        inspect.signature(forward_fn).parameters)
+    if num_args_in_forward_chunk_fn != len(input_tensors):
+        raise ValueError(
+            f'forward_chunk_fn expects {num_args_in_forward_chunk_fn} arguments, but only {len(input_tensors)} input '
+            'tensors are given')
+
+    if chunk_size > 0:
+        tensor_shape = input_tensors[0].shape[chunk_dim]
+        for input_tensor in input_tensors:
+            if input_tensor.shape[chunk_dim] != tensor_shape:
+                raise ValueError(
+                    f'All input tenors have to be of the same shape: {tensor_shape}, '
+                    f'found shape {input_tensor.shape[chunk_dim]}')
+
+        if input_tensors[0].shape[chunk_dim] % chunk_size != 0:
+            raise ValueError(
+                f'The dimension to be chunked {input_tensors[0].shape[chunk_dim]} has to be a multiple of the chunk '
+                f'size {chunk_size}')
+
+        num_chunks = input_tensors[0].shape[chunk_dim] // chunk_size
+
+        # chunk input tensor into tuples
+        input_tensors_chunks = tuple(
+            input_tensor.chunk(num_chunks, dim=chunk_dim)
+            for input_tensor in input_tensors)
+        # apply forward fn to every tuple
+        output_chunks = tuple(
+            forward_fn(*input_tensors_chunk)
+            for input_tensors_chunk in zip(*input_tensors_chunks))
+        # concatenate output at same dimension
+        return torch.cat(output_chunks, dim=chunk_dim)
+
+    return forward_fn(*input_tensors)
+
+
+def find_pruneable_heads_and_indices(
+        heads: list[int], n_heads: int, head_size: int,
+        already_pruned_heads: set[int]) -> tuple[set[int], torch.Tensor]:
+    # Copied from transformers, the latest version of transformers deletes this function
+    mask = torch.ones(n_heads, head_size)
+    heads = set(
+        heads
+    ) - already_pruned_heads  # Convert to set and remove already pruned heads
+    for head in heads:
+        # Compute how many pruned heads are before the head and move the index accordingly
+        head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
+        mask[head] = 0
+    mask = mask.view(-1).contiguous().eq(1)
+    index: torch.LongTensor = torch.arange(len(mask))[mask].long()
+    return heads, index
+
+
+def prune_linear_layer(layer: torch.nn.Linear,
+                       index: torch.LongTensor,
+                       dim: int = 0) -> torch.nn.Linear:
+    # Copied from transformers, the latest version of transformers deletes this function
+    index = index.to(layer.weight.device)
+    W = layer.weight.index_select(dim, index).detach().clone()
+    if layer.bias is not None:
+        if dim == 1:
+            b = layer.bias.detach().clone()
+        else:
+            b = layer.bias[index].detach().clone()
+    new_size = list(layer.weight.size())
+    new_size[dim] = len(index)
+    new_layer = torch.nn.Linear(
+        new_size[1], new_size[0], bias=layer.bias
+        is not None).to(layer.weight.device)
+    new_layer.weight.requires_grad = False
+    new_layer.weight.copy_(W.contiguous())
+    new_layer.weight.requires_grad = True
+    if layer.bias is not None:
+        new_layer.bias.requires_grad = False
+        new_layer.bias.copy_(b.contiguous())
+        new_layer.bias.requires_grad = True
+    return new_layer

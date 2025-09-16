@@ -56,7 +56,7 @@ fi
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
-RUN sh /tmp/install.sh {version_args} && \
+RUN bash /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \

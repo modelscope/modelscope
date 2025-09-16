@@ -265,7 +265,6 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
-        self.login(access_token=token, endpoint=endpoint)
 
         owner_or_group, name = model_id_to_group_owner_name(model_id)
 
@@ -311,9 +310,11 @@ class HubApi:
             json=body,
             cookies=cookies,
             headers=self.builder_headers(self.headers))
-        raise_for_http_status(r)
-        d = r.json()
-        raise_on_error(d)
+        # raise_for_http_status(r)
+        # d = r.json()
+        # raise_on_error(d)
+        handle_http_post_error(r, path, body)
+        raise_on_error(r.json())
         model_repo_url = f'{endpoint}/models/{model_id}'
 
         # Upload model files for AIGC models

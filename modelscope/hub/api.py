@@ -265,6 +265,7 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
+        self.login(access_token=token, endpoint=endpoint)
 
         owner_or_group, name = model_id_to_group_owner_name(model_id)
 

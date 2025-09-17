@@ -59,7 +59,7 @@ RUN echo $CUR_TIME
 RUN bash /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
     pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
@@ -68,7 +68,7 @@ RUN bash /tmp/install.sh {version_args} && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers==4.55.4 diffusers timm>=0.9.0 && pip cache purge; \
+    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
@@ -76,10 +76,10 @@ RUN bash /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers peft -U; \
+    pip install --no-cache-dir huggingface-hub transformers peft ; \
 fi; \
 if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
-    pip install liger_kernel nvitop pre-commit transformers huggingface-hub -U && \
+    pip install liger_kernel nvitop pre-commit transformers huggingface-hub && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
     CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
     pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable; \

@@ -68,7 +68,7 @@ RUN bash /tmp/install.sh {version_args} && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
+    pip install --no-cache-dir transformers==4.55.4 diffusers timm>=0.9.0 && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \

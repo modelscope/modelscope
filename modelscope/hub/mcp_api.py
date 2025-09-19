@@ -379,13 +379,21 @@ class MCPApi(HubApi):
             r = self.session.post(
                 url, headers=headers, json=body, cookies=cookies)
             raise_for_http_status(r)
-            resp = r.json()
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to deploy MCP server {server_id}: {e}')
             raise MCPApiRequestError(
                 f'Failed to deploy MCP server {server_id}: {e}') from e
 
-        return resp.get('success')
+        try:
+            resp = r.json()
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(
+                f'JSON parsing failed for deploying MCP server {server_id}: {e}'
+            )
+            logger.error(f'Response content: {r.text}')
+            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
+
+        return resp.get('success', False)
 
     def undeploy_mcp_server(self,
                             server_id: str,
@@ -419,7 +427,7 @@ class MCPApi(HubApi):
                 access_token=token, cookies_required=True)
             r = self.session.delete(url, headers=headers, cookies=cookies)
             raise_for_http_status(r)
-            data = self._handle_response(r)
+            data = self._handle_response(r) if r.content else {}
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to undeploy MCP server {server_id}: {e}')
             raise MCPApiRequestError(

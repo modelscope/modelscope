@@ -58,17 +58,6 @@ class AigcModel:
         'WAN_VIDEO_2_1_FLF2V_14_B'
     }
 
-    OFFICIAL_TAGS = {
-        'photography', 'illustration-design', 'e-commerce-design', 'dimension',
-        '3d', 'hand-drawn-style', 'logo', 'commodity', 'toy-figurines',
-        'flat-abstraction', 'character-enhancement', 'scenery', 'animal',
-        'art-style-strong', 'other-styles', 'architectural-design',
-        'classic-painting-style', 'cg-fantasy', 'artware', 'construction',
-        'man', 'woman', 'food', 'automobile-traffic', 'sci-fi-mecha',
-        'clothing', 'plant', 'other-functions', 'picture-control',
-        'main-strong', 'character-strong'
-    }
-
     def __init__(self,
                  aigc_type: str,
                  base_model_type: str,
@@ -131,9 +120,6 @@ class AigcModel:
         self.base_model_id = base_model_id
         self.path_in_repo = path_in_repo
         self.trigger_words = trigger_words
-        self.official_tags = official_tags
-        if official_tags:
-            self._validate_official_tags()
 
         # Validate types and provide warnings
         self._validate_aigc_type()
@@ -161,11 +147,17 @@ class AigcModel:
 
     def _validate_official_tags(self):
         """Validate official tags and provide warning for unsupported tags."""
-        for tag in self.official_tags:
-            if tag not in self.OFFICIAL_TAGS:
-                supported_tags = ', '.join(sorted(self.OFFICIAL_TAGS))
-                logger.warning(f'Your tag: "{tag}" may not be supported. '
-                               f'Recommended values: {supported_tags}. ')
+        invalid_tags = {
+            tag
+            for tag in self.official_tags if tag not in self.OFFICIAL_TAGS
+        }
+        if invalid_tags:
+            supported_tags = ', '.join(sorted(self.OFFICIAL_TAGS))
+            invalid_tags_str = ', '.join(f'"{tag}"'
+                                         for tag in sorted(invalid_tags))
+            logger.warning(
+                f'Your tag(s): {invalid_tags_str} may not be supported. '
+                f'Recommended values: {supported_tags}. ')
 
     def _process_model_path(self):
         """Process model_path to extract weight information"""

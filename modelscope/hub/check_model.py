@@ -53,7 +53,7 @@ def check_local_model_is_latest(
                 'Snapshot': 'True'
             }
         }
-        _api = HubApi(timeout=0.5)
+        _api = HubApi(timeout=20)
         try:
             _, revisions = _api.get_model_branches_and_tags(
                 model_id=model_id, use_cookies=cookies)

@@ -58,6 +58,17 @@ class AigcModel:
         'WAN_VIDEO_2_1_FLF2V_14_B'
     }
 
+    OFFICIAL_TAGS = {
+        'photography', 'illustration-design', 'e-commerce-design', 'dimension',
+        '3d', 'hand-drawn-style', 'logo', 'commodity', 'toy-figurines',
+        'flat-abstraction', 'character-enhancement', 'scenery', 'animal',
+        'art-style-strong', 'other-styles', 'architectural-design',
+        'classic-painting-style', 'cg-fantasy', 'artware', 'construction',
+        'man', 'woman', 'food', 'automobile-traffic', 'sci-fi-mecha',
+        'clothing', 'plant', 'other-functions', 'picture-control',
+        'main-strong', 'character-strong'
+    }
+
     def __init__(self,
                  aigc_type: str,
                  base_model_type: str,
@@ -124,6 +135,10 @@ class AigcModel:
         # Validate types and provide warnings
         self._validate_aigc_type()
         self._validate_base_model_type()
+
+        if official_tags:
+            self.official_tags = official_tags
+            self._validate_official_tags()
 
         # Process model path and calculate weights information
         self._process_model_path()

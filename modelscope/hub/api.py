@@ -37,6 +37,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_MAX_WORKERS,
+                                      DEFAULT_MODELSCOPE_INTL_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_CREDENTIALS_PATH,
@@ -306,11 +307,16 @@ class HubApi:
             # Use regular model endpoint
             path = f'{endpoint}/api/v1/models'
 
+        headers = self.builder_headers(self.headers)
+
+        intl_end = DEFAULT_MODELSCOPE_INTL_DOMAIN.split('.')[-1]
+        if endpoint.rstrip('/').endswith(f'.{intl_end}'):
+            headers['X-Modelscope-Accept-Language'] = 'en-US'
         r = self.session.post(
             path,
             json=body,
             cookies=cookies,
-            headers=self.builder_headers(self.headers))
+            headers=headers)
         raise_for_http_status(r)
         d = r.json()
         raise_on_error(d)

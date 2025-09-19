@@ -167,9 +167,8 @@ class AigcModel:
             for tag in self.official_tags if tag not in self.OFFICIAL_TAGS
         }
         if invalid_tags:
-            supported_tags = ', '.join(sorted(self.OFFICIAL_TAGS))
-            invalid_tags_str = ', '.join(f'"{tag}"'
-                                         for tag in sorted(invalid_tags))
+            supported_tags = ', '.join(self.OFFICIAL_TAGS)
+            invalid_tags_str = ', '.join(f'"{tag}"' for tag in invalid_tags)
             logger.warning(
                 f'Your tag(s): {invalid_tags_str} may not be supported. '
                 f'Recommended values: {supported_tags}. ')

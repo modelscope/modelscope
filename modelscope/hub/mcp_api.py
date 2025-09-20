@@ -325,3 +325,116 @@ class MCPApi(HubApi):
 
         result['servers'] = mcp_config_list
         return result
+
+    def deploy_mcp_server(self,
+                          server_id: str,
+                          transport_type: str,
+                          auth_check: bool = False,
+                          env_info: Optional[Dict[str, Any]] = None,
+                          expiration_minutes: Optional[int] = -1,
+                          token: Optional[str] = None) -> bool:
+        """
+        Deploy a MCP server to make it operational.
+        Args:
+            server_id: MCP server ID (e.g., "@demo/platform-pool")
+            auth_check: Whether to enable ModelScope authentication check for the deployed server
+            env_info: Environment variables for MCP server, e.g. {"Demo_Server_API_KEY": "demo_server_api_key"}
+            expiration_minutes: Expiration time in minutes. -1 means no expiration,
+                                for values between 1,2,3..., it represents the actual minutes
+            transport_type: sse or streamable_http
+            token: Optional access token for authentication
+        Returns:
+            bool: True if deployment was successful, False otherwise
+        Raises:
+            ValueError: If server_id is empty or None
+            MCPApiRequestError: If API request fails or authentication fails
+            MCPApiResponseError: If response format is invalid or JSON parsing fails
+        Authentication:
+            Required. You may leverage the token parameter for one-time authentication, or use api.login()
+        Example Returns:
+            True
+        """
+        if not server_id:
+            raise ValueError('server_id cannot be empty')
+        if transport_type not in ['sse', 'streamable_http']:
+            raise ValueError('transport_type must be sse or streamable_http')
+
+        url = f'{self.mcp_base_url}/{server_id}/deploy'
+        headers = self.builder_headers(self.headers)
+
+        # Add Authorization header - this is required for MCP deploy operations
+        if token:
+            headers['Authorization'] = token
+
+        body = {
+            'auth_check': auth_check,
+            'env_info': env_info or {},
+            'expiration_minutes': expiration_minutes,
+            'transport_type': transport_type
+        }
+
+        try:
+            cookies = self.get_cookies(
+                access_token=token, cookies_required=True)
+            r = self.session.post(
+                url, headers=headers, json=body, cookies=cookies)
+            raise_for_http_status(r)
+        except requests.exceptions.RequestException as e:
+            logger.error(f'Failed to deploy MCP server {server_id}: {e}')
+            raise MCPApiRequestError(
+                f'Failed to deploy MCP server {server_id}: {e}') from e
+
+        try:
+            resp = r.json()
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(
+                f'JSON parsing failed for deploying MCP server {server_id}: {e}'
+            )
+            logger.error(f'Response content: {r.text}')
+            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
+
+        return resp.get('success', False)
+
+    def undeploy_mcp_server(self,
+                            server_id: str,
+                            token: Optional[str] = None) -> bool:
+        """
+        Undeploy a MCP server to stop its operational status.
+        Args:
+            server_id: MCP server ID (e.g., "@demo/platform-pool")
+            token: Optional access token for authentication
+        Returns:
+            bool: True if undeploy was successful, False otherwise
+        Raises:
+            ValueError: If server_id is empty or None
+            MCPApiRequestError: If API request fails or authentication fails
+            MCPApiResponseError: If response format is invalid or JSON parsing fails
+        Authentication:
+            Required. You may leverage the token parameter for one-time authentication, or use api.login()
+        Example Returns:
+            True
+        """
+        if not server_id:
+            raise ValueError('server_id cannot be empty')
+
+        url = f'{self.mcp_base_url}/{server_id}/undeploy'
+        # Add Authorization header - this is required for MCP undeploy operations
+        headers = self.builder_headers(self.headers)
+        if token:
+            headers['Authorization'] = token
+        try:
+            cookies = self.get_cookies(
+                access_token=token, cookies_required=True)
+            r = self.session.delete(url, headers=headers, cookies=cookies)
+            raise_for_http_status(r)
+            data = self._handle_response(r) if r.content else {}
+        except requests.exceptions.RequestException as e:
+            logger.error(f'Failed to undeploy MCP server {server_id}: {e}')
+            raise MCPApiRequestError(
+                f'Failed to undeploy MCP server {server_id}: {e}') from e
+
+        # For DELETE requests, if we get HTTP 200, consider it successful
+        # even if response body is empty or doesn't contain success field
+        if r.status_code == 200:
+            return data.get('success', True) if data else True
+        return False

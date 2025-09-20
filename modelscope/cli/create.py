@@ -197,6 +197,7 @@ class CreateCMD(CLICommand):
                 visibility=visibility_idx,
                 license=self.args.license,
                 chinese_name=self.args.chinese_name,
+                endpoint=self.args.endpoint,
                 aigc_model=aigc_model)
             print(f'Successfully created AIGC model: {model_url}')
         except Exception as e:

@@ -313,7 +313,7 @@ class HubApi:
 
         intl_end = DEFAULT_MODELSCOPE_INTL_DOMAIN.split('.')[-1]
         if endpoint.rstrip('/').endswith(f'.{intl_end}'):
-            headers['X-Modelscope-Accept-Language'] = 'en-US'
+            headers['X-Modelscope-Accept-Language'] = 'en_US'
         r = self.session.post(
             path,
             json=body,

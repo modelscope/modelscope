@@ -37,6 +37,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_MAX_WORKERS,
+                                      DEFAULT_MODELSCOPE_INTL_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_CREDENTIALS_PATH,
@@ -298,18 +299,24 @@ class HubApi:
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
                 'ModelPath': aigc_model.model_path,
-                'TriggerWords': aigc_model.trigger_words
+                'TriggerWords': aigc_model.trigger_words,
+                'OfficialTags': aigc_model.official_tags
             })
 
         else:
             # Use regular model endpoint
             path = f'{endpoint}/api/v1/models'
 
+        headers = self.builder_headers(self.headers)
+
+        intl_end = DEFAULT_MODELSCOPE_INTL_DOMAIN.split('.')[-1]
+        if endpoint.rstrip('/').endswith(f'.{intl_end}'):
+            headers['X-Modelscope-Accept-Language'] = 'en-US'
         r = self.session.post(
             path,
             json=body,
             cookies=cookies,
-            headers=self.builder_headers(self.headers))
+            headers=headers)
         raise_for_http_status(r)
         d = r.json()
         raise_on_error(d)

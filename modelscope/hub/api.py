@@ -300,8 +300,10 @@ class HubApi:
                 'WeightsSize': aigc_model.weight_size,
                 'ModelPath': aigc_model.model_path,
                 'TriggerWords': aigc_model.trigger_words,
-                'OfficialTags': aigc_model.official_tags
             })
+
+            if aigc_model.official_tags:
+                body['OfficialTags'] = aigc_model.official_tags
 
         else:
             # Use regular model endpoint

@@ -139,6 +139,8 @@ class AigcModel:
         if official_tags:
             self.official_tags = official_tags
             self._validate_official_tags()
+        else:
+            self.official_tags = None
 
         # Process model path and calculate weights information
         self._process_model_path()

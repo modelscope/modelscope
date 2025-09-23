@@ -130,8 +130,7 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
-    @staticmethod
-    def _get_cookies(access_token: str):
+    def _get_cookies(self, access_token: str):
         """
         Get jar cookies for authentication from access_token.
 
@@ -142,10 +141,13 @@ class HubApi:
             jar (CookieJar): cookies for authentication.
         """
         from requests.cookies import RequestsCookieJar
+
+        domain: str = self.endpoint.lstrip(MODELSCOPE_URL_SCHEME) if self.endpoint else get_domain()
+
         jar = RequestsCookieJar()
         jar.set('m_session_id',
                 access_token,
-                domain=get_domain(),
+                domain=domain,
                 path='/')
         return jar
 

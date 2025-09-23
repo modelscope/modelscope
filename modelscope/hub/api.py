@@ -141,8 +141,9 @@ class HubApi:
             jar (CookieJar): cookies for authentication.
         """
         from requests.cookies import RequestsCookieJar
+        from urllib.parse import urlparse
 
-        domain: str = self.endpoint.lstrip(MODELSCOPE_URL_SCHEME) if self.endpoint else get_domain()
+        domain: str = urlparse(self.endpoint).netloc if self.endpoint else get_domain()
 
         jar = RequestsCookieJar()
         jar.set('m_session_id',

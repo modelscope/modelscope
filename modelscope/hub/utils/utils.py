@@ -153,9 +153,6 @@ def file_integrity_validation(file_path, expected_sha256):
         file_path (str): The file to validate
         expected_sha256 (str): The expected sha256 hash
 
-    Raises:
-        FileIntegrityError: If file_path hash is not expected.
-
     """
     file_sha256 = compute_hash(file_path)
     if not file_sha256 == expected_sha256:

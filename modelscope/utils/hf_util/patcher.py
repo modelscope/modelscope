@@ -244,11 +244,13 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     extra_allow_file_pattern = list(
                         (cls.vocab_files_names.values()) if cls is not None
                         and hasattr(cls, 'vocab_files_names') else []) + [
-                            'chat_template.jinja', r'*.json', r'*.py', r'*.txt'
+                            'chat_template.jinja', r'*.json', r'*.py',
+                            r'*.txt', r'*.model'
                         ]  # noqa
                 elif 'Processor' in module_class.__name__:
                     extra_allow_file_pattern = [
-                        'chat_template.jinja', r'*.json', r'*.py', r'*.txt'
+                        'chat_template.jinja', r'*.json', r'*.py', r'*.txt',
+                        r'*.model'
                     ]
 
                 kwargs['allow_file_pattern'] = extra_allow_file_pattern

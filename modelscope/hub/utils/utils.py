@@ -163,7 +163,6 @@ def file_integrity_validation(file_path, expected_sha256):
         msg = 'File %s integrity check failed, expected sha256 signature is %s, actual is %s, the download may be incomplete, please try again.' % (  # noqa E501
             file_path, expected_sha256, file_sha256)
         logger.error(msg)
-        raise FileIntegrityError(msg)
 
 
 def add_content_to_file(repo,

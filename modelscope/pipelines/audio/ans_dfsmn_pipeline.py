@@ -132,7 +132,7 @@ class ANSDFSMNPipeline(Pipeline):
         if len(data1.shape) > 1:
             data1 = data1[:, 0]
         if fs != self.SAMPLE_RATE:
-            data1 = librosa.resample(data1, fs, self.SAMPLE_RATE)
+            data1 = librosa.resample(data1, orig_sr=fs, target_sr=self.SAMPLE_RATE)
         data = data1 * 32768
         data_tensor = torch.from_numpy(data).type(torch.FloatTensor)
         return data_tensor

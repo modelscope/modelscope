@@ -63,6 +63,7 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    handle_http_response, is_ok,
                                    raise_for_http_status, raise_on_error)
 from modelscope.hub.git import GitCommandWrapper
+from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
@@ -83,7 +84,8 @@ from modelscope.utils.file_utils import get_file_hash, get_file_size
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
-                                         MODEL_LFS_SUFFIX, CommitInfo,
+                                         MODEL_LFS_SUFFIX,
+                                         CommitHistoryResponse, CommitInfo,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
 from modelscope.utils.thread_utils import thread_executor
@@ -128,8 +130,7 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
-    @staticmethod
-    def _get_cookies(access_token: str):
+    def _get_cookies(self, access_token: str):
         """
         Get jar cookies for authentication from access_token.
 
@@ -140,10 +141,14 @@ class HubApi:
             jar (CookieJar): cookies for authentication.
         """
         from requests.cookies import RequestsCookieJar
+        from urllib.parse import urlparse
+
+        domain: str = urlparse(self.endpoint).netloc if self.endpoint else get_domain()
+
         jar = RequestsCookieJar()
         jar.set('m_session_id',
                 access_token,
-                domain=get_domain(),
+                domain=domain,
                 path='/')
         return jar
 
@@ -282,11 +287,11 @@ class HubApi:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
             # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
-            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
 
             # Add AIGC-specific fields to body
             body.update({
-                'TagShowName': aigc_model.revision,
+                'TagShowName': aigc_model.tag,
                 'CoverImages': aigc_model.cover_images,
                 'AigcType': aigc_model.aigc_type,
                 'TagDescription': aigc_model.description,
@@ -295,7 +300,8 @@ class HubApi:
                 'WeightsName': aigc_model.weight_filename,
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
-                'ModelPath': aigc_model.model_path
+                'ModelPath': aigc_model.model_path,
+                'TriggerWords': aigc_model.trigger_words
             })
 
         else:
@@ -307,16 +313,101 @@ class HubApi:
             json=body,
             cookies=cookies,
             headers=self.builder_headers(self.headers))
-        handle_http_post_error(r, path, body)
-        raise_on_error(r.json())
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
         model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: to be aligned with the new api
         # Upload model files for AIGC models
-        # if aigc_model is not None:
-        #     aigc_model.upload_to_repo(self, model_id, token)
+        if aigc_model is not None:
+            aigc_model.upload_to_repo(self, model_id, token)
 
         return model_repo_url
+
+    def create_model_tag(self,
+                         model_id: str,
+                         tag_name: str,
+                         endpoint: Optional[str] = None,
+                         token: Optional[str] = None,
+                         aigc_model: Optional['AigcModel'] = None) -> str:
+        """Create a tag for a model at ModelScope Hub.
+
+        Args:
+            model_id (str): The model id in format {owner}/{name}
+            tag_name (str): The tag name (e.g., "v1.0.0")
+            endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_model (AigcModel, optional): AigcModel instance for AIGC model tag creation.
+                If provided, will create an AIGC model tag with automatic parameters.
+                Refer to modelscope.hub.utils.aigc.AigcModel for details.
+
+        Returns:
+            str: URL of the created tag
+
+        Raises:
+            InvalidParameter: If model_id, tag_name, ref, or description is invalid.
+            ValueError: If not login.
+
+        Note:
+            model_id = {owner}/{name}
+        """
+        if model_id is None:
+            raise InvalidParameter('model_id is required!')
+        if tag_name is None:
+            raise InvalidParameter('tag_name is required!')
+        if tag_name.lower() in ['main', 'master']:
+            raise InvalidParameter(
+                f'tag_name "{tag_name}" is not allowed. '
+                f'Please use a different tag name (e.g., "v1.0", "v1.1", "latest"). '
+                f'Reserved names: main, master'
+            )
+
+        # Get cookies for authentication.
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
+        if not endpoint:
+            endpoint = self.endpoint
+
+        owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Set path and body based on model type
+        if aigc_model is not None:
+            # Use AIGC model tag endpoint
+            path = f'{endpoint}/api/v1/models/aigc/repo/tag'
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
+
+            # Base body for AIGC model tag
+            body = {
+                'CoverImages': aigc_model.cover_images,
+                'Name': name,
+                'Path': owner_or_group,
+                'TagShowName': tag_name,
+                'WeightsName': aigc_model.weight_filename,
+                'WeightsSha256': aigc_model.weight_sha256,
+                'WeightsSize': aigc_model.weight_size,
+                'TriggerWords': aigc_model.trigger_words
+            }
+
+        else:
+            # Use regular model tag endpoint
+            path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
+            revision = 'master'
+            body = {
+                'TagName': tag_name,
+                'Ref': revision
+            }
+
+        r = self.session.post(
+            path,
+            json=body,
+            cookies=cookies,
+            headers=self.builder_headers(self.headers))
+
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+
+        tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
+        return tag_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):
         """Delete model_id from ModelScope.
@@ -433,6 +524,105 @@ class HubApi:
                 return alternative_endpoint
         else:
             return prefer_endpoint
+
+    def model_info(self,
+                   repo_id: str,
+                   *,
+                   revision: Optional[str] = DEFAULT_MODEL_REVISION,
+                   endpoint: Optional[str] = None) -> ModelInfo:
+        """Get model information including commit history.
+
+        Args:
+            repo_id (str): The model id in the format of
+                ``namespace/model_name``.
+            revision (str, optional): Specific revision of the model.
+                Defaults to ``DEFAULT_MODEL_REVISION``.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            ModelInfo: The model detailed information returned by
+            ModelScope Hub with commit history.
+        """
+        owner_or_group, _ = model_id_to_group_owner_name(repo_id)
+        model_data = self.get_model(
+            model_id=repo_id, revision=revision, endpoint=endpoint)
+        commits = self.list_repo_commits(
+            repo_id=repo_id, repo_type=REPO_TYPE_MODEL, revision=revision, endpoint=endpoint)
+        siblings = self.get_model_files(
+            model_id=repo_id, revision=revision, recursive=True, endpoint=endpoint)
+
+        # Create ModelInfo from API response data
+        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group, siblings=siblings)
+
+        return model_info
+
+    def dataset_info(self,
+                     repo_id: str,
+                     *,
+                     revision: Optional[str] = None,
+                     endpoint: Optional[str] = None) -> DatasetInfo:
+        """Get dataset information including commit history.
+
+        Args:
+            repo_id (str): The dataset id in the format of
+                ``namespace/dataset_name``.
+            revision (str, optional): Specific revision of the dataset.
+                Defaults to ``None``.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            DatasetInfo: The dataset detailed information returned by
+            ModelScope Hub with commit history.
+        """
+        owner_or_group, _ = model_id_to_group_owner_name(repo_id)
+        dataset_data = self.get_dataset(
+            dataset_id=repo_id, revision=revision, endpoint=endpoint)
+        commits = self.list_repo_commits(
+            repo_id=repo_id, repo_type=REPO_TYPE_DATASET, revision=revision, endpoint=endpoint)
+        siblings = self.get_dataset_files(
+            repo_id=repo_id, revision=revision or DEFAULT_DATASET_REVISION, recursive=True, endpoint=endpoint)
+
+        # Create DatasetInfo from API response data
+        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group, siblings=siblings)
+
+        return dataset_info
+
+    def repo_info(
+        self,
+        repo_id: str,
+        *,
+        repo_type: Optional[str] = REPO_TYPE_MODEL,
+        revision: Optional[str] = DEFAULT_MODEL_REVISION,
+        endpoint: Optional[str] = None
+    ) -> Union[ModelInfo, DatasetInfo]:
+        """Get repository information for models or datasets.
+
+        Args:
+            repo_id (str): The repository id in the format of
+                ``namespace/repo_name``.
+            revision (str, optional): Specific revision of the repository.
+                Currently only effective for model repositories. Defaults to
+                ``DEFAULT_MODEL_REVISION``.
+            repo_type (str, optional): Type of the repository. Supported
+                values are ``"model"`` and ``"dataset"``. If not provided,
+                ``"model"`` is assumed.
+            endpoint (str, optional): Hub endpoint to use. When ``None``,
+                use the endpoint specified when initializing :class:`HubApi`.
+
+        Returns:
+            Union[ModelInfo, DatasetInfo]: The repository detailed information
+            returned by ModelScope Hub.
+        """
+        if repo_type is None or repo_type == REPO_TYPE_MODEL:
+            return self.model_info(repo_id=repo_id, revision=revision, endpoint=endpoint)
+
+        if repo_type == REPO_TYPE_DATASET:
+            return self.dataset_info(repo_id=repo_id, revision=revision, endpoint=endpoint)
+
+        raise InvalidParameter(
+            f'Arg repo_type {repo_type} not supported. Please choose from {REPO_TYPE_SUPPORT}.')
 
     def repo_exists(
             self,
@@ -717,9 +907,9 @@ class HubApi:
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
-        elif use_cookies:
+        elif isinstance(use_cookies, bool):
             cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
+            if use_cookies and cookies is None:
                 raise ValueError('Token does not exist, please login first.')
         return cookies
 
@@ -1111,6 +1301,68 @@ class HubApi:
 
         return resp
 
+    def list_repo_commits(self,
+                          repo_id: str,
+                          *,
+                          repo_type: Optional[str] = REPO_TYPE_MODEL,
+                          revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+                          page_number: int = 1,
+                          page_size: int = 50,
+                          endpoint: Optional[str] = None):
+        """
+        Get the commit history for a repository.
+
+        Args:
+            repo_id (str): The repository id, in the format of `namespace/repo_name`.
+            repo_type (Optional[str]): The type of the repository. Supported types are `model` and `dataset`.
+            revision (str): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            page_number (int): The page number for pagination. Defaults to 1.
+            page_size (int): The number of commits per page. Defaults to 50.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            CommitHistoryResponse: The commit history response.
+
+        Examples:
+            >>> from modelscope.hub.api import HubApi
+            >>> api = HubApi()
+            >>> commit_history = api.list_repo_commits('meituan/Meeseeks')
+            >>> print(f"Total commits: {commit_history.total_count}")
+            >>> for commit in commit_history.commits:
+            ...     print(f"{commit.short_id}: {commit.title}")
+        """
+        from datasets.utils.file_utils import is_relative_path
+
+        if is_relative_path(repo_id) and repo_id.count('/') == 1:
+            _owner, _dataset_name = repo_id.split('/')
+        else:
+            raise ValueError(f'Invalid repo_id: {repo_id} !')
+
+        if not endpoint:
+            endpoint = self.endpoint
+
+        commits_url = f'{endpoint}/api/v1/{repo_type}s/{repo_id}/commits' if repo_type else \
+            f'{endpoint}/api/v1/models/{repo_id}/commits'
+        params = {
+            'Ref': revision or DEFAULT_REPOSITORY_REVISION,
+            'PageNumber': page_number,
+            'PageSize': page_size
+        }
+        cookies = ModelScopeConfig.get_cookies()
+
+        try:
+            r = self.session.get(commits_url, params=params,
+                                 cookies=cookies, headers=self.builder_headers(self.headers))
+            raise_for_http_status(r)
+            resp = r.json()
+            raise_on_error(resp)
+
+            if resp.get('Code') == HTTPStatus.OK:
+                return CommitHistoryResponse.from_api_response(resp)
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f'Failed to get repository commits for {repo_id}: {str(e)}')
+
     def get_dataset_files(self,
                           repo_id: str,
                           *,
@@ -1163,6 +1415,39 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
 
         return resp['Data']['Files']
+
+    def get_dataset(
+        self,
+        dataset_id: str,
+        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
+        endpoint: Optional[str] = None
+    ):
+        """
+        Get the dataset information.
+
+        Args:
+            dataset_id (str): The dataset id.
+            revision (Optional[str]): The revision of the dataset.
+            endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+
+        Returns:
+            dict: The dataset information.
+        """
+        cookies = ModelScopeConfig.get_cookies()
+        if not endpoint:
+            endpoint = self.endpoint
+
+        if revision:
+            path = f'{endpoint}/api/v1/datasets/{dataset_id}?Revision={revision}'
+        else:
+            path = f'{endpoint}/api/v1/datasets/{dataset_id}'
+
+        r = self.session.get(
+            path, cookies=cookies, headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        resp = r.json()
+        datahub_raise_on_error(path, resp, r)
+        return resp[API_RESPONSE_FIELD_DATA]
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
                                    dataset_id: str, revision: str, endpoint: Optional[str] = None):
@@ -2154,8 +2439,9 @@ class HubApi:
             else:
                 raise ValueError('Invalid data type to upload')
 
+        raise_for_http_status(rsp=response)
         resp = response.json()
-        raise_on_error(resp)
+        raise_on_error(rsp=resp)
 
         res_d['url'] = upload_object['url']
         res_d['status_code'] = resp['Code']
@@ -2208,8 +2494,9 @@ class HubApi:
             cookies=cookies
         )
 
+        raise_for_http_status(rsp=response)
         resp = response.json()
-        raise_on_error(resp)
+        raise_on_error(rsp=resp)
 
         upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
         resp_objects = resp['Data']['objects']

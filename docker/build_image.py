@@ -344,6 +344,23 @@ class LLMImageBuilder(Builder):
 
 class SwiftImageBuilder(LLMImageBuilder):
 
+    def init_args(self, args) -> Any:
+        if not args.base_image:
+            args.base_image = 'nvidia/cuda:12.6.3-devel-ubuntu22.04'
+        if not args.cuda_version:
+            args.cuda_version = '12.6.3'
+        if not args.torch_version:
+            args.torch_version = '2.7.1'
+            args.torchaudio_version = '2.7.1'
+            args.torchvision_version = '0.22.1'
+        if not args.vllm_version:
+            args.vllm_version = '0.10.1.1'
+        if not args.lmdeploy_version:
+            args.lmdeploy_version = '0.9.2.post1'
+        if not args.flashattn_version:
+            args.flashattn_version = '2.7.4.post1'
+        return super().init_args(args)
+
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -351,8 +368,7 @@ class SwiftImageBuilder(LLMImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir deepspeed==0.14.5 --no-deps && \
-    pip install --no-cache-dir -U icecream soundfile pybind11
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '

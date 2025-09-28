@@ -56,7 +56,7 @@ UPLOAD_COMMIT_BATCH_SIZE = int(os.environ.get('UPLOAD_COMMIT_BATCH_SIZE', 512))
 UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD = 20 * 1024 * 1024
 
 
-MODELSCOPE_ASCII = """
+MODELSCOPE_ASCII = r"""
  _   .-')                _ .-') _     ('-.             .-')                              _ (`-.    ('-.
 ( '.( OO )_             ( (  OO) )  _(  OO)           ( OO ).                           ( (OO  ) _(  OO)
  ,--.   ,--.).-'),-----. \     .'_ (,------.,--.     (_)---\_)   .-----.  .-'),-----.  _.`     \(,------.

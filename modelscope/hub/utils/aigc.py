@@ -2,11 +2,13 @@
 import glob
 import os
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import requests
 from tqdm.auto import tqdm
 
-from modelscope.hub.utils.utils import MODELSCOPE_URL_SCHEME, get_domain
+from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
+                                        encode_image_to_base64, get_endpoint)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -48,10 +50,12 @@ class AigcModel:
 
     # Supported base model types for reference
     BASE_MODEL_TYPES = {
-        'SD_1_5', 'SD_XL', 'SD_3', 'FLUX_1', 'WAN_VIDEO_2_1_T2V_1_3_B',
-        'WAN_VIDEO_2_1_T2V_14_B', 'WAN_VIDEO_2_1_I2V_14_B',
-        'WAN_VIDEO_2_1_FLF2V_14_B', 'WAN_VIDEO_2_2_T2V_5_B',
-        'WAN_VIDEO_2_2_T2V_14_B', 'WAN_VIDEO_2_2_I2V_14_B', 'QWEN_IMAGE_20B'
+        'WAN_VIDEO_2_1_14_B', 'SD_XL', 'SD_2', 'SD_3',
+        'WAN_VIDEO_2_1_T2V_1_3_B', 'UNKNOWN', 'WAN_VIDEO_2_2_TI2V_5_B',
+        'WAN_VIDEO_2_2_I2V_A_14_B', 'WAN_VIDEO_2_1_I2V_14_B',
+        'QWEN_IMAGE_20_B', 'SD_2_1', 'SD_1_5', 'FLUX_1',
+        'WAN_VIDEO_2_2_T2V_A_14_B', 'WAN_VIDEO_2_1_T2V_14_B',
+        'WAN_VIDEO_2_1_FLF2V_14_B'
     }
 
     def __init__(self,
@@ -59,10 +63,11 @@ class AigcModel:
                  base_model_type: str,
                  model_path: str,
                  base_model_id: str = '',
-                 revision: Optional[str] = 'v1.0',
+                 tag: Optional[str] = 'v1.0',
                  description: Optional[str] = 'this is an aigc model',
                  cover_images: Optional[List[str]] = None,
-                 path_in_repo: Optional[str] = ''):
+                 path_in_repo: Optional[str] = '',
+                 trigger_words: Optional[List[str]] = None):
         """
         Initializes the AigcModel helper.
 
@@ -70,24 +75,49 @@ class AigcModel:
             model_path (str): The path of checkpoint/LoRA weight file or folder.
             aigc_type (str): AIGC model type. Recommended: 'Checkpoint', 'LoRA', 'VAE'.
             base_model_type (str): Vision foundation model type. Recommended values are in BASE_MODEL_TYPES.
-            revision (str, optional): Revision for the AIGC model. Defaults to 'v1.0'.
+            tag (str, optional): Tag for the AIGC model. Defaults to 'v1.0'.
             description (str, optional): Model description. Defaults to 'this is an aigc model'.
             cover_images (List[str], optional): List of cover image URLs.
             base_model_id (str, optional): Base model name. e.g., 'AI-ModelScope/FLUX.1-dev'.
             path_in_repo (str, optional): Path in the repository.
-                Note: Auto-upload during AIGC create is temporarily disabled by server. This parameter
-                will not take effect at creation time.
+            trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
         self.base_model_type = base_model_type
-        self.revision = revision
+        self.tag = tag
         self.description = description
-        self.cover_images = cover_images if cover_images is not None else [
-            DEFAULT_AIGC_COVER_IMAGE
-        ]
+        # Process cover images - convert local paths to base64 data URLs
+        if cover_images is not None:
+            processed_cover_images = []
+            for img in cover_images:
+                if isinstance(img, str):
+                    # Check if it's a local file path (not a URL)
+                    if not (img.startswith('http://')
+                            or img.startswith('https://')
+                            or img.startswith('data:')):
+                        try:
+                            # Convert local path to base64 data URL
+                            processed_img = encode_image_to_base64(img)
+                            processed_cover_images.append(processed_img)
+                            logger.info('Converted local image to base64: %s',
+                                        os.path.basename(img))
+                        except (FileNotFoundError, ValueError) as e:
+                            logger.warning(
+                                'Failed to process local image %s: %s. Using as-is.',
+                                img, e)
+                            processed_cover_images.append(img)
+                    else:
+                        # Keep URLs and data URLs as-is
+                        processed_cover_images.append(img)
+                else:
+                    processed_cover_images.append(img)
+            self.cover_images = processed_cover_images
+        else:
+            self.cover_images = [DEFAULT_AIGC_COVER_IMAGE]
         self.base_model_id = base_model_id
         self.path_in_repo = path_in_repo
+        self.trigger_words = trigger_words
 
         # Validate types and provide warnings
         self._validate_aigc_type()
@@ -211,7 +241,6 @@ class AigcModel:
                 # Upload entire folder with path_in_repo support
                 logger.info('Uploading directory: %s', self.model_path)
                 api.upload_folder(
-                    revision=self.revision,
                     repo_id=model_id,
                     folder_path=self.model_path,
                     path_in_repo=self.path_in_repo,
@@ -221,7 +250,6 @@ class AigcModel:
                 # Upload single file, target_file is guaranteed to be set by _process_model_path
                 logger.info('Uploading file: %s', self.target_file)
                 api.upload_file(
-                    revision=self.revision,
                     path_or_fileobj=self.target_file,
                     path_in_repo=self.path_in_repo + '/' + self.weight_filename
                     if self.path_in_repo else self.weight_filename,
@@ -242,7 +270,8 @@ class AigcModel:
                           *,
                           cookies: Optional[object] = None,
                           timeout: int = 300,
-                          headers: Optional[dict] = None) -> None:
+                          headers: Optional[dict] = None,
+                          endpoint: Optional[str] = None) -> None:
         """Pre-upload aigc model weights to the LFS server.
 
         Server may require the sha256 of weights to be registered before creation.
@@ -253,8 +282,13 @@ class AigcModel:
             timeout: Request timeout seconds.
             headers: Optional headers.
         """
-        domain: str = get_domain()
-        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{domain.lstrip("www.")}'
+        endpoint = endpoint or get_endpoint()
+        endpoint_host: str = urlparse(endpoint.strip()).hostname.lstrip('www.')
+
+        # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
+        base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
+            else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{endpoint_host.lstrip("pre.")}'
+
         url: str = f'{base_url}/api/v1/models/aigc/weights'
 
         file_path = getattr(self, 'target_file', None) or self.model_path
@@ -308,14 +342,15 @@ class AigcModel:
         return {
             'aigc_type': self.aigc_type,
             'base_model_type': self.base_model_type,
-            'revision': self.revision,
+            'tag': self.tag,
             'description': self.description,
             'cover_images': self.cover_images,
             'base_model_id': self.base_model_id,
             'model_path': self.model_path,
             'weight_filename': self.weight_filename,
             'weight_sha256': self.weight_sha256,
-            'weight_size': self.weight_size
+            'weight_size': self.weight_size,
+            'trigger_words': self.trigger_words
         }
 
     @classmethod

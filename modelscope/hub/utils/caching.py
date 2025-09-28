@@ -4,6 +4,7 @@ import hashlib
 import os
 import pickle
 import tempfile
+import threading
 from shutil import move, rmtree
 from typing import Dict
 
@@ -39,6 +40,8 @@ class FileSystemCache(object):
             cache_root_location (str): The root location to store files.
             kwargs(dict): The keyword arguments.
         """
+        self._cache_lock = threading.RLock()
+
         os.makedirs(cache_root_location, exist_ok=True)
         self.cache_root_location = cache_root_location
         self.load_cache()
@@ -55,15 +58,30 @@ class FileSystemCache(object):
                 self.cached_files = pickle.load(f)
 
     def save_cached_files(self):
-        """Save cache metadata."""
-        # save new meta to tmp and move to KEY_FILE_NAME
-        cache_keys_file_path = os.path.join(self.cache_root_location,
-                                            FileSystemCache.KEY_FILE_NAME)
-        # TODO: Sync file write
-        fd, fn = tempfile.mkstemp()
-        with open(fd, 'wb') as f:
-            pickle.dump(self.cached_files, f)
-        move(fn, cache_keys_file_path)
+        """
+        Save cache metadata in order to verify that the cached content is consistent with the remote content.
+
+        Example of the cached content:
+            [{'Path': 'configuration.json', 'Revision': 'f01dxxx'}, {'Path': 'model.bin', 'Revision': '1159xxx'}, ...]
+        """
+        with self._cache_lock:
+            cache_keys_file_path = os.path.join(self.cache_root_location,
+                                                FileSystemCache.KEY_FILE_NAME)
+            fd, temp_filename = tempfile.mkstemp(
+                suffix='.tmp', dir=self.cache_root_location)
+
+            try:
+                with os.fdopen(fd, 'wb') as f:
+                    pickle.dump(self.cached_files, f)
+                move(temp_filename, cache_keys_file_path)
+            except Exception:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+                if os.path.exists(temp_filename):
+                    os.unlink(temp_filename)
+                raise
 
     def get_file(self, key):
         """Check the key is in the cache, if exist, return the file, otherwise return None.

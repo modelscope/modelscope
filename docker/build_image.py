@@ -207,6 +207,9 @@ class GPUImageBuilder(Builder):
         # pushd ~ popd is to solve the tf cannot use gpu problem.
         extra_content = """
 RUN pip install tf-keras==2.16.0 --no-dependencies && \
+    pip install onnx==1.18.0 --no-dependencies && \
+    pip install transformers==4.55.4 --no-dependencies && \
+    pip install deepspeed==0.17.4 --no-dependencies && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
     CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
         pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
@@ -273,19 +276,19 @@ class LLMImageBuilder(Builder):
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.6.0'
-            args.torchaudio_version = '2.6.0'
-            args.torchvision_version = '0.21.0'
+            args.torch_version = '2.8.0'
+            args.torchaudio_version = '2.8.0'
+            args.torchvision_version = '0.23.0'
         if not args.cuda_version:
             args.cuda_version = '12.4.0'
         if not args.vllm_version:
-            args.vllm_version = '0.8.5.post1'
+            args.vllm_version = '0.11.0'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.9.1'
+            args.lmdeploy_version = '0.10.1'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
-            args.flashattn_version = '2.7.1.post4'
+            args.flashattn_version = '2.7.4.post1'
         return args
 
     def generate_dockerfile(self) -> str:

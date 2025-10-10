@@ -59,7 +59,8 @@ RUN echo $CUR_TIME
 RUN bash /tmp/install.sh {version_args} && \
     curl -fsSL https://ollama.com/install.sh | sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm accelerate peft trl safetensors && \
+    pip install transformers trl && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm accelerate peft safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
     pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \

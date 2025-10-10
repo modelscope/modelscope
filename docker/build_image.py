@@ -162,7 +162,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'cpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -208,7 +208,6 @@ class GPUImageBuilder(Builder):
         extra_content = """
 RUN pip install tf-keras==2.16.0 --no-dependencies && \
     pip install onnx==1.18.0 --no-dependencies && \
-    pip install "transformers<4.56" "trl<0.23" --no-dependencies && \
     pip install deepspeed==0.17.4 --no-dependencies && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
     CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
@@ -233,7 +232,7 @@ RUN pushd $(dirname $(python -c 'print(__import__("tensorflow").__file__)'))  &&
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -309,7 +308,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'llm')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -385,7 +384,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{install_megatron_deps}', 'True')
+            content = content.replace('{image_type}', 'swift')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',

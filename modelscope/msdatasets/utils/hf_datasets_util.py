@@ -768,7 +768,7 @@ def _download_additional_modules(
             f'Loading {name} requires executing code from the repository. '
             'This is disabled by default for security reasons. '
             'If you trust the authors of this dataset, you can enable it with '
-            '`trust_remote_code=True`.\n'
+            '`trust_remote_code=True`.'
         )
 
     download_config = download_config.copy()

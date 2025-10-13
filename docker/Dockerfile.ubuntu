@@ -87,7 +87,7 @@ RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.13.0; \
 elif [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install "transformers<4.56" "trl<0.23" --no-dependencies; \
-else
+else \
     pip install --no-cache-dir huggingface-hub transformers peft -U; \
 fi
 

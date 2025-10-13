@@ -75,10 +75,7 @@ RUN bash /tmp/install.sh {version_args} && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
 
-RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers peft -U; \
-fi; \
-if [ "$IMAGE_TYPE" = "swift" ]; then \
+RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip install "sglang[all]<0.5" "math_verify==0.5.2" "gradio<5.33" -U && \
     pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.57" "trl<0.21" huggingface-hub -U && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
@@ -90,6 +87,8 @@ if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.13.0; \
 elif [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install "transformers<4.56" "trl<0.23" --no-dependencies; \
+else
+    pip install --no-cache-dir huggingface-hub transformers peft -U; \
 fi
 
 # install nvm and set node version to 18

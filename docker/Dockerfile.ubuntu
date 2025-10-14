@@ -89,6 +89,7 @@ elif [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install "transformers<4.56" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 else \
     pip install --no-cache-dir huggingface-hub transformers peft -U; \
+    pip uninstall autoawq \
 fi
 
 # install nvm and set node version to 18

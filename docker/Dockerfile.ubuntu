@@ -85,11 +85,11 @@ RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     cd apex && git checkout e13873debc4699d39c6861074b9a3b2a02327f92 && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
     pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.13.0; \
-elif [ "$IMAGE_TYPE" = "gpu" ]; then \
-    pip install "transformers<4.56" "trl<0.23" "diffusers<0.35" --no-dependencies; \
-else \
+elif [ "$IMAGE_TYPE" = "llm" ]; then \
     pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
     pip uninstall autoawq -y; \
+else \
+    pip install "transformers<4.56" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi
 
 # install nvm and set node version to 18

@@ -89,7 +89,7 @@ elif [ "$IMAGE_TYPE" = "llm" ]; then \
     pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
     pip uninstall autoawq -y; \
 else \
-    pip install "transformers<4.56" "trl<0.23" "diffusers<0.35" --no-dependencies; \
+    pip install "transformers<4.56" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi
 
 # install nvm and set node version to 18

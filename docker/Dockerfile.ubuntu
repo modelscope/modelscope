@@ -16,7 +16,7 @@ COPY {meta_file} /tmp/install.sh
 
 ARG INSTALL_MS_DEPS={install_ms_deps}
 
-ARG INSTALL_MEGATRON_DEPS={install_megatron_deps}
+ARG IMAGE_TYPE={image_type}
 
 # install dependencies
 COPY requirements /var/modelscope
@@ -75,19 +75,21 @@ RUN bash /tmp/install.sh {version_args} && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
 
-RUN if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers peft -U; \
-fi; \
-if [ "$INSTALL_MEGATRON_DEPS" = "True" ]; then \
-    pip install "sglang[all]<0.5" "math_verify==0.5.2" "gradio<5.33" "qwen_vl_utils<0.0.12" -U && \
+RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
+    pip install "sglang[all]<0.5" "math_verify==0.5.2" "gradio<5.33" -U && \
     pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.57" "trl<0.21" huggingface-hub -U && \
     SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])") && echo $SITE_PACKAGES && \
     CUDNN_PATH=$SITE_PACKAGES/nvidia/cudnn CPLUS_INCLUDE_PATH=$SITE_PACKAGES/nvidia/cudnn/include \
-    pip install --no-build-isolation "transformer_engine[pytorch]<2.7"; \
+    pip install --no-build-isolation transformer_engine[pytorch]; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && git checkout e13873debc4699d39c6861074b9a3b2a02327f92 && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
     pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.13.0; \
+elif [ "$IMAGE_TYPE" = "llm" ]; then \
+    pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
+    pip uninstall autoawq -y; \
+else \
+    pip install "transformers<4.56" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi
 
 # install nvm and set node version to 18
@@ -97,7 +99,6 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | b
     nvm install 22 && \
     nvm use 22
 
-ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub

@@ -37,6 +37,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
                                       DEFAULT_MAX_WORKERS,
+                                      DEFAULT_MODELSCOPE_INTL_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
                                       MODELSCOPE_CLOUD_USERNAME,
                                       MODELSCOPE_CREDENTIALS_PATH,
@@ -130,8 +131,7 @@ class HubApi:
 
         self.upload_checker = UploadingCheck()
 
-    @staticmethod
-    def _get_cookies(access_token: str):
+    def _get_cookies(self, access_token: str):
         """
         Get jar cookies for authentication from access_token.
 
@@ -142,10 +142,14 @@ class HubApi:
             jar (CookieJar): cookies for authentication.
         """
         from requests.cookies import RequestsCookieJar
+        from urllib.parse import urlparse
+
+        domain: str = urlparse(self.endpoint).netloc if self.endpoint else get_domain()
+
         jar = RequestsCookieJar()
         jar.set('m_session_id',
                 access_token,
-                domain=get_domain(),
+                domain=domain,
                 path='/')
         return jar
 
@@ -284,11 +288,11 @@ class HubApi:
             # Use AIGC model endpoint
             path = f'{endpoint}/api/v1/models/aigc'
             # Best-effort pre-upload weights so server recognizes sha256 (use existing cookies)
-            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers))
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
 
             # Add AIGC-specific fields to body
             body.update({
-                'TagShowName': aigc_model.revision,
+                'TagShowName': aigc_model.tag,
                 'CoverImages': aigc_model.cover_images,
                 'AigcType': aigc_model.aigc_type,
                 'TagDescription': aigc_model.description,
@@ -297,28 +301,122 @@ class HubApi:
                 'WeightsName': aigc_model.weight_filename,
                 'WeightsSha256': aigc_model.weight_sha256,
                 'WeightsSize': aigc_model.weight_size,
-                'ModelPath': aigc_model.model_path
+                'ModelPath': aigc_model.model_path,
+                'TriggerWords': aigc_model.trigger_words,
             })
+
+            if aigc_model.official_tags:
+                body['OfficialTags'] = aigc_model.official_tags
 
         else:
             # Use regular model endpoint
             path = f'{endpoint}/api/v1/models'
+
+        headers = self.builder_headers(self.headers)
+
+        intl_end = DEFAULT_MODELSCOPE_INTL_DOMAIN.split('.')[-1]
+        if endpoint.rstrip('/').endswith(f'.{intl_end}'):
+            headers['X-Modelscope-Accept-Language'] = 'en_US'
+        r = self.session.post(
+            path,
+            json=body,
+            cookies=cookies,
+            headers=headers)
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+        model_repo_url = f'{endpoint}/models/{model_id}'
+
+        # Upload model files for AIGC models
+        if aigc_model is not None:
+            aigc_model.upload_to_repo(self, model_id, token)
+
+        return model_repo_url
+
+    def create_model_tag(self,
+                         model_id: str,
+                         tag_name: str,
+                         endpoint: Optional[str] = None,
+                         token: Optional[str] = None,
+                         aigc_model: Optional['AigcModel'] = None) -> str:
+        """Create a tag for a model at ModelScope Hub.
+
+        Args:
+            model_id (str): The model id in format {owner}/{name}
+            tag_name (str): The tag name (e.g., "v1.0.0")
+            endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
+            aigc_model (AigcModel, optional): AigcModel instance for AIGC model tag creation.
+                If provided, will create an AIGC model tag with automatic parameters.
+                Refer to modelscope.hub.utils.aigc.AigcModel for details.
+
+        Returns:
+            str: URL of the created tag
+
+        Raises:
+            InvalidParameter: If model_id, tag_name, ref, or description is invalid.
+            ValueError: If not login.
+
+        Note:
+            model_id = {owner}/{name}
+        """
+        if model_id is None:
+            raise InvalidParameter('model_id is required!')
+        if tag_name is None:
+            raise InvalidParameter('tag_name is required!')
+        if tag_name.lower() in ['main', 'master']:
+            raise InvalidParameter(
+                f'tag_name "{tag_name}" is not allowed. '
+                f'Please use a different tag name (e.g., "v1.0", "v1.1", "latest"). '
+                f'Reserved names: main, master'
+            )
+
+        # Get cookies for authentication.
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
+        if not endpoint:
+            endpoint = self.endpoint
+
+        owner_or_group, name = model_id_to_group_owner_name(model_id)
+
+        # Set path and body based on model type
+        if aigc_model is not None:
+            # Use AIGC model tag endpoint
+            path = f'{endpoint}/api/v1/models/aigc/repo/tag'
+            aigc_model.preupload_weights(cookies=cookies, headers=self.builder_headers(self.headers), endpoint=endpoint)
+
+            # Base body for AIGC model tag
+            body = {
+                'CoverImages': aigc_model.cover_images,
+                'Name': name,
+                'Path': owner_or_group,
+                'TagShowName': tag_name,
+                'WeightsName': aigc_model.weight_filename,
+                'WeightsSha256': aigc_model.weight_sha256,
+                'WeightsSize': aigc_model.weight_size,
+                'TriggerWords': aigc_model.trigger_words
+            }
+
+        else:
+            # Use regular model tag endpoint
+            path = f'{endpoint}/api/v1/models/{model_id}/repo/tag'
+            revision = 'master'
+            body = {
+                'TagName': tag_name,
+                'Ref': revision
+            }
 
         r = self.session.post(
             path,
             json=body,
             cookies=cookies,
             headers=self.builder_headers(self.headers))
-        handle_http_post_error(r, path, body)
-        raise_on_error(r.json())
-        model_repo_url = f'{endpoint}/models/{model_id}'
 
-        # TODO: to be aligned with the new api
-        # Upload model files for AIGC models
-        # if aigc_model is not None:
-        #     aigc_model.upload_to_repo(self, model_id, token)
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
 
-        return model_repo_url
+        tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
+        return tag_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None):
         """Delete model_id from ModelScope.
@@ -460,9 +558,11 @@ class HubApi:
             model_id=repo_id, revision=revision, endpoint=endpoint)
         commits = self.list_repo_commits(
             repo_id=repo_id, repo_type=REPO_TYPE_MODEL, revision=revision, endpoint=endpoint)
+        siblings = self.get_model_files(
+            model_id=repo_id, revision=revision, recursive=True, endpoint=endpoint)
 
         # Create ModelInfo from API response data
-        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group)
+        model_info = ModelInfo(**model_data, commits=commits, author=owner_or_group, siblings=siblings)
 
         return model_info
 
@@ -490,9 +590,11 @@ class HubApi:
             dataset_id=repo_id, revision=revision, endpoint=endpoint)
         commits = self.list_repo_commits(
             repo_id=repo_id, repo_type=REPO_TYPE_DATASET, revision=revision, endpoint=endpoint)
+        siblings = self.get_dataset_files(
+            repo_id=repo_id, revision=revision or DEFAULT_DATASET_REVISION, recursive=True, endpoint=endpoint)
 
         # Create DatasetInfo from API response data
-        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group)
+        dataset_info = DatasetInfo(**dataset_data, commits=commits, author=owner_or_group, siblings=siblings)
 
         return dataset_info
 
@@ -814,9 +916,9 @@ class HubApi:
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
-        elif use_cookies:
+        elif isinstance(use_cookies, bool):
             cookies = ModelScopeConfig.get_cookies()
-            if cookies is None:
+            if use_cookies and cookies is None:
                 raise ValueError('Token does not exist, please login first.')
         return cookies
 
@@ -1251,7 +1353,7 @@ class HubApi:
         commits_url = f'{endpoint}/api/v1/{repo_type}s/{repo_id}/commits' if repo_type else \
             f'{endpoint}/api/v1/models/{repo_id}/commits'
         params = {
-            'Ref': revision or DEFAULT_MODEL_REVISION or DEFAULT_REPOSITORY_REVISION,
+            'Ref': revision or DEFAULT_REPOSITORY_REVISION,
             'PageNumber': page_number,
             'PageSize': page_size
         }

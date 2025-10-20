@@ -23,10 +23,7 @@ from transformers.modeling_outputs import (
     MultipleChoiceModelOutput, NextSentencePredictorOutput,
     QuestionAnsweringModelOutput, SequenceClassifierOutput,
     TokenClassifierOutput)
-from transformers.modeling_utils import (PreTrainedModel,
-                                         apply_chunking_to_forward,
-                                         find_pruneable_heads_and_indices,
-                                         prune_linear_layer)
+from transformers.modeling_utils import PreTrainedModel
 from transformers.models.bert.configuration_bert import BertConfig
 from transformers.utils import logging
 
@@ -36,6 +33,9 @@ from modelscope.models.builder import MODELS
 from modelscope.outputs import AttentionBackboneModelOutput
 from modelscope.utils.constant import Tasks
 from modelscope.utils.nlp.utils import parse_labels_in_order
+from modelscope.utils.torch_utils import (apply_chunking_to_forward,
+                                          find_pruneable_heads_and_indices,
+                                          prune_linear_layer)
 
 transformers.logging.set_verbosity_error()
 

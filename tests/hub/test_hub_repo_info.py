@@ -3,6 +3,7 @@
 
 import datetime
 import unittest
+import zoneinfo
 from unittest.mock import Mock, patch
 
 from modelscope.hub.api import HubApi

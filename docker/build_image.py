@@ -348,19 +348,19 @@ class SwiftImageBuilder(LLMImageBuilder):
 
     def init_args(self, args) -> Any:
         if not args.base_image:
-            args.base_image = 'nvidia/cuda:12.6.3-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:12.8.1-devel-ubuntu22.04'
         if not args.cuda_version:
-            args.cuda_version = '12.6.3'
+            args.cuda_version = '12.8.1'
         if not args.torch_version:
-            args.torch_version = '2.7.1'
-            args.torchaudio_version = '2.7.1'
-            args.torchvision_version = '0.22.1'
+            args.torch_version = '2.8.0'
+            args.torchaudio_version = '2.8.0'
+            args.torchvision_version = '0.23.0'
         if not args.vllm_version:
-            args.vllm_version = '0.10.1.1'
+            args.vllm_version = '0.11.0'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.9.2.post1'
+            args.lmdeploy_version = '0.10.1'
         if not args.flashattn_version:
-            args.flashattn_version = '2.7.4.post1'
+            args.flashattn_version = '2.8.1'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:

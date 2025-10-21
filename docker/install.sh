@@ -21,7 +21,7 @@ pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes d
 # pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl
 # find on: https://github.com/Dao-AILab/flash-attention/releases
 # cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
-pip install --no-cache-dir flash_attn==$flashattn_version
+pip install --no-cache-dir flash_attn==$flashattn_version --no-build-isolation
 
 pip install --no-cache-dir triton auto-gptq==$autogptq_version -U && pip cache purge
 

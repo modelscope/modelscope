@@ -12,11 +12,10 @@ from threading import Lock, Thread
 from typing import Dict, List, Optional, Union
 
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import Visibility
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
-from modelscope.utils.file_utils import get_file_hash
 from modelscope.utils.logger import get_logger
-from modelscope.utils.repo_utils import (CommitInfo, CommitOperationAdd,
-                                         RepoUtils)
+from modelscope.utils.repo_utils import CommitInfo, RepoUtils
 
 logger = get_logger()
 
@@ -114,9 +113,9 @@ class CommitScheduler:
             Repository type for the target repo. Defaults to `model`.
         revision (`str`, *optional*):
             Target branch or revision for commits. Defaults to `master`.
-        private (`bool`, *optional*):
-            Whether to make the repo private. If `None` (default), the repo will be public unless
-            the organization's default is private. This value is ignored if the repo already exists.
+        visibility (`str`, *optional*):
+            The visibility of the repo,
+            could be `public`, `private`, `internal`, default to `public`.
         token (`str`, *optional*):
             The token to use to commit to the repo. Defaults to the token saved on the machine.
         allow_patterns (`List[str]` or `str`, *optional*):
@@ -180,7 +179,7 @@ class CommitScheduler:
         path_in_repo: Optional[str] = None,
         repo_type: Optional[str] = None,
         revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-        private: Optional[bool] = None,
+        visibility: Optional[str] = Visibility.PUBLIC,
         token: Optional[str] = None,
         allow_patterns: Optional[Union[List[str], str]] = None,
         ignore_patterns: Optional[Union[List[str], str]] = None,
@@ -205,7 +204,7 @@ class CommitScheduler:
             repo_id=repo_id,
             token=token,
             repo_type=repo_type,
-            visibility='private' if private else 'public',
+            visibility=visibility,
             exist_ok=True,
             create_default_config=False,
         )

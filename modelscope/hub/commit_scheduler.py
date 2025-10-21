@@ -221,6 +221,7 @@ class CommitScheduler:
                 f'"interval" must be a positive integer, not "{interval}".')
         self.lock = Lock()
         self.interval = interval
+        self.__stopped = False
 
         logger.info(
             f'Scheduled job to push {self.folder_path} to {self.repo_id} at an interval of {self.interval} minutes.'
@@ -230,8 +231,6 @@ class CommitScheduler:
             target=self._run_scheduler, daemon=True)
         self._scheduler_thread.start()
         atexit.register(self.commit_scheduled_changes)
-
-        self.__stopped = False
 
     def stop(self) -> None:
         """Stop the scheduler."""
@@ -299,6 +298,12 @@ class CommitScheduler:
             return commit_info
 
         except Exception as e:
+            # Treat "No files to upload" as a normal ― no-change ― situation instead of an error.
+            if 'No files to upload' in str(e):
+                logger.debug(
+                    'No changed files to upload for scheduled commit.')
+                return None
+
             if hasattr(self, '_pending_tracker_updates'):
                 del self._pending_tracker_updates
             logger.error(f'Error during scheduled commit: {e}')

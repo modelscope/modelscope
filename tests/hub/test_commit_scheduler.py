@@ -1,7 +1,5 @@
 import atexit
-import os
 import shutil
-import sys
 import tempfile
 import time
 import unittest
@@ -12,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.commit_scheduler import CommitScheduler, PartialFileIO
+from modelscope.hub.constants import Visibility
 from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import _repo_file_download
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
@@ -64,10 +63,6 @@ class TestCommitScheduler(unittest.TestCase):
             except Exception:
                 pass
 
-        # Clean up temporary directories
-        if self.cache_dir.exists():
-            shutil.rmtree(self.cache_dir, ignore_errors=True)
-
         # Try to delete test repo (may not exist for mocked tests)
         try:
             if hasattr(self, 'api') and TEST_ACCESS_TOKEN1:
@@ -75,6 +70,10 @@ class TestCommitScheduler(unittest.TestCase):
                 self.api.delete_repo(repo_id=self.repo_id, repo_type='dataset')
         except Exception:
             pass
+
+        # Clean up temporary directories
+        if self.cache_dir.exists():
+            shutil.rmtree(self.cache_dir, ignore_errors=True)
 
         delete_credential()
 
@@ -164,7 +163,7 @@ class TestCommitScheduler(unittest.TestCase):
                 revision=custom_revision,
                 allow_patterns=allow_patterns,
                 ignore_patterns=ignore_patterns,
-                private=True,
+                visibility=Visibility.PUBLIC,
                 hub_api=self.api,
                 repo_type='dataset',
                 token=TEST_ACCESS_TOKEN1)
@@ -184,7 +183,7 @@ class TestCommitScheduler(unittest.TestCase):
             # Verify create_repo was called with correct visibility
             mock_create.assert_called_once()
             call_args = mock_create.call_args
-            self.assertEqual(call_args.kwargs.get('visibility'), 'private')
+            self.assertEqual(call_args.kwargs.get('visibility'), 'public')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     @patch.object(CommitScheduler, 'commit_scheduled_changes')

@@ -257,6 +257,7 @@ def get_file_hash(
             progress.update(len(byte_chunk))
         file_hash = file_hash.hexdigest()
         final_chunk_size = buffer_size
+        file_path_or_obj.seek(0, os.SEEK_SET)
 
     else:
         progress.close()

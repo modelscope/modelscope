@@ -122,6 +122,13 @@ class CreateCMD(CLICommand):
             type=str,
             default='',
             help='Path in the repository to upload to.')
+        aigc_group.add_argument(
+            '--model_source',
+            type=str,
+            default='USER_UPLOAD',
+            help=
+            'Source of the AIGC model. `USER_UPLOAD`, `TRAINED_FROM_MODELSCOPE` or `TRAINED_FROM_ALIYUN_FC`.'
+        )
 
         parser.set_defaults(func=subparser_func)
 
@@ -183,6 +190,7 @@ class CreateCMD(CLICommand):
                 description=self.args.description,
                 base_model_id=self.args.base_model_id,
                 path_in_repo=self.args.path_in_repo,
+                model_source=self.args.model_source,
             )
 
         # Convert visibility string to int for the API call

@@ -179,7 +179,7 @@ class CreateCMD(CLICommand):
                 model_path=self.args.model_path,
                 aigc_type=self.args.aigc_type,
                 base_model_type=self.args.base_model_type,
-                revision=self.args.revision,
+                tag=self.args.revision,
                 description=self.args.description,
                 base_model_id=self.args.base_model_id,
                 path_in_repo=self.args.path_in_repo,

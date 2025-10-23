@@ -303,6 +303,7 @@ class HubApi:
                 'WeightsSize': aigc_model.weight_size,
                 'ModelPath': aigc_model.model_path,
                 'TriggerWords': aigc_model.trigger_words,
+                'ModelSource': aigc_model.model_source,
             })
 
             if aigc_model.official_tags:

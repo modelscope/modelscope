@@ -69,17 +69,20 @@ class AigcModel:
         'main-strong', 'character-strong'
     }
 
-    def __init__(self,
-                 aigc_type: str,
-                 base_model_type: str,
-                 model_path: str,
-                 base_model_id: str = '',
-                 tag: Optional[str] = 'v1.0',
-                 description: Optional[str] = 'this is an aigc model',
-                 cover_images: Optional[List[str]] = None,
-                 path_in_repo: Optional[str] = '',
-                 trigger_words: Optional[List[str]] = None,
-                 official_tags: Optional[List[str]] = None):
+    def __init__(
+        self,
+        aigc_type: str,
+        base_model_type: str,
+        model_path: str,
+        base_model_id: str = '',
+        tag: Optional[str] = 'v1.0',
+        description: Optional[str] = 'this is an aigc model',
+        cover_images: Optional[List[str]] = None,
+        path_in_repo: Optional[str] = '',
+        trigger_words: Optional[List[str]] = None,
+        official_tags: Optional[List[str]] = None,
+        model_source: Optional[str] = 'USER_UPLOAD',
+    ):
         """
         Initializes the AigcModel helper.
 
@@ -94,12 +97,15 @@ class AigcModel:
             path_in_repo (str, optional): Path in the repository.
             trigger_words (List[str], optional): Trigger words for the AIGC Lora model.
             official_tags (List[str], optional): Official tags for the AIGC model. Defaults to None.
+            model_source (str, optional): Source of the model.
+                `USER_UPLOAD`, `TRAINED_FROM_MODELSCOPE` or `TRAINED_FROM_ALIYUN_FC`. Defaults to 'USER_UPLOAD'.
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
         self.base_model_type = base_model_type
         self.tag = tag
         self.description = description
+        self.model_source = model_source
         # Process cover images - convert local paths to base64 data URLs
         if cover_images is not None:
             processed_cover_images = []
@@ -383,7 +389,8 @@ class AigcModel:
             'weight_sha256': self.weight_sha256,
             'weight_size': self.weight_size,
             'trigger_words': self.trigger_words,
-            'official_tags': self.official_tags
+            'official_tags': self.official_tags,
+            'model_source': self.model_source,
         }
 
     @classmethod

@@ -741,7 +741,8 @@ def _download_additional_modules(
         namespace: str,
         revision: str,
         imports: Tuple[str, str, str, str],
-        download_config: Optional[DownloadConfig]
+        download_config: Optional[DownloadConfig],
+        trust_remote_code: Optional[bool] = False,
 ) -> List[Tuple[str, str]]:
     """
     Download additional module for a module <name>.py at URL (or local path) <base_path>/<name>.py
@@ -755,6 +756,21 @@ def _download_additional_modules(
     """
     local_imports = []
     library_imports = []
+
+    # Check if we need to execute remote code
+    has_remote_code = any(
+        import_type in ('internal', 'external')
+        for import_type, _, _, _ in imports
+    )
+
+    if has_remote_code and not trust_remote_code:
+        raise ValueError(
+            f'Loading {name} requires executing code from the repository. '
+            'This is disabled by default for security reasons. '
+            'If you trust the authors of this dataset, you can enable it with '
+            '`trust_remote_code=True`.'
+        )
+
     download_config = download_config.copy()
     if download_config.download_desc is None:
         download_config.download_desc = 'Downloading extra modules'
@@ -863,6 +879,7 @@ def get_module_with_script(self) -> DatasetModule:
         revision=revision,
         imports=imports,
         download_config=self.download_config,
+        trust_remote_code=self.trust_remote_code,
     )
     additional_files = []
     if dataset_infos_path:

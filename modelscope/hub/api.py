@@ -953,9 +953,9 @@ class HubApi:
             'page_size': page_size,
         }
         if sort:
-            if sort not in SortKeyMap:
+            if sort not in VALID_SORT_KEYS:
                 raise InvalidParameter(
-                    f'Invalid sort key: {sort}. Supported sort keys: {list(SortKeyMap.keys())}')
+                    f'Invalid sort key: {sort}. Supported sort keys: {list(VALID_SORT_KEYS)}')
             params['sort'] = sort
         if search:
             params['search'] = search

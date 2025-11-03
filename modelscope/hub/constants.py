@@ -125,9 +125,9 @@ class SortKey(object):
     LAST_MODIFIED = 'last_modified'
 
 
-SortKeyMap = {
-    SortKey.DEFAULT: SortKey.DEFAULT,
-    SortKey.DOWNLOADS: SortKey.DOWNLOADS,
-    SortKey.LIKES: SortKey.LIKES,
-    SortKey.LAST_MODIFIED: SortKey.LAST_MODIFIED
+VALID_SORT_KEYS = {
+    SortKey.DEFAULT,
+    SortKey.DOWNLOADS,
+    SortKey.LIKES,
+    SortKey.LAST_MODIFIED,
 }

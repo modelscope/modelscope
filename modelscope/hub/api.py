@@ -55,7 +55,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
                                       DatasetVisibility, Licenses,
-                                      ModelVisibility, SortKeyMap, Visibility,
+                                      ModelVisibility, VALID_SORT_KEYS, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,

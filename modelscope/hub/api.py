@@ -928,7 +928,7 @@ class HubApi:
             owner_or_group (str): Search by dataset authors (including organizations and individuals).
             page_number (int, optional): The page number. Defaults to 1.
             page_size (int, optional): The page size. Defaults to 10.
-            sort (str, optional): Sort key, default to SortKey.DEFAULT,
+            sort (str, optional): Sort key. If not provided, the server's default sorting is used.
                 choose from ['default', 'downloads', 'likes', 'last_modified'].
             search (str, optional): Search by substring keywords in the dataset's Chinese name,
                 English name, and authors (including organizations and individuals).

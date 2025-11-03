@@ -67,7 +67,7 @@ jobs:
             fi
       - name: Fetch LFS objects
         run: |
-          git lfs pull 
+          git lfs pull
       - name: Run unittest
         shell: bash
         run: |

@@ -768,7 +768,7 @@ def load_from_prebuilt(file_path=None):
     if os.path.exists(file_path):
         index = _load_index(file_path, with_template=True)
     else:
-        index = None
+        index = generate_ast_template()
     return index
 
 

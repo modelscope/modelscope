@@ -1,0 +1,78 @@
+[project]
+name = "modelscope"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+description = "ModelScope: bring the notion of Model-as-a-Service to life."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  {name = "ModelScope team"},
+  {email = "contact@modelscope.cn"}
+]
+keywords = ["python", "nlp", "science", "cv", "speech", "multi-modal"]
+requires-python = ">=3.7"
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+]
+
+[project.urls]
+Homepage = "https://github.com/modelscope/modelscope"
+
+[project.scripts]
+modelscope = "modelscope.cli.cli:run_cmd"
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["modelscope*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "modelscope.version.__version__"}
+dependencies = {file = ["requirements/hub.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+hub        = {file = ["requirements/hub.txt"]}
+datasets   = {file = ["requirements/datasets.txt"]}
+framework  = {file = ["requirements/framework.txt"]}
+server     = {file = ["requirements/server.txt"]}
+
+# domain specific with framework base
+cv          = {file = ["requirements/framework.txt", "requirements/cv.txt"]}
+nlp         = {file = ["requirements/framework.txt", "requirements/nlp.txt"]}
+multi-modal = {file = ["requirements/framework.txt", "requirements/multi-modal.txt"]}
+science     = {file = ["requirements/framework.txt", "requirements/science.txt"]}
+
+# audio specific with framework base
+audio_asr     = {file = ["requirements/framework.txt", "requirements/audio/audio_asr.txt"]}
+audio_codec   = {file = ["requirements/framework.txt", "requirements/audio/audio_codec.txt"]}
+audio_tts     = {file = ["requirements/framework.txt", "requirements/audio/audio_tts.txt"]}
+audio_kws     = {file = ["requirements/framework.txt", "requirements/audio/audio_kws.txt"]}
+audio_signal  = {file = ["requirements/framework.txt", "requirements/audio/audio_signal.txt"]}
+
+docs       = {file = ["requirements/docs.txt"]}
+tests      = {file = ["requirements/tests.txt"]}
+
+# skip audio requirements due to its hard dependency which may cause installation failure
+all = {file = [
+  "requirements/hub.txt",
+  "requirements/datasets.txt",
+  "requirements/framework.txt",
+  "requirements/cv.txt",
+  "requirements/nlp.txt",
+  "requirements/multi-modal.txt",
+  "requirements/science.txt",
+  "requirements/server.txt",
+]}

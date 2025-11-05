@@ -10,13 +10,11 @@ authors = [
   {email = "contact@modelscope.cn"}
 ]
 keywords = ["python", "nlp", "science", "cv", "speech", "multi-modal"]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     'Development Status :: 4 - Beta',
     'Operating System :: OS Independent',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',

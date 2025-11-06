@@ -16,6 +16,7 @@ from modelscope.cli.server import ServerCMD
 from modelscope.cli.upload import UploadCMD
 from modelscope.hub.constants import MODELSCOPE_ASCII
 from modelscope.utils.logger import get_logger
+from modelscope.version import __version__
 
 logger = get_logger(log_level=logging.WARNING)
 
@@ -24,6 +25,11 @@ def run_cmd():
     print(MODELSCOPE_ASCII)
     parser = argparse.ArgumentParser(
         'ModelScope Command Line tool', usage='modelscope <command> [<args>]')
+    parser.add_argument(
+        '-V',
+        '--version',
+        action='version',
+        version=f'ModelScope CLI {__version__}')
     parser.add_argument(
         '--token', default=None, help='Specify ModelScope SDK token.')
     subparsers = parser.add_subparsers(help='modelscope commands helpers')

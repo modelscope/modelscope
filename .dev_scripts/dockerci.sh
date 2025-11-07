@@ -22,7 +22,7 @@ do
   echo "get gpu lock $gpu"
 
   CONTAINER_NAME="modelscope-ci-$idx"
-  let is_get_file_lock=true
+  is_get_file_lock=true
 
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}

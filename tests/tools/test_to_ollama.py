@@ -122,6 +122,18 @@ class TestToOllama(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_check_template_type(self):
+        _test_check_tmpl_type(
+            'unsloth/gpt-oss-20b-GGUF',
+            'gpt-oss',
+            gguf_meta={'general.name': 'Gpt-Oss-20B'})
+        _test_check_tmpl_type(
+            'unsloth/granite-4.0-h-tiny-GGUF',
+            'granite4',
+            gguf_meta={'general.name': 'Granite-4.0-H-Tiny'})
+        _test_check_tmpl_type(
+            'unsloth/DeepSeek-V3.1-GGUF',
+            'deepseek-v3.1',
+            gguf_meta={'general.name': 'Deepseek-V3.1'})
         _test_check_tmpl_type('unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF',
                               'qwen3-coder')
         _test_check_tmpl_type(

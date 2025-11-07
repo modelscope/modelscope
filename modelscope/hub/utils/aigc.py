@@ -8,7 +8,7 @@ import requests
 from tqdm.auto import tqdm
 
 from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
-                                        encode_image_to_base64, get_endpoint)
+                                        encode_media_to_base64, get_endpoint)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -117,7 +117,7 @@ class AigcModel:
                             or img.startswith('data:')):
                         try:
                             # Convert local path to base64 data URL
-                            processed_img = encode_image_to_base64(img)
+                            processed_img = encode_media_to_base64(img)
                             processed_cover_images.append(processed_img)
                             logger.info('Converted local image to base64: %s',
                                         os.path.basename(img))

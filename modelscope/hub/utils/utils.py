@@ -146,16 +146,15 @@ def compute_hash(file_path):
     return sha256_hash.hexdigest()
 
 
-def file_integrity_validation(file_path, expected_sha256):
+def file_integrity_validation(file_path, expected_sha256) -> bool:
     """Validate the file hash is expected, if not, delete the file
 
     Args:
         file_path (str): The file to validate
         expected_sha256 (str): The expected sha256 hash
 
-    Raises:
-        FileIntegrityError: If file_path hash is not expected.
-
+    Returns:
+        bool: True if the file is valid, False otherwise
     """
     file_sha256 = compute_hash(file_path)
     if not file_sha256 == expected_sha256:
@@ -163,7 +162,9 @@ def file_integrity_validation(file_path, expected_sha256):
         msg = 'File %s integrity check failed, expected sha256 signature is %s, actual is %s, the download may be incomplete, please try again.' % (  # noqa E501
             file_path, expected_sha256, file_sha256)
         logger.error(msg)
-        raise FileIntegrityError(msg)
+        return False
+
+    return True
 
 
 def add_content_to_file(repo,

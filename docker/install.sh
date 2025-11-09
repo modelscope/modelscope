@@ -10,11 +10,11 @@ flashattn_version=${7:-2.7.1.post4}
 
 pip uninstall -y torch torchvision torchaudio
 
-pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
+pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version --index-url https://download.pytorch.org/whl/cu129
 
 pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
 
-pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
+pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version --index-url https://download.pytorch.org/whl/cu129
 
 pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord optimum openai-whisper
 

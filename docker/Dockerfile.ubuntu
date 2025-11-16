@@ -77,7 +77,7 @@ RUN bash /tmp/install.sh {version_args} && \
 
 RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip install "sglang[all]<0.6" "math_verify==0.5.2" "gradio<5.33" "deepspeed<0.18" -U && \
-    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.58" "trl<0.24" huggingface-hub -U && \
+    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.58" "trl<0.24" "peft<0.18" huggingface-hub -U && \
     pip install --no-build-isolation transformer_engine[pytorch]; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \

@@ -466,8 +466,8 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
     def image(self) -> str:
         return (
-            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
-            f'{self.args.python_tag}-torch{self.args.torch_version}-{self.args.modelscope_version}-swift-test'
+            f'{docker_registry}:cann:8.3.rc1-910-openeuler24.03-{self.args.python_tag}'
+            f'torch{self.args.torch_version}-{self.args.modelscope_version}-asced-swift-test'
         )
 
     def push(self):
@@ -475,9 +475,8 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         if ret != 0:
             return ret
         image_tag2 = (
-            f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
-            f'{self.args.python_tag}-torch{self.args.torch_version}-'
-            f'{self.args.modelscope_version}-swift-{formatted_time}-test')
+            f'{docker_registry}:cann:8.3.rc1-910-openeuler24.03-{self.args.python_tag}'
+            f'torch{self.args.torch_version}-{self.args.modelscope_version}-asced-swift-{formatted_time}-test')
         ret = os.system(f'docker tag {self.image()} {image_tag2}')
         if ret != 0:
             return ret
@@ -517,6 +516,8 @@ elif args.image_type.lower() == 'llm':
     builder_cls = LLMImageBuilder
 elif args.image_type.lower() == 'swift':
     builder_cls = SwiftImageBuilder
+elif args.image_type.lower() == 'ascend_swift':
+    builder_cls = AscendSwiftImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

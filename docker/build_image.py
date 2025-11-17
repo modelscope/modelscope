@@ -419,46 +419,19 @@ class AscendSwiftImageBuilder(SwiftImageBuilder):
     def init_args(self, args) -> Any:
         if not args.base_image:
             # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
-            args.base_image = "ascendai/cann:8.3.rc1-910-openeuler24.03-py3.11"
-        if not args.torch_version:
-            args.torch_version = "2.7.1"
-            args.torch_npu_version = "2.7.1"
-            args.torchvision_version = "0.22.1"
-        if not args.vllm_version:
-            args.vllm_version = "0.11.0"
-            args.vllm_ascend_version = "0.11.0-dev"
+            args.base_image = "swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11"
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
-        meta_file = "./docker/install_ascend.sh"
-        with open("docker/Dockerfile.extra_install", "r") as f:
-            extra_content = f.read()
-            extra_content = extra_content.replace(
-                "{python_version}", self.args.python_version
-            )
-        extra_content += """
+        extra_content = """
 RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
-        version_args = (
-            f"{self.args.torch_version} {self.args.torchvision_version} {self.args.torch_npu_version} "
-            f"{self.args.vllm_version} {self.args.vllm_ascend_version}"
-        )
-        with open('docker/Dockerfile.ubuntu', 'r') as f:
+        with open('docker/Dockerfile.ascend', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
             content = content.replace('{extra_content}', extra_content)
-            content = content.replace('{meta_file}', meta_file)
-            content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{install_megatron_deps}', 'True')
-            content = content.replace('{torch_version}',
-                                      self.args.torch_version)
-            content = content.replace('{torchvision_version}',
-                                      self.args.torchvision_version)
-            content = content.replace('{torchaudio_version}',
-                                      self.args.torchaudio_version)
-            content = content.replace('{index_url}', '')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
@@ -466,21 +439,12 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
     def image(self) -> str:
         return (
-            f'{docker_registry}:cann:8.3.rc1-910-openeuler24.03-{self.args.python_tag}'
-            f'torch{self.args.torch_version}-{self.args.modelscope_version}-asced-swift-test'
+            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
+            f'-{self.args.modelscope_version}-ascend-swift-test'
         )
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
-        if ret != 0:
-            return ret
-        image_tag2 = (
-            f'{docker_registry}:cann:8.3.rc1-910-openeuler24.03-{self.args.python_tag}'
-            f'torch{self.args.torch_version}-{self.args.modelscope_version}-asced-swift-{formatted_time}-test')
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
-        if ret != 0:
-            return ret
-        return os.system(f'docker push {image_tag2}')
+        return 0
 
 
 parser = argparse.ArgumentParser()

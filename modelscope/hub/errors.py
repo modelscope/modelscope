@@ -120,9 +120,9 @@ def handle_http_response(response: requests.Response,
         http_error_msg = 'The request model: %s does not exist!' % (model_id)
     elif 403 == response.status_code:
         if cookies is None:
-            http_error_msg = f'Authentication token does not exist, \
-                failed to access model {model_id} which may not exist \
-                or may be private. Please login first.'
+            http_error_msg = (
+                f'Authentication token does not exist, failed to access model {model_id} '
+                'which may not exist or may be private. Please login first.')
 
         else:
             http_error_msg = f'The authentication token is invalid, failed to access model {model_id}.'

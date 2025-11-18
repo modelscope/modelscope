@@ -131,7 +131,7 @@ else:
         if module is not None:
             module = _patch_pretrained_class([module], wrap=True)
         else:
-            raise ImportError(
+            raise AttributeError(
                 f'Cannot import available module of {name} in modelscope,'
                 f' or related packages({hf_pkgs})')
         return module[0]

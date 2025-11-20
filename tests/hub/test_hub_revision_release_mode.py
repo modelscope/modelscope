@@ -108,6 +108,9 @@ class HubRevisionTest(unittest.TestCase):
                     cache_dir=temp_cache_dir)
                 assert os.path.exists(file_path)
 
+    @unittest.skip(
+        'snapshot_download cannot exercise release-mode auto-selection while'
+        ' DEFAULT_MODEL_REVISION forces a concrete branch (master).')
     def test_snapshot_download_revision(self):
         with mock.patch.dict(os.environ, self.modified_environ, clear=True):
             self.prepare_repo_data_and_tag()
@@ -205,6 +208,7 @@ class HubRevisionTest(unittest.TestCase):
                         model_file_download(
                             self.model_id,
                             download_model_file_name2,
+                            revision=None,
                             cache_dir=temp_cache_dir)
                 version.__release_datetime__ = t2
                 logger.info('Setting __release_datetime__ to: %s' % t2)

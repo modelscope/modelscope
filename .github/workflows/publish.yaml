@@ -24,8 +24,7 @@ jobs:
       - name: Build ModelScope
         # Build AST template before packaging
         run: |
-          python -c "from modelscope.utils.ast_utils import generate_ast_template; generate_ast_template()"
-          python setup.py sdist bdist_wheel
+          make whl
       - name: Publish package to PyPI
         run: |
           pip install twine

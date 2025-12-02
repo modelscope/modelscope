@@ -32,7 +32,6 @@ jobs:
 
       - name: Fetch LFS objects
         run: |
-          git lfs install --local --force
           git lfs pull
 
       - name: Run unittest

@@ -46,6 +46,8 @@ hub        = {file = ["requirements/hub.txt"]}
 datasets   = {file = ["requirements/datasets.txt"]}
 framework  = {file = ["requirements/framework.txt"]}
 server     = {file = ["requirements/server.txt"]}
+docs       = {file = ["requirements/docs.txt"]}
+tests      = {file = ["requirements/tests.txt"]}
 
 # domain specific with framework base
 cv          = {file = ["requirements/framework.txt", "requirements/cv.txt"]}
@@ -59,9 +61,12 @@ audio_codec   = {file = ["requirements/framework.txt", "requirements/audio/audio
 audio_tts     = {file = ["requirements/framework.txt", "requirements/audio/audio_tts.txt"]}
 audio_kws     = {file = ["requirements/framework.txt", "requirements/audio/audio_kws.txt"]}
 audio_signal  = {file = ["requirements/framework.txt", "requirements/audio/audio_signal.txt"]}
-
-docs       = {file = ["requirements/docs.txt"]}
-tests      = {file = ["requirements/tests.txt"]}
+audio         = {file = ["requirements/framework.txt",
+                        "requirements/audio/audio_asr.txt",
+                        "requirements/audio/audio_codec.txt",
+                        "requirements/audio/audio_tts.txt",
+                        "requirements/audio/audio_kws.txt",
+                        "requirements/audio/audio_signal.txt"]}
 
 # skip audio requirements due to its hard dependency which may cause installation failure
 all = {file = [

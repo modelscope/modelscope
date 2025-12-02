@@ -18,7 +18,8 @@ test:
 
 .PHONY: whl
 whl:
-	python setup.py sdist bdist_wheel
+	python -c "from modelscope.utils.ast_utils import generate_ast_template; generate_ast_template()"
+	python setup.py sdist --dist-dir $(WHL_BUILD_DIR)/dist bdist_wheel --dist-dir $(WHL_BUILD_DIR)/dist
 
 .PHONY: clean
 clean:

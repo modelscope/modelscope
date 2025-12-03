@@ -132,6 +132,7 @@ class CreateCMD(CLICommand):
         aigc_group.add_argument(
             '--base_model_sub_type',
             type=str,
+            default='',
             help='Base model sub type, e.g., Qwen_Edit_2509')
 
         parser.set_defaults(func=subparser_func)

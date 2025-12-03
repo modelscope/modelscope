@@ -129,6 +129,10 @@ class CreateCMD(CLICommand):
             help=
             'Source of the AIGC model. `USER_UPLOAD`, `TRAINED_FROM_MODELSCOPE` or `TRAINED_FROM_ALIYUN_FC`.'
         )
+        aigc_group.add_argument(
+            '--base_model_sub_type',
+            type=str,
+            help='Base model sub type, e.g., Qwen_Edit_2509')
 
         parser.set_defaults(func=subparser_func)
 
@@ -191,6 +195,7 @@ class CreateCMD(CLICommand):
                 base_model_id=self.args.base_model_id,
                 path_in_repo=self.args.path_in_repo,
                 model_source=self.args.model_source,
+                base_model_sub_type=self.args.base_model_sub_type,
             )
 
         # Convert visibility string to int for the API call

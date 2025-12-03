@@ -304,6 +304,7 @@ class HubApi:
                 'ModelPath': aigc_model.model_path,
                 'TriggerWords': aigc_model.trigger_words,
                 'ModelSource': aigc_model.model_source,
+                'SubVisionFoundation': aigc_model.base_model_sub_type,
             })
 
             if aigc_model.official_tags:

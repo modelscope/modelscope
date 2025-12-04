@@ -2892,7 +2892,7 @@ class HubApi:
             raise ValueError('The arg `repo_id` cannot be empty!')
 
         visibility_map: Dict[str, int] = {v: k for k, v in VisibilityMap.items()}
-        visibility: int = visibility_map.get(visibility, 5)
+        visibility_code: int = visibility_map.get(visibility, 5)
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         if repo_type == REPO_TYPE_MODEL:
@@ -2901,7 +2901,7 @@ class HubApi:
             payload = {
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),
-                'Visibility': visibility,
+                'Visibility': visibility_code,
                 'ProtectedMode': 2,
                 'ApprovalMode': model_info.get('ApprovalMode', 2),
                 'Description': model_info.get('Description', ''),
@@ -2914,18 +2914,18 @@ class HubApi:
             }
         elif repo_type == REPO_TYPE_DATASET:
 
-            owner, dataset_name = repo_id.split('/')
-            if not all([owner, dataset_name]):
+            repo_id_parts = repo_id.split('/')
+            if len(repo_id_parts) != 2 or not all(repo_id_parts):
                 raise ValueError(f'Invalid dataset repo_id: {repo_id}, should be in format of `owner/dataset_name`')
 
             dataset_idx, _ = self.get_dataset_id_and_type(
-                dataset_name=dataset_name,
-                namespace=owner,
+                dataset_name=repo_id_parts[1],
+                namespace=repo_id_parts[0],
             )
 
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
             payload = {
-                'Visibility': visibility,
+                'Visibility': visibility_code,
                 'ProtectedMode': 2,
             }
         else:
@@ -2937,7 +2937,11 @@ class HubApi:
             cookies=cookies,
             headers=self.builder_headers(self.headers))
 
-        return r.json()
+        raise_for_http_status(r)
+        resp = r.json()
+        raise_on_error(resp)
+
+        return resp
 
 
 class ModelScopeConfig:

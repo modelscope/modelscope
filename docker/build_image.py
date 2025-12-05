@@ -418,10 +418,11 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
 
 class AscendSwiftImageBuilder(SwiftImageBuilder):
+
     def init_args(self, args) -> Any:
         if not args.base_image:
             # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
-            args.base_image = "swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11"
+            args.base_image = 'swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -442,8 +443,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
     def image(self) -> str:
         return (
             f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
-            f'-{self.args.modelscope_version}-ascend-swift-test'
-        )
+            f'-{self.args.modelscope_version}-ascend-swift-test')
 
     def push(self):
         return 0

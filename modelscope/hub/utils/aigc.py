@@ -82,6 +82,7 @@ class AigcModel:
         trigger_words: Optional[List[str]] = None,
         official_tags: Optional[List[str]] = None,
         model_source: Optional[str] = 'USER_UPLOAD',
+        base_model_sub_type: Optional[str] = '',
     ):
         """
         Initializes the AigcModel helper.
@@ -99,6 +100,7 @@ class AigcModel:
             official_tags (List[str], optional): Official tags for the AIGC model. Defaults to None.
             model_source (str, optional): Source of the model.
                 `USER_UPLOAD`, `TRAINED_FROM_MODELSCOPE` or `TRAINED_FROM_ALIYUN_FC`. Defaults to 'USER_UPLOAD'.
+            base_model_sub_type (str, Optional): Sub vision foundation model type. Defaults to ''. e.g. `SD_1_5`
         """
         self.model_path = model_path
         self.aigc_type = aigc_type
@@ -106,6 +108,7 @@ class AigcModel:
         self.tag = tag
         self.description = description
         self.model_source = model_source
+        self.base_model_sub_type = base_model_sub_type
         # Process cover images - convert local paths to base64 data URLs
         if cover_images is not None:
             processed_cover_images = []
@@ -391,6 +394,7 @@ class AigcModel:
             'trigger_words': self.trigger_words,
             'official_tags': self.official_tags,
             'model_source': self.model_source,
+            'base_model_sub_type': self.base_model_sub_type,
         }
 
     @classmethod

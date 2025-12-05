@@ -162,7 +162,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'cpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -207,6 +207,8 @@ class GPUImageBuilder(Builder):
         # pushd ~ popd is to solve the tf cannot use gpu problem.
         extra_content = """
 RUN pip install tf-keras==2.16.0 --no-dependencies && \
+    pip install onnx==1.18.0 --no-dependencies && \
+    pip install deepspeed==0.17.4 --no-dependencies && \
     pip install --no-cache-dir torchsde jupyterlab torchmetrics==0.11.4 basicsr pynvml shortuuid && \
     CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6 8.9 9.0" \
         pip install --no-cache-dir  'git+https://github.com/facebookresearch/detectron2.git'
@@ -230,7 +232,7 @@ RUN pushd $(dirname $(python -c 'print(__import__("tensorflow").__file__)'))  &&
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -273,19 +275,19 @@ class LLMImageBuilder(Builder):
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.4.0-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.6.0'
-            args.torchaudio_version = '2.6.0'
-            args.torchvision_version = '0.21.0'
+            args.torch_version = '2.8.0'
+            args.torchaudio_version = '2.8.0'
+            args.torchvision_version = '0.23.0'
         if not args.cuda_version:
             args.cuda_version = '12.4.0'
         if not args.vllm_version:
-            args.vllm_version = '0.8.5.post1'
+            args.vllm_version = '0.11.0'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.9.1'
+            args.lmdeploy_version = '0.10.1'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
-            args.flashattn_version = '2.7.1.post4'
+            args.flashattn_version = '2.7.4.post1'
         return args
 
     def generate_dockerfile(self) -> str:
@@ -306,7 +308,7 @@ class LLMImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{install_megatron_deps}', 'False')
+            content = content.replace('{image_type}', 'llm')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -382,7 +384,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{install_megatron_deps}', 'True')
+            content = content.replace('{image_type}', 'swift')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -413,6 +415,38 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         if ret != 0:
             return ret
         return os.system(f'docker push {image_tag2}')
+
+
+class AscendSwiftImageBuilder(SwiftImageBuilder):
+    def init_args(self, args) -> Any:
+        if not args.base_image:
+            # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
+            args.base_image = "swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11"
+        return super().init_args(args)
+
+    def generate_dockerfile(self) -> str:
+        extra_content = """
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+"""
+        with open('docker/Dockerfile.ascend', 'r') as f:
+            content = f.read()
+            content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{cur_time}', formatted_time)
+            content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
+        return content
+
+    def image(self) -> str:
+        return (
+            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
+            f'-{self.args.modelscope_version}-ascend-swift-test'
+        )
+
+    def push(self):
+        return 0
 
 
 parser = argparse.ArgumentParser()
@@ -448,6 +482,8 @@ elif args.image_type.lower() == 'llm':
     builder_cls = LLMImageBuilder
 elif args.image_type.lower() == 'swift':
     builder_cls = SwiftImageBuilder
+elif args.image_type.lower() == 'ascend_swift':
+    builder_cls = AscendSwiftImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

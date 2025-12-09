@@ -2305,8 +2305,8 @@ class HubApi:
         # Check authentication first
         self.get_cookies(access_token=token, cookies_required=True)
 
-        allow_patterns = allow_patterns if allow_patterns else None
-        ignore_patterns = ignore_patterns if ignore_patterns else None
+        allow_patterns = allow_patterns if allow_patterns is not None else []
+        allow_patterns = [allow_patterns] if isinstance(allow_patterns, str) else allow_patterns
 
         # Ignore .git .cache folders
         if ignore_patterns is None:
@@ -2316,8 +2316,11 @@ class HubApi:
         ignore_patterns += DEFAULT_IGNORE_PATTERNS
 
         # Cover the ignore patterns if both allow and ignore patterns are provided
-        if allow_patterns is not None:
-            ...
+        if '**' in allow_patterns:
+            ignore_patterns = []
+        ignore_patterns = [
+            p for p in ignore_patterns if p not in allow_patterns
+        ]
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'

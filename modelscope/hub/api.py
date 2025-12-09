@@ -2908,6 +2908,15 @@ class HubApi:
         if repo_type == REPO_TYPE_MODEL:
             model_info = self.get_model(model_id=repo_id)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
+            tasks = model_info.get('Tasks')
+            if isinstance(tasks, list) and tasks:
+                first = tasks[0]
+                if isinstance(first, dict) and first:
+                    model_tasks = first.get('name')
+                else:
+                    model_tasks = ''
+            else:
+                model_tasks = ''
             payload = {
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),
@@ -2921,7 +2930,7 @@ class HubApi:
                 'SubScientificField': model_info.get('SubScientificField', None),
                 'ScientificField': model_info.get('NEXA', {}).get('ScientificField', ''),
                 'Source': model_info.get('NEXA', {}).get('Source', ''),
-                'ModelTask': model_info.get('Tasks', [{}])[0].get('name'),
+                'ModelTask': model_tasks,
                 'License': model_info.get('License', ''),
             }
         elif repo_type == REPO_TYPE_DATASET:

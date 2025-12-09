@@ -2921,6 +2921,8 @@ class HubApi:
                 'SubScientificField': model_info.get('SubScientificField', None),
                 'ScientificField': model_info.get('NEXA', {}).get('ScientificField', ''),
                 'Source': model_info.get('NEXA', {}).get('Source', ''),
+                'ModelTask': model_info.get('Tasks', [{}])[0].get('name'),
+                'License': model_info.get('License', ''),
             }
         elif repo_type == REPO_TYPE_DATASET:
 

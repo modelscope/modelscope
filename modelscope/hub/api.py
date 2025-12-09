@@ -2310,9 +2310,14 @@ class HubApi:
 
         # Ignore .git .cache folders
         if ignore_patterns is None:
-            ignore_patterns = DEFAULT_IGNORE_PATTERNS
+            ignore_patterns = []
         elif isinstance(ignore_patterns, str):
             ignore_patterns = [ignore_patterns]
+        ignore_patterns += DEFAULT_IGNORE_PATTERNS
+
+        # Cover the ignore patterns if both allow and ignore patterns are provided
+        if allow_patterns is not None:
+            ...
 
         commit_message = (
             commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'

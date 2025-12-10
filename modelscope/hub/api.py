@@ -2912,14 +2912,11 @@ class HubApi:
             model_info = self.get_model(model_id=repo_id)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
             tasks = model_info.get('Tasks')
+            model_tasks = ''
             if isinstance(tasks, list) and tasks:
                 first = tasks[0]
                 if isinstance(first, dict) and first:
                     model_tasks = first.get('name')
-                else:
-                    model_tasks = ''
-            else:
-                model_tasks = ''
             payload = {
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),

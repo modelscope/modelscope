@@ -2901,6 +2901,9 @@ class HubApi:
         if not repo_id:
             raise ValueError('The arg `repo_id` cannot be empty!')
 
+        if visibility not in ['private', 'public']:
+            raise ValueError(f'Invalid visibility: {visibility}, supported visibilities: `private`, `public`')
+
         visibility_map: Dict[str, int] = {v: k for k, v in VisibilityMap.items()}
         visibility_code: int = visibility_map.get(visibility, 5)
         cookies = self.get_cookies(access_token=token, cookies_required=True)

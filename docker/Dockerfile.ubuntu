@@ -76,16 +76,16 @@ RUN bash /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
-    pip install "sglang<0.6" math_verify "gradio<5.33" "deepspeed<0.18" ray -U && \
-    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.58" "trl<0.24" "peft<0.18" huggingface-hub -U && \
+    pip install "sglang<0.5.6" math_verify "gradio<5.33" "deepspeed<0.18" ray -U && \
+    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<4.58" "trl<0.25" "peft<0.18" huggingface-hub -U && \
     pip install --no-build-isolation transformer_engine[pytorch]; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
-    pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.14.0; \
-    pip uninstall autoawq -y; \
+    pip install git+https://github.com/NVIDIA/Megatron-LM.git@core_r0.15.0; \
+    pip uninstall autoawq nvidia-cudnn-cu12 -y; \
     mkdir -p /root/.cache/modelscope/_github; \
-    git -C /root/.cache/modelscope/_github clone https://github.com/NVIDIA/Megatron-LM.git Megatron-LM --branch core_r0.14.0; \
+    git -C /root/.cache/modelscope/_github clone https://github.com/NVIDIA/Megatron-LM.git Megatron-LM --branch core_r0.15.0; \
 elif [ "$IMAGE_TYPE" = "llm" ]; then \
     pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
     pip uninstall autoawq -y; \
@@ -102,6 +102,6 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | b
 
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
-ENV MODELSCOPE_CACHE=/root/.cache/modelscope/
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/
 ENV MEGATRON_LM_PATH=/root/.cache/modelscope/_github/Megatron-LM
 SHELL ["/bin/bash", "-c"]

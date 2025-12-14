@@ -195,6 +195,10 @@ template_info = [
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-llm',
     ),
     TemplateInfo(
+        template_regex=f'.*{cases("DeepSeek-V3.1")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepseek-v3.1'),
+    TemplateInfo(
         template_regex=
         f'.*{cases("deepseek")}.*{cases("v3")}.*',
         modelfile_prefix=
@@ -994,6 +998,14 @@ template_info = [
         template_regex=f'.*{cases("deepscaler")}.*',
         modelfile_prefix=
         'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/deepscaler'),
+    TemplateInfo(
+        template_regex=f'.*{cases("granite-4.0")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/granite4'),
+    TemplateInfo(
+        template_regex=f'.*{cases("gpt-oss")}.*',
+        modelfile_prefix=
+        'https://modelscope.oss-cn-beijing.aliyuncs.com/llm_template/ollama/gpt-oss'),
 ]
 
 

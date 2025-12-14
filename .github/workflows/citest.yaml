@@ -54,7 +54,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-            lfs: 'true'
+            lfs: 'false'
             submodules: 'true'
             fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
       - name: Get changed files
@@ -65,8 +65,9 @@ jobs:
             else
                 echo "PR_CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | xargs)" >> $GITHUB_ENV
             fi
-      - name: Checkout LFS objects
-        run: git lfs checkout
+      - name: Fetch LFS objects
+        run: |
+          git lfs pull
       - name: Run unittest
         shell: bash
         run: |

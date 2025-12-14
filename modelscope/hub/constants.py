@@ -116,3 +116,18 @@ VisibilityMap = {
     ModelVisibility.INTERNAL: Visibility.INTERNAL,
     ModelVisibility.PUBLIC: Visibility.PUBLIC
 }
+
+
+class SortKey(object):
+    DEFAULT = 'default'
+    DOWNLOADS = 'downloads'
+    LIKES = 'likes'
+    LAST_MODIFIED = 'last_modified'
+
+
+VALID_SORT_KEYS = {
+    SortKey.DEFAULT,
+    SortKey.DOWNLOADS,
+    SortKey.LIKES,
+    SortKey.LAST_MODIFIED,
+}

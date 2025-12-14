@@ -24,12 +24,16 @@ jobs:
           sudo chown -R $USER:$USER  $ACTION_RUNNER_DIR
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-            lfs: 'true'
-            submodules: 'true'
-      - name: Checkout LFS objects
-        run: git lfs checkout
+            lfs: false
+            submodules: true
+            fetch-depth: 0
+
+      - name: Fetch LFS objects
+        run: |
+          git lfs pull
+
       - name: Run unittest
         shell: bash
         run: |

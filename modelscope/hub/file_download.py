@@ -25,6 +25,7 @@ from modelscope.hub.constants import (
     MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB, TEMPORARY_FOLDER_NAME)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
+                                       INTRA_CLOUD_ACCELERATION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
                                        REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import (get_dataset_cache_root,
@@ -194,9 +195,22 @@ def _repo_file_download(
                 " online, set 'local_files_only' to False.")
 
     _api = HubApi()
+
     headers = {
-        'user-agent': ModelScopeConfig.get_user_agent(user_agent=user_agent, )
+        'user-agent': ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
+        'snapshot-identifier': str(uuid.uuid4()),
     }
+
+    if INTRA_CLOUD_ACCELERATION == 'true':
+        region_id: str = (
+            os.getenv('INTRA_CLOUD_ACCELERATION_REGION')
+            or _api._get_internal_acceleration_domain())
+        if region_id:
+            logger.info(
+                f'Intra-cloud acceleration enabled for downloading from {repo_id}'
+            )
+            headers['x-aliyun-region-id'] = region_id
+
     if cookies is None:
         cookies = ModelScopeConfig.get_cookies()
     repo_files = []

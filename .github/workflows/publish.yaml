@@ -22,7 +22,9 @@ jobs:
       - name: Install wheel
         run: pip install wheel && pip install -r requirements/framework.txt
       - name: Build ModelScope
-        run: python setup.py sdist bdist_wheel
+        # Build AST template before packaging
+        run: |
+          make whl
       - name: Publish package to PyPI
         run: |
           pip install twine

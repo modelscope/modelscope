@@ -170,7 +170,7 @@ class HubApi:
         Raises:
             ValueError: If no credentials found and cookies_required is True.
         """
-        token = access_token if access_token is not None else self.token
+        token = access_token or self.token or os.environ.get('MODELSCOPE_API_TOKEN')
         if token:
             cookies = self._get_cookies(access_token=token)
         else:
@@ -701,7 +701,12 @@ class HubApi:
                 'Failed to check existence of repo: %s, make sure you have access authorization.'
                 % repo_type)
 
-    def delete_repo(self, repo_id: str, repo_type: str, endpoint: Optional[str] = None):
+    def delete_repo(self,
+                    repo_id: str,
+                    repo_type: str,
+                    endpoint: Optional[str] = None,
+                    token: Optional[str] = None
+                    ):
         """
         Delete a repository from ModelScope.
 
@@ -714,15 +719,23 @@ class HubApi:
             endpoint(`str`):
                 The endpoint to use. If not provided, the default endpoint is `https://www.modelscope.cn`
                 Could be set to `https://ai.modelscope.ai` for international version.
+            token (str): Access token of the ModelScope.
         """
 
         if not endpoint:
             endpoint = self.endpoint
 
         if repo_type == REPO_TYPE_DATASET:
-            self.delete_dataset(repo_id, endpoint)
+            self.delete_dataset(
+                dataset_id=repo_id,
+                endpoint=endpoint,
+                token=token
+            )
         elif repo_type == REPO_TYPE_MODEL:
-            self.delete_model(repo_id, endpoint)
+            self.delete_model(
+                model_id=repo_id,
+                endpoint=endpoint,
+                token=token)
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 
@@ -1290,6 +1303,22 @@ class HubApi:
                        description: Optional[str] = '',
                        endpoint: Optional[str] = None,
                        token: Optional[str] = None) -> str:
+        """
+        Create a dataset in ModelScope.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+            namespace (str): The namespace (user or organization) for the dataset.
+            chinese_name (str, optional): The Chinese name of the dataset. Defaults to ''.
+            license (str, optional): The license of the dataset. Defaults to Licenses.APACHE_V2.
+            visibility (int, optional): The visibility of the dataset. Defaults to DatasetVisibility.PUBLIC.
+            description (str, optional): The description of the dataset. Defaults to ''.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            str: The URL of the created dataset repository.
+        """
 
         if dataset_name is None or namespace is None:
             raise InvalidParameter('dataset_name and namespace are required!')
@@ -1318,10 +1347,24 @@ class HubApi:
         raise_on_error(r.json())
         dataset_repo_url = f'{endpoint}/datasets/{namespace}/{dataset_name}'
         logger.info(f'Create dataset success: {dataset_repo_url}')
+
         return dataset_repo_url
 
-    def delete_dataset(self, dataset_id: str, endpoint: Optional[str] = None, token: Optional[str] = None):
+    def delete_dataset(self,
+                       dataset_id: str,
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None):
+        """
+        Delete a dataset from ModelScope.
 
+        Args:
+            dataset_id (str): The dataset id to delete.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            None
+        """
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
@@ -1335,7 +1378,10 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
-    def get_dataset_id_and_type(self, dataset_name: str, namespace: str, endpoint: Optional[str] = None,
+    def get_dataset_id_and_type(self,
+                                dataset_name: str,
+                                namespace: str,
+                                endpoint: Optional[str] = None,
                                 token: Optional[str] = None):
         """ Get the dataset id and type. """
         if not endpoint:
@@ -1952,8 +1998,6 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        self.login(access_token=token, endpoint=endpoint)
-
         repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
@@ -1979,7 +2023,8 @@ class HubApi:
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                aigc_model=aigc_model
+                aigc_model=aigc_model,
+                token=token,
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
@@ -2012,6 +2057,7 @@ class HubApi:
                 chinese_name=chinese_name,
                 license=license,
                 visibility=visibility,
+                token=token,
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 
@@ -2187,7 +2233,6 @@ class HubApi:
             ... )
             >>> print(commit_info)
         """
-
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 

@@ -7,7 +7,7 @@ import json
 import requests
 from attrs import asdict, define, field, validators
 
-from modelscope.hub.api import ModelScopeConfig
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.hub.constants import (API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_MESSAGE)
 from modelscope.hub.errors import (NotLoginException, NotSupportError,
@@ -188,13 +188,11 @@ class ServiceDeployer(object):
     """Facilitate model deployment on to supported service provider(s).
     """
 
-    def __init__(self, endpoint=None):
+    def __init__(self, endpoint=None, token: Optional[str] = None):
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
-        self.cookies = ModelScopeConfig.get_cookies()
-        if self.cookies is None:
-            raise NotLoginException(
-                'Token does not exist, please login with HubApi first.')
+        self.cookies = HubApi().get_cookies(
+            access_token=token, cookies_required=True)
 
     # deploy_model
     def create(self, model_id: str, revision: str, instance_name: str,

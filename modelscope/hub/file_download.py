@@ -49,6 +49,7 @@ def model_file_download(
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
+    token: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
     """Download from a given URL and cache it if it's not already present in the local cache.
 
@@ -67,6 +68,7 @@ def model_file_download(
             local cached file if it exists. if `False`, download the file anyway even it exists.
         cookies (CookieJar, optional): The cookie of download request.
         local_dir (str, optional): Specific local directory path to which the file will be downloaded.
+        token (str, optional): The user token.
 
     Returns:
         string: string of local file or if networking is off, last version of
@@ -95,7 +97,8 @@ def model_file_download(
         user_agent=user_agent,
         local_files_only=local_files_only,
         cookies=cookies,
-        local_dir=local_dir)
+        local_dir=local_dir,
+        token=token)
 
 
 def dataset_file_download(
@@ -107,6 +110,7 @@ def dataset_file_download(
     user_agent: Optional[Union[Dict, str]] = None,
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
+    token: Optional[str] = None,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -129,6 +133,7 @@ def dataset_file_download(
         local_files_only (bool, optional): If `True`, avoid downloading the file and return the path to the
             local cached file if it exists.
         cookies (CookieJar, optional): The cookie of the request, default None.
+        token (str, optional): The user token.
     Raises:
         ValueError: the value details.
 
@@ -153,7 +158,8 @@ def dataset_file_download(
         user_agent=user_agent,
         local_files_only=local_files_only,
         cookies=cookies,
-        local_dir=local_dir)
+        local_dir=local_dir,
+        token=token)
 
 
 def _repo_file_download(
@@ -168,6 +174,7 @@ def _repo_file_download(
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
     disable_tqdm: bool = False,
+    token: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
 
     if not repo_type:
@@ -194,7 +201,7 @@ def _repo_file_download(
                 ' traffic has been disabled. To enable look-ups and downloads'
                 " online, set 'local_files_only' to False.")
 
-    _api = HubApi()
+    _api = HubApi(token=token)
 
     headers = {
         'user-agent': ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
@@ -212,7 +219,7 @@ def _repo_file_download(
             headers['x-aliyun-region-id'] = region_id
 
     if cookies is None:
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = _api.get_cookies()
     repo_files = []
     endpoint = _api.get_endpoint_for_read(repo_id=repo_id, repo_type=repo_type)
     file_to_download_meta = None

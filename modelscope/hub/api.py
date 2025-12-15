@@ -1852,7 +1852,7 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
-        raise_on_http_response(resp, logger, cookies, url)
+        raise_on_error(resp)
         resp = resp['Message']
         return resp
 

@@ -2389,8 +2389,6 @@ class HubApi:
 
         # Cover the ignore patterns if both allow and ignore patterns are provided
         if allow_patterns is not None:
-            if '**' in allow_patterns:
-                ignore_patterns = []
             ignore_patterns = [
                 p for p in ignore_patterns if p not in allow_patterns
             ]

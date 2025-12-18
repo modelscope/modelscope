@@ -8,7 +8,7 @@ from datasets import (Dataset, DatasetBuilder, DatasetDict, IterableDataset,
                       IterableDatasetDict)
 from datasets import load_dataset as hf_load_dataset
 
-from modelscope.hub.api import ModelScopeConfig
+from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.msdatasets.auth.auth_config import OssAuthConfig
 from modelscope.msdatasets.context.dataset_context_config import \
     DatasetContextConfig
@@ -86,7 +86,8 @@ class OssDownloader(BaseDownloader):
     def _authorize(self) -> None:
         """ Authorization of target dataset.
         Get credentials from cache and send to the modelscope-hub in the future. """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = HubApi().get_cookies(
+            access_token=self.dataset_context_config.token)
         git_token = ModelScopeConfig.get_token()
         user_info = ModelScopeConfig.get_user_info()
 
@@ -178,7 +179,8 @@ class VirgoDownloader(BaseDownloader):
         """Authorization of virgo dataset."""
         from modelscope.msdatasets.auth.auth_config import VirgoAuthConfig
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = HubApi().get_cookies(
+            access_token=self.dataset_context_config.token)
         user_info = ModelScopeConfig.get_user_info()
 
         if not self.dataset_context_config.auth_config:

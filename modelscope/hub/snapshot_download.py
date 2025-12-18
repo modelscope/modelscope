@@ -19,6 +19,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
 from .api import HubApi, ModelScopeConfig
 from .callback import ProgressCallback
+from .constants import DEFAULT_MAX_WORKERS
 from .errors import InvalidParameter
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
@@ -42,11 +43,12 @@ def snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
-    max_workers: int = 8,
+    max_workers: Optional[int] = None,
     repo_id: str = None,
     repo_type: Optional[str] = REPO_TYPE_MODEL,
     enable_file_lock: Optional[bool] = None,
     progress_callbacks: List[Type[ProgressCallback]] = None,
+    token: Optional[str] = None,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -87,6 +89,7 @@ def snapshot_download(
             change `MODELSCOPE_HUB_FILE_LOCK` env to `false`.
         progress_callbacks (`List[Type[ProgressCallback]]`, **optional**, default to `None`):
             progress callbacks to track the download progress.
+        token (str, optional): The user token.
     Raises:
         ValueError: the value details.
 
@@ -111,6 +114,8 @@ def snapshot_download(
         raise ValueError(
             f'Invalid repo type: {repo_type}, only support: {REPO_TYPE_SUPPORT}'
         )
+
+    max_workers = max_workers or DEFAULT_MAX_WORKERS
 
     if revision is None:
         revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION
@@ -143,7 +148,8 @@ def snapshot_download(
             ignore_patterns=ignore_patterns,
             allow_patterns=allow_patterns,
             max_workers=max_workers,
-            progress_callbacks=progress_callbacks)
+            progress_callbacks=progress_callbacks,
+            token=token)
 
 
 def dataset_snapshot_download(
@@ -160,6 +166,7 @@ def dataset_snapshot_download(
     ignore_patterns: Optional[Union[List[str], str]] = None,
     enable_file_lock: Optional[bool] = None,
     max_workers: int = 8,
+    token: Optional[str] = None,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -196,6 +203,7 @@ def dataset_snapshot_download(
             If you find something wrong with file lock and have a problem modifying your code,
             change `MODELSCOPE_HUB_FILE_LOCK` env to `false`.
         max_workers (`int`): The maximum number of workers to download files, default 8.
+        token (str, optional): The user token.
     Raises:
         ValueError: the value details.
 
@@ -238,7 +246,8 @@ def dataset_snapshot_download(
             local_dir=local_dir,
             ignore_patterns=ignore_patterns,
             allow_patterns=allow_patterns,
-            max_workers=max_workers)
+            max_workers=max_workers,
+            token=token)
 
 
 def _snapshot_download(
@@ -257,6 +266,7 @@ def _snapshot_download(
     ignore_patterns: Optional[Union[List[str], str]] = None,
     max_workers: int = 8,
     progress_callbacks: List[Type[ProgressCallback]] = None,
+    token: Optional[str] = None,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -296,11 +306,11 @@ def _snapshot_download(
                 )
                 headers['x-aliyun-region-id'] = region_id
 
-        _api = HubApi()
+        _api = HubApi(token=token)
         endpoint = _api.get_endpoint_for_read(
             repo_id=repo_id, repo_type=repo_type)
         if cookies is None:
-            cookies = ModelScopeConfig.get_cookies()
+            cookies = _api.get_cookies()
         if repo_type == REPO_TYPE_MODEL:
             if local_dir:
                 directory = os.path.abspath(local_dir)

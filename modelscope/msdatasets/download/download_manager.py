@@ -3,10 +3,11 @@
 from datasets.download.download_manager import DownloadManager
 from datasets.download.streaming_download_manager import \
     StreamingDownloadManager
-from datasets.utils.file_utils import cached_path, is_relative_path
+from datasets.utils.file_utils import cached_path
 
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
 from modelscope.msdatasets.utils.oss_utils import OssUtilities
+from modelscope.utils.file_utils import is_relative_path
 
 
 class DataDownloadManager(DownloadManager):

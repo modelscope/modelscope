@@ -82,7 +82,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadChannel, DownloadMode,
                                        Frameworks, ModelFile, Tasks,
                                        VirgoDatasetConfig)
-from modelscope.utils.file_utils import get_file_hash, get_file_size
+from modelscope.utils.file_utils import (get_file_hash, get_file_size,
+                                         is_relative_path)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
@@ -1461,7 +1462,6 @@ class HubApi:
             >>> for commit in commit_history.commits:
             ...     print(f"{commit.short_id}: {commit.title}")
         """
-        from datasets.utils.file_utils import is_relative_path
 
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')
@@ -1520,7 +1520,6 @@ class HubApi:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
-        from datasets.utils.file_utils import is_relative_path
 
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')

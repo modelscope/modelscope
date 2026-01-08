@@ -19,6 +19,7 @@ from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
 from .api import HubApi, ModelScopeConfig
 from .callback import ProgressCallback
+from .constants import DEFAULT_MAX_WORKERS
 from .errors import InvalidParameter
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
@@ -42,7 +43,7 @@ def snapshot_download(
     local_dir: Optional[str] = None,
     allow_patterns: Optional[Union[List[str], str]] = None,
     ignore_patterns: Optional[Union[List[str], str]] = None,
-    max_workers: int = 8,
+    max_workers: Optional[int] = None,
     repo_id: str = None,
     repo_type: Optional[str] = REPO_TYPE_MODEL,
     enable_file_lock: Optional[bool] = None,
@@ -111,6 +112,8 @@ def snapshot_download(
         raise ValueError(
             f'Invalid repo type: {repo_type}, only support: {REPO_TYPE_SUPPORT}'
         )
+
+    max_workers = max_workers or DEFAULT_MAX_WORKERS
 
     if revision is None:
         revision = DEFAULT_DATASET_REVISION if repo_type == REPO_TYPE_DATASET else DEFAULT_MODEL_REVISION

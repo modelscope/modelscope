@@ -417,6 +417,38 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         return os.system(f'docker push {image_tag2}')
 
 
+class AscendSwiftImageBuilder(SwiftImageBuilder):
+
+    def init_args(self, args) -> Any:
+        if not args.base_image:
+            # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
+            args.base_image = 'swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11'
+        return super().init_args(args)
+
+    def generate_dockerfile(self) -> str:
+        extra_content = """
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+"""
+        with open('docker/Dockerfile.ascend', 'r') as f:
+            content = f.read()
+            content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{cur_time}', formatted_time)
+            content = content.replace('{install_ms_deps}', 'False')
+            content = content.replace('{modelscope_branch}',
+                                      self.args.modelscope_branch)
+            content = content.replace('{swift_branch}', self.args.swift_branch)
+        return content
+
+    def image(self) -> str:
+        return (
+            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
+            f'-{self.args.modelscope_version}-ascend-swift-test')
+
+    def push(self):
+        return 0
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
@@ -450,6 +482,8 @@ elif args.image_type.lower() == 'llm':
     builder_cls = LLMImageBuilder
 elif args.image_type.lower() == 'swift':
     builder_cls = SwiftImageBuilder
+elif args.image_type.lower() == 'ascend_swift':
+    builder_cls = AscendSwiftImageBuilder
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

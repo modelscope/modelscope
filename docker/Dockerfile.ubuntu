@@ -99,6 +99,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | b
     nvm install 22 && \
     nvm use 22
 
+RUN rm -f /etc/apt/sources.list.d/cuda-*.list && apt-get update
+
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub

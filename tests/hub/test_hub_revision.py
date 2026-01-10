@@ -22,6 +22,7 @@ download_model_file_name = 'test.bin'
 download_model_file_name2 = 'test2.bin'
 
 
+@unittest.skipUnless(TEST_ACCESS_TOKEN1, 'TEST_ACCESS_TOKEN_CITEST is not set')
 class HubRevisionTest(unittest.TestCase):
 
     def setUp(self):

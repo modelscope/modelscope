@@ -18,6 +18,7 @@ from modelscope.utils.test_utils import delete_credential, test_level
 logger = get_logger()
 
 
+@unittest.skipUnless(TEST_ACCESS_TOKEN1, 'TEST_ACCESS_TOKEN_CITEST is not set')
 class TestUploadFileFolder(unittest.TestCase):
 
     def setUp(self):

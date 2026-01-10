@@ -25,6 +25,7 @@ DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
 
 
+@unittest.skipUnless(TEST_ACCESS_TOKEN1, 'TEST_ACCESS_TOKEN_CITEST is not set')
 class HubOperationTest(unittest.TestCase):
 
     def setUp(self):

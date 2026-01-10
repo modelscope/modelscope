@@ -21,6 +21,7 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
 download_model_file_name = 'test.bin'
 
 
+@unittest.skipUnless(TEST_ACCESS_TOKEN1, 'TEST_ACCESS_TOKEN_CITEST is not set')
 class HubPrivateFileDownloadTest(unittest.TestCase):
 
     def setUp(self):

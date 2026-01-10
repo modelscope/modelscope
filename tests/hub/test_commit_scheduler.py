@@ -67,7 +67,7 @@ class TestCommitScheduler(unittest.TestCase):
         try:
             if hasattr(self, 'api') and TEST_ACCESS_TOKEN1:
                 self.api.login(TEST_ACCESS_TOKEN1)
-                self.api.delete_repo(repo_id=self.repo_id, repo_type='dataset')
+                # self.api.delete_repo(repo_id=self.repo_id, repo_type='dataset')
         except Exception:
             pass
 

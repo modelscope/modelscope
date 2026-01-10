@@ -28,7 +28,7 @@ class ModelUploadCMDTest(unittest.TestCase):
         print(self.tmp_dir, self.task_name, self.model_name)
 
     def tearDown(self):
-        self.api.delete_model(model_id=self.model_id)
+        # self.api.delete_model(model_id=self.model_id)
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 

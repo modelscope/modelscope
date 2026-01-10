@@ -42,10 +42,10 @@ class HubUploadTest(unittest.TestCase):
     def tearDown(self):
         logger.info('TearDown')
         shutil.rmtree(self.model_dir, ignore_errors=True)
-        try:
-            self.api.delete_model(model_id=self.create_model_name)
-        except Exception:
-            pass
+        # try:
+        #     self.api.delete_model(model_id=self.create_model_name)
+        # except Exception:
+        #     pass
 
     def test_repo_exist(self):
         res = self.api.repo_exists('Qwen/Qwen2.5-7B-Instruct')

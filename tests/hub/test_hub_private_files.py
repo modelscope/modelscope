@@ -51,7 +51,7 @@ class HubPrivateFileDownloadTest(unittest.TestCase):
         # to ensure the temporary model is deleted.
         self.api.login(TEST_ACCESS_TOKEN1)
         os.chdir(self.old_cwd)
-        self.api.delete_model(model_id=self.model_id)
+        # self.api.delete_model(model_id=self.model_id)
 
     def test_snapshot_download_private_model(self):
         self.prepare_case()

@@ -47,10 +47,10 @@ class TestUploadFileFolder(unittest.TestCase):
     def tearDown(self):
 
         # Remove repositories
-        self.api.delete_repo(
-            repo_id=self.repo_id_model, repo_type=REPO_TYPE_MODEL)
-        self.api.delete_repo(
-            repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
+        # self.api.delete_repo(
+        #     repo_id=self.repo_id_model, repo_type=REPO_TYPE_MODEL)
+        # self.api.delete_repo(
+        #     repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
 
         # Clean up the temporary credentials
         delete_credential()

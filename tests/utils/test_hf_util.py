@@ -54,10 +54,10 @@ class HFUtilTest(unittest.TestCase):
     def tearDown(self):
         logger.info('TearDown')
         shutil.rmtree(self.model_dir, ignore_errors=True)
-        try:
-            self.api.delete_model(model_id=self.create_model_name)
-        except Exception:
-            pass
+        # try:
+        #     self.api.delete_model(model_id=self.create_model_name)
+        # except Exception:
+        #     pass
 
     def test_auto_tokenizer(self):
         from modelscope import AutoTokenizer
@@ -296,7 +296,7 @@ class HFUtilTest(unittest.TestCase):
         save_dir = './tmp_test_hf_pipeline'
         try:
             os.system(f'rm -rf {save_dir}')
-            self.api.delete_model(repo_id)
+            # self.api.delete_model(repo_id)
             # wait for delete repo
             import time
             time.sleep(5)

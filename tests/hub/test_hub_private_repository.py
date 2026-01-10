@@ -32,10 +32,10 @@ class HubPrivateRepositoryTest(unittest.TestCase):
             chinese_name=TEST_MODEL_CHINESE_NAME,
         )
 
-    def tearDown(self):
-        self.api.login(TEST_ACCESS_TOKEN1)
-        os.chdir(self.old_cwd)
-        self.api.delete_model(model_id=self.model_id)
+    # def tearDown(self):
+    #     self.api.login(TEST_ACCESS_TOKEN1)
+    #     os.chdir(self.old_cwd)
+    # self.api.delete_model(model_id=self.model_id)
 
     def test_clone_private_repo_no_permission(self):
         token, _ = self.api.login(TEST_ACCESS_TOKEN2)

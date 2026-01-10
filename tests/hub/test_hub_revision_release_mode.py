@@ -46,8 +46,8 @@ class HubRevisionTest(unittest.TestCase):
             for k, v in os.environ.items() if k not in names_to_remove
         }
 
-    def tearDown(self):
-        self.api.delete_model(model_id=self.model_id)
+    # def tearDown(self):
+    #     self.api.delete_model(model_id=self.model_id)
 
     def prepare_repo_data(self):
         temporary_dir = tempfile.mkdtemp()

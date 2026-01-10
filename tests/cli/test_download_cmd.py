@@ -48,7 +48,7 @@ class DownloadCMDTest(unittest.TestCase):
         repo.tag_and_push(self.revision, 'Test revision')
 
     def tearDown(self):
-        self.api.delete_model(model_id=self.model_id)
+        # self.api.delete_model(model_id=self.model_id)
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 

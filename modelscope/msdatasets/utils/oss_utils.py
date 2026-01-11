@@ -4,7 +4,6 @@ from __future__ import print_function
 import multiprocessing
 import os
 import threading
-import time
 
 import oss2
 from datasets.utils.file_utils import hash_url_to_filename

@@ -3,6 +3,7 @@
 from __future__ import print_function
 import multiprocessing
 import os
+import threading
 import time
 
 import oss2
@@ -46,23 +47,24 @@ class CredentialProviderWrapper(CredentialsProvider):
         self.dataset_name = dataset_name
         self.namespace = namespace
         self.revision = revision
+        self._lock = threading.Lock()
 
     def get_credentials(self):
         """
         oss2 SDK will call this method automatically when it finds the token is expired or needs authentication.
         """
-        time.sleep(0.5)  # To avoid frequent calls
-        oss_config = self.api.get_dataset_access_config_session(
-            dataset_name=self.dataset_name,
-            namespace=self.namespace,
-            check_cookie=True,
-            revision=self.revision)
+        with self._lock:
+            oss_config = self.api.get_dataset_access_config_session(
+                dataset_name=self.dataset_name,
+                namespace=self.namespace,
+                check_cookie=True,
+                revision=self.revision)
 
-        return Credentials(
-            access_key_id=oss_config[ACCESS_ID],
-            access_key_secret=oss_config[ACCESS_SECRET],
-            security_token=oss_config[SECURITY_TOKEN],
-        )
+            return Credentials(
+                access_key_id=oss_config[ACCESS_ID],
+                access_key_secret=oss_config[ACCESS_SECRET],
+                security_token=oss_config[SECURITY_TOKEN],
+            )
 
 
 class OssUtilities:

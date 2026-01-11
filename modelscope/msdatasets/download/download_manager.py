@@ -24,7 +24,6 @@ class DataDownloadManager(DownloadManager):
         url_or_filename = str(url_or_filename)
 
         oss_utilities = OssUtilities(
-            oss_config=download_config.oss_config,
             dataset_name=download_config.dataset_name,
             namespace=download_config.namespace,
             revision=download_config.version)
@@ -56,7 +55,6 @@ class DataStreamingDownloadManager(StreamingDownloadManager):
     def _download(self, url_or_filename: str) -> str:
         url_or_filename = str(url_or_filename)
         oss_utilities = OssUtilities(
-            oss_config=self.download_config.oss_config,
             dataset_name=self.download_config.dataset_name,
             namespace=self.download_config.namespace,
             revision=self.download_config.version)

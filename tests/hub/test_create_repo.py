@@ -22,10 +22,13 @@ class TestCreateRepo(unittest.TestCase):
         self.repo_id_dataset: str = f'{TEST_ORG}/test_create_repo_dataset_{uuid.uuid4().hex[-6:]}'
 
     def tearDown(self):
-        # self.api.delete_repo(
-        #     repo_id=self.repo_id_model, repo_type=REPO_TYPE_MODEL)
-        # self.api.delete_repo(
-        #     repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
+        try:
+            self.api.delete_repo(
+                repo_id=self.repo_id_model, repo_type=REPO_TYPE_MODEL)
+            self.api.delete_repo(
+                repo_id=self.repo_id_dataset, repo_type=REPO_TYPE_DATASET)
+        except Exception as e:
+            logger.warning(f'Failed to delete repo during tearDown: {e} !')
         delete_credential()
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')

@@ -33,8 +33,8 @@ class TestCreateAigcModel(unittest.TestCase):
         try:
             self.api.login(TEST_ACCESS_TOKEN1)
             self.api.delete_model(model_id=self.repo_id)
-        except HTTPError:
-            pass  # It's ok if the repo doesn't exist (e.g., creation failed)
+        except Exception as e:
+            logger.warning(f'Error deleting model {self.repo_id}: {e}')
         os.remove(self.tmp_file_path)
         delete_credential()
 

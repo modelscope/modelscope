@@ -427,7 +427,9 @@ class HubApi:
         return tag_url
 
     def delete_model(self, model_id: str, endpoint: Optional[str] = None, token: Optional[str] = None):
-        """Delete model_id from ModelScope.
+        """
+        @deprecated
+        Delete model_id from ModelScope.
 
         Args:
             model_id (str): The model id.
@@ -440,6 +442,12 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
@@ -709,6 +717,7 @@ class HubApi:
                     token: Optional[str] = None
                     ):
         """
+        @deprecated
         Delete a repository from ModelScope.
 
         Args:
@@ -722,6 +731,12 @@ class HubApi:
                 Could be set to `https://ai.modelscope.ai` for international version.
             token (str): Access token of the ModelScope.
         """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1356,6 +1371,7 @@ class HubApi:
                        endpoint: Optional[str] = None,
                        token: Optional[str] = None):
         """
+        @deprecated
         Delete a dataset from ModelScope.
 
         Args:
@@ -1366,6 +1382,12 @@ class HubApi:
         Returns:
             None
         """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint

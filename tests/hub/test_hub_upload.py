@@ -44,8 +44,9 @@ class HubUploadTest(unittest.TestCase):
         shutil.rmtree(self.model_dir, ignore_errors=True)
         try:
             self.api.delete_model(model_id=self.create_model_name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                f'Failed to delete model {self.create_model_name}: {e}')
 
     def test_repo_exist(self):
         res = self.api.repo_exists('Qwen/Qwen2.5-7B-Instruct')
@@ -59,6 +60,7 @@ class HubUploadTest(unittest.TestCase):
             'Qwen/not-a-repo', repo_type=REPO_TYPE_DATASET)
         self.assertFalse(res)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_upload_exits_repo_master(self):
         logger.info('basic test for upload!')
         self.api.login(TEST_ACCESS_TOKEN1)
@@ -124,7 +126,7 @@ class HubUploadTest(unittest.TestCase):
             revision='new_revision/version1')
         assert not os.path.exists(os.path.join(self.repo_path, 'add3.py'))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_upload_non_exists_repo(self):
         logger.info('test upload non exists repo!')
         self.api.login(TEST_ACCESS_TOKEN1)
@@ -143,7 +145,7 @@ class HubUploadTest(unittest.TestCase):
         assert os.path.exists(os.path.join(self.repo_path, 'add1.py'))
         shutil.rmtree(self.repo_path, ignore_errors=True)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_upload_without_token(self):
         logger.info('test upload without login!')
         self.api.login(TEST_ACCESS_TOKEN1)
@@ -155,7 +157,7 @@ class HubUploadTest(unittest.TestCase):
                 visibility=ModelVisibility.PUBLIC,
                 license=Licenses.APACHE_V2)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_upload_invalid_repo(self):
         logger.info('test upload to invalid repo!')
         self.api.login(TEST_ACCESS_TOKEN1)
@@ -166,7 +168,7 @@ class HubUploadTest(unittest.TestCase):
                 visibility=ModelVisibility.PUBLIC,
                 license=Licenses.APACHE_V2)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub(self):
         ret = push_to_hub(
             repo_name=self.create_model_name,
@@ -174,7 +176,7 @@ class HubUploadTest(unittest.TestCase):
             token=TEST_ACCESS_TOKEN1)
         self.assertTrue(ret is True)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub_async(self):
         future = push_to_hub_async(
             repo_name=self.create_model_name,

@@ -35,7 +35,10 @@ class HubPrivateRepositoryTest(unittest.TestCase):
     def tearDown(self):
         self.api.login(TEST_ACCESS_TOKEN1)
         os.chdir(self.old_cwd)
-        self.api.delete_model(model_id=self.model_id)
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            print(f'delete model {self.model_id} failed, {e}')
 
     def test_clone_private_repo_no_permission(self):
         token, _ = self.api.login(TEST_ACCESS_TOKEN2)

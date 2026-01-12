@@ -43,9 +43,12 @@ class HubRepositoryTest(unittest.TestCase):
         temporary_dir = tempfile.mkdtemp()
         self.model_dir = os.path.join(temporary_dir, self.model_name)
 
-    # def tearDown(self):
-    #     os.chdir(self.old_cwd)
-    #     self.api.delete_model(model_id=self.model_id)
+    def tearDown(self):
+        os.chdir(self.old_cwd)
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'Failed to delete model {self.model_id}: {e}')
 
     def test_clone_repo(self):
         Repository(self.model_dir, clone_from=self.model_id)

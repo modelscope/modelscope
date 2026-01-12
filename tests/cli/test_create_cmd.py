@@ -32,10 +32,10 @@ class CreateCMDTest(unittest.TestCase):
         api = HubApi()
         api.login(self.token)
 
-        # try:
-        #     api.delete_model(model_id=self.repo_id)
-        # except Exception as e:
-        #     print(f'Error deleting model {self.repo_id}: {e}')
+        try:
+            api.delete_model(model_id=self.repo_id)
+        except Exception as e:
+            print(f'Error deleting model {self.repo_id}: {e}')
 
         print(f'Test {type(self).__name__}.{self._testMethodName} finished')
 

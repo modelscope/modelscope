@@ -9,9 +9,12 @@ import uuid
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
 from modelscope.hub.repository import Repository
+from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_CHINESE_NAME,
                                          TEST_MODEL_ORG)
+
+logger = get_logger()
 
 DEFAULT_GIT_PATH = 'git'
 download_model_file_name = 'test.bin'
@@ -48,8 +51,11 @@ class DownloadCMDTest(unittest.TestCase):
         repo.tag_and_push(self.revision, 'Test revision')
 
     def tearDown(self):
-        # self.api.delete_model(model_id=self.model_id)
         shutil.rmtree(self.tmp_dir)
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'Error deleting model {self.model_id}: {e}')
         super().tearDown()
 
     def test_download(self):

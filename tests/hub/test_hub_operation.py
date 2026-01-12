@@ -4,7 +4,6 @@ import shutil
 import tempfile
 import unittest
 import uuid
-from pathlib import Path
 from shutil import rmtree
 
 import requests
@@ -15,10 +14,12 @@ from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.utils.constant import ModelFile
-from modelscope.utils.file_utils import get_model_cache_dir
+from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_CHINESE_NAME,
                                          TEST_MODEL_ORG)
+
+logger = get_logger()
 
 DEFAULT_GIT_PATH = 'git'
 
@@ -40,8 +41,11 @@ class HubOperationTest(unittest.TestCase):
             chinese_name=TEST_MODEL_CHINESE_NAME,
         )
 
-    # def tearDown(self):
-    # self.api.delete_model(model_id=self.model_id)
+    def tearDown(self):
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'delete model {self.model_id} failed, {e}')
 
     def prepare_case(self):
         temporary_dir = tempfile.mkdtemp()

@@ -38,8 +38,11 @@ class HubRevisionTest(unittest.TestCase):
             chinese_name=TEST_MODEL_CHINESE_NAME,
         )
 
-    # def tearDown(self):
-    #     self.api.delete_model(model_id=self.model_id)
+    def tearDown(self):
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'delete model {self.model_id} failed, {e}')
 
     def prepare_repo_data(self):
         temporary_dir = tempfile.mkdtemp()

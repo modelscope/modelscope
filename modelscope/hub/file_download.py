@@ -221,7 +221,8 @@ def _repo_file_download(
     if cookies is None:
         cookies = _api.get_cookies()
     repo_files = []
-    endpoint = _api.get_endpoint_for_read(repo_id=repo_id, repo_type=repo_type)
+    endpoint = _api.get_endpoint_for_read(
+        repo_id=repo_id, repo_type=repo_type, token=token)
     file_to_download_meta = None
     if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(
@@ -263,7 +264,8 @@ def _repo_file_download(
                     recursive=True,
                     page_number=page_number,
                     page_size=page_size,
-                    endpoint=endpoint)
+                    endpoint=endpoint,
+                    token=token)
             except Exception as e:
                 logger.error(
                     f'Get dataset: {repo_id} file list failed, error: {e}')

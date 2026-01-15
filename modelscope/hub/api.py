@@ -514,7 +514,8 @@ class HubApi:
     def get_endpoint_for_read(self,
                               repo_id: str,
                               *,
-                              repo_type: Optional[str] = None) -> str:
+                              repo_type: Optional[str] = None,
+                              token: Optional[str] = None) -> str:
         """Get proper endpoint for read operation (such as download, list etc.)
         1. If user has set MODELSCOPE_DOMAIN, construct endpoint with user-specified domain.
            If the repo does not exist on that endpoint, throw 404 error, otherwise return the endpoint.
@@ -529,7 +530,7 @@ class HubApi:
         if s is not None and s.strip() != '':
             endpoint = MODELSCOPE_URL_SCHEME + s
             try:
-                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
+                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} does not exist on {endpoint}.')
                 raise
@@ -538,13 +539,13 @@ class HubApi:
         check_cn_first = not is_env_true(MODELSCOPE_PREFER_AI_SITE)
         prefer_endpoint = get_endpoint(cn_site=check_cn_first)
         if not self.repo_exists(
-                repo_id, repo_type=repo_type, endpoint=prefer_endpoint):
+                repo_id, repo_type=repo_type, endpoint=prefer_endpoint, token=token):
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
             logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, '
                            f'will try on alternative endpoint {alternative_endpoint}.')
             try:
                 self.repo_exists(
-                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True)
+                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
                 raise
@@ -2917,6 +2918,7 @@ class HubApi:
                         page_number=page_number,
                         page_size=page_size,
                         endpoint=endpoint,
+                        token=token,
                     )
                 except Exception as e:
                     logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
@@ -3006,7 +3008,7 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         if repo_type == REPO_TYPE_MODEL:
-            model_info = self.get_model(model_id=repo_id)
+            model_info = self.get_model(model_id=repo_id, token=token)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
             tasks = model_info.get('Tasks')
             model_tasks = ''
@@ -3039,6 +3041,7 @@ class HubApi:
             dataset_idx, _ = self.get_dataset_id_and_type(
                 dataset_name=repo_id_parts[1],
                 namespace=repo_id_parts[0],
+                token=token
             )
 
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
@@ -3089,6 +3092,8 @@ class ModelScopeConfig:
         if os.path.exists(cookies_path):
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
+                if not cookies:
+                    return None
                 for cookie in cookies:
                     if cookie.name == 'm_session_id' and cookie.is_expired() and \
                             not ModelScopeConfig.cookie_expired_warning:

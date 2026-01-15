@@ -856,20 +856,21 @@ class HubApi:
             ignore_file_pattern = [ignore_file_pattern]
         if visibility is None or license is None:
             raise InvalidParameter('Visibility and License cannot be empty for new model.')
-        if not self.repo_exists(model_id):
+        if not self.repo_exists(model_id, token=token):
             logger.info('Creating new model [%s]' % model_id)
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                original_model_id=original_model_id)
+                original_model_id=original_model_id,
+                token=token)
         tmp_dir = os.path.join(model_dir, TEMPORARY_FOLDER_NAME)  # make temporary folder
         git_wrapper = GitCommandWrapper()
         logger.info(f'Pushing folder {model_dir} as model {model_id}.')
         logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
-            repo = Repository(model_dir=tmp_dir, clone_from=model_id)
+            repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
                 logger.info('Creating new branch %s' % revision)
@@ -2050,7 +2051,7 @@ class HubApi:
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
                     from modelscope.hub.repository import Repository
-                    repo = Repository(temp_cache_dir, repo_id)
+                    repo = Repository(temp_cache_dir, repo_id, auth_token=token)
                     default_config = {
                         'framework': 'pytorch',
                         'task': 'text-generation',

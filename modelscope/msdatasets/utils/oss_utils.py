@@ -56,7 +56,7 @@ class CredentialProviderWrapper(CredentialsProvider):
             oss_config = self.api.get_dataset_access_config_session(
                 dataset_name=self.dataset_name,
                 namespace=self.namespace,
-                check_cookie=True,
+                check_cookie=False,
                 revision=self.revision)
 
             return Credentials(
@@ -83,7 +83,7 @@ class OssUtilities:
         oss_config = self.api.get_dataset_access_config_session(
             dataset_name=self.dataset_name,
             namespace=self.namespace,
-            check_cookie=True,
+            check_cookie=False,
             revision=self.revision)
 
         if os.getenv('ENABLE_DATASET_ACCELERATION') == 'True':

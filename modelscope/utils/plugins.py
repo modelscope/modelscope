@@ -5,6 +5,7 @@
 import copy
 import filecmp
 import importlib
+import importlib.metadata
 import os
 import pkgutil
 import shutil
@@ -15,7 +16,6 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Set, Union
 
-import importlib.metadata
 import json
 
 from modelscope import snapshot_download

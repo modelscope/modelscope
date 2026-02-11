@@ -1,8 +1,7 @@
 # Copyright (c) 2022 Zhipu.AI
 import ctypes
-from typing import List
-
 from importlib.resources import files
+from typing import List
 
 import torch
 from cpm_kernels.kernels.base import (KernelFunction, LazyKernelCModule,

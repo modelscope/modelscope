@@ -5,11 +5,11 @@ import hashlib
 import os
 import sys
 import time
-import zoneinfo
 from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Optional, Union
 
+import zoneinfo
 from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,

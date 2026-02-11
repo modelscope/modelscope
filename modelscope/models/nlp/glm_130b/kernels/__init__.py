@@ -2,7 +2,8 @@
 import ctypes
 from typing import List
 
-import pkg_resources
+from importlib.resources import files
+
 import torch
 from cpm_kernels.kernels.base import (KernelFunction, LazyKernelCModule,
                                       round_up)
@@ -14,12 +15,12 @@ class Kernel:
 
     def __init__(self, filename: str, function_names: List[str]):
         filename = filename + '.fatbin'
-        if not pkg_resources.resource_exists(RESOURCE_PACKAGE_NAME, filename):
+        resource_ref = files(RESOURCE_PACKAGE_NAME).joinpath(filename)
+        if not resource_ref.is_file():
             raise RuntimeError('File `%s` not found in `%s`' %
                                (filename, RESOURCE_PACKAGE_NAME))
         self.filename = filename
-        self.code = pkg_resources.resource_string(RESOURCE_PACKAGE_NAME,
-                                                  filename)
+        self.code = resource_ref.read_bytes()
         self._function_names = function_names
         self._cmodule = LazyKernelCModule(self.code)
 

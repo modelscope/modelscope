@@ -8,14 +8,15 @@ import importlib
 import os
 import pkgutil
 import shutil
+import subprocess
 import sys
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Set, Union
 
+import importlib.metadata
 import json
-import pkg_resources
 
 from modelscope import snapshot_download
 from modelscope.fileio.file import LocalStorage
@@ -484,7 +485,7 @@ def get_modules_from_package(package):
     import hashlib
     from urllib.parse import urlparse
     from urllib import request as urllib2
-    from pip._internal.utils.packaging import get_requirement
+    from packaging.requirements import Requirement
 
     def urlretrieve(url, filename, data=None, auth=None):
         if auth is not None:
@@ -734,7 +735,7 @@ def get_modules_from_package(package):
         """if user using package name then generate whl file and parse the file to get the module name by
         the discover_import_names method
         """
-        req = get_requirement(package)
+        req = Requirement(package)
         package = req.name
         data = get(package, tmpdir=tmpdir)
         whl_file = data['path']
@@ -792,13 +793,14 @@ class PluginsManager(object):
 
     @staticmethod
     def _check_plugin_installed(package, verified_version=None):
-        from pip._internal.utils.packaging import get_requirement, specifiers
-        req = get_requirement(package)
+        from packaging.requirements import Requirement
+        req = Requirement(package)
 
         try:
-            importlib.reload(pkg_resources)
-            package_meta_info = pkg_resources.working_set.by_key[req.name]
-            version = package_meta_info.version
+            # Ensure newly installed packages are discoverable
+            importlib.invalidate_caches()
+            dist = importlib.metadata.distribution(req.name)
+            version = dist.version
 
             # To test if the package is installed
             installed = True
@@ -810,7 +812,7 @@ class PluginsManager(object):
                     installed = False
                     break
 
-        except KeyError:
+        except importlib.metadata.PackageNotFoundError:
             version = ''
             installed = False
 
@@ -825,6 +827,7 @@ class PluginsManager(object):
         command_args: List[str],
     ):
         """
+        Run a pip command via subprocess.
 
         Args:
             command: install, uninstall command
@@ -833,26 +836,91 @@ class PluginsManager(object):
 
         Returns:
             status_code: The pip command status code, 0 if success, else is failed
-            options: parsed option from system args by pip command
-            args: the unknown args that could be parsed by pip command
+            options: parsed options extracted from command_args
+            args: positional arguments (package names) extracted from command_args
 
         """
-        from pip._internal.commands import create_command
-        importlib.reload(pkg_resources)
+        # Ensure import system can discover newly installed packages
+        importlib.invalidate_caches()
         if command == 'install':
             command_args.append('-f')
             command_args.append(
                 'https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html'
             )
-        command = create_command(command)
-        options, args = command.parse_args(command_args)
 
-        status_code = command.main(command_args)
+        # Parse command_args to extract options and positional args,
+        # keeping backward compatibility with callers
+        options, args = PluginsManager._parse_pip_args(command_args)
 
-        # reload the pkg_resources in order to get the latest pkgs information
-        importlib.reload(pkg_resources)
+        cmd = [sys.executable, '-m', 'pip', command] + command_args
+        result = subprocess.run(cmd)
+        status_code = result.returncode
+
+        # Refresh caches so the latest packages are discoverable
+        importlib.invalidate_caches()
 
         return status_code, options, args
+
+    @staticmethod
+    def _parse_pip_args(command_args: List[str]):
+        """Parse pip command arguments into options and positional args.
+
+        Extracts commonly used pip options and separates positional arguments
+        (package names) from flag arguments, maintaining backward compatibility
+        with callers that depend on the parsed structure.
+
+        Args:
+            command_args: list of arguments passed to pip command
+
+        Returns:
+            options: SimpleNamespace with index_url, src_dir, and requirments
+            args: list of positional arguments (package names)
+
+        """
+        from types import SimpleNamespace
+
+        options = SimpleNamespace(
+            index_url=None,
+            src_dir=None,
+            requirments=[],
+        )
+        args = []
+
+        # Flags that consume the next token as their value
+        flags_with_value = {
+            '-i': 'index_url',
+            '--index-url': 'index_url',
+            '-r': 'requirments',
+            '--requirement': 'requirments',
+            '--src': 'src_dir',
+            '-f': None,
+            '--find-links': None,
+        }
+
+        i = 0
+        while i < len(command_args):
+            arg = command_args[i]
+            if arg in flags_with_value:
+                attr = flags_with_value[arg]
+                if i + 1 < len(command_args):
+                    if attr is not None:
+                        value = command_args[i + 1]
+                        current = getattr(options, attr)
+                        if isinstance(current, list):
+                            current.append(value)
+                        else:
+                            setattr(options, attr, value)
+                    i += 2
+                    continue
+            elif arg.startswith('-'):
+                # Bool flags like -y, --yes; skip without consuming next token
+                i += 1
+                continue
+            else:
+                args.append(arg)
+            i += 1
+
+        return options, args
 
     def install_plugins(self,
                         install_args: List[str],
@@ -1003,7 +1071,7 @@ class PluginsManager(object):
             # update package information if existed
             if package_name in local_plugins_info and not override:
                 original_item = local_plugins_info[package_name]
-                from pkg_resources import parse_version
+                from packaging.version import parse as parse_version
                 item_version = parse_version(
                     item['version'] if item['version'] != '' else '0.0.0')
                 origin_version = parse_version(

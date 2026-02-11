@@ -873,7 +873,7 @@ class PluginsManager(object):
             command_args: list of arguments passed to pip command
 
         Returns:
-            options: SimpleNamespace with index_url, src_dir, and requirments
+            options: SimpleNamespace with index_url, src_dir, and requirements
             args: list of positional arguments (package names)
 
         """
@@ -882,7 +882,7 @@ class PluginsManager(object):
         options = SimpleNamespace(
             index_url=None,
             src_dir=None,
-            requirments=[],
+            requirements=[],
         )
         args = []
 
@@ -890,8 +890,8 @@ class PluginsManager(object):
         flags_with_value = {
             '-i': 'index_url',
             '--index-url': 'index_url',
-            '-r': 'requirments',
-            '--requirement': 'requirments',
+            '-r': 'requirements',
+            '--requirement': 'requirements',
             '--src': 'src_dir',
             '-f': None,
             '--find-links': None,
@@ -974,7 +974,7 @@ class PluginsManager(object):
         # the case of install with requirements
         if len(args) == 0:
             src_dir = options.src_dir
-            requirements = options.requirments
+            requirements = options.requirements
             for requirement in requirements:
                 package_info = {
                     'name': requirement,

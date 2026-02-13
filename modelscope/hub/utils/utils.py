@@ -381,6 +381,30 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
         )
 
 
+# Fallback MIME types for common media formats that may not be registered
+# in the system's MIME database on certain platforms.
+_FALLBACK_MIME_TYPES = {
+    '.webp': 'image/webp',
+    '.avif': 'image/avif',
+    '.heic': 'image/heic',
+    '.heif': 'image/heif',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.svg': 'image/svg+xml',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.ico': 'image/x-icon',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.mkv': 'video/x-matroska',
+}
+
+
 def encode_media_to_base64(media_file_path: str) -> str:
     """
     Encode image or video file to base64 string.
@@ -407,8 +431,13 @@ def encode_media_to_base64(media_file_path: str) -> str:
     if not os.path.isfile(media_file_path):
         raise ValueError(f'Path is not a file: {media_file_path}')
 
-    # Get MIME type
+    # Get MIME type, with fallback for formats that may not be registered
+    # in the system's MIME database on some platforms (e.g. Linux servers,
+    # Docker containers).
     mime_type, _ = mimetypes.guess_type(media_file_path)
+    if not mime_type:
+        mime_type = _FALLBACK_MIME_TYPES.get(
+            os.path.splitext(media_file_path)[1].lower())
     if not mime_type:
         raise ValueError(f'File is not a valid format: {media_file_path}')
 

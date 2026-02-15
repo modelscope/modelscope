@@ -1,6 +1,6 @@
 addict
 attrs
-datasets>=3.0.0,<=3.6.0
+datasets>=4.0.0,<=4.5.0
 einops
 oss2
 Pillow

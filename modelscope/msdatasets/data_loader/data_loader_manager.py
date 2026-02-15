@@ -77,6 +77,7 @@ class LocalDataLoaderManager(DataLoaderManager):
                     'sure that you can trust the external codes.')
 
             # Build huggingface data loader and return dataset.
+            # trust_remote_code was removed in datasets 4.0 (script-based loading dropped)
             return hf_data_loader(
                 dataset_name,
                 name=subset_name,
@@ -87,7 +88,6 @@ class LocalDataLoaderManager(DataLoaderManager):
                 cache_dir=cache_root_dir,
                 download_mode=download_mode.value,
                 streaming=use_streaming,
-                trust_remote_code=trust_remote_code,
                 **input_config_kwargs)
         raise f'Expected local data loader type: {LocalDataLoaderType.HF_DATA_LOADER.value}.'
 
@@ -121,6 +121,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
                 logger.warning(
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
                     'sure that you can trust the external codes.')
+            # trust_remote_code was removed in datasets 4.0 (script-based loading dropped)
             dataset_ret = hf_data_loader(
                 dataset_name,
                 name=subset_name,
@@ -130,7 +131,6 @@ class RemoteDataLoaderManager(DataLoaderManager):
                 data_files=data_files,
                 download_mode=download_mode_val,
                 streaming=use_streaming,
-                trust_remote_code=trust_remote_code,
                 token=token,
                 **input_config_kwargs)
             # download statistics

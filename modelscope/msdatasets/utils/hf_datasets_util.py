@@ -17,7 +17,16 @@ import requests
 from datasets import (BuilderConfig, Dataset, DatasetBuilder, DatasetDict,
                       DownloadConfig, DownloadManager, DownloadMode, Features,
                       IterableDataset, IterableDatasetDict, Split,
-                      VerificationMode, Version, config, data_files, LargeList, Sequence as SequenceHf)
+                      VerificationMode, Version, config, data_files, LargeList,
+                      Sequence as SequenceHf)
+
+# In datasets 4.0+, Sequence was replaced by List as a feature type.
+# Use List as the base for ListMs when available, fall back to Sequence for <4.0.
+try:
+    from datasets import List as DatasetList
+except ImportError:
+    DatasetList = None
+
 from datasets.features import features
 from datasets.features.features import _FEATURE_TYPES
 from datasets.data_files import (
@@ -29,27 +38,53 @@ from datasets.download.streaming_download_manager import (
 from datasets.exceptions import DataFilesNotFoundError, DatasetNotFoundError
 from datasets.info import DatasetInfosDict
 from datasets.load import (
-    ALL_ALLOWED_EXTENSIONS, BuilderConfigsParameters,
+    BuilderConfigsParameters,
     CachedDatasetModuleFactory, DatasetModule,
-    HubDatasetModuleFactoryWithoutScript,
     HubDatasetModuleFactoryWithParquetExport,
-    HubDatasetModuleFactoryWithScript, LocalDatasetModuleFactoryWithoutScript,
-    LocalDatasetModuleFactoryWithScript, PackagedDatasetModuleFactory,
+    PackagedDatasetModuleFactory,
     create_builder_configs_from_metadata_configs, get_dataset_builder_class,
-    import_main_class, infer_module_for_data_files, files_to_hash,
-    _get_importable_file_path, resolve_trust_remote_code, _create_importable_file, _load_importable_file,
-    init_dynamic_modules)
+    import_main_class, infer_module_for_data_files)
+
+# To compatible with datasets 4.0+
+try:
+    from datasets.load import (
+        HubDatasetModuleFactory as HubDatasetModuleFactoryWithoutScript,
+        LocalDatasetModuleFactory as LocalDatasetModuleFactoryWithoutScript)
+except ImportError:
+    from datasets.load import (
+        HubDatasetModuleFactoryWithoutScript,
+        LocalDatasetModuleFactoryWithoutScript)
+
+# Script-based dataset loading was removed in datasets 4.0.
+# These APIs are conditionally imported for backward compatibility with <4.0.
+try:
+    from datasets.load import (
+        HubDatasetModuleFactoryWithScript,
+        LocalDatasetModuleFactoryWithScript,
+        resolve_trust_remote_code,
+        _get_importable_file_path, _create_importable_file,
+        _load_importable_file, init_dynamic_modules,
+        files_to_hash)
+    from datasets.utils.py_utils import get_imports
+    _HAS_SCRIPT_LOADING = True
+except ImportError:
+    _HAS_SCRIPT_LOADING = False
+
 from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import (_EXTENSION_TO_MODULE,
                                        _MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
+# ALL_ALLOWED_EXTENSIONS moved to datasets.packaged_modules in datasets 4.0
+try:
+    from datasets.packaged_modules import _ALL_ALLOWED_EXTENSIONS as ALL_ALLOWED_EXTENSIONS
+except ImportError:
+    from datasets.load import ALL_ALLOWED_EXTENSIONS
 from datasets.utils import file_utils
 from datasets.utils.file_utils import (_raise_if_offline_mode_is_enabled,
                                        cached_path, is_local_path,
                                        relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
 from datasets.utils.metadata import MetadataConfigs
-from datasets.utils.py_utils import get_imports
 from datasets.utils.track import tracked_str
 
 from fsspec import filesystem
@@ -94,8 +129,13 @@ ExpandDatasetProperty_T = Literal[
 
 
 # Patch datasets features
+# In datasets 4.0+, the List type is the native feature type;
+# in datasets <4.0, Sequence (a dataclass) serves that role.
+_ListBase = DatasetList if DatasetList is not None else SequenceHf
+
+
 @dataclass(repr=False)
-class ListMs(SequenceHf):
+class ListMs(_ListBase):
     """Feature type for large list data composed of child feature data type.
 
     It is backed by `pyarrow.ListType`, which uses 32-bit offsets or a fixed length.
@@ -144,6 +184,15 @@ def generate_from_dict_ms(obj: Any):
         return {key: generate_from_dict_ms(value) for key, value in obj.items()}
     obj = dict(obj)
     _type = obj.pop('_type')
+
+    # Handle legacy 'Sequence' type for backward compatibility.
+    # In datasets 4.0+, Sequence is a utility function (not a feature type),
+    # so it may not be registered in _FEATURE_TYPES.
+    if _type == 'Sequence':
+        feature = obj.pop('feature')
+        length = obj.get('length', -1)
+        return SequenceHf(feature=generate_from_dict_ms(feature), length=length)
+
     class_type = _FEATURE_TYPES.get(_type, None) or globals().get(_type, None)
 
     if class_type is None:
@@ -155,9 +204,6 @@ def generate_from_dict_ms(obj: Any):
     if class_type == ListMs:
         feature = obj.pop('feature')
         return ListMs(generate_from_dict_ms(feature), **obj)
-    if class_type == SequenceHf:  # backward compatibility, this translates to a List or a dict
-        feature = obj.pop('feature')
-        return SequenceHf(feature=generate_from_dict_ms(feature), **obj)
 
     field_names = {f.name for f in fields(class_type)}
     return class_type(**{k: v for k, v in obj.items() if k in field_names})
@@ -831,6 +877,10 @@ def _download_additional_modules(
 
 
 def get_module_with_script(self) -> DatasetModule:
+    if not _HAS_SCRIPT_LOADING:
+        raise RuntimeError(
+            'Script-based dataset loading is not supported with datasets>=4.0. '
+            'Please convert the dataset to a script-free format (e.g. Parquet).')
 
     repo_id: str = self.name
     _namespace, _dataset_name = repo_id.split('/')
@@ -1000,9 +1050,12 @@ class DatasetsWrapperHF:
         ) if not save_infos else VerificationMode.ALL_CHECKS)
 
         if trust_remote_code:
-            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
-                           'that you can trust the external codes.'
-                           )
+            if not _HAS_SCRIPT_LOADING:
+                logger.warning('trust_remote_code is ignored: script-based dataset loading '
+                               'is no longer supported with datasets>=4.0.')
+            else:
+                logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                               'that you can trust the external codes.')
 
         # Create a dataset builder
         builder_instance = DatasetsWrapperHF.load_dataset_builder(
@@ -1017,7 +1070,7 @@ class DatasetsWrapperHF:
             revision=revision,
             token=token,
             storage_options=storage_options,
-            trust_remote_code=trust_remote_code,
+            trust_remote_code=trust_remote_code if _HAS_SCRIPT_LOADING else None,
             _require_default_config_name=name is None,
             **config_kwargs,
         )
@@ -1135,9 +1188,12 @@ class DatasetsWrapperHF:
             download_config.storage_options.update(storage_options)
 
         if trust_remote_code:
-            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
-                           'that you can trust the external codes.'
-                           )
+            if not _HAS_SCRIPT_LOADING:
+                logger.warning('trust_remote_code is ignored: script-based dataset loading '
+                               'is no longer supported with datasets>=4.0.')
+            else:
+                logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                               'that you can trust the external codes.')
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
@@ -1147,7 +1203,7 @@ class DatasetsWrapperHF:
             data_dir=data_dir,
             data_files=data_files,
             cache_dir=cache_dir,
-            trust_remote_code=trust_remote_code,
+            trust_remote_code=trust_remote_code if _HAS_SCRIPT_LOADING else None,
             _require_default_config_name=_require_default_config_name,
             _require_custom_configs=bool(config_kwargs),
             name=name,
@@ -1250,9 +1306,12 @@ class DatasetsWrapperHF:
         # - if path has one "/" and is dataset repository on the HF hub without a python file
         #   -> use a packaged module (csv, text etc.) based on content of the repository
         if trust_remote_code:
-            logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
-                           'that you can trust the external codes.'
-                           )
+            if not _HAS_SCRIPT_LOADING:
+                logger.warning('trust_remote_code is ignored: script-based dataset loading '
+                               'is no longer supported with datasets>=4.0.')
+            else:
+                logger.warning(f'Use trust_remote_code=True. Will invoke codes from {path}. Please make sure '
+                               'that you can trust the external codes.')
 
         # Try packaged
         if path in _PACKAGED_DATASETS_MODULES:
@@ -1263,9 +1322,13 @@ class DatasetsWrapperHF:
                 download_config=download_config,
                 download_mode=download_mode,
             ).get_module()
-        # Try locally
+        # Try locally with script (requires datasets <4.0)
         elif path.endswith(filename):
             if os.path.isfile(path):
+                if not _HAS_SCRIPT_LOADING:
+                    raise RuntimeError(
+                        f'Script-based dataset loading ({path}) is not supported with datasets>=4.0. '
+                        'Please convert the dataset to a script-free format (e.g. Parquet).')
                 return LocalDatasetModuleFactoryWithScript(
                     path,
                     download_mode=download_mode,
@@ -1277,6 +1340,10 @@ class DatasetsWrapperHF:
                     f"Couldn't find a dataset script at {relative_to_absolute_path(path)}"
                 )
         elif os.path.isfile(combined_path):
+            if not _HAS_SCRIPT_LOADING:
+                raise RuntimeError(
+                    f'Script-based dataset loading ({combined_path}) is not supported with datasets>=4.0. '
+                    'Please convert the dataset to a script-free format (e.g. Parquet).')
             return LocalDatasetModuleFactoryWithScript(
                 combined_path,
                 download_mode=download_mode,
@@ -1342,24 +1409,8 @@ class DatasetsWrapperHF:
                         sibling.rfilename for sibling in dataset_info.siblings
                 ]:  # contains a dataset script
 
-                    # fs = HfFileSystem(
-                    #     endpoint=config.HF_ENDPOINT,
-                    #     token=download_config.token)
-
                     # TODO
                     can_load_config_from_parquet_export = False
-                    # if _require_custom_configs:
-                    #     can_load_config_from_parquet_export = False
-                    # elif _require_default_config_name:
-                    #     with fs.open(
-                    #             f'datasets/{path}/{filename}',
-                    #             'r',
-                    #             revision=revision,
-                    #             encoding='utf-8') as f:
-                    #         can_load_config_from_parquet_export = 'DEFAULT_CONFIG_NAME' not in f.read(
-                    #         )
-                    # else:
-                    #     can_load_config_from_parquet_export = True
                     if config.USE_PARQUET_EXPORT and can_load_config_from_parquet_export:
                         # If the parquet export is ready (parquet files + info available for the current sha),
                         # we can use it instead
@@ -1379,7 +1430,14 @@ class DatasetsWrapperHF:
                         except Exception as e:
                             logger.error(e)
 
-                    # Otherwise we must use the dataset script if the user trusts it
+                    # Otherwise we must use the dataset script if the user trusts it.
+                    # Script-based loading was removed in datasets 4.0.
+                    if not _HAS_SCRIPT_LOADING:
+                        raise RuntimeError(
+                            f"Dataset '{path}' contains a loading script but script-based dataset loading "
+                            'is not supported with datasets>=4.0. Please convert the dataset to a '
+                            'script-free format (e.g. Parquet).')
+
                     # To be adapted to the old version of datasets
                     if has_attr_in_class(HubDatasetModuleFactoryWithScript, 'revision'):
                         return HubDatasetModuleFactoryWithScript(
@@ -1424,10 +1482,12 @@ class DatasetsWrapperHF:
                 logger.error(f'>> Error loading {path}: {e1}')
 
                 try:
+                    # dynamic_modules_path was removed in datasets 4.0
+                    _cached_factory_kwargs = {'cache_dir': cache_dir}
+                    if _HAS_SCRIPT_LOADING:
+                        _cached_factory_kwargs['dynamic_modules_path'] = dynamic_modules_path
                     return CachedDatasetModuleFactory(
-                        path,
-                        dynamic_modules_path=dynamic_modules_path,
-                        cache_dir=cache_dir).get_module()
+                        path, **_cached_factory_kwargs).get_module()
                 except Exception:
                     # If it's not in the cache, then it doesn't exist.
                     if isinstance(e1, OfflineModeIsEnabled):
@@ -1467,7 +1527,9 @@ def load_dataset_with_ctx(*args, **kwargs):
     get_paths_info_origin = HfApi.get_paths_info
     resolve_pattern_origin = data_files.resolve_pattern
     get_module_without_script_origin = HubDatasetModuleFactoryWithoutScript.get_module
-    get_module_with_script_origin = HubDatasetModuleFactoryWithScript.get_module
+    # Script-based loading was removed in datasets 4.0
+    get_module_with_script_origin = (
+        HubDatasetModuleFactoryWithScript.get_module if _HAS_SCRIPT_LOADING else None)
     generate_from_dict_origin = features.generate_from_dict
 
     # Monkey patching with modelscope functions
@@ -1483,7 +1545,8 @@ def load_dataset_with_ctx(*args, **kwargs):
     HfApi.get_paths_info = _get_paths_info
     data_files.resolve_pattern = _resolve_pattern
     HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
-    HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
+    if _HAS_SCRIPT_LOADING:
+        HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
     features.generate_from_dict = generate_from_dict_ms
 
     streaming = kwargs.get('streaming', False)
@@ -1512,4 +1575,5 @@ def load_dataset_with_ctx(*args, **kwargs):
             HfApi.get_paths_info = get_paths_info_origin
             data_files.resolve_pattern = resolve_pattern_origin
             HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
-            HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
+            if _HAS_SCRIPT_LOADING:
+                HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin

@@ -280,13 +280,19 @@ class MsDataset:
         # Load from the huggingface hub
         elif hub == Hubs.huggingface:
             from datasets import load_dataset
+            # trust_remote_code was removed in datasets 4.0 (script-based loading dropped)
             return load_dataset(
                 dataset_name,
                 name=subset_name,
                 split=split,
-                streaming=use_streaming,
+                data_dir=data_dir,
+                data_files=data_files,
+                cache_dir=cache_dir,
+                features=features,
                 download_mode=download_mode.value,
-                trust_remote_code=trust_remote_code,
+                revision=version,
+                token=token,
+                streaming=use_streaming,
                 **config_kwargs)
 
         # Load from the modelscope hub

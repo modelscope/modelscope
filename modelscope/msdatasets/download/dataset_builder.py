@@ -13,8 +13,8 @@ from datasets.filesystems import is_remote_filesystem
 from datasets.info import DatasetInfo
 from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import csv
-from filelock import FileLock
 from datasets.utils.py_utils import map_nested
+from filelock import FileLock
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \

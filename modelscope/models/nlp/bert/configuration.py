@@ -141,6 +141,7 @@ class BertConfig(PretrainedConfig):
         self.position_embedding_type = position_embedding_type
         self.use_cache = use_cache
         self.classifier_dropout = classifier_dropout
+        self.is_decoder = False
 
 
 class BertOnnxConfig(OnnxConfig):

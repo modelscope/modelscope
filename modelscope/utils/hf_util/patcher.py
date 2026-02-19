@@ -16,16 +16,16 @@ from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
                                          CommitOperationAdd)
 
 ignore_file_pattern = [
-    r'\w+\.bin',
-    r'\w+\.safetensors',
-    r'\w+\.pth',
-    r'\w+\.pt',
-    r'\w+\.h5',
-    r'\w+\.ckpt',
-    r'\w+\.zip',
-    r'\w+\.onnx',
-    r'\w+\.tar',
-    r'\w+\.gz',
+    r'*.bin',
+    r'*.safetensors',
+    r'*.pth',
+    r'*.pt',
+    r'*.h5',
+    r'*.ckpt',
+    r'*.zip',
+    r'*.onnx',
+    r'*.tar',
+    r'*.gz',
 ]
 
 

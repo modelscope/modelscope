@@ -30,10 +30,14 @@ class TestDownloadTokenizer(unittest.TestCase):
             r'*.gz',
         ]
         model_dir = snapshot_download(
-            'Qwen/Qwen3-0.6B', cache_dir=self.work_dir, ignore_file_pattern=ignore_file_pattern)
+            'Qwen/Qwen3-0.6B',
+            cache_dir=self.work_dir,
+            ignore_file_pattern=ignore_file_pattern)
         self.assertTrue(model_dir is not None)
-        self.assertTrue(os.path.exists(os.path.join(model_dir, 'tokenizer.json')))
-        self.assertFalse(os.path.exists(os.path.join(model_dir, 'model.safetensors')))
+        self.assertTrue(
+            os.path.exists(os.path.join(model_dir, 'tokenizer.json')))
+        self.assertFalse(
+            os.path.exists(os.path.join(model_dir, 'model.safetensors')))
 
 
 if __name__ == '__main__':

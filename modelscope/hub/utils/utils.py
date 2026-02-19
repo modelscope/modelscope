@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Optional, Union
 
-import zoneinfo
 from filelock import BaseFileLock, FileLock, SoftFileLock, Timeout
 
 from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
@@ -18,7 +17,6 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_DOMAIN,
                                       MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
-from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -312,6 +310,7 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
     Returns:
         Timezone-aware datetime object or None if input is None
     """
+    import zoneinfo
     if not time_stamp:
         return None
 

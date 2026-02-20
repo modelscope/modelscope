@@ -7,6 +7,7 @@ vllm_version=${4:-0.6.0}
 lmdeploy_version=${5:-0.6.1}
 autogptq_version=${6:-0.7.1}
 flashattn_version=${7:-2.7.1.post4}
+optimum_version=${8:-2.0.0}
 
 pip uninstall -y torch torchvision torchaudio
 
@@ -24,6 +25,8 @@ pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes d
 pip install --no-cache-dir flash_attn==$flashattn_version
 
 pip install --no-cache-dir triton auto-gptq==$autogptq_version -U && pip cache purge
+
+pip install --no-cache-dir optimum==$optimum_version
 
 if [[ "$(printf '%s\n' "0.6.0" "$vllm_version" | sort -V | head -n1)" = "0.6.0" ]]; then
     # vllm_version is >= 0.6.0

@@ -139,6 +139,7 @@ class OssDownloader(BaseDownloader):
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
                     'sure that you can trust the external codes.')
 
+            # trust_remote_code was removed in datasets 4.0 (script-based loading dropped)
             self.dataset = hf_load_dataset(
                 dataset_py_script,
                 name=subset_name,
@@ -148,7 +149,6 @@ class OssDownloader(BaseDownloader):
                 data_files=data_files,
                 cache_dir=cache_dir,
                 download_mode=download_mode.value,
-                trust_remote_code=trust_remote_code,
                 **input_kwargs)
         else:
             self.dataset = self.data_files_manager.fetch_data_files(

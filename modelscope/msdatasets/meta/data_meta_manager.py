@@ -5,7 +5,7 @@ import shutil
 from collections import defaultdict
 
 import json
-from datasets.utils.filelock import FileLock
+from filelock import FileLock
 
 from modelscope.hub.api import HubApi
 from modelscope.msdatasets.context.dataset_context_config import \

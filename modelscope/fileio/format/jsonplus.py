@@ -456,7 +456,7 @@ def _load_currency(val):
     from moneyed import get_currency
     try:
         return get_currency(code=val)
-    except:
+    except Exception:
         return Currency(**val)
 
 

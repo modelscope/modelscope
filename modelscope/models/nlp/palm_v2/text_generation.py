@@ -793,7 +793,7 @@ class Translator(object):
         '''
         try:
             query_id = batch.query_id
-        except:
+        except Exception:
             query_id = None
         '''
         translations = []

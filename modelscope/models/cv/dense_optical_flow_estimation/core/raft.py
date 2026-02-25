@@ -17,7 +17,7 @@ autocast = torch.cuda.amp.autocast
 
 # try:
 #     autocast = torch.cuda.amp.autocast
-# except:
+# except Exception:
 #     # dummy autocast for PyTorch < 1.6
 #     class autocast:
 #         def __init__(self, enabled):

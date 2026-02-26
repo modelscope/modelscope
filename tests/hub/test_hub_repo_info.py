@@ -5,8 +5,6 @@ import datetime
 import unittest
 from unittest.mock import Mock, patch
 
-import zoneinfo
-
 from modelscope.hub.api import HubApi
 from modelscope.hub.info import BlobLfsInfo, DatasetInfo, ModelInfo
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
@@ -236,6 +234,7 @@ class HubRepoInfoTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_model_info_class_comprehensive(self):
         """Test ModelInfo class initialization and properties."""
+        import zoneinfo
         model_data = {
             'Id': 123,
             'Name': 'demo-model',
@@ -344,6 +343,7 @@ class HubRepoInfoTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dataset_info_class(self):
         # Test DatasetInfo class initialization and properties
+        import zoneinfo
         dataset_data = {
             'Id': 456,
             'Name': 'demo-dataset',

@@ -320,6 +320,9 @@ def _dataset_info(
     return HfDatasetInfo(**data_info)
 
 
+_repo_tree_cache: Dict[tuple, List[Union[RepoFile, RepoFolder]]] = {}
+
+
 def _list_repo_tree(
     self,
     repo_id: str,
@@ -332,18 +335,26 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
+    revision = revision or DEFAULT_DATASET_REVISION
+    cache_key = (repo_id, revision, path_in_repo or '/', recursive)
+
+    cached = _repo_tree_cache.get(cache_key)
+    if cached is not None:
+        yield from cached
+        return
+
     _api = HubApi(timeout=3 * 60, max_retries=3)
     endpoint = _api.get_endpoint_for_read(
         repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
 
-    # List all files in the repo
+    results: List[Union[RepoFile, RepoFolder]] = []
     page_number = 1
     page_size = 100
     while True:
         try:
             dataset_files = _api.get_dataset_files(
                 repo_id=repo_id,
-                revision=revision or DEFAULT_DATASET_REVISION,
+                revision=revision,
                 root_path=path_in_repo or '/',
                 recursive=recursive,
                 page_number=page_number,
@@ -355,17 +366,21 @@ def _list_repo_tree(
             break
 
         for file_info_d in dataset_files:
-            path_info = {}
-            path_info['type'] = 'directory' if file_info_d['Type'] == 'tree' else 'file'
-            path_info['path'] = file_info_d['Path']
-            path_info['size'] = file_info_d['Size']
-            path_info['oid'] = file_info_d['Sha256']
-
-            yield RepoFile(**path_info) if path_info['type'] == 'file' else RepoFolder(**path_info)
+            path_info = {
+                'type': 'directory' if file_info_d['Type'] == 'tree' else 'file',
+                'path': file_info_d['Path'],
+                'size': file_info_d['Size'],
+                'oid': file_info_d['Sha256'],
+            }
+            item = RepoFile(**path_info) if path_info['type'] == 'file' else RepoFolder(**path_info)
+            results.append(item)
+            yield item
 
         if len(dataset_files) < page_size:
             break
         page_number += 1
+
+    _repo_tree_cache[cache_key] = results
 
 
 def _get_paths_info(
@@ -379,7 +394,6 @@ def _get_paths_info(
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
 
-    # Refer to func: `_list_repo_tree()`, for patching `HfApi.list_repo_tree`
     repo_info_iter = self.list_repo_tree(
         repo_id=repo_id,
         recursive=False,
@@ -1555,14 +1569,13 @@ def load_dataset_with_ctx(*args, **kwargs):
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
         yield dataset_res
     finally:
-        # Restore the original functions
-        config.HF_ENDPOINT = hf_endpoint_origin
-        file_utils.get_from_cache = get_from_cache_origin
-        features.generate_from_dict = generate_from_dict_origin
-        # Keep the context during the streaming iteration
+        # Always clear the repo file tree cache to free memory
+        _repo_tree_cache.clear()
+
         if not streaming:
             config.HF_ENDPOINT = hf_endpoint_origin
             file_utils.get_from_cache = get_from_cache_origin
+            features.generate_from_dict = generate_from_dict_origin
 
             # Compatible with datasets 2.18.0
             if hasattr(DownloadManager, '_download'):

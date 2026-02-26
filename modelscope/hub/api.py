@@ -1567,7 +1567,7 @@ class HubApi:
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
-        datahub_raise_on_error(datahub_url, resp, r)
+        # datahub_raise_on_error(datahub_url, resp, r)
 
         return resp['Data']['Files']
 

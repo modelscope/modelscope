@@ -280,7 +280,6 @@ class MsDataset:
         # Load from the huggingface hub
         elif hub == Hubs.huggingface:
             from datasets import load_dataset
-            # trust_remote_code was removed in datasets 4.0 (script-based loading dropped)
             return load_dataset(
                 dataset_name,
                 name=subset_name,

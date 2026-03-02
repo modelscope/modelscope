@@ -255,18 +255,17 @@ class HFUtilTest(unittest.TestCase):
 
     def test_automapping_download(self):
         from modelscope import AutoConfig
-        model = "nomic-ai/nomic-embed-text-v1.5"
+        model = 'nomic-ai/nomic-embed-text-v1.5'
         config = AutoConfig.from_pretrained(model, trust_remote_code=True)
         model_dir = config.name_or_path
         files = os.listdir(model_dir)
         has_weight_files = any(
-            f.endswith('.safetensors') or f.endswith('.bin')
-            for f in files
+            f.endswith('.safetensors') or f.endswith('.bin') for f in files)
+        self.assertFalse(
+            has_weight_files,
+            f'Expected no weight files in {model_dir}, but found: '
+            f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
         )
-        self.assertFalse(has_weight_files,
-                         f"Expected no weight files in {model_dir}, but found: "
-                         f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
-                         )
         cache_dir = os.path.dirname(model_dir)
         cache_dir = os.path.dirname(cache_dir)
         model_dir_2 = os.path.join(cache_dir, 'nomic-ai', 'nomic-bert-2048')
@@ -274,12 +273,12 @@ class HFUtilTest(unittest.TestCase):
             files = os.listdir(model_dir_2)
             has_weight_files = any(
                 f.endswith('.safetensors') or f.endswith('.bin')
-                for f in files
+                for f in files)
+            self.assertFalse(
+                has_weight_files,
+                f'Expected no weight files in {model_dir}, but found: '
+                f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
             )
-            self.assertFalse(has_weight_files,
-                             f"Expected no weight files in {model_dir}, but found: "
-                             f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
-                             )
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub(self):

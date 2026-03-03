@@ -1,14 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
 import shutil
-import tempfile
 import unittest
-import zipfile
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.cv.referring_video_object_segmentation import \
-    ReferringVideoObjectSegmentation
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
@@ -84,7 +80,8 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
-
+        from modelscope.models.cv.referring_video_object_segmentation import \
+            ReferringVideoObjectSegmentation
         cache_path = snapshot_download(self.model_id)
         model = ReferringVideoObjectSegmentation.from_pretrained(cache_path)
         kwargs = dict(

@@ -6,7 +6,6 @@ import unittest
 
 import numpy as np
 
-from modelscope.exporters import TfModelExporter
 from modelscope.utils.test_utils import test_level
 
 
@@ -24,6 +23,7 @@ class TestExportTfModel(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_export_resnet50(self):
+        from modelscope.exporters import TfModelExporter
         import tensorflow as tf
         from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
         from tensorflow.keras.preprocessing import image

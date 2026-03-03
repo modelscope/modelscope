@@ -80,6 +80,7 @@ class HFUtilTest(unittest.TestCase):
             'baichuan-inc/baichuan-7B', trust_remote_code=True)
         self.assertTrue(model is not None)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_auto_config(self):
         from modelscope import AutoConfig, GenerationConfig
         config = AutoConfig.from_pretrained(

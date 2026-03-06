@@ -2,6 +2,7 @@
 
 import copy
 import hashlib
+import inspect
 import io
 import os
 import shutil
@@ -38,6 +39,57 @@ from .utils.utils import (file_integrity_validation, get_endpoint,
                           model_id_to_group_owner_name)
 
 logger = get_logger()
+
+
+def _callback_accepts_resume_size(callback_cls: Type[ProgressCallback]) -> bool:
+    try:
+        signature = inspect.signature(callback_cls)
+    except (TypeError, ValueError):
+        return False
+    for parameter in signature.parameters.values():
+        if parameter.kind == inspect.Parameter.VAR_KEYWORD:
+            return True
+        if parameter.name == 'resume_size':
+            return True
+    return False
+
+
+def _callback_overrides_set_current(
+        callback_cls: Type[ProgressCallback]) -> bool:
+    return getattr(callback_cls, 'set_current',
+                   None) is not ProgressCallback.set_current
+
+
+def _create_progress_callbacks(
+    file_name: str,
+    file_size: int,
+    *,
+    disable_tqdm: bool = False,
+    progress_callbacks: List[Type[ProgressCallback]] = None,
+    resume_size: int = 0,
+):
+    callback_types = [] if progress_callbacks is None else progress_callbacks.copy(
+    )
+    if not disable_tqdm:
+        callback_types.append(TqdmCallback)
+
+    callback_instances = []
+    for callback_cls in callback_types:
+        callback_kwargs = {}
+        if resume_size > 0 and _callback_accepts_resume_size(callback_cls):
+            callback_kwargs['resume_size'] = resume_size
+        callback = callback_cls(file_name, file_size, **callback_kwargs)
+        if resume_size > 0 and not callback_kwargs:
+            if _callback_overrides_set_current(callback_cls):
+                callback.set_current(resume_size)
+            else:
+                callback.update(resume_size)
+        callback_instances.append(callback)
+    return callback_instances
+
+
+def _get_part_file_name(model_file_path: str, start: int, end: int) -> str:
+    return model_file_path + '_%s_%s' % (start, end)
 
 
 def model_file_download(
@@ -419,16 +471,14 @@ def download_part_with_retry(params):
         total=API_FILE_DOWNLOAD_RETRY_TIMES,
         backoff_factor=1,
         allowed_methods=['GET'])
-    part_file_name = model_file_path + '_%s_%s' % (start, end)
+    part_file_name = _get_part_file_name(model_file_path, start, end)
     while True:
         try:
             partial_length = 0
             if os.path.exists(
                     part_file_name):  # download partial, continue download
-                with open(part_file_name, 'rb') as f:
-                    partial_length = f.seek(0, io.SEEK_END)
-                    for callback in progress_callbacks:
-                        callback.update(partial_length)
+                partial_length = min(os.path.getsize(part_file_name),
+                                     end - start + 1)
             download_start = start + partial_length
             if download_start > end:
                 break  # this part is download completed.
@@ -463,26 +513,32 @@ def parallel_download(url: str,
                       disable_tqdm: bool = False,
                       progress_callbacks: List[Type[ProgressCallback]] = None,
                       endpoint: str = None):
-    progress_callbacks = [] if progress_callbacks is None else progress_callbacks.copy(
-    )
-    if not disable_tqdm:
-        progress_callbacks.append(TqdmCallback)
-    progress_callbacks = [
-        callback(file_name, file_size) for callback in progress_callbacks
-    ]
     # create temp file
     PART_SIZE = 160 * 1024 * 1024  # every part is 160M
-    tasks = []
+    part_ranges = []
+    end = -1
     file_path = os.path.join(local_dir, file_name)
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     for idx in range(int(file_size / PART_SIZE)):
         start = idx * PART_SIZE
         end = (idx + 1) * PART_SIZE - 1
-        tasks.append((file_path, progress_callbacks, start, end, url,
-                      file_name, cookies, headers))
+        part_ranges.append((start, end))
     if end + 1 < file_size:
-        tasks.append((file_path, progress_callbacks, end + 1, file_size - 1,
-                      url, file_name, cookies, headers))
+        part_ranges.append((end + 1, file_size - 1))
+    resume_size = 0
+    for start, end in part_ranges:
+        part_file_name = _get_part_file_name(file_path, start, end)
+        if os.path.exists(part_file_name):
+            resume_size += min(os.path.getsize(part_file_name),
+                               end - start + 1)
+    progress_callbacks = _create_progress_callbacks(
+        file_name,
+        file_size,
+        disable_tqdm=disable_tqdm,
+        progress_callbacks=progress_callbacks,
+        resume_size=resume_size)
+    tasks = [(file_path, progress_callbacks, start, end, url, file_name,
+              cookies, headers) for start, end in part_ranges]
     parallels = min(MODELSCOPE_DOWNLOAD_PARALLELS, 16)
     # download every part
     with ThreadPoolExecutor(
@@ -493,8 +549,8 @@ def parallel_download(url: str,
     # merge parts.
     hash_sha256 = hashlib.sha256()
     with open(os.path.join(local_dir, file_name), 'wb') as output_file:
-        for task in tasks:
-            part_file_name = task[0] + '_%s_%s' % (task[2], task[3])
+        for start, end in part_ranges:
+            part_file_name = _get_part_file_name(file_path, start, end)
             with open(part_file_name, 'rb') as part_file:
                 while True:
                     chunk = part_file.read(16 * API_FILE_DOWNLOAD_CHUNK_SIZE)
@@ -539,20 +595,22 @@ def http_get_model_file(
         FileDownloadError: File download failed.
 
     """
-    progress_callbacks = [] if progress_callbacks is None else progress_callbacks.copy(
-    )
-    if not disable_tqdm:
-        progress_callbacks.append(TqdmCallback)
-    progress_callbacks = [
-        callback(file_name, file_size) for callback in progress_callbacks
-    ]
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
     temp_file_path = os.path.join(local_dir, file_name)
     os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
     logger.debug('downloading %s to %s', url, temp_file_path)
     # retry sleep 0.5s, 1s, 2s, 4s
-    has_retry = False
+    resume_size = 0
+    if os.path.exists(temp_file_path):
+        resume_size = min(os.path.getsize(temp_file_path), file_size)
+    progress_callbacks = _create_progress_callbacks(
+        file_name,
+        file_size,
+        disable_tqdm=disable_tqdm,
+        progress_callbacks=progress_callbacks,
+        resume_size=resume_size)
+    has_retry = resume_size > 0
     hash_sha256 = hashlib.sha256()
     retry = Retry(
         total=API_FILE_DOWNLOAD_RETRY_TIMES,
@@ -573,10 +631,8 @@ def http_get_model_file(
             if os.path.exists(temp_file_path):
                 # resuming from interrupted download is also considered as retry
                 has_retry = True
-                with open(temp_file_path, 'rb') as f:
-                    partial_length = f.seek(0, io.SEEK_END)
-                    for callback in progress_callbacks:
-                        callback.update(partial_length)
+                partial_length = min(os.path.getsize(temp_file_path),
+                                     file_size)
 
             # Check if download is complete
             if partial_length >= file_size:

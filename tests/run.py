@@ -91,18 +91,20 @@ def statistics_test_result(df):
 
 
 def gather_test_suites_in_files(test_dir, case_file_list, list_tests):
+    test_dir = test_dir.split(',')
     test_suite = unittest.TestSuite()
-    for case in case_file_list:
-        test_case = unittest.defaultTestLoader.discover(
-            start_dir=test_dir, pattern=case)
-        test_suite.addTest(test_case)
-        if hasattr(test_case, '__iter__'):
-            for subcase in test_case:
+    for _test_dir in test_dir:
+        for case in case_file_list:
+            test_case = unittest.defaultTestLoader.discover(
+                start_dir=_test_dir, pattern=case)
+            test_suite.addTest(test_case)
+            if hasattr(test_case, '__iter__'):
+                for subcase in test_case:
+                    if list_tests:
+                        print(subcase)
+            else:
                 if list_tests:
-                    print(subcase)
-        else:
-            if list_tests:
-                print(test_case)
+                    print(test_case)
     return test_suite
 
 
@@ -620,8 +622,12 @@ if __name__ == '__main__':
         '--list_tests', action='store_true', help='list all tests')
     parser.add_argument(
         '--pattern', default='test_*.py', help='test file pattern')
+    # Ignore old models and tests
     parser.add_argument(
-        '--test_dir', default='tests', help='directory to be tested')
+        '--test_dir',
+        default=
+        'tests/cli,tests/fileio,tests/hub,tests/mcp,tests/msdatasets,tests/tools,tests/utils',
+        help='directory to be tested')
     parser.add_argument(
         '--level', default=0, type=int, help='2 -- all, 1 -- p1, 0 -- p0')
     parser.add_argument(

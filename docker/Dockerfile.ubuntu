@@ -64,7 +64,7 @@ RUN bash /tmp/install.sh {version_args} && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
 
-RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
+RUN if [ "$IMAGE_TYPE" = "latest" ]; then \
     pip install math_verify "gradio<5.33" "deepspeed<0.18" ray -U && \
     pip install liger_kernel wandb swanlab nvitop pre-commit "transformers" "trl<0.25" "peft<0.18" huggingface-hub -U && \
     pip install --no-build-isolation transformer_engine[pytorch]; \
@@ -75,7 +75,7 @@ RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip uninstall autoawq -y; \
     mkdir -p /root/.cache/modelscope/_github; \
     git -C /root/.cache/modelscope/_github clone https://github.com/NVIDIA/Megatron-LM.git Megatron-LM --branch core_r0.15.0; \
-elif [ "$IMAGE_TYPE" = "llm" ]; then \
+elif [ "$IMAGE_TYPE" = "stable" ]; then \
     pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
 else \
     pip install "transformers<4.56" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
@@ -93,4 +93,6 @@ RUN rm -f /etc/apt/sources.list.d/cuda-*.list && apt-get update
 ENV VLLM_USE_MODELSCOPE=True
 ENV LMDEPLOY_USE_MODELSCOPE=True
 ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope
+ENV MEGATRON_LM_PATH=/root/.cache/modelscope/_github/Megatron-LM
+ENV SWIFT_PATCH_CONV3D=1
 SHELL ["/bin/bash", "-c"]

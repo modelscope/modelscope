@@ -64,7 +64,7 @@ RUN bash /tmp/install.sh {version_args} && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
 
-RUN if [ "$IMAGE_TYPE" = "latest" ]; then \
+RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install math_verify "gradio<5.33" "deepspeed<0.18" ray -U && \
     pip install liger_kernel wandb swanlab nvitop pre-commit "transformers" "trl<0.25" "peft<0.18" huggingface-hub -U && \
     pip install --no-build-isolation transformer_engine[pytorch]; \
@@ -75,10 +75,10 @@ RUN if [ "$IMAGE_TYPE" = "latest" ]; then \
     pip uninstall autoawq -y; \
     mkdir -p /root/.cache/modelscope/_github; \
     git -C /root/.cache/modelscope/_github clone https://github.com/NVIDIA/Megatron-LM.git Megatron-LM --branch core_r0.15.0; \
-elif [ "$IMAGE_TYPE" = "stable" ]; then \
+elif [ "$IMAGE_TYPE" = "cpu" ]; then \
     pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
 else \
-    pip install "transformers<4.56" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
+    pip install "transformers<5.0" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi
 
 # install nvm and set node version to 18

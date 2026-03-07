@@ -244,7 +244,7 @@ class BaseGPUImageBuilder(Builder):
         return os.system(f'docker push {self.image()}')
 
 
-class CPUImageBuilder(Builder):
+class StableCPUImageBuilder(Builder):
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install_cpu.sh'
@@ -264,7 +264,7 @@ class CPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{image_type}', 'stable')
+            content = content.replace('{image_type}', 'cpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -323,7 +323,7 @@ class StableGPUImageBuilder(Builder):
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'True')
-            content = content.replace('{image_type}', 'stable')
+            content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -365,8 +365,6 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
     def init_args(self, args: Any) -> Any:
         if not args.vllm_version:
             args.vllm_version = '0.16.0'
-        if not args.flashattn_version:
-            args.flashattn_version = '2.8.3'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -389,8 +387,8 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{image_type}', 'latest')
+            content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
             content = content.replace('{torchvision_version}',
@@ -416,14 +414,14 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-'
-            f'{self.args.modelscope_version}-swift-{formatted_time}-test')
+            f'{self.args.modelscope_version}-latest-{formatted_time}-test')
         ret = os.system(f'docker tag {self.image()} {image_tag2}')
         if ret != 0:
             return ret
         return os.system(f'docker push {image_tag2}')
 
 
-class AscendSwiftImageBuilder(SwiftImageBuilder):
+class AscendSwiftImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args) -> Any:
         if not args.base_image:
@@ -449,7 +447,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
     def image(self) -> str:
         return (
             f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
-            f'-{self.args.modelscope_version}-ascend-swift-test')
+            f'-{self.args.modelscope_version}-ascend-test')
 
     def push(self):
         return 0
@@ -481,9 +479,9 @@ if args.image_type.lower() == 'base':
 elif args.image_type.lower() == 'old':
     builder_cls = [OldCPUImageBuilder, OldGPUImageBuilder]
 elif args.image_type.lower() == 'stable':
-    builder_cls = [CPUImageBuilder, GPUImageBuilder, AscendSwiftImageBuilder]
+    builder_cls = [StableCPUImageBuilder, StableGPUImageBuilder, AscendSwiftImageBuilder]
 elif args.image_type.lower() == 'latest':
-    builder_cls = [SwiftImageBuilder]
+    builder_cls = [LatestGPUImageBuilder]
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

@@ -27,8 +27,7 @@ pip install --no-cache-dir triton auto-gptq==$autogptq_version -U && pip cache p
 
 if [[ "$(printf '%s\n' "0.6.0" "$vllm_version" | sort -V | head -n1)" = "0.6.0" ]]; then
     # vllm_version is >= 0.6.0
-    pip install uv
-    uv pip install vllm --torch-backend=auto --extra-index-url https://wheels.vllm.ai/nightly
+    pip install vllm --extra-index-url https://wheels.vllm.ai/nightly
     pip install -U "transformers<5.3"
 else
     echo "vllm_version < 0.6.0, skipping installation. (vllm_version = $vllm_version)"

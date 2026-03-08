@@ -150,6 +150,8 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir torch==$TORCH_VERSION torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu; \
     fi
 
+RUN echo 'Installing apex...'
+
 # copy install scripts
 COPY docker/scripts/install_apex.sh /tmp/
 

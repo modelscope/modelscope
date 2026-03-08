@@ -352,11 +352,11 @@ class SwiftImageBuilder(LLMImageBuilder):
         if not args.cuda_version:
             args.cuda_version = '12.8.1'
         if not args.torch_version:
-            args.torch_version = '2.9.0'
-            args.torchaudio_version = '2.9.0'
-            args.torchvision_version = '0.24.0'
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
         if not args.vllm_version:
-            args.vllm_version = '0.13.0'
+            args.vllm_version = '0.16.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.10.1'
         if not args.flashattn_version:

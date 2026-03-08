@@ -1,0 +1,5 @@
+FROM {base_image}
+
+RUN cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html
+
+SHELL ["/bin/bash", "-c"]

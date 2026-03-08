@@ -151,44 +151,6 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
     fi
 
 
-# default shell bash
-ENV SHELL=/bin/bash
-# install special package
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/$CUDATOOLKIT_VERSION/repo.html; \
-    else \
-        pip install --no-cache-dir dgl dglgo -f https://data.dgl.ai/wheels/repo.html; \
-    fi
-
-# copy install scripts
-COPY docker/scripts/install_unifold.sh docker/scripts/install_colmap.sh docker/scripts/install_pytorch3d_nvdiffrast.sh docker/scripts/install_tiny_cuda_nn.sh docker/scripts/install_apex.sh /tmp/
-
-# 3d supports
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_colmap.sh; \
-    else \
-     echo 'cpu unsupport colmap'; \
-    fi
-# install pytorch3d
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_pytorch3d_nvdiffrast.sh; \
-    else \
-     echo 'cpu unsupport pytorch3d nvdiffrast'; \
-    fi
-
-# for uniford
-RUN if [ "$USE_GPU" = "True" ] ; then \
-        bash /tmp/install_unifold.sh; \
-    else \
-     echo 'cpu unsupport uniford'; \
-    fi
-
-RUN if [ "$USE_GPU" = "True" ] ; then \
-       export TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" && pip install --no-cache-dir git+https://github.com/gxd1994/Pointnet2.PyTorch.git@master#subdirectory=pointnet2; \
-    else \
-     echo 'CPU env does not support Pointnet2'; \
-    fi
-
 # NVIDIA apex building
 RUN if [ "$USE_GPU" = "True" ] ; then \
         pip install --no-cache-dir packaging &&\
@@ -197,19 +159,6 @@ RUN if [ "$USE_GPU" = "True" ] ; then \
      echo 'CPU env does not support NVIDIA Apex.'; \
     fi
 
-
-ARG TENSORFLOW_VERSION={tf_version}
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            pip install --no-cache-dir tensorflow==$TENSORFLOW_VERSION; \
-        else \
-            echo 'cpu not install tensorflow'; \
-    fi
-
- RUN if [ "$USE_GPU" = "True" ] ; then \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.9;9.0;8.6+PTX" MMCV_WITH_OPS=1 MAX_JOBS=32 FORCE_CUDA=1 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
-        else \
-            cd /tmp && git clone -b ms_build --single-branch https://github.com/tastelikefeet/mmcv.git && cd mmcv && MMCV_WITH_OPS=1 MAX_JOBS=32 pip install . && cd / && rm -fr /tmp/mmcv && pip cache purge; \
-    fi
 
  RUN pip install --no-cache-dir https://github.com/liyaodev/fairseq/releases/download/v0.12.3.1/fairseq-0.12.3.1-cp311-cp311-linux_x86_64.whl  # for py311
 

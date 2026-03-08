@@ -479,7 +479,9 @@ if args.image_type.lower() == 'base':
 elif args.image_type.lower() == 'old':
     builder_cls = [OldCPUImageBuilder, OldGPUImageBuilder]
 elif args.image_type.lower() == 'stable':
-    builder_cls = [StableCPUImageBuilder, StableGPUImageBuilder, AscendSwiftImageBuilder]
+    builder_cls = [StableCPUImageBuilder, StableGPUImageBuilder]
+elif args.image_type.lower() == 'ascend':
+    builder_cls = [AscendSwiftImageBuilder]
 elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
 else:

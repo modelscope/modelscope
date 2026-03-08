@@ -24,7 +24,7 @@ from filelock import FileLock
 
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.logger import get_logger
-from modelscope.hub.api import ModelScopeConfig
+from modelscope.hub.api import HubApi
 
 from modelscope import __version__
 
@@ -219,7 +219,7 @@ def get_from_cache_ms(
             etag = (response.get('ETag', None) or response.get('etag', None)) if use_etag else None
             connected = True
         try:
-            cookies = ModelScopeConfig.get_cookies()
+            cookies = HubApi().get_cookies(access_token=token)
             response = http_head_ms(
                 url,
                 allow_redirects=True,

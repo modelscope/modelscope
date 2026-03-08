@@ -1,11 +1,10 @@
 import base64
 import unittest
 
-import json
-
 from modelscope.utils.constant import Tasks
 from modelscope.utils.input_output import (
     PipelineInfomation, service_base64_input_to_pipeline_input)
+from modelscope.utils.test_utils import test_level
 
 
 def encode_image_to_base64(image):
@@ -116,6 +115,7 @@ class PipelineInputOutputTest(unittest.TestCase):
         }
         assert expect_schema == schema
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_input_output_encode_decode(self):
         with open('data/test/images/image_captioning.png', 'rb') as f:
             image = f.read()

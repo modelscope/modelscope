@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-from typing import Mapping, Sequence, Union
+from typing import Mapping, Optional, Sequence, Union
 
 from modelscope.msdatasets.auth.auth_config import BaseAuthConfig
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
@@ -11,14 +11,24 @@ from modelscope.utils.constant import DownloadMode, Hubs
 class DatasetContextConfig:
     """Context configuration of dataset."""
 
-    def __init__(self, dataset_name: Union[str, list], namespace: str,
-                 version: str, subset_name: str, split: Union[str, list],
-                 target: str, hub: Hubs, data_dir: str,
+    def __init__(self,
+                 dataset_name: Union[str, list],
+                 namespace: str,
+                 version: str,
+                 subset_name: str,
+                 split: Union[str, list],
+                 target: str,
+                 hub: Hubs,
+                 data_dir: str,
                  data_files: Union[str, Sequence[str],
                                    Mapping[str, Union[str, Sequence[str]]]],
-                 download_mode: DownloadMode, cache_root_dir: str,
-                 use_streaming: bool, stream_batch_size: int,
-                 trust_remote_code: bool, **kwargs):
+                 download_mode: DownloadMode,
+                 cache_root_dir: str,
+                 use_streaming: bool,
+                 stream_batch_size: int,
+                 trust_remote_code: bool,
+                 token: Optional[str] = None,
+                 **kwargs):
 
         self._download_config = None
         self._data_meta_config = None
@@ -32,6 +42,7 @@ class DatasetContextConfig:
 
         # General arguments for dataset
         self.hub = hub
+        self.token = token
         self.download_mode = download_mode
         self.dataset_name = dataset_name
         self.namespace = namespace

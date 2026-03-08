@@ -9,7 +9,6 @@ import numpy as np
 from datasets import (Dataset, DatasetDict, Features, IterableDataset,
                       IterableDatasetDict)
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
-from datasets.utils.file_utils import is_relative_path
 
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
@@ -32,6 +31,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        REPO_TYPE_DATASET, ConfigFields,
                                        DatasetFormations, DownloadMode, Hubs,
                                        ModeKeys, Tasks, UploadMode)
+from modelscope.utils.file_utils import is_relative_path
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 

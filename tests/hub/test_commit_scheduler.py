@@ -14,9 +14,12 @@ from modelscope.hub.constants import Visibility
 from modelscope.hub.errors import NotExistError
 from modelscope.hub.file_download import _repo_file_download
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
+from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import CommitInfo, CommitOperationAdd
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
                                          delete_credential, test_level)
+
+logger = get_logger()
 
 
 class TestCommitScheduler(unittest.TestCase):
@@ -68,8 +71,8 @@ class TestCommitScheduler(unittest.TestCase):
             if hasattr(self, 'api') and TEST_ACCESS_TOKEN1:
                 self.api.login(TEST_ACCESS_TOKEN1)
                 self.api.delete_repo(repo_id=self.repo_id, repo_type='dataset')
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f'Failed to delete test repo {self.repo_id}: {e}')
 
         # Clean up temporary directories
         if self.cache_dir.exists():

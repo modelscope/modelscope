@@ -56,8 +56,9 @@ class HFUtilTest(unittest.TestCase):
         shutil.rmtree(self.model_dir, ignore_errors=True)
         try:
             self.api.delete_model(model_id=self.create_model_name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                f'Failed to delete model {self.create_model_name}: {e}')
 
     def test_auto_tokenizer(self):
         from modelscope import AutoTokenizer
@@ -296,8 +297,10 @@ class HFUtilTest(unittest.TestCase):
         save_dir = './tmp_test_hf_pipeline'
         try:
             os.system(f'rm -rf {save_dir}')
-            self.api.delete_model(repo_id)
-            # wait for delete repo
+            try:
+                self.api.delete_model(repo_id)
+            except Exception as e:
+                logger.warning(f'Failed to delete model {repo_id}: {e}')
             import time
             time.sleep(5)
         except Exception:

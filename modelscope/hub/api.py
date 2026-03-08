@@ -82,7 +82,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadChannel, DownloadMode,
                                        Frameworks, ModelFile, Tasks,
                                        VirgoDatasetConfig)
-from modelscope.utils.file_utils import get_file_hash, get_file_size
+from modelscope.utils.file_utils import (get_file_hash, get_file_size,
+                                         is_relative_path)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
@@ -102,13 +103,15 @@ class HubApi:
     def __init__(self,
                  endpoint: Optional[str] = None,
                  timeout=API_HTTP_CLIENT_TIMEOUT,
-                 max_retries=API_HTTP_CLIENT_MAX_RETRIES):
+                 max_retries=API_HTTP_CLIENT_MAX_RETRIES,
+                 token: Optional[str] = None):
         """The ModelScope HubApi。
 
         Args:
             endpoint (str, optional): The modelscope server http|https address. Defaults to None.
         """
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
+        self.token = token
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
         retry = Retry(
@@ -154,12 +157,12 @@ class HubApi:
                 path='/')
         return jar
 
-    def get_cookies(self, access_token, cookies_required: Optional[bool] = False):
+    def get_cookies(self, access_token: Optional[str] = None, cookies_required: Optional[bool] = False):
         """
         Get cookies for authentication from local cache or access_token.
 
         Args:
-            access_token (str): user access token on ModelScope
+            access_token (Optional[str]): user access token on ModelScope. If not provided, try to get from local cache.
             cookies_required (bool): whether to raise error if no cookies found, defaults to `False`.
 
         Returns:
@@ -168,8 +171,9 @@ class HubApi:
         Raises:
             ValueError: If no credentials found and cookies_required is True.
         """
-        if access_token:
-            cookies = self._get_cookies(access_token=access_token)
+        token = access_token or self.token or os.environ.get('MODELSCOPE_API_TOKEN')
+        if token:
+            cookies = self._get_cookies(access_token=token)
         else:
             cookies = ModelScopeConfig.get_cookies()
 
@@ -203,8 +207,7 @@ class HubApi:
         Note:
             You only have to login once within 30 days.
         """
-        if access_token is None:
-            access_token = os.environ.get('MODELSCOPE_API_TOKEN')
+        access_token = access_token or self.token or os.environ.get('MODELSCOPE_API_TOKEN')
         if not access_token:
             return None, None
         if not endpoint:
@@ -423,12 +426,15 @@ class HubApi:
         tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
         return tag_url
 
-    def delete_model(self, model_id: str, endpoint: Optional[str] = None):
-        """Delete model_id from ModelScope.
+    def delete_model(self, model_id: str, endpoint: Optional[str] = None, token: Optional[str] = None):
+        """
+        @deprecated
+        Delete model_id from ModelScope.
 
         Args:
             model_id (str): The model id.
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Raises:
             ValueError: If not login.
@@ -436,7 +442,13 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -458,7 +470,8 @@ class HubApi:
             self,
             model_id: str,
             revision: Optional[str] = DEFAULT_MODEL_REVISION,
-            endpoint: Optional[str] = None
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None,
     ) -> dict:
         """Get model information at ModelScope
 
@@ -466,6 +479,7 @@ class HubApi:
             model_id (str): The model id.
             revision (str optional): revision of model.
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Returns:
             The model detail information.
@@ -476,7 +490,7 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         owner_or_group, name = model_id_to_group_owner_name(model_id)
         if not endpoint:
             endpoint = self.endpoint
@@ -500,7 +514,8 @@ class HubApi:
     def get_endpoint_for_read(self,
                               repo_id: str,
                               *,
-                              repo_type: Optional[str] = None) -> str:
+                              repo_type: Optional[str] = None,
+                              token: Optional[str] = None) -> str:
         """Get proper endpoint for read operation (such as download, list etc.)
         1. If user has set MODELSCOPE_DOMAIN, construct endpoint with user-specified domain.
            If the repo does not exist on that endpoint, throw 404 error, otherwise return the endpoint.
@@ -515,7 +530,7 @@ class HubApi:
         if s is not None and s.strip() != '':
             endpoint = MODELSCOPE_URL_SCHEME + s
             try:
-                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
+                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} does not exist on {endpoint}.')
                 raise
@@ -524,13 +539,13 @@ class HubApi:
         check_cn_first = not is_env_true(MODELSCOPE_PREFER_AI_SITE)
         prefer_endpoint = get_endpoint(cn_site=check_cn_first)
         if not self.repo_exists(
-                repo_id, repo_type=repo_type, endpoint=prefer_endpoint):
+                repo_id, repo_type=repo_type, endpoint=prefer_endpoint, token=token):
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
             logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, '
                            f'will try on alternative endpoint {alternative_endpoint}.')
             try:
                 self.repo_exists(
-                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True)
+                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
                 raise
@@ -696,8 +711,14 @@ class HubApi:
                 'Failed to check existence of repo: %s, make sure you have access authorization.'
                 % repo_type)
 
-    def delete_repo(self, repo_id: str, repo_type: str, endpoint: Optional[str] = None):
+    def delete_repo(self,
+                    repo_id: str,
+                    repo_type: str,
+                    endpoint: Optional[str] = None,
+                    token: Optional[str] = None
+                    ):
         """
+        @deprecated
         Delete a repository from ModelScope.
 
         Args:
@@ -709,15 +730,29 @@ class HubApi:
             endpoint(`str`):
                 The endpoint to use. If not provided, the default endpoint is `https://www.modelscope.cn`
                 Could be set to `https://ai.modelscope.ai` for international version.
+            token (str): Access token of the ModelScope.
         """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
 
         if not endpoint:
             endpoint = self.endpoint
 
         if repo_type == REPO_TYPE_DATASET:
-            self.delete_dataset(repo_id, endpoint)
+            self.delete_dataset(
+                dataset_id=repo_id,
+                endpoint=endpoint,
+                token=token
+            )
         elif repo_type == REPO_TYPE_MODEL:
-            self.delete_model(repo_id, endpoint)
+            self.delete_model(
+                model_id=repo_id,
+                endpoint=endpoint,
+                token=token)
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 
@@ -744,7 +779,8 @@ class HubApi:
                    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                    original_model_id: Optional[str] = None,
                    ignore_file_pattern: Optional[Union[List[str], str]] = None,
-                   lfs_suffix: Optional[Union[str, List[str]]] = None):
+                   lfs_suffix: Optional[Union[str, List[str]]] = None,
+                   token: Optional[str] = None):
         warnings.warn(
             'This function is deprecated and will be removed in future versions. '
             'Please use git command directly or use HubApi().upload_folder instead',
@@ -810,7 +846,7 @@ class HubApi:
                 f'No {ModelFile.CONFIGURATION} file found in {model_dir}, creating a default one.')
             HubApi._create_default_config(model_dir)
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
@@ -821,20 +857,21 @@ class HubApi:
             ignore_file_pattern = [ignore_file_pattern]
         if visibility is None or license is None:
             raise InvalidParameter('Visibility and License cannot be empty for new model.')
-        if not self.repo_exists(model_id):
+        if not self.repo_exists(model_id, token=token):
             logger.info('Creating new model [%s]' % model_id)
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                original_model_id=original_model_id)
+                original_model_id=original_model_id,
+                token=token)
         tmp_dir = os.path.join(model_dir, TEMPORARY_FOLDER_NAME)  # make temporary folder
         git_wrapper = GitCommandWrapper()
         logger.info(f'Pushing folder {model_dir} as model {model_id}.')
         logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
-            repo = Repository(model_dir=tmp_dir, clone_from=model_id)
+            repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
                 logger.info('Creating new branch %s' % revision)
@@ -881,7 +918,8 @@ class HubApi:
                     owner_or_group: str,
                     page_number: Optional[int] = 1,
                     page_size: Optional[int] = 10,
-                    endpoint: Optional[str] = None) -> dict:
+                    endpoint: Optional[str] = None,
+                    token: Optional[str] = None) -> dict:
         """List models in owner or group.
 
         Args:
@@ -889,6 +927,7 @@ class HubApi:
             page_number(int, optional): The page number, default: 1
             page_size(int, optional): The page size, default: 10
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Raises:
             RequestError: The request error.
@@ -896,7 +935,7 @@ class HubApi:
         Returns:
             dict: {"models": "list of models", "TotalCount": total_number_of_models_in_owner_or_group}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/models/'
@@ -925,7 +964,7 @@ class HubApi:
                       sort: Optional[str] = None,
                       search: Optional[str] = None,
                       endpoint: Optional[str] = None,
-                      ) -> dict:
+                      token: Optional[str] = None) -> dict:
         """List datasets via OpenAPI with pagination, filtering and sorting.
 
         Args:
@@ -937,6 +976,7 @@ class HubApi:
             search (str, optional): Search by substring keywords in the dataset's Chinese name,
                 English name, and authors (including organizations and individuals).
             endpoint (str, optional): Hub endpoint to use. When None, use the endpoint specified in the class.
+            token (str, optional): Access token for authentication.
 
         Returns:
             dict: The OpenAPI data payload, e.g.
@@ -966,7 +1006,7 @@ class HubApi:
         if owner_or_group:
             params['author'] = owner_or_group
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         headers = self.builder_headers(self.headers)
 
         r = self.session.get(
@@ -991,9 +1031,7 @@ class HubApi:
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
         elif isinstance(use_cookies, bool):
-            cookies = ModelScopeConfig.get_cookies()
-            if use_cookies and cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+            cookies = self.get_cookies(cookies_required=use_cookies)
         return cookies
 
     def list_model_revisions(
@@ -1251,6 +1289,7 @@ class HubApi:
             filename: str,
             *,
             revision: Optional[str] = None,
+            token: Optional[str] = None,
     ):
         """Get if the specified file exists
 
@@ -1259,10 +1298,11 @@ class HubApi:
             filename (`str`): The queried filename, if the file exists in a sub folder,
                 please pass <sub-folder-name>/<file-name>
             revision (`Optional[str]`): The repo revision
+            token (`Optional[str]`): The access token
         Returns:
             The query result in bool value
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         files = self.get_model_files(
             repo_id,
             recursive=True,
@@ -1279,14 +1319,29 @@ class HubApi:
                        license: Optional[str] = Licenses.APACHE_V2,
                        visibility: Optional[int] = DatasetVisibility.PUBLIC,
                        description: Optional[str] = '',
-                       endpoint: Optional[str] = None, ) -> str:
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None) -> str:
+        """
+        Create a dataset in ModelScope.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+            namespace (str): The namespace (user or organization) for the dataset.
+            chinese_name (str, optional): The Chinese name of the dataset. Defaults to ''.
+            license (str, optional): The license of the dataset. Defaults to Licenses.APACHE_V2.
+            visibility (int, optional): The visibility of the dataset. Defaults to DatasetVisibility.PUBLIC.
+            description (str, optional): The description of the dataset. Defaults to ''.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            str: The URL of the created dataset repository.
+        """
 
         if dataset_name is None or namespace is None:
             raise InvalidParameter('dataset_name and namespace are required!')
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/datasets'
@@ -1310,11 +1365,32 @@ class HubApi:
         raise_on_error(r.json())
         dataset_repo_url = f'{endpoint}/datasets/{namespace}/{dataset_name}'
         logger.info(f'Create dataset success: {dataset_repo_url}')
+
         return dataset_repo_url
 
-    def delete_dataset(self, dataset_id: str, endpoint: Optional[str] = None):
+    def delete_dataset(self,
+                       dataset_id: str,
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None):
+        """
+        @deprecated
+        Delete a dataset from ModelScope.
 
-        cookies = ModelScopeConfig.get_cookies()
+        Args:
+            dataset_id (str): The dataset id to delete.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            None
+        """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -1327,12 +1403,16 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
-    def get_dataset_id_and_type(self, dataset_name: str, namespace: str, endpoint: Optional[str] = None):
+    def get_dataset_id_and_type(self,
+                                dataset_name: str,
+                                namespace: str,
+                                endpoint: Optional[str] = None,
+                                token: Optional[str] = None):
         """ Get the dataset id and type. """
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url, cookies=cookies)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp, r)
@@ -1348,7 +1428,8 @@ class HubApi:
                        recursive: bool = True,
                        page_number: int = 1,
                        page_size: int = 100,
-                       endpoint: Optional[str] = None):
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None):
         """
         @deprecated: Use `get_dataset_files` instead.
         """
@@ -1356,7 +1437,7 @@ class HubApi:
                       DeprecationWarning)
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=dataset_name, namespace=namespace, endpoint=endpoint)
+            dataset_name=dataset_name, namespace=namespace, endpoint=endpoint, token=token)
 
         recursive = 'True' if recursive else 'False'
         if not endpoint:
@@ -1365,7 +1446,7 @@ class HubApi:
         params = {'Revision': revision if revision else 'master',
                   'Root': root_path if root_path else '/', 'Recursive': recursive,
                   'PageNumber': page_number, 'PageSize': page_size}
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
@@ -1380,7 +1461,8 @@ class HubApi:
                           revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                           page_number: int = 1,
                           page_size: int = 50,
-                          endpoint: Optional[str] = None):
+                          endpoint: Optional[str] = None,
+                          token: Optional[str] = None):
         """
         Get the commit history for a repository.
 
@@ -1391,6 +1473,7 @@ class HubApi:
             page_number (int): The page number for pagination. Defaults to 1.
             page_size (int): The number of commits per page. Defaults to 50.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
 
         Returns:
             CommitHistoryResponse: The commit history response.
@@ -1403,7 +1486,6 @@ class HubApi:
             >>> for commit in commit_history.commits:
             ...     print(f"{commit.short_id}: {commit.title}")
         """
-        from datasets.utils.file_utils import is_relative_path
 
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')
@@ -1420,7 +1502,7 @@ class HubApi:
             'PageNumber': page_number,
             'PageSize': page_size
         }
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         try:
             r = self.session.get(commits_url, params=params,
@@ -1443,7 +1525,8 @@ class HubApi:
                           recursive: bool = True,
                           page_number: int = 1,
                           page_size: int = 100,
-                          endpoint: Optional[str] = None):
+                          endpoint: Optional[str] = None,
+                          token: Optional[str] = None):
         """
         Get the dataset files.
 
@@ -1455,12 +1538,12 @@ class HubApi:
             page_number (int): The page number for pagination. Defaults to 1.
             page_size (int): The number of items per page. Defaults to 100.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
 
         Returns:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
-        from datasets.utils.file_utils import is_relative_path
 
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')
@@ -1468,7 +1551,7 @@ class HubApi:
             raise ValueError(f'Invalid repo_id: {repo_id} !')
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1480,7 +1563,7 @@ class HubApi:
             'PageNumber': page_number,
             'PageSize': page_size
         }
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
@@ -1492,7 +1575,8 @@ class HubApi:
         self,
         dataset_id: str,
         revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-        endpoint: Optional[str] = None
+        endpoint: Optional[str] = None,
+        token: Optional[str] = None
     ):
         """
         Get the dataset information.
@@ -1501,11 +1585,12 @@ class HubApi:
             dataset_id (str): The dataset id.
             revision (Optional[str]): The revision of the dataset.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
 
         Returns:
             dict: The dataset information.
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         if not endpoint:
             endpoint = self.endpoint
 
@@ -1522,12 +1607,13 @@ class HubApi:
         return resp[API_RESPONSE_FIELD_DATA]
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
-                                   dataset_id: str, revision: str, endpoint: Optional[str] = None):
+                                   dataset_id: str, revision: str, endpoint: Optional[str] = None,
+                                   token: Optional[str] = None):
         """ Get the meta file-list of the dataset. """
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url,
                              cookies=cookies,
                              headers=self.builder_headers(self.headers))
@@ -1559,11 +1645,12 @@ class HubApi:
                                            namespace: str,
                                            revision: str,
                                            meta_cache_dir: str, dataset_type: int, file_list: list,
-                                           endpoint: Optional[str] = None):
+                                           endpoint: Optional[str] = None,
+                                           token: Optional[str] = None):
         local_paths = defaultdict(list)
         dataset_formation = DatasetFormations(dataset_type)
         dataset_meta_format = DatasetMetaFormats[dataset_formation]
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         # Dump the data_type as a local file
         HubApi.dump_datatype_file(dataset_type=dataset_type, meta_cache_dir=meta_cache_dir)
@@ -1591,7 +1678,8 @@ class HubApi:
         return local_paths, dataset_formation
 
     @staticmethod
-    def fetch_meta_files_from_url(url, out_path, chunk_size=1024, mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
+    def fetch_meta_files_from_url(url, out_path, chunk_size=1024, mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+                                  token: Optional[str] = None):
         """
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
@@ -1605,7 +1693,7 @@ class HubApi:
         if os.path.exists(out_path):
             logger.info(f'Reusing cached meta-data file: {out_path}')
             return out_path
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = HubApi().get_cookies(access_token=token)
 
         # Make the request and get the response content as TextIO
         logger.info('Loading meta-data file ...')
@@ -1697,12 +1785,13 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION,
-            endpoint: Optional[str] = None):
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
-        return self.datahub_remote_call(datahub_url)
+        return self.datahub_remote_call(datahub_url, token=token)
 
     def get_dataset_access_config_session(
             self,
@@ -1710,7 +1799,8 @@ class HubApi:
             namespace: str,
             check_cookie: bool,
             revision: Optional[str] = DEFAULT_DATASET_REVISION,
-            endpoint: Optional[str] = None):
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None):
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1719,7 +1809,7 @@ class HubApi:
         if check_cookie:
             cookies = self._check_cookie(use_cookies=True)
         else:
-            cookies = ModelScopeConfig.get_cookies()
+            cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(
             url=datahub_url,
@@ -1729,7 +1819,7 @@ class HubApi:
         raise_on_error(resp)
         return resp['Data']
 
-    def get_virgo_meta(self, dataset_id: str, version: int = 1) -> dict:
+    def get_virgo_meta(self, dataset_id: str, version: int = 1, token: Optional[str] = None) -> dict:
         """
         Get virgo dataset meta info.
         """
@@ -1738,7 +1828,7 @@ class HubApi:
             raise RuntimeError(f'Virgo endpoint is not set in env: {VirgoDatasetConfig.env_virgo_endpoint}')
 
         virgo_dataset_url = f'{virgo_endpoint}/data/set/download'
-        cookies = requests.utils.dict_from_cookiejar(ModelScopeConfig.get_cookies())
+        cookies = requests.utils.dict_from_cookiejar(self.get_cookies(access_token=token))
 
         dataset_info = dict(
             dataSetId=dataset_id,
@@ -1763,11 +1853,12 @@ class HubApi:
                                                namespace: str,
                                                revision: str,
                                                zip_file_name: str,
-                                               endpoint: Optional[str] = None):
+                                               endpoint: Optional[str] = None,
+                                               token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(url=datahub_url, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         resp = r.json()
@@ -1787,13 +1878,14 @@ class HubApi:
         return data_sts
 
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
-                                 is_recursive, is_filter_dir, revision, endpoint: Optional[str] = None):
+                                 is_recursive, is_filter_dir, revision, endpoint: Optional[str] = None,
+                                 token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
               f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         resp = self.session.get(url=url, cookies=cookies, timeout=1800)
         resp = resp.json()
         raise_on_error(resp)
@@ -1801,14 +1893,15 @@ class HubApi:
         return resp
 
     def delete_oss_dataset_object(self, object_name: str, dataset_name: str,
-                                  namespace: str, revision: str, endpoint: Optional[str] = None) -> str:
+                                  namespace: str, revision: str, endpoint: Optional[str] = None,
+                                  token: Optional[str] = None) -> str:
         if not object_name or not dataset_name or not namespace or not revision:
             raise ValueError('Args cannot be empty!')
         if not endpoint:
             endpoint = self.endpoint
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss?Path={object_name}&Revision={revision}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
@@ -1816,7 +1909,8 @@ class HubApi:
         return resp
 
     def delete_oss_dataset_dir(self, object_name: str, dataset_name: str,
-                               namespace: str, revision: str, endpoint: Optional[str] = None) -> str:
+                               namespace: str, revision: str, endpoint: Optional[str] = None,
+                               token: Optional[str] = None) -> str:
         if not object_name or not dataset_name or not namespace or not revision:
             raise ValueError('Args cannot be empty!')
         if not endpoint:
@@ -1824,15 +1918,15 @@ class HubApi:
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
               f'&Revision={revision}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Message']
         return resp
 
-    def datahub_remote_call(self, url):
-        cookies = ModelScopeConfig.get_cookies()
+    def datahub_remote_call(self, url, token: Optional[str] = None):
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(
             url,
             cookies=cookies,
@@ -1842,13 +1936,14 @@ class HubApi:
         return resp['Data']
 
     def dataset_download_statistics(self, dataset_name: str, namespace: str,
-                                    use_streaming: bool = False, endpoint: Optional[str] = None) -> None:
+                                    use_streaming: bool = False, endpoint: Optional[str] = None,
+                                    token: Optional[str] = None) -> None:
         is_ci_test = os.getenv('CI_TEST') == 'True'
         if not endpoint:
             endpoint = self.endpoint
         if dataset_name and namespace and not is_ci_test and not use_streaming:
             try:
-                cookies = ModelScopeConfig.get_cookies()
+                cookies = self.get_cookies(access_token=token)
 
                 # Download count
                 download_count_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
@@ -1926,8 +2021,6 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        self.login(access_token=token, endpoint=endpoint)
-
         repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
@@ -1953,12 +2046,13 @@ class HubApi:
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                aigc_model=aigc_model
+                aigc_model=aigc_model,
+                token=token,
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
                     from modelscope.hub.repository import Repository
-                    repo = Repository(temp_cache_dir, repo_id)
+                    repo = Repository(temp_cache_dir, repo_id, auth_token=token)
                     default_config = {
                         'framework': 'pytorch',
                         'task': 'text-generation',
@@ -1986,6 +2080,7 @@ class HubApi:
                 chinese_name=chinese_name,
                 license=license,
                 visibility=visibility,
+                token=token,
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 
@@ -2161,7 +2256,6 @@ class HubApi:
             ... )
             >>> print(commit_info)
         """
-
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
@@ -2219,6 +2313,7 @@ class HubApi:
             data=path_or_fileobj,
             disable_tqdm=disable_tqdm,
             tqdm_desc=tqdm_desc,
+            token=token,
         )
 
         # Construct commit info and create commit
@@ -2317,8 +2412,6 @@ class HubApi:
 
         # Cover the ignore patterns if both allow and ignore patterns are provided
         if allow_patterns is not None:
-            if '**' in allow_patterns:
-                ignore_patterns = []
             ignore_patterns = [
                 p for p in ignore_patterns if p not in allow_patterns
             ]
@@ -2370,6 +2463,7 @@ class HubApi:
                 data=file_path,
                 disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                 tqdm_desc='[Uploading ' + file_path_in_repo + ']',
+                token=token,
             )
 
             return {
@@ -2446,6 +2540,7 @@ class HubApi:
             disable_tqdm: Optional[bool] = False,
             tqdm_desc: Optional[str] = '[Uploading]',
             buffer_size_mb: Optional[int] = 1,
+            token: Optional[str] = None,
     ) -> dict:
 
         res_d: dict = dict(
@@ -2460,6 +2555,7 @@ class HubApi:
             repo_id=repo_id,
             repo_type=repo_type,
             objects=objects,
+            token=token,
         )
 
         # upload_object: {'url': 'xxx', 'oid': 'xxx'}
@@ -2470,7 +2566,7 @@ class HubApi:
             res_d['is_uploaded'] = True
             return res_d
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         cookies = dict(cookies) if cookies else None
         if cookies is None:
             raise ValueError('Token does not exist, please login first.')
@@ -2536,7 +2632,8 @@ class HubApi:
             repo_id: str,
             repo_type: str,
             objects: List[Dict[str, Any]],
-            endpoint: Optional[str] = None
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Check the blob has already uploaded.
@@ -2549,6 +2646,7 @@ class HubApi:
                 oid (str): The sha256 hash value.
                 size (int): The size of the blob.
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str): The access token.
 
         Returns:
             List[Dict[str, Any]]: The result of the check.
@@ -2565,9 +2663,7 @@ class HubApi:
             'objects': objects,
         }
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         response = requests.post(
             url,
             headers=self.builder_headers(self.headers),
@@ -2755,7 +2851,8 @@ class HubApi:
                      delete_patterns: Union[str, List[str]],
                      *,
                      revision: Optional[str] = DEFAULT_MODEL_REVISION,
-                     endpoint: Optional[str] = None) -> Dict[str, Any]:
+                     endpoint: Optional[str] = None,
+                     token: Optional[str] = None) -> Dict[str, Any]:
         """
         Delete files in batch using glob (wildcard) patterns, e.g. '*.py', 'data/*.csv', 'foo*', etc.
 
@@ -2780,6 +2877,7 @@ class HubApi:
             delete_patterns (str or List[str]): List of glob patterns, e.g. '*.py', 'data/*.csv', 'foo*'
             revision (str, optional): Branch or tag name
             endpoint (str, optional): API endpoint
+            token (str, optional): Access token
         Returns:
             dict: Deletion result
         """
@@ -2790,7 +2888,7 @@ class HubApi:
         if isinstance(delete_patterns, str):
             delete_patterns = [delete_patterns]
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -2820,6 +2918,7 @@ class HubApi:
                         page_number=page_number,
                         page_size=page_size,
                         endpoint=endpoint,
+                        token=token,
                     )
                 except Exception as e:
                     logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
@@ -2909,7 +3008,7 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         if repo_type == REPO_TYPE_MODEL:
-            model_info = self.get_model(model_id=repo_id)
+            model_info = self.get_model(model_id=repo_id, token=token)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
             tasks = model_info.get('Tasks')
             model_tasks = ''
@@ -2942,6 +3041,7 @@ class HubApi:
             dataset_idx, _ = self.get_dataset_id_and_type(
                 dataset_name=repo_id_parts[1],
                 namespace=repo_id_parts[0],
+                token=token
             )
 
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
@@ -2992,6 +3092,8 @@ class ModelScopeConfig:
         if os.path.exists(cookies_path):
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
+                if not cookies:
+                    return None
                 for cookie in cookies:
                     if cookie.name == 'm_session_id' and cookie.is_expired() and \
                             not ModelScopeConfig.cookie_expired_warning:

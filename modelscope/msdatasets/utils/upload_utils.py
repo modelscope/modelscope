@@ -13,18 +13,9 @@ class DatasetUploadManager(object):
 
     def __init__(self, dataset_name: str, namespace: str, version: str):
         from modelscope.hub.api import HubApi
-        _hub_api = HubApi()
-        _oss_config = _hub_api.get_dataset_access_config_session(
-            dataset_name=dataset_name,
-            namespace=namespace,
-            check_cookie=False,
-            revision=version)
 
         self.oss_utilities = OssUtilities(
-            oss_config=_oss_config,
-            dataset_name=dataset_name,
-            namespace=namespace,
-            revision=version)
+            dataset_name=dataset_name, namespace=namespace, revision=version)
 
     def upload(self, object_name: str, local_file_path: str,
                upload_mode: UploadMode) -> str:

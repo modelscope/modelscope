@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from shutil import Error, copy2, copystat
 from typing import BinaryIO, Optional, Union
+from urllib.parse import urlparse
 
 
 # TODO: remove this api, unify to flattened args
@@ -274,3 +275,11 @@ def get_file_hash(
         'chunk_nums': len(chunk_hash_list),
         'chunk_hash_list': chunk_hash_list,
     }
+
+
+def is_relative_path(url_or_filename: str) -> bool:
+    """
+    Check if a given string is a relative path.
+    """
+    return urlparse(
+        url_or_filename).scheme == '' and not os.path.isabs(url_or_filename)

@@ -1579,7 +1579,7 @@ class HubApi:
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
-        # datahub_raise_on_error(datahub_url, resp, r)
+        datahub_raise_on_error(datahub_url, resp, r)
 
         data = resp.get('Data')
         if data is None:
@@ -2608,21 +2608,21 @@ class HubApi:
 
             if isinstance(data, (str, Path)):
                 with open(data, 'rb') as f:
-                    response = requests.put(
+                    response = self.session.put(
                         upload_object['url'],
                         headers=headers,
                         data=read_in_chunks(f, pbar)
                     )
 
             elif isinstance(data, bytes):
-                response = requests.put(
+                response = self.session.put(
                     upload_object['url'],
                     headers=headers,
                     data=read_in_chunks(io.BytesIO(data), pbar)
                 )
 
             elif isinstance(data, io.BufferedIOBase):
-                response = requests.put(
+                response = self.session.put(
                     upload_object['url'],
                     headers=headers,
                     data=read_in_chunks(data, pbar)

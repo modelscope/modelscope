@@ -180,9 +180,11 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 revision = 'master'
             if file_filter is not None:
                 allow_file_pattern = file_filter
+            local_files_only = kwargs.pop('local_files_only', False)
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
                 revision=revision,
+                local_files_only=local_files_only,
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern)
             if subfolder:

@@ -128,6 +128,8 @@ class OldCPUImageBuilder(Builder):
             'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
             'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
         content = content.replace('{base_image}', old_cpu_image)
+        content = content.replace('{modelscope_branch}',
+                                  self.args.modelscope_branch)
         return content
 
     def image(self) -> str:
@@ -183,6 +185,8 @@ class OldGPUImageBuilder(Builder):
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
         content = content.replace('{base_image}', old_gpu_image)
+        content = content.replace('{modelscope_branch}',
+                                  self.args.modelscope_branch)
         return content
 
     def image(self) -> str:

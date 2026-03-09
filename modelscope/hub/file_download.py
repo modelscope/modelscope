@@ -253,6 +253,11 @@ def _repo_file_download(
         group_or_owner, name = model_id_to_group_owner_name(repo_id)
         if not revision:
             revision = DEFAULT_DATASET_REVISION
+        _hub_id, _ = _api.get_dataset_id_and_type(
+            dataset_name=name,
+            namespace=group_or_owner,
+            endpoint=endpoint,
+            token=token)
         page_number = 1
         page_size = 100
         while True:
@@ -265,7 +270,8 @@ def _repo_file_download(
                     page_number=page_number,
                     page_size=page_size,
                     endpoint=endpoint,
-                    token=token)
+                    token=token,
+                    dataset_hub_id=_hub_id)
             except Exception as e:
                 logger.error(
                     f'Get dataset: {repo_id} file list failed, error: {e}')

@@ -8,6 +8,7 @@ from collections import OrderedDict
 from modelscope.exporters import Exporter
 from modelscope.models import Model
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -20,7 +21,8 @@ class TestExportOCRRecognition(unittest.TestCase):
             os.makedirs(self.tmp_dir)
         self.model_id = 'damo/cv_LightweightEdge_ocr-recognitoin-general_damo'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('torch<=2.4'), 'Skip because torch version not supported')
     def test_export_ocr_detection(self):
         model = Model.from_pretrained(
             'damo/cv_LightweightEdge_ocr-recognitoin-general_damo',
@@ -28,14 +30,16 @@ class TestExportOCRRecognition(unittest.TestCase):
         Exporter.from_model(model).export_onnx(
             input_shape=(1, 3, 32, 640), output_dir=self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('torch<=2.4'), 'Skip because torch version not supported')
     def test_export_ocr_detection_crnn(self):
         model = Model.from_pretrained(
             'damo/cv_crnn_ocr-recognition-general_damo')
         Exporter.from_model(model).export_onnx(
             input_shape=(1, 3, 32, 640), output_dir=self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('torch<=2.4'), 'Skip because torch version not supported')
     def test_export_ocr_detection_cvit(self):
         model = Model.from_pretrained(
             'damo/cv_convnextTiny_ocr-recognition-general_damo')

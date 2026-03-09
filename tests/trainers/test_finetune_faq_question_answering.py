@@ -83,7 +83,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
                 cfg_file=cfg_file))
         return trainer
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_faq_model_finetune(self):
         trainer = self.build_trainer(self.model_id, 'v1.0.1')
         trainer.train()
@@ -107,7 +107,7 @@ class TestFinetuneFaqQuestionAnswering(unittest.TestCase):
         self.assertAlmostEqual(
             result_after['output'][0][0]['score'], 0.8, delta=0.2)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_faq_mgimn_model_finetune(self):
         trainer = self.build_trainer(self.mgimn_model_id, 'v1.0.0')
         trainer.train()

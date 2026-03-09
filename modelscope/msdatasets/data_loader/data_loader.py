@@ -148,7 +148,6 @@ class OssDownloader(BaseDownloader):
                 data_files=data_files,
                 cache_dir=cache_dir,
                 download_mode=download_mode.value,
-                trust_remote_code=trust_remote_code,
                 **input_kwargs)
         else:
             self.dataset = self.data_files_manager.fetch_data_files(

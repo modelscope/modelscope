@@ -9,10 +9,15 @@ cpu_sets_arr=($cpu_sets)
 is_get_file_lock=false
 CI_COMMAND=${CI_COMMAND:-bash .dev_scripts/ci_container_test.sh python tests/run.py --parallel 2 --run_config tests/run_config.yaml}
 echo "ci command: $CI_COMMAND"
+echo "Using docker image: $IMAGE_NAME:$IMAGE_VERSION"
 PR_CHANGED_FILES="${PR_CHANGED_FILES:-}"
 echo "PR modified files: $PR_CHANGED_FILES"
 PR_CHANGED_FILES=${PR_CHANGED_FILES//[ ]/#}
 echo "PR_CHANGED_FILES: $PR_CHANGED_FILES"
+
+LOG_DIR=/home/admin/ci_logs
+mkdir -p $LOG_DIR
+
 idx=0
 sleep 65
 for gpu in $gpus
@@ -23,6 +28,9 @@ do
 
   CONTAINER_NAME="modelscope-ci-$idx"
   is_get_file_lock=true
+
+  LOG_FILE="$LOG_DIR/ci_test_$(date +%Y%m%d_%H%M%S)_gpu${gpu//,/_}.log"
+  echo "Log file: $LOG_FILE"
 
   # pull image if there are update
   docker pull ${IMAGE_NAME}:${IMAGE_VERSION}
@@ -49,7 +57,7 @@ do
               -e PR_CHANGED_FILES=$PR_CHANGED_FILES \
               --workdir=$CODE_DIR_IN_CONTAINER \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
-              $CI_COMMAND
+              $CI_COMMAND 2>&1 | tee "$LOG_FILE"
   else
     docker run --rm --name $CONTAINER_NAME --shm-size=16gb \
               --cpuset-cpus=${cpu_sets_arr[$idx]} \
@@ -71,14 +79,19 @@ do
               -e PR_CHANGED_FILES=$PR_CHANGED_FILES \
               --workdir=$CODE_DIR_IN_CONTAINER \
               ${IMAGE_NAME}:${IMAGE_VERSION} \
-              $CI_COMMAND
+              $CI_COMMAND 2>&1 | tee "$LOG_FILE"
   fi
-  if [ $? -ne 0 ]; then
-    echo "Running test case failed, please check the log!"
-    exit -1
+
+  DOCKER_EXIT_CODE=${PIPESTATUS[0]}
+  if [ $DOCKER_EXIT_CODE -ne 0 ]; then
+    echo "Running test case failed, please check the log: $LOG_FILE"
+    exit 1
   fi
+
+  echo "Test completed successfully. Log saved to: $LOG_FILE"
   break
 done
+
 if [ "$is_get_file_lock" = false ] ; then
     echo 'No free GPU!'
     exit 1

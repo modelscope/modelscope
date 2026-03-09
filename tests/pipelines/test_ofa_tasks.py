@@ -11,6 +11,7 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.cv.image_utils import created_boxed_image
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -36,7 +37,8 @@ class OfaTasksTest(unittest.TestCase):
         result = img_captioning(image)
         print(result[OutputKeys.CAPTION])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_image_captioning_with_name(self):
         img_captioning = pipeline(
             Tasks.image_captioning,
@@ -58,7 +60,8 @@ class OfaTasksTest(unittest.TestCase):
         for r in results:
             print(r[OutputKeys.CAPTION])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_ocr_recognize_with_name(self):
         ocr_recognize = pipeline(
             Tasks.ocr_recognition,
@@ -81,7 +84,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(image)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_image_classification_with_name(self):
         ofa_pipe = pipeline(
             Tasks.image_classification,
@@ -109,7 +113,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_summarization_with_name(self):
         ofa_pipe = pipeline(
             Tasks.text_summarization,
@@ -144,7 +149,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe({'text': text, 'text2': text2})
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_text_classification_with_name(self):
         ofa_pipe = pipeline(
             Tasks.text_classification,
@@ -170,7 +176,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_visual_entailment_with_name(self):
         ofa_pipe = pipeline(
             Tasks.visual_entailment,
@@ -186,7 +193,8 @@ class OfaTasksTest(unittest.TestCase):
         for r in results:
             print(r[OutputKeys.LABELS], r[OutputKeys.SCORES])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_visual_grounding_with_model(self):
         model = Model.from_pretrained(
             'damo/ofa_visual-grounding_refcoco_large_en')
@@ -219,7 +227,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe([input for _ in range(3)], batch_size=2)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_visual_grounding_zh_with_name(self):
         model = 'damo/ofa_visual-grounding_refcoco_large_zh'
         ofa_pipe = pipeline(Tasks.visual_grounding, model=model)
@@ -243,7 +252,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_visual_question_answering_with_name(self):
         model = 'damo/ofa_visual-question-answering_pretrain_large_en'
         ofa_pipe = pipeline(Tasks.visual_question_answering, model=model)
@@ -273,7 +283,8 @@ class OfaTasksTest(unittest.TestCase):
         # test batch infer
         print(img_captioning([image for _ in range(3)], batch_size=2))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_visual_entailment_distilled_model_with_name(self):
         ofa_pipe = pipeline(
             Tasks.visual_entailment,
@@ -295,7 +306,8 @@ class OfaTasksTest(unittest.TestCase):
         result = ofa_pipe(input)
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_text_to_image_synthesis_with_name(self):
         model = 'damo/ofa_text-to-image-synthesis_coco_large_en'
         ofa_pipe = pipeline(Tasks.text_to_image_synthesis, model=model)
@@ -330,7 +342,8 @@ class OfaTasksTest(unittest.TestCase):
         for r in result:
             print(r[OutputKeys.TEXT])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_sudoku_with_name(self):
         model = 'damo/ofa_sudoku_kaggle_large'
         ofa_pipe = pipeline(Tasks.sudoku, model=model)
@@ -353,7 +366,8 @@ class OfaTasksTest(unittest.TestCase):
         for r in result:
             print(r[OutputKeys.TEXT])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed')
     def test_run_with_text2sql_with_name(self):
         model = 'damo/ofa_text2sql_spider_large_en'
         ofa_pipe = pipeline(Tasks.text2sql, model=model)

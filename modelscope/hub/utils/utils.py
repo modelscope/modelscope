@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import contextlib
+import errno
 import hashlib
 import os
 import sys
@@ -286,6 +287,16 @@ def weak_file_lock(lock_file: Union[str, Path],
                     lock_file)
                 lock = SoftFileLock(lock_file, timeout=default_interval)
                 continue
+            raise
+        except OSError as e:
+            # Handle NFS stale file handle and similar issues
+            if e.errno in (errno.ESTALE, errno.ENOENT, errno.EREMOTEIO):
+                logger.warning(
+                    'Encountered OSError (errno=%d) on %s, Falling back to SoftFileLock.',
+                    e.errno, lock_file)
+                lock = SoftFileLock(lock_file, timeout=default_interval)
+                continue
+            raise
         else:
             break
 

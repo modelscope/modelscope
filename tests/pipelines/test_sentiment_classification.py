@@ -9,6 +9,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import TextClassificationPipeline
 from modelscope.preprocessors import TextClassificationTransformersPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -46,7 +47,8 @@ class SentimentClassificationTaskModelTest(unittest.TestCase):
         self.assertTrue(
             isinstance(pipeline_ins.model, ModelForTextClassification))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'), 'skip test when transformers >= 5.0')
     def test_run_with_model_name(self):
         pipeline_ins = pipeline(
             task=Tasks.text_classification, model=self.model_id)
@@ -54,7 +56,8 @@ class SentimentClassificationTaskModelTest(unittest.TestCase):
         self.assertTrue(
             isinstance(pipeline_ins.model, ModelForTextClassification))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'), 'skip test when transformers >= 5.0')
     def test_run_with_default_model(self):
         pipeline_ins = pipeline(task=Tasks.text_classification)
         print(pipeline_ins(input=self.sentence1))

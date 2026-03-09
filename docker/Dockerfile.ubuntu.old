@@ -1,0 +1,7 @@
+FROM {base_image}
+
+RUN cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
+    cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    cd / && rm -fr /tmp/modelscope && pip cache purge;
+
+SHELL ["/bin/bash", "-c"]

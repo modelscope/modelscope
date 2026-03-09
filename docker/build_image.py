@@ -110,7 +110,9 @@ class OldCPUImageBuilder(Builder):
     def generate_dockerfile(self) -> str:
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
-        content = content.replace('{base_image}', '')
+        old_cpu_image = ('modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
+                         'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
+        content = content.replace('{base_image}', old_cpu_image)
         return content
 
     def image(self) -> str:
@@ -161,9 +163,11 @@ class OldGPUImageBuilder(Builder):
         return args
 
     def generate_dockerfile(self) -> str:
+        old_gpu_image = ('modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
+                         'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.33.0-test')
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
-        content = content.replace('{base_image}', '')
+        content = content.replace('{base_image}', old_gpu_image)
         return content
 
     def image(self) -> str:
@@ -421,7 +425,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         return os.system(f'docker push {image_tag2}')
 
 
-class AscendSwiftImageBuilder(StableGPUImageBuilder):
+class AscendImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args) -> Any:
         if not args.base_image:
@@ -481,7 +485,7 @@ elif args.image_type.lower() == 'old':
 elif args.image_type.lower() == 'stable':
     builder_cls = [StableCPUImageBuilder, StableGPUImageBuilder]
 elif args.image_type.lower() == 'ascend':
-    builder_cls = [AscendSwiftImageBuilder]
+    builder_cls = [AscendImageBuilder]
 elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
 else:

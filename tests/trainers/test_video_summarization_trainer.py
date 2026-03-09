@@ -11,6 +11,7 @@ from modelscope.msdatasets.dataset_cls.custom_datasets import \
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.import_utils import exists
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import test_level
 
@@ -41,7 +42,9 @@ class VideoSummarizationTrainerTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,

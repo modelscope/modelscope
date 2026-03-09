@@ -5,6 +5,7 @@ import cv2
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -18,7 +19,9 @@ class DiscoGuidedDiffusionTest(unittest.TestCase):
     test_input1 = '夕阳西下'
     test_input2 = '城市，赛博朋克'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_run(self):
         diffusers_pipeline = pipeline(
             task=self.task,

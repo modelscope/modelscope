@@ -6,6 +6,7 @@ from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.models import Model
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -16,13 +17,17 @@ class BackboneTest(unittest.TestCase):
         self.model_id = 'damo/nlp_structbert_backbone_tiny_std'
         self.transformer_model = 'bert'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_run_load_backbone_model_with_ms_backbone(self):
         model = Model.from_pretrained(
             task=self.task, model_name_or_path=self.model_id)
         self.assertEqual(model.__class__.__name__, 'SbertModel')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_run_load_backbone_model_with_hf_automodel(self):
         local_model_dir = snapshot_download(self.model_id)
         cfg = Config.from_file(
@@ -42,7 +47,9 @@ class BackboneTest(unittest.TestCase):
             task=self.task, model_name_or_path=self.model_id, cfg_dict=cfg)
         self.assertEqual(model.__class__.__name__, 'BertModel')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_run_load_backbone_model_with_hf_automodel_specific_model(self):
         self.transformer_model = 'roberta'
 

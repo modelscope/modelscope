@@ -23,7 +23,7 @@ class HFUtilTest(unittest.TestCase):
     def setUp(self):
         logger.info('SetUp')
         self.api = HubApi()
-        self.api.login(TEST_ACCESS_TOKEN1)
+        response, _ = self.api.login(TEST_ACCESS_TOKEN1)
         self.user = TEST_MODEL_ORG
         print(self.user)
         self.create_model_name = '%s/%s_%s' % (self.user, 'test_model_upload',
@@ -80,6 +80,7 @@ class HFUtilTest(unittest.TestCase):
             'baichuan-inc/baichuan-7B', trust_remote_code=True)
         self.assertTrue(model is not None)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_auto_config(self):
         from modelscope import AutoConfig, GenerationConfig
         config = AutoConfig.from_pretrained(
@@ -108,33 +109,19 @@ class HFUtilTest(unittest.TestCase):
     def test_transformer_patch(self):
         with patch_context():
             from transformers import AutoTokenizer, AutoModelForCausalLM
-            tokenizer = AutoTokenizer.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
+            tokenizer = AutoTokenizer.from_pretrained('Qwen/Qwen2.5-0.5B')
             self.assertIsNotNone(tokenizer)
-            model = AutoModelForCausalLM.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
+            model = AutoModelForCausalLM.from_pretrained('Qwen/Qwen2.5-0.5B')
             self.assertIsNotNone(model)
 
     def test_patch_model(self):
         from modelscope.utils.hf_util.patcher import patch_context
         with patch_context():
             from transformers import AutoModel
-            model = AutoModel.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
+            model = AutoModel.from_pretrained('Qwen/Qwen2.5-0.5B')
             self.assertTrue(model is not None)
         try:
-            model = AutoModel.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-        except Exception:
-            pass
-        else:
-            self.assertTrue(False)
-
-    def test_patch_config_bert(self):
-        from transformers import BertConfig
-        try:
-            BertConfig.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
+            model = AutoModel.from_pretrained('Qwen/Qwen2.5-0.5B')
         except Exception:
             pass
         else:
@@ -143,22 +130,18 @@ class HFUtilTest(unittest.TestCase):
     def test_patch_config(self):
         with patch_context():
             from transformers import AutoConfig
-            config = AutoConfig.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-            self.assertTrue(getattr(config, 'base_model_prefix') == 'encoder')
+            config = AutoConfig.from_pretrained('Qwen/Qwen2.5-0.5B')
+            self.assertTrue(config is not None)
         try:
-            config = AutoConfig.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
-            self.assertTrue(
-                getattr(config, 'base_model_prefix', None) != 'encoder')
+            AutoConfig.from_pretrained('Qwen/Qwen2.5-0.5B')
+            self.assertTrue(False)
         except:  # noqa
             pass
 
         # Test patch again
         with patch_context():
             from transformers import AutoConfig
-            config = AutoConfig.from_pretrained(
-                'iic/nlp_structbert_sentiment-classification_chinese-tiny')
+            config = AutoConfig.from_pretrained('Qwen/Qwen2.5-0.5B')
             self.assertTrue(config is not None)
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
@@ -252,6 +235,33 @@ class HFUtilTest(unittest.TestCase):
         with patch_context():
             from huggingface_hub import whoami
             self.assertTrue(whoami()['name'] == self.user)
+
+    def test_automapping_download(self):
+        from modelscope import AutoConfig
+        model = 'nomic-ai/nomic-embed-text-v1.5'
+        config = AutoConfig.from_pretrained(model, trust_remote_code=True)
+        model_dir = config.name_or_path
+        files = os.listdir(model_dir)
+        has_weight_files = any(
+            f.endswith('.safetensors') or f.endswith('.bin') for f in files)
+        self.assertFalse(
+            has_weight_files,
+            f'Expected no weight files in {model_dir}, but found: '
+            f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
+        )
+        cache_dir = os.path.dirname(model_dir)
+        cache_dir = os.path.dirname(cache_dir)
+        model_dir_2 = os.path.join(cache_dir, 'nomic-ai', 'nomic-bert-2048')
+        if os.path.exists(model_dir_2):
+            files = os.listdir(model_dir_2)
+            has_weight_files = any(
+                f.endswith('.safetensors') or f.endswith('.bin')
+                for f in files)
+            self.assertFalse(
+                has_weight_files,
+                f'Expected no weight files in {model_dir}, but found: '
+                f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
+            )
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub(self):

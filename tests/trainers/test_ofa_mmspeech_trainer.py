@@ -9,6 +9,7 @@ from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import DownloadMode, ModelFile
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -76,7 +77,8 @@ class TestMMSpeechTrainer(unittest.TestCase):
             shutil.rmtree(self.WORKSPACE, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip because fairseq is not installed.')
     def test_trainer_std(self):
         os.makedirs(self.WORKSPACE, exist_ok=True)
         config_file = os.path.join(self.WORKSPACE, ModelFile.CONFIGURATION)

@@ -1,5 +1,6 @@
 import argparse
 import os
+import subprocess
 from datetime import datetime
 from typing import Any
 
@@ -57,6 +58,19 @@ class Builder:
         with open('./Dockerfile', 'w') as f:
             f.write(content)
 
+    def run_cmd(self, *args: str) -> int:
+        """Run a shell command safely via subprocess (no shell=True).
+
+        Args:
+            *args: Command and its arguments as separate strings, e.g.
+                   ``self.run_cmd('docker', 'build', '-t', tag, '.')``.
+
+        Returns:
+            The process return code (0 on success).
+        """
+        result = subprocess.run(list(args), check=False)
+        return result.returncode
+
     def build(self) -> int:
         pass
 
@@ -79,8 +93,8 @@ class Builder:
                 raise RuntimeError(f'Docker push error with errno: {ret}')
 
             if self.args.ci_image != 0:
-                ret = os.system(
-                    f'docker tag {self.image()} {docker_registry}:ci_image')
+                ret = self.run_cmd('docker', 'tag', self.image(),
+                                   f'{docker_registry}:ci_image')
                 if ret != 0:
                     raise RuntimeError(
                         f'Docker tag ci_image error with errno: {ret}')
@@ -110,8 +124,9 @@ class OldCPUImageBuilder(Builder):
     def generate_dockerfile(self) -> str:
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
-        old_cpu_image = ('modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-                         'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
+        old_cpu_image = (
+            'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
+            'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
         content = content.replace('{base_image}', old_cpu_image)
         return content
 
@@ -122,23 +137,22 @@ class OldCPUImageBuilder(Builder):
         )
 
     def build(self):
-        return os.system(
-            f'DOCKER_BUILDKIT=0 docker build -t {self.image()} -f Dockerfile .'
-        )
+        return self.run_cmd('docker', 'build',
+                            '--build-arg', 'DOCKER_BUILDKIT=0', '-t',
+                            self.image(), '-f', 'Dockerfile', '.')
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
+        ret = self.run_cmd('docker', 'push', self.image())
         if ret != 0:
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
             f'torch{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
         )
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
         if ret != 0:
             return ret
-        return os.system(f'docker push {image_tag2}')
-
+        return self.run_cmd('docker', 'push', image_tag2)
 
 
 class OldGPUImageBuilder(Builder):
@@ -163,8 +177,9 @@ class OldGPUImageBuilder(Builder):
         return args
 
     def generate_dockerfile(self) -> str:
-        old_gpu_image = ('modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-                         'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.33.0-test')
+        old_gpu_image = (
+            'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
+            'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.33.0-test')
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
         content = content.replace('{base_image}', old_gpu_image)
@@ -176,22 +191,22 @@ class OldGPUImageBuilder(Builder):
             f'torch{self.args.torch_version}-base')
 
     def build(self):
-        return os.system(
-            f'DOCKER_BUILDKIT=0 docker build -t {self.image()} -f Dockerfile .'
-        )
+        return self.run_cmd('docker', 'build',
+                            '--build-arg', 'DOCKER_BUILDKIT=0', '-t',
+                            self.image(), '-f', 'Dockerfile', '.')
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
+        ret = self.run_cmd('docker', 'push', self.image())
         if ret != 0:
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-tf{self.args.tf_version}-'
             f'{self.args.modelscope_version}-{formatted_time}-test')
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
         if ret != 0:
             return ret
-        return os.system(f'docker push {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
 
 
 class BaseCPUImageBuilder(Builder):
@@ -213,12 +228,12 @@ class BaseCPUImageBuilder(Builder):
             f'torch{self.args.torch_version}-base')
 
     def build(self):
-        return os.system(
-            f'DOCKER_BUILDKIT=0 docker build -t {self.image()} -f Dockerfile .'
-        )
+        return self.run_cmd('docker', 'build',
+                            '--build-arg', 'DOCKER_BUILDKIT=0', '-t',
+                            self.image(), '-f', 'Dockerfile', '.')
 
     def push(self):
-        return os.system(f'docker push {self.image()}')
+        return self.run_cmd('docker', 'push', self.image())
 
 
 class BaseGPUImageBuilder(Builder):
@@ -240,12 +255,12 @@ class BaseGPUImageBuilder(Builder):
             f'{self.args.python_tag}-torch{self.args.torch_version}-test')
 
     def build(self) -> int:
-        return os.system(
-            f'DOCKER_BUILDKIT=0 docker build -t {self.image()} -f Dockerfile .'
-        )
+        return self.run_cmd('docker', 'build',
+                            '--build-arg', 'DOCKER_BUILDKIT=0', '-t',
+                            self.image(), '-f', 'Dockerfile', '.')
 
     def push(self):
-        return os.system(f'docker push {self.image()}')
+        return self.run_cmd('docker', 'push', self.image())
 
 
 class StableCPUImageBuilder(Builder):
@@ -290,20 +305,21 @@ class StableCPUImageBuilder(Builder):
         )
 
     def build(self) -> int:
-        return os.system(f'docker build -t {self.image()} -f Dockerfile .')
+        return self.run_cmd('docker', 'build', '-t', self.image(), '-f',
+                            'Dockerfile', '.')
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
+        ret = self.run_cmd('docker', 'push', self.image())
         if ret != 0:
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-{self.args.python_tag}-'
             f'torch{self.args.torch_version}-{self.args.modelscope_version}-{formatted_time}-test'
         )
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
         if ret != 0:
             return ret
-        return os.system(f'docker push {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
 
 
 class StableGPUImageBuilder(Builder):
@@ -347,20 +363,21 @@ class StableGPUImageBuilder(Builder):
         )
 
     def build(self) -> int:
-        return os.system(f'docker build -t {self.image()} -f Dockerfile .')
+        return self.run_cmd('docker', 'build', '-t', self.image(), '-f',
+                            'Dockerfile', '.')
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
+        ret = self.run_cmd('docker', 'push', self.image())
         if ret != 0:
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-'
             f'{self.args.modelscope_version}-{formatted_time}-test')
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
         if ret != 0:
             return ret
-        return os.system(f'docker push {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
 
 
 class LatestGPUImageBuilder(StableGPUImageBuilder):
@@ -412,17 +429,17 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         )
 
     def push(self):
-        ret = os.system(f'docker push {self.image()}')
+        ret = self.run_cmd('docker', 'push', self.image())
         if ret != 0:
             return ret
         image_tag2 = (
             f'{docker_registry}:ubuntu{self.args.ubuntu_version}-cuda{self.args.cuda_version}-'
             f'{self.args.python_tag}-torch{self.args.torch_version}-'
             f'{self.args.modelscope_version}-latest-{formatted_time}-test')
-        ret = os.system(f'docker tag {self.image()} {image_tag2}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
         if ret != 0:
             return ret
-        return os.system(f'docker push {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
 
 
 class AscendImageBuilder(StableGPUImageBuilder):
@@ -490,7 +507,6 @@ elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
-
 
 for builder in builder_cls:
     builder(args, args.dry_run)()

@@ -428,6 +428,10 @@ def _snapshot_download(
 
 
 def fetch_repo_files(_api, repo_id, revision, endpoint):
+    _owner, _dataset_name = repo_id.split('/')
+    _hub_id, _ = _api.get_dataset_id_and_type(
+        dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+
     page_number = 1
     page_size = 150
     repo_files = []
@@ -441,7 +445,8 @@ def fetch_repo_files(_api, repo_id, revision, endpoint):
                 recursive=True,
                 page_number=page_number,
                 page_size=page_size,
-                endpoint=endpoint)
+                endpoint=endpoint,
+                dataset_hub_id=_hub_id)
         except Exception as e:
             logger.error(f'Error fetching dataset files: {e}')
             break

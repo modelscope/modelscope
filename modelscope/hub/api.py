@@ -1403,6 +1403,8 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
+    _dataset_id_type_cache: dict = {}
+
     def get_dataset_id_and_type(self,
                                 dataset_name: str,
                                 namespace: str,
@@ -1411,6 +1413,10 @@ class HubApi:
         """ Get the dataset id and type. """
         if not endpoint:
             endpoint = self.endpoint
+        cache_key = (namespace, dataset_name, endpoint)
+        cached = HubApi._dataset_id_type_cache.get(cache_key)
+        if cached is not None:
+            return cached
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url, cookies=cookies)
@@ -1418,6 +1424,7 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
+        HubApi._dataset_id_type_cache[cache_key] = (dataset_id, dataset_type)
         return dataset_id, dataset_type
 
     def list_repo_tree(self,
@@ -1526,7 +1533,8 @@ class HubApi:
                           page_number: int = 1,
                           page_size: int = 100,
                           endpoint: Optional[str] = None,
-                          token: Optional[str] = None):
+                          token: Optional[str] = None,
+                          dataset_hub_id: Optional[str] = None):
         """
         Get the dataset files.
 
@@ -1539,19 +1547,23 @@ class HubApi:
             page_size (int): The number of items per page. Defaults to 100.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
             token (Optional[str]): The access token.
+            dataset_hub_id (Optional[str]): Pre-fetched dataset hub id. When provided,
+                skips the internal ``get_dataset_id_and_type`` lookup. Useful in pagination
+                loops to avoid redundant API calls per page.
 
         Returns:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
 
-        if is_relative_path(repo_id) and repo_id.count('/') == 1:
-            _owner, _dataset_name = repo_id.split('/')
-        else:
-            raise ValueError(f'Invalid repo_id: {repo_id} !')
+        if dataset_hub_id is None:
+            if is_relative_path(repo_id) and repo_id.count('/') == 1:
+                _owner, _dataset_name = repo_id.split('/')
+            else:
+                raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
+            dataset_hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1569,7 +1581,10 @@ class HubApi:
         resp = r.json()
         # datahub_raise_on_error(datahub_url, resp, r)
 
-        return resp['Data']['Files']
+        data = resp.get('Data')
+        if data is None:
+            return []
+        return data.get('Files') or []
 
     def get_dataset(
         self,
@@ -2907,6 +2922,9 @@ class HubApi:
             file_paths = [f['Path'] for f in files]
         elif repo_type == REPO_TYPE_DATASET:
             file_paths = []
+            _owner, _dataset_name = repo_id.split('/')
+            _hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
             page_number = 1
             page_size = 100
             while True:
@@ -2919,6 +2937,7 @@ class HubApi:
                         page_size=page_size,
                         endpoint=endpoint,
                         token=token,
+                        dataset_hub_id=_hub_id,
                     )
                 except Exception as e:
                     logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')

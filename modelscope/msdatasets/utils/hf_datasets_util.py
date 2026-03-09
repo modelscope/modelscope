@@ -90,10 +90,11 @@ from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
-from huggingface_hub import (DatasetCard, DatasetCardData)
+from huggingface_hub import (DatasetCard, DatasetCardData, hf_hub_url)
 from huggingface_hub.errors import OfflineModeIsEnabled
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
+from huggingface_hub.hf_file_system import HfFileSystem
 from packaging import version
 
 from modelscope import HubApi
@@ -211,14 +212,12 @@ def generate_from_dict_ms(obj: Any):
 
 def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) -> str:
     url_or_filename = str(url_or_filename)
-    # for temp val
-    revision = None
     if url_or_filename.startswith('hf://'):
-        revision, url_or_filename = url_or_filename.split('@', 1)[-1].split('/', 1)
-    if is_relative_path(url_or_filename):
-        # append the relative path to the base_path
-        # url_or_filename = url_or_path_join(self._base_path, url_or_filename)
-        revision = revision or DEFAULT_DATASET_REVISION
+        # hf:// URLs are handled natively by cached_path via HfApi.hf_hub_download,
+        # which uses config.HF_ENDPOINT (already set to ModelScope endpoint).
+        pass
+    elif is_relative_path(url_or_filename):
+        revision = DEFAULT_DATASET_REVISION
         # Note: make sure the FilePath is the last param
         params: dict = {'Source': 'SDK', 'Revision': revision, 'FilePath': url_or_filename}
         params: str = urlencode(params)
@@ -323,6 +322,34 @@ def _dataset_info(
 _repo_tree_cache: Dict[tuple, List[Union[RepoFile, RepoFolder]]] = {}
 
 
+def _derive_from_recursive_cache(
+    repo_id: str,
+    revision: str,
+    path_in_repo: str,
+    recursive: bool,
+) -> Optional[List[Union[RepoFile, RepoFolder]]]:
+    """Try to derive results from a cached recursive root listing."""
+    root_key = (repo_id, revision, '/', True)
+    root_cached = _repo_tree_cache.get(root_key)
+    if root_cached is None:
+        return None
+
+    prefix = path_in_repo.strip('/') if path_in_repo and path_in_repo != '/' else ''
+    results = []
+    for item in root_cached:
+        item_path = item.path
+        if prefix:
+            if not item_path.startswith(prefix + '/') and item_path != prefix:
+                continue
+            rel_path = item_path[len(prefix) + 1:] if item_path.startswith(prefix + '/') else ''
+        else:
+            rel_path = item_path
+        if not recursive and '/' in rel_path:
+            continue
+        results.append(item)
+    return results
+
+
 def _list_repo_tree(
     self,
     repo_id: str,
@@ -336,33 +363,52 @@ def _list_repo_tree(
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
 
     revision = revision or DEFAULT_DATASET_REVISION
-    cache_key = (repo_id, revision, path_in_repo or '/', recursive)
+    normalized_path = path_in_repo or '/'
+    cache_key = (repo_id, revision, normalized_path, recursive)
 
     cached = _repo_tree_cache.get(cache_key)
     if cached is not None:
         yield from cached
         return
 
+    derived = _derive_from_recursive_cache(repo_id, revision, normalized_path, recursive)
+    if derived is not None:
+        _repo_tree_cache[cache_key] = derived
+        yield from derived
+        return
+
     _api = HubApi(timeout=3 * 60, max_retries=3)
     endpoint = _api.get_endpoint_for_read(
         repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
 
+    _owner, _dataset_name = repo_id.split('/')
+    dataset_hub_id, _ = _api.get_dataset_id_and_type(
+        dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+
     results: List[Union[RepoFile, RepoFolder]] = []
     page_number = 1
-    page_size = 100
-    while True:
+    # Larger page_size reduces the number of HTTP round-trips for big datasets.
+    # Termination uses `not dataset_files` (empty page) so it is safe even if
+    # the server silently caps the actual page size to a smaller value.
+    page_size = 500
+    max_pages = 10000
+    while page_number <= max_pages:
         try:
             dataset_files = _api.get_dataset_files(
                 repo_id=repo_id,
                 revision=revision,
-                root_path=path_in_repo or '/',
+                root_path=normalized_path,
                 recursive=recursive,
                 page_number=page_number,
                 page_size=page_size,
                 endpoint=endpoint,
+                dataset_hub_id=dataset_hub_id,
             )
         except Exception as e:
             logger.error(f'Get dataset: {repo_id} file list failed, message: {e}')
+            break
+
+        if not dataset_files:
             break
 
         for file_info_d in dataset_files:
@@ -393,6 +439,19 @@ def _get_paths_info(
     repo_type: Optional[str] = None,
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
+
+    revision = revision or DEFAULT_DATASET_REVISION
+    if isinstance(paths, str):
+        paths = [paths]
+    paths_set = set(paths)
+
+    # Search within any cached tree data (recursive root is the most comprehensive)
+    root_key = (repo_id, revision, '/', True)
+    root_cached = _repo_tree_cache.get(root_key)
+    if root_cached is not None:
+        matched = [item for item in root_cached if item.path in paths_set]
+        if matched:
+            return matched
 
     repo_info_iter = self.list_repo_tree(
         repo_id=repo_id,
@@ -1525,8 +1584,55 @@ class DatasetsWrapperHF:
                 f'any data file in the same directory.')
 
 
+_hf_fs_open_original = None
+
+
+def _hf_fs_open(self, path, mode='rb', **kwargs):
+    """Wrapper for HfFileSystem._open that fixes size=0 from ModelScope API.
+
+    The ModelScope tree API may report Size=0 for files. When HfFileSystem
+    caches this, AbstractBufferedFile treats the file as empty (0 bytes).
+    This wrapper detects size=0 for files opened in read mode and resolves
+    the actual size via a HEAD request before creating the file object.
+    """
+    if mode == 'rb' and 'size' not in kwargs:
+        try:
+            resolved = self.resolve_path(path)
+            resolved_name = resolved.unresolve()
+            parent = self._parent(resolved_name)
+            cached_size = None
+            if parent in self.dircache:
+                for entry in self.dircache[parent]:
+                    if entry['name'] == resolved_name and entry.get('type') == 'file':
+                        cached_size = entry.get('size', -1)
+                        break
+            if cached_size == 0:
+                url = hf_hub_url(
+                    repo_id=resolved.repo_id,
+                    revision=resolved.revision,
+                    filename=resolved.path_in_repo,
+                    repo_type=resolved.repo_type,
+                    endpoint=self.endpoint,
+                )
+                headers = self._api._build_hf_headers()
+                resp = requests.head(url, headers=headers, allow_redirects=True, timeout=30)
+                if resp.status_code == 200:
+                    cl = resp.headers.get('Content-Length')
+                    if cl:
+                        actual_size = int(cl)
+                        kwargs['size'] = actual_size
+                        for entry in self.dircache.get(parent, []):
+                            if entry['name'] == resolved_name:
+                                entry['size'] = actual_size
+                                break
+        except Exception:
+            pass
+    return _hf_fs_open_original(self, path, mode=mode, **kwargs)
+
+
 @contextlib.contextmanager
 def load_dataset_with_ctx(*args, **kwargs):
+    global _hf_fs_open_original
 
     # Keep the original functions
     hf_endpoint_origin = config.HF_ENDPOINT
@@ -1545,6 +1651,7 @@ def load_dataset_with_ctx(*args, **kwargs):
     get_module_with_script_origin = (
         HubDatasetModuleFactoryWithScript.get_module if _HAS_SCRIPT_LOADING else None)
     generate_from_dict_origin = features.generate_from_dict
+    hf_fs_open_origin = HfFileSystem._open
 
     # Monkey patching with modelscope functions
     config.HF_ENDPOINT = get_endpoint()
@@ -1562,6 +1669,8 @@ def load_dataset_with_ctx(*args, **kwargs):
     if _HAS_SCRIPT_LOADING:
         HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
     features.generate_from_dict = generate_from_dict_ms
+    _hf_fs_open_original = hf_fs_open_origin
+    HfFileSystem._open = _hf_fs_open
 
     streaming = kwargs.get('streaming', False)
 
@@ -1569,8 +1678,11 @@ def load_dataset_with_ctx(*args, **kwargs):
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
         yield dataset_res
     finally:
-        # Always clear the repo file tree cache to free memory
         _repo_tree_cache.clear()
+        HubApi._dataset_id_type_cache.clear()
+
+        HfFileSystem._open = hf_fs_open_origin
+        _hf_fs_open_original = None
 
         if not streaming:
             config.HF_ENDPOINT = hf_endpoint_origin

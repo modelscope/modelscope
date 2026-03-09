@@ -283,9 +283,9 @@ class MsDataset:
             return load_dataset(
                 dataset_name,
                 name=subset_name,
-                split=split,
                 data_dir=data_dir,
                 data_files=data_files,
+                split=split,
                 cache_dir=cache_dir,
                 features=features,
                 download_mode=download_mode.value,

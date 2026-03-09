@@ -2162,13 +2162,13 @@ class HubApi:
             commit_message=commit_message,
         )
 
-        # POST with retry mechanism
+        # POST with retry mechanism (uses self.session for connection reuse and adapter retries)
         last_exception = None
         for attempt in range(max_retries):
             try:
                 if attempt > 0:
                     logger.info(f'Attempt {attempt + 1} to create commit for {repo_id}...')
-                response = requests.post(
+                response = self.session.post(
                     url,
                     headers=self.builder_headers(self.headers),
                     data=json.dumps(payload),
@@ -2679,7 +2679,7 @@ class HubApi:
         }
 
         cookies = self.get_cookies(access_token=token, cookies_required=True)
-        response = requests.post(
+        response = self.session.post(
             url,
             headers=self.builder_headers(self.headers),
             data=json.dumps(payload),

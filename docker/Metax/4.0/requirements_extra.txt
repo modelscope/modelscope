@@ -1,0 +1,9 @@
+optimum==1.27.0
+pytorchvideo
+timm
+qwen_vl_utils==0.0.14
+mpi4py
+librosa
+ms-opencompass
+evalscope
+diffusers==0.35.2

@@ -1,0 +1,77 @@
+ARG BUILD_BASE_IMAGE=mx-devops-acr-cn-shanghai.cr.volces.com/opensource/public-ai-release/maca/ms-swift:3.10.3-maca.ai3.3.0.16-torch2.6-py310-ubuntu22.04-amd64
+ARG PYTHON_VERSION=3.10
+
+FROM ${BUILD_BASE_IMAGE} AS base
+
+
+# may need passing a particular vllm version during build
+ARG VLLM_VERSION
+ARG VLLM_METAX_VERSION
+ARG MEGATRON_VERSION
+ARG SWIFT_VERSION
+
+# --- 设置环境变量（可被 --build-arg 覆盖）---
+ENV MACA_PATH=/opt/maca
+ENV CUCC_CMAKE_ENTRY=2
+ENV CUDA_PATH=/root/cu-bridge/CUDA_DIR
+ENV CUCC_PATH=${MACA_PATH}/tools/cu-bridge
+ENV PATH=/opt/conda/bin:/opt/conda/condabin:${CUDA_PATH}/bin:${CUCC_PATH}/tools:${CUCC_PATH}/bin:${MACA_PATH}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_PATH}/lib64:${MACA_PATH}/lib:${MACA_PATH}/mxgpu_llvm/lib:${LD_LIBRARY_PATH}
+RUN echo $PATH
+RUN apt install -y git
+# 检查并初始化 cu-bridge
+RUN if [ ! -d /root/cu-bridge ]; then \
+        ${MACA_PATH}/tools/cu-bridge/tools/pre_make; \
+    fi
+
+# ======================
+# Step 1: Clone and build original vLLM (for torch setup)
+# ======================
+WORKDIR /workspace
+RUN git clone --branch ${VLLM_VERSION} https://github.com/vllm-project/vllm.git \
+    && cd vllm \
+    && python3 use_existing_torch.py \
+    && pip install -r requirements/build.txt
+
+# ======================
+# Step 2: Build vLLM with empty device (to avoid CUDA dependency)
+# ======================
+RUN cd vllm \
+    && VLLM_TARGET_DEVICE=empty pip install -v . --no-build-isolation
+
+
+# ======================
+# Step 3: Build vLLM-metax
+# ======================
+RUN git clone --branch ${VLLM_METAX_VERSION} https://github.com/MetaX-MACA/vLLM-metax.git \
+    && cd vLLM-metax \
+    && python3 use_existing_metax.py \
+    && pip install -r requirements/build.txt \
+    && python3 -m build -w -n \
+    && pip install dist/*.whl
+
+# ======================
+# Step 4: Clone and patch Megatron-LM
+# ======================
+RUN git clone --branch ${MEGATRON_VERSION} https://github.com/NVIDIA/Megatron-LM.git \
+    && sed -i 's/nvcc/cucc/g' /workspace/Megatron-LM/megatron/legacy/fused_kernels/__init__.py
+
+# ======================
+# Step 5: Clone, patch and install ms-swift
+# ======================
+RUN rm -rf /workspace/ms-swift
+
+RUN git clone --branch ${SWIFT_VERSION} https://github.com/modelscope/ms-swift.git \
+    && sed -i '0,/^\(from \|import \)/{s//import vllm_metax.patch\n&/}' ms-swift/swift/__init__.py \
+    && cd ms-swift \
+    && pip install -r requirements.txt \
+    && pip install .
+
+
+# 默认命令
+CMD ["bash"]
+
+
+
+
+

@@ -1,0 +1,4 @@
+setuptools>=77.0.3,<80
+flash-linear-attention
+mcoplib
+

@@ -70,8 +70,3 @@ RUN git clone --branch ${SWIFT_VERSION} https://github.com/modelscope/ms-swift.g
 
 # 默认命令
 CMD ["bash"]
-
-
-
-
-

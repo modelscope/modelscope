@@ -484,7 +484,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.10.14')
+parser.add_argument('--python_version', type=str, default='3.11.11')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)

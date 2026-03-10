@@ -126,7 +126,7 @@ class OldCPUImageBuilder(Builder):
             content = f.read()
         old_cpu_image = (
             'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-            'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
+            'ubuntu22.04-py311-torch2.3.1-1.34.0-test')
         content = content.replace('{base_image}', old_cpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
@@ -181,7 +181,7 @@ class OldGPUImageBuilder(Builder):
     def generate_dockerfile(self) -> str:
         old_gpu_image = (
             'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-            'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.33.0-test')
+            'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.34.0-test')
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
         content = content.replace('{base_image}', old_gpu_image)
@@ -335,6 +335,9 @@ class StableGPUImageBuilder(Builder):
             extra_content = f.read()
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
+            extra_content += """
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+"""
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '

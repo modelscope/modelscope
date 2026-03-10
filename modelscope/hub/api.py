@@ -67,9 +67,10 @@ from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
 from modelscope.hub.utils.aigc import AigcModel
-from modelscope.hub.utils.utils import (
-    add_content_to_file, get_domain, get_endpoint, get_readable_folder_size,
-    get_release_datetime, is_env_true, model_id_to_group_owner_name)
+from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
+                                        get_endpoint, get_readable_folder_size,
+                                        get_release_datetime, is_env_true,
+                                        model_id_to_group_owner_name)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,

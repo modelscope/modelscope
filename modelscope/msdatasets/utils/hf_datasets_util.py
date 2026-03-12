@@ -192,11 +192,14 @@ def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) ->
         if '@' in hf_path:
             at_idx = hf_path.index('@')
             after_at = hf_path[at_idx + 1:]
-            slash_idx = after_at.index('/')
-            revision = after_at[:slash_idx]
-            file_path = after_at[slash_idx + 1:]
+            slash_idx = after_at.find('/')
+            if slash_idx == -1:
+                revision = after_at
+                file_path = ''
+            else:
+                revision = after_at[:slash_idx]
+                file_path = after_at[slash_idx + 1:]
         else:
-            # Fallback when no @revision is present
             parts = hf_path.split('/', 2)
             revision = DEFAULT_DATASET_REVISION
             file_path = parts[2] if len(parts) > 2 else ''

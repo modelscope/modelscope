@@ -27,6 +27,8 @@ class Builder:
             args.torch_version = '2.9.1'
             args.torchaudio_version = '2.9.1'
             args.torchvision_version = '0.24.1'
+        if not args.optimum_version:
+            args.optimum_version = '2.0.0'
         if not args.tf_version:
             args.tf_version = '2.16.1'
         if not args.cuda_version:
@@ -338,7 +340,7 @@ class StableGPUImageBuilder(Builder):
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
-            f'{self.args.flashattn_version}')
+            f'{self.args.flashattn_version} {self.args.optimum_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
@@ -403,7 +405,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
-            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
+            f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}  {self.args.optimum_version}'
             f'{self.args.flashattn_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
@@ -493,6 +495,7 @@ parser.add_argument('--vllm_version', type=str, default=None)
 parser.add_argument('--lmdeploy_version', type=str, default=None)
 parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)
+parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')

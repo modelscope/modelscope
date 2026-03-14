@@ -356,7 +356,7 @@ class SwiftImageBuilder(LLMImageBuilder):
             args.torchaudio_version = '2.10.0'
             args.torchvision_version = '0.25.0'
         if not args.vllm_version:
-            args.vllm_version = '0.16.1'
+            args.vllm_version = '0.17.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.10.1'
         if not args.flashattn_version:

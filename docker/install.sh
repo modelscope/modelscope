@@ -13,8 +13,6 @@ pip uninstall -y torch torchvision torchaudio
 
 pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 
-pip install --no-cache-dir -U autoawq lmdeploy==$lmdeploy_version
-
 pip install --no-cache-dir torch==$torch_version torchvision==$torchvision_version torchaudio==$torchaudio_version
 
 pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes deepspeed torchmetrics decord optimum openai-whisper
@@ -24,7 +22,7 @@ pip install --no-cache-dir tiktoken transformers_stream_generator bitsandbytes d
 # cd /tmp && git clone https://github.com/Dao-AILab/flash-attention.git && cd flash-attention && python setup.py install && cd / && rm -fr /tmp/flash-attention && pip cache purge;
 MAX_JOBS=16 pip install --no-cache-dir flash_attn==$flashattn_version --no-build-isolation
 
-pip install --no-cache-dir triton auto-gptq==$autogptq_version -U && pip cache purge
+pip install --no-cache-dir triton -U && pip cache purge
 
 pip install --no-cache-dir optimum==$optimum_version
 

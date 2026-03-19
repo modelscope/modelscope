@@ -36,7 +36,7 @@ class Builder:
         if not args.vllm_version:
             args.vllm_version = '0.15.1'
         if not args.lmdeploy_version:
-            args.lmdeploy_version = '0.10.1'
+            args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
             args.autogptq_version = '0.7.1'
         if not args.flashattn_version:
@@ -128,7 +128,7 @@ class OldCPUImageBuilder(Builder):
             content = f.read()
         old_cpu_image = (
             'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-            'ubuntu22.04-py311-torch2.3.1-1.33.0-test')
+            'ubuntu22.04-py311-torch2.3.1-1.34.0-test')
         content = content.replace('{base_image}', old_cpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
@@ -183,7 +183,7 @@ class OldGPUImageBuilder(Builder):
     def generate_dockerfile(self) -> str:
         old_gpu_image = (
             'modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:'
-            'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.33.0-test')
+            'ubuntu22.04-cuda12.1.0-py311-torch2.3.1-tf2.16.1-1.34.0-test')
         with open('docker/Dockerfile.ubuntu.old', 'r') as f:
             content = f.read()
         content = content.replace('{base_image}', old_gpu_image)
@@ -337,6 +337,9 @@ class StableGPUImageBuilder(Builder):
             extra_content = f.read()
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
+            extra_content += """
+RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+"""
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version} '
@@ -484,7 +487,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.10.14')
+parser.add_argument('--python_version', type=str, default='3.11.11')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)

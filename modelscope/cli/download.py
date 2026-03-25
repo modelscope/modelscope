@@ -205,7 +205,8 @@ class DownloadCMD(CLICommand):
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             api = HubApi(token=self.args.token)
-            local_dir = self.args.local_dir or os.getcwd()
+            local_dir = self.args.local_dir or os.path.join(
+                os.getcwd(), '.agents', 'skills')
             data = api.get_collection(self.args.collection, repo_type='skill')
             elements = data.get('CollectionElements',
                                 {}).get('CollectionElementVoList', [])

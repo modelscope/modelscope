@@ -3094,7 +3094,8 @@ class HubApi:
         Args:
             element_path (str): The skill path (owner/organization).
             element_name (str): The skill name.
-            local_dir (Optional[str]): Target directory for extraction. Defaults to current directory.
+            local_dir (Optional[str]): Target directory for extraction.
+                Defaults to current directory.
 
         Returns:
             str: Path to the extracted skill directory.
@@ -3109,11 +3110,15 @@ class HubApi:
             local_dir = os.getcwd()
         os.makedirs(local_dir, exist_ok=True)
 
+        # Build skill directory name: <element_path>__<element_name>__master
+        skill_dir_name = f'{element_path}__{element_name}__master'
+        skill_dir = os.path.join(local_dir, skill_dir_name)
+
         r = self.session.get(url, stream=True, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         raise_for_http_status(r)
 
-        # Save to temp file then extract
+        # Save to temp zip file then extract
         zip_path = os.path.join(local_dir, f'{element_name}.zip')
         try:
             with open(zip_path, 'wb') as f:
@@ -3121,13 +3126,13 @@ class HubApi:
                     if chunk:
                         f.write(chunk)
 
+            os.makedirs(skill_dir, exist_ok=True)
             with zipfile.ZipFile(zip_path, 'r') as zf:
-                zf.extractall(local_dir)
+                zf.extractall(skill_dir)
         finally:
             if os.path.exists(zip_path):
                 os.remove(zip_path)
 
-        skill_dir = os.path.join(local_dir, element_name)
         logger.info(f'Skill {element_path}/{element_name} downloaded to {skill_dir}')
         return skill_dir
 

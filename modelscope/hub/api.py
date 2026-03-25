@@ -13,6 +13,7 @@ import shutil
 import tempfile
 import uuid
 import warnings
+import zipfile
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -3042,6 +3043,89 @@ class HubApi:
         raise_on_error(resp)
 
         return resp
+
+    # ============= Collection API =============
+    def get_collection_elements(self, collection_id: str, repo_type: str = 'skill',
+                                page_number: int = 1, page_size: int = 50) -> dict:
+        """Get elements from a collection.
+
+        Args:
+            collection_id (str): The collection ID.
+            repo_type (str): Element type filter, only 'skill' is supported currently.
+            page_number (int): Page number for pagination.
+            page_size (int): Page size for pagination.
+
+        Returns:
+            dict: Collection elements data.
+
+        Raises:
+            ValueError: If repo_type is not 'skill'.
+            RequestError: If the API request fails.
+        """
+        if repo_type != 'skill':
+            logger.warning(f'repo_type={repo_type} is not supported yet, only "skill" is currently supported.')
+            raise ValueError(f'repo_type={repo_type} is not supported, only "skill" is currently supported.')
+
+        cookies = self.get_cookies()
+        path = f'{self.endpoint}/api/v1/collections/element'
+        params = {
+            'CollectionId': collection_id,
+            'ElementType': repo_type,
+            'PageNumber': page_number,
+            'PageSize': page_size,
+        }
+
+        r = self.session.get(path, params=params, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+
+        return d[API_RESPONSE_FIELD_DATA]
+
+    def download_skill(self, element_path: str, element_name: str,
+                       local_dir: Optional[str] = None) -> str:
+        """Download a single skill archive and extract it.
+
+        Args:
+            element_path (str): The skill path (owner/organization).
+            element_name (str): The skill name.
+            local_dir (Optional[str]): Target directory for extraction. Defaults to current directory.
+
+        Returns:
+            str: Path to the extracted skill directory.
+
+        Raises:
+            RequestError: If the download request fails.
+        """
+        cookies = self.get_cookies()
+        url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
+
+        if local_dir is None:
+            local_dir = os.getcwd()
+        os.makedirs(local_dir, exist_ok=True)
+
+        r = self.session.get(url, stream=True, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+
+        # Save to temp file then extract
+        zip_path = os.path.join(local_dir, f'{element_name}.zip')
+        try:
+            with open(zip_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                zf.extractall(local_dir)
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+        skill_dir = os.path.join(local_dir, element_name)
+        logger.info(f'Skill {element_path}/{element_name} downloaded to {skill_dir}')
+        return skill_dir
 
 
 class ModelScopeConfig:

@@ -1,5 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import logging
 import os
+import sys
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
@@ -11,6 +13,9 @@ from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
 from modelscope.hub.utils.utils import convert_patterns
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
+from modelscope.utils.logger import get_logger
+
+logger = get_logger(log_level=logging.WARNING)
 
 
 def subparser_func(args):
@@ -41,6 +46,11 @@ class DownloadCMD(CLICommand):
             type=str,
             help='The id of the dataset to be downloaded. For download, '
             'the id of either a model or dataset must be provided.')
+        group.add_argument(
+            '--collection',
+            type=str,
+            default=None,
+            help='The ID of the collection to download (skills only)')
         parser.add_argument(
             'repo_id',
             type=str,
@@ -122,8 +132,8 @@ class DownloadCMD(CLICommand):
                 else:
                     raise Exception('Not support repo-type: %s'
                                     % self.args.repo_type)
-        if not self.args.model and not self.args.dataset:
-            raise Exception('Model or dataset must be set.')
+        if not self.args.model and not self.args.dataset and not self.args.collection:
+            raise Exception('Model, dataset, or collection must be set.')
         cookies = None
         if self.args.token is not None:
             api = HubApi()
@@ -191,5 +201,80 @@ class DownloadCMD(CLICommand):
             print(
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )
+        elif self.args.collection:
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            api = HubApi(token=self.args.token)
+            local_dir = self.args.local_dir or os.getcwd()
+            data = api.get_collection_elements(
+                self.args.collection, repo_type='skill')
+            elements = data.get('Collections', {}).get('CollectionElementList',
+                                                       [])
+            total_count = data.get('Collections', {}).get('TotalCount', 0)
+            logger.info(
+                f'Collection {self.args.collection} has total {total_count} elements.'
+            )
+
+            if not elements:
+                print('No skill elements found in collection: %s'
+                      % self.args.collection)
+                return
+
+            # Validate elements have required fields
+            valid_elements = []
+            for elem in elements:
+                if not elem.get('ElementPath') or not elem.get('ElementName'):
+                    logger.warning('Skipping malformed collection element: %s',
+                                   elem)
+                    continue
+                valid_elements.append(elem)
+
+            if not valid_elements:
+                print('No valid skill elements found in collection: %s'
+                      % self.args.collection)
+                return
+
+            print('Found %d skill(s) in collection, downloading...'
+                  % len(valid_elements))
+
+            succeeded = []
+            failed = []
+
+            def _download_one_skill(element):
+                element_path = element['ElementPath']
+                element_name = element['ElementName']
+                try:
+                    skill_dir = api.download_skill(
+                        element_path=element_path,
+                        element_name=element_name,
+                        local_dir=local_dir)
+                    return (element_path, element_name, skill_dir, None)
+                except Exception as e:
+                    return (element_path, element_name, None, str(e))
+
+            with ThreadPoolExecutor(
+                    max_workers=self.args.max_workers) as executor:
+                futures = {
+                    executor.submit(_download_one_skill, elem): elem
+                    for elem in valid_elements
+                }
+                for future in as_completed(futures):
+                    path, name, skill_dir, error = future.result()
+                    if error:
+                        failed.append((path, name, error))
+                        print('Failed to download skill %s/%s: %s' %
+                              (path, name, error))
+                    else:
+                        succeeded.append((path, name, skill_dir))
+                        print('Downloaded skill %s/%s -> %s' %
+                              (path, name, skill_dir))
+
+            print('\nDownload complete: %d succeeded, %d failed' %
+                  (len(succeeded), len(failed)))
+            if failed:
+                print('Failed skills:')
+                for path, name, error in failed:
+                    print('  %s/%s: %s' % (path, name, error))
+                sys.exit(1)
         else:
             pass  # noop

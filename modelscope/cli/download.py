@@ -206,13 +206,12 @@ class DownloadCMD(CLICommand):
 
             api = HubApi(token=self.args.token)
             local_dir = self.args.local_dir or os.getcwd()
-            data = api.get_collection_elements(
-                self.args.collection, repo_type='skill')
-            elements = data.get('Collections', {}).get('CollectionElementList',
-                                                       [])
-            total_count = data.get('Collections', {}).get('TotalCount', 0)
+            data = api.get_collection(self.args.collection, repo_type='skill')
+            elements = data.get('CollectionElements',
+                                {}).get('CollectionElementVoList', [])
+
             logger.info(
-                f'Collection {self.args.collection} has total {total_count} elements.'
+                f'Collection {self.args.collection} has {len(elements)} elements.'
             )
 
             if not elements:

@@ -3045,42 +3045,46 @@ class HubApi:
         return resp
 
     # ============= Collection API =============
-    def get_collection_elements(self, collection_id: str, repo_type: str = 'skill',
-                                page_number: int = 1, page_size: int = 50) -> dict:
-        """Get elements from a collection.
+    def get_collection(self,
+                       collection_id: str,
+                       repo_type: str = 'skill',
+                       page_number: int = 1,
+                       page_size: int = 50) -> dict:
+        """Get collection details and its elements.
 
         Args:
-            collection_id (str): The collection ID.
+            collection_id (str): The collection ID (Fid).
             repo_type (str): Element type filter, only 'skill' is supported currently.
             page_number (int): Page number for pagination.
             page_size (int): Page size for pagination.
 
         Returns:
-            dict: Collection elements data.
+            dict: Collection details including elements.
 
         Raises:
             ValueError: If repo_type is not 'skill'.
             RequestError: If the API request fails.
         """
         if repo_type != 'skill':
-            logger.warning(f'repo_type={repo_type} is not supported yet, only "skill" is currently supported.')
-            raise ValueError(f'repo_type={repo_type} is not supported, only "skill" is currently supported.')
-
+            logger.warning(
+                f'repo_type={repo_type} is not supported yet, '
+                'only "skill" is currently supported.')
+            raise ValueError(
+                f'repo_type={repo_type} is not supported, '
+                'only "skill" is currently supported.')
         cookies = self.get_cookies()
-        path = f'{self.endpoint}/api/v1/collections/element'
+        path = f'{self.endpoint}/api/v1/collections'
         params = {
-            'CollectionId': collection_id,
+            'Fid': collection_id,
             'ElementType': repo_type,
             'PageNumber': page_number,
             'PageSize': page_size,
         }
-
         r = self.session.get(path, params=params, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         raise_for_http_status(r)
         d = r.json()
         raise_on_error(d)
-
         return d[API_RESPONSE_FIELD_DATA]
 
     def download_skill(self, element_path: str, element_name: str,

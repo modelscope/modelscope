@@ -206,7 +206,7 @@ class DownloadCMD(CLICommand):
 
             api = HubApi(token=self.args.token)
             local_dir = self.args.local_dir or os.path.join(
-                os.getcwd(), '.agents', 'skills')
+                os.path.expanduser('~'), '.agents', 'skills')
             data = api.get_collection(self.args.collection, repo_type='skill')
             elements = data.get('CollectionElements',
                                 {}).get('CollectionElementVoList', [])

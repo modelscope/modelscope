@@ -13,6 +13,7 @@ from modelscope.cli.pipeline import PipelineCMD
 from modelscope.cli.plugins import PluginsCMD
 from modelscope.cli.scancache import ScanCacheCMD
 from modelscope.cli.server import ServerCMD
+from modelscope.cli.skills import SkillsCMD
 from modelscope.cli.upload import UploadCMD
 from modelscope.hub.constants import MODELSCOPE_ASCII
 from modelscope.utils.logger import get_logger
@@ -36,6 +37,7 @@ def run_cmd():
 
     CreateCMD.define_args(subparsers)
     DownloadCMD.define_args(subparsers)
+    SkillsCMD.define_args(subparsers)
     UploadCMD.define_args(subparsers)
     ClearCacheCMD.define_args(subparsers)
     PluginsCMD.define_args(subparsers)

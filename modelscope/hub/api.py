@@ -3087,13 +3087,12 @@ class HubApi:
         raise_on_error(d)
         return d[API_RESPONSE_FIELD_DATA]
 
-    def download_skill(self, element_path: str, element_name: str,
+    def download_skill(self, skill_id: str,
                        local_dir: Optional[str] = None) -> str:
         """Download a single skill archive and extract it.
 
         Args:
-            element_path (str): The skill path (owner/organization).
-            element_name (str): The skill name.
+            skill_id (str): The skill identifier in format '<path>/<name>'.
             local_dir (Optional[str]): Target directory for extraction.
                 Defaults to current directory.
 
@@ -3101,8 +3100,15 @@ class HubApi:
             str: Path to the extracted skill directory.
 
         Raises:
+            ValueError: If skill_id format is invalid.
             RequestError: If the download request fails.
         """
+        parts = skill_id.split('/', 1)
+        if len(parts) != 2 or not parts[0] or not parts[1]:
+            raise ValueError(
+                'Invalid skill_id format: %s, expected <path>/<name>' % skill_id)
+        element_path, element_name = parts
+
         cookies = self.get_cookies()
         url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
 

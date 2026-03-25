@@ -243,11 +243,10 @@ class DownloadCMD(CLICommand):
             def _download_one_skill(element):
                 element_path = element['ElementPath']
                 element_name = element['ElementName']
+                skill_id = '%s/%s' % (element_path, element_name)
                 try:
                     skill_dir = api.download_skill(
-                        element_path=element_path,
-                        element_name=element_name,
-                        local_dir=local_dir)
+                        skill_id=skill_id, local_dir=local_dir)
                     return (element_path, element_name, skill_dir, None)
                 except Exception as e:
                     return (element_path, element_name, None, str(e))

@@ -3103,11 +3103,7 @@ class HubApi:
             ValueError: If skill_id format is invalid.
             RequestError: If the download request fails.
         """
-        parts = skill_id.split('/', 1)
-        if len(parts) != 2 or not parts[0] or not parts[1]:
-            raise ValueError(
-                'Invalid skill_id format: %s, expected <path>/<name>' % skill_id)
-        element_path, element_name = parts
+        element_path, element_name = RepoUtils.validate_repo_id(skill_id)
 
         cookies = self.get_cookies()
         url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
@@ -3132,6 +3128,9 @@ class HubApi:
                     if chunk:
                         f.write(chunk)
 
+            # Clean existing directory to avoid corrupted state
+            if os.path.exists(skill_dir):
+                shutil.rmtree(skill_dir)
             os.makedirs(skill_dir, exist_ok=True)
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 zf.extractall(skill_dir)

@@ -1,12 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import logging
-import os
-import sys
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.cli.utils import concurrent_download
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import DEFAULT_MAX_WORKERS
+from modelscope.hub.constants import DEFAULT_MAX_WORKERS, DEFAULT_SKILLS_DIR
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
@@ -202,11 +201,8 @@ class DownloadCMD(CLICommand):
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )
         elif self.args.collection:
-            from concurrent.futures import ThreadPoolExecutor, as_completed
-
             api = HubApi(token=self.args.token)
-            local_dir = self.args.local_dir or os.path.join(
-                os.path.expanduser('~'), '.agents', 'skills')
+            local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
             data = api.get_collection(self.args.collection, repo_type='skill')
             elements = data.get('CollectionElements',
                                 {}).get('CollectionElementVoList', [])
@@ -216,8 +212,8 @@ class DownloadCMD(CLICommand):
             )
 
             if not elements:
-                print('No skill elements found in collection: %s'
-                      % self.args.collection)
+                print(f'No skill elements found in collection: '
+                      f'{self.args.collection}')
                 return
 
             # Validate elements have required fields
@@ -230,50 +226,28 @@ class DownloadCMD(CLICommand):
                 valid_elements.append(elem)
 
             if not valid_elements:
-                print('No valid skill elements found in collection: %s'
-                      % self.args.collection)
+                print(f'No valid skill elements found in collection: '
+                      f'{self.args.collection}')
                 return
 
-            print('Found %d skill(s) in collection, downloading...'
-                  % len(valid_elements))
-
-            succeeded = []
-            failed = []
+            print(f'Found {len(valid_elements)} skill(s) in collection, '
+                  f'downloading...')
 
             def _download_one_skill(element):
                 element_path = element['ElementPath']
                 element_name = element['ElementName']
-                skill_id = '%s/%s' % (element_path, element_name)
+                skill_id = f'{element_path}/{element_name}'
                 try:
                     skill_dir = api.download_skill(
                         skill_id=skill_id, local_dir=local_dir)
-                    return (element_path, element_name, skill_dir, None)
+                    return (skill_id, skill_dir, None)
                 except Exception as e:
-                    return (element_path, element_name, None, str(e))
+                    return (skill_id, None, str(e))
 
-            with ThreadPoolExecutor(
-                    max_workers=self.args.max_workers) as executor:
-                futures = {
-                    executor.submit(_download_one_skill, elem): elem
-                    for elem in valid_elements
-                }
-                for future in as_completed(futures):
-                    path, name, skill_dir, error = future.result()
-                    if error:
-                        failed.append((path, name, error))
-                        print('Failed to download skill %s/%s: %s' %
-                              (path, name, error))
-                    else:
-                        succeeded.append((path, name, skill_dir))
-                        print('Downloaded skill %s/%s -> %s' %
-                              (path, name, skill_dir))
-
-            print('\nDownload complete: %d succeeded, %d failed' %
-                  (len(succeeded), len(failed)))
-            if failed:
-                print('Failed skills:')
-                for path, name, error in failed:
-                    print('  %s/%s: %s' % (path, name, error))
-                sys.exit(1)
+            concurrent_download(
+                _download_one_skill,
+                valid_elements,
+                max_workers=self.args.max_workers,
+                item_name='skill')
         else:
             pass  # noop

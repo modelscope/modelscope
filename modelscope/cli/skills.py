@@ -1,17 +1,15 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import logging
-import os
 import sys
 from argparse import ArgumentParser
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from modelscope.cli.base import CLICommand
+from modelscope.cli.utils import concurrent_download
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import DEFAULT_SKILLS_DIR
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
-
-DEFAULT_SKILLS_DIR = os.path.join(os.path.expanduser('~'), '.agents', 'skills')
 
 
 def subparser_func(args):
@@ -74,22 +72,19 @@ class SkillsCMD(CLICommand):
         local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
 
         skill_ids = self.args.skill_ids
-        print('Downloading %d skill(s)...' % len(skill_ids))
+        print(f'Downloading {len(skill_ids)} skill(s)...')
 
         if len(skill_ids) == 1:
             # Single skill download
             try:
                 skill_dir = api.download_skill(
                     skill_id=skill_ids[0], local_dir=local_dir)
-                print('Skill downloaded to: %s' % skill_dir)
+                print(f'Skill downloaded to: {skill_dir}')
             except Exception as e:
-                print('Failed to download skill %s: %s' % (skill_ids[0], e))
+                print(f'Failed to download skill {skill_ids[0]}: {e}')
                 sys.exit(1)
         else:
             # Multiple skills - concurrent download
-            succeeded = []
-            failed = []
-
             def _download_one(skill_id):
                 try:
                     skill_dir = api.download_skill(
@@ -98,27 +93,8 @@ class SkillsCMD(CLICommand):
                 except Exception as e:
                     return (skill_id, None, str(e))
 
-            with ThreadPoolExecutor(
-                    max_workers=self.args.max_workers) as executor:
-                futures = {
-                    executor.submit(_download_one, sid): sid
-                    for sid in skill_ids
-                }
-                for future in as_completed(futures):
-                    skill_id, skill_dir, error = future.result()
-                    if error:
-                        failed.append((skill_id, error))
-                        print('Failed to download skill %s: %s' %
-                              (skill_id, error))
-                    else:
-                        succeeded.append((skill_id, skill_dir))
-                        print('Downloaded skill %s -> %s' %
-                              (skill_id, skill_dir))
-
-            print('\nDownload complete: %d succeeded, %d failed' %
-                  (len(succeeded), len(failed)))
-            if failed:
-                print('Failed skills:')
-                for skill_id, error in failed:
-                    print('  %s: %s' % (skill_id, error))
-                sys.exit(1)
+            concurrent_download(
+                _download_one,
+                skill_ids,
+                max_workers=self.args.max_workers,
+                item_name='skill')

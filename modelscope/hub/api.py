@@ -3066,9 +3066,6 @@ class HubApi:
             RequestError: If the API request fails.
         """
         if repo_type != 'skill':
-            logger.warning(
-                f'repo_type={repo_type} is not supported yet, '
-                'only "skill" is currently supported.')
             raise ValueError(
                 f'repo_type={repo_type} is not supported, '
                 'only "skill" is currently supported.')

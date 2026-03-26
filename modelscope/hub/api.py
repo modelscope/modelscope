@@ -3134,6 +3134,17 @@ class HubApi:
             os.makedirs(skill_dir, exist_ok=True)
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 zf.extractall(skill_dir)
+
+            # Flatten if zip contains a single top-level directory
+            entries = os.listdir(skill_dir)
+            if len(entries) == 1:
+                nested_dir = os.path.join(skill_dir, entries[0])
+                if os.path.isdir(nested_dir):
+                    for item in os.listdir(nested_dir):
+                        shutil.move(
+                            os.path.join(nested_dir, item),
+                            os.path.join(skill_dir, item))
+                    os.rmdir(nested_dir)
         finally:
             if os.path.exists(zip_path):
                 os.remove(zip_path)

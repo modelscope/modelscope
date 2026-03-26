@@ -25,6 +25,7 @@ Homepage = "https://github.com/modelscope/modelscope"
 
 [project.scripts]
 modelscope = "modelscope.cli.cli:run_cmd"
+ms = "modelscope.cli.cli:run_cmd"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

@@ -1,16 +1,20 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
+import logging
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.cli.utils import concurrent_download
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import DEFAULT_MAX_WORKERS
+from modelscope.hub.constants import DEFAULT_MAX_WORKERS, DEFAULT_SKILLS_DIR
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
 from modelscope.hub.utils.utils import convert_patterns
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
+from modelscope.utils.logger import get_logger
+
+logger = get_logger(log_level=logging.WARNING)
 
 
 def subparser_func(args):
@@ -41,6 +45,11 @@ class DownloadCMD(CLICommand):
             type=str,
             help='The id of the dataset to be downloaded. For download, '
             'the id of either a model or dataset must be provided.')
+        group.add_argument(
+            '--collection',
+            type=str,
+            default=None,
+            help='The ID of the collection to download (skills only)')
         parser.add_argument(
             'repo_id',
             type=str,
@@ -122,8 +131,8 @@ class DownloadCMD(CLICommand):
                 else:
                     raise Exception('Not support repo-type: %s'
                                     % self.args.repo_type)
-        if not self.args.model and not self.args.dataset:
-            raise Exception('Model or dataset must be set.')
+        if not self.args.model and not self.args.dataset and not self.args.collection:
+            raise Exception('Model, dataset, or collection must be set.')
         cookies = None
         if self.args.token is not None:
             api = HubApi()
@@ -191,5 +200,54 @@ class DownloadCMD(CLICommand):
             print(
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )
+        elif self.args.collection:
+            api = HubApi(token=self.args.token)
+            local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
+            data = api.get_collection(self.args.collection, repo_type='skill')
+            elements = data.get('CollectionElements',
+                                {}).get('CollectionElementVoList', [])
+
+            logger.info(
+                f'Collection {self.args.collection} has {len(elements)} elements.'
+            )
+
+            if not elements:
+                print(f'No skill elements found in collection: '
+                      f'{self.args.collection}')
+                return
+
+            # Validate elements have required fields
+            valid_elements = []
+            for elem in elements:
+                if not elem.get('ElementPath') or not elem.get('ElementName'):
+                    logger.warning('Skipping malformed collection element: %s',
+                                   elem)
+                    continue
+                valid_elements.append(elem)
+
+            if not valid_elements:
+                print(f'No valid skill elements found in collection: '
+                      f'{self.args.collection}')
+                return
+
+            print(f'Found {len(valid_elements)} skill(s) in collection, '
+                  f'downloading...')
+
+            def _download_one_skill(element):
+                element_path = element['ElementPath']
+                element_name = element['ElementName']
+                skill_id = f'{element_path}/{element_name}'
+                try:
+                    skill_dir = api.download_skill(
+                        skill_id=skill_id, local_dir=local_dir)
+                    return (skill_id, skill_dir, None)
+                except Exception as e:
+                    return (skill_id, None, str(e))
+
+            concurrent_download(
+                _download_one_skill,
+                valid_elements,
+                max_workers=self.args.max_workers,
+                item_name='skill')
         else:
             pass  # noop

@@ -41,6 +41,7 @@ TEMPORARY_FOLDER_NAME = '._____temp'
 DEFAULT_MAX_WORKERS = int(
     os.getenv('DEFAULT_MAX_WORKERS', min(8,
                                          os.cpu_count() + 4)))
+DEFAULT_SKILLS_DIR = os.path.join(os.path.expanduser('~'), '.agents', 'skills')
 
 # Upload check env
 UPLOAD_MAX_FILE_SIZE = int(

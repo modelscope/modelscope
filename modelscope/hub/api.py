@@ -13,6 +13,7 @@ import shutil
 import tempfile
 import uuid
 import warnings
+import zipfile
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -3042,6 +3043,110 @@ class HubApi:
         raise_on_error(resp)
 
         return resp
+
+    # ============= Collection API =============
+    def get_collection(self,
+                       collection_id: str,
+                       repo_type: str = 'skill',
+                       page_number: int = 1,
+                       page_size: int = 50) -> dict:
+        """Get collection details and its elements.
+
+        Args:
+            collection_id (str): The collection ID (Fid).
+            repo_type (str): Element type filter, only 'skill' is supported currently.
+            page_number (int): Page number for pagination.
+            page_size (int): Page size for pagination.
+
+        Returns:
+            dict: Collection details including elements.
+
+        Raises:
+            ValueError: If repo_type is not 'skill'.
+            RequestError: If the API request fails.
+        """
+        if repo_type != 'skill':
+            raise ValueError(
+                f'repo_type={repo_type} is not supported, '
+                'only "skill" is currently supported.')
+        cookies = self.get_cookies()
+        path = f'{self.endpoint}/api/v1/collections'
+        params = {
+            'Fid': collection_id,
+            'ElementType': repo_type,
+            'PageNumber': page_number,
+            'PageSize': page_size,
+        }
+        r = self.session.get(path, params=params, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+        return d[API_RESPONSE_FIELD_DATA]
+
+    def download_skill(self, skill_id: str,
+                       local_dir: Optional[str] = None) -> str:
+        """Download a single skill archive and extract it.
+
+        Args:
+            skill_id (str): The skill identifier in format '<path>/<name>'.
+            local_dir (Optional[str]): Target directory for extraction.
+                Defaults to current directory.
+
+        Returns:
+            str: Path to the extracted skill directory.
+
+        Raises:
+            ValueError: If skill_id format is invalid.
+            RequestError: If the download request fails.
+        """
+        element_path, element_name = RepoUtils.validate_repo_id(skill_id)
+
+        cookies = self.get_cookies()
+        url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
+
+        if local_dir is None:
+            local_dir = os.getcwd()
+        os.makedirs(local_dir, exist_ok=True)
+
+        # Build skill directory name: use element_name directly, overwrite if exists, to avoid corrupted state
+        skill_dir = os.path.join(local_dir, element_name)
+
+        r = self.session.get(url, stream=True, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+
+        # Save to temp zip file then extract
+        zip_path = os.path.join(local_dir, f'{element_name}.zip')
+        try:
+            with open(zip_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
+            # Clean existing directory to avoid corrupted state
+            if os.path.exists(skill_dir):
+                shutil.rmtree(skill_dir)
+            os.makedirs(skill_dir, exist_ok=True)
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                zf.extractall(skill_dir)
+
+            # Flatten if zip contains a single top-level directory
+            entries = os.listdir(skill_dir)
+            if len(entries) == 1:
+                nested_dir = os.path.join(skill_dir, entries[0])
+                if os.path.isdir(nested_dir):
+                    for item in os.listdir(nested_dir):
+                        shutil.move(
+                            os.path.join(nested_dir, item),
+                            os.path.join(skill_dir, item))
+                    os.rmdir(nested_dir)
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+        logger.info(f'Skill {element_path}/{element_name} downloaded to {skill_dir}')
+        return skill_dir
 
 
 class ModelScopeConfig:

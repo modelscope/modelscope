@@ -219,6 +219,28 @@ class RepoUtils:
             return pattern + '*'
         return pattern
 
+    @staticmethod
+    def validate_repo_id(repo_id: str) -> tuple:
+        """Validate and parse a repo_id in '<owner>/<name>' format.
+
+        Args:
+            repo_id (str): The repo identifier, e.g. 'MiniMax-AI/minimax-pdf'.
+
+        Returns:
+            tuple: A tuple of (owner, name).
+
+        Raises:
+            ValueError: If repo_id format is invalid.
+        """
+        if not repo_id or '/' not in repo_id:
+            raise ValueError(
+                f'Invalid repo_id: {repo_id}, expected format: <owner>/<name>')
+        parts = repo_id.split('/', 1)
+        if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
+            raise ValueError(
+                f'Invalid repo_id: {repo_id}, expected format: <owner>/<name>')
+        return parts[0].strip(), parts[1].strip()
+
 
 @dataclass
 class CommitInfo:

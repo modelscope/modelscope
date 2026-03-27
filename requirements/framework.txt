@@ -1,6 +1,6 @@
 addict
 attrs
-datasets>=4.0.0,<=4.6.1
+datasets>=4.0.0,<=4.8.4
 einops
 Pillow
 python-dateutil>=2.1

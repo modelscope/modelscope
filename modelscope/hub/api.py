@@ -3109,9 +3109,8 @@ class HubApi:
             local_dir = os.getcwd()
         os.makedirs(local_dir, exist_ok=True)
 
-        # Build skill directory name: <element_path>__<element_name>__master
-        skill_dir_name = f'{element_path}__{element_name}__master'
-        skill_dir = os.path.join(local_dir, skill_dir_name)
+        # Build skill directory name: use element_name directly, overwrite if exists, to avoid corrupted state
+        skill_dir = os.path.join(local_dir, element_name)
 
         r = self.session.get(url, stream=True, cookies=cookies,
                              headers=self.builder_headers(self.headers))

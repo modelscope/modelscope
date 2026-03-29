@@ -76,9 +76,9 @@ RUN bash /tmp/install.sh {version_args} && \
 
 RUN if [ "$IMAGE_TYPE" = "swift" ]; then \
     pip install math_verify "gradio<5.33" "deepspeed<0.19" ray weave -U && \
-    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<5.4" "trl<0.29" "peft<0.19" huggingface-hub -U && \
+    pip install liger_kernel wandb swanlab nvitop pre-commit "transformers<5.3" "trl<0.29" "peft<0.19" huggingface-hub -U && \
     pip install --no-build-isolation transformer_engine[pytorch] --no-cache-dir; \
-    pip install -U git+https://github.com/fla-org/flash-linear-attention; \
+    pip install -U flash-linear-attention --no-build-isolation; \
     pip install -U git+https://github.com/Dao-AILab/causal-conv1d --no-build-isolation; \
     pip install git+https://github.com/Dao-AILab/fast-hadamard-transform --no-build-isolation; \
     pip install git+https://github.com/NVIDIA-NeMo/Emerging-Optimizers.git@v0.1.0; \

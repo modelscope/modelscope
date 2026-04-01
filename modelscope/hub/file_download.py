@@ -446,6 +446,7 @@ def download_part_with_retry(params):
                     headers=get_headers,
                     cookies=cookies,
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                r.raise_for_status()
                 for chunk in r.iter_content(
                         chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
                     if chunk:  # filter out keep-alive new chunks
@@ -738,15 +739,21 @@ def download_file(
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
     if FILE_HASH in file_meta:
         expected_hash = file_meta[FILE_HASH]
-        # if a real-time hash has been computed
         if file_digest is not None:
-            # if real-time hash mismatched, try to compute it again
             if file_digest != expected_hash:
-                print(
-                    'Mismatched real-time digest found, falling back to lump-sum hash computation'
-                )
-                file_integrity_validation(temp_file, expected_hash)
+                logger.warning(
+                    'Mismatched real-time digest for %s, falling back to full hash check',
+                    file_meta['Path'])
+                if not file_integrity_validation(temp_file, expected_hash):
+                    raise FileDownloadError(
+                        'File %s hash validation failed after download, '
+                        'the file may be corrupted. Please retry.'
+                        % file_meta['Path'])
         else:
-            file_integrity_validation(temp_file, expected_hash)
+            if not file_integrity_validation(temp_file, expected_hash):
+                raise FileDownloadError(
+                    'File %s hash validation failed after download, '
+                    'the file may be corrupted. Please retry.'
+                    % file_meta['Path'])
     # put file into to cache
     return cache.put_file(file_meta, temp_file)

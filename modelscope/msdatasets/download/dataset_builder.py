@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import csv as csv_module
 import os
+import sys
 from typing import Dict, Union
 
 import datasets
@@ -136,6 +138,10 @@ class CsvDatasetBuilder(csv.Csv):
         return splits
 
     def _generate_tables(self, files, base_dir):
+        # Raise csv field size limit to avoid errors with large cells
+        if self.csv_engine == 'python':
+            csv_module.field_size_limit(sys.maxsize)
+
         schema = pa.schema(self.config.features.type
                            ) if self.config.features is not None else None
         dtype = {

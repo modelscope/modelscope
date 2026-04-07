@@ -58,6 +58,10 @@ class CsvDatasetBuilder(csv.Csv):
         if DELIMITER_NAME in self.input_config_kwargs:
             self.csv_delimiter = self.input_config_kwargs[DELIMITER_NAME]
 
+        # Extract engine and chunksize before passing kwargs to parent class
+        self.csv_engine = self.input_config_kwargs.pop('engine', None)
+        self.csv_chunksize = self.input_config_kwargs.pop('chunksize', None)
+
         split = self.split or list(dataset_context_config.data_meta_config.
                                    target_dataset_structure.keys())
         sub_dir_hash = get_subdir_hash_from_split(
@@ -139,8 +143,13 @@ class CsvDatasetBuilder(csv.Csv):
             for name, dtype in zip(schema.names, schema.types)
         } if schema else None
         for file_idx, file in enumerate(files):
-            csv_file_reader = pd.read_csv(
-                file, iterator=True, dtype=dtype, delimiter=self.csv_delimiter)
+            pd_kwargs = dict(
+                iterator=True, dtype=dtype, delimiter=self.csv_delimiter)
+            if self.csv_engine is not None:
+                pd_kwargs['engine'] = self.csv_engine
+            if self.csv_chunksize is not None:
+                pd_kwargs['chunksize'] = self.csv_chunksize
+            csv_file_reader = pd.read_csv(file, **pd_kwargs)
             transform_fields = []
             for field_name in csv_file_reader._engine.names:
                 if field_name.endswith(':FILE'):
@@ -215,8 +224,10 @@ class CsvDatasetBuilder(csv.Csv):
 
     def _convert_csv_to_dataset(self, split_name, csv_file_path):
 
-        df = pd.read_csv(
-            csv_file_path, iterator=False, delimiter=self.csv_delimiter)
+        pd_kwargs = dict(iterator=False, delimiter=self.csv_delimiter)
+        if self.csv_engine is not None:
+            pd_kwargs['engine'] = self.csv_engine
+        df = pd.read_csv(csv_file_path, **pd_kwargs)
 
         transform_fields = []
         for field_name in df.columns.tolist():

@@ -2200,7 +2200,7 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
             tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
@@ -2716,7 +2716,7 @@ class HubApi:
             data: Union[str, Path, bytes, BinaryIO],
             disable_tqdm: Optional[bool] = False,
             tqdm_desc: Optional[str] = '[Uploading]',
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
             token: Optional[str] = None,
     ) -> dict:
 

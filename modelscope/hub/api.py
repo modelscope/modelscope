@@ -2391,8 +2391,9 @@ class HubApi:
     ) -> CommitInfo:
         """Commit with application-level exponential backoff retry.
 
-        Retries on transient server errors (5xx, ConnectionError).
-        Raises immediately on client errors (4xx).
+        Retries on transient errors (5xx, ConnectionError) and specific
+        retryable 4xx errors (e.g. git ref conflicts).
+        Raises immediately on non-retryable client errors (4xx).
         """
         last_error = None
         for attempt in range(max_retries):

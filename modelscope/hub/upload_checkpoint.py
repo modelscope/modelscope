@@ -64,8 +64,6 @@ class UploadCheckpoint:
         # Fingerprint mismatch — invalidate this batch only
         self._committed_batches.discard(batch_idx)
         self._batch_fingerprints.pop(batch_idx, None)
-        logger.warning(
-            f'Batch {batch_idx} fingerprint changed, will re-upload.')
         self._save()
         return False
 

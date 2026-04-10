@@ -2332,6 +2332,7 @@ class HubApi:
     ) -> dict:
         """Hash and upload a single file, returning result dict."""
         hash_info_d = None
+        file_stat = None
         if hash_cache is not None:
             try:
                 file_stat = os.stat(file_path)
@@ -2341,13 +2342,14 @@ class HubApi:
                     hash_info_d = cached
                     hash_info_d['file_path_or_obj'] = file_path
             except OSError:
-                pass
+                file_stat = None
 
         if hash_info_d is None:
             hash_info_d = compute_file_hash(file_path_or_obj=file_path)
             if hash_cache is not None:
                 try:
-                    file_stat = os.stat(file_path)
+                    if file_stat is None:
+                        file_stat = os.stat(file_path)
                     hash_cache.put(
                         file_path_in_repo, file_stat.st_mtime,
                         file_stat.st_size, hash_info_d)
@@ -2406,6 +2408,7 @@ class HubApi:
                 )
             except (ConnectionError, requests.exceptions.ConnectionError) as e:
                 last_error = e
+            # Defensive: create_commit raises ValueError, kept for future-proofing
             except (HTTPError, requests.exceptions.HTTPError) as e:
                 if hasattr(e, 'response') and e.response is not None:
                     if 400 <= e.response.status_code < 500:
@@ -2413,7 +2416,7 @@ class HubApi:
                 last_error = e
             except ValueError as e:
                 error_str = str(e)
-                if 'HTTP 4' in error_str:
+                if re.search(r'HTTP 4\d{2}', error_str):
                     raise
                 last_error = e
             except Exception as e:
@@ -2463,7 +2466,7 @@ class HubApi:
             max_workers: int = DEFAULT_MAX_WORKERS,
             use_cache: bool = True,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-    ) -> Union[CommitInfo, List[CommitInfo]]:
+    ) -> Optional[Union[CommitInfo, List[CommitInfo]]]:
         """
         Upload a folder to the ModelScope Hub.
 
@@ -2483,8 +2486,9 @@ class HubApi:
             revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
 
         Returns:
-            Union[CommitInfo, List[CommitInfo]]:
+            Optional[Union[CommitInfo, List[CommitInfo]]]:
                 The commit info or list of commit infos if multiple batches are committed.
+                Returns None if all batches were already committed.
 
         Examples:
             >>> from modelscope.hub.api import HubApi
@@ -2624,10 +2628,6 @@ class HubApi:
                 logger.error(f'Upload failed: {path_in_repo} - {e}')
                 tracker.record_failure(file_idx, file_info, e)
 
-        executor = ThreadPoolExecutor(max_workers=max_workers)
-        for file_idx, file_info in files_to_upload:
-            executor.submit(_upload_worker, file_idx, file_info)
-
         # Pipeline: consume batches in order, commit as each becomes ready
         commit_infos: List[CommitInfo] = []
         failed_batches: List[int] = []
@@ -2635,47 +2635,55 @@ class HubApi:
         num_batches = tracker.num_batches
 
         try:
-            for batch_idx in tqdm(range(num_batches), desc='[Committing batches]', total=num_batches):
-                if checkpoint is not None and checkpoint.is_batch_committed(batch_idx):
-                    logger.info(f'Batch {batch_idx + 1}/{num_batches} already committed, skipping.')
-                    continue
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                for file_idx, file_info in files_to_upload:
+                    executor.submit(_upload_worker, file_idx, file_info)
 
-                results, failures = tracker.wait_for_batch(batch_idx)
+                for batch_idx in tqdm(range(num_batches), desc='[Committing batches]', total=num_batches):
+                    if checkpoint is not None and checkpoint.is_batch_committed(batch_idx):
+                        logger.info(f'Batch {batch_idx + 1}/{num_batches} already committed, skipping.')
+                        continue
 
-                if failures:
-                    total_failed_files.extend(failures)
-                    for item, err in failures:
-                        logger.warning(f'  Failed: {item[0]} - {err}')
+                    results, failures = tracker.wait_for_batch(batch_idx)
 
-                operations = self._build_batch_operations(results, repo_type)
-                if not operations:
-                    logger.warning(f'Batch {batch_idx + 1}/{num_batches}: all files failed, skipping commit.')
-                    failed_batches.append(batch_idx)
-                    continue
+                    if failures:
+                        total_failed_files.extend(failures)
+                        for item, err in failures:
+                            logger.warning(f'  Failed: {item[0]} - {err}')
 
-                batch_commit_message = f'{commit_message} (batch {batch_idx + 1}/{num_batches})'
-                try:
-                    commit_info = self._commit_with_retry(
-                        repo_id=repo_id,
-                        operations=operations,
-                        commit_message=batch_commit_message,
-                        commit_description=commit_description,
-                        token=token,
-                        repo_type=repo_type,
-                        revision=revision,
-                    )
-                    commit_infos.append(commit_info)
-                    if checkpoint is not None:
-                        checkpoint.mark_batch_committed(batch_idx)
-                except Exception as e:
-                    logger.error(f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
-                    failed_batches.append(batch_idx)
+                    operations = self._build_batch_operations(results, repo_type)
+                    if not operations:
+                        logger.warning(f'Batch {batch_idx + 1}/{num_batches}: all files failed, skipping commit.')
+                        failed_batches.append(batch_idx)
+                        continue
 
-                # Incremental hash cache save after each batch
-                if hash_cache is not None:
-                    hash_cache.save()
+                    batch_commit_message = f'{commit_message} (batch {batch_idx + 1}/{num_batches})'
+                    try:
+                        commit_info = self._commit_with_retry(
+                            repo_id=repo_id,
+                            operations=operations,
+                            commit_message=batch_commit_message,
+                            commit_description=commit_description,
+                            token=token,
+                            repo_type=repo_type,
+                            revision=revision,
+                        )
+                        commit_infos.append(commit_info)
+                    except Exception as e:
+                        logger.error(f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
+                        failed_batches.append(batch_idx)
+                    else:
+                        if checkpoint is not None:
+                            try:
+                                checkpoint.mark_batch_committed(batch_idx)
+                            except Exception as e:
+                                logger.warning(f'Checkpoint save failed for batch {batch_idx + 1}, '
+                                               f'but commit succeeded: {e}')
+
+                    # Incremental hash cache save after each batch
+                    if hash_cache is not None:
+                        hash_cache.save()
         finally:
-            executor.shutdown(wait=True)
             if hash_cache is not None:
                 hash_cache.save()
 
@@ -2691,7 +2699,7 @@ class HubApi:
         if not commit_infos:
             if skipped_count == len(sorted_files):
                 logger.info('All batches were already committed.')
-                return []
+                return None
             raise RuntimeError(
                 f'No batches were committed successfully. '
                 f'{len(failed_batches)} batch(es) failed, {len(total_failed_files)} file(s) failed.')

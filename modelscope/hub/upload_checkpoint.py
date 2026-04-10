@@ -59,6 +59,11 @@ class UploadCheckpoint:
         if batch_idx not in self._committed_batches:
             return False
         stored_fp = self._batch_fingerprints.get(batch_idx)
+        if stored_fp is None:
+            # Legacy checkpoint or first run — trust committed status
+            self._batch_fingerprints[batch_idx] = fingerprint
+            self._save()
+            return True
         if stored_fp == fingerprint:
             return True
         # Fingerprint mismatch — invalidate this batch only

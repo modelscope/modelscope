@@ -2417,7 +2417,12 @@ class HubApi:
             except ValueError as e:
                 error_str = str(e)
                 if re.search(r'HTTP 4\d{2}', error_str):
-                    raise
+                    retryable_patterns = [
+                        'Could not update refs',
+                        'try again',
+                    ]
+                    if not any(p in error_str for p in retryable_patterns):
+                        raise
                 last_error = e
             except Exception as e:
                 last_error = e

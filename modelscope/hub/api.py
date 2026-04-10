@@ -82,7 +82,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadChannel, DownloadMode,
                                        Frameworks, ModelFile, Tasks,
                                        VirgoDatasetConfig)
-from modelscope.utils.file_utils import (get_file_hash, get_file_size,
+from modelscope.utils.file_utils import (compute_file_hash, get_file_size,
                                          is_relative_path)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
@@ -2267,7 +2267,7 @@ class HubApi:
         if buffer_size_mb <= 0:
             raise ValueError('Buffer size: `buffer_size_mb` must be greater than 0')
 
-        hash_info_d: dict = get_file_hash(
+        hash_info_d: dict = compute_file_hash(
             file_path_or_obj=path_or_fileobj,
             buffer_size_mb=buffer_size_mb,
         )
@@ -2425,7 +2425,7 @@ class HubApi:
         def _upload_items(item_pair, **kwargs):
             file_path_in_repo, file_path = item_pair
 
-            hash_info_d: dict = get_file_hash(
+            hash_info_d: dict = compute_file_hash(
                 file_path_or_obj=file_path,
             )
             file_size: int = hash_info_d['file_size']

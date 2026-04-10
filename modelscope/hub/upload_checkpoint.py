@@ -4,7 +4,7 @@ import hashlib
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import json
 
@@ -33,51 +33,56 @@ class UploadCheckpoint:
         self._path = Path(checkpoint_path)
         self._repo_id = repo_id
         self._committed_batches: Set[int] = set()
-        self._fingerprint: Optional[str] = None
+        self._batch_fingerprints: Dict[int, str] = {}
         self._load()
 
     @staticmethod
     def compute_fingerprint(items: List[Tuple[str, str]], ) -> str:
         """Compute a fingerprint from (file_path_in_repo, metadata) pairs.
 
-        Used to detect when the file set changes between runs,
+        Used to detect when a batch's file set changes between runs,
         invalidating stale batch indices. The metadata element is
         typically 'mtime|size' but can be any string that changes
-        when the file content changes.
+        when the file content changes. Called per-batch to produce
+        individual batch fingerprints.
         """
         parts = [f'{path}|{fhash}' for path, fhash in sorted(items)]
         return hashlib.sha256('||'.join(parts).encode()).hexdigest()
 
-    def validate_fingerprint(self, fingerprint: str):
-        """Validate operations fingerprint. Reset if mismatch.
+    def validate_batch_fingerprint(self, batch_idx: int,
+                                   fingerprint: str) -> bool:
+        """Check if a committed batch's fingerprint still matches.
 
-        If the fingerprint differs from the stored one, the file set has
-        changed and old batch indices are invalid.
+        Returns True if batch is committed and fingerprint matches (safe to skip).
+        If committed but fingerprint mismatches, clears the batch's committed status.
         """
-        if (self._fingerprint is not None
-                and self._fingerprint != fingerprint):
-            logger.warning(
-                'Operations fingerprint changed since last checkpoint, '
-                'resetting committed batches.')
-            self._committed_batches.clear()
-        self._fingerprint = fingerprint
+        if batch_idx not in self._committed_batches:
+            return False
+        stored_fp = self._batch_fingerprints.get(batch_idx)
+        if stored_fp == fingerprint:
+            return True
+        # Fingerprint mismatch — invalidate this batch only
+        self._committed_batches.discard(batch_idx)
+        self._batch_fingerprints.pop(batch_idx, None)
+        logger.warning(
+            f'Batch {batch_idx} fingerprint changed, will re-upload.')
+        self._save()
+        return False
 
     def is_batch_committed(self, batch_index: int) -> bool:
         """Check if a batch has already been committed."""
         return batch_index in self._committed_batches
 
-    def mark_batch_committed(self, batch_index: int):
-        """Mark a batch as committed and persist immediately.
-
-        Saves to disk right away so progress survives crashes.
-        """
-        self._committed_batches.add(batch_index)
+    def mark_batch_committed(self, batch_idx: int, fingerprint: str):
+        """Mark a batch as committed with its fingerprint and persist."""
+        self._committed_batches.add(batch_idx)
+        self._batch_fingerprints[batch_idx] = fingerprint
         self._save()
 
     def clear(self):
         """Remove checkpoint file."""
         self._committed_batches.clear()
-        self._fingerprint = None
+        self._batch_fingerprints.clear()
         try:
             if self._path.exists():
                 self._path.unlink()
@@ -99,7 +104,10 @@ class UploadCheckpoint:
                     f'(cached: {data.get("repo_id")}, current: {self._repo_id}), '
                     f'ignoring stale checkpoint.')
                 return
-            self._fingerprint = data.get('fingerprint')
+            self._batch_fingerprints = {
+                int(k): v
+                for k, v in data.get('batch_fingerprints', {}).items()
+            }
             self._committed_batches = set(data.get('committed_batches', []))
             if self._committed_batches:
                 logger.info(
@@ -115,7 +123,9 @@ class UploadCheckpoint:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             data = {
                 'repo_id': self._repo_id,
-                'fingerprint': self._fingerprint,
+                'batch_fingerprints':
+                {str(k): v
+                 for k, v in self._batch_fingerprints.items()},
                 'committed_batches': sorted(self._committed_batches),
             }
             fd, tmp_path = tempfile.mkstemp(

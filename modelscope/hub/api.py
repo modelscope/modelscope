@@ -2584,14 +2584,25 @@ class HubApi:
         commit_batch_size = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(sorted_files)
         tracker = BatchTracker(len(sorted_files), commit_batch_size)
 
-        # Compute fingerprint from (path, size) pairs — available immediately, no hashing needed
+        # Compute per-batch fingerprints
+        batch_fingerprints = {}
         if checkpoint is not None:
-            fingerprint_items = []
-            for path_in_repo, file_path in sorted_files:
+            batch_fp_items: dict = {}
+            for file_idx, (path_in_repo, file_path) in enumerate(sorted_files):
+                batch_idx = tracker.batch_index(file_idx)
+                if batch_idx not in batch_fp_items:
+                    batch_fp_items[batch_idx] = []
                 st = os.stat(file_path)
-                fingerprint_items.append((path_in_repo, f'{st.st_mtime}|{st.st_size}'))
-            ops_fingerprint = UploadCheckpoint.compute_fingerprint(fingerprint_items)
-            checkpoint.validate_fingerprint(ops_fingerprint)
+                batch_fp_items[batch_idx].append(
+                    (path_in_repo, f'{st.st_mtime}|{st.st_size}'))
+            for batch_idx, items in batch_fp_items.items():
+                batch_fingerprints[batch_idx] = (
+                    UploadCheckpoint.compute_fingerprint(items))
+            # Validate each batch individually
+            for batch_idx in range(tracker.num_batches):
+                if batch_idx in batch_fingerprints:
+                    checkpoint.validate_batch_fingerprint(
+                        batch_idx, batch_fingerprints[batch_idx])
 
         # Determine which files to upload (skip files in already-committed batches)
         files_to_upload = []
@@ -2675,7 +2686,8 @@ class HubApi:
                     else:
                         if checkpoint is not None:
                             try:
-                                checkpoint.mark_batch_committed(batch_idx)
+                                checkpoint.mark_batch_committed(
+                                    batch_idx, batch_fingerprints.get(batch_idx, ''))
                             except Exception as e:
                                 logger.warning(f'Checkpoint save failed for batch {batch_idx + 1}, '
                                                f'but commit succeeded: {e}')

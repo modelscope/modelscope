@@ -38,10 +38,12 @@ class UploadCheckpoint:
 
     @staticmethod
     def compute_fingerprint(items: List[Tuple[str, str]], ) -> str:
-        """Compute a fingerprint from (file_path_in_repo, file_hash) pairs.
+        """Compute a fingerprint from (file_path_in_repo, metadata) pairs.
 
-        Used to detect when the operations set changes between runs,
-        invalidating stale batch indices.
+        Used to detect when the file set changes between runs,
+        invalidating stale batch indices. The metadata element is
+        typically 'mtime|size' but can be any string that changes
+        when the file content changes.
         """
         parts = [f'{path}|{fhash}' for path, fhash in sorted(items)]
         return hashlib.sha256('||'.join(parts).encode()).hexdigest()

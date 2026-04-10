@@ -67,6 +67,9 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
+from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE, UploadHashCache
+from modelscope.hub.upload_checkpoint import (UPLOAD_CHECKPOINT_FILE,
+                                              UploadCheckpoint)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -2328,6 +2331,7 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
+            use_cache: bool = True,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> Union[CommitInfo, List[CommitInfo]]:
         """
@@ -2397,6 +2401,15 @@ class HubApi:
         )
         commit_description = commit_description or 'Uploading files'
 
+        # Exclude internal cache/checkpoint files from upload
+        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, UPLOAD_CHECKPOINT_FILE]
+        if ignore_patterns is None:
+            ignore_patterns = _internal_ignore
+        elif isinstance(ignore_patterns, str):
+            ignore_patterns = [ignore_patterns] + _internal_ignore
+        else:
+            ignore_patterns = list(ignore_patterns) + _internal_ignore
+
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
         logger.info('Preparing files to upload ...')
         prepared_repo_objects = self._prepare_upload_folder(
@@ -2421,13 +2434,48 @@ class HubApi:
                          exist_ok=True,
                          create_default_config=False)
 
-        @thread_executor(max_workers=max_workers, disable_tqdm=False)
+        # Initialize hash cache and checkpoint for resume support
+        folder_path_resolved = Path(folder_path).resolve() \
+            if isinstance(folder_path, (str, Path)) else Path(folder_path[0]).resolve().parent
+        hash_cache = None
+        checkpoint = None
+        if use_cache:
+            cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
+            hash_cache = UploadHashCache(cache_path)
+            checkpoint_path = folder_path_resolved / UPLOAD_CHECKPOINT_FILE
+            checkpoint = UploadCheckpoint(checkpoint_path, repo_id=repo_id)
+
+            print(f'Initialized upload cache at {cache_path} and checkpoint at {checkpoint_path}.', flush=True)
+
+        @thread_executor(max_workers=max_workers, disable_tqdm=False, fault_tolerant=True)
         def _upload_items(item_pair, **kwargs):
             file_path_in_repo, file_path = item_pair
 
-            hash_info_d: dict = compute_file_hash(
-                file_path_or_obj=file_path,
-            )
+            # Check hash cache before computing
+            hash_info_d = None
+            if hash_cache is not None:
+                try:
+                    file_stat = os.stat(file_path)
+                    cached = hash_cache.get(
+                        file_path_in_repo, file_stat.st_mtime, file_stat.st_size)
+                    if cached is not None:
+                        hash_info_d = cached
+                        hash_info_d['file_path_or_obj'] = file_path
+                except OSError:
+                    pass
+
+            if hash_info_d is None:
+                hash_info_d = compute_file_hash(file_path_or_obj=file_path)
+                # Update cache with newly computed hash
+                if hash_cache is not None:
+                    try:
+                        file_stat = os.stat(file_path)
+                        hash_cache.put(
+                            file_path_in_repo, file_stat.st_mtime,
+                            file_stat.st_size, hash_info_d)
+                    except OSError:
+                        pass
+
             file_size: int = hash_info_d['file_size']
             file_hash: str = hash_info_d['file_hash']
 
@@ -2449,16 +2497,33 @@ class HubApi:
                 'file_hash_info': hash_info_d,
             }
 
-        uploaded_items_list = _upload_items(
-            prepared_repo_objects,
-            repo_id=repo_id,
-            token=token,
-            repo_type=repo_type,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            buffer_size_mb=1,
-            disable_tqdm=False,
-        )
+        try:
+            upload_result = _upload_items(
+                prepared_repo_objects,
+                repo_id=repo_id,
+                token=token,
+                repo_type=repo_type,
+                commit_message=commit_message,
+                commit_description=commit_description,
+                buffer_size_mb=1,
+                disable_tqdm=False,
+            )
+            uploaded_items_list, failed_items = upload_result
+
+            # Sort by path to ensure deterministic batch composition for checkpoint resume
+            uploaded_items_list = sorted(
+                uploaded_items_list, key=lambda d: d['file_path_in_repo'])
+        finally:
+            # Always save hash cache, even on interruption or error
+            if hash_cache is not None:
+                hash_cache.save()
+
+        if failed_items:
+            logger.warning(
+                f'{len(failed_items)} file(s) failed during upload, '
+                f'continuing with {len(uploaded_items_list)} successful file(s).')
+            for item, err in failed_items:
+                logger.warning(f'  Failed: {item[0]} - {err}')
 
         # Construct commit info and create commit
         operations = []
@@ -2482,6 +2547,16 @@ class HubApi:
         if len(operations) == 0:
             raise ValueError(f'No files to upload in the folder: {folder_path} !')
 
+        # Validate checkpoint fingerprint against current operations
+        if checkpoint is not None:
+            fingerprint_items = [
+                (d['file_path_in_repo'], d['file_hash_info']['file_hash'])
+                for d in uploaded_items_list
+            ]
+            ops_fingerprint = UploadCheckpoint.compute_fingerprint(
+                fingerprint_items)
+            checkpoint.validate_fingerprint(ops_fingerprint)
+
         # Commit the operations in batches
         commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
         num_batches = (len(operations) - 1) // commit_batch_size + 1
@@ -2489,6 +2564,10 @@ class HubApi:
               flush=True)
         commit_infos: List[CommitInfo] = []
         for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
+            if checkpoint is not None and checkpoint.is_batch_committed(i):
+                print(f'Batch {i + 1}/{num_batches} already committed, skipping.', flush=True)
+                continue
+
             batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
             batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
 
@@ -2503,6 +2582,11 @@ class HubApi:
             )
             commit_infos.append(commit_info)
 
+            if checkpoint is not None:
+                checkpoint.mark_batch_committed(i)
+
+        # Checkpoint persists for cross-session resume;
+        # fingerprint validation prevents stale batch indices
         return commit_infos[0] if len(commit_infos) == 1 else commit_infos
 
     def _upload_blob(

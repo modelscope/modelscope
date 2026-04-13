@@ -204,10 +204,21 @@ def get_file_size(file_path_or_obj: Union[str, Path, bytes, BinaryIO]) -> int:
 
 def get_file_hash(
     file_path_or_obj: Union[str, Path, bytes, BinaryIO],
-    buffer_size_mb: Optional[int] = 1,
+    buffer_size_mb: Optional[int] = 16,
     tqdm_desc: Optional[str] = '[Calculating]',
     disable_tqdm: Optional[bool] = True,
 ) -> dict:
+    """Compute SHA256 hash for a file path, bytes, or file-like object.
+
+    Args:
+        file_path_or_obj: File path, bytes, or file-like object.
+        buffer_size_mb: Read buffer size in MB. Default 16MB.
+        tqdm_desc: Progress bar description.
+        disable_tqdm: Whether to disable progress bar.
+
+    Returns:
+        dict with keys: file_path_or_obj, file_hash, file_size.
+    """
     from tqdm.auto import tqdm
 
     file_size = get_file_size(file_path_or_obj)
@@ -222,7 +233,6 @@ def get_file_hash(
 
     buffer_size = buffer_size_mb * 1024 * 1024
     file_hash = hashlib.sha256()
-    chunk_hash_list = []
 
     progress = tqdm(
         total=file_size,
@@ -237,27 +247,21 @@ def get_file_hash(
     if isinstance(file_path_or_obj, (str, Path)):
         with open(file_path_or_obj, 'rb') as f:
             while byte_chunk := f.read(buffer_size):
-                chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
                 file_hash.update(byte_chunk)
                 progress.update(len(byte_chunk))
         file_hash = file_hash.hexdigest()
-        final_chunk_size = buffer_size
 
     elif isinstance(file_path_or_obj, bytes):
         file_hash.update(file_path_or_obj)
         file_hash = file_hash.hexdigest()
-        chunk_hash_list.append(file_hash)
-        final_chunk_size = len(file_path_or_obj)
-        progress.update(final_chunk_size)
+        progress.update(len(file_path_or_obj))
 
     elif isinstance(file_path_or_obj, io.BufferedIOBase):
         file_path_or_obj.seek(0, os.SEEK_SET)
         while byte_chunk := file_path_or_obj.read(buffer_size):
-            chunk_hash_list.append(hashlib.sha256(byte_chunk).hexdigest())
             file_hash.update(byte_chunk)
             progress.update(len(byte_chunk))
         file_hash = file_hash.hexdigest()
-        final_chunk_size = buffer_size
         file_path_or_obj.seek(0, os.SEEK_SET)
 
     else:
@@ -271,10 +275,121 @@ def get_file_hash(
         'file_path_or_obj': file_path_or_obj,
         'file_hash': file_hash,
         'file_size': file_size,
-        'chunk_size': final_chunk_size,
-        'chunk_nums': len(chunk_hash_list),
-        'chunk_hash_list': chunk_hash_list,
     }
+
+
+def _get_file_hash_async(
+    file_path: Union[str, Path],
+    buffer_size_mb: int = 16,
+    tqdm_desc: Optional[str] = '[Calculating]',
+    disable_tqdm: Optional[bool] = True,
+) -> dict:
+    """Compute SHA256 with async I/O double-buffering for high-latency storage.
+
+    Uses a producer-consumer pattern: a background thread reads file chunks
+    into a bounded queue while the main thread computes the hash. This
+    overlaps I/O latency with CPU computation.
+    """
+    import queue
+    import threading
+
+    from tqdm.auto import tqdm
+
+    file_path = str(file_path)
+    file_size = os.path.getsize(file_path)
+    buffer_size = buffer_size_mb * 1024 * 1024
+
+    chunk_queue = queue.Queue(maxsize=2)  # Bounded to limit memory usage
+    read_error = [None]  # Mutable container for thread error propagation
+
+    def _producer():
+        try:
+            with open(file_path, 'rb') as f:
+                while True:
+                    chunk = f.read(buffer_size)
+                    if not chunk:
+                        break
+                    chunk_queue.put(chunk)
+        except Exception as e:
+            read_error[0] = e
+        finally:
+            chunk_queue.put(None)  # Sentinel to signal EOF
+
+    reader_thread = threading.Thread(target=_producer, daemon=True)
+    reader_thread.start()
+
+    file_hash = hashlib.sha256()
+    progress = tqdm(
+        total=file_size,
+        desc=tqdm_desc,
+        disable=disable_tqdm,
+        dynamic_ncols=True,
+        unit='B',
+        unit_scale=True,
+        unit_divisor=1024,
+    )
+
+    while True:
+        chunk = chunk_queue.get()
+        if chunk is None:
+            break
+        file_hash.update(chunk)
+        progress.update(len(chunk))
+
+    reader_thread.join()
+    progress.close()
+
+    if read_error[0] is not None:
+        raise read_error[0]
+
+    return {
+        'file_path_or_obj': file_path,
+        'file_hash': file_hash.hexdigest(),
+        'file_size': file_size,
+    }
+
+
+def compute_file_hash(
+    file_path_or_obj: Union[str, Path, bytes, BinaryIO],
+    buffer_size_mb: Optional[int] = 16,
+    async_threshold_mb: int = 32,
+    tqdm_desc: Optional[str] = '[Calculating]',
+    disable_tqdm: Optional[bool] = True,
+) -> dict:
+    """Compute SHA256 hash with automatic optimization for large files.
+
+    For file paths larger than async_threshold_mb, uses async double-buffered
+    I/O to overlap disk reads with hash computation. For smaller files or
+    non-path inputs (bytes, BinaryIO), falls back to synchronous hashing.
+
+    Args:
+        file_path_or_obj: File path, bytes, or file-like object.
+        buffer_size_mb: Read buffer size in MB. Default 16MB for NAS optimization.
+        async_threshold_mb: File size threshold for async mode. Default 32MB.
+        tqdm_desc: Progress bar description.
+        disable_tqdm: Whether to disable progress bar.
+
+    Returns:
+        dict with keys: file_path_or_obj, file_hash, file_size.
+    """
+    # Use async mode for large files accessed by path
+    if isinstance(file_path_or_obj, (str, Path)):
+        file_size = os.path.getsize(str(file_path_or_obj))
+        if file_size >= async_threshold_mb * 1024 * 1024:
+            return _get_file_hash_async(
+                file_path_or_obj,
+                buffer_size_mb=buffer_size_mb,
+                tqdm_desc=tqdm_desc,
+                disable_tqdm=disable_tqdm,
+            )
+
+    # Fallback to synchronous hashing
+    return get_file_hash(
+        file_path_or_obj,
+        buffer_size_mb=buffer_size_mb,
+        tqdm_desc=tqdm_desc,
+        disable_tqdm=disable_tqdm,
+    )
 
 
 def is_relative_path(url_or_filename: str) -> bool:

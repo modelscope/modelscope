@@ -57,8 +57,9 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
-                                      VALID_SORT_KEYS, DatasetVisibility,
-                                      Licenses, ModelVisibility, Visibility,
+                                      UPLOAD_USE_CACHE, VALID_SORT_KEYS,
+                                      DatasetVisibility, Licenses,
+                                      ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -2470,7 +2471,7 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
-            use_cache: bool = True,
+            use_cache: bool = UPLOAD_USE_CACHE,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> Optional[Union[CommitInfo, List[CommitInfo]]]:
         """
@@ -2489,6 +2490,7 @@ class HubApi:
             ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
             max_workers (int): The maximum number of workers to use for uploading files concurrently.
                 Defaults to `DEFAULT_MAX_WORKERS`.
+            use_cache (bool): Whether to use hash cache and checkpoint for upload resume support. Defaults to True.
             revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
 
         Returns:

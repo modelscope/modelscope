@@ -11,10 +11,12 @@ import platform
 import re
 import shutil
 import tempfile
+import time
 import uuid
 import warnings
 import zipfile
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
@@ -55,8 +57,9 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
-                                      VALID_SORT_KEYS, DatasetVisibility,
-                                      Licenses, ModelVisibility, Visibility,
+                                      UPLOAD_USE_CACHE, VALID_SORT_KEYS,
+                                      DatasetVisibility, Licenses,
+                                      ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -67,6 +70,9 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
+from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE, UploadHashCache
+from modelscope.hub.upload_pipeline import BatchTracker
+from modelscope.hub.upload_progress import UPLOAD_PROGRESS_FILE, UploadProgress
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -82,7 +88,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadChannel, DownloadMode,
                                        Frameworks, ModelFile, Tasks,
                                        VirgoDatasetConfig)
-from modelscope.utils.file_utils import (get_file_hash, get_file_size,
+from modelscope.utils.file_utils import (compute_file_hash, get_file_size,
                                          is_relative_path)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
@@ -91,7 +97,6 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          CommitHistoryResponse, CommitInfo,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
-from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
 
@@ -2195,7 +2200,7 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
             tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
@@ -2267,7 +2272,7 @@ class HubApi:
         if buffer_size_mb <= 0:
             raise ValueError('Buffer size: `buffer_size_mb` must be greater than 0')
 
-        hash_info_d: dict = get_file_hash(
+        hash_info_d: dict = compute_file_hash(
             file_path_or_obj=path_or_fileobj,
             buffer_size_mb=buffer_size_mb,
         )
@@ -2315,6 +2320,144 @@ class HubApi:
 
         return commit_info
 
+    def _upload_single_file(
+            self,
+            file_path_in_repo: str,
+            file_path: str,
+            *,
+            repo_id: str,
+            repo_type: str,
+            token: str,
+            hash_cache=None,
+    ) -> dict:
+        """Hash and upload a single file, returning result dict."""
+        hash_info_d = None
+        file_stat = None
+        is_real_path = isinstance(file_path, (str, os.PathLike))
+        if hash_cache is not None and is_real_path:
+            try:
+                file_stat = os.stat(file_path)
+                cached = hash_cache.get(
+                    file_path_in_repo, file_stat.st_mtime, file_stat.st_size)
+                if cached is not None:
+                    hash_info_d = cached
+                    hash_info_d['file_path_or_obj'] = file_path
+            except OSError:
+                file_stat = None
+
+        if hash_info_d is None:
+            hash_info_d = compute_file_hash(file_path_or_obj=file_path)
+            if hash_cache is not None and is_real_path:
+                try:
+                    if file_stat is None:
+                        file_stat = os.stat(file_path)
+                    hash_cache.put(
+                        file_path_in_repo, file_stat.st_mtime,
+                        file_stat.st_size, hash_info_d)
+                except OSError:
+                    pass
+
+        file_size: int = hash_info_d['file_size']
+        file_hash: str = hash_info_d['file_hash']
+
+        upload_res: dict = self._upload_blob(
+            repo_id=repo_id,
+            repo_type=repo_type,
+            sha256=file_hash,
+            size=file_size,
+            data=file_path,
+            disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+            tqdm_desc='[Uploading ' + file_path_in_repo + ']',
+            token=token,
+        )
+
+        return {
+            'file_path_in_repo': file_path_in_repo,
+            'file_path': file_path,
+            'is_uploaded': upload_res['is_uploaded'],
+            'file_hash_info': hash_info_d,
+        }
+
+    def _commit_with_retry(
+            self,
+            *,
+            repo_id: str,
+            operations,
+            commit_message: str,
+            commit_description: Optional[str] = None,
+            token: str = None,
+            repo_type: str = REPO_TYPE_MODEL,
+            revision: str = DEFAULT_REPOSITORY_REVISION,
+            max_retries: int = 5,
+    ) -> CommitInfo:
+        """Commit with application-level exponential backoff retry.
+
+        Retries on transient errors (5xx, ConnectionError) and specific
+        retryable 4xx errors (e.g. git ref conflicts).
+        Raises immediately on non-retryable client errors (4xx).
+        """
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                return self.create_commit(
+                    repo_id=repo_id,
+                    operations=operations,
+                    commit_message=commit_message,
+                    commit_description=commit_description,
+                    token=token,
+                    repo_type=repo_type,
+                    revision=revision,
+                )
+            except (ConnectionError, requests.exceptions.ConnectionError) as e:
+                last_error = e
+            # Defensive: create_commit raises ValueError, kept for future-proofing
+            except (HTTPError, requests.exceptions.HTTPError) as e:
+                if hasattr(e, 'response') and e.response is not None:
+                    if 400 <= e.response.status_code < 500:
+                        raise
+                last_error = e
+            except ValueError as e:
+                error_str = str(e)
+                if re.search(r'HTTP 4\d{2}', error_str):
+                    retryable_patterns = [
+                        'Could not update refs',
+                        'try again',
+                    ]
+                    if not any(p in error_str for p in retryable_patterns):
+                        raise
+                last_error = e
+            except Exception as e:
+                last_error = e
+
+            wait = min(2 ** attempt, 60)
+            logger.warning(
+                f'Commit attempt {attempt + 1}/{max_retries} failed: {last_error}, '
+                f'retrying in {wait}s ...')
+            time.sleep(wait)
+
+        raise RuntimeError(
+            f'Commit failed after {max_retries} attempts: {last_error}'
+        ) from last_error
+
+    def _build_batch_operations(
+            self,
+            results: list,
+            repo_type: str,
+    ) -> list:
+        """Build CommitOperationAdd list from upload results."""
+        operations = []
+        for item_d in results:
+            opt = CommitOperationAdd(
+                path_in_repo=item_d['file_path_in_repo'],
+                path_or_fileobj=item_d['file_path'],
+                file_hash_info=item_d['file_hash_info'],
+            )
+            opt._upload_mode = 'lfs' if self.upload_checker.is_lfs(
+                item_d['file_path'], repo_type) else 'normal'
+            opt._is_uploaded = item_d['is_uploaded']
+            operations.append(opt)
+        return operations
+
     def upload_folder(
             self,
             *,
@@ -2328,8 +2471,9 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
+            use_cache: bool = UPLOAD_USE_CACHE,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-    ) -> Union[CommitInfo, List[CommitInfo]]:
+    ) -> Optional[Union[CommitInfo, List[CommitInfo]]]:
         """
         Upload a folder to the ModelScope Hub.
 
@@ -2346,11 +2490,13 @@ class HubApi:
             ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
             max_workers (int): The maximum number of workers to use for uploading files concurrently.
                 Defaults to `DEFAULT_MAX_WORKERS`.
+            use_cache (bool): Whether to use hash cache and checkpoint for upload resume support. Defaults to True.
             revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
 
         Returns:
-            Union[CommitInfo, List[CommitInfo]]:
+            Optional[Union[CommitInfo, List[CommitInfo]]]:
                 The commit info or list of commit infos if multiple batches are committed.
+                Returns None if all batches were already committed.
 
         Examples:
             >>> from modelscope.hub.api import HubApi
@@ -2397,6 +2543,15 @@ class HubApi:
         )
         commit_description = commit_description or 'Uploading files'
 
+        # Exclude internal cache/checkpoint files from upload
+        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, UPLOAD_PROGRESS_FILE]
+        if ignore_patterns is None:
+            ignore_patterns = _internal_ignore
+        elif isinstance(ignore_patterns, str):
+            ignore_patterns = [ignore_patterns] + _internal_ignore
+        else:
+            ignore_patterns = list(ignore_patterns) + _internal_ignore
+
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
         logger.info('Preparing files to upload ...')
         prepared_repo_objects = self._prepare_upload_folder(
@@ -2421,87 +2576,155 @@ class HubApi:
                          exist_ok=True,
                          create_default_config=False)
 
-        @thread_executor(max_workers=max_workers, disable_tqdm=False)
-        def _upload_items(item_pair, **kwargs):
-            file_path_in_repo, file_path = item_pair
+        # Initialize hash cache and checkpoint for resume support
+        folder_path_resolved = Path(folder_path).resolve() \
+            if isinstance(folder_path, (str, Path)) else Path(folder_path[0]).resolve().parent
+        hash_cache = None
+        checkpoint = None
+        if use_cache:
+            cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
+            hash_cache = UploadHashCache(cache_path)
+            checkpoint_path = folder_path_resolved / UPLOAD_PROGRESS_FILE
+            checkpoint = UploadProgress(checkpoint_path, repo_id=repo_id)
 
-            hash_info_d: dict = get_file_hash(
-                file_path_or_obj=file_path,
-            )
-            file_size: int = hash_info_d['file_size']
-            file_hash: str = hash_info_d['file_hash']
+        # Sort for deterministic batch assignment
+        sorted_files = sorted(prepared_repo_objects, key=lambda x: x[0])
+        commit_batch_size = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(sorted_files)
+        tracker = BatchTracker(len(sorted_files), commit_batch_size)
 
-            upload_res: dict = self._upload_blob(
-                repo_id=repo_id,
-                repo_type=repo_type,
-                sha256=file_hash,
-                size=file_size,
-                data=file_path,
-                disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
-                tqdm_desc='[Uploading ' + file_path_in_repo + ']',
-                token=token,
-            )
+        # Compute per-batch fingerprints
+        batch_fingerprints = {}
+        if checkpoint is not None:
+            batch_fp_items: dict = {}
+            for file_idx, (path_in_repo, file_path) in enumerate(sorted_files):
+                batch_idx = tracker.batch_index(file_idx)
+                if batch_idx not in batch_fp_items:
+                    batch_fp_items[batch_idx] = []
+                # Skip fingerprint for file-like objects (e.g. PartialFileIO)
+                if isinstance(file_path, (str, os.PathLike)):
+                    st = os.stat(file_path)
+                    batch_fp_items[batch_idx].append(
+                        (path_in_repo, f'{st.st_mtime}|{st.st_size}'))
+            for batch_idx, items in batch_fp_items.items():
+                batch_fingerprints[batch_idx] = (
+                    UploadProgress.compute_fingerprint(items))
+            # Validate each batch individually
+            for batch_idx in range(tracker.num_batches):
+                if batch_idx in batch_fingerprints:
+                    checkpoint.validate_batch_fingerprint(
+                        batch_idx, batch_fingerprints[batch_idx])
 
-            return {
-                'file_path_in_repo': file_path_in_repo,
-                'file_path': file_path,
-                'is_uploaded': upload_res['is_uploaded'],
-                'file_hash_info': hash_info_d,
-            }
+        # Determine which files to upload (skip files in already-committed batches)
+        files_to_upload = []
+        for file_idx, file_info in enumerate(sorted_files):
+            batch_idx = tracker.batch_index(file_idx)
+            if checkpoint is not None and checkpoint.is_batch_committed(batch_idx):
+                continue
+            files_to_upload.append((file_idx, file_info))
 
-        uploaded_items_list = _upload_items(
-            prepared_repo_objects,
-            repo_id=repo_id,
-            token=token,
-            repo_type=repo_type,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            buffer_size_mb=1,
-            disable_tqdm=False,
-        )
+        # Mark already-committed batches as skipped so consumer won't block
+        if checkpoint is not None:
+            for batch_idx in range(tracker.num_batches):
+                if checkpoint.is_batch_committed(batch_idx):
+                    tracker.mark_batch_skipped(batch_idx)
 
-        # Construct commit info and create commit
-        operations = []
+        skipped_count = len(sorted_files) - len(files_to_upload)
+        if skipped_count > 0:
+            logger.info(f'{skipped_count} file(s) in already-committed batches, skipping upload.')
 
-        for item_d in uploaded_items_list:
-            prepared_path_in_repo: str = item_d['file_path_in_repo']
-            prepared_file_path: str = item_d['file_path']
-            is_uploaded: bool = item_d['is_uploaded']
-            file_hash_info: dict = item_d['file_hash_info']
-            opt = CommitOperationAdd(
-                path_in_repo=prepared_path_in_repo,
-                path_or_fileobj=prepared_file_path,
-                file_hash_info=file_hash_info,
-            )
+        logger.info(
+            f'Uploading {len(files_to_upload)} file(s) in {tracker.num_batches} batch(es) '
+            f'of size {commit_batch_size} (pipeline mode).')
 
-            # check normal or lfs
-            opt._upload_mode = 'lfs' if self.upload_checker.is_lfs(prepared_file_path, repo_type) else 'normal'
-            opt._is_uploaded = is_uploaded
-            operations.append(opt)
+        # Submit upload tasks to thread pool
+        def _upload_worker(file_idx: int, file_info: tuple):
+            path_in_repo, file_path = file_info
+            try:
+                result = self._upload_single_file(
+                    path_in_repo, file_path,
+                    repo_id=repo_id, repo_type=repo_type,
+                    token=token, hash_cache=hash_cache)
+                tracker.record_success(file_idx, result)
+            except Exception as e:
+                logger.error(f'Upload failed: {path_in_repo} - {e}')
+                tracker.record_failure(file_idx, file_info, e)
 
-        if len(operations) == 0:
-            raise ValueError(f'No files to upload in the folder: {folder_path} !')
-
-        # Commit the operations in batches
-        commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
-        num_batches = (len(operations) - 1) // commit_batch_size + 1
-        print(f'Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.',
-              flush=True)
+        # Pipeline: consume batches in order, commit as each becomes ready
         commit_infos: List[CommitInfo] = []
-        for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
-            batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
-            batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
+        failed_batches: List[int] = []
+        total_failed_files: List[tuple] = []
+        num_batches = tracker.num_batches
 
-            commit_info: CommitInfo = self.create_commit(
-                repo_id=repo_id,
-                operations=batch_operations,
-                commit_message=batch_commit_message,
-                commit_description=commit_description,
-                token=token,
-                repo_type=repo_type,
-                revision=revision,
-            )
-            commit_infos.append(commit_info)
+        try:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                for file_idx, file_info in files_to_upload:
+                    executor.submit(_upload_worker, file_idx, file_info)
+
+                for batch_idx in tqdm(range(num_batches), desc='[Committing batches]', total=num_batches):
+                    if checkpoint is not None and checkpoint.is_batch_committed(batch_idx):
+                        logger.info(f'Batch {batch_idx + 1}/{num_batches} already committed, skipping.')
+                        continue
+
+                    results, failures = tracker.wait_for_batch(batch_idx)
+
+                    if failures:
+                        total_failed_files.extend(failures)
+                        for item, err in failures:
+                            logger.warning(f'  Failed: {item[0]} - {err}')
+
+                    operations = self._build_batch_operations(results, repo_type)
+                    if not operations:
+                        logger.warning(f'Batch {batch_idx + 1}/{num_batches}: all files failed, skipping commit.')
+                        failed_batches.append(batch_idx)
+                        continue
+
+                    batch_commit_message = f'{commit_message} (batch {batch_idx + 1}/{num_batches})'
+                    try:
+                        commit_info = self._commit_with_retry(
+                            repo_id=repo_id,
+                            operations=operations,
+                            commit_message=batch_commit_message,
+                            commit_description=commit_description,
+                            token=token,
+                            repo_type=repo_type,
+                            revision=revision,
+                        )
+                        commit_infos.append(commit_info)
+                    except Exception as e:
+                        logger.error(f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
+                        failed_batches.append(batch_idx)
+                    else:
+                        if checkpoint is not None:
+                            try:
+                                checkpoint.mark_batch_committed(
+                                    batch_idx, batch_fingerprints.get(batch_idx, ''))
+                            except Exception as e:
+                                logger.warning(f'Checkpoint save failed for batch {batch_idx + 1}, '
+                                               f'but commit succeeded: {e}')
+
+                    # Incremental hash cache save after each batch
+                    if hash_cache is not None:
+                        hash_cache.save()
+        finally:
+            if hash_cache is not None:
+                hash_cache.save()
+
+        # Summary
+        if total_failed_files:
+            logger.warning(
+                f'{len(total_failed_files)} file(s) failed during upload.')
+        if failed_batches:
+            logger.warning(
+                f'{len(failed_batches)} batch(es) failed to commit: {failed_batches}. '
+                f'Re-run upload_folder() to retry.')
+
+        if not commit_infos:
+            if skipped_count == len(sorted_files):
+                logger.info('All batches were already committed.')
+                return None
+            raise RuntimeError(
+                f'No batches were committed successfully. '
+                f'{len(failed_batches)} batch(es) failed, {len(total_failed_files)} file(s) failed.')
 
         return commit_infos[0] if len(commit_infos) == 1 else commit_infos
 
@@ -2515,7 +2738,7 @@ class HubApi:
             data: Union[str, Path, bytes, BinaryIO],
             disable_tqdm: Optional[bool] = False,
             tqdm_desc: Optional[str] = '[Uploading]',
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
             token: Optional[str] = None,
     ) -> dict:
 

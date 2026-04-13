@@ -145,7 +145,8 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     revision=self.args.revision,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 snapshot_download(
@@ -155,7 +156,8 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             else:  # download repo
                 snapshot_download(
                     self.args.model,
@@ -165,7 +167,8 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=convert_patterns(self.args.include),
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             print(f'\nSuccessfully Downloaded from model {self.args.model}.\n')
         elif self.args.dataset:
             dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
@@ -176,7 +179,8 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     revision=dataset_revision,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 dataset_snapshot_download(
@@ -186,7 +190,8 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
@@ -196,7 +201,8 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=convert_patterns(self.args.include),
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token)
             print(
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )

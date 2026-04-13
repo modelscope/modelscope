@@ -12,13 +12,13 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
-UPLOAD_CHECKPOINT_FILE = '.ms_upload_checkpoint'
+UPLOAD_PROGRESS_FILE = '.ms_upload_progress'
 
 
-class UploadCheckpoint:
+class UploadProgress:
     """Tracks committed batch indices for upload_folder resume.
 
-    Stored as JSON at {folder_path}/.ms_upload_checkpoint. On resume,
+    Stored as JSON at {folder_path}/.ms_upload_progress. On resume,
     already-committed batches are skipped. Validates repo_id to prevent
     cross-repo confusion.
     """

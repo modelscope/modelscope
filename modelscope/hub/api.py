@@ -70,9 +70,8 @@ from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
 from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE, UploadHashCache
-from modelscope.hub.upload_checkpoint import (UPLOAD_CHECKPOINT_FILE,
-                                              UploadCheckpoint)
 from modelscope.hub.upload_pipeline import BatchTracker
+from modelscope.hub.upload_progress import UPLOAD_PROGRESS_FILE, UploadProgress
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -2333,7 +2332,8 @@ class HubApi:
         """Hash and upload a single file, returning result dict."""
         hash_info_d = None
         file_stat = None
-        if hash_cache is not None:
+        is_real_path = isinstance(file_path, (str, os.PathLike))
+        if hash_cache is not None and is_real_path:
             try:
                 file_stat = os.stat(file_path)
                 cached = hash_cache.get(
@@ -2346,7 +2346,7 @@ class HubApi:
 
         if hash_info_d is None:
             hash_info_d = compute_file_hash(file_path_or_obj=file_path)
-            if hash_cache is not None:
+            if hash_cache is not None and is_real_path:
                 try:
                     if file_stat is None:
                         file_stat = os.stat(file_path)
@@ -2542,7 +2542,7 @@ class HubApi:
         commit_description = commit_description or 'Uploading files'
 
         # Exclude internal cache/checkpoint files from upload
-        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, UPLOAD_CHECKPOINT_FILE]
+        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, UPLOAD_PROGRESS_FILE]
         if ignore_patterns is None:
             ignore_patterns = _internal_ignore
         elif isinstance(ignore_patterns, str):
@@ -2582,8 +2582,8 @@ class HubApi:
         if use_cache:
             cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
             hash_cache = UploadHashCache(cache_path)
-            checkpoint_path = folder_path_resolved / UPLOAD_CHECKPOINT_FILE
-            checkpoint = UploadCheckpoint(checkpoint_path, repo_id=repo_id)
+            checkpoint_path = folder_path_resolved / UPLOAD_PROGRESS_FILE
+            checkpoint = UploadProgress(checkpoint_path, repo_id=repo_id)
 
         # Sort for deterministic batch assignment
         sorted_files = sorted(prepared_repo_objects, key=lambda x: x[0])
@@ -2598,12 +2598,14 @@ class HubApi:
                 batch_idx = tracker.batch_index(file_idx)
                 if batch_idx not in batch_fp_items:
                     batch_fp_items[batch_idx] = []
-                st = os.stat(file_path)
-                batch_fp_items[batch_idx].append(
-                    (path_in_repo, f'{st.st_mtime}|{st.st_size}'))
+                # Skip fingerprint for file-like objects (e.g. PartialFileIO)
+                if isinstance(file_path, (str, os.PathLike)):
+                    st = os.stat(file_path)
+                    batch_fp_items[batch_idx].append(
+                        (path_in_repo, f'{st.st_mtime}|{st.st_size}'))
             for batch_idx, items in batch_fp_items.items():
                 batch_fingerprints[batch_idx] = (
-                    UploadCheckpoint.compute_fingerprint(items))
+                    UploadProgress.compute_fingerprint(items))
             # Validate each batch individually
             for batch_idx in range(tracker.num_batches):
                 if batch_idx in batch_fingerprints:

@@ -140,7 +140,10 @@ class CsvDatasetBuilder(csv.Csv):
     def _generate_tables(self, files, base_dir):
         # Raise csv field size limit to avoid errors with large cells
         if self.csv_engine == 'python':
-            csv_module.field_size_limit(sys.maxsize)
+            try:
+                csv_module.field_size_limit(sys.maxsize)
+            except OverflowError:
+                csv_module.field_size_limit(2147483647)
 
         schema = pa.schema(self.config.features.type
                            ) if self.config.features is not None else None
@@ -150,11 +153,12 @@ class CsvDatasetBuilder(csv.Csv):
         } if schema else None
         for file_idx, file in enumerate(files):
             pd_kwargs = dict(
-                iterator=True, dtype=dtype, delimiter=self.csv_delimiter)
+                iterator=True,
+                dtype=dtype,
+                delimiter=self.csv_delimiter,
+                chunksize=self.csv_chunksize or 10000)
             if self.csv_engine is not None:
                 pd_kwargs['engine'] = self.csv_engine
-            if self.csv_chunksize is not None:
-                pd_kwargs['chunksize'] = self.csv_chunksize
             csv_file_reader = pd.read_csv(file, **pd_kwargs)
             transform_fields = []
             for field_name in csv_file_reader._engine.names:

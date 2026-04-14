@@ -249,7 +249,10 @@ class MsDataset:
         if config_kwargs.get('engine') == 'python':
             import csv as csv_module
             import sys
-            csv_module.field_size_limit(sys.maxsize)
+            try:
+                csv_module.field_size_limit(sys.maxsize)
+            except OverflowError:
+                csv_module.field_size_limit(2147483647)
 
         # Init context config
         dataset_context_config = DatasetContextConfig(

@@ -32,13 +32,13 @@ RUN wget -O /tmp/boost.tar.gz https://archives.boost.io/release/1.80.0/source/bo
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
 ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
-ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV GPG_KEY="A035C8C19219BA821ECEA86B64E628F8D684696D 7169605F62C751356D054A26A821E680E5FA6305"
 ENV PYTHON_VERSION {python_version}
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
 ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
-ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV GPG_KEY="A035C8C19219BA821ECEA86B64E628F8D684696D 7169605F62C751356D054A26A821E680E5FA6305"
 ENV PYTHON_VERSION {python_version}
 
 RUN set -eux; \
@@ -46,7 +46,7 @@ RUN set -eux; \
         wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
         wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
         GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
-        gpg --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys "$GPG_KEY"; \
+        gpg --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys $GPG_KEY; \
         gpg --batch --verify python.tar.xz.asc python.tar.xz; \
         gpgconf --kill all; \
         rm -rf "$GNUPGHOME" python.tar.xz.asc; \

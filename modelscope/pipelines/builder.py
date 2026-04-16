@@ -281,7 +281,10 @@ def external_engine_for_llm_checker(model: Union[str, List[str], Model,
 
     llm_framework = kwargs.get('llm_framework', '')
     if llm_framework == 'swift':
-        from swift.llm import get_model_info_meta
+        try:
+            from swift.model import get_model_info_meta
+        except ImportError:
+            from swift.llm import get_model_info_meta
         # check if swift supports
         if os.path.exists(model):
             model_id = get_model_id_from_cache(model)

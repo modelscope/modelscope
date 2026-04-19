@@ -418,8 +418,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}  '
-            f'{self.args.optimum_version}'
-            f'{self.args.flashattn_version}')
+            f'{self.args.flashattn_version} {self.args.optimum_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)

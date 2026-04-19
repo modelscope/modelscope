@@ -22,7 +22,7 @@ class Builder:
     def init_args(self, args: Any) -> Any:
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:12.9.1-cudnn-devel-ubuntu22.04'
         if not args.torch_version:
             args.torch_version = '2.9.1'
             args.torchaudio_version = '2.9.1'
@@ -32,7 +32,7 @@ class Builder:
         if not args.tf_version:
             args.tf_version = '2.16.1'
         if not args.cuda_version:
-            args.cuda_version = '12.8.1'
+            args.cuda_version = '12.9.1'
         if not args.vllm_version:
             args.vllm_version = '0.15.1'
         if not args.lmdeploy_version:
@@ -393,8 +393,12 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
     """Dependencies will be latest versions"""
 
     def init_args(self, args: Any) -> Any:
+        if not args.torch_version:
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
         if not args.vllm_version:
-            args.vllm_version = '0.16.0'
+            args.vllm_version = '0.19.0'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -487,7 +491,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.11.11')
+parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)

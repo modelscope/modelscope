@@ -32,13 +32,13 @@ RUN wget -O /tmp/boost.tar.gz https://archives.boost.io/release/1.80.0/source/bo
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
 ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
-ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV GPG_KEY="A035C8C19219BA821ECEA86B64E628F8D684696D 7169605F62C751356D054A26A821E680E5FA6305"
 ENV PYTHON_VERSION {python_version}
 
 #install and config python copy from https://github.com/docker-library/python/blob/1b7a1106674a21e699b155cbd53bf39387284cca/3.10/bookworm/Dockerfile
 ARG PYTHON_VERSION={python_version}
 ENV PATH /usr/local/bin:$PATH
-ENV GPG_KEY A035C8C19219BA821ECEA86B64E628F8D684696D
+ENV GPG_KEY="A035C8C19219BA821ECEA86B64E628F8D684696D 7169605F62C751356D054A26A821E680E5FA6305"
 ENV PYTHON_VERSION {python_version}
 
 RUN set -eux; \
@@ -46,7 +46,7 @@ RUN set -eux; \
         wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
         wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
         GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
-        gpg --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys "$GPG_KEY"; \
+        gpg --batch --keyserver hkp://keyserver.ubuntu.com --recv-keys $GPG_KEY; \
         gpg --batch --verify python.tar.xz.asc python.tar.xz; \
         gpgconf --kill all; \
         rm -rf "$GNUPGHOME" python.tar.xz.asc; \
@@ -112,9 +112,9 @@ RUN set -eux; \
         done
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
-ENV PYTHON_PIP_VERSION 23.0.1
+ENV PYTHON_PIP_VERSION 24.3.1
 # https://github.com/docker-library/python/issues/365
-ENV PYTHON_SETUPTOOLS_VERSION 65.5.1
+ENV PYTHON_SETUPTOOLS_VERSION 75.8.2
 # https://github.com/pypa/get-pip
 ENV PYTHON_GET_PIP_URL https://github.com/pypa/get-pip/raw/dbf0c85f76fb6e1ab42aa672ffca6f0a675d9ee4/public/get-pip.py
 ENV PYTHON_GET_PIP_SHA256 dfe9fd5c28dc98b5ac17979a953ea550cec37ae1b47a5116007395bfacff2ab9

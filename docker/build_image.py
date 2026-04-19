@@ -427,7 +427,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)

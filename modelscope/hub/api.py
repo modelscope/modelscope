@@ -11,9 +11,9 @@ import platform
 import re
 import shutil
 import tempfile
-import time
 import uuid
 import warnings
+import zipfile
 from collections import defaultdict
 from http import HTTPStatus
 from http.cookiejar import CookieJar
@@ -1403,6 +1403,8 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
+    _dataset_id_type_cache: dict = {}
+
     def get_dataset_id_and_type(self,
                                 dataset_name: str,
                                 namespace: str,
@@ -1411,6 +1413,10 @@ class HubApi:
         """ Get the dataset id and type. """
         if not endpoint:
             endpoint = self.endpoint
+        cache_key = (namespace, dataset_name, endpoint)
+        cached = HubApi._dataset_id_type_cache.get(cache_key)
+        if cached is not None:
+            return cached
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
         cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url, cookies=cookies)
@@ -1418,6 +1424,7 @@ class HubApi:
         datahub_raise_on_error(datahub_url, resp, r)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
+        HubApi._dataset_id_type_cache[cache_key] = (dataset_id, dataset_type)
         return dataset_id, dataset_type
 
     def list_repo_tree(self,
@@ -1526,7 +1533,8 @@ class HubApi:
                           page_number: int = 1,
                           page_size: int = 100,
                           endpoint: Optional[str] = None,
-                          token: Optional[str] = None):
+                          token: Optional[str] = None,
+                          dataset_hub_id: Optional[str] = None):
         """
         Get the dataset files.
 
@@ -1539,19 +1547,23 @@ class HubApi:
             page_size (int): The number of items per page. Defaults to 100.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
             token (Optional[str]): The access token.
+            dataset_hub_id (Optional[str]): Pre-fetched dataset hub id. When provided,
+                skips the internal ``get_dataset_id_and_type`` lookup. Useful in pagination
+                loops to avoid redundant API calls per page.
 
         Returns:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
 
-        if is_relative_path(repo_id) and repo_id.count('/') == 1:
-            _owner, _dataset_name = repo_id.split('/')
-        else:
-            raise ValueError(f'Invalid repo_id: {repo_id} !')
+        if dataset_hub_id is None:
+            if is_relative_path(repo_id) and repo_id.count('/') == 1:
+                _owner, _dataset_name = repo_id.split('/')
+            else:
+                raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
+            dataset_hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1569,7 +1581,10 @@ class HubApi:
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp, r)
 
-        return resp['Data']['Files']
+        data = resp.get('Data')
+        if data is None:
+            return []
+        return data.get('Files') or []
 
     def get_dataset(
         self,
@@ -2100,11 +2115,9 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             endpoint: Optional[str] = None,
-            max_retries: int = 3,
-            timeout: int = 180,
     ) -> CommitInfo:
         """
-        Create a commit on the ModelScope Hub with retry mechanism.
+        Create a commit on the ModelScope Hub.
 
         Args:
             repo_id (str): The repo id in the format of `owner_name/repo_name`.
@@ -2117,14 +2130,14 @@ class HubApi:
             revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
             endpoint (Optional[str]): The endpoint to use.
                 In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
-            max_retries (int): Number of max retry attempts (default: 3).
             timeout (int): Timeout for each request in seconds (default: 180).
 
         Returns:
             CommitInfo: The commit info.
 
         Raises:
-            requests.exceptions.RequestException: If all retry attempts fail.
+            ValueError: If the request fails with a 4xx client error.
+            requests.exceptions.RequestException: If a network-level error occurs.
         """
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
@@ -2147,66 +2160,29 @@ class HubApi:
             commit_message=commit_message,
         )
 
-        # POST with retry mechanism
-        last_exception = None
-        for attempt in range(max_retries):
+        response = self.session.post(
+            url,
+            headers=self.builder_headers(self.headers),
+            data=json.dumps(payload),
+            cookies=cookies,
+        )
+
+        if response.status_code != 200:
             try:
-                if attempt > 0:
-                    logger.info(f'Attempt {attempt + 1} to create commit for {repo_id}...')
-                response = requests.post(
-                    url,
-                    headers=self.builder_headers(self.headers),
-                    data=json.dumps(payload),
-                    cookies=cookies,
-                    timeout=timeout,
-                )
+                error_detail = response.json()
+            except json.JSONDecodeError:
+                error_detail = response.text
+            error_msg = f'HTTP {response.status_code} error from {url}: {error_detail}'
+            raise ValueError(error_msg)
 
-                if response.status_code != 200:
-                    try:
-                        error_detail = response.json()
-                    except json.JSONDecodeError:
-                        error_detail = response.text
-
-                    error_msg = (
-                        f'HTTP {response.status_code} error from {url}: '
-                        f'{error_detail}'
-                    )
-
-                    # If server error (5xx), we can retry, otherwise (4xx) raise immediately
-                    if 500 <= response.status_code < 600:
-                        logger.warning(
-                            f'Server error on attempt {attempt + 1}: {error_msg}'
-                        )
-                    else:
-                        raise ValueError(f'Client request failed: {error_msg}')
-                else:
-                    resp = response.json()
-
-                    oid = resp.get('Data', {}).get('oid', '')
-                    logger.info(f'Commit succeeded: {url}')
-                    return CommitInfo(
-                        commit_url=url,
-                        commit_message=commit_message,
-                        commit_description=commit_description,
-                        oid=oid,
-                    )
-
-            except requests.exceptions.RequestException as e:
-                last_exception = e
-                logger.warning(f'Request failed on attempt {attempt + 1}: {str(e)}')
-
-            except Exception as e:
-                last_exception = e
-                logger.error(f'Unexpected error on attempt {attempt + 1}: {str(e)}')
-                if attempt == max_retries - 1:
-                    raise
-
-            if attempt < max_retries - 1:
-                time.sleep(1)
-
-        # All retries exhausted
-        raise requests.exceptions.RequestException(
-            f'Failed to create commit after {max_retries} attempts. Last error: {last_exception}'
+        resp = response.json()
+        oid = resp.get('Data', {}).get('oid', '')
+        logger.info(f'Commit succeeded: {url}')
+        return CommitInfo(
+            commit_url=url,
+            commit_message=commit_message,
+            commit_description=commit_description,
+            oid=oid,
         )
 
     def upload_file(
@@ -2593,21 +2569,21 @@ class HubApi:
 
             if isinstance(data, (str, Path)):
                 with open(data, 'rb') as f:
-                    response = requests.put(
+                    response = self.session.put(
                         upload_object['url'],
                         headers=headers,
                         data=read_in_chunks(f, pbar)
                     )
 
             elif isinstance(data, bytes):
-                response = requests.put(
+                response = self.session.put(
                     upload_object['url'],
                     headers=headers,
                     data=read_in_chunks(io.BytesIO(data), pbar)
                 )
 
             elif isinstance(data, io.BufferedIOBase):
-                response = requests.put(
+                response = self.session.put(
                     upload_object['url'],
                     headers=headers,
                     data=read_in_chunks(data, pbar)
@@ -2664,7 +2640,7 @@ class HubApi:
         }
 
         cookies = self.get_cookies(access_token=token, cookies_required=True)
-        response = requests.post(
+        response = self.session.post(
             url,
             headers=self.builder_headers(self.headers),
             data=json.dumps(payload),
@@ -2907,6 +2883,9 @@ class HubApi:
             file_paths = [f['Path'] for f in files]
         elif repo_type == REPO_TYPE_DATASET:
             file_paths = []
+            _owner, _dataset_name = repo_id.split('/')
+            _hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
             page_number = 1
             page_size = 100
             while True:
@@ -2919,6 +2898,7 @@ class HubApi:
                         page_size=page_size,
                         endpoint=endpoint,
                         token=token,
+                        dataset_hub_id=_hub_id,
                     )
                 except Exception as e:
                     logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
@@ -3063,6 +3043,110 @@ class HubApi:
         raise_on_error(resp)
 
         return resp
+
+    # ============= Collection API =============
+    def get_collection(self,
+                       collection_id: str,
+                       repo_type: str = 'skill',
+                       page_number: int = 1,
+                       page_size: int = 50) -> dict:
+        """Get collection details and its elements.
+
+        Args:
+            collection_id (str): The collection ID (Fid).
+            repo_type (str): Element type filter, only 'skill' is supported currently.
+            page_number (int): Page number for pagination.
+            page_size (int): Page size for pagination.
+
+        Returns:
+            dict: Collection details including elements.
+
+        Raises:
+            ValueError: If repo_type is not 'skill'.
+            RequestError: If the API request fails.
+        """
+        if repo_type != 'skill':
+            raise ValueError(
+                f'repo_type={repo_type} is not supported, '
+                'only "skill" is currently supported.')
+        cookies = self.get_cookies()
+        path = f'{self.endpoint}/api/v1/collections'
+        params = {
+            'Fid': collection_id,
+            'ElementType': repo_type,
+            'PageNumber': page_number,
+            'PageSize': page_size,
+        }
+        r = self.session.get(path, params=params, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+        return d[API_RESPONSE_FIELD_DATA]
+
+    def download_skill(self, skill_id: str,
+                       local_dir: Optional[str] = None) -> str:
+        """Download a single skill archive and extract it.
+
+        Args:
+            skill_id (str): The skill identifier in format '<path>/<name>'.
+            local_dir (Optional[str]): Target directory for extraction.
+                Defaults to current directory.
+
+        Returns:
+            str: Path to the extracted skill directory.
+
+        Raises:
+            ValueError: If skill_id format is invalid.
+            RequestError: If the download request fails.
+        """
+        element_path, element_name = RepoUtils.validate_repo_id(skill_id)
+
+        cookies = self.get_cookies()
+        url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
+
+        if local_dir is None:
+            local_dir = os.getcwd()
+        os.makedirs(local_dir, exist_ok=True)
+
+        # Build skill directory name: use element_name directly, overwrite if exists, to avoid corrupted state
+        skill_dir = os.path.join(local_dir, element_name)
+
+        r = self.session.get(url, stream=True, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+
+        # Save to temp zip file then extract
+        zip_path = os.path.join(local_dir, f'{element_name}.zip')
+        try:
+            with open(zip_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
+            # Clean existing directory to avoid corrupted state
+            if os.path.exists(skill_dir):
+                shutil.rmtree(skill_dir)
+            os.makedirs(skill_dir, exist_ok=True)
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                zf.extractall(skill_dir)
+
+            # Flatten if zip contains a single top-level directory
+            entries = os.listdir(skill_dir)
+            if len(entries) == 1:
+                nested_dir = os.path.join(skill_dir, entries[0])
+                if os.path.isdir(nested_dir):
+                    for item in os.listdir(nested_dir):
+                        shutil.move(
+                            os.path.join(nested_dir, item),
+                            os.path.join(skill_dir, item))
+                    os.rmdir(nested_dir)
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+        logger.info(f'Skill {element_path}/{element_name} downloaded to {skill_dir}')
+        return skill_dir
 
 
 class ModelScopeConfig:

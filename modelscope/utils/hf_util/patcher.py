@@ -12,20 +12,19 @@ from types import MethodType
 from typing import BinaryIO, Dict, Iterable, List, Optional, Union
 
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
-from modelscope.utils.repo_utils import (CommitInfo, CommitOperation,
-                                         CommitOperationAdd)
+from modelscope.utils.repo_utils import CommitInfo, CommitOperation
 
 ignore_file_pattern = [
-    r'\w+\.bin',
-    r'\w+\.safetensors',
-    r'\w+\.pth',
-    r'\w+\.pt',
-    r'\w+\.h5',
-    r'\w+\.ckpt',
-    r'\w+\.zip',
-    r'\w+\.onnx',
-    r'\w+\.tar',
-    r'\w+\.gz',
+    r'*.bin',
+    r'*.safetensors',
+    r'*.pth',
+    r'*.pt',
+    r'*.h5',
+    r'*.ckpt',
+    r'*.zip',
+    r'*.onnx',
+    r'*.tar',
+    r'*.gz',
 ]
 
 
@@ -133,6 +132,29 @@ def get_all_imported_modules():
     return all_imported_modules
 
 
+def _decide_allow_file_pattern(module_name, cls=None):
+    extra_allow_file_pattern = None
+    if 'GenerationConfig' in module_name:
+        from transformers.utils import GENERATION_CONFIG_NAME
+        extra_allow_file_pattern = [GENERATION_CONFIG_NAME, r'*.py']
+    elif 'Config' in module_name:
+        from transformers import CONFIG_NAME
+        extra_allow_file_pattern = [CONFIG_NAME, r'*.py']
+    elif 'Tokenizer' in module_name:
+        extra_allow_file_pattern = list((
+            cls.vocab_files_names.values()
+        ) if cls is not None and hasattr(cls, 'vocab_files_names') else []) + [
+            'chat_template.jinja', r'*.json', r'*.py', r'*.txt', r'*.model',
+            r'*.tiktoken'
+        ]  # noqa
+    elif 'Processor' in module_name:
+        extra_allow_file_pattern = [
+            'chat_template.jinja', r'*.json', r'*.py', r'*.txt', r'*.model',
+            r'*.tiktoken'
+        ]
+    return extra_allow_file_pattern
+
+
 def _patch_pretrained_class(all_imported_modules, wrap=False):
     """Patch all class to download from modelscope
 
@@ -158,9 +180,11 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 revision = 'master'
             if file_filter is not None:
                 allow_file_pattern = file_filter
+            local_files_only = kwargs.pop('local_files_only', False)
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
                 revision=revision,
+                local_files_only=local_files_only,
                 ignore_file_pattern=ignore_file_pattern,
                 allow_file_pattern=allow_file_pattern)
             if subfolder:
@@ -231,28 +255,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
             if kwargs.get(
                     'allow_file_pattern') is None and module_class is not None:
-                extra_allow_file_pattern = None
-                if 'GenerationConfig' == module_class.__name__:
-                    from transformers.utils import GENERATION_CONFIG_NAME
-                    extra_allow_file_pattern = [
-                        GENERATION_CONFIG_NAME, r'*.py'
-                    ]
-                elif 'Config' in module_class.__name__:
-                    from transformers import CONFIG_NAME
-                    extra_allow_file_pattern = [CONFIG_NAME, r'*.py']
-                elif 'Tokenizer' in module_class.__name__:
-                    extra_allow_file_pattern = list(
-                        (cls.vocab_files_names.values()) if cls is not None
-                        and hasattr(cls, 'vocab_files_names') else []) + [
-                            'chat_template.jinja', r'*.json', r'*.py',
-                            r'*.txt', r'*.model', r'*.tiktoken'
-                        ]  # noqa
-                elif 'Processor' in module_class.__name__:
-                    extra_allow_file_pattern = [
-                        'chat_template.jinja', r'*.json', r'*.py', r'*.txt',
-                        r'*.model', r'*.tiktoken'
-                    ]
-
+                extra_allow_file_pattern = _decide_allow_file_pattern(
+                    module_class.__name__, cls)
                 kwargs['allow_file_pattern'] = extra_allow_file_pattern
             yield
             kwargs.pop('ignore_file_pattern', None)
@@ -439,11 +443,26 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
     def get_class_from_dynamic_module(class_reference, *args, **kwargs):
         from transformers.dynamic_module_utils import origin_get_class_from_dynamic_module
+        if 'pretrained_model_name_or_path' in inspect.signature(
+                origin_get_class_from_dynamic_module).parameters:
+            pretrained_model_name_or_path = args[0]
+            if not os.path.exists(pretrained_model_name_or_path):
+                from modelscope import snapshot_download
+                args[0] = snapshot_download(pretrained_model_name_or_path)
         if '--' in class_reference:
             repo_id, class_reference = class_reference.split('--')
             if not os.path.exists(repo_id):
+                download_kwargs = {}
+                extra_allow_file_pattern = _decide_allow_file_pattern(
+                    class_reference)
+                if extra_allow_file_pattern is not None:
+                    download_kwargs[
+                        'allow_file_pattern'] = extra_allow_file_pattern
+                if 'Config' in class_reference or 'Processor' in class_reference or 'Tokenizer' in class_reference:
+                    download_kwargs[
+                        'ignore_file_pattern'] = ignore_file_pattern
                 from modelscope import snapshot_download
-                repo_id = snapshot_download(repo_id)
+                repo_id = snapshot_download(repo_id, **download_kwargs)
             class_reference = repo_id + '--' + class_reference
         return origin_get_class_from_dynamic_module(class_reference, *args,
                                                     **kwargs)

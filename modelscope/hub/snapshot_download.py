@@ -308,7 +308,7 @@ def _snapshot_download(
 
         _api = HubApi(token=token)
         endpoint = _api.get_endpoint_for_read(
-            repo_id=repo_id, repo_type=repo_type)
+            repo_id=repo_id, repo_type=repo_type, token=token)
         if cookies is None:
             cookies = _api.get_cookies()
         if repo_type == REPO_TYPE_MODEL:
@@ -393,8 +393,8 @@ def _snapshot_download(
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
             logger.info('Fetching dataset repo file list...')
-            repo_files = fetch_repo_files(_api, repo_id, revision_detail,
-                                          endpoint)
+            repo_files = fetch_repo_files(
+                _api, repo_id, revision_detail, endpoint, token=token)
 
             if repo_files is None:
                 logger.error(
@@ -427,7 +427,14 @@ def _snapshot_download(
         return cache_root_path
 
 
-def fetch_repo_files(_api, repo_id, revision, endpoint):
+def fetch_repo_files(_api, repo_id, revision, endpoint, token=None):
+    _owner, _dataset_name = repo_id.split('/')
+    _hub_id, _ = _api.get_dataset_id_and_type(
+        dataset_name=_dataset_name,
+        namespace=_owner,
+        endpoint=endpoint,
+        token=token)
+
     page_number = 1
     page_size = 150
     repo_files = []
@@ -441,7 +448,9 @@ def fetch_repo_files(_api, repo_id, revision, endpoint):
                 recursive=True,
                 page_number=page_number,
                 page_size=page_size,
-                endpoint=endpoint)
+                endpoint=endpoint,
+                token=token,
+                dataset_hub_id=_hub_id)
         except Exception as e:
             logger.error(f'Error fetching dataset files: {e}')
             break

@@ -3,12 +3,9 @@ import os
 import shutil
 import tempfile
 import unittest
-import zipfile
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.cv.movie_scene_segmentation import \
-    MovieSceneSegmentationModel
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
@@ -86,7 +83,8 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
-
+        from modelscope.models.cv.movie_scene_segmentation import \
+            MovieSceneSegmentationModel
         cache_path = snapshot_download(self.model_id)
         model = MovieSceneSegmentationModel.from_pretrained(cache_path)
         kwargs = dict(

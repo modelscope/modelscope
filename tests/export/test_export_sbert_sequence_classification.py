@@ -8,6 +8,7 @@ from collections import OrderedDict
 from modelscope.exporters import Exporter, TorchModelExporter
 from modelscope.models import Model
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -25,7 +26,9 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'skip because transformers version is too high.')
     def test_export_sbert_sequence_classification(self):
         model = Model.from_pretrained(self.model_id)
         print(
@@ -35,7 +38,9 @@ class TestExportSbertSequenceClassification(unittest.TestCase):
             TorchModelExporter.from_model(model).export_torch_script(
                 shape=(2, 256), output_dir=self.tmp_dir))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'skip because transformers version is too high.')
     def test_export_bert_sequence_classification(self):
         model = Model.from_pretrained(
             self.model_id_bert, task=Tasks.text_classification, num_labels=2)

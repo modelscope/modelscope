@@ -253,6 +253,11 @@ def _repo_file_download(
         group_or_owner, name = model_id_to_group_owner_name(repo_id)
         if not revision:
             revision = DEFAULT_DATASET_REVISION
+        _hub_id, _ = _api.get_dataset_id_and_type(
+            dataset_name=name,
+            namespace=group_or_owner,
+            endpoint=endpoint,
+            token=token)
         page_number = 1
         page_size = 100
         while True:
@@ -265,7 +270,8 @@ def _repo_file_download(
                     page_number=page_number,
                     page_size=page_size,
                     endpoint=endpoint,
-                    token=token)
+                    token=token,
+                    dataset_hub_id=_hub_id)
             except Exception as e:
                 logger.error(
                     f'Get dataset: {repo_id} file list failed, error: {e}')
@@ -440,6 +446,7 @@ def download_part_with_retry(params):
                     headers=get_headers,
                     cookies=cookies,
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                r.raise_for_status()
                 for chunk in r.iter_content(
                         chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
                     if chunk:  # filter out keep-alive new chunks
@@ -732,15 +739,21 @@ def download_file(
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
     if FILE_HASH in file_meta:
         expected_hash = file_meta[FILE_HASH]
-        # if a real-time hash has been computed
         if file_digest is not None:
-            # if real-time hash mismatched, try to compute it again
             if file_digest != expected_hash:
-                print(
-                    'Mismatched real-time digest found, falling back to lump-sum hash computation'
-                )
-                file_integrity_validation(temp_file, expected_hash)
+                logger.warning(
+                    'Mismatched real-time digest for %s, falling back to full hash check',
+                    file_meta['Path'])
+                if not file_integrity_validation(temp_file, expected_hash):
+                    raise FileDownloadError(
+                        'File %s hash validation failed after download, '
+                        'the file may be corrupted. Please retry.'
+                        % file_meta['Path'])
         else:
-            file_integrity_validation(temp_file, expected_hash)
+            if not file_integrity_validation(temp_file, expected_hash):
+                raise FileDownloadError(
+                    'File %s hash validation failed after download, '
+                    'the file may be corrupted. Please retry.'
+                    % file_meta['Path'])
     # put file into to cache
     return cache.put_file(file_meta, temp_file)

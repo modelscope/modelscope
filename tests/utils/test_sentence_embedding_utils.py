@@ -2,6 +2,7 @@ import subprocess
 import sys
 import unittest
 
+from modelscope.models.cv.anydoor.ldm.util import exists
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
@@ -24,6 +25,9 @@ class SentenceEmbeddingPipelineTest(unittest.TestCase):
             'is responsible for the movement of planets around the sun.',
         ]
 
+    @unittest.skipUnless(
+        exists('sentence_transformers'),
+        'Skip because sentence_transformers is not installed.')
     def test_ori_pipeline(self):
         ppl = pipeline(
             Tasks.sentence_embedding,

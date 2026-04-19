@@ -12,7 +12,7 @@ from modelscope.hub.repository import Repository
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1,
                                          TEST_MODEL_CHINESE_NAME,
-                                         TEST_MODEL_ORG)
+                                         TEST_MODEL_ORG, test_level)
 
 logger = get_logger()
 
@@ -58,21 +58,25 @@ class DownloadCMDTest(unittest.TestCase):
             logger.warning(f'Error deleting model {self.model_id}: {e}')
         super().tearDown()
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download(self):
         cmd = f'python -m modelscope.cli.cli download --model {self.model_id}'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download_with_position_arg(self):
         cmd = f'python -m modelscope.cli.cli download {self.model_id}'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download_file(self):
         cmd = f'python -m modelscope.cli.cli download --model {self.model_id} {download_model_file_name}'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download_with_cache(self):
         cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --cache_dir {self.tmp_dir}'
         stat, output = subprocess.getstatusoutput(cmd)
@@ -83,11 +87,65 @@ class DownloadCMDTest(unittest.TestCase):
             osp.exists(
                 f'{self.tmp_dir}/{self.model_id}/{download_model_file_name}'))
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download_with_revision(self):
         cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --revision {self.revision}'
         stat, output = subprocess.getstatusoutput(cmd)
         if stat != 0:
             print(output)
+        self.assertEqual(stat, 0)
+
+
+class DownloadCMDTokenTest(unittest.TestCase):
+
+    def setUp(self):
+        print(('Testing %s.%s' % (type(self).__name__, self._testMethodName)))
+        self.api = HubApi()
+
+        # Create private model repo
+        self.model_id = '%s/%s' % (TEST_MODEL_ORG, 'test_model_with_token')
+        self.api.create_repo(
+            repo_id=self.model_id,
+            repo_type='model',
+            visibility='private',
+            license=Licenses.APACHE_V2,
+            chinese_name=TEST_MODEL_CHINESE_NAME,
+            exist_ok=True,
+        )
+
+        # Create private dataset repo
+        self.dataset_id = '%s/%s' % (TEST_MODEL_ORG, 'test_dataset_with_token')
+        self.api.create_repo(
+            repo_id=self.dataset_id,
+            repo_type='dataset',
+            visibility='private',
+            license=Licenses.APACHE_V2,
+            exist_ok=True,
+        )
+
+    def tearDown(self):
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'Error deleting model {self.model_id}: {e}')
+        try:
+            self.api.delete_dataset(dataset_id=self.dataset_id)
+        except Exception as e:
+            logger.warning(f'Error deleting dataset {self.dataset_id}: {e}')
+        super().tearDown()
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_download_model_with_token(self):
+        cmd = f'python -m modelscope.cli.cli download --model {self.model_id} --token {TEST_ACCESS_TOKEN1}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        print(output)
+        self.assertEqual(stat, 0)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_download_dataset_with_token(self):
+        cmd = f'python -m modelscope.cli.cli download --dataset {self.dataset_id} --token {TEST_ACCESS_TOKEN1}'
+        stat, output = subprocess.getstatusoutput(cmd)
+        print(output)
         self.assertEqual(stat, 0)
 
 

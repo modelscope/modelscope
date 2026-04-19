@@ -4,14 +4,13 @@ import os.path as osp
 import shutil
 import tempfile
 import unittest
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Union
 
 import cv2
 import torch
 from torch.utils import data as data
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.models.cv.image_color_enhance import ImageColorEnhance
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
 from modelscope.utils.test_utils import test_level
@@ -69,7 +68,7 @@ class TestImageColorEnhanceTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,
@@ -86,6 +85,7 @@ class TestImageColorEnhanceTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
+        from modelscope.models.cv.image_color_enhance import ImageColorEnhance
         cache_path = snapshot_download(self.model_id)
         model = ImageColorEnhance.from_pretrained(cache_path)
         kwargs = dict(

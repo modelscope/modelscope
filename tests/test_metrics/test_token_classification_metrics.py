@@ -6,12 +6,14 @@ import numpy as np
 
 from modelscope.metrics.token_classification_metric import \
     TokenClassificationMetric
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
 class TestTokenClsMetrics(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('seqeval'), 'Skip because seqeval is not installed.')
     def test_value(self):
         metric = TokenClassificationMetric()
 

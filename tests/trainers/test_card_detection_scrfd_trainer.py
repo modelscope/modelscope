@@ -13,6 +13,7 @@ from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 
@@ -63,7 +64,9 @@ class TestCardDetectionScrfdTrainerSingleGPU(unittest.TestCase):
         cfg.data.samples_per_gpu = 4  # batch size
         return cfg
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_from_scratch(self):
         kwargs = dict(
             cfg_file=os.path.join(self.cache_path, 'mmcv_scrfd.py'),

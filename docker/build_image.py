@@ -463,8 +463,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args) -> Any:
         if not args.base_image:
-            # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
-            args.base_image = 'swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11'
+            # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
+            args.base_image = 'quay.io/ascend/vllm-ascend:v0.14.0rc1-a3'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:

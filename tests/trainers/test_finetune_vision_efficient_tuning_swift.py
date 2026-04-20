@@ -44,7 +44,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         exists('transformers<5.0'),
         'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_lora_train(self):
-        from swift import LoRAConfig
+        from swift.tuners import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
 
         def cfg_modify_fn(cfg):
@@ -86,7 +86,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         exists('transformers<5.0'),
         'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_adapter_train(self):
-        from swift import AdapterConfig
+        from swift.tuners import AdapterConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'
 
         def cfg_modify_fn(cfg):
@@ -126,7 +126,7 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         exists('transformers<5.0'),
         'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_prompt_train(self):
-        from swift import PromptConfig
+        from swift.tuners import PromptConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
 
         def cfg_modify_fn(cfg):

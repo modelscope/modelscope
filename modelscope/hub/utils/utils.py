@@ -211,7 +211,8 @@ def get_endpoint(cn_site=True):
 
 
 def compute_hash(file_path):
-    BUFFER_SIZE = 1024 * 64  # 64k buffer size
+    # 16MB buffer for large file hash computation
+    BUFFER_SIZE = 1024 * 1024 * 16
     sha256_hash = hashlib.sha256()
     with open(file_path, 'rb') as f:
         while True:

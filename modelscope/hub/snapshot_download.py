@@ -20,7 +20,7 @@ from modelscope.utils.thread_utils import thread_executor
 from .api import HubApi, ModelScopeConfig
 from .callback import ProgressCallback
 from .constants import DEFAULT_MAX_WORKERS
-from .errors import InvalidParameter
+from .errors import FileDownloadError, InvalidParameter
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
 from .utils.caching import ModelFileSystemCache
@@ -767,7 +767,8 @@ def _download_file_lists(
             else:
                 filtered_repo_files.append(repo_file)
 
-    @thread_executor(max_workers=max_workers, disable_tqdm=False)
+    @thread_executor(
+        max_workers=max_workers, disable_tqdm=False, fault_tolerant=True)
     def _download_single_file(repo_file):
         if repo_type == REPO_TYPE_MODEL:
             url = get_file_download_url(
@@ -801,5 +802,20 @@ def _download_file_lists(
     if len(filtered_repo_files) > 0:
         logger.info(
             f'Got {len(filtered_repo_files)} files, start to download ...')
-        _download_single_file(filtered_repo_files)
-        logger.info(f"Download {repo_type} '{repo_id}' successfully.")
+        download_result = _download_single_file(filtered_repo_files)
+
+        # Handle fault-tolerant results: report failed downloads
+        if isinstance(download_result, tuple) and len(download_result) == 2:
+            _, failed_items = download_result
+            if failed_items:
+                failed_paths = [
+                    item['Path'] if isinstance(item, dict) else str(item)
+                    for item, _ in failed_items
+                ]
+                logger.error(
+                    f'{len(failed_items)} file(s) failed to download:\n'
+                    + '\n'.join(f'  - {p}' for p in failed_paths))
+
+        logger.info(
+            f"Finish downloading {len(filtered_repo_files)} files for repo '{repo_id}'"
+        )

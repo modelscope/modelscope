@@ -35,20 +35,7 @@ from .utils.utils import (extract_root_from_patterns,
 
 logger = get_logger()
 
-
-def _get_dataset_page_size() -> int:
-    """Get dataset file listing page size from environment or use default.
-
-    Configurable via MODELSCOPE_DATASET_PAGE_SIZE environment variable.
-    Default is 500, balancing request payload size and total API calls.
-    """
-    try:
-        return int(os.environ.get('MODELSCOPE_DATASET_PAGE_SIZE', '500'))
-    except (ValueError, TypeError):
-        return 500
-
-
-DEFAULT_DATASET_PAGE_SIZE = _get_dataset_page_size()
+DEFAULT_DATASET_PAGE_SIZE = 200
 
 
 def snapshot_download(

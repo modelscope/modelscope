@@ -905,11 +905,16 @@ def _pipeline_download_dataset(
         logger.error(f'{len(failed_items)} file(s) failed to download:\n'
                      + '\n'.join(f'  - {p}' for p in failed_paths))
 
-    # Completion summary
+    # Completion summary (always print, even if raising after)
     downloaded = total_found - total_cached - len(failed_items)
     print(f'Download complete: {total_found} files found, '
           f'{total_cached} cached, {downloaded} downloaded'
           + (f', {len(failed_items)} failed' if failed_items else '') + '.')
+
+    if failed_items:
+        raise FileDownloadError(
+            f'{len(failed_items)} file(s) failed to download out of '
+            f'{total_found}.')
 
 
 def _download_file_lists(
@@ -1038,6 +1043,7 @@ def _download_file_lists(
         download_result = _download_single_file(filtered_repo_files)
 
         # Handle fault-tolerant results: report failed downloads
+        failed_items = []
         if isinstance(download_result, tuple) and len(download_result) == 2:
             _, failed_items = download_result
             if failed_items:
@@ -1052,3 +1058,8 @@ def _download_file_lists(
         logger.info(
             f"Finish downloading {len(filtered_repo_files)} files for repo '{repo_id}'"
         )
+
+        if failed_items:
+            raise FileDownloadError(
+                f'{len(failed_items)} file(s) failed to download out of '
+                f'{len(filtered_repo_files)}.')

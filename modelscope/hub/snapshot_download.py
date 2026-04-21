@@ -3,11 +3,15 @@
 import fnmatch
 import os
 import re
+import threading
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Dict, List, Optional, Type, Union
+
+from tqdm.auto import tqdm
 
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
@@ -434,14 +438,14 @@ def _snapshot_download(
             group_or_owner, name = model_id_to_group_owner_name(repo_id)
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
-            logger.info('Fetching dataset repo file list...')
             # Extract server-side root filter from include patterns
             extracted_root = extract_root_from_patterns(
                 allow_file_pattern=_normalize_patterns(allow_file_pattern),
                 allow_patterns=_normalize_patterns(allow_patterns))
             root_path = '/' + extracted_root if extracted_root else '/'
 
-            repo_files = fetch_repo_files(
+            print(f'Fetching file list (root: {root_path})...')
+            file_page_iter = _iter_dataset_file_pages(
                 _api,
                 repo_id,
                 revision_detail,
@@ -453,23 +457,20 @@ def _snapshot_download(
                 allow_patterns=allow_patterns,
                 ignore_patterns=ignore_patterns)
 
-            _download_file_lists(
-                repo_files,
-                cache,
-                temporary_cache_dir,
-                repo_id,
-                _api,
-                name,
-                group_or_owner,
-                headers,
-                repo_type=repo_type,
+            _pipeline_download_dataset(
+                file_page_iter,
+                cache=cache,
+                temporary_cache_dir=temporary_cache_dir,
+                repo_id=repo_id,
+                api=_api,
+                dataset_name=name,
+                namespace=group_or_owner,
+                headers=headers,
                 revision=revision,
                 cookies=cookies,
-                pre_filtered=True,
                 max_workers=max_workers,
                 endpoint=endpoint,
-                progress_callbacks=progress_callbacks,
-            )
+                progress_callbacks=progress_callbacks)
 
         cache.save_model_version(revision_info=revision_detail)
         cache_root_path = cache.get_root_location()
@@ -677,6 +678,238 @@ def filter_files_by_patterns(
         filtered.append(repo_file)
 
     return filtered
+
+
+def _iter_dataset_file_pages(
+    _api,
+    repo_id,
+    revision,
+    endpoint,
+    token=None,
+    root_path='/',
+    allow_file_pattern=None,
+    ignore_file_pattern=None,
+    allow_patterns=None,
+    ignore_patterns=None,
+    page_size=DEFAULT_DATASET_PAGE_SIZE,
+):
+    """Generator that yields filtered file pages from a dataset repo.
+
+    Each yield is a non-empty list of file-entry dicts for one API page.
+    Applies per-page pattern filtering to minimize memory usage.
+    Falls back to root_path='/' if the extracted prefix yields no results.
+
+    Args:
+        _api: HubApi instance.
+        repo_id: Dataset repo identifier (owner/name).
+        revision: Git revision.
+        endpoint: API endpoint URL.
+        token: Authentication token.
+        root_path: Server-side directory prefix filter.
+        allow_file_pattern: Include patterns (fnmatch).
+        ignore_file_pattern: Exclude patterns (fnmatch).
+        allow_patterns: Additional include patterns (HF-compatible).
+        ignore_patterns: Additional exclude patterns (HF-compatible).
+        page_size: Number of files per API page request.
+
+    Yields:
+        List[dict]: Non-empty list of filtered file entries per page.
+    """
+    if '/' not in repo_id:
+        raise InvalidParameter(
+            f"Invalid repo_id: '{repo_id}', expected format 'owner/name'")
+
+    _owner, _dataset_name = repo_id.split('/', 1)
+    _hub_id, _ = _api.get_dataset_id_and_type(
+        dataset_name=_dataset_name,
+        namespace=_owner,
+        endpoint=endpoint,
+        token=token)
+
+    has_patterns = any([
+        allow_file_pattern, ignore_file_pattern, allow_patterns,
+        ignore_patterns
+    ])
+
+    def _paginate_pages(effective_root_path):
+        """Yield filtered file pages for the given root_path."""
+        page_number = 1
+        total_found = 0
+
+        while True:
+            try:
+                dataset_files = _api.get_dataset_files(
+                    repo_id=repo_id,
+                    revision=revision,
+                    root_path=effective_root_path,
+                    recursive=True,
+                    page_number=page_number,
+                    page_size=page_size,
+                    endpoint=endpoint,
+                    token=token,
+                    dataset_hub_id=_hub_id)
+            except Exception as e:
+                logger.error(
+                    f'Error fetching dataset files (page {page_number}): {e}')
+                break
+
+            if not dataset_files:
+                break
+
+            # Per-page filtering to reduce memory footprint
+            if has_patterns:
+                page_filtered = filter_files_by_patterns(
+                    dataset_files,
+                    allow_file_pattern=allow_file_pattern,
+                    ignore_file_pattern=ignore_file_pattern,
+                    allow_patterns=allow_patterns,
+                    ignore_patterns=ignore_patterns)
+            else:
+                # No patterns: keep all non-tree entries
+                page_filtered = [
+                    f for f in dataset_files if f.get('Type') != 'tree'
+                ]
+
+            total_found += len(page_filtered)
+            if page_filtered:
+                yield page_filtered
+
+            print(
+                f'\r  Fetched {total_found} matching files '
+                f'({page_number} pages)...',
+                end='',
+                flush=True)
+
+            if len(dataset_files) < page_size:
+                break
+
+            page_number += 1
+
+    # Primary fetch with optimized root_path
+    try:
+        yielded_any = False
+        for page in _paginate_pages(root_path):
+            yielded_any = True
+            yield page
+
+        # Fallback: if optimized root_path yielded nothing and it's not the default
+        if not yielded_any and root_path != '/':
+            print(f"\n  root_path='{root_path}' returned no results, "
+                  f"falling back to root_path='/' for full listing.")
+            for page in _paginate_pages('/'):
+                yield page
+    finally:
+        # Terminate the \r progress line regardless of how iteration ends
+        print()
+
+
+def _pipeline_download_dataset(
+    file_page_iter,
+    cache,
+    temporary_cache_dir,
+    repo_id,
+    api,
+    dataset_name,
+    namespace,
+    headers,
+    revision,
+    cookies,
+    max_workers=DEFAULT_MAX_WORKERS,
+    endpoint=None,
+    progress_callbacks=None,
+):
+    """Pipeline consumer: download dataset files as pages are yielded.
+
+    Consumes the page iterator from _iter_dataset_file_pages, submitting
+    each file to a thread pool for concurrent download. Uses tqdm for
+    real-time progress and thread-safe error collection.
+
+    Args:
+        file_page_iter: Iterator yielding List[dict] file pages.
+        cache: ModelFileSystemCache instance for dedup.
+        temporary_cache_dir: Temp staging directory.
+        repo_id: Dataset repo identifier.
+        api: HubApi instance.
+        dataset_name: Dataset name component.
+        namespace: Owner/namespace component.
+        headers: HTTP request headers.
+        revision: Git revision.
+        cookies: HTTP cookies.
+        max_workers: Thread pool concurrency.
+        endpoint: API endpoint URL.
+        progress_callbacks: Optional progress callback list.
+    """
+    total_found = 0
+    total_cached = 0
+    failed_items = []
+    lock = threading.Lock()
+
+    def _on_done(future, repo_file):
+        """Done callback: update progress bar and collect failures."""
+        try:
+            future.result()
+        except Exception as exc:
+            with lock:
+                failed_items.append((repo_file, exc))
+            logger.debug(
+                f"Download failed for {repo_file.get('Path', '?')}: {exc}")
+        finally:
+            pbar.update(1)
+
+    # tqdm wraps the executor so all callbacks fire before pbar closes
+    with tqdm(total=0, unit=' files', disable=False) as pbar:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for page_files in file_page_iter:
+                for repo_file in page_files:
+                    total_found += 1
+                    pbar.total = total_found
+                    pbar.refresh()
+
+                    # Skip files already in cache
+                    if cache.exists(repo_file):
+                        total_cached += 1
+                        pbar.update(1)
+                        continue
+
+                    # Build download URL
+                    url = api.get_dataset_file_url(
+                        file_name=repo_file['Path'],
+                        dataset_name=dataset_name,
+                        namespace=namespace,
+                        revision=revision,
+                        endpoint=endpoint)
+
+                    # Submit download task
+                    future = executor.submit(
+                        download_file,
+                        url,
+                        repo_file,
+                        temporary_cache_dir,
+                        cache,
+                        headers,
+                        cookies,
+                        disable_tqdm=False,
+                        progress_callbacks=progress_callbacks,
+                    )
+                    future.add_done_callback(
+                        lambda f, rf=repo_file: _on_done(f, rf))
+
+            # Executor __exit__ waits for all futures to complete
+
+    # Report failures after progress bar closes
+    if failed_items:
+        failed_paths = [
+            item.get('Path', '?') if isinstance(item, dict) else str(item)
+            for item, _ in failed_items
+        ]
+        logger.error(f'{len(failed_items)} file(s) failed to download:\n'
+                     + '\n'.join(f'  - {p}' for p in failed_paths))
+
+    # Completion summary
+    downloaded = total_found - total_cached - len(failed_items)
+    print(f'Download complete: {total_found} files found, '
+          f'{total_cached} cached, {downloaded} downloaded'
+          + (f', {len(failed_items)} failed' if failed_items else '') + '.')
 
 
 def _download_file_lists(

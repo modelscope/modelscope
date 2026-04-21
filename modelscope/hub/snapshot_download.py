@@ -24,11 +24,27 @@ from .errors import InvalidParameter
 from .file_download import (create_temporary_directory_and_cache,
                             download_file, get_file_download_url)
 from .utils.caching import ModelFileSystemCache
-from .utils.utils import (get_model_masked_directory,
+from .utils.utils import (extract_root_from_patterns,
+                          get_model_masked_directory,
                           model_id_to_group_owner_name, strtobool,
                           weak_file_lock)
 
 logger = get_logger()
+
+
+def _get_dataset_page_size() -> int:
+    """Get dataset file listing page size from environment or use default.
+
+    Configurable via MODELSCOPE_DATASET_PAGE_SIZE environment variable.
+    Default is 500, balancing request payload size and total API calls.
+    """
+    try:
+        return int(os.environ.get('MODELSCOPE_DATASET_PAGE_SIZE', '500'))
+    except (ValueError, TypeError):
+        return 500
+
+
+DEFAULT_DATASET_PAGE_SIZE = _get_dataset_page_size()
 
 
 def snapshot_download(
@@ -335,13 +351,42 @@ def _snapshot_download(
                 snapshot_header[
                     'cached_model_revision'] = cache.cached_model_revision
 
+            # Extract server-side root filter from include patterns
+            extracted_root = extract_root_from_patterns(
+                allow_file_pattern=_normalize_patterns(allow_file_pattern),
+                allow_patterns=_normalize_patterns(allow_patterns))
+
             repo_files = _api.get_model_files(
                 model_id=repo_id,
                 revision=revision,
+                root=extracted_root,
                 recursive=True,
                 use_cookies=False if cookies is None else cookies,
                 headers=snapshot_header,
                 endpoint=endpoint)
+
+            # Fallback: if root filter yielded no results, retry without it
+            if not repo_files and extracted_root is not None:
+                logger.warning(
+                    f"root='{extracted_root}' returned no model files, "
+                    f'falling back to root=None for full listing.')
+                repo_files = _api.get_model_files(
+                    model_id=repo_id,
+                    revision=revision,
+                    root=None,
+                    recursive=True,
+                    use_cookies=False if cookies is None else cookies,
+                    headers=snapshot_header,
+                    endpoint=endpoint)
+
+            # Apply client-side pattern filtering
+            repo_files = filter_files_by_patterns(
+                repo_files,
+                allow_file_pattern=allow_file_pattern,
+                ignore_file_pattern=ignore_file_pattern,
+                allow_patterns=allow_patterns,
+                ignore_patterns=ignore_patterns)
+
             _download_file_lists(
                 repo_files,
                 cache,
@@ -354,10 +399,7 @@ def _snapshot_download(
                 repo_type=repo_type,
                 revision=revision,
                 cookies=cookies,
-                ignore_file_pattern=ignore_file_pattern,
-                allow_file_pattern=allow_file_pattern,
-                ignore_patterns=ignore_patterns,
-                allow_patterns=allow_patterns,
+                pre_filtered=True,
                 max_workers=max_workers,
                 endpoint=endpoint,
                 progress_callbacks=progress_callbacks,
@@ -393,13 +435,23 @@ def _snapshot_download(
             revision_detail = revision or DEFAULT_DATASET_REVISION
 
             logger.info('Fetching dataset repo file list...')
-            repo_files = fetch_repo_files(
-                _api, repo_id, revision_detail, endpoint, token=token)
+            # Extract server-side root filter from include patterns
+            extracted_root = extract_root_from_patterns(
+                allow_file_pattern=_normalize_patterns(allow_file_pattern),
+                allow_patterns=_normalize_patterns(allow_patterns))
+            root_path = '/' + extracted_root if extracted_root else '/'
 
-            if repo_files is None:
-                logger.error(
-                    f'Failed to retrieve file list for dataset: {repo_id}')
-                return None
+            repo_files = fetch_repo_files(
+                _api,
+                repo_id,
+                revision_detail,
+                endpoint,
+                token=token,
+                root_path=root_path,
+                allow_file_pattern=allow_file_pattern,
+                ignore_file_pattern=ignore_file_pattern,
+                allow_patterns=allow_patterns,
+                ignore_patterns=ignore_patterns)
 
             _download_file_lists(
                 repo_files,
@@ -413,10 +465,7 @@ def _snapshot_download(
                 repo_type=repo_type,
                 revision=revision,
                 cookies=cookies,
-                ignore_file_pattern=ignore_file_pattern,
-                allow_file_pattern=allow_file_pattern,
-                ignore_patterns=ignore_patterns,
-                allow_patterns=allow_patterns,
+                pre_filtered=True,
                 max_workers=max_workers,
                 endpoint=endpoint,
                 progress_callbacks=progress_callbacks,
@@ -427,40 +476,109 @@ def _snapshot_download(
         return cache_root_path
 
 
-def fetch_repo_files(_api, repo_id, revision, endpoint, token=None):
-    _owner, _dataset_name = repo_id.split('/')
+def fetch_repo_files(
+    _api,
+    repo_id,
+    revision,
+    endpoint,
+    token=None,
+    root_path='/',
+    allow_file_pattern=None,
+    ignore_file_pattern=None,
+    allow_patterns=None,
+    ignore_patterns=None,
+    page_size=DEFAULT_DATASET_PAGE_SIZE,
+):
+    """Fetch and filter dataset repo files with pagination and server-side prefix filtering.
+
+    Applies per-page pattern filtering to minimize memory usage.
+    Falls back to root_path='/' if the extracted prefix yields no results.
+
+    Args:
+        _api: HubApi instance.
+        repo_id: Dataset repo identifier (owner/name).
+        revision: Git revision.
+        endpoint: API endpoint URL.
+        token: Authentication token.
+        root_path: Server-side directory prefix filter.
+        allow_file_pattern: Include patterns for client-side filtering.
+        ignore_file_pattern: Exclude patterns for client-side filtering.
+        allow_patterns: Additional include patterns (HF-compatible).
+        ignore_patterns: Additional exclude patterns (HF-compatible).
+        page_size: Number of files per API page request.
+
+    Returns:
+        List of filtered file entry dicts.
+    """
+    if '/' not in repo_id:
+        raise InvalidParameter(
+            f"Invalid repo_id: '{repo_id}', expected format 'owner/name'")
+    _owner, _dataset_name = repo_id.split('/', 1)
     _hub_id, _ = _api.get_dataset_id_and_type(
         dataset_name=_dataset_name,
         namespace=_owner,
         endpoint=endpoint,
         token=token)
 
-    page_number = 1
-    page_size = 150
-    repo_files = []
+    has_patterns = any([
+        allow_file_pattern, ignore_file_pattern, allow_patterns,
+        ignore_patterns
+    ])
 
-    while True:
-        try:
-            dataset_files = _api.get_dataset_files(
-                repo_id=repo_id,
-                revision=revision,
-                root_path='/',
-                recursive=True,
-                page_number=page_number,
-                page_size=page_size,
-                endpoint=endpoint,
-                token=token,
-                dataset_hub_id=_hub_id)
-        except Exception as e:
-            logger.error(f'Error fetching dataset files: {e}')
-            break
+    def _paginate_and_filter(effective_root_path):
+        """Fetch all pages with the given root_path, applying per-page filtering."""
+        page_number = 1
+        repo_files = []
 
-        repo_files.extend(dataset_files)
+        while True:
+            try:
+                dataset_files = _api.get_dataset_files(
+                    repo_id=repo_id,
+                    revision=revision,
+                    root_path=effective_root_path,
+                    recursive=True,
+                    page_number=page_number,
+                    page_size=page_size,
+                    endpoint=endpoint,
+                    token=token,
+                    dataset_hub_id=_hub_id)
+            except Exception as e:
+                logger.error(
+                    f'Error fetching dataset files (page {page_number}): {e}')
+                break
 
-        if len(dataset_files) < page_size:
-            break
+            if not dataset_files:
+                break
 
-        page_number += 1
+            # Per-page filtering: apply patterns immediately to reduce memory
+            if has_patterns:
+                page_filtered = filter_files_by_patterns(
+                    dataset_files,
+                    allow_file_pattern=allow_file_pattern,
+                    ignore_file_pattern=ignore_file_pattern,
+                    allow_patterns=allow_patterns,
+                    ignore_patterns=ignore_patterns)
+                repo_files.extend(page_filtered)
+            else:
+                # No patterns: keep all non-tree entries
+                repo_files.extend(
+                    f for f in dataset_files if f.get('Type') != 'tree')
+
+            if len(dataset_files) < page_size:
+                break
+
+            page_number += 1
+
+        return repo_files
+
+    # Primary fetch with optimized root_path
+    repo_files = _paginate_and_filter(root_path)
+
+    # Fallback: if optimized root_path yielded nothing and it's not the default
+    if not repo_files and root_path != '/':
+        logger.warning(f"root_path='{root_path}' returned no results, "
+                       f"falling back to root_path='/' for full listing.")
+        repo_files = _paginate_and_filter('/')
 
     return repo_files
 
@@ -494,6 +612,73 @@ def _get_valid_regex_pattern(patterns: List[str]):
         return None
 
 
+def filter_files_by_patterns(
+    repo_files: List[dict],
+    *,
+    allow_file_pattern: Optional[List[str]] = None,
+    ignore_file_pattern: Optional[List[str]] = None,
+    allow_patterns: Optional[List[str]] = None,
+    ignore_patterns: Optional[List[str]] = None,
+) -> List[dict]:
+    """Filter repo file entries by include/exclude patterns.
+
+    Skips 'tree' type entries. Applies fnmatch and regex pattern matching.
+    Returns only file entries that pass all filter criteria.
+
+    Args:
+        repo_files: List of file entry dicts with 'Type', 'Path', 'Name' keys.
+        allow_file_pattern: Include patterns (fnmatch). Files must match at least one.
+        ignore_file_pattern: Exclude patterns (fnmatch). Matching files are skipped.
+        allow_patterns: Additional include patterns (HF-compatible).
+        ignore_patterns: Additional exclude patterns (HF-compatible).
+
+    Returns:
+        List of file entries that pass all filters.
+    """
+    ignore_patterns = _normalize_patterns(ignore_patterns)
+    allow_patterns = _normalize_patterns(allow_patterns)
+    ignore_file_pattern = _normalize_patterns(ignore_file_pattern)
+    allow_file_pattern = _normalize_patterns(allow_file_pattern)
+    ignore_regex_pattern = _get_valid_regex_pattern(ignore_file_pattern)
+
+    filtered = []
+    for repo_file in repo_files:
+        if repo_file['Type'] == 'tree':
+            continue
+        try:
+            if ignore_patterns and any(
+                    fnmatch.fnmatch(repo_file['Path'], p)
+                    for p in ignore_patterns):
+                continue
+
+            if ignore_file_pattern and any(
+                    fnmatch.fnmatch(repo_file['Path'], p)
+                    for p in ignore_file_pattern):
+                continue
+
+            if ignore_regex_pattern and any(
+                    re.search(p, repo_file['Name']) is not None
+                    for p in ignore_regex_pattern):
+                continue
+
+            if allow_patterns and not any(
+                    fnmatch.fnmatch(repo_file['Path'], p)
+                    for p in allow_patterns):
+                continue
+
+            if allow_file_pattern and not any(
+                    fnmatch.fnmatch(repo_file['Path'], p)
+                    for p in allow_file_pattern):
+                continue
+        except Exception as e:
+            logger.warning('Invalid file pattern: %s' % e)
+            continue
+
+        filtered.append(repo_file)
+
+    return filtered
+
+
 def _download_file_lists(
     repo_files: List[str],
     cache: ModelFileSystemCache,
@@ -513,60 +698,74 @@ def _download_file_lists(
     max_workers: int = 8,
     endpoint: Optional[str] = None,
     progress_callbacks: List[Type[ProgressCallback]] = None,
+    pre_filtered: bool = False,
 ):
-    ignore_patterns = _normalize_patterns(ignore_patterns)
-    allow_patterns = _normalize_patterns(allow_patterns)
-    ignore_file_pattern = _normalize_patterns(ignore_file_pattern)
-    allow_file_pattern = _normalize_patterns(allow_file_pattern)
-    # to compatible regex usage.
-    ignore_regex_pattern = _get_valid_regex_pattern(ignore_file_pattern)
-
-    filtered_repo_files = []
-    for repo_file in repo_files:
-        if repo_file['Type'] == 'tree':
-            continue
-        try:
-            # processing patterns
-            if ignore_patterns and any([
-                    fnmatch.fnmatch(repo_file['Path'], pattern)
-                    for pattern in ignore_patterns
-            ]):
-                continue
-
-            if ignore_file_pattern and any([
-                    fnmatch.fnmatch(repo_file['Path'], pattern)
-                    for pattern in ignore_file_pattern
-            ]):
-                continue
-
-            if ignore_regex_pattern and any([
-                    re.search(pattern, repo_file['Name']) is not None
-                    for pattern in ignore_regex_pattern
-            ]):  # noqa E501
-                continue
-
-            if allow_patterns is not None and allow_patterns:
-                if not any(
-                        fnmatch.fnmatch(repo_file['Path'], pattern)
-                        for pattern in allow_patterns):
-                    continue
-
-            if allow_file_pattern is not None and allow_file_pattern:
-                if not any(
-                        fnmatch.fnmatch(repo_file['Path'], pattern)
-                        for pattern in allow_file_pattern):
-                    continue
-            # check model_file is exist in cache, if existed, skip download
+    if pre_filtered:
+        # Files are already filtered by patterns; only check cache
+        filtered_repo_files = []
+        for repo_file in repo_files:
             if cache.exists(repo_file):
                 file_name = os.path.basename(repo_file['Name'])
                 logger.debug(
                     f'File {file_name} already in cache with identical hash, skip downloading!'
                 )
                 continue
-        except Exception as e:
-            logger.warning('The file pattern is invalid : %s' % e)
-        else:
             filtered_repo_files.append(repo_file)
+    else:
+        # Legacy path: apply pattern filtering + cache check
+        ignore_patterns = _normalize_patterns(ignore_patterns)
+        allow_patterns = _normalize_patterns(allow_patterns)
+        ignore_file_pattern = _normalize_patterns(ignore_file_pattern)
+        allow_file_pattern = _normalize_patterns(allow_file_pattern)
+        # to compatible regex usage.
+        ignore_regex_pattern = _get_valid_regex_pattern(ignore_file_pattern)
+
+        filtered_repo_files = []
+        for repo_file in repo_files:
+            if repo_file['Type'] == 'tree':
+                continue
+            try:
+                # processing patterns
+                if ignore_patterns and any([
+                        fnmatch.fnmatch(repo_file['Path'], pattern)
+                        for pattern in ignore_patterns
+                ]):
+                    continue
+
+                if ignore_file_pattern and any([
+                        fnmatch.fnmatch(repo_file['Path'], pattern)
+                        for pattern in ignore_file_pattern
+                ]):
+                    continue
+
+                if ignore_regex_pattern and any([
+                        re.search(pattern, repo_file['Name']) is not None
+                        for pattern in ignore_regex_pattern
+                ]):  # noqa E501
+                    continue
+
+                if allow_patterns is not None and allow_patterns:
+                    if not any(
+                            fnmatch.fnmatch(repo_file['Path'], pattern)
+                            for pattern in allow_patterns):
+                        continue
+
+                if allow_file_pattern is not None and allow_file_pattern:
+                    if not any(
+                            fnmatch.fnmatch(repo_file['Path'], pattern)
+                            for pattern in allow_file_pattern):
+                        continue
+                # check model_file is exist in cache, if existed, skip download
+                if cache.exists(repo_file):
+                    file_name = os.path.basename(repo_file['Name'])
+                    logger.debug(
+                        f'File {file_name} already in cache with identical hash, skip downloading!'
+                    )
+                    continue
+            except Exception as e:
+                logger.warning('The file pattern is invalid : %s' % e)
+            else:
+                filtered_repo_files.append(repo_file)
 
     @thread_executor(max_workers=max_workers, disable_tqdm=False)
     def _download_single_file(repo_file):

@@ -5,6 +5,7 @@ MCP (Model Context Protocol) API interface for ModelScope Hub.
 This module provides a simple interface to interact with
 ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
+import os
 from typing import Any, Dict, Optional
 
 import requests
@@ -46,16 +47,52 @@ class MCPApi(HubApi):
     Different methods have different token requirements - see individual method docs.
     """
 
-    def __init__(self, endpoint: Optional[str] = None) -> None:
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 token: Optional[str] = None) -> None:
         """
         Initialize MCP API.
 
         Args:
             endpoint: The modelscope server address. Defaults to None (uses default endpoint).
+            token: Optional access token for Bearer authentication.
         """
-        super().__init__(endpoint=endpoint)
+        super().__init__(endpoint=endpoint, token=token)
 
         self.mcp_base_url = self.endpoint + MCP_API_PATH
+
+    def _build_headers(self,
+                       token: Optional[str] = None,
+                       token_required: bool = False) -> Dict[str, str]:
+        """
+        Build HTTP headers with optional Bearer token authentication.
+
+        Token resolution order: explicit token param > self.token > MODELSCOPE_API_TOKEN env var.
+
+        Args:
+            token: Optional access token, takes highest priority.
+            token_required: If True, raise ValueError when no token is available.
+
+        Returns:
+            Headers dict with user-agent, request-id, and optionally Authorization.
+
+        Raises:
+            ValueError: If token_required is True but no token is available.
+        """
+        headers = self.builder_headers(self.headers)
+        resolved_token = token or self.token or os.environ.get(
+            'MODELSCOPE_API_TOKEN')
+        if resolved_token:
+            headers['Authorization'] = f'Bearer {resolved_token}'
+        elif token_required:
+            raise ValueError(
+                'Authentication required but no token found. '
+                'You can pass the `token` argument, '
+                'or set MODELSCOPE_API_TOKEN environment variable, '
+                'or use MCPApi(token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
+        return headers
 
     @staticmethod
     def _handle_response(r: requests.Response) -> Dict[str, Any]:
@@ -141,12 +178,9 @@ class MCPApi(HubApi):
         }
 
         try:
-            cookies = self.get_cookies(token)
+            headers = self._build_headers(token=token, token_required=False)
             r = self.session.put(
-                url=self.mcp_base_url,
-                headers=self.builder_headers(self.headers),
-                json=body,
-                cookies=cookies)
+                url=self.mcp_base_url, headers=headers, json=body)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error('Failed to get MCP servers: %s', e)
@@ -204,12 +238,10 @@ class MCPApi(HubApi):
             }
         """
         url = f'{self.mcp_base_url}/operational'
-        headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self.get_cookies(
-                access_token=token, cookies_required=True)
-            r = self.session.get(url, headers=headers, cookies=cookies)
+            headers = self._build_headers(token=token, token_required=True)
+            r = self.session.get(url, headers=headers)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get operational MCP servers: {e}')
@@ -230,8 +262,7 @@ class MCPApi(HubApi):
             mcp_config['mcp_servers'] = []
             for operational_url in item.get('operational_urls', []):
                 mcp_config['mcp_servers'].append({
-                    'type':
-                    operational_url.get('url').split('/')[-1],
+                    'type': (operational_url.get('url') or '').split('/')[-1],
                     'url':
                     operational_url.get('url', '')
                 })
@@ -286,16 +317,11 @@ class MCPApi(HubApi):
             raise ValueError('server_id cannot be empty')
 
         url = f'{self.mcp_base_url}/{server_id}'
-        headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self.get_cookies(token)
+            headers = self._build_headers(token=token, token_required=False)
             r = self.session.get(
-                url,
-                headers=headers,
-                params={'get_operational_url':
-                        True},  # Always get operational URLs
-                cookies=cookies)
+                url, headers=headers, params={'get_operational_url': True})
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get MCP server {server_id}: {e}')
@@ -318,7 +344,7 @@ class MCPApi(HubApi):
         if server_name and operational_urls:
             for operational_url in operational_urls:
                 mcp_config = {
-                    'type': operational_url.get('url').split('/')[-1],
+                    'type': (operational_url.get('url') or '').split('/')[-1],
                     'url': operational_url.get('url', '')
                 }
                 mcp_config_list.append(mcp_config)

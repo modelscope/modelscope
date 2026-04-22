@@ -1,14 +1,13 @@
 FROM {base_image}
 
-# Use bash so that `source` and other bash builtins work in all following RUN steps.
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=300 \
+    PIP_RETRIES=10 \
+    SOC_VERSION={soc_version}
+
 SHELL ["/bin/bash", "-c"]
 
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PIP_DEFAULT_TIMEOUT=300
-ENV PIP_RETRIES=10
-ENV TRANSFORMERS_VERBOSITY=error
-ENV TRANSFORMERS_NO_ADVISORY_WARNINGS=1
-
+# ---------- System dependencies ----------
 RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
     find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f && \
     apt-get update -y && \
@@ -19,23 +18,55 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set install.trusted-host mirrors.aliyun.com
+    pip config set install.trusted-host mirrors.aliyun.com && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        pip config set global.extra-index-url "https://download.pytorch.org/whl/cpu/"; \
+    fi
 
 {extra_content}
 
-# Reuse the vllm-ascend base image and only add the extra repos we need.
-# --depth 1 keeps the image smaller; branch/tag names work with shallow clone.
+# ---------- Install vllm + vllm-ascend ----------
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    pip install --no-cache-dir vllm==0.18.0 && \
+    pip install --no-cache-dir \
+        --extra-index-url https://mirrors.huaweicloud.com/ascend/repos/pypi/simple \
+        vllm-ascend==0.18.0rc1
+
+# ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch v0.15.3 https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
     git clone --depth 1 --branch core_r0.15.3 https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
     GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift && \
     git clone --depth 1 https://github.com/modelscope/mcore-bridge.git /mcore-bridge
 
+# ---------- Install training-side repositories ----------
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     cd /MindSpeed && pip install --no-cache-dir -e . && \
     cd /mcore-bridge && pip install --no-cache-dir -e . && \
-    pip cache purge
+    cd /ms-swift && pip install --no-cache-dir -e .
 
+# ---------- Pin torch to the correct version + torch_npu ----------
+# x86: must force-install the CPU build from pytorch.org/whl/cpu
+# aarch64: PyPI only provides the CPU build, so install it directly from the Aliyun mirror
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        pip install --no-cache-dir --force-reinstall --no-deps \
+            --index-url https://download.pytorch.org/whl/cpu \
+            torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1; \
+    else \
+        pip install --no-cache-dir --force-reinstall --no-deps \
+            torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1; \
+    fi && \
+    pip install --no-cache-dir --force-reinstall --no-deps \
+        torch_npu==2.7.1.post2 && \
+    rm -rf /root/.cache/pip
+
+# ---------- Remove CUDA-only dependencies pulled in by vllm (they cause missing libtorch_cuda.so errors on NPU) ----------
+RUN pip uninstall -y flashinfer tvm-ffi torch-c-dlpack-ext 2>/dev/null || true
 ARG INSTALL_MS_DEPS={install_ms_deps}
 
 ENV MEGATRON_LM_PATH=/Megatron-LM

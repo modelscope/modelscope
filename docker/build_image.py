@@ -457,7 +457,7 @@ class AscendImageBuilder(StableGPUImageBuilder):
     def init_args(self, args) -> Any:
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
-            args.base_image = 'quay.io/ascend/vllm-ascend:v0.14.0rc1-a3'
+            args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -467,6 +467,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         with open('docker/Dockerfile.ascend', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{soc_version}', self.args.soc_version)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
@@ -477,8 +478,9 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
     def image(self) -> str:
         return (
-            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
-            f'-{self.args.modelscope_version}-ascend-test')
+            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-'
+            f'{self.args.soc_version}-torch2.7.1-'
+            f'{self.args.modelscope_version}-ascend-test')
 
     def push(self):
         return 0
@@ -503,6 +505,7 @@ parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
+parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--dry_run', type=int, default=0)
 args = parser.parse_args()
 

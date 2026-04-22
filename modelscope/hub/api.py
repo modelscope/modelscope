@@ -2048,12 +2048,12 @@ class HubApi:
         """
         try:
             resp = response.json()
-        except requests.exceptions.JSONDecodeError as e:
+        except (requests.exceptions.JSONDecodeError, ValueError) as e:
             logger.error(f'JSON parsing failed: {e}')
             raise RequestError(f'Invalid JSON response: {e}') from e
 
         # OpenAPI envelope with explicit success field
-        if 'success' in resp:
+        if isinstance(resp, dict) and 'success' in resp:
             if resp.get('success') is True and 'data' in resp:
                 return resp['data']
             else:
@@ -2061,7 +2061,7 @@ class HubApi:
                 raise RequestError(msg)
 
         # Simple envelope with data field only (e.g., MCP API)
-        return resp.get('data', {})
+        return resp.get('data', {}) if isinstance(resp, dict) else {}
 
     def get_file_base_path(self, repo_id: str, endpoint: Optional[str] = None) -> str:
         _namespace, _dataset_name = repo_id.split('/')

@@ -5,13 +5,12 @@ MCP (Model Context Protocol) API interface for ModelScope Hub.
 This module provides a simple interface to interact with
 ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
-import os
 from typing import Any, Dict, Optional
 
 import requests
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.errors import raise_for_http_status
+from modelscope.hub.errors import RequestError, raise_for_http_status
 from modelscope.utils.logger import get_logger
 
 # Configure logging
@@ -60,62 +59,6 @@ class MCPApi(HubApi):
         super().__init__(endpoint=endpoint, token=token)
 
         self.mcp_base_url = self.endpoint + MCP_API_PATH
-
-    def _build_headers(self,
-                       token: Optional[str] = None,
-                       token_required: bool = False) -> Dict[str, str]:
-        """
-        Build HTTP headers with optional Bearer token authentication.
-
-        Token resolution order: explicit token param > self.token > MODELSCOPE_API_TOKEN env var.
-
-        Args:
-            token: Optional access token, takes highest priority.
-            token_required: If True, raise ValueError when no token is available.
-
-        Returns:
-            Headers dict with user-agent, request-id, and optionally Authorization.
-
-        Raises:
-            ValueError: If token_required is True but no token is available.
-        """
-        headers = self.builder_headers(self.headers)
-        resolved_token = token or self.token or os.environ.get(
-            'MODELSCOPE_API_TOKEN')
-        if resolved_token:
-            headers['Authorization'] = f'Bearer {resolved_token}'
-        elif token_required:
-            raise ValueError(
-                'Authentication required but no token found. '
-                'You can pass the `token` argument, '
-                'or set MODELSCOPE_API_TOKEN environment variable, '
-                'or use MCPApi(token=`your_sdk_token`). '
-                'Your token is available at https://modelscope.cn/my/myaccesstoken'
-            )
-        return headers
-
-    @staticmethod
-    def _handle_response(r: requests.Response) -> Dict[str, Any]:
-        """
-        Handle HTTP response with unified error handling and JSON parsing.
-
-        Args:
-            r: requests Response object
-
-        Returns:
-            Parsed response data dict
-
-        Raises:
-            MCPApiResponseError: If JSON parsing fails
-        """
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
-        return resp.get('data', {})
 
     @staticmethod
     def _get_server_name_from_id(server_id: str) -> str:
@@ -178,7 +121,8 @@ class MCPApi(HubApi):
         }
 
         try:
-            headers = self._build_headers(token=token, token_required=False)
+            headers = self._build_bearer_headers(
+                token=token, token_required=False)
             r = self.session.put(
                 url=self.mcp_base_url, headers=headers, json=body)
             raise_for_http_status(r)
@@ -186,7 +130,12 @@ class MCPApi(HubApi):
             logger.error('Failed to get MCP servers: %s', e)
             raise MCPApiRequestError(f'Failed to get MCP servers: {e}') from e
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from MCP servers list: {e}') from e
+
         mcp_server_list = data.get('mcp_server_list', [])
         mcp_config_list = [{
             'name': item.get('name', ''),
@@ -240,7 +189,8 @@ class MCPApi(HubApi):
         url = f'{self.mcp_base_url}/operational'
 
         try:
-            headers = self._build_headers(token=token, token_required=True)
+            headers = self._build_bearer_headers(
+                token=token, token_required=True)
             r = self.session.get(url, headers=headers)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
@@ -250,7 +200,12 @@ class MCPApi(HubApi):
 
         logger.debug(f'Response status code: {r.status_code}')
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from operational MCP servers: {e}') from e
+
         mcp_server_list = data.get('mcp_server_list', [])
 
         mcp_config_list = []
@@ -319,7 +274,8 @@ class MCPApi(HubApi):
         url = f'{self.mcp_base_url}/{server_id}'
 
         try:
-            headers = self._build_headers(token=token, token_required=False)
+            headers = self._build_bearer_headers(
+                token=token, token_required=False)
             r = self.session.get(
                 url, headers=headers, params={'get_operational_url': True})
             raise_for_http_status(r)
@@ -328,7 +284,11 @@ class MCPApi(HubApi):
             raise MCPApiRequestError(
                 f'Failed to get MCP server {server_id}: {e}') from e
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from MCP server {server_id}: {e}') from e
 
         result = {
             'name': data.get('name', ''),

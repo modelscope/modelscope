@@ -15,7 +15,7 @@ class MCPApiTest(unittest.TestCase):
         self.api = MCPApi()
         self.api.login(TEST_ACCESS_TOKEN1)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_list_mcp_servers(self):
         """Test list_mcp_servers functionality and validation."""
         result = self.api.list_mcp_servers(total_count=5)
@@ -31,7 +31,7 @@ class MCPApiTest(unittest.TestCase):
         for field in ['name', 'id', 'description']:
             self.assertIn(field, server)
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_list_operational_mcp_servers(self):
         """Test list_operational_mcp_servers functionality."""
         result = self.api.list_operational_mcp_servers()
@@ -53,7 +53,7 @@ class MCPApiTest(unittest.TestCase):
                 self.assertIn('url', first_config)
                 self.assertTrue(first_config['url'].startswith('https://'))
 
-    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_get_mcp_server(self):
         """Test get_mcp_server functionality and validation."""
         result = self.api.get_mcp_server('@modelcontextprotocol/fetch')

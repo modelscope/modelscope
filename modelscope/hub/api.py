@@ -1011,25 +1011,11 @@ class HubApi:
         if owner_or_group:
             params['author'] = owner_or_group
 
-        cookies = self.get_cookies(access_token=token, cookies_required=False)
-        headers = self.builder_headers(self.headers)
+        headers = self._build_bearer_headers(token=token, token_required=False)
 
-        r = self.session.get(
-            path,
-            params=params,
-            cookies=cookies,
-            headers=headers
-        )
+        r = self.session.get(path, params=params, headers=headers)
         raise_for_http_status(r)
-        resp = r.json()
-
-        # OpenAPI success schema
-        if resp.get('success') is True and 'data' in resp:
-            return resp['data']
-        else:
-            # Fallback for unexpected schema
-            msg = resp.get('message') or 'Failed to list datasets'
-            raise RequestError(msg)
+        return self._parse_openapi_response(r)
 
     def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar:  # noqa
         cookies = None
@@ -1992,6 +1978,90 @@ class HubApi:
     def builder_headers(self, headers):
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
+
+    def _build_bearer_headers(self,
+                              token: Optional[str] = None,
+                              token_required: bool = False) -> Dict[str, str]:
+        """
+        Build HTTP headers with optional Bearer token for OpenAPI endpoints.
+
+        Token resolution order:
+            1. Explicit token param
+            2. self.token (set at construction)
+            3. MODELSCOPE_API_TOKEN env var
+            4. Locally cached cookies (m_session_id from login())
+
+        Args:
+            token: Optional access token for one-time authentication.
+            token_required: If True, raise ValueError when no token is available.
+
+        Returns:
+            Headers dict with user-agent, request-id, and optionally Authorization.
+
+        Raises:
+            ValueError: If token_required is True but no token is available.
+        """
+        headers = self.builder_headers(self.headers)
+
+        # Priority: explicit token > self.token > env var > local cookies
+        resolved_token = token or self.token or os.environ.get(
+            'MODELSCOPE_API_TOKEN')
+
+        # Fall back to locally cached cookies (m_session_id saved by login())
+        if not resolved_token:
+            cookies = self.get_cookies()
+            if cookies:
+                for cookie in cookies:
+                    if cookie.name == 'm_session_id':
+                        resolved_token = cookie.value
+                        break
+
+        if resolved_token:
+            headers['Authorization'] = f'Bearer {resolved_token}'
+        elif token_required:
+            raise ValueError(
+                'Authentication required but no token found. '
+                'You can pass the `token` argument, '
+                'or set MODELSCOPE_API_TOKEN environment variable, '
+                'or use HubApi(token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
+        return headers
+
+    @staticmethod
+    def _parse_openapi_response(response: 'requests.Response') -> Dict[str, Any]:
+        """
+        Parse OpenAPI response with unified JSON parsing and data extraction.
+
+        Handles the standard OpenAPI response envelope:
+            {"success": bool, "data": {...}, "message": str}
+        Also handles the simpler envelope where only "data" is present.
+
+        Args:
+            response: requests Response object (HTTP status already validated).
+
+        Returns:
+            Parsed 'data' dict from the response envelope.
+
+        Raises:
+            RequestError: If JSON parsing fails or business-level error is returned.
+        """
+        try:
+            resp = response.json()
+        except (requests.exceptions.JSONDecodeError, ValueError) as e:
+            logger.error(f'JSON parsing failed: {e}')
+            raise RequestError(f'Invalid JSON response: {e}') from e
+
+        # OpenAPI envelope with explicit success field
+        if isinstance(resp, dict) and 'success' in resp:
+            if resp.get('success') is True and 'data' in resp:
+                return resp['data']
+            else:
+                msg = resp.get('message') or 'OpenAPI request failed'
+                raise RequestError(msg)
+
+        # Simple envelope with data field only (e.g., MCP API)
+        return resp.get('data', {}) if isinstance(resp, dict) else {}
 
     def get_file_base_path(self, repo_id: str, endpoint: Optional[str] = None) -> str:
         _namespace, _dataset_name = repo_id.split('/')

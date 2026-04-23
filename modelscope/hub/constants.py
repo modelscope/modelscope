@@ -78,6 +78,15 @@ UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT = int(
 UPLOAD_COMMIT_BATCH_SIZE = int(os.environ.get('UPLOAD_COMMIT_BATCH_SIZE', 256))
 UPLOAD_ADAPTIVE_BATCH_SIZE = os.environ.get('UPLOAD_ADAPTIVE_BATCH_SIZE',
                                             'true').lower() == 'true'
+
+# ReAct progressive retry fallback
+UPLOAD_REACT_ENABLED = os.environ.get('UPLOAD_REACT_ENABLED',
+                                      'true').lower() == 'true'
+UPLOAD_REACT_ROUND2_BASE_DELAY = int(
+    os.environ.get('UPLOAD_REACT_ROUND2_BASE_DELAY', 2))
+UPLOAD_REACT_ROUND3_FILE_DELAY = int(
+    os.environ.get('UPLOAD_REACT_ROUND3_FILE_DELAY', 30))
+
 UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD = 20 * 1024 * 1024
 UPLOAD_USE_CACHE = os.environ.get('UPLOAD_USE_CACHE', 'true').lower() == 'true'
 

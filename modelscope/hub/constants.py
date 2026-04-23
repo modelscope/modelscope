@@ -33,9 +33,14 @@ UPLOAD_BLOB_RETRY_MAX_WAIT = int(
 UPLOAD_FAILED_FILE_MAX_RETRIES = int(
     os.environ.get('UPLOAD_FAILED_FILE_MAX_RETRIES', 3))
 
-# Blob upload timeout (seconds per request, scales with file size)
-UPLOAD_BLOB_TIMEOUT_SECONDS = int(
-    os.environ.get('UPLOAD_BLOB_TIMEOUT_SECONDS', 7200))
+# Per-socket-operation timeout for blob upload (not total transfer time).
+# Each individual socket send/recv must complete within this limit.
+# Safe for any file size: a 100GB upload's total time can exceed this,
+# but each chunk I/O operation finishes in milliseconds.
+UPLOAD_BLOB_TIMEOUT = (30,
+                       int(
+                           os.environ.get('UPLOAD_BLOB_TIMEOUT_SECONDS',
+                                          3600)))
 
 # Methods that are safe for urllib3 transport-level retry.
 # PUT is excluded because blob uploads use streaming data that cannot be replayed.
@@ -89,8 +94,6 @@ UPLOAD_REACT_ROUND3_FILE_DELAY = int(
 UPLOAD_REACT_BACKOFF_MAX_EXPONENT = int(
     os.environ.get('UPLOAD_REACT_BACKOFF_MAX_EXPONENT', 5))
 UPLOAD_REACT_MAX_DELAY = int(os.environ.get('UPLOAD_REACT_MAX_DELAY', 120))
-UPLOAD_BATCH_WAIT_TIMEOUT = int(
-    os.environ.get('UPLOAD_BATCH_WAIT_TIMEOUT', 600))
 
 UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD = 20 * 1024 * 1024
 UPLOAD_USE_CACHE = os.environ.get('UPLOAD_USE_CACHE', 'true').lower() == 'true'

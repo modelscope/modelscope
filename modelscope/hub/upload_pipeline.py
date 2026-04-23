@@ -3,7 +3,6 @@
 import threading
 from typing import List, Tuple
 
-from modelscope.hub.constants import UPLOAD_BATCH_WAIT_TIMEOUT
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -60,27 +59,20 @@ class BatchTracker:
     def mark_batch_skipped(self, batch_idx: int):
         self._batch_events[batch_idx].set()
 
-    def wait_for_batch(
-        self,
-        batch_idx: int,
-        timeout: float = UPLOAD_BATCH_WAIT_TIMEOUT
-    ) -> Tuple[List[dict], List[tuple]]:
-        """Wait for a batch to complete with timeout protection.
+    def wait_for_batch(self, batch_idx: int) -> Tuple[List[dict], List[tuple]]:
+        """Wait for a batch to complete.
+
+        Blocks indefinitely until all files in the batch have reported
+        success or failure. Per-blob timeouts (UPLOAD_BLOB_TIMEOUT)
+        prevent individual uploads from hanging forever.
 
         Args:
             batch_idx: Index of the batch to wait for.
-            timeout: Maximum seconds to wait (default from UPLOAD_BATCH_WAIT_TIMEOUT).
 
         Returns:
             Tuple of (successful_results, failures).
-
-        Raises:
-            TimeoutError: If the batch does not complete within timeout.
         """
-        if not self._batch_events[batch_idx].wait(timeout=timeout):
-            raise TimeoutError(
-                f'Batch {batch_idx} did not complete within {timeout}s, '
-                f'possible worker thread crash.')
+        self._batch_events[batch_idx].wait()
         with self._lock:
             return list(self._batch_results[batch_idx]), list(
                 self._batch_failures[batch_idx])

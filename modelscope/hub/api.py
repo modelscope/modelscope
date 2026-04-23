@@ -54,7 +54,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_BLOB_MAX_RETRIES,
                                       UPLOAD_BLOB_RETRY_BACKOFF,
                                       UPLOAD_BLOB_RETRY_MAX_WAIT,
-                                      UPLOAD_BLOB_TIMEOUT_SECONDS,
+                                      UPLOAD_BLOB_TIMEOUT,
                                       UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                                       UPLOAD_COMMIT_BATCH_SIZE,
                                       UPLOAD_FAILED_FILE_MAX_RETRIES,
@@ -3315,7 +3315,7 @@ class HubApi:
                         upload_object['url'],
                         headers=headers,
                         data=stream,
-                        timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
+                        timeout=UPLOAD_BLOB_TIMEOUT,
                     )
                 stream.verify_complete()
 
@@ -3326,7 +3326,7 @@ class HubApi:
                     upload_object['url'],
                     headers=headers,
                     data=stream,
-                    timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
+                    timeout=UPLOAD_BLOB_TIMEOUT,
                 )
                 stream.verify_complete()
 
@@ -3337,7 +3337,7 @@ class HubApi:
                     upload_object['url'],
                     headers=headers,
                     data=stream,
-                    timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
+                    timeout=UPLOAD_BLOB_TIMEOUT,
                 )
                 stream.verify_complete()
 

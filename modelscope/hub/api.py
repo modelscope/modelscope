@@ -3043,17 +3043,17 @@ class HubApi:
             1 for r in all_results if r.get('is_uploaded'))
         uploaded_count = len(all_results) - reused_count
 
-        logger.info('=' * 60)
-        logger.info('Upload Report')
-        logger.info('-' * 60)
-        logger.info(f'  Total files      : {total_files}')
-        logger.info(f'  Skipped (cached) : {skipped_count}')
-        logger.info(f'  Reused (global)  : {reused_count}')
-        logger.info(f'  Uploaded (PUT)   : {uploaded_count}')
-        logger.info(f'  Failed           : {failed_count}')
-        logger.info(f'  Commits          : {len(commit_infos)}')
-        logger.info(f'  Elapsed          : {elapsed:.1f}s')
-        logger.info('=' * 60)
+        print('=' * 60)
+        print('Upload Report')
+        print('-' * 60)
+        print(f'  Total files      : {total_files}')
+        print(f'  Skipped (cached) : {skipped_count}')
+        print(f'  Reused (global)  : {reused_count}')
+        print(f'  Uploaded (PUT)   : {uploaded_count}')
+        print(f'  Failed           : {failed_count}')
+        print(f'  Commits          : {len(commit_infos)}')
+        print(f'  Elapsed          : {elapsed:.1f}s')
+        print('=' * 60)
 
         # Final error if there are still failed files after all retries
         if total_failed_files:

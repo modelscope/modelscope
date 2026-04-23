@@ -35,7 +35,7 @@ attention.deprecate = lambda *arg, **kwargs: None
 __tuner_MAP__ = {'lora': LoRATuner, 'control_lora': ControlLoRATuner}
 
 if is_swift_available():
-    from swift import AdapterConfig, LoRAConfig, PromptConfig, Swift
+    from swift.tuners import AdapterConfig, LoRAConfig, PromptConfig, Swift
 
 
 @MODELS.register_module(

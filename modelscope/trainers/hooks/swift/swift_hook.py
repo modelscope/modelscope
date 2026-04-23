@@ -52,7 +52,7 @@ class SwiftCheckpointProcessor(CheckpointProcessor):
                 raise ValueError(
                     'Please install swift by `pip install ms-swift` to use SwiftHook.'
                 )
-            from swift import SwiftModel
+            from swift.tuners import SwiftModel
             if isinstance(model, SwiftModel):
                 _swift_output_dir = output_dir + SwiftCheckpointProcessor.SWIFT_SAVE_SUFFIX
                 model.save_pretrained(

@@ -39,6 +39,9 @@ from .utils.utils import (file_integrity_validation, get_endpoint,
 
 logger = get_logger()
 
+# Maximum number of retries for hash validation failures
+HASH_RETRY_TIMES = 3
+
 
 def model_file_download(
     model_id: str,
@@ -711,49 +714,66 @@ def download_file(
     disable_tqdm=False,
     progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
-    if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
-            'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
-        file_digest = parallel_download(
-            url,
-            temporary_cache_dir,
-            file_meta['Path'],
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict(),
-            file_size=file_meta['Size'],
-            disable_tqdm=disable_tqdm,
-            progress_callbacks=progress_callbacks,
-        )
-    else:
-        file_digest = http_get_model_file(
-            url,
-            temporary_cache_dir,
-            file_meta['Path'],
-            file_size=file_meta['Size'],
-            headers=headers,
-            cookies=cookies,
-            disable_tqdm=disable_tqdm,
-            progress_callbacks=progress_callbacks,
-        )
-
-    # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
-    if FILE_HASH in file_meta:
-        expected_hash = file_meta[FILE_HASH]
-        if file_digest is not None:
-            if file_digest != expected_hash:
-                logger.warning(
-                    'Mismatched real-time digest for %s, falling back to full hash check',
-                    file_meta['Path'])
-                if not file_integrity_validation(temp_file, expected_hash):
-                    raise FileDownloadError(
-                        'File %s hash validation failed after download, '
-                        'the file may be corrupted. Please retry.'
-                        % file_meta['Path'])
+
+    for hash_attempt in range(HASH_RETRY_TIMES):
+        if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
+                'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
+            file_digest = parallel_download(
+                url,
+                temporary_cache_dir,
+                file_meta['Path'],
+                headers=headers,
+                cookies=None if cookies is None else cookies.get_dict(),
+                file_size=file_meta['Size'],
+                disable_tqdm=disable_tqdm,
+                progress_callbacks=progress_callbacks,
+            )
         else:
-            if not file_integrity_validation(temp_file, expected_hash):
-                raise FileDownloadError(
-                    'File %s hash validation failed after download, '
-                    'the file may be corrupted. Please retry.'
-                    % file_meta['Path'])
-    # put file into to cache
+            file_digest = http_get_model_file(
+                url,
+                temporary_cache_dir,
+                file_meta['Path'],
+                file_size=file_meta['Size'],
+                headers=headers,
+                cookies=cookies,
+                disable_tqdm=disable_tqdm,
+                progress_callbacks=progress_callbacks,
+            )
+
+        # Check file integrity
+        if FILE_HASH in file_meta:
+            expected_hash = file_meta[FILE_HASH]
+            hash_valid = True
+            if file_digest is not None:
+                if file_digest != expected_hash:
+                    logger.warning(
+                        'Mismatched real-time digest for %s, falling back to full hash check',
+                        file_meta['Path'])
+                    if not file_integrity_validation(temp_file, expected_hash):
+                        hash_valid = False
+            else:
+                if not file_integrity_validation(temp_file, expected_hash):
+                    hash_valid = False
+
+            if not hash_valid:
+                if hash_attempt < HASH_RETRY_TIMES - 1:
+                    logger.warning(
+                        'Hash validation failed for %s, '
+                        'retrying download (attempt %d/%d)', file_meta['Path'],
+                        hash_attempt + 1, HASH_RETRY_TIMES)
+                    # Clean up corrupted file before retry
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    continue
+                else:
+                    raise FileDownloadError(
+                        'File %s hash validation failed after %d attempts, '
+                        'the file may be corrupted.' %
+                        (file_meta['Path'], HASH_RETRY_TIMES))
+
+        # Hash validation passed or no hash to validate, exit retry loop
+        break
+
+    # Put file into cache
     return cache.put_file(file_meta, temp_file)

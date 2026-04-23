@@ -139,6 +139,8 @@ class UploadProgress:
         except Exception as e:
             logger.warning(f'Failed to load checkpoint, starting fresh: {e}')
             self._committed_batches = set()
+            self._batch_fingerprints = {}
+            self._failed_files = []
 
     def _save(self):
         """Atomic persist via temp file + rename."""

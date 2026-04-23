@@ -2863,8 +2863,10 @@ class HubApi:
                                   result.get('file_path', '')), e))
             total_failed_files = retry_failures
 
-        # Record final failed files in checkpoint for next-run awareness
-        if checkpoint is not None:
+        # Record final failed files in checkpoint for next-run awareness.
+        # Only update when we actually did work this run; otherwise preserve
+        # the previous record so the false-success check below still works.
+        if checkpoint is not None and files_to_upload:
             failed_paths = [item[0] for (item, _) in total_failed_files]
             checkpoint.record_failed_files(failed_paths)
 
@@ -2892,9 +2894,11 @@ class HubApi:
             if skipped_count == len(sorted_files):
                 # Check for previously failed files recorded in checkpoint
                 if checkpoint is not None and checkpoint.get_failed_files():
-                    logger.error(
-                        'Some files failed in a previous run and still need re-upload. '
-                        'Consider deleting .ms_upload_progress and retrying.')
+                    previously_failed = checkpoint.get_failed_files()
+                    raise RuntimeError(
+                        f'{len(previously_failed)} file(s) failed in a previous run '
+                        f'and were not retried (in already-committed batches). '
+                        f'Delete {UPLOAD_PROGRESS_FILE} and re-run to retry.')
                 else:
                     logger.info('All batches were already committed.')
                     return None

@@ -55,24 +55,22 @@ class ErrorCategory(str, Enum):
 def classify_error(error: Exception) -> ErrorCategory:
     """Classify an exception into a retry category.
 
-    This pure function determines whether an error is transient (retryable),
-    throttled (retryable with backoff), or permanent (non-retryable).
-
-    Args:
-        error: Exception from upload or commit operation.
-
-    Returns:
-        ErrorCategory indicating the retry strategy.
+    Returns an ErrorCategory that indicates whether the error is transient
+    (retryable) or permanent, and what kind of failure occurred.
     """
     error_str = str(error).lower()
+
+    # ---- Specific OS error subclasses (check BEFORE generic IOError) ----
+    if isinstance(error, FileNotFoundError):
+        return ErrorCategory.FILE_INVALID
+    if isinstance(error, PermissionError):
+        return ErrorCategory.FILE_INVALID
 
     # Network / connection errors
     if isinstance(error, (ConnectionError, TimeoutError)):
         return ErrorCategory.TRANSIENT_NETWORK
-    if 'timeout' in error_str or 'connection' in error_str:
-        return ErrorCategory.TRANSIENT_NETWORK
 
-    # requests HTTP errors
+    # requests HTTP errors (check response status code)
     if isinstance(error, requests.exceptions.HTTPError):
         resp = getattr(error, 'response', None)
         if resp is not None:
@@ -95,15 +93,22 @@ def classify_error(error: Exception) -> ErrorCategory:
             return ErrorCategory.AUTH_FAILED
         if '404' in error_str:
             return ErrorCategory.NOT_FOUND
-        # Match "HTTP 5xx"
-        if re.search(r'http\s*5\d{2}', error_str):
+        if re.search(r'(?:http[/\s]*)?5\d{2}|server.*error', error_str):
             return ErrorCategory.TRANSIENT_SERVER
         return ErrorCategory.UNKNOWN
 
-    # File system errors
+    # Generic file / IO errors
     if isinstance(error, (IOError, OSError)):
         if 'size changed' in error_str or 'no such file' in error_str:
             return ErrorCategory.FILE_INVALID
+        if 'permission' in error_str or 'access denied' in error_str:
+            return ErrorCategory.FILE_INVALID
+        return ErrorCategory.TRANSIENT_NETWORK
+
+    # Fallback: check common patterns in error message
+    if 'timeout' in error_str or 'timed out' in error_str:
+        return ErrorCategory.TRANSIENT_NETWORK
+    if 'connection' in error_str:
         return ErrorCategory.TRANSIENT_NETWORK
 
     return ErrorCategory.UNKNOWN
@@ -249,7 +254,8 @@ class UploadTracker:
             data = {
                 'version': _TRACKER_VERSION,
                 'repo_id': self._repo_id,
-                'files': self._files,
+                'files': {k: dict(v)
+                          for k, v in self._files.items()},
             }
             self._dirty = False
         try:

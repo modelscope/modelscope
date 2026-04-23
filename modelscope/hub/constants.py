@@ -32,6 +32,17 @@ UPLOAD_BLOB_RETRY_MAX_WAIT = int(
 # Failed file retry within upload_folder
 UPLOAD_FAILED_FILE_MAX_RETRIES = int(
     os.environ.get('UPLOAD_FAILED_FILE_MAX_RETRIES', 3))
+
+# Blob upload timeout (seconds per request, scales with file size)
+UPLOAD_BLOB_TIMEOUT_SECONDS = int(
+    os.environ.get('UPLOAD_BLOB_TIMEOUT_SECONDS', 7200))
+
+# Methods that are safe for urllib3 transport-level retry.
+# PUT is excluded because blob uploads use streaming data that cannot be replayed.
+UPLOAD_RETRY_ALLOWED_METHODS = frozenset(
+    os.environ.get('UPLOAD_RETRY_ALLOWED_METHODS',
+                   'GET,HEAD,DELETE,OPTIONS,TRACE').split(','))
+
 API_RESPONSE_FIELD_DATA = 'Data'
 API_FILE_DOWNLOAD_RETRY_TIMES = 5
 API_FILE_DOWNLOAD_TIMEOUT = 60

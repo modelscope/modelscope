@@ -53,6 +53,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_BLOB_MAX_RETRIES,
                                       UPLOAD_BLOB_RETRY_BACKOFF,
                                       UPLOAD_BLOB_RETRY_MAX_WAIT,
+                                      UPLOAD_BLOB_TIMEOUT_SECONDS,
                                       UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                                       UPLOAD_COMMIT_BATCH_SIZE,
                                       UPLOAD_FAILED_FILE_MAX_RETRIES,
@@ -60,6 +61,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_RETRY_ALLOWED_METHODS,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
                                       UPLOAD_USE_CACHE, VALID_SORT_KEYS,
                                       DatasetVisibility, Licenses,
@@ -105,6 +107,44 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
 logger = get_logger()
 
 
+class _CountedReadStream:
+    """File wrapper that counts bytes read and updates a progress bar.
+
+    Unlike a generator, this is a file-like object that requests can
+    use with Content-Length header for transfer integrity verification.
+    """
+
+    def __init__(self, file_obj, expected_size, pbar, chunk_size):
+        self._file = file_obj
+        self._expected_size = expected_size
+        self._pbar = pbar
+        self._chunk_size = chunk_size
+        self._bytes_read = 0
+
+    def read(self, size=-1):
+        """Read a chunk from the underlying file object."""
+        read_size = self._chunk_size if size < 0 else min(size, self._chunk_size)
+        chunk = self._file.read(read_size)
+        if chunk:
+            n = len(chunk)
+            self._bytes_read += n
+            self._pbar.update(n)
+        return chunk
+
+    @property
+    def bytes_read(self):
+        """Total bytes read so far."""
+        return self._bytes_read
+
+    def verify_complete(self):
+        """Raise IOError if bytes read does not match expected size."""
+        if self._bytes_read != self._expected_size:
+            raise IOError(
+                f'Upload data incomplete: read {self._bytes_read} bytes, '
+                f'expected {self._expected_size} bytes. '
+                f'File may have been modified during upload.')
+
+
 class HubApi:
     """Model hub api interface.
     """
@@ -129,6 +169,7 @@ class HubApi:
             connect=2,
             backoff_factor=2,
             status_forcelist=(500, 502, 503, 504),
+            allowed_methods=UPLOAD_RETRY_ALLOWED_METHODS,
             respect_retry_after_header=True,
         )
         adapter = HTTPAdapter(max_retries=retry)
@@ -2438,6 +2479,14 @@ class HubApi:
         last_error = None
         for attempt in range(UPLOAD_BLOB_MAX_RETRIES):
             try:
+                # Validate file size has not changed since hash computation
+                if isinstance(file_path, (str, os.PathLike)):
+                    current_size = os.path.getsize(str(file_path))
+                    if current_size != file_size:
+                        raise IOError(
+                            f'File size changed since hash computation: '
+                            f'was {file_size}, now {current_size}. '
+                            f'File may have been modified: {file_path_in_repo}')
                 upload_res: dict = self._upload_blob(
                     repo_id=repo_id,
                     repo_type=repo_type,
@@ -2450,7 +2499,7 @@ class HubApi:
                 )
                 break
             except (ConnectionError, requests.exceptions.ConnectionError,
-                    requests.exceptions.HTTPError) as e:
+                    requests.exceptions.HTTPError, IOError) as e:
                 # Only retry on 5xx / connection errors; 4xx are not retryable
                 if isinstance(e, requests.exceptions.HTTPError):
                     if hasattr(e, 'response') and e.response is not None:
@@ -2953,14 +3002,8 @@ class HubApi:
         self.headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
         headers = self.builder_headers(self.headers)
 
-        def read_in_chunks(file_object, pbar, chunk_size=buffer_size_mb * 1024 * 1024):
-            """Lazy function (generator) to read a file piece by piece."""
-            while True:
-                ck = file_object.read(chunk_size)
-                if not ck:
-                    break
-                pbar.update(len(ck))
-                yield ck
+        chunk_size = buffer_size_mb * 1024 * 1024
+        headers['Content-Length'] = str(size)
 
         with tqdm(
                 total=size,
@@ -2969,28 +3012,39 @@ class HubApi:
                 desc=tqdm_desc,
                 disable=disable_tqdm
         ) as pbar:
-
             if isinstance(data, (str, Path)):
                 with open(data, 'rb') as f:
+                    stream = _CountedReadStream(
+                        f, size, pbar, chunk_size)
                     response = self.session.put(
                         upload_object['url'],
                         headers=headers,
-                        data=read_in_chunks(f, pbar)
+                        data=stream,
+                        timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
                     )
+                stream.verify_complete()
 
             elif isinstance(data, bytes):
+                stream = _CountedReadStream(
+                    io.BytesIO(data), size, pbar, chunk_size)
                 response = self.session.put(
                     upload_object['url'],
                     headers=headers,
-                    data=read_in_chunks(io.BytesIO(data), pbar)
+                    data=stream,
+                    timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
                 )
+                stream.verify_complete()
 
             elif isinstance(data, io.BufferedIOBase):
+                stream = _CountedReadStream(
+                    data, size, pbar, chunk_size)
                 response = self.session.put(
                     upload_object['url'],
                     headers=headers,
-                    data=read_in_chunks(data, pbar)
+                    data=stream,
+                    timeout=UPLOAD_BLOB_TIMEOUT_SECONDS,
                 )
+                stream.verify_complete()
 
             else:
                 raise ValueError('Invalid data type to upload')

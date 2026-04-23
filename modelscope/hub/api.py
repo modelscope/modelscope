@@ -2811,6 +2811,7 @@ class HubApi:
                     st = os.stat(file_path)
                     if tracker.is_committed(path_in_repo, st.st_mtime, st.st_size):
                         skipped_indices.add(file_idx)
+                        batch_tracker.mark_file_skipped(file_idx)
                         continue
                 except OSError as e:
                     logger.warning(
@@ -2820,13 +2821,6 @@ class HubApi:
         skipped_count = len(skipped_indices)
         if skipped_count > 0:
             logger.info(f'{skipped_count} file(s) already committed, skipping.')
-
-        # Mark fully-skipped batches so BatchTracker doesn't block on them
-        for batch_idx in range(batch_tracker.num_batches):
-            start = batch_idx * commit_batch_size
-            end = min(start + commit_batch_size, len(sorted_files))
-            if all(i in skipped_indices for i in range(start, end)):
-                batch_tracker.mark_batch_skipped(batch_idx)
 
         logger.info(
             f'Uploading {len(files_to_upload)} file(s) in {batch_tracker.num_batches} batch(es) '

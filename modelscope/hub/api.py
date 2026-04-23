@@ -62,7 +62,9 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_REACT_BACKOFF_MAX_EXPONENT,
                                       UPLOAD_REACT_ENABLED,
+                                      UPLOAD_REACT_MAX_DELAY,
                                       UPLOAD_REACT_ROUND2_BASE_DELAY,
                                       UPLOAD_REACT_ROUND3_FILE_DELAY,
                                       UPLOAD_RETRY_ALLOWED_METHODS,
@@ -82,7 +84,8 @@ from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
 from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE
 from modelscope.hub.upload_pipeline import BatchTracker
-from modelscope.hub.upload_tracker import UploadTracker, classify_error
+from modelscope.hub.upload_tracker import (NullTracker, UploadTracker,
+                                           classify_error)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -2464,6 +2467,22 @@ class HubApi:
 
         return commit_info
 
+    def _track_uploaded_batch(self, tracker, results):
+        """Mark files as uploaded and persist tracker state."""
+        for r in results:
+            tracker.mark_uploaded(
+                r['file_path_in_repo'], r['file_mtime'],
+                r['file_size_on_disk'])
+        tracker.save()
+
+    def _track_committed_batch(self, tracker, results):
+        """Mark files as committed and persist tracker state."""
+        tracker.mark_committed_batch([
+            (r['file_path_in_repo'], r['file_mtime'],
+             r['file_size_on_disk'])
+            for r in results])
+        tracker.save()
+
     def _upload_single_file(
             self,
             file_path_in_repo: str,
@@ -2475,10 +2494,12 @@ class HubApi:
             tracker=None,
     ) -> dict:
         """Hash and upload a single file, returning result dict."""
+        if tracker is None:
+            tracker = NullTracker()
         hash_info_d = None
         file_stat = None
         is_real_path = isinstance(file_path, (str, os.PathLike))
-        if tracker is not None and is_real_path:
+        if is_real_path:
             try:
                 file_stat = os.stat(file_path)
                 cached = tracker.get_hash(
@@ -2491,7 +2512,7 @@ class HubApi:
 
         if hash_info_d is None:
             hash_info_d = compute_file_hash(file_path_or_obj=file_path)
-            if tracker is not None and is_real_path:
+            if is_real_path:
                 try:
                     if file_stat is None:
                         file_stat = os.stat(file_path)
@@ -2659,41 +2680,36 @@ class HubApi:
             use_cache: bool = UPLOAD_USE_CACHE,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
     ) -> Optional[Union[CommitInfo, List[CommitInfo]]]:
-        """
-        Upload a folder to the ModelScope Hub.
+        """Upload a folder to ModelScope Hub with resumable support.
+
+        Upload files from a local folder (or explicit file list) to a remote
+        repository, with automatic batching, parallel upload, and progressive
+        retry fallback (ReAct) for failed files.
 
         Args:
-            repo_id (str): The repo id in the format of `owner_name/repo_name`.
-            folder_path (Union[str, Path, List[str], List[Path]]): The folder path or list of file paths to upload.
-            path_in_repo (Optional[str]): The path in the repo to upload to.
-            commit_message (Optional[str]): The commit message.
-            commit_description (Optional[str]): The commit description.
-            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
-                See `https://modelscope.cn/my/myaccesstoken` to get your token.
-            repo_type (Optional[str]): The repo type, default to `model`.
-            allow_patterns (Optional[Union[List[str], str]]): The patterns to allow.
-            ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
-            max_workers (int): The maximum number of workers to use for uploading files concurrently.
-                Defaults to `DEFAULT_MAX_WORKERS`.
-            use_cache (bool): Whether to use hash cache and checkpoint for upload resume support. Defaults to True.
-            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            repo_id: Repository identifier in 'owner/repo' format.
+            folder_path: Local folder path, or a list of (path_in_repo, local_path) tuples.
+            path_in_repo: Target directory path within the repository.
+            commit_message: Commit message for the upload.
+            commit_description: Optional extended commit description.
+            revision: Branch or tag name (default: 'master').
+            token: Authentication token. If None, uses stored credentials.
+            repo_type: One of 'model', 'dataset', or 'space'.
+            ignore_patterns: Glob patterns for files to exclude.
+            max_workers: Max concurrent upload threads.
+            use_cache: If True, uses .ms_upload_cache for resumable uploads.
+                Files with matching path, mtime, and size that are already
+                committed will be skipped automatically.
 
         Returns:
-            Optional[Union[CommitInfo, List[CommitInfo]]]:
-                The commit info or list of commit infos if multiple batches are committed.
-                Returns None if all batches were already committed.
+            None if all files were already committed (nothing to do).
+            A single CommitInfo if only one batch was committed.
+            A list of CommitInfo if multiple batches were committed.
 
-        Examples:
-            >>> from modelscope.hub.api import HubApi
-            >>> api = HubApi()
-            >>> commit_info = api.upload_folder(
-            ...     repo_id='your-namespace/your-repo-name',
-            ...     folder_path='/path/to/your/folder',
-            ...     path_in_repo='optional/path/in/repo',
-            ...     commit_message='Upload my folder',
-            ...     token='your-access-token'
-            ... )
-            >>> print(commit_info.commit_url)
+        Raises:
+            ValueError: If folder_path is empty or contains no valid files.
+            RuntimeError: If any files remain failed after all retry rounds,
+                with a message indicating the count and a retry hint.
         """
         if not repo_id:
             raise ValueError('The arg `repo_id` cannot be empty!')
@@ -2779,17 +2795,18 @@ class HubApi:
         # Initialize unified upload tracker for resume support
         folder_path_resolved = Path(folder_path).resolve() \
             if isinstance(folder_path, (str, Path)) else Path(folder_path[0]).resolve().parent
-        tracker = None
         if use_cache:
             cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
             tracker = UploadTracker(cache_path, repo_id=repo_id)
+        else:
+            tracker = NullTracker()
         batch_tracker = BatchTracker(len(sorted_files), commit_batch_size)
 
         # File-level filtering: skip individually committed files
         files_to_upload = []
         skipped_indices = set()
         for file_idx, (path_in_repo, file_path) in enumerate(sorted_files):
-            if tracker is not None and isinstance(file_path, (str, os.PathLike)):
+            if isinstance(file_path, (str, os.PathLike)):
                 try:
                     st = os.stat(file_path)
                     if tracker.is_committed(path_in_repo, st.st_mtime, st.st_size):
@@ -2856,12 +2873,7 @@ class HubApi:
                             logger.error(f'  Failed: {item[0]} - {err}')
 
                     # Mark successfully uploaded files in tracker (BEFORE commit attempt)
-                    if tracker is not None:
-                        for r in results:
-                            tracker.mark_uploaded(
-                                r['file_path_in_repo'], r['file_mtime'],
-                                r['file_size_on_disk'])
-                        tracker.save()
+                    self._track_uploaded_batch(tracker, results)
 
                     operations = self._build_batch_operations(results, repo_type)
                     if not operations:
@@ -2884,21 +2896,15 @@ class HubApi:
                         )
                         commit_infos.append(commit_info)
                         # Mark all files in this batch as committed
-                        if tracker is not None:
-                            tracker.mark_committed_batch([
-                                (r['file_path_in_repo'], r['file_mtime'],
-                                 r['file_size_on_disk'])
-                                for r in results])
-                            tracker.save()
+                        self._track_committed_batch(tracker, results)
                     except Exception as e:
                         logger.error(
                             f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
-                        if tracker is not None:
-                            for r in results:
-                                tracker.mark_failed(
-                                    r['file_path_in_repo'], r['file_mtime'],
-                                    r['file_size_on_disk'],
-                                    error_type='commit_failed')
+                        for r in results:
+                            tracker.mark_failed(
+                                r['file_path_in_repo'], r['file_mtime'],
+                                r['file_size_on_disk'],
+                                error_type='commit_failed')
                         # Recover uploaded files to retry queue
                         for r in results:
                             total_failed_files.append(
@@ -2907,8 +2913,7 @@ class HubApi:
                             f'Batch {batch_idx + 1}/{num_batches}: '
                             f'{len(results)} uploaded file(s) recovered to retry queue.')
         finally:
-            if tracker is not None:
-                tracker.save()
+            tracker.save()
 
         # ReAct progressive retry fallback
         if total_failed_files and UPLOAD_REACT_ENABLED:
@@ -2945,13 +2950,7 @@ class HubApi:
                         logger.error(f'  Retry failed: {path_in_repo} - {e}')
                         retry_failures.append(((path_in_repo, file_path), e))
                 if retry_successes:
-                    if tracker is not None:
-                        for result in retry_successes:
-                            tracker.mark_uploaded(
-                                result['file_path_in_repo'],
-                                result['file_mtime'],
-                                result['file_size_on_disk'])
-                        tracker.save()
+                    self._track_uploaded_batch(tracker, retry_successes)
                     operations = self._build_batch_operations(
                         retry_successes, repo_type)
                     if operations:
@@ -2965,12 +2964,7 @@ class HubApi:
                                 repo_type=repo_type,
                                 revision=revision)
                             commit_infos.append(commit_info)
-                            if tracker is not None:
-                                tracker.mark_committed_batch([
-                                    (r['file_path_in_repo'], r['file_mtime'],
-                                     r['file_size_on_disk'])
-                                    for r in retry_successes])
-                                tracker.save()
+                            self._track_committed_batch(tracker, retry_successes)
                             logger.info(
                                 f'  Retry round {retry_round + 1}: '
                                 f'committed {len(retry_successes)} file(s).')
@@ -2984,25 +2978,26 @@ class HubApi:
                 total_failed_files = retry_failures
 
         # Final tracker save
-        if tracker is not None:
-            tracker.save()
+        tracker.save()
 
         # Summary
         # Upload statistics
         total_files = len(sorted_files)
-        uploaded_count = total_files - skipped_count - len(total_failed_files)
+        failed_count = len(total_failed_files)
+        succeeded = total_files - skipped_count - failed_count
         logger.info(
-            f'Upload summary: {total_files} total, {uploaded_count} uploaded, '
-            f'{skipped_count} skipped (committed), {len(total_failed_files)} failed')
+            f'Upload summary: {total_files} total, '
+            f'{skipped_count} skipped (already committed), '
+            f'{len(commit_infos)} batch(es) committed, '
+            f'{failed_count} failed')
 
         # Final error if there are still failed files after all retries
         if total_failed_files:
-            # Log each failed file
             for (path_in_repo, _), err in total_failed_files:
                 logger.error(f'  - {path_in_repo}: {type(err).__name__}: {err}')
-            succeeded = uploaded_count + skipped_count
+            succeeded = total_files - failed_count
             raise RuntimeError(
-                f'ERROR - {len(total_failed_files)} file(s) failed to upload. '
+                f'ERROR - {failed_count} file(s) failed to upload. '
                 f'Please manually try again. Successfully uploaded '
                 f'{succeeded} file(s) will be automatically skipped '
                 f'during the retry.')
@@ -3030,13 +3025,16 @@ class HubApi:
         """ReAct-style progressive retry for failed files.
 
         Implements Reason-Act-Observe loop with three escalating rounds:
-          Round 1: Parallel retry with reduced concurrency
-          Round 2: Serial retry with exponential backoff
-          Round 3: Single-file commit with long delays
+          Round 1: Parallel retry with reduced concurrency (workers//2, batch=16)
+          Round 2: Serial retry with exponential backoff (delay * 2^min(i, max_exp))
+          Round 3: Single-file commit with long delays (one file per commit)
+
+        Files that exceed the per-file retry limit are classified as permanent
+        failures and will not be retried further.
 
         Args:
-            failed_files: list of ((path_in_repo, file_path), error) tuples.
-            tracker: UploadTracker instance (or None).
+            failed_files: List of ((path_in_repo, file_path), error) tuples.
+            tracker: UploadTracker or NullTracker instance.
             repo_id: Repository identifier.
             repo_type: Repository type.
             token: Authentication token.
@@ -3046,9 +3044,13 @@ class HubApi:
             max_workers: Max upload concurrency from caller.
 
         Returns:
-            Tuple of (remaining_failures, successful_commit_infos).
+            Tuple of (all_failures, commit_infos) where:
+              - all_failures: list of ((path_in_repo, file_path), error) for
+                files that could not be resolved (permanent + exhausted retries).
+              - commit_infos: list of CommitInfo for successful retry commits.
         """
         commit_infos = []
+        retry_counts: dict = {}  # path_in_repo -> cumulative retry count
         permanent_failures = []
         retryable = list(failed_files)
 
@@ -3061,17 +3063,16 @@ class HubApi:
                 remaining.append(item_err)
             else:
                 permanent_failures.append(item_err)
-                if tracker is not None:
-                    try:
-                        st = os.stat(file_path) if isinstance(
-                            file_path, (str, os.PathLike)) else None
-                    except OSError:
-                        st = None
-                    tracker.mark_failed(
-                        path_in_repo,
-                        st.st_mtime if st else 0,
-                        st.st_size if st else 0,
-                        error_type=category.value)
+                try:
+                    st = os.stat(file_path) if isinstance(
+                        file_path, (str, os.PathLike)) else None
+                except OSError:
+                    st = None
+                tracker.mark_failed(
+                    path_in_repo,
+                    st.st_mtime if st else 0,
+                    st.st_size if st else 0,
+                    error_type=category.value)
                 logger.error(
                     f'[ReAct] Permanent failure: {path_in_repo} '
                     f'({category.value}: {err})')
@@ -3135,10 +3136,10 @@ class HubApi:
             else:
                 for i, ((path_in_repo, file_path), _err) in enumerate(retryable):
                     if cfg['delay'] > 0 and i > 0:
-                        delay = (cfg['delay'] * (2 ** min(i, 5))
+                        delay = (cfg['delay'] * (2 ** min(i, UPLOAD_REACT_BACKOFF_MAX_EXPONENT))
                                  if round_idx == 1
                                  else cfg['delay'])
-                        delay = min(delay, 120)
+                        delay = min(delay, UPLOAD_REACT_MAX_DELAY)
                         logger.info(
                             f'[ReAct] Waiting {delay}s before '
                             f'retrying {path_in_repo} ...')
@@ -3161,12 +3162,7 @@ class HubApi:
             for batch_start in range(0, len(round_successes), batch_size):
                 batch = round_successes[batch_start:batch_start + batch_size]
                 # Mark uploaded
-                if tracker is not None:
-                    for r in batch:
-                        tracker.mark_uploaded(
-                            r['file_path_in_repo'], r['file_mtime'],
-                            r['file_size_on_disk'])
-                    tracker.save()
+                self._track_uploaded_batch(tracker, batch)
 
                 operations = self._build_batch_operations(batch, repo_type)
                 if not operations:
@@ -3183,12 +3179,7 @@ class HubApi:
                         revision=revision)
                     commit_infos.append(commit_info)
                     # Mark committed
-                    if tracker is not None:
-                        tracker.mark_committed_batch([
-                            (r['file_path_in_repo'], r['file_mtime'],
-                             r['file_size_on_disk'])
-                            for r in batch])
-                        tracker.save()
+                    self._track_committed_batch(tracker, batch)
                     logger.info(
                         f'[ReAct] {round_name}: '
                         f'committed {len(batch)} file(s).')
@@ -3201,26 +3192,41 @@ class HubApi:
                             ((r['file_path_in_repo'],
                               r['file_path']), e))
 
-            # OBSERVE: classify new failures
+            # OBSERVE: classify new failures, enforce per-file retry limit
             new_retryable = []
             for item_err in round_failures:
                 (path_in_repo, file_path), err = item_err
+                retry_counts[path_in_repo] = retry_counts.get(path_in_repo, 0) + 1
+                if retry_counts[path_in_repo] >= 3:
+                    permanent_failures.append(item_err)
+                    try:
+                        st = os.stat(file_path) if isinstance(
+                            file_path, (str, os.PathLike)) else None
+                    except OSError:
+                        st = None
+                    tracker.mark_failed(
+                        path_in_repo,
+                        st.st_mtime if st else 0,
+                        st.st_size if st else 0,
+                        error_type='max_retries_exceeded')
+                    logger.error(
+                        f'[ReAct] Max retries exceeded for {path_in_repo}')
+                    continue
                 category = classify_error(err)
                 if category.is_retryable:
                     new_retryable.append(item_err)
                 else:
                     permanent_failures.append(item_err)
-                    if tracker is not None:
-                        try:
-                            st = os.stat(file_path) if isinstance(
-                                file_path, (str, os.PathLike)) else None
-                        except OSError:
-                            st = None
-                        tracker.mark_failed(
-                            path_in_repo,
-                            st.st_mtime if st else 0,
-                            st.st_size if st else 0,
-                            error_type=category.value)
+                    try:
+                        st = os.stat(file_path) if isinstance(
+                            file_path, (str, os.PathLike)) else None
+                    except OSError:
+                        st = None
+                    tracker.mark_failed(
+                        path_in_repo,
+                        st.st_mtime if st else 0,
+                        st.st_size if st else 0,
+                        error_type=category.value)
                     logger.error(
                         f'[ReAct] Permanent failure: {path_in_repo} '
                         f'({category.value})')

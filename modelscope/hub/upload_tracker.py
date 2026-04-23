@@ -240,8 +240,13 @@ class UploadTracker:
         with self._lock:
             if key in self._files:
                 self._files[key]['status'] = FileStatus.FAILED
+                if error_type:
+                    self._files[key]['error_type'] = error_type
             else:
-                self._files[key] = {'status': FileStatus.FAILED}
+                entry = {'status': FileStatus.FAILED}
+                if error_type:
+                    entry['error_type'] = error_type
+                self._files[key] = entry
             self._dirty = True
 
     # ---- Persistence ----
@@ -354,3 +359,43 @@ class UploadTracker:
             logger.warning(
                 f'Legacy upload progress file detected: {legacy_path}. '
                 f'This file is no longer used. You may delete it safely.')
+
+
+class NullTracker:
+    """No-op tracker for when caching is disabled.
+
+    Implements the same interface as UploadTracker but does nothing,
+    eliminating 'if tracker is not None' checks throughout api.py.
+    """
+
+    def get_hash(self, rel_path: str, mtime: float, size: int) -> None:
+        return None
+
+    def put_hash(self, rel_path: str, mtime: float, size: int,
+                 hash_info: dict):
+        pass
+
+    def is_committed(self, rel_path: str, mtime: float, size: int) -> bool:
+        return False
+
+    def get_status(self, rel_path: str, mtime: float, size: int):
+        return None
+
+    def mark_uploaded(self, rel_path: str, mtime: float, size: int):
+        pass
+
+    def mark_committed_batch(self, file_keys):
+        pass
+
+    def mark_failed(self,
+                    rel_path: str,
+                    mtime: float,
+                    size: int,
+                    error_type: str = ''):
+        pass
+
+    def save(self):
+        pass
+
+    def clear(self):
+        pass

@@ -3072,7 +3072,7 @@ class HubApi:
                         st.st_mtime if st else 0,
                         st.st_size if st else 0,
                         error_type=category.value)
-                logger.warning(
+                logger.error(
                     f'[ReAct] Permanent failure: {path_in_repo} '
                     f'({category.value}: {err})')
         retryable = remaining
@@ -3221,7 +3221,7 @@ class HubApi:
                             st.st_mtime if st else 0,
                             st.st_size if st else 0,
                             error_type=category.value)
-                    logger.warning(
+                    logger.error(
                         f'[ReAct] Permanent failure: {path_in_repo} '
                         f'({category.value})')
 

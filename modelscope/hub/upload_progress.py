@@ -4,7 +4,7 @@ import hashlib
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 import json
 
@@ -13,6 +13,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 UPLOAD_PROGRESS_FILE = '.ms_upload_progress'
+CHECKPOINT_VERSION = 2
 
 
 class UploadProgress:
@@ -34,6 +35,8 @@ class UploadProgress:
         self._repo_id = repo_id
         self._committed_batches: Set[int] = set()
         self._batch_fingerprints: Dict[int, str] = {}
+        self._failed_files: List[str] = [
+        ]  # path_in_repo of files that failed all retries
         self._load()
 
     @staticmethod
@@ -49,6 +52,15 @@ class UploadProgress:
         parts = [f'{path}|{fhash}' for path, fhash in sorted(items)]
         return hashlib.sha256('||'.join(parts).encode()).hexdigest()
 
+    def record_failed_files(self, failed_files: List[str]):
+        """Record paths of files that failed all retry attempts."""
+        self._failed_files = list(failed_files)
+        self._save()
+
+    def get_failed_files(self) -> List[str]:
+        """Get list of previously failed file paths."""
+        return list(self._failed_files)
+
     def validate_batch_fingerprint(self, batch_idx: int,
                                    fingerprint: str) -> bool:
         """Check if a committed batch's fingerprint still matches.
@@ -60,10 +72,10 @@ class UploadProgress:
             return False
         stored_fp = self._batch_fingerprints.get(batch_idx)
         if stored_fp is None:
-            # Legacy checkpoint or first run — trust committed status
-            self._batch_fingerprints[batch_idx] = fingerprint
+            # Legacy or corrupted — do NOT trust, invalidate this batch
+            self._committed_batches.discard(batch_idx)
             self._save()
-            return True
+            return False
         if stored_fp == fingerprint:
             return True
         # Fingerprint mismatch — invalidate this batch only
@@ -112,6 +124,14 @@ class UploadProgress:
                 for k, v in data.get('batch_fingerprints', {}).items()
             }
             self._committed_batches = set(data.get('committed_batches', []))
+            self._failed_files = data.get('failed_files', [])
+            version = data.get('version', 1)
+            if version < CHECKPOINT_VERSION:
+                logger.warning(
+                    'Legacy upload checkpoint detected (version %d). '
+                    'It may contain partially successful batches that mask failed files. '
+                    'Consider deleting %s and re-running upload to ensure completeness.',
+                    version, self._path)
             if self._committed_batches:
                 logger.info(
                     f'Upload checkpoint loaded: {len(self._committed_batches)} '
@@ -130,6 +150,8 @@ class UploadProgress:
                 {str(k): v
                  for k, v in self._batch_fingerprints.items()},
                 'committed_batches': sorted(self._committed_batches),
+                'failed_files': self._failed_files,
+                'version': CHECKPOINT_VERSION,
             }
             fd, tmp_path = tempfile.mkstemp(
                 dir=str(self._path.parent), prefix='.ms_upload_ckpt_tmp_')

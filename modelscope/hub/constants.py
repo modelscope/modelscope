@@ -20,7 +20,18 @@ MODELSCOPE_CREDENTIALS_PATH = os.environ.get(
     'MODELSCOPE_CREDENTIALS_PATH', DEFAULT_CREDENTIALS_PATH.as_posix())
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
 API_HTTP_CLIENT_TIMEOUT = 60
-API_HTTP_CLIENT_MAX_RETRIES = 2
+API_HTTP_CLIENT_MAX_RETRIES = int(
+    os.environ.get('API_HTTP_CLIENT_MAX_RETRIES', 5))
+
+# Application-level retry for blob upload
+UPLOAD_BLOB_MAX_RETRIES = int(os.environ.get('UPLOAD_BLOB_MAX_RETRIES', 5))
+UPLOAD_BLOB_RETRY_BACKOFF = int(os.environ.get('UPLOAD_BLOB_RETRY_BACKOFF', 2))
+UPLOAD_BLOB_RETRY_MAX_WAIT = int(
+    os.environ.get('UPLOAD_BLOB_RETRY_MAX_WAIT', 60))
+
+# Failed file retry within upload_folder
+UPLOAD_FAILED_FILE_MAX_RETRIES = int(
+    os.environ.get('UPLOAD_FAILED_FILE_MAX_RETRIES', 3))
 API_RESPONSE_FIELD_DATA = 'Data'
 API_FILE_DOWNLOAD_RETRY_TIMES = 5
 API_FILE_DOWNLOAD_TIMEOUT = 60

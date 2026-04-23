@@ -50,8 +50,12 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_BLOB_MAX_RETRIES,
+                                      UPLOAD_BLOB_RETRY_BACKOFF,
+                                      UPLOAD_BLOB_RETRY_MAX_WAIT,
                                       UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                                       UPLOAD_COMMIT_BATCH_SIZE,
+                                      UPLOAD_FAILED_FILE_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_COUNT,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
@@ -123,9 +127,9 @@ class HubApi:
             total=max_retries,
             read=2,
             connect=2,
-            backoff_factor=1,
+            backoff_factor=2,
             status_forcelist=(500, 502, 503, 504),
-            respect_retry_after_header=False,
+            respect_retry_after_header=True,
         )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
@@ -2430,16 +2434,40 @@ class HubApi:
         file_size: int = hash_info_d['file_size']
         file_hash: str = hash_info_d['file_hash']
 
-        upload_res: dict = self._upload_blob(
-            repo_id=repo_id,
-            repo_type=repo_type,
-            sha256=file_hash,
-            size=file_size,
-            data=file_path,
-            disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
-            tqdm_desc='[Uploading ' + file_path_in_repo + ']',
-            token=token,
-        )
+        # Application-level retry for transient blob upload failures
+        last_error = None
+        for attempt in range(UPLOAD_BLOB_MAX_RETRIES):
+            try:
+                upload_res: dict = self._upload_blob(
+                    repo_id=repo_id,
+                    repo_type=repo_type,
+                    sha256=file_hash,
+                    size=file_size,
+                    data=file_path,
+                    disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+                    tqdm_desc='[Uploading ' + file_path_in_repo + ']',
+                    token=token,
+                )
+                break
+            except (ConnectionError, requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError) as e:
+                # Only retry on 5xx / connection errors; 4xx are not retryable
+                if isinstance(e, requests.exceptions.HTTPError):
+                    if hasattr(e, 'response') and e.response is not None:
+                        if e.response.status_code < 500:
+                            raise
+                last_error = e
+                if attempt < UPLOAD_BLOB_MAX_RETRIES - 1:
+                    wait = min(UPLOAD_BLOB_RETRY_BACKOFF ** attempt,
+                               UPLOAD_BLOB_RETRY_MAX_WAIT)
+                    logger.warning(
+                        f'Blob upload attempt {attempt + 1}/{UPLOAD_BLOB_MAX_RETRIES} '
+                        f'failed for {file_path_in_repo}: {e}, retrying in {wait}s ...')
+                    time.sleep(wait)
+        else:
+            raise RuntimeError(
+                f'Blob upload failed after {UPLOAD_BLOB_MAX_RETRIES} attempts '
+                f'for {file_path_in_repo}: {last_error}') from last_error
 
         return {
             'file_path_in_repo': file_path_in_repo,
@@ -2710,10 +2738,12 @@ class HubApi:
         def _upload_worker(file_idx: int, file_info: tuple):
             path_in_repo, file_path = file_info
             try:
+                logger.debug(f'Uploading: {path_in_repo} ...')
                 result = self._upload_single_file(
                     path_in_repo, file_path,
                     repo_id=repo_id, repo_type=repo_type,
                     token=token, hash_cache=hash_cache)
+                logger.debug(f'Uploaded: {path_in_repo}')
                 tracker.record_success(file_idx, result)
             except Exception as e:
                 logger.error(f'Upload failed: {path_in_repo} - {e}')
@@ -2740,11 +2770,11 @@ class HubApi:
                     if failures:
                         total_failed_files.extend(failures)
                         for item, err in failures:
-                            logger.warning(f'  Failed: {item[0]} - {err}')
+                            logger.error(f'  Failed: {item[0]} - {err}')
 
                     operations = self._build_batch_operations(results, repo_type)
                     if not operations:
-                        logger.warning(f'Batch {batch_idx + 1}/{num_batches}: all files failed, skipping commit.')
+                        logger.error(f'Batch {batch_idx + 1}/{num_batches}: all files failed, skipping commit.')
                         failed_batches.append(batch_idx)
                         continue
 
@@ -2764,7 +2794,14 @@ class HubApi:
                         logger.error(f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
                         failed_batches.append(batch_idx)
                     else:
-                        if checkpoint is not None:
+                        # Only mark batch as committed if ALL files succeeded;
+                        # partial-success batches will be retried on next run.
+                        if failures:
+                            logger.error(
+                                f'Batch {batch_idx + 1}/{num_batches} committed with '
+                                f'{len(failures)} failed file(s); batch will be '
+                                f'retried on next run.')
+                        elif checkpoint is not None:
                             try:
                                 checkpoint.mark_batch_committed(
                                     batch_idx, batch_fingerprints.get(batch_idx, ''))
@@ -2779,19 +2816,88 @@ class HubApi:
             if hash_cache is not None:
                 hash_cache.save()
 
+        # Retry failed files after all batches processed
+        for retry_round in range(UPLOAD_FAILED_FILE_MAX_RETRIES):
+            if not total_failed_files:
+                break
+            logger.info(
+                f'Retry round {retry_round + 1}/{UPLOAD_FAILED_FILE_MAX_RETRIES}: '
+                f're-uploading {len(total_failed_files)} failed file(s) ...')
+            retry_failures = []
+            retry_successes = []
+            for (path_in_repo, file_path), _err in total_failed_files:
+                try:
+                    result = self._upload_single_file(
+                        path_in_repo, file_path,
+                        repo_id=repo_id, repo_type=repo_type,
+                        token=token, hash_cache=hash_cache)
+                    retry_successes.append(result)
+                except Exception as e:
+                    logger.error(f'  Retry failed: {path_in_repo} - {e}')
+                    retry_failures.append(((path_in_repo, file_path), e))
+            # Commit retry successes as a supplementary batch
+            if retry_successes:
+                operations = self._build_batch_operations(retry_successes, repo_type)
+                if operations:
+                    try:
+                        commit_info = self._commit_with_retry(
+                            repo_id=repo_id,
+                            operations=operations,
+                            commit_message=f'{commit_message} (retry round {retry_round + 1})',
+                            commit_description=commit_description,
+                            token=token,
+                            repo_type=repo_type,
+                            revision=revision,
+                        )
+                        commit_infos.append(commit_info)
+                        logger.info(
+                            f'  Retry round {retry_round + 1}: '
+                            f'committed {len(retry_successes)} file(s).')
+                    except Exception as e:
+                        logger.error(
+                            f'  Retry round {retry_round + 1} commit failed: {e}')
+                        # Treat successfully uploaded but uncommitted files as failed
+                        for result in retry_successes:
+                            retry_failures.append(
+                                ((result['file_path_in_repo'],
+                                  result.get('file_path', '')), e))
+            total_failed_files = retry_failures
+
+        # Record final failed files in checkpoint for next-run awareness
+        if checkpoint is not None:
+            failed_paths = [item[0] for (item, _) in total_failed_files]
+            checkpoint.record_failed_files(failed_paths)
+
         # Summary
         if total_failed_files:
-            logger.warning(
-                f'{len(total_failed_files)} file(s) failed during upload.')
+            logger.error(
+                f'{len(total_failed_files)} file(s) failed to upload, '
+                f'please try again: file(s) successfully uploaded '
+                f'will be automatically skipped in retry.')
+            for (path_in_repo, _), err in total_failed_files:
+                logger.error(f'  - {path_in_repo}: {type(err).__name__}: {err}')
         if failed_batches:
-            logger.warning(
+            logger.error(
                 f'{len(failed_batches)} batch(es) failed to commit: {failed_batches}. '
                 f'Re-run upload_folder() to retry.')
 
+        # Upload statistics
+        total_files = len(sorted_files)
+        uploaded_count = total_files - skipped_count - len(total_failed_files)
+        logger.info(
+            f'Upload summary: {total_files} total, {uploaded_count} uploaded, '
+            f'{skipped_count} skipped (checkpoint), {len(total_failed_files)} failed')
+
         if not commit_infos:
             if skipped_count == len(sorted_files):
-                logger.info('All batches were already committed.')
-                return None
+                # Check for previously failed files recorded in checkpoint
+                if checkpoint is not None and checkpoint.get_failed_files():
+                    logger.error(
+                        'Some files failed in a previous run and still need re-upload. '
+                        'Consider deleting .ms_upload_progress and retrying.')
+                else:
+                    logger.info('All batches were already committed.')
+                    return None
             raise RuntimeError(
                 f'No batches were committed successfully. '
                 f'{len(failed_batches)} batch(es) failed, {len(total_failed_files)} file(s) failed.')

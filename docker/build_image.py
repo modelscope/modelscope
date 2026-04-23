@@ -479,7 +479,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
     def image(self) -> str:
         return (
             f'{docker_registry}:{self.args.base_image.split(":")[-1]}-'
-            f'{self.args.soc_version}-torch2.7.1-'
+            f'{self.args.soc_version}-torch2.9.0-'
             f'{self.args.modelscope_version}-ascend-test')
 
     def push(self):

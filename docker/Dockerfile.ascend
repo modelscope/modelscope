@@ -25,14 +25,21 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     fi
 
 {extra_content}
-
 # ---------- Install vllm + vllm-ascend ----------
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
-    pip install --no-cache-dir vllm==0.18.0 && \
-    pip install --no-cache-dir \
-        --extra-index-url https://mirrors.huaweicloud.com/ascend/repos/pypi/simple \
-        vllm-ascend==0.18.0rc1
+    git clone --depth 1 --branch v0.14.0 https://github.com/vllm-project/vllm && \
+    git clone --depth 1 --branch v0.14.0rc1 https://github.com/vllm-project/vllm-ascend.git
+
+RUN ARCH=$(uname -m) && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    source /usr/local/Ascend/nnal/atb/set_env.sh && \
+    # Install torch & torch_npu & torchvision
+    pip install torch==2.9.0 torch_npu==2.9.0 torchvision==0.24.0 && \
+    # Install vllm
+    cd vllm && VLLM_TARGET_DEVICE=empty pip install -v -e . && cd .. && \
+    # Install vllm-ascend
+    cd vllm-ascend && pip install -v -e . && cd .. 
 
 # ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch v0.15.3 https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
@@ -56,13 +63,13 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ "$ARCH" = "x86_64" ]; then \
         pip install --no-cache-dir --force-reinstall --no-deps \
             --index-url https://download.pytorch.org/whl/cpu \
-            torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1; \
+            torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0; \
     else \
         pip install --no-cache-dir --force-reinstall --no-deps \
-            torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1; \
+            torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0; \
     fi && \
     pip install --no-cache-dir --force-reinstall --no-deps \
-        torch_npu==2.7.1.post2 && \
+        torch_npu==2.9.0 && \
     rm -rf /root/.cache/pip
 
 # ---------- Remove CUDA-only dependencies pulled in by vllm (they cause missing libtorch_cuda.so errors on NPU) ----------

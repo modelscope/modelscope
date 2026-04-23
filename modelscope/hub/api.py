@@ -2584,6 +2584,7 @@ class HubApi:
             'file_mtime': file_stat.st_mtime if file_stat else 0,
             'file_size_on_disk': file_stat.st_size if file_stat else hash_info_d.get('file_size', 0),
             'is_uploaded': upload_res['is_uploaded'],
+            'is_reused': upload_res.get('is_reused', False),
             'file_hash_info': hash_info_d,
         }
 
@@ -3040,8 +3041,9 @@ class HubApi:
         total_files = len(sorted_files)
         failed_count = len(total_failed_files)
         reused_count = sum(
-            1 for r in all_results if r.get('is_uploaded'))
-        uploaded_count = len(all_results) - reused_count
+            1 for r in all_results if r.get('is_reused'))
+        uploaded_count = sum(
+            1 for r in all_results if not r.get('is_reused'))
 
         print('=' * 60)
         print('Upload Report')
@@ -3340,6 +3342,7 @@ class HubApi:
         res_d: dict = dict(
             url=None,
             is_uploaded=False,
+            is_reused=False,
             status_code=None,
             status_msg=None,
         )
@@ -3347,6 +3350,7 @@ class HubApi:
         if pre_validated is True:
             logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
             res_d['is_uploaded'] = True
+            res_d['is_reused'] = True
             return res_d
 
         if isinstance(pre_validated, str):
@@ -3362,6 +3366,7 @@ class HubApi:
             if upload_url is None:
                 logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
                 res_d['is_uploaded'] = True
+                res_d['is_reused'] = True
                 return res_d
 
         cookies = self.get_cookies(access_token=token, cookies_required=True)

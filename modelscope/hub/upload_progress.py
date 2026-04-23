@@ -24,12 +24,16 @@ class UploadProgress:
     cross-repo confusion.
     """
 
-    def __init__(self, checkpoint_path: Union[str, Path], repo_id: str):
+    def __init__(self,
+                 checkpoint_path: Union[str, Path],
+                 repo_id: str,
+                 batch_size: int = 0):
         """Initialize checkpoint.
 
         Args:
             checkpoint_path: Path to the checkpoint file.
             repo_id: Repository ID for validation on resume.
+            batch_size: Current batch size for change detection across runs.
         """
         self._path = Path(checkpoint_path)
         self._repo_id = repo_id
@@ -37,6 +41,7 @@ class UploadProgress:
         self._batch_fingerprints: Dict[int, str] = {}
         self._failed_files: List[str] = [
         ]  # path_in_repo of files that failed all retries
+        self._batch_size = batch_size
         self._load()
 
     @staticmethod
@@ -125,13 +130,19 @@ class UploadProgress:
             }
             self._committed_batches = set(data.get('committed_batches', []))
             self._failed_files = data.get('failed_files', [])
+            stored_batch_size = data.get('batch_size', 0)
+            if stored_batch_size > 0 and self._batch_size > 0 and stored_batch_size != self._batch_size:
+                logger.warning(
+                    f'Batch size changed ({stored_batch_size} -> {self._batch_size}). '
+                    f'All checkpointed batches will be re-validated via fingerprint.'
+                )
             version = data.get('version', 1)
             if version < CHECKPOINT_VERSION:
                 logger.warning(
-                    'Legacy upload checkpoint detected (version %d). '
-                    'It may contain partially successful batches that mask failed files. '
-                    'Consider deleting %s and re-running upload to ensure completeness.',
-                    version, self._path)
+                    f'Legacy upload checkpoint detected (version {version}). '
+                    f'It may contain partially successful batches that mask failed files. '
+                    f'Consider deleting {self._path} and re-running upload to ensure completeness.'
+                )
             if self._committed_batches:
                 logger.info(
                     f'Upload checkpoint loaded: {len(self._committed_batches)} '
@@ -148,6 +159,7 @@ class UploadProgress:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             data = {
                 'repo_id': self._repo_id,
+                'batch_size': self._batch_size,
                 'batch_fingerprints':
                 {str(k): v
                  for k, v in self._batch_fingerprints.items()},

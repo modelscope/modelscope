@@ -50,6 +50,7 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_ADAPTIVE_BATCH_SIZE,
                                       UPLOAD_BLOB_MAX_RETRIES,
                                       UPLOAD_BLOB_RETRY_BACKOFF,
                                       UPLOAD_BLOB_RETRY_MAX_WAIT,
@@ -105,6 +106,32 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          RepoUtils)
 
 logger = get_logger()
+
+
+def _calculate_adaptive_batch_size(total_files: int) -> int:
+    """Calculate optimal commit batch size based on total file count.
+
+    Adaptive strategy ensures batch granularity scales with workload:
+    - Very few files (1-10): no splitting, single batch
+    - Few files (11-100): ~10 batches for failure isolation
+    - Medium (101-10K): 64-256 files per batch
+    - Large (>10K): 512 files per batch to limit commit frequency
+
+    Args:
+        total_files: Total number of files (including checkpoint-skipped).
+
+    Returns:
+        Recommended batch size (>= 1).
+    """
+    if total_files <= 0:
+        return 1
+    if total_files <= 10:
+        return total_files
+    if total_files <= 100:
+        return max(1, total_files // 10)
+    if total_files <= 10_000:
+        return max(64, min(256, total_files // 80))
+    return 512
 
 
 class _CountedReadStream:
@@ -908,7 +935,7 @@ class HubApi:
         if visibility is None or license is None:
             raise InvalidParameter('Visibility and License cannot be empty for new model.')
         if not self.repo_exists(model_id, token=token):
-            logger.info('Creating new model [%s]' % model_id)
+            logger.info(f'Creating new model [{model_id}]')
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
@@ -924,7 +951,7 @@ class HubApi:
             repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
-                logger.info('Creating new branch %s' % revision)
+                logger.info(f'Creating new branch {revision}')
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
             files_in_repo = os.listdir(tmp_dir)
@@ -1154,15 +1181,14 @@ class HubApi:
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
-                    'Model revision not specified, using default [%s] version.'
-                    % revision)
+                    f'Model revision not specified, using default [{revision}] version.')
             if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
 
             revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
             if revision_detail is None:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
-            logger.debug('Development mode use revision: %s' % revision)
+            logger.debug(f'Development mode use revision: {revision}')
         else:
             if revision is not None and revision in all_branches:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
@@ -1186,8 +1212,8 @@ class HubApi:
                         revision = MASTER_MODEL_BRANCH
                         revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
                         vl = '[%s]' % ','.join(all_tags)
-                        logger.warning('Model revision should be specified from revisions: %s' % (vl))
-                    logger.warning('Model revision not specified, use revision: %s' % revision)
+                        logger.warning(f'Model revision should be specified from revisions: {vl}')
+                    logger.warning(f'Model revision not specified, use revision: {revision}')
                 else:
                     # use user-specified revision
                     if revision not in all_tags:
@@ -1200,7 +1226,7 @@ class HubApi:
                                                 (model_id, revision, vl))
                     else:
                         revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
-                    logger.info('Use user-specified model revision: %s' % revision)
+                    logger.info(f'Use user-specified model revision: {revision}')
         return revision_detail
 
     def get_valid_revision(self,
@@ -2723,6 +2749,21 @@ class HubApi:
                          exist_ok=True,
                          create_default_config=False)
 
+        # Sort for deterministic batch assignment
+        sorted_files = sorted(prepared_repo_objects, key=lambda x: x[0])
+
+        # Calculate batch size (adaptive or fixed)
+        if UPLOAD_ADAPTIVE_BATCH_SIZE:
+            commit_batch_size = _calculate_adaptive_batch_size(len(sorted_files))
+            logger.info(
+                f'Adaptive batch size: {commit_batch_size} '
+                f'(for {len(sorted_files)} files)')
+        else:
+            commit_batch_size = (
+                UPLOAD_COMMIT_BATCH_SIZE
+                if UPLOAD_COMMIT_BATCH_SIZE > 0
+                else len(sorted_files))
+
         # Initialize hash cache and checkpoint for resume support
         folder_path_resolved = Path(folder_path).resolve() \
             if isinstance(folder_path, (str, Path)) else Path(folder_path[0]).resolve().parent
@@ -2732,11 +2773,9 @@ class HubApi:
             cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
             hash_cache = UploadHashCache(cache_path)
             checkpoint_path = folder_path_resolved / UPLOAD_PROGRESS_FILE
-            checkpoint = UploadProgress(checkpoint_path, repo_id=repo_id)
-
-        # Sort for deterministic batch assignment
-        sorted_files = sorted(prepared_repo_objects, key=lambda x: x[0])
-        commit_batch_size = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(sorted_files)
+            checkpoint = UploadProgress(
+                checkpoint_path, repo_id=repo_id,
+                batch_size=commit_batch_size)
         tracker = BatchTracker(len(sorted_files), commit_batch_size)
 
         # Compute per-batch fingerprints

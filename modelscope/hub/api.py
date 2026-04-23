@@ -3053,7 +3053,8 @@ class HubApi:
         print(f'  Reused (global)  : {reused_count}')
         print(f'  Uploaded (PUT)   : {uploaded_count}')
         print(f'  Failed           : {failed_count}')
-        print(f'  Commits          : {len(commit_infos)}')
+        committed_count = reused_count + uploaded_count
+        print(f'  Committed        : {committed_count}')
         print(f'  Elapsed          : {elapsed:.1f}s')
         print('=' * 60)
 

@@ -81,6 +81,8 @@ UPLOAD_MAX_FILE_COUNT_IN_DIR = int(
 UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT = int(
     os.environ.get('UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT', 500 * 1024 * 1024))
 UPLOAD_COMMIT_BATCH_SIZE = int(os.environ.get('UPLOAD_COMMIT_BATCH_SIZE', 256))
+UPLOAD_VALIDATE_BLOB_BATCH_SIZE = int(
+    os.environ.get('UPLOAD_VALIDATE_BLOB_BATCH_SIZE', 64))
 UPLOAD_ADAPTIVE_BATCH_SIZE = os.environ.get('UPLOAD_ADAPTIVE_BATCH_SIZE',
                                             'true').lower() == 'true'
 

@@ -69,9 +69,10 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       UPLOAD_REACT_ROUND3_FILE_DELAY,
                                       UPLOAD_RETRY_ALLOWED_METHODS,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
-                                      UPLOAD_USE_CACHE, VALID_SORT_KEYS,
-                                      DatasetVisibility, Licenses,
-                                      ModelVisibility, Visibility,
+                                      UPLOAD_USE_CACHE,
+                                      UPLOAD_VALIDATE_BLOB_BATCH_SIZE,
+                                      VALID_SORT_KEYS, DatasetVisibility,
+                                      Licenses, ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.errors import (InvalidParameter, NotExistError,
                                    NotLoginException, RequestError,
@@ -2492,6 +2493,7 @@ class HubApi:
             repo_type: str,
             token: str,
             tracker=None,
+            pre_validated=None,
     ) -> dict:
         """Hash and upload a single file, returning result dict."""
         if tracker is None:
@@ -2553,6 +2555,7 @@ class HubApi:
                     disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                     tqdm_desc='[Uploading ' + file_path_in_repo + ']',
                     token=token,
+                    pre_validated=pre_validated,
                 )
                 break
             except (ConnectionError, requests.exceptions.ConnectionError,
@@ -2711,6 +2714,8 @@ class HubApi:
             RuntimeError: If any files remain failed after all retry rounds,
                 with a message indicating the count and a retry hint.
         """
+        start_time = time.time()
+
         if not repo_id:
             raise ValueError('The arg `repo_id` cannot be empty!')
 
@@ -2818,23 +2823,64 @@ class HubApi:
                         f'Cannot stat file {path_in_repo}, will re-upload: {e}')
             files_to_upload.append((file_idx, (path_in_repo, file_path)))
 
+        # Batch pre-validation for files with cached hashes
+        pre_validated_map = {}  # oid -> upload_url or None
+        hash_info_map = {}      # file_idx -> (hash_info, file_stat)
+        files_need_hash = []    # files without cached hash
+
+        for file_idx, (path_in_repo, file_path) in files_to_upload:
+            if isinstance(file_path, (str, os.PathLike)):
+                try:
+                    st = os.stat(file_path)
+                    cached = tracker.get_hash(
+                        path_in_repo, st.st_mtime, st.st_size)
+                    if cached is not None:
+                        hash_info_map[file_idx] = (cached, st)
+                        continue
+                except OSError:
+                    pass
+            files_need_hash.append((file_idx, (path_in_repo, file_path)))
+
+        # Batch validate cached hashes against server
+        if hash_info_map:
+            objects = [
+                {'oid': info['file_hash'], 'size': info['file_size']}
+                for info, _ in hash_info_map.values()
+            ]
+            validated = self._validate_blob(
+                repo_id=repo_id, repo_type=repo_type,
+                objects=objects, token=token)
+            pre_validated_map = validated
+            reused = sum(1 for v in validated.values() if v is None)
+            logger.info(
+                f'Pre-validated {len(objects)} cached hash(es): '
+                f'{reused} globally existing, '
+                f'{len(objects) - reused} need upload.')
+
         skipped_count = len(skipped_indices)
         if skipped_count > 0:
             logger.info(f'{skipped_count} file(s) already committed, skipping.')
+
+        logger.info(
+            f'Scan complete: {len(sorted_files)} total, '
+            f'{skipped_count} committed (skip), '
+            f'{len(files_to_upload)} to process.')
 
         logger.info(
             f'Uploading {len(files_to_upload)} file(s) in {batch_tracker.num_batches} batch(es) '
             f'of size {commit_batch_size} (pipeline mode).')
 
         # Submit upload tasks to thread pool
-        def _upload_worker(file_idx: int, file_info: tuple):
+        def _upload_worker(file_idx: int, file_info: tuple,
+                           pre_validated=None):
             path_in_repo, file_path = file_info
             try:
                 logger.debug(f'Uploading: {path_in_repo} ...')
                 result = self._upload_single_file(
                     path_in_repo, file_path,
                     repo_id=repo_id, repo_type=repo_type,
-                    token=token, tracker=tracker)
+                    token=token, tracker=tracker,
+                    pre_validated=pre_validated)
                 logger.debug(f'Uploaded: {path_in_repo}')
                 batch_tracker.record_success(file_idx, result)
             except Exception as e:
@@ -2843,13 +2889,22 @@ class HubApi:
 
         # Pipeline: consume batches in order, commit as each becomes ready
         commit_infos: List[CommitInfo] = []
+        all_results: List[dict] = []
         total_failed_files: List[tuple] = []
         num_batches = batch_tracker.num_batches
 
         try:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for file_idx, file_info in files_to_upload:
-                    executor.submit(_upload_worker, file_idx, file_info)
+                    # Look up pre-validated status by file hash
+                    pv = None
+                    if file_idx in hash_info_map:
+                        cached_hash = hash_info_map[file_idx][0]['file_hash']
+                        pv = pre_validated_map.get(cached_hash)
+                        # pv: None=exists(True), str=upload_url
+                        if pv is None:
+                            pv = True  # globally existing, skip upload
+                    executor.submit(_upload_worker, file_idx, file_info, pv)
 
                 for batch_idx in tqdm(range(num_batches), desc='[Committing batches]', total=num_batches):
                     # Skip fully-committed batches
@@ -2860,6 +2915,7 @@ class HubApi:
                         continue
 
                     results, failures = batch_tracker.wait_for_batch(batch_idx)
+                    all_results.extend(results)
 
                     if failures:
                         total_failed_files.extend(failures)
@@ -2889,6 +2945,9 @@ class HubApi:
                             revision=revision,
                         )
                         commit_infos.append(commit_info)
+                        logger.info(
+                            f'Batch {batch_idx + 1}/{num_batches}: '
+                            f'committed {len(results)} file(s).')
                         # Mark all files in this batch as committed
                         self._track_committed_batch(tracker, results)
                     except Exception as e:
@@ -2911,7 +2970,7 @@ class HubApi:
 
         # ReAct progressive retry fallback
         if total_failed_files and UPLOAD_REACT_ENABLED:
-            total_failed_files, react_commits = self._retry_failed_files_react(
+            total_failed_files, react_commits, react_results = self._retry_failed_files_react(
                 failed_files=total_failed_files,
                 tracker=tracker,
                 repo_id=repo_id,
@@ -2923,6 +2982,7 @@ class HubApi:
                 max_workers=max_workers,
             )
             commit_infos.extend(react_commits)
+            all_results.extend(react_results)
         elif total_failed_files:
             # Simple fallback when ReAct is disabled
             for retry_round in range(UPLOAD_FAILED_FILE_MAX_RETRIES):
@@ -2944,6 +3004,7 @@ class HubApi:
                         logger.error(f'  Retry failed: {path_in_repo} - {e}')
                         retry_failures.append(((path_in_repo, file_path), e))
                 if retry_successes:
+                    all_results.extend(retry_successes)
                     self._track_uploaded_batch(tracker, retry_successes)
                     operations = self._build_batch_operations(
                         retry_successes, repo_type)
@@ -2974,15 +3035,25 @@ class HubApi:
         # Final tracker save
         tracker.save()
 
-        # Summary
-        # Upload statistics
+        # Upload report
+        elapsed = time.time() - start_time
         total_files = len(sorted_files)
         failed_count = len(total_failed_files)
-        logger.info(
-            f'Upload summary: {total_files} total, '
-            f'{skipped_count} skipped (already committed), '
-            f'{len(commit_infos)} batch(es) committed, '
-            f'{failed_count} failed')
+        reused_count = sum(
+            1 for r in all_results if r.get('is_uploaded'))
+        uploaded_count = len(all_results) - reused_count
+
+        logger.info('=' * 60)
+        logger.info('Upload Report')
+        logger.info('-' * 60)
+        logger.info(f'  Total files      : {total_files}')
+        logger.info(f'  Skipped (cached) : {skipped_count}')
+        logger.info(f'  Reused (global)  : {reused_count}')
+        logger.info(f'  Uploaded (PUT)   : {uploaded_count}')
+        logger.info(f'  Failed           : {failed_count}')
+        logger.info(f'  Commits          : {len(commit_infos)}')
+        logger.info(f'  Elapsed          : {elapsed:.1f}s')
+        logger.info('=' * 60)
 
         # Final error if there are still failed files after all retries
         if total_failed_files:
@@ -3037,12 +3108,15 @@ class HubApi:
             max_workers: Max upload concurrency from caller.
 
         Returns:
-            Tuple of (all_failures, commit_infos) where:
+            Tuple of (all_failures, commit_infos, all_successes) where:
               - all_failures: list of ((path_in_repo, file_path), error) for
                 files that could not be resolved (permanent + exhausted retries).
               - commit_infos: list of CommitInfo for successful retry commits.
+              - all_successes: list of upload result dicts for successfully
+                retried files (to be merged into the upload report).
         """
         commit_infos = []
+        all_successes: list = []
         retry_counts: dict = {}  # path_in_repo -> cumulative retry count
         permanent_failures = []
         retryable = list(failed_files)
@@ -3150,6 +3224,8 @@ class HubApi:
                         round_failures.append(
                             ((path_in_repo, file_path), e))
 
+            all_successes.extend(round_successes)
+
             # ACT: commit successful uploads in small batches
             batch_size = min(cfg['batch_size'], max(1, len(round_successes)))
             for batch_start in range(0, len(round_successes), batch_size):
@@ -3244,7 +3320,7 @@ class HubApi:
                 f'[ReAct] {len(retryable)} file(s) still failing '
                 f'after all retry rounds.')
 
-        return all_failures, commit_infos
+        return all_failures, commit_infos, all_successes
 
     def _upload_blob(
             self,
@@ -3258,6 +3334,7 @@ class HubApi:
             tqdm_desc: Optional[str] = '[Uploading]',
             buffer_size_mb: Optional[int] = 16,
             token: Optional[str] = None,
+            pre_validated=None,
     ) -> dict:
 
         res_d: dict = dict(
@@ -3267,21 +3344,25 @@ class HubApi:
             status_msg=None,
         )
 
-        objects = [{'oid': sha256, 'size': size}]
-        upload_objects = self._validate_blob(
-            repo_id=repo_id,
-            repo_type=repo_type,
-            objects=objects,
-            token=token,
-        )
-
-        # upload_object: {'url': 'xxx', 'oid': 'xxx'}
-        upload_object = upload_objects[0] if len(upload_objects) == 1 else None
-
-        if upload_object is None:
-            logger.debug(f'Blob {sha256[:8]} has already uploaded, reuse it.')
+        if pre_validated is True:
+            logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
             res_d['is_uploaded'] = True
             return res_d
+
+        if isinstance(pre_validated, str):
+            upload_url = pre_validated
+        else:
+            validated = self._validate_blob(
+                repo_id=repo_id,
+                repo_type=repo_type,
+                objects=[{'oid': sha256, 'size': size}],
+                token=token,
+            )
+            upload_url = validated.get(sha256)
+            if upload_url is None:
+                logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
+                res_d['is_uploaded'] = True
+                return res_d
 
         cookies = self.get_cookies(access_token=token, cookies_required=True)
         cookies = dict(cookies) if cookies else None
@@ -3306,7 +3387,7 @@ class HubApi:
                     stream = _CountedReadStream(
                         f, size, pbar, chunk_size)
                     response = self.session.put(
-                        upload_object['url'],
+                        upload_url,
                         headers=headers,
                         data=stream,
                         timeout=UPLOAD_BLOB_TIMEOUT,
@@ -3317,7 +3398,7 @@ class HubApi:
                 stream = _CountedReadStream(
                     io.BytesIO(data), size, pbar, chunk_size)
                 response = self.session.put(
-                    upload_object['url'],
+                    upload_url,
                     headers=headers,
                     data=stream,
                     timeout=UPLOAD_BLOB_TIMEOUT,
@@ -3328,7 +3409,7 @@ class HubApi:
                 stream = _CountedReadStream(
                     data, size, pbar, chunk_size)
                 response = self.session.put(
-                    upload_object['url'],
+                    upload_url,
                     headers=headers,
                     data=stream,
                     timeout=UPLOAD_BLOB_TIMEOUT,
@@ -3342,7 +3423,8 @@ class HubApi:
         resp = response.json()
         raise_on_error(rsp=resp)
 
-        res_d['url'] = upload_object['url']
+        res_d['url'] = upload_url
+        res_d['is_uploaded'] = True
         res_d['status_code'] = resp['Code']
         res_d['status_msg'] = resp['Message']
 
@@ -3356,56 +3438,63 @@ class HubApi:
             objects: List[Dict[str, Any]],
             endpoint: Optional[str] = None,
             token: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Check the blob has already uploaded.
-        True -- uploaded; False -- not uploaded.
+    ) -> Dict[str, Optional[str]]:
+        """Validate whether blobs need uploading.
+
+        Queries the LFS batch API in chunks of UPLOAD_VALIDATE_BLOB_BATCH_SIZE.
 
         Args:
-            repo_id (str): The repo id ModelScope.
-            repo_type (str): The repo type. `dataset`, `model`, etc.
-            objects (List[Dict[str, Any]]): The objects to check.
-                oid (str): The sha256 hash value.
-                size (int): The size of the blob.
-            endpoint: the endpoint to use, default to None to use endpoint specified in the class
-            token (str): The access token.
+            repo_id: The repo id on ModelScope.
+            repo_type: The repo type ('dataset', 'model', etc.).
+            objects: Objects to check, each with 'oid' (sha256) and 'size'.
+            endpoint: API endpoint override.
+            token: Access token.
 
         Returns:
-            List[Dict[str, Any]]: The result of the check.
+            Dict mapping oid -> upload_url (needs upload) or None (already exists).
         """
-
-        # construct URL
         if not endpoint:
             endpoint = self.endpoint
-        url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch'
 
-        # build payload
-        payload = {
-            'operation': 'upload',
-            'objects': objects,
-        }
+        result: Dict[str, Optional[str]] = {}
+        batch_size = UPLOAD_VALIDATE_BLOB_BATCH_SIZE
 
-        cookies = self.get_cookies(access_token=token, cookies_required=True)
-        response = self.session.post(
-            url,
-            headers=self.builder_headers(self.headers),
-            data=json.dumps(payload),
-            cookies=cookies
-        )
+        for i in range(0, len(objects), batch_size):
+            chunk = objects[i:i + batch_size]
 
-        raise_for_http_status(rsp=response)
-        resp = response.json()
-        raise_on_error(rsp=resp)
+            url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch'
+            payload = {
+                'operation': 'upload',
+                'objects': chunk,
+            }
 
-        upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
-        resp_objects = resp['Data']['objects']
-        for obj in resp_objects:
-            upload_objects.append(
-                {'url': obj['actions']['upload']['href'],
-                 'oid': obj['oid']}
+            cookies = self.get_cookies(access_token=token, cookies_required=True)
+            response = self.session.post(
+                url,
+                headers=self.builder_headers(self.headers),
+                data=json.dumps(payload),
+                cookies=cookies
             )
 
-        return upload_objects
+            raise_for_http_status(rsp=response)
+            resp = response.json()
+            raise_on_error(rsp=resp)
+
+            resp_objects = resp['Data']['objects']
+            needs_upload = set()
+            for obj in resp_objects:
+                actions = obj.get('actions', {})
+                upload_action = actions.get('upload')
+                if upload_action:
+                    result[obj['oid']] = upload_action['href']
+                    needs_upload.add(obj['oid'])
+
+            # Objects not needing upload are globally existing
+            for o in chunk:
+                if o['oid'] not in needs_upload:
+                    result[o['oid']] = None
+
+        return result
 
     def _prepare_upload_folder(
             self,
@@ -3493,7 +3582,7 @@ class HubApi:
             if isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'normal':
 
                 commit_action = {
-                    'action': 'update' if operation._is_uploaded else 'create',
+                    'action': 'create',
                     'path': operation.path_in_repo,
                     'type': 'normal',
                     'size': operation.upload_info.size,
@@ -3507,7 +3596,7 @@ class HubApi:
             elif isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'lfs':
 
                 commit_action = {
-                    'action': 'update' if operation._is_uploaded else 'create',
+                    'action': 'create',
                     'path': operation.path_in_repo,
                     'type': 'lfs',
                     'size': operation.upload_info.size,

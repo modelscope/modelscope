@@ -2984,7 +2984,6 @@ class HubApi:
         # Upload statistics
         total_files = len(sorted_files)
         failed_count = len(total_failed_files)
-        succeeded = total_files - skipped_count - failed_count
         logger.info(
             f'Upload summary: {total_files} total, '
             f'{skipped_count} skipped (already committed), '

@@ -163,4 +163,4 @@ class UploadCMD(CLICommand):
         else:
             raise ValueError(f'{self.local_path} is not a valid local path')
 
-        print(f'Finished uploading to {self.repo_id}')
+        print(f'\nFinished uploading to {self.repo_id}')

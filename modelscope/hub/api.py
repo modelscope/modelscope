@@ -85,8 +85,8 @@ from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
 from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE
 from modelscope.hub.upload_pipeline import BatchTracker
-from modelscope.hub.upload_tracker import (NullTracker, UploadTracker,
-                                           classify_error)
+from modelscope.hub.upload_tracker import (_LEGACY_PROGRESS_FILE, NullTracker,
+                                           UploadTracker, classify_error)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -2751,7 +2751,7 @@ class HubApi:
         commit_description = commit_description or 'Uploading files'
 
         # Exclude internal cache/checkpoint files from upload
-        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, '.ms_upload_progress']
+        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, _LEGACY_PROGRESS_FILE]
         if ignore_patterns is None:
             ignore_patterns = _internal_ignore
         elif isinstance(ignore_patterns, str):

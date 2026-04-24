@@ -268,7 +268,7 @@ class UploadTracker:
             fd, tmp_path = tempfile.mkstemp(
                 dir=str(self._path.parent), suffix='.tmp')
             try:
-                with os.fdopen(fd, 'w') as f:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
                     json.dump(data, f, ensure_ascii=False)
                 os.replace(tmp_path, str(self._path))
             except BaseException:

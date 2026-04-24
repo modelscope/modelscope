@@ -96,7 +96,7 @@ class UploadHashCache:
                 dir=str(self._cache_path.parent),
                 prefix='.ms_upload_cache_tmp_')
             try:
-                with os.fdopen(fd, 'w') as f:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
                     json.dump(data, f)
                 os.replace(tmp_path, str(self._cache_path))
             except BaseException:

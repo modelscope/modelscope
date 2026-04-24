@@ -170,7 +170,7 @@ class UploadProgress:
             fd, tmp_path = tempfile.mkstemp(
                 dir=str(self._path.parent), prefix='.ms_upload_ckpt_tmp_')
             try:
-                with os.fdopen(fd, 'w') as f:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
                     json.dump(data, f)
                 os.replace(tmp_path, str(self._path))
             except BaseException:

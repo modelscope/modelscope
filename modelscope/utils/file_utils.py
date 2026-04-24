@@ -8,6 +8,10 @@ from shutil import Error, copy2, copystat
 from typing import BinaryIO, Optional, Union
 from urllib.parse import urlparse
 
+from modelscope.utils.logger import get_logger
+
+logger = get_logger()
+
 
 # TODO: remove this api, unify to flattened args
 def func_receive_dict_inputs(func):
@@ -221,8 +225,8 @@ def get_file_hash(
     """
     from tqdm.auto import tqdm
 
-    file_size = get_file_size(file_path_or_obj)
-    if file_size > 1024 * 1024 * 1024:  # 1GB
+    declared_size = get_file_size(file_path_or_obj)
+    if declared_size > 1024 * 1024 * 1024:  # 1GB
         disable_tqdm = False
         name = 'Large File'
         if isinstance(file_path_or_obj, (str, Path)):
@@ -235,7 +239,7 @@ def get_file_hash(
     file_hash = hashlib.sha256()
 
     progress = tqdm(
-        total=file_size,
+        total=declared_size,
         initial=0,
         unit_scale=True,
         dynamic_ncols=True,
@@ -245,24 +249,41 @@ def get_file_hash(
     )
 
     if isinstance(file_path_or_obj, (str, Path)):
+        bytes_hashed = 0
         with open(file_path_or_obj, 'rb') as f:
             while byte_chunk := f.read(buffer_size):
                 file_hash.update(byte_chunk)
+                bytes_hashed += len(byte_chunk)
                 progress.update(len(byte_chunk))
         file_hash = file_hash.hexdigest()
+        if bytes_hashed != declared_size:
+            logger.warning(
+                f'File size changed during hash computation: '
+                f'declared {declared_size} bytes, actually hashed {bytes_hashed} bytes. '
+                f'File may have been modified: {file_path_or_obj}')
+        file_size = bytes_hashed
 
     elif isinstance(file_path_or_obj, bytes):
         file_hash.update(file_path_or_obj)
         file_hash = file_hash.hexdigest()
         progress.update(len(file_path_or_obj))
+        file_size = len(file_path_or_obj)
 
     elif isinstance(file_path_or_obj, io.BufferedIOBase):
+        bytes_hashed = 0
         file_path_or_obj.seek(0, os.SEEK_SET)
         while byte_chunk := file_path_or_obj.read(buffer_size):
             file_hash.update(byte_chunk)
+            bytes_hashed += len(byte_chunk)
             progress.update(len(byte_chunk))
         file_hash = file_hash.hexdigest()
         file_path_or_obj.seek(0, os.SEEK_SET)
+        if bytes_hashed != declared_size:
+            logger.warning(
+                f'File size changed during hash computation: '
+                f'declared {declared_size} bytes, actually hashed {bytes_hashed} bytes. '
+                f'File may have been modified: {file_path_or_obj}')
+        file_size = bytes_hashed
 
     else:
         progress.close()
@@ -296,7 +317,7 @@ def _get_file_hash_async(
     from tqdm.auto import tqdm
 
     file_path = str(file_path)
-    file_size = os.path.getsize(file_path)
+    declared_size = os.path.getsize(file_path)
     buffer_size = buffer_size_mb * 1024 * 1024
 
     chunk_queue = queue.Queue(maxsize=2)  # Bounded to limit memory usage
@@ -319,8 +340,9 @@ def _get_file_hash_async(
     reader_thread.start()
 
     file_hash = hashlib.sha256()
+    bytes_hashed = 0
     progress = tqdm(
-        total=file_size,
+        total=declared_size,
         desc=tqdm_desc,
         disable=disable_tqdm,
         dynamic_ncols=True,
@@ -334,6 +356,7 @@ def _get_file_hash_async(
         if chunk is None:
             break
         file_hash.update(chunk)
+        bytes_hashed += len(chunk)
         progress.update(len(chunk))
 
     reader_thread.join()
@@ -342,10 +365,16 @@ def _get_file_hash_async(
     if read_error[0] is not None:
         raise read_error[0]
 
+    if bytes_hashed != declared_size:
+        logger.warning(
+            f'File size changed during hash computation: '
+            f'declared {declared_size} bytes, actually hashed {bytes_hashed} bytes. '
+            f'File may have been modified: {file_path}')
+
     return {
         'file_path_or_obj': file_path,
         'file_hash': file_hash.hexdigest(),
-        'file_size': file_size,
+        'file_size': bytes_hashed,
     }
 
 

@@ -56,10 +56,32 @@ class BatchTracker:
             if self._is_batch_complete(idx):
                 self._batch_events[idx].set()
 
-    def mark_batch_skipped(self, batch_idx: int):
-        self._batch_events[batch_idx].set()
+    def mark_file_skipped(self, file_index: int):
+        """Mark a file as skipped (already committed).
+
+        Decrements the batch's expected count so _is_batch_complete
+        uses the correct target. When all files in a batch are skipped,
+        the batch event is set automatically.
+        """
+        idx = self.batch_index(file_index)
+        with self._lock:
+            self._batch_expected[idx] -= 1
+            if self._is_batch_complete(idx):
+                self._batch_events[idx].set()
 
     def wait_for_batch(self, batch_idx: int) -> Tuple[List[dict], List[tuple]]:
+        """Wait for a batch to complete.
+
+        Blocks indefinitely until all files in the batch have reported
+        success or failure. Per-blob timeouts (UPLOAD_BLOB_TIMEOUT)
+        prevent individual uploads from hanging forever.
+
+        Args:
+            batch_idx: Index of the batch to wait for.
+
+        Returns:
+            Tuple of (successful_results, failures).
+        """
         self._batch_events[batch_idx].wait()
         with self._lock:
             return list(self._batch_results[batch_idx]), list(

@@ -20,7 +20,34 @@ MODELSCOPE_CREDENTIALS_PATH = os.environ.get(
     'MODELSCOPE_CREDENTIALS_PATH', DEFAULT_CREDENTIALS_PATH.as_posix())
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
 API_HTTP_CLIENT_TIMEOUT = 60
-API_HTTP_CLIENT_MAX_RETRIES = 2
+API_HTTP_CLIENT_MAX_RETRIES = int(
+    os.environ.get('API_HTTP_CLIENT_MAX_RETRIES', 5))
+
+# Application-level retry for blob upload
+UPLOAD_BLOB_MAX_RETRIES = int(os.environ.get('UPLOAD_BLOB_MAX_RETRIES', 5))
+UPLOAD_BLOB_RETRY_BACKOFF = int(os.environ.get('UPLOAD_BLOB_RETRY_BACKOFF', 2))
+UPLOAD_BLOB_RETRY_MAX_WAIT = int(
+    os.environ.get('UPLOAD_BLOB_RETRY_MAX_WAIT', 60))
+
+# Failed file retry within upload_folder
+UPLOAD_FAILED_FILE_MAX_RETRIES = int(
+    os.environ.get('UPLOAD_FAILED_FILE_MAX_RETRIES', 3))
+
+# Per-socket-operation timeout for blob upload (not total transfer time).
+# Each individual socket send/recv must complete within this limit.
+# Safe for any file size: a 100GB upload's total time can exceed this,
+# but each chunk I/O operation finishes in milliseconds.
+UPLOAD_BLOB_TIMEOUT = (30,
+                       int(
+                           os.environ.get('UPLOAD_BLOB_TIMEOUT_SECONDS',
+                                          3600)))
+
+# Methods that are safe for urllib3 transport-level retry.
+# PUT is excluded because blob uploads use streaming data that cannot be replayed.
+UPLOAD_RETRY_ALLOWED_METHODS = frozenset(
+    os.environ.get('UPLOAD_RETRY_ALLOWED_METHODS',
+                   'GET,HEAD,DELETE,OPTIONS,TRACE').split(','))
+
 API_RESPONSE_FIELD_DATA = 'Data'
 API_FILE_DOWNLOAD_RETRY_TIMES = 5
 API_FILE_DOWNLOAD_TIMEOUT = 60
@@ -45,7 +72,7 @@ DEFAULT_SKILLS_DIR = os.path.join(os.path.expanduser('~'), '.agents', 'skills')
 
 # Upload check env
 UPLOAD_MAX_FILE_SIZE = int(
-    os.environ.get('UPLOAD_MAX_FILE_SIZE', 100 * 1024**3))
+    os.environ.get('UPLOAD_MAX_FILE_SIZE_MB', 100 * 1024)) * 1024 * 1024
 UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS = int(
     os.environ.get('UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS', 1 * 1024 * 1024))
 UPLOAD_MAX_FILE_COUNT = int(os.environ.get('UPLOAD_MAX_FILE_COUNT', 100_000))
@@ -54,7 +81,23 @@ UPLOAD_MAX_FILE_COUNT_IN_DIR = int(
 UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT = int(
     os.environ.get('UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT', 500 * 1024 * 1024))
 UPLOAD_COMMIT_BATCH_SIZE = int(os.environ.get('UPLOAD_COMMIT_BATCH_SIZE', 256))
-UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD = 20 * 1024 * 1024
+UPLOAD_VALIDATE_BLOB_BATCH_SIZE = int(
+    os.environ.get('UPLOAD_VALIDATE_BLOB_BATCH_SIZE', 64))
+UPLOAD_ADAPTIVE_BATCH_SIZE = os.environ.get('UPLOAD_ADAPTIVE_BATCH_SIZE',
+                                            'true').lower() == 'true'
+
+# ReAct progressive retry fallback
+UPLOAD_REACT_ENABLED = os.environ.get('UPLOAD_REACT_ENABLED',
+                                      'true').lower() == 'true'
+UPLOAD_REACT_ROUND2_BASE_DELAY = int(
+    os.environ.get('UPLOAD_REACT_ROUND2_BASE_DELAY', 2))
+UPLOAD_REACT_ROUND3_FILE_DELAY = int(
+    os.environ.get('UPLOAD_REACT_ROUND3_FILE_DELAY', 30))
+UPLOAD_REACT_BACKOFF_MAX_EXPONENT = int(
+    os.environ.get('UPLOAD_REACT_BACKOFF_MAX_EXPONENT', 5))
+UPLOAD_REACT_MAX_DELAY = int(os.environ.get('UPLOAD_REACT_MAX_DELAY', 120))
+
+UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD = 5 * 1024 * 1024
 UPLOAD_USE_CACHE = os.environ.get('UPLOAD_USE_CACHE', 'true').lower() == 'true'
 
 

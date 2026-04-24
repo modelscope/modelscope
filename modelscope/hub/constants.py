@@ -72,7 +72,7 @@ DEFAULT_SKILLS_DIR = os.path.join(os.path.expanduser('~'), '.agents', 'skills')
 
 # Upload check env
 UPLOAD_MAX_FILE_SIZE = int(
-    os.environ.get('UPLOAD_MAX_FILE_SIZE', 100 * 1024**3))
+    os.environ.get('UPLOAD_MAX_FILE_SIZE_MB', 100 * 1024)) * 1024 * 1024
 UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS = int(
     os.environ.get('UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS', 1 * 1024 * 1024))
 UPLOAD_MAX_FILE_COUNT = int(os.environ.get('UPLOAD_MAX_FILE_COUNT', 100_000))

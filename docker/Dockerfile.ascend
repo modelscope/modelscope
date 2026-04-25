@@ -39,7 +39,7 @@ RUN ARCH=$(uname -m) && \
     # Install vllm
     cd vllm && VLLM_TARGET_DEVICE=empty pip install -v -e . && cd .. && \
     # Install vllm-ascend
-    cd vllm-ascend && pip install -v -e . && cd .. 
+    cd vllm-ascend && pip install -v -e . && cd ..
 
 # ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch v0.15.3 https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \

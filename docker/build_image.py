@@ -475,10 +475,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
             'arm64': 'arm',
         }
         if arch not in arch_mapping:
-            raise ValueError(
-                f'Unsupported architecture: {arch}. '
-                'Please pass --arch x86 or --arch arm.'
-            )
+            raise ValueError(f'Unsupported architecture: {arch}. '
+                             'Please pass --arch x86 or --arch arm.')
         return arch_mapping[arch]
 
     @staticmethod

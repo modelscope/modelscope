@@ -1,5 +1,6 @@
 import argparse
 import os
+import platform
 import subprocess
 from datetime import datetime
 from typing import Any
@@ -454,10 +455,48 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
 class AscendImageBuilder(StableGPUImageBuilder):
 
+    @staticmethod
+    def _normalize_arch(arch: str = None) -> str:
+        arch = arch or platform.machine()
+        arch = arch.lower()
+        arch_mapping = {
+            'x86': 'x86',
+            'x86_64': 'x86',
+            'amd64': 'x86',
+            'arm': 'arm',
+            'aarch64': 'arm',
+            'arm64': 'arm',
+        }
+        if arch not in arch_mapping:
+            raise ValueError(
+                f'Unsupported architecture: {arch}. '
+                'Please pass --arch x86 or --arch arm.'
+            )
+        return arch_mapping[arch]
+
+    @staticmethod
+    def _get_atlas_hardware(soc_version: str) -> str:
+        soc_version = soc_version.lower()
+        atlas_mapping = {
+            'ascend910b1': 'A2',
+            'ascend910_9391': 'A3',
+            'ascend310p1': '300I',
+        }
+        if soc_version.startswith('ascend950'):
+            return 'A5'
+        if soc_version not in atlas_mapping:
+            raise ValueError(
+                f'Unsupported soc_version: {soc_version}. '
+                'Supported values are ascend910b1, ascend910_9391, '
+                'ascend310p1, and values starting with ascend950.')
+        return atlas_mapping[soc_version]
+
     def init_args(self, args) -> Any:
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
+        args.arch = self._normalize_arch(args.arch)
+        args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -478,9 +517,9 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
     def image(self) -> str:
         return (
-            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-'
-            f'{self.args.soc_version}-torch2.9.0-'
-            f'{self.args.modelscope_version}-ascend-test')
+            f'{docker_registry}:{self.args.swift_branch}-'
+            f'{self.args.atlas_hardware}-{self.args.python_tag}-{self.args.arch}'
+        )
 
     def push(self):
         return 0
@@ -506,6 +545,7 @@ parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
+parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
 parser.add_argument('--dry_run', type=int, default=0)
 args = parser.parse_args()
 

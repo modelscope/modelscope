@@ -398,7 +398,7 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             args.torchaudio_version = '2.10.0'
             args.torchvision_version = '0.25.0'
         if not args.vllm_version:
-            args.vllm_version = '0.19.0'
+            args.vllm_version = '0.19.1'
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.9.1-cudnn-devel-ubuntu22.04'

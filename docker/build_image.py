@@ -55,6 +55,13 @@ class Builder:
     def generate_dockerfile(self) -> str:
         raise NotImplementedError
 
+    @staticmethod
+    def _remove_pynini_related_dependency(content: str) -> str:
+        return content.replace(
+            'pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html &&',  # noqa: E501
+            'pip install --no-cache-dir typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html &&'  # noqa: E501
+        )
+
     def _save_dockerfile(self, content: str) -> None:
         if os.path.exists('./Dockerfile'):
             os.remove('./Dockerfile')
@@ -303,7 +310,7 @@ class StableCPUImageBuilder(Builder):
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
-        return content
+        return self._remove_pynini_related_dependency(content)
 
     def image(self) -> str:
         return (
@@ -364,7 +371,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
-        return content
+        return self._remove_pynini_related_dependency(content)
 
     def image(self) -> str:
         return (

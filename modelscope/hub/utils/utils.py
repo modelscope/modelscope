@@ -66,6 +66,83 @@ def convert_patterns(raw_input: Union[str, List[str]]):
     return output
 
 
+def extract_root_from_patterns(
+    allow_file_pattern: Optional[List[str]] = None,
+    allow_patterns: Optional[List[str]] = None,
+) -> Optional[str]:
+    """Extract common directory prefix from include patterns for server-side filtering.
+
+    Only processes allow/include patterns (ignore/exclude is irrelevant for prefix).
+    Returns None if no meaningful prefix can be extracted.
+
+    Algorithm:
+    1. Merge allow_file_pattern and allow_patterns into one list
+    2. For each pattern, find position of first wildcard char (* ? [)
+    3. Extract text before that position, then take directory part (up to last '/')
+    4. Find longest common directory prefix (path-segment-aware)
+    5. Return None if no valid common prefix
+
+    Examples:
+        ['TacExo/*'] -> 'TacExo'
+        ['data/train/*.parquet'] -> 'data/train'
+        ['data/train/*', 'data/valid/*'] -> 'data'
+        ['*.safetensors'] -> None
+        ['TacExo/*', 'OtherDir/*'] -> None (no common prefix)
+        ['data/*/train.csv'] -> 'data'
+    """
+    # Merge both pattern lists
+    patterns = []
+    if allow_file_pattern:
+        patterns.extend(allow_file_pattern)
+    if allow_patterns:
+        patterns.extend(allow_patterns)
+
+    if not patterns:
+        return None
+
+    extracted_dirs = []
+    for pattern in patterns:
+        # Find position of first wildcard character
+        first_wildcard = len(pattern)
+        for wc in ('*', '?', '['):
+            pos = pattern.find(wc)
+            if pos != -1:
+                first_wildcard = min(first_wildcard, pos)
+
+        # Get text before wildcard
+        prefix = pattern[:first_wildcard]
+
+        # Extract directory part (up to last '/')
+        last_sep = prefix.rfind('/')
+        if last_sep > 0:
+            dir_part = prefix[:last_sep]
+            # Validate: no wildcards should remain in dir_part
+            if not any(c in dir_part for c in ('*', '?', '[')):
+                extracted_dirs.append(dir_part)
+        # If no '/' found or only at position 0, this pattern has no directory prefix
+
+    if not extracted_dirs:
+        return None
+
+    # Find longest common directory prefix (path-segment-aware)
+    if len(extracted_dirs) == 1:
+        return extracted_dirs[0]
+
+    # Split all paths into segments and find common prefix segments
+    split_paths = [d.split('/') for d in extracted_dirs]
+    common_segments = []
+    for segments in zip(*split_paths):
+        if len(set(segments)) == 1:
+            common_segments.append(segments[0])
+        else:
+            break
+
+    if not common_segments:
+        return None
+
+    return '/'.join(common_segments)
+
+
 # during model download, the '.' would be converted to '___' to produce
 # actual physical (masked) directory for storage
 def get_model_masked_directory(directory, model_id):
@@ -134,7 +211,8 @@ def get_endpoint(cn_site=True):
 
 
 def compute_hash(file_path):
-    BUFFER_SIZE = 1024 * 64  # 64k buffer size
+    # 16MB buffer for large file hash computation
+    BUFFER_SIZE = 1024 * 1024 * 16
     sha256_hash = hashlib.sha256()
     with open(file_path, 'rb') as f:
         while True:

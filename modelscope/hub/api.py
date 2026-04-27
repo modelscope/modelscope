@@ -4285,9 +4285,3 @@ class UploadingCheck:
         if total_size > self.normal_file_size_total_limit:
             raise ValueError(f'Total size of non-lfs files {total_size / (1024 * 1024)}MB '
                              f'and exceeds limit: {self.normal_file_size_total_limit / (1024 * 1024)}MB')
-        normal_file_list = [item for item in file_path_list if not self.is_lfs(item, repo_type)]
-        total_size = sum([get_file_size(item) for item in normal_file_list])
-
-        if total_size > self.normal_file_size_total_limit:
-            raise ValueError(f'Total size of non-lfs files {total_size / (1024 * 1024)}MB '
-                             f'and exceeds limit: {self.normal_file_size_total_limit / (1024 * 1024)}MB')

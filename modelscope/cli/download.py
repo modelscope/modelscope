@@ -10,7 +10,7 @@ from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
-from modelscope.hub.utils.utils import convert_patterns
+from modelscope.hub.utils.utils import convert_patterns, resolve_endpoint
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
 from modelscope.utils.logger import get_logger
 
@@ -107,6 +107,16 @@ class DownloadCMD(CLICommand):
             help='Glob patterns to exclude from files to download.'
             'Ignored if file is specified')
         parser.add_argument(
+            '--endpoint',
+            type=str,
+            default=None,
+            help='ModelScope server endpoint, e.g. modelscope.cn or '
+            'https://modelscope.cn. Scheme (https://) is auto-completed '
+            'if omitted. Falls back to env MODELSCOPE_DOMAIN, then '
+            'defaults to https://www.modelscope.cn. '
+            'When omitted, the CLI auto-detects the correct site '
+            '(cn/intl) for download.')
+        parser.add_argument(
             '--max-workers',
             type=int,
             default=DEFAULT_MAX_WORKERS,
@@ -133,9 +143,11 @@ class DownloadCMD(CLICommand):
                                     % self.args.repo_type)
         if not self.args.model and not self.args.dataset and not self.args.collection:
             raise Exception('Model, dataset, or collection must be set.')
+        endpoint = resolve_endpoint(
+            self.args.endpoint) if self.args.endpoint is not None else None
         cookies = None
         if self.args.token is not None:
-            api = HubApi()
+            api = HubApi(endpoint=endpoint)
             cookies = api.get_cookies(access_token=self.args.token)
         if self.args.model:
             if len(self.args.files) == 1:  # download single file
@@ -146,7 +158,8 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     revision=self.args.revision,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 snapshot_download(
@@ -157,7 +170,8 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             else:  # download repo
                 snapshot_download(
                     self.args.model,
@@ -168,7 +182,8 @@ class DownloadCMD(CLICommand):
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             print(f'\nSuccessfully Downloaded from model {self.args.model}.\n')
         elif self.args.dataset:
             dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
@@ -180,7 +195,8 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     revision=dataset_revision,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 dataset_snapshot_download(
@@ -191,7 +207,8 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
@@ -202,12 +219,13 @@ class DownloadCMD(CLICommand):
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
                     cookies=cookies,
-                    token=self.args.token)
+                    token=self.args.token,
+                    endpoint=endpoint)
             print(
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )
         elif self.args.collection:
-            api = HubApi(token=self.args.token)
+            api = HubApi(endpoint=endpoint, token=self.args.token)
             local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
             data = api.get_collection(self.args.collection, repo_type='skill')
             elements = data.get('CollectionElements',

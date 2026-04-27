@@ -210,6 +210,39 @@ def get_endpoint(cn_site=True):
     return MODELSCOPE_URL_SCHEME + get_domain(cn_site)
 
 
+def resolve_endpoint(cli_endpoint: Optional[str] = None,
+                     cn_site: bool = True) -> str:
+    """Resolve the ModelScope API endpoint with automatic scheme completion.
+
+    Priority (highest to lowest):
+        1. ``cli_endpoint`` (explicit CLI --endpoint argument)
+        2. Environment variable ``MODELSCOPE_DOMAIN``
+        3. Built-in default (https://www.modelscope.cn)
+
+    Scheme auto-completion:
+        If the resolved value does not start with ``http://`` or ``https://``,
+        ``https://`` is prepended automatically so that callers may pass bare
+        domain names such as ``modelscope.ai``.
+
+    Args:
+        cli_endpoint: Value from the CLI ``--endpoint`` flag.  When *None*,
+            the function falls back to :func:`get_endpoint`.
+        cn_site: Forwarded to :func:`get_endpoint` when *cli_endpoint* is
+            *None*.  ``True`` selects the Chinese site, ``False`` the
+            international site.
+
+    Returns:
+        A fully-qualified endpoint URL, e.g. ``https://www.modelscope.cn``.
+    """
+    if cli_endpoint is None:
+        return get_endpoint(cn_site=cn_site)
+    endpoint = cli_endpoint.strip().rstrip('/')
+    if not endpoint.startswith('http://') and not endpoint.startswith(
+            'https://'):
+        endpoint = MODELSCOPE_URL_SCHEME + endpoint
+    return endpoint
+
+
 def compute_hash(file_path):
     # 16MB buffer for large file hash computation
     BUFFER_SIZE = 1024 * 1024 * 16

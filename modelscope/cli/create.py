@@ -6,7 +6,6 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.constants import (Licenses, ModelVisibility, Visibility,
                                       VisibilityMap)
 from modelscope.hub.utils.aigc import AigcModel
-from modelscope.hub.utils.utils import resolve_endpoint
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 from modelscope.utils.logger import get_logger
 
@@ -76,22 +75,12 @@ class CreateCMD(CLICommand):
             'Optional, License of the repo. Default to `Apache License 2.0`.',
         )
         parser.add_argument(
-            '--exist_ok',
-            action='store_true',
-            default=False,
-            help=
-            'If True, do not raise error when repo already exists. Defaults to False.',
-        )
-        parser.add_argument(
             '--endpoint',
             type=str,
             default=None,
-            help=
-            'ModelScope server endpoint, e.g. modelscope.cn (Chinese site) or '
-            'modelscope.ai (international site). Full URL like '
-            'https://modelscope.cn is also accepted. Scheme (https://) is '
-            'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
-            'then defaults to https://www.modelscope.cn.',
+            help='Optional, The modelscope server address. Default to None. '
+            'If not provided, the CLI will use the default official ModelScope endpoint (`https://modelscope.cn`). '
+            '`https://modelscope.ai` is also supported.',
         )
 
         # AIGC specific arguments
@@ -163,8 +152,7 @@ class CreateCMD(CLICommand):
     def _create_regular_repo(self):
         # Check token and login
         # The cookies will be reused if the user has logged in before.
-        endpoint = resolve_endpoint(self.args.endpoint)
-        api = HubApi(endpoint=endpoint)
+        api = HubApi(endpoint=self.args.endpoint)
 
         # Create repo
         api.create_repo(
@@ -174,15 +162,14 @@ class CreateCMD(CLICommand):
             repo_type=self.args.repo_type,
             chinese_name=self.args.chinese_name,
             license=self.args.license,
-            exist_ok=self.args.exist_ok,
+            exist_ok=True,
             create_default_config=True,
-            endpoint=endpoint,
+            endpoint=self.args.endpoint,
         )
 
     def _create_aigc_model(self):
         """Execute the command."""
-        endpoint = resolve_endpoint(self.args.endpoint)
-        api = HubApi(endpoint=endpoint)
+        api = HubApi(endpoint=self.args.endpoint)
         model_id = self.args.repo_id
 
         if self.args.from_json:

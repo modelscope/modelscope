@@ -56,7 +56,6 @@ def snapshot_download(
     enable_file_lock: Optional[bool] = None,
     progress_callbacks: List[Type[ProgressCallback]] = None,
     token: Optional[str] = None,
-    endpoint: Optional[str] = None,
 ) -> str:
     """Download all files of a repo.
     Downloads a whole snapshot of a repo's files at the specified revision. This
@@ -157,8 +156,7 @@ def snapshot_download(
             allow_patterns=allow_patterns,
             max_workers=max_workers,
             progress_callbacks=progress_callbacks,
-            token=token,
-            endpoint=endpoint)
+            token=token)
 
 
 def dataset_snapshot_download(
@@ -176,7 +174,6 @@ def dataset_snapshot_download(
     enable_file_lock: Optional[bool] = None,
     max_workers: int = 8,
     token: Optional[str] = None,
-    endpoint: Optional[str] = None,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -257,8 +254,7 @@ def dataset_snapshot_download(
             ignore_patterns=ignore_patterns,
             allow_patterns=allow_patterns,
             max_workers=max_workers,
-            token=token,
-            endpoint=endpoint)
+            token=token)
 
 
 def _snapshot_download(
@@ -278,7 +274,6 @@ def _snapshot_download(
     max_workers: int = 8,
     progress_callbacks: List[Type[ProgressCallback]] = None,
     token: Optional[str] = None,
-    endpoint: Optional[str] = None,
 ):
     if not repo_type:
         repo_type = REPO_TYPE_MODEL
@@ -319,9 +314,8 @@ def _snapshot_download(
                 headers['x-aliyun-region-id'] = region_id
 
         _api = HubApi(token=token)
-        if endpoint is None:
-            endpoint = _api.get_endpoint_for_read(
-                repo_id=repo_id, repo_type=repo_type, token=token)
+        endpoint = _api.get_endpoint_for_read(
+            repo_id=repo_id, repo_type=repo_type, token=token)
         if cookies is None:
             cookies = _api.get_cookies()
         if repo_type == REPO_TYPE_MODEL:

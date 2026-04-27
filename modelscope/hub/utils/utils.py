@@ -237,6 +237,8 @@ def resolve_endpoint(cli_endpoint: Optional[str] = None,
     if cli_endpoint is None:
         return get_endpoint(cn_site=cn_site)
     endpoint = cli_endpoint.strip().rstrip('/')
+    if not endpoint:
+        return get_endpoint(cn_site=cn_site)
     if not endpoint.startswith('http://') and not endpoint.startswith(
             'https://'):
         endpoint = MODELSCOPE_URL_SCHEME + endpoint

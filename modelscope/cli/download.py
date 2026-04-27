@@ -110,10 +110,12 @@ class DownloadCMD(CLICommand):
             '--endpoint',
             type=str,
             default=None,
-            help='ModelScope server endpoint, e.g. modelscope.cn or '
-            'https://modelscope.cn. Scheme (https://) is auto-completed '
-            'if omitted. Falls back to env MODELSCOPE_DOMAIN, then '
-            'defaults to https://www.modelscope.cn. '
+            help=
+            'ModelScope server endpoint, e.g. modelscope.cn (Chinese site) or '
+            'modelscope.ai (international site). Full URL like '
+            'https://modelscope.cn is also accepted. Scheme (https://) is '
+            'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
+            'then defaults to https://www.modelscope.cn. '
             'When omitted, the CLI auto-detects the correct site '
             '(cn/intl) for download.')
         parser.add_argument(
@@ -143,8 +145,10 @@ class DownloadCMD(CLICommand):
                                     % self.args.repo_type)
         if not self.args.model and not self.args.dataset and not self.args.collection:
             raise Exception('Model, dataset, or collection must be set.')
-        endpoint = resolve_endpoint(
-            self.args.endpoint) if self.args.endpoint is not None else None
+        if self.args.endpoint:
+            endpoint = resolve_endpoint(self.args.endpoint)
+        else:
+            endpoint = None
         cookies = None
         if self.args.token is not None:
             api = HubApi(endpoint=endpoint)
@@ -227,7 +231,8 @@ class DownloadCMD(CLICommand):
         elif self.args.collection:
             api = HubApi(endpoint=endpoint, token=self.args.token)
             local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
-            data = api.get_collection(self.args.collection, repo_type='skill')
+            data = api.get_collection(
+                self.args.collection, repo_type='skill', endpoint=endpoint)
             elements = data.get('CollectionElements',
                                 {}).get('CollectionElementVoList', [])
 
@@ -263,7 +268,9 @@ class DownloadCMD(CLICommand):
                 skill_id = f'{element_path}/{element_name}'
                 try:
                     skill_dir = api.download_skill(
-                        skill_id=skill_id, local_dir=local_dir)
+                        skill_id=skill_id,
+                        local_dir=local_dir,
+                        endpoint=endpoint)
                     return (skill_id, skill_dir, None)
                 except Exception as e:
                     return (skill_id, None, str(e))

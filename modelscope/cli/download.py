@@ -110,8 +110,7 @@ class DownloadCMD(CLICommand):
             '--endpoint',
             type=str,
             default=None,
-            help=
-            'ModelScope server endpoint, e.g. modelscope.cn (Chinese site) or '
+            help='ModelScope server endpoint, e.g. modelscope.cn or '
             'modelscope.ai (international site). Full URL like '
             'https://modelscope.cn is also accepted. Scheme (https://) is '
             'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '

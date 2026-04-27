@@ -577,10 +577,6 @@ class _MsKernelApi:
                        path_in_repo=None,
                        revision=None,
                        **kwargs):
-        # List the remote tree via ModelScope's file API without downloading,
-        # then yield the `RepoFolder` objects `kernels.variants.get_variants`
-        # expects. Using `get_model_files` avoids relying on snapshot_download
-        # glob semantics (which may not recurse into subdirectories).
         from huggingface_hub.hf_api import RepoFolder
         from modelscope.hub.api import HubApi
         entries = HubApi().get_model_files(

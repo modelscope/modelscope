@@ -92,7 +92,7 @@ class UploadCMD(CLICommand):
             type=str,
             default=None,
             help='ModelScope server endpoint, e.g. modelscope.cn or '
-            'modelscope.ai (international site). Full URL like '
+            'modelscope.ai    Full URL like '
             'https://modelscope.cn is also accepted. Scheme (https://) is '
             'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
             'then defaults to https://www.modelscope.cn.')

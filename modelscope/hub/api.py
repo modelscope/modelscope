@@ -2916,7 +2916,6 @@ class HubApi:
                         continue
 
                     results, failures = batch_tracker.wait_for_batch(batch_idx)
-                    all_results.extend(results)
 
                     if failures:
                         total_failed_files.extend(failures)
@@ -2946,6 +2945,7 @@ class HubApi:
                             revision=revision,
                         )
                         commit_infos.append(commit_info)
+                        all_results.extend(results)
                         logger.info(
                             f'Batch {batch_idx + 1}/{num_batches}: '
                             f'committed {len(results)} file(s).')
@@ -3005,7 +3005,6 @@ class HubApi:
                         logger.error(f'  Retry failed: {path_in_repo} - {e}')
                         retry_failures.append(((path_in_repo, file_path), e))
                 if retry_successes:
-                    all_results.extend(retry_successes)
                     self._track_uploaded_batch(tracker, retry_successes)
                     operations = self._build_batch_operations(
                         retry_successes, repo_type)
@@ -3020,6 +3019,7 @@ class HubApi:
                                 repo_type=repo_type,
                                 revision=revision)
                             commit_infos.append(commit_info)
+                            all_results.extend(retry_successes)
                             self._track_committed_batch(tracker, retry_successes)
                             logger.info(
                                 f'  Retry round {retry_round + 1}: '
@@ -3050,7 +3050,7 @@ class HubApi:
         print('-' * 60)
         print(f'  Total files      : {total_files}')
         print(f'  Skipped (cached) : {skipped_count}')
-        print(f'  Reused (global)  : {reused_count}')
+        print(f'  Existed (server) : {reused_count}')
         print(f'  Uploaded (PUT)   : {uploaded_count}')
         print(f'  Failed           : {failed_count}')
         committed_count = reused_count + uploaded_count

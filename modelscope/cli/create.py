@@ -78,8 +78,8 @@ class CreateCMD(CLICommand):
             '--endpoint',
             type=str,
             default=None,
-            help='Optional, The modelscope server address. Default to None.'
-            'If not provided, the CLI will use the default official ModelScope endpoint (`https://modelscope.cn`).'
+            help='Optional, The modelscope server address. Default to None. '
+            'If not provided, the CLI will use the default official ModelScope endpoint (`https://modelscope.cn`). '
             '`https://modelscope.ai` is also supported.',
         )
 

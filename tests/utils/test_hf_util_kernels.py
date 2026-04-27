@@ -16,9 +16,9 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-from modelscope.utils.hf_util.patcher import (_patch_kernels,
-                                              _unpatch_kernels, patch_context,
-                                              patch_hub, unpatch_hub)
+from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
+                                              patch_context, patch_hub,
+                                              unpatch_hub)
 
 
 def _ensure_kernels_installed():
@@ -75,8 +75,7 @@ class _KernelsTestBase(unittest.TestCase):
         _unpatch_kernels()
         import modelscope
         for name in ('get_kernel', 'has_kernel', 'install_kernel',
-                     'load_kernel', 'get_locked_kernel',
-                     'snapshot_download'):
+                     'load_kernel', 'get_locked_kernel', 'snapshot_download'):
             try:
                 delattr(modelscope, name)
             except AttributeError:
@@ -109,8 +108,7 @@ class KernelsProxyApiTest(_KernelsTestBase):
         _patch_kernels()
         _unpatch_kernels()
         self.assertFalse(hasattr(self.kernels_utils, '_get_hf_api_origin'))
-        self.assertIs(self.kernels_utils._get_hf_api,
-                      self.original_get_hf_api)
+        self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
     def test_snapshot_download_routes_to_modelscope(self):
         api = self._patched_api()
@@ -133,7 +131,8 @@ class KernelsProxyApiTest(_KernelsTestBase):
 
     def test_file_exists_routes_to_hubapi(self):
         api = self._patched_api()
-        fake = MagicMock(); fake.file_exists.return_value = True
+        fake = MagicMock()
+        fake.file_exists.return_value = True
         with patch('modelscope.hub.api.HubApi', return_value=fake):
             self.assertTrue(api.file_exists('foo/bar', 'README.md'))
         fake.file_exists.assert_called_once_with(
@@ -142,8 +141,8 @@ class KernelsProxyApiTest(_KernelsTestBase):
     def test_list_repo_refs_routes_to_hubapi(self):
         api = self._patched_api()
         fake = MagicMock()
-        fake.get_model_branches_and_tags.return_value = (
-            ['master', 'v1'], ['r1.0'])
+        fake.get_model_branches_and_tags.return_value = (['master',
+                                                          'v1'], ['r1.0'])
         with patch('modelscope.hub.api.HubApi', return_value=fake):
             refs = api.list_repo_refs('foo/bar')
         self.assertEqual([b.name for b in refs.branches], ['master', 'v1'])
@@ -175,8 +174,7 @@ class PatchHubFlowTest(_KernelsTestBase):
             with patch_context():
                 self.assertTrue(
                     hasattr(self.kernels_utils, '_get_hf_api_origin'))
-            self.assertFalse(
-                hasattr(self.kernels_utils, '_get_hf_api_origin'))
+            self.assertFalse(hasattr(self.kernels_utils, '_get_hf_api_origin'))
 
 
 class ModelscopeImportTest(_KernelsTestBase):
@@ -204,8 +202,7 @@ class ModelscopeImportTest(_KernelsTestBase):
         ms_get_kernel = modelscope.get_kernel
         self.assertIsNot(ms_get_kernel, kernels.get_kernel)
         # Before any call, `_get_hf_api` stays the original.
-        self.assertIs(self.kernels_utils._get_hf_api,
-                      self.original_get_hf_api)
+        self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
         captured = {}
         with patch.object(kernels, 'get_kernel',
@@ -218,8 +215,7 @@ class ModelscopeImportTest(_KernelsTestBase):
         # Mid-call: ModelScope proxy was active.
         self.assertTrue(hasattr(captured['api'], 'snapshot_download'))
         # After the call: patch is rolled back.
-        self.assertIs(self.kernels_utils._get_hf_api,
-                      self.original_get_hf_api)
+        self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
     def test_wrapped_call_nests_inside_patch_hub(self):
         import kernels
@@ -255,8 +251,7 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
         module = modelscope.get_kernel(self.REPO)
         self.assertIsNotNone(module)
         # Wrapper must leave `_get_hf_api` restored afterwards.
-        self.assertIs(self.kernels_utils._get_hf_api,
-                      self.original_get_hf_api)
+        self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
     def test_patch_hub_then_kernels_get_kernel(self):
         with _isolate_hub_patches(), patch_context():
@@ -264,8 +259,7 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
             module = get_kernel(self.REPO)
             self.assertIsNotNone(module)
         # `patch_context` rolled the kernels patch back on exit.
-        self.assertIs(self.kernels_utils._get_hf_api,
-                      self.original_get_hf_api)
+        self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
 
 if __name__ == '__main__':

@@ -553,9 +553,14 @@ class _MsKernelApi:
     handful of methods that `kernels` actually calls are implemented.
     """
 
-    def snapshot_download(self, repo_id, *, allow_patterns=None,
-                          cache_dir=None, revision=None,
-                          local_files_only=False, **kwargs):
+    def snapshot_download(self,
+                          repo_id,
+                          *,
+                          allow_patterns=None,
+                          cache_dir=None,
+                          revision=None,
+                          local_files_only=False,
+                          **kwargs):
         from modelscope import snapshot_download as ms_snapshot_download
         if isinstance(allow_patterns, str):
             allow_patterns = [allow_patterns]
@@ -566,7 +571,11 @@ class _MsKernelApi:
             local_files_only=local_files_only,
             allow_file_pattern=allow_patterns)
 
-    def list_repo_tree(self, repo_id, *, path_in_repo=None, revision=None,
+    def list_repo_tree(self,
+                       repo_id,
+                       *,
+                       path_in_repo=None,
+                       revision=None,
                        **kwargs):
         # List the remote tree via ModelScope's file API without downloading,
         # then yield the `RepoFolder` objects `kernels.variants.get_variants`
@@ -584,8 +593,7 @@ class _MsKernelApi:
             if entry.get('Type') != 'tree':
                 continue
             path = entry.get('Path') or entry.get('Name')
-            folders.append(
-                RepoFolder(path=path, oid='', last_commit=None))
+            folders.append(RepoFolder(path=path, oid='', last_commit=None))
         return folders
 
     def file_exists(self, repo_id, filename, *, revision=None, **kwargs):

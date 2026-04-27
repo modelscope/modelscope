@@ -106,6 +106,8 @@ fi
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
+RUN pip install --no-cache-dir cmake
+
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     pip install --no-cache-dir -U funasr scikit-learn && \

@@ -73,11 +73,10 @@ class _KernelsTestBase(unittest.TestCase):
 
     def tearDown(self):
         _unpatch_kernels()
-        # LazyImportModule caches attributes resolved via `try_import_from_hf`;
-        # drop them so each test re-resolves against the fresh state.
         import modelscope
         for name in ('get_kernel', 'has_kernel', 'install_kernel',
-                     'load_kernel', 'get_locked_kernel'):
+                     'load_kernel', 'get_locked_kernel',
+                     'snapshot_download'):
             try:
                 delattr(modelscope, name)
             except AttributeError:
@@ -241,13 +240,13 @@ class ModelscopeImportTest(_KernelsTestBase):
                           self.original_get_hf_api)
 
 
-class FlashAttn2IntegrationTest(_KernelsTestBase):
-    """Real-world check using `kernels-community/flash-attn2`, which is
+class TinyGradRMSIntegrationTest(_KernelsTestBase):
+    """Real-world check using `kernels-community/tinygrad-rms`, which is
     published on both HuggingFace and ModelScope. Verifies that the
     ModelScope download path actually works end to end.
     """
 
-    REPO = 'kernels-community/flash-attn2'
+    REPO = 'kernels-community/tinygrad-rms'
 
     def test_from_modelscope_get_kernel(self):
         import modelscope

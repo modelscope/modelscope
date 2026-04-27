@@ -568,25 +568,25 @@ class _MsKernelApi:
 
     def list_repo_tree(self, repo_id, *, path_in_repo=None, revision=None,
                        **kwargs):
-        # Download the requested subtree and walk it locally, producing the
-        # `RepoFolder` objects that `kernels.variants.get_variants` expects.
+        # List the remote tree via ModelScope's file API without downloading,
+        # then yield the `RepoFolder` objects `kernels.variants.get_variants`
+        # expects. Using `get_model_files` avoids relying on snapshot_download
+        # glob semantics (which may not recurse into subdirectories).
         from huggingface_hub.hf_api import RepoFolder
-        from modelscope import snapshot_download as ms_snapshot_download
-        local_path = ms_snapshot_download(
+        from modelscope.hub.api import HubApi
+        entries = HubApi().get_model_files(
             repo_id,
             revision=_ms_revision(revision),
-            allow_file_pattern=[f'{path_in_repo}/*'] if path_in_repo else None)
-        root = Path(local_path)
-        base = root / path_in_repo if path_in_repo else root
-        if not base.is_dir():
-            return []
-        return [
-            RepoFolder(
-                path=entry.relative_to(root).as_posix(),
-                oid='',
-                last_commit=None) for entry in base.iterdir()
-            if entry.is_dir()
-        ]
+            root=path_in_repo,
+            recursive=False)
+        folders = []
+        for entry in entries:
+            if entry.get('Type') != 'tree':
+                continue
+            path = entry.get('Path') or entry.get('Name')
+            folders.append(
+                RepoFolder(path=path, oid='', last_commit=None))
+        return folders
 
     def file_exists(self, repo_id, filename, *, revision=None, **kwargs):
         from modelscope.hub.api import HubApi

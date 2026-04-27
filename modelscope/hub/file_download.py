@@ -53,6 +53,7 @@ def model_file_download(
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
     token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
     """Download from a given URL and cache it if it's not already present in the local cache.
 
@@ -72,6 +73,7 @@ def model_file_download(
         cookies (CookieJar, optional): The cookie of download request.
         local_dir (str, optional): Specific local directory path to which the file will be downloaded.
         token (str, optional): The user token.
+        endpoint (str, optional): The remote endpoint.
 
     Returns:
         string: string of local file or if networking is off, last version of
@@ -101,7 +103,8 @@ def model_file_download(
         local_files_only=local_files_only,
         cookies=cookies,
         local_dir=local_dir,
-        token=token)
+        token=token,
+        endpoint=endpoint)
 
 
 def dataset_file_download(
@@ -114,6 +117,7 @@ def dataset_file_download(
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
     token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -137,6 +141,7 @@ def dataset_file_download(
             local cached file if it exists.
         cookies (CookieJar, optional): The cookie of the request, default None.
         token (str, optional): The user token.
+        endpoint (str, optional): The remote endpoint.
     Raises:
         ValueError: the value details.
 
@@ -162,7 +167,8 @@ def dataset_file_download(
         local_files_only=local_files_only,
         cookies=cookies,
         local_dir=local_dir,
-        token=token)
+        token=token,
+        endpoint=endpoint)
 
 
 def _repo_file_download(
@@ -178,6 +184,7 @@ def _repo_file_download(
     local_dir: Optional[str] = None,
     disable_tqdm: bool = False,
     token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
 
     if not repo_type:
@@ -224,8 +231,9 @@ def _repo_file_download(
     if cookies is None:
         cookies = _api.get_cookies()
     repo_files = []
-    endpoint = _api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=repo_type, token=token)
+    if endpoint is None:
+        endpoint = _api.get_endpoint_for_read(
+            repo_id=repo_id, repo_type=repo_type, token=token)
     file_to_download_meta = None
     if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(

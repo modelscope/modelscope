@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
+from modelscope.hub.utils.utils import resolve_endpoint
 
 
 def subparser_func(args):
@@ -28,8 +29,18 @@ class LoginCMD(CLICommand):
             type=str,
             required=True,
             help='The Access Token for modelscope.')
+        parser.add_argument(
+            '--endpoint',
+            type=str,
+            default=None,
+            help=
+            'ModelScope server endpoint, e.g. modelscope.cn (Chinese site) or '
+            'modelscope.ai (international site). Full URL like '
+            'https://modelscope.cn is also accepted. Scheme (https://) is '
+            'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
+            'then defaults to https://www.modelscope.cn.')
         parser.set_defaults(func=subparser_func)
 
     def execute(self):
-        api = HubApi()
+        api = HubApi(endpoint=resolve_endpoint(self.args.endpoint))
         api.login(self.args.token)

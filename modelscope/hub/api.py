@@ -3890,7 +3890,8 @@ class HubApi:
                        collection_id: str,
                        repo_type: str = 'skill',
                        page_number: int = 1,
-                       page_size: int = 50) -> dict:
+                       page_size: int = 50,
+                       endpoint: Optional[str] = None) -> dict:
         """Get collection details and its elements.
 
         Args:
@@ -3906,12 +3907,14 @@ class HubApi:
             ValueError: If repo_type is not 'skill'.
             RequestError: If the API request fails.
         """
+        if not endpoint:
+            endpoint = self.endpoint
         if repo_type != 'skill':
             raise ValueError(
                 f'repo_type={repo_type} is not supported, '
                 'only "skill" is currently supported.')
         cookies = self.get_cookies()
-        path = f'{self.endpoint}/api/v1/collections'
+        path = f'{endpoint}/api/v1/collections'
         params = {
             'Fid': collection_id,
             'ElementType': repo_type,
@@ -3926,7 +3929,8 @@ class HubApi:
         return d[API_RESPONSE_FIELD_DATA]
 
     def download_skill(self, skill_id: str,
-                       local_dir: Optional[str] = None) -> str:
+                       local_dir: Optional[str] = None,
+                       endpoint: Optional[str] = None) -> str:
         """Download a single skill archive and extract it.
 
         Args:
@@ -3941,10 +3945,12 @@ class HubApi:
             ValueError: If skill_id format is invalid.
             RequestError: If the download request fails.
         """
+        if not endpoint:
+            endpoint = self.endpoint
         element_path, element_name = RepoUtils.validate_repo_id(skill_id)
 
         cookies = self.get_cookies()
-        url = f'{self.endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
+        url = f'{endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
 
         if local_dir is None:
             local_dir = os.getcwd()

@@ -4,7 +4,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.utils.utils import convert_patterns, get_endpoint
+from modelscope.hub.utils.utils import convert_patterns, resolve_endpoint
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
 
 
@@ -90,8 +90,12 @@ class UploadCMD(CLICommand):
         parser.add_argument(
             '--endpoint',
             type=str,
-            default=get_endpoint(),
-            help='Endpoint for ModelScope service.')
+            default=None,
+            help='ModelScope server endpoint, e.g. modelscope.cn or '
+            'modelscope.ai    Full URL like '
+            'https://modelscope.cn is also accepted. Scheme (https://) is '
+            'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
+            'then defaults to https://www.modelscope.cn.')
 
         parser.set_defaults(func=subparser_func)
 
@@ -135,7 +139,7 @@ class UploadCMD(CLICommand):
             self.local_path = self.args.local_path
             self.path_in_repo = self.args.path_in_repo
 
-        api = HubApi(endpoint=self.args.endpoint)
+        api = HubApi(endpoint=resolve_endpoint(self.args.endpoint))
 
         if os.path.isfile(self.local_path):
             api.upload_file(

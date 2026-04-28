@@ -119,21 +119,30 @@ else:
         extra_objects[_import] = getattr(hf_util, _import)
 
     def try_import_from_hf(name):
-        hf_pkgs = ['transformers', 'peft', 'diffusers']
+        hf_pkgs = ['transformers', 'peft', 'diffusers', 'kernels']
         module = None
+        matched_pkg = None
         for pkg in hf_pkgs:
             try:
                 module = getattr(importlib.import_module(pkg), name)
+                matched_pkg = pkg
                 break
             except Exception:  # noqa
                 pass
 
-        if module is not None:
-            module = _patch_pretrained_class([module], wrap=True)
-        else:
+        if module is None:
             raise AttributeError(
                 f'Cannot import available module of {name} in modelscope,'
                 f' or related packages({hf_pkgs})')
+
+        if matched_pkg == 'kernels':
+            if callable(module):
+                from modelscope.utils.hf_util.patcher import \
+                    _wrap_kernels_callable
+                return _wrap_kernels_callable(name)
+            return module
+
+        module = _patch_pretrained_class([module], wrap=True)
         return module[0]
 
     import sys

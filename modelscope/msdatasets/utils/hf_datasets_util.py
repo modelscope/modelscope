@@ -12,6 +12,7 @@ Sub-modules:
     _module_factories – dataset module factory functions & data-file resolution
 """
 import contextlib
+import inspect
 import os
 import warnings
 from dataclasses import fields
@@ -686,6 +687,16 @@ class DatasetsWrapperHF:
         _config_cls = builder_cls.BUILDER_CONFIG_CLASS
         if hasattr(_config_cls, '__dataclass_fields__'):
             _valid_fields = set(_config_cls.__dataclass_fields__.keys())
+            # Also preserve parameters accepted by the builder's
+            # __init__ (e.g. writer_batch_size, base_path, repo_id)
+            # so they are not inadvertently stripped.
+            try:
+                _init_params = set(
+                    inspect.signature(builder_cls.__init__).parameters.keys()
+                )
+            except (ValueError, TypeError):
+                _init_params = set()
+            _valid_fields = _valid_fields | _init_params
             config_kwargs = {
                 k: v for k, v in config_kwargs.items()
                 if k in _valid_fields

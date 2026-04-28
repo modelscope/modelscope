@@ -81,9 +81,9 @@ def _request_with_retry_ms(
                 'method=%s, url=%s, timeout=%s, Range=%s',
                 method, url, timeout, range_header or 'N/A',
             )
-            t0 = time.time()
+            t0 = time.perf_counter()
             response = requests.request(method=method.upper(), url=url, timeout=timeout, **params)
-            elapsed = time.time() - t0
+            elapsed = time.perf_counter() - t0
             logger.debug(
                 '[MS_DOWNLOAD] _request_with_retry_ms response: '
                 'status=%s, content_length=%s, elapsed=%.3fs, url=%s',
@@ -93,14 +93,14 @@ def _request_with_retry_ms(
                 url,
             )
             success = True
-        except requests.exceptions.ReadTimeout as err:
+        except (requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError) as err:
             logger.error(
-                '[MS_DOWNLOAD] _request_with_retry_ms ReadTimeout: '
+                '[MS_DOWNLOAD] _request_with_retry_ms %s: '
                 'method=%s, url=%s, timeout=%s, error=%s',
-                method, url, timeout, err,
+                type(err).__name__, method, url, timeout, err,
             )
-            raise
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as err:
             if tries > max_retries:
                 raise err
             else:

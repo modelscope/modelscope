@@ -8,7 +8,7 @@ import sys
 from asyncio import Future
 from functools import partial
 from pathlib import Path
-from types import MethodType
+from types import MethodType, SimpleNamespace
 from typing import BinaryIO, Dict, Iterable, List, Optional, Union
 
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
@@ -515,6 +515,147 @@ def _unpatch_pretrained_class(all_imported_modules):
         delattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module')
 
 
+def _patch_kernels():
+    """Monkey-patch the `kernels` library to route HF API calls to ModelScope.
+
+    Only `kernels.utils._get_hf_api` is replaced; every download, file check
+    and ref listing performed by `kernels` goes through `_MsKernelApi`, so
+    the kernel loading/variant/lock logic stays untouched.
+    """
+    try:
+        from kernels import utils as kernels_utils
+    except ImportError:
+        return
+    if hasattr(kernels_utils, '_get_hf_api_origin'):
+        return
+    kernels_utils._get_hf_api_origin = kernels_utils._get_hf_api
+    kernels_utils._get_hf_api = lambda user_agent=None: _MsKernelApi()
+
+
+def _unpatch_kernels():
+    try:
+        from kernels import utils as kernels_utils
+    except ImportError:
+        return
+    origin = getattr(kernels_utils, '_get_hf_api_origin', None)
+    if origin is not None:
+        kernels_utils._get_hf_api = origin
+        del kernels_utils._get_hf_api_origin
+
+
+def _ms_revision(revision):
+    """Translate an HF revision string into one ModelScope accepts."""
+    return 'master' if revision in (None, 'main') else revision
+
+
+class _MsKernelApi:
+    """Minimal `HfApi` look-alike that forwards to ModelScope. Only the
+    handful of methods that `kernels` actually calls are implemented.
+    """
+
+    def snapshot_download(self,
+                          repo_id,
+                          *,
+                          allow_patterns=None,
+                          ignore_patterns=None,
+                          cache_dir=None,
+                          revision=None,
+                          local_files_only=False,
+                          **kwargs):
+        from modelscope import snapshot_download as ms_snapshot_download
+        return ms_snapshot_download(
+            repo_id,
+            revision=_ms_revision(revision),
+            cache_dir=cache_dir,
+            local_files_only=local_files_only,
+            allow_patterns=allow_patterns,
+            ignore_patterns=ignore_patterns,
+            **kwargs)
+
+    def list_repo_tree(self,
+                       repo_id,
+                       *,
+                       path_in_repo=None,
+                       revision=None,
+                       **kwargs):
+        from huggingface_hub.hf_api import RepoFolder
+        from modelscope.hub.api import HubApi
+        entries = HubApi().get_model_files(
+            repo_id,
+            revision=_ms_revision(revision),
+            root=path_in_repo,
+            recursive=False)
+        folders = []
+        for entry in entries:
+            if entry.get('Type') != 'tree':
+                continue
+            path = entry.get('Path') or entry.get('Name')
+            folders.append(RepoFolder(path=path, oid='', last_commit=None))
+        return folders
+
+    def file_exists(self, repo_id, filename, *, revision=None, **kwargs):
+        from modelscope.hub.api import HubApi
+        return HubApi().file_exists(
+            repo_id, filename, revision=_ms_revision(revision))
+
+    def list_repo_refs(self, repo_id, **kwargs):
+        from huggingface_hub.hf_api import GitRefInfo
+        from modelscope.hub.api import HubApi
+        branches, tags = HubApi().get_model_branches_and_tags(repo_id)
+        # `target_commit` doubles as the revision in later calls, so reuse
+        # the branch/tag name (ModelScope accepts it as a revision).
+        return SimpleNamespace(
+            branches=[
+                GitRefInfo(name=n, ref=f'refs/heads/{n}', target_commit=n)
+                for n in (branches or [])
+            ],
+            tags=[
+                GitRefInfo(name=n, ref=f'refs/tags/{n}', target_commit=n)
+                for n in (tags or [])
+            ],
+            converts=[])
+
+    def hf_hub_download(self, *args, **kwargs):
+        # Only called for the optional `kernel-status.toml`. Raising
+        # `EntryNotFoundError` makes kernels treat the repo as having no
+        # redirect status.
+        from huggingface_hub.errors import EntryNotFoundError
+        raise EntryNotFoundError(
+            'kernel-status.toml lookup is skipped on ModelScope')
+
+
+@contextlib.contextmanager
+def _kernels_patch_scope():
+    """Apply `_patch_kernels` for the duration of the `with` block, unless an
+    outer patch (e.g. `patch_hub()`) is already in effect.
+    """
+    from kernels import utils as kernels_utils
+    if hasattr(kernels_utils, '_get_hf_api_origin'):
+        yield
+        return
+    _patch_kernels()
+    try:
+        yield
+    finally:
+        _unpatch_kernels()
+
+
+def _wrap_kernels_callable(attr_name):
+    """Return a wrapper around `kernels.<attr_name>` that scopes the ModelScope
+    patch on `kernels.utils._get_hf_api` to the call itself, so
+    `from kernels import <attr_name>` stays on HuggingFace unless the user
+    explicitly calls `patch_hub()` / `patch_context()`.
+    """
+
+    def _wrapped(*args, **kwargs):
+        import kernels
+        with _kernels_patch_scope():
+            return getattr(kernels, attr_name)(*args, **kwargs)
+
+    _wrapped.__name__ = _wrapped.__qualname__ = attr_name
+    return _wrapped
+
+
 def _patch_hub():
     import huggingface_hub
     from huggingface_hub import hf_api
@@ -854,11 +995,13 @@ def _unpatch_hub():
 
 def patch_hub():
     _patch_hub()
+    _patch_kernels()
     _patch_pretrained_class(get_all_imported_modules())
 
 
 def unpatch_hub():
     _unpatch_pretrained_class(get_all_imported_modules())
+    _unpatch_kernels()
     _unpatch_hub()
 
 

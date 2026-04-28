@@ -116,12 +116,20 @@ class KernelsProxyApiTest(_KernelsTestBase):
                 'modelscope.hub.snapshot_download.snapshot_download',
                 return_value='/tmp/fake_path') as mocked:
             result = api.snapshot_download(
-                'foo/bar', allow_patterns=['build/*'], revision='main')
+                'foo/bar',
+                allow_patterns=['build/*'],
+                ignore_patterns=['*.md'],
+                revision='main',
+                max_workers=4)
         self.assertEqual(result, '/tmp/fake_path')
         kwargs = mocked.call_args.kwargs
         # `main` is normalized to `master` for ModelScope.
         self.assertEqual(kwargs['revision'], 'master')
-        self.assertEqual(kwargs['allow_file_pattern'], ['build/*'])
+        # `allow_patterns` / `ignore_patterns` are forwarded as-is and extra
+        # kwargs (e.g. `max_workers`) are passed through.
+        self.assertEqual(kwargs['allow_patterns'], ['build/*'])
+        self.assertEqual(kwargs['ignore_patterns'], ['*.md'])
+        self.assertEqual(kwargs['max_workers'], 4)
 
     def test_hf_hub_download_raises_entry_not_found(self):
         from huggingface_hub.errors import EntryNotFoundError

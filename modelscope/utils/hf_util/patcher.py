@@ -557,19 +557,20 @@ class _MsKernelApi:
                           repo_id,
                           *,
                           allow_patterns=None,
+                          ignore_patterns=None,
                           cache_dir=None,
                           revision=None,
                           local_files_only=False,
                           **kwargs):
         from modelscope import snapshot_download as ms_snapshot_download
-        if isinstance(allow_patterns, str):
-            allow_patterns = [allow_patterns]
         return ms_snapshot_download(
             repo_id,
             revision=_ms_revision(revision),
             cache_dir=cache_dir,
             local_files_only=local_files_only,
-            allow_file_pattern=allow_patterns)
+            allow_patterns=allow_patterns,
+            ignore_patterns=ignore_patterns,
+            **kwargs)
 
     def list_repo_tree(self,
                        repo_id,

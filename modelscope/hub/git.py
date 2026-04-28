@@ -177,9 +177,24 @@ class GitCommandWrapper(metaclass=Singleton):
             clone_args = '-C %s clone %s' % (repo_base_dir, url)
         logger.debug(clone_args)
         clone_args = clone_args.split(' ')
-        response = self._run_git_command(*clone_args)
-        logger.debug(response.stdout.decode('utf8'))
-        return response
+        try:
+            response = self._run_git_command(*clone_args)
+            logger.debug(response.stdout.decode('utf8'))
+            return response
+        except GitError:
+            # git clone may succeed but still exit non-zero when an
+            # external hook (e.g. a custom core.hooksPath that wraps
+            # ``git lfs post-merge``) returns a non-zero code.  When the
+            # repository was actually cloned, treat this as a warning.
+            repo_dir = os.path.join(repo_base_dir, repo_name)
+            if os.path.isdir(os.path.join(repo_dir, '.git')):
+                logger.warning(
+                    'git clone exited with non-zero status but the '
+                    'repository was cloned successfully at %s. '
+                    'This is usually caused by a post-clone hook '
+                    '(e.g. core.hooksPath). Continuing.', repo_dir)
+                return None
+            raise
 
     def add_user_info(self, repo_base_dir, repo_name):
         from modelscope.hub.api import ModelScopeConfig

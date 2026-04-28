@@ -73,7 +73,7 @@ class Repository:
                                self.model_repo_name, revision)
 
         if git_wrapper.is_lfs_installed():
-            git_wrapper.git_lfs_install(self.model_dir)  # init repo lfs
+            git_wrapper.git_lfs_install(self.model_dir)
 
         # add user info if login
         self.git_wrapper.add_user_info(self.model_base_dir,

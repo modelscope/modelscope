@@ -58,8 +58,8 @@ class GitCommandWrapper(metaclass=Singleton):
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            std_out = response.stdout.decode('utf8')
-            std_err = error.stderr.decode('utf8')
+            std_out = response.stdout.decode('utf-8', errors='replace')
+            std_err = error.stderr.decode('utf-8', errors='replace')
             if 'nothing to commit' in std_out:
                 logger.info(
                     'Nothing to commit, your local repo is upto date with remote'

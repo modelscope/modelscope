@@ -3,6 +3,7 @@
 import os
 import subprocess
 from typing import List, Optional
+from urllib.parse import urlparse, urlunparse
 
 from modelscope.utils.logger import get_logger
 from ..utils.constant import MASTER_MODEL_BRANCH
@@ -80,10 +81,51 @@ class GitCommandWrapper(metaclass=Singleton):
             logger.debug(rsp.stdout.decode('utf8'))
 
     def _add_token(self, token: str, url: str):
-        if token:
-            if '//oauth2' not in url:
-                url = url.replace('//', '//oauth2:%s@' % token)
-        return url
+        """Inject OAuth2 token into an HTTP(S) git URL.
+
+        Uses ``urllib.parse`` for reliable URL component handling,
+        avoiding naive string replacement that can corrupt URLs
+        containing multiple ``://`` sequences.
+
+        Args:
+            token: OAuth2 access token.
+            url:   Remote URL (HTTP, HTTPS, or SSH).
+
+        Returns:
+            URL with ``oauth2:<token>@`` injected into the *netloc*,
+            or the original *url* unchanged when:
+
+            * *token* is falsy,
+            * the URL already carries an ``oauth2`` credential,
+            * the scheme is not HTTP/HTTPS (e.g. ``ssh://``, ``git@``).
+        """
+        if not token:
+            return url
+
+        # SSH URLs authenticate via keys, not tokens.
+        if url.startswith('git@'):
+            return url
+
+        try:
+            parsed = urlparse(url)
+        except Exception:
+            return url
+
+        # Only inject into HTTP(S) URLs.
+        if parsed.scheme not in ('http', 'https'):
+            return url
+
+        # Prevent double injection.
+        if parsed.username == 'oauth2':
+            return url
+
+        # Reconstruct netloc: oauth2:<token>@host[:port]
+        host = parsed.hostname or ''
+        if parsed.port:
+            host = f'{host}:{parsed.port}'
+        netloc = f'oauth2:{token}@{host}'
+
+        return urlunparse(parsed._replace(netloc=netloc))
 
     def remove_token_from_url(self, url: str):
         if url and '//oauth2' in url:

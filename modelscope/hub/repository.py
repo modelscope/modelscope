@@ -24,7 +24,8 @@ class Repository:
                  clone_from: str,
                  revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                  auth_token: Optional[str] = None,
-                 git_path: Optional[str] = None):
+                 git_path: Optional[str] = None,
+                 endpoint: Optional[str] = None):
         """Instantiate a Repository object by cloning the remote ModelScopeHub repo
 
         Args:
@@ -36,10 +37,12 @@ class Repository:
                         Usually you can safely ignore the parameter as the token is already
                         saved when you login the first time, if None, we will use saved token.
             git_path (str, optional): The git command line path, if None, we use 'git'
+            endpoint (str, optional): The ModelScope endpoint URL. If None, use default endpoint.
 
         Raises:
             InvalidParameter: revision is None.
         """
+        self._endpoint = endpoint
         self.model_dir = model_dir
         self.model_base_dir = os.path.dirname(model_dir)
         self.model_repo_name = os.path.basename(model_dir)
@@ -79,7 +82,8 @@ class Repository:
             self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
 
     def _get_model_id_url(self, model_id):
-        url = f'{get_endpoint()}/{model_id}.git'
+        endpoint = self._endpoint if self._endpoint else get_endpoint()
+        url = f'{endpoint}/{model_id}.git'
         return url
 
     def _get_remote_url(self):
@@ -207,7 +211,8 @@ class DatasetRepository:
                  dataset_id: str,
                  revision: Optional[str] = DEFAULT_DATASET_REVISION,
                  auth_token: Optional[str] = None,
-                 git_path: Optional[str] = None):
+                 git_path: Optional[str] = None,
+                 endpoint: Optional[str] = None):
         """
         Instantiate a Dataset Repository object by cloning the remote ModelScope dataset repo
 
@@ -220,10 +225,12 @@ class DatasetRepository:
                                         Usually you can safely ignore the parameter as the token is
                                         already saved when you login the first time, if None, we will use saved token.
             git_path (str, optional): The git command line path, if None, we use 'git'
+            endpoint (str, optional): The ModelScope endpoint URL. If None, use default endpoint.
 
         Raises:
             InvalidParameter: parameter invalid.
         """
+        self._endpoint = endpoint
         self.dataset_id = dataset_id
         if not repo_work_dir or not isinstance(repo_work_dir, str):
             err_msg = 'dataset_work_dir must be provided!'
@@ -314,7 +321,8 @@ class DatasetRepository:
             remote_branch=branch)
 
     def _get_repo_url(self, dataset_id):
-        return f'{get_endpoint()}/datasets/{dataset_id}.git'
+        endpoint = self._endpoint if self._endpoint else get_endpoint()
+        return f'{endpoint}/datasets/{dataset_id}.git'
 
     def _get_remote_url(self):
         try:

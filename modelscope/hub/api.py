@@ -949,13 +949,14 @@ class HubApi:
                 license=license,
                 chinese_name=chinese_name,
                 original_model_id=original_model_id,
-                token=token)
+                token=token,
+                endpoint=self.endpoint)
         tmp_dir = os.path.join(model_dir, TEMPORARY_FOLDER_NAME)  # make temporary folder
         git_wrapper = GitCommandWrapper()
         logger.info(f'Pushing folder {model_dir} as model {model_id}.')
         logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
-            repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token)
+            repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token, endpoint=self.endpoint)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
                 logger.info(f'Creating new branch {revision}')
@@ -2216,11 +2217,12 @@ class HubApi:
                 chinese_name=chinese_name,
                 aigc_model=aigc_model,
                 token=token,
+                endpoint=endpoint,
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
                     from modelscope.hub.repository import Repository
-                    repo = Repository(temp_cache_dir, repo_id, auth_token=token)
+                    repo = Repository(temp_cache_dir, repo_id, auth_token=token, endpoint=endpoint)
                     default_config = {
                         'framework': 'pytorch',
                         'task': 'text-generation',
@@ -2249,6 +2251,7 @@ class HubApi:
                 license=license,
                 visibility=visibility,
                 token=token,
+                endpoint=endpoint,
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 

@@ -72,11 +72,34 @@ def _request_with_retry_ms(
     """
     tries, success = 0, False
     response = None
+    range_header = (params.get('headers') or {}).get('Range', '')
     while not success:
         tries += 1
         try:
+            logger.debug(
+                '[MS_DOWNLOAD] _request_with_retry_ms sending request: '
+                'method=%s, url=%s, timeout=%s, Range=%s',
+                method, url, timeout, range_header or 'N/A',
+            )
+            t0 = time.time()
             response = requests.request(method=method.upper(), url=url, timeout=timeout, **params)
+            elapsed = time.time() - t0
+            logger.debug(
+                '[MS_DOWNLOAD] _request_with_retry_ms response: '
+                'status=%s, content_length=%s, elapsed=%.3fs, url=%s',
+                response.status_code,
+                response.headers.get('Content-Length', 'N/A'),
+                elapsed,
+                url,
+            )
             success = True
+        except requests.exceptions.ReadTimeout as err:
+            logger.error(
+                '[MS_DOWNLOAD] _request_with_retry_ms ReadTimeout: '
+                'method=%s, url=%s, timeout=%s, error=%s',
+                method, url, timeout, err,
+            )
+            raise
         except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as err:
             if tries > max_retries:
                 raise err
@@ -108,6 +131,10 @@ def http_head_ms(
 def http_get_ms(
     url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=100.0, max_retries=0, desc=None
 ) -> Optional[requests.Response]:
+    logger.debug(
+        '[MS_DOWNLOAD] http_get_ms entry: url=%s, timeout=%s, resume_size=%s',
+        url, timeout, resume_size,
+    )
     headers = dict(headers) if headers is not None else {}
     headers['user-agent'] = get_datasets_user_agent_ms(user_agent=headers.get('user-agent'))
     if resume_size > 0:
@@ -320,6 +347,7 @@ def get_from_cache_ms(
             if scheme not in ('http', 'https'):
                 fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
             else:
+                logger.info('[MS_DOWNLOAD] get_from_cache_ms downloading: url=%s', url)
                 http_get_ms(
                     url,
                     temp_file=temp_file,

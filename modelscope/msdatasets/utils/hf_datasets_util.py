@@ -683,6 +683,14 @@ class DatasetsWrapperHF:
         builder_cls = get_dataset_builder_class(
             dataset_module, dataset_name=dataset_name)
 
+        _config_cls = builder_cls.BUILDER_CONFIG_CLASS
+        if hasattr(_config_cls, '__dataclass_fields__'):
+            _valid_fields = set(_config_cls.__dataclass_fields__.keys())
+            config_kwargs = {
+                k: v for k, v in config_kwargs.items()
+                if k in _valid_fields
+            }
+
         builder_instance: DatasetBuilder = builder_cls(
             cache_dir=cache_dir,
             dataset_name=dataset_name,

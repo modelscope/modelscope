@@ -401,9 +401,9 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             args.vllm_version = '0.19.1'
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:12.9.1-cudnn-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:13.0.3-cudnn-devel-ubuntu22.04'
         if not args.cuda_version:
-            args.cuda_version = '12.9.1'
+            args.cuda_version = '13.0.3'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:

@@ -456,6 +456,39 @@ def _hf_fs_open(self, path, mode='rb', **kwargs):
     return _hf_fs_open_original(self, path, mode=mode, **kwargs)
 
 
+def _align_builder_splits_with_data_files(builder_instance, split):
+    """Align builder.info.splits with the actually requested split(s).
+
+    When data_files have been filtered to a subset of splits (see
+    _filter_data_files_by_split in _module_factories.py), the builder's
+    info.splits metadata may still list all original splits from the
+    README.  download_and_prepare() calls verify_splits() which would
+    then raise ExpectedMoreSplitsError.  This helper prunes info.splits
+    to only contain the splits that will actually be generated.
+    """
+    if split is None:
+        return
+    info = getattr(builder_instance, 'info', None)
+    if info is None or info.splits is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    existing_keys = set(info.splits.keys())
+    if split_names >= existing_keys:
+        return  # All splits requested, no filtering needed
+
+    filtered = {k: v for k, v in info.splits.items() if k in split_names}
+    if not filtered:
+        return  # Safety: don't empty out splits
+
+    from datasets import SplitDict
+    info.splits = SplitDict(filtered, dataset_name=info.splits.dataset_name)
+
+
 # ===================================================================
 # DatasetsWrapperHF
 # ===================================================================
@@ -572,6 +605,8 @@ class DatasetsWrapperHF:
 
         if streaming:
             return builder_instance.as_streaming_dataset(split=split)
+
+        _align_builder_splits_with_data_files(builder_instance, split)
 
         builder_instance.download_and_prepare(
             download_config=download_config,

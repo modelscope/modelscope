@@ -19,10 +19,14 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
         name (str, optional):  Trainer name, if None, default trainer
             will be used.
         default_args (dict, optional): Default initialization arguments.
+            If ``trust_remote_code`` key is set to True in default_args,
+            remote code and plugins declared in the model configuration
+            will be allowed to execute.
     """
     cfg = dict(type=name)
     model = default_args.get('model', None)
     model_revision = default_args.get('model_revision', DEFAULT_MODEL_REVISION)
+    trust_remote_code = default_args.get('trust_remote_code', False)
 
     if isinstance(model, str) \
             or (isinstance(model, list) and isinstance(model[0], str)):
@@ -33,7 +37,15 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
                     model, str) else read_config(
                         model[0], revision=model_revision)
             model_dir = normalize_model_input(model, model_revision)
-            register_plugins_repo(configuration.safe_get('plugins'))
-            register_modelhub_repo(model_dir,
-                                   configuration.get('allow_remote', False))
+            plugins = configuration.safe_get('plugins')
+            allow_remote = configuration.get('allow_remote', False)
+            if (plugins or allow_remote) and not trust_remote_code:
+                raise RuntimeError(
+                    'Detected plugins or allow_remote field in the model configuration file, but '
+                    'trust_remote_code=True was not explicitly set.\n'
+                    'To prevent potential execution of malicious code, loading has been refused.\n'
+                    'If you trust this model repository, please pass '
+                    'trust_remote_code=True in default_args to build_trainer().')
+            register_plugins_repo(plugins)
+            register_modelhub_repo(model_dir, trust_remote_code)
     return build_from_cfg(cfg, TRAINERS, default_args=default_args)

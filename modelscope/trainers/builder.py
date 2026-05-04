@@ -45,7 +45,8 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
                     'trust_remote_code=True was not explicitly set.\n'
                     'To prevent potential execution of malicious code, loading has been refused.\n'
                     'If you trust this model repository, please pass '
-                    'trust_remote_code=True in default_args to build_trainer().')
+                    'trust_remote_code=True in default_args to build_trainer().'
+                )
             register_plugins_repo(plugins)
             register_modelhub_repo(model_dir, trust_remote_code)
     return build_from_cfg(cfg, TRAINERS, default_args=default_args)

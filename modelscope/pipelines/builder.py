@@ -165,10 +165,10 @@ def pipeline(task: str = None,
                             'Detected plugins or allow_remote field in the model configuration file, but '
                             'trust_remote_code=True was not explicitly set.\n'
                             'To prevent potential execution of malicious code, loading has been refused.\n'
-                            'If you trust this model repository, please pass trust_remote_code=True to pipeline().')
+                            'If you trust this model repository, please pass trust_remote_code=True to pipeline().'
+                        )
                     register_plugins_repo(plugins)
-                    register_modelhub_repo(model,
-                                           trust_remote_code)
+                    register_modelhub_repo(model, trust_remote_code)
 
                 if pipeline_name:
                     pipeline_props = {'type': pipeline_name}

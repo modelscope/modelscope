@@ -456,6 +456,49 @@ def _hf_fs_open(self, path, mode='rb', **kwargs):
     return _hf_fs_open_original(self, path, mode=mode, **kwargs)
 
 
+def _validate_split_exists(builder_instance, split):
+    """Fail-fast check: raise ValueError before downloading if the
+    requested split does not exist in the dataset metadata.
+
+    Args:
+        builder_instance: The DatasetBuilder instance with info/config.
+        split: The user-requested split specification (may be None).
+
+    Raises:
+        ValueError: If any requested split name is not found among
+            the available splits declared in the dataset metadata.
+    """
+    if split is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    # Prefer info.splits (original metadata); fall back to data_files keys
+    available = set()
+    info = getattr(builder_instance, 'info', None)
+    if info is not None and info.splits:
+        available = set(info.splits.keys())
+
+    if not available:
+        config = getattr(builder_instance, 'config', None)
+        data_files = getattr(config, 'data_files', None)
+        if isinstance(data_files, dict):
+            available = set(data_files.keys())
+
+    if not available:
+        return  # Cannot determine available splits; let downstream handle
+
+    missing = split_names - available
+    if missing:
+        raise ValueError(
+            f'Split {sorted(missing)} not found in dataset. '
+            f'Available splits: {sorted(available)}'
+        )
+
+
 def _align_builder_splits_with_data_files(builder_instance, split):
     """Align builder.info.splits with the actually requested split(s).
 
@@ -606,6 +649,7 @@ class DatasetsWrapperHF:
         if streaming:
             return builder_instance.as_streaming_dataset(split=split)
 
+        _validate_split_exists(builder_instance, split)
         _align_builder_splits_with_data_files(builder_instance, split)
 
         builder_instance.download_and_prepare(

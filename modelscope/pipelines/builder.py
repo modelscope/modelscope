@@ -158,17 +158,23 @@ def pipeline(task: str = None,
                         third_party=third_party,
                         ignore_file_pattern=ignore_file_pattern)
 
-                    plugins = cfg.safe_get('plugins')
-                    allow_remote = cfg.get('allow_remote', False)
-                    if (plugins or allow_remote) and not trust_remote_code:
-                        raise RuntimeError(
-                            'Detected plugins or allow_remote field in the model configuration file, but '
-                            'trust_remote_code=True was not explicitly set.\n'
-                            'To prevent potential execution of malicious code, loading has been refused.\n'
-                            'If you trust this model repository, please pass trust_remote_code=True to pipeline().'
-                        )
-                    register_plugins_repo(plugins)
-                    register_modelhub_repo(model, trust_remote_code)
+                    if cfg:
+                        plugins = cfg.safe_get('plugins')
+                        allow_remote = cfg.get('allow_remote', False)
+                        if (plugins or allow_remote) and not trust_remote_code:
+                            raise RuntimeError(
+                                'Detected plugins or allow_remote field in the model '
+                                'configuration file, but trust_remote_code=True was not '
+                                'explicitly set.\n'
+                                'To prevent potential execution of malicious code, loading '
+                                'has been refused.\n'
+                                'If you trust this model repository, please pass '
+                                'trust_remote_code=True to pipeline().')
+                        register_plugins_repo(plugins)
+                        model_dir = model if isinstance(model,
+                                                        str) else model[0]
+                        register_modelhub_repo(
+                            model_dir, trust_remote_code and allow_remote)
 
                 if pipeline_name:
                     pipeline_props = {'type': pipeline_name}

@@ -24,6 +24,7 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
             will be allowed to execute.
     """
     cfg = dict(type=name)
+    default_args = default_args or {}
     model = default_args.get('model', None)
     model_revision = default_args.get('model_revision', DEFAULT_MODEL_REVISION)
     trust_remote_code = default_args.get('trust_remote_code', False)
@@ -37,16 +38,22 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
                     model, str) else read_config(
                         model[0], revision=model_revision)
             model_dir = normalize_model_input(model, model_revision)
-            plugins = configuration.safe_get('plugins')
-            allow_remote = configuration.get('allow_remote', False)
-            if (plugins or allow_remote) and not trust_remote_code:
-                raise RuntimeError(
-                    'Detected plugins or allow_remote field in the model configuration file, but '
-                    'trust_remote_code=True was not explicitly set.\n'
-                    'To prevent potential execution of malicious code, loading has been refused.\n'
-                    'If you trust this model repository, please pass '
-                    'trust_remote_code=True in default_args to build_trainer().'
-                )
-            register_plugins_repo(plugins)
-            register_modelhub_repo(model_dir, trust_remote_code)
+            if configuration:
+                plugins = configuration.safe_get('plugins')
+                allow_remote = configuration.get('allow_remote', False)
+                if (plugins or allow_remote) and not trust_remote_code:
+                    raise RuntimeError(
+                        'Detected plugins or allow_remote field in the model '
+                        'configuration file, but trust_remote_code=True was '
+                        'not explicitly set.\n'
+                        'To prevent potential execution of malicious code, '
+                        'loading has been refused.\n'
+                        'If you trust this model repository, please pass '
+                        'trust_remote_code=True in default_args to '
+                        'build_trainer().')
+                register_plugins_repo(plugins)
+                model_dir_str = model_dir if isinstance(model_dir,
+                                                        str) else model_dir[0]
+                register_modelhub_repo(model_dir_str, trust_remote_code
+                                       and allow_remote)
     return build_from_cfg(cfg, TRAINERS, default_args=default_args)

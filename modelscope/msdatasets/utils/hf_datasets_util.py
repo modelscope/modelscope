@@ -544,6 +544,7 @@ class DatasetsWrapperHF:
             storage_options=storage_options,
             trust_remote_code=trust_remote_code,
             _require_default_config_name=name is None,
+            split=split,
             **config_kwargs,
         )
 
@@ -624,6 +625,7 @@ class DatasetsWrapperHF:
         storage_options: Optional[Dict] = None,
         trust_remote_code: Optional[bool] = None,
         _require_default_config_name=True,
+        split: Optional[Union[str, Split]] = None,
         **config_kwargs,
     ) -> DatasetBuilder:
 
@@ -644,6 +646,12 @@ class DatasetsWrapperHF:
             download_config = download_config.copy(
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
+        if split is not None:
+            download_config = download_config.copy(
+            ) if download_config else DownloadConfig()
+            if download_config.storage_options is None:
+                download_config.storage_options = {}
+            download_config.storage_options['split'] = split
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,

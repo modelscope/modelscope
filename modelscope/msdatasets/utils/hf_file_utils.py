@@ -53,11 +53,12 @@ def _request_with_retry_ms(
     url: str,
     max_retries: int = 2,
     base_wait_time: float = 0.5,
-    max_wait_time: float = 2,
+    max_wait_time: float = 8,
     timeout: float = 10.0,
     **params,
 ) -> requests.Response:
-    """Wrapper around requests to retry in case it fails with a ConnectTimeout, with exponential backoff.
+    """Wrapper around requests to retry in case it fails with a ConnectTimeout,
+    ReadTimeout or ConnectionError, with exponential backoff.
 
     Note that if the environment variable HF_DATASETS_OFFLINE is set to 1, then a OfflineModeIsEnabled error is raised.
 
@@ -77,7 +78,9 @@ def _request_with_retry_ms(
         try:
             response = requests.request(method=method.upper(), url=url, timeout=timeout, **params)
             success = True
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as err:
+        except (requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ReadTimeout) as err:
             if tries > max_retries:
                 raise err
             else:
@@ -88,7 +91,7 @@ def _request_with_retry_ms(
 
 
 def http_head_ms(
-    url, proxies=None, headers=None, cookies=None, allow_redirects=True, timeout=10.0, max_retries=0
+    url, proxies=None, headers=None, cookies=None, allow_redirects=True, timeout=10.0, max_retries=3
 ) -> requests.Response:
     headers = copy.deepcopy(headers) or {}
     headers['user-agent'] = get_datasets_user_agent_ms(user_agent=headers.get('user-agent'))
@@ -106,7 +109,7 @@ def http_head_ms(
 
 
 def http_get_ms(
-    url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=100.0, max_retries=0, desc=None
+    url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=300.0, max_retries=3, desc=None
 ) -> Optional[requests.Response]:
     headers = dict(headers) if headers is not None else {}
     headers['user-agent'] = get_datasets_user_agent_ms(user_agent=headers.get('user-agent'))
@@ -147,7 +150,7 @@ def get_from_cache_ms(
     user_agent=None,
     local_files_only=False,
     use_etag=True,
-    max_retries=0,
+    max_retries=3,
     token=None,
     use_auth_token='deprecated',
     ignore_url_params=False,

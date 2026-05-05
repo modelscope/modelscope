@@ -25,7 +25,7 @@ from datasets import (Dataset, DatasetBuilder, DatasetDict,
                       DownloadConfig, DownloadManager, DownloadMode, Features,
                       IterableDataset, IterableDatasetDict, Split,
                       VerificationMode, Version, config, data_files, LargeList,
-                      Sequence as SequenceHf)
+                      Sequence as SequenceHf, SplitDict)
 
 try:
     from datasets import List as DatasetList
@@ -528,7 +528,6 @@ def _align_builder_splits_with_data_files(builder_instance, split):
     if not filtered:
         return  # Safety: don't empty out splits
 
-    from datasets import SplitDict
     info.splits = SplitDict(filtered, dataset_name=info.splits.dataset_name)
 
 

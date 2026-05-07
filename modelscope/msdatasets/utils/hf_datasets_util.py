@@ -26,7 +26,7 @@ from datasets import (Dataset, DatasetBuilder, DatasetDict,
                       DownloadConfig, DownloadManager, DownloadMode, Features,
                       IterableDataset, IterableDatasetDict, Split,
                       VerificationMode, Version, config, data_files, LargeList,
-                      Sequence as SequenceHf)
+                      Sequence as SequenceHf, SplitDict)
 
 try:
     from datasets import List as DatasetList
@@ -457,6 +457,81 @@ def _hf_fs_open(self, path, mode='rb', **kwargs):
     return _hf_fs_open_original(self, path, mode=mode, **kwargs)
 
 
+def _validate_split_exists(builder_instance, split):
+    """Fail-fast check: raise ValueError before downloading if the
+    requested split does not exist in the dataset metadata.
+
+    Args:
+        builder_instance: The DatasetBuilder instance with info/config.
+        split: The user-requested split specification (may be None).
+
+    Raises:
+        ValueError: If any requested split name is not found among
+            the available splits declared in the dataset metadata.
+    """
+    if split is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    # Prefer info.splits (original metadata); fall back to data_files keys
+    available = set()
+    info = getattr(builder_instance, 'info', None)
+    if info is not None and info.splits:
+        available = set(info.splits.keys())
+
+    if not available:
+        config = getattr(builder_instance, 'config', None)
+        data_files = getattr(config, 'data_files', None)
+        if isinstance(data_files, dict):
+            available = set(data_files.keys())
+
+    if not available:
+        return  # Cannot determine available splits; let downstream handle
+
+    missing = split_names - available
+    if missing:
+        raise ValueError(
+            f'Split {sorted(missing)} not found in dataset. '
+            f'Available splits: {sorted(available)}'
+        )
+
+
+def _align_builder_splits_with_data_files(builder_instance, split):
+    """Align builder.info.splits with the actually requested split(s).
+
+    When data_files have been filtered to a subset of splits (see
+    _filter_data_files_by_split in _module_factories.py), the builder's
+    info.splits metadata may still list all original splits from the
+    README.  download_and_prepare() calls verify_splits() which would
+    then raise ExpectedMoreSplitsError.  This helper prunes info.splits
+    to only contain the splits that will actually be generated.
+    """
+    if split is None:
+        return
+    info = getattr(builder_instance, 'info', None)
+    if info is None or info.splits is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    existing_keys = set(info.splits.keys())
+    if split_names >= existing_keys:
+        return  # All splits requested, no filtering needed
+
+    filtered = {k: v for k, v in info.splits.items() if k in split_names}
+    if not filtered:
+        return  # Safety: don't empty out splits
+
+    info.splits = SplitDict(filtered, dataset_name=info.splits.dataset_name)
+
+
 # ===================================================================
 # DatasetsWrapperHF
 # ===================================================================
@@ -545,6 +620,7 @@ class DatasetsWrapperHF:
             storage_options=storage_options,
             trust_remote_code=trust_remote_code,
             _require_default_config_name=name is None,
+            split=split,
             **config_kwargs,
         )
 
@@ -572,6 +648,9 @@ class DatasetsWrapperHF:
 
         if streaming:
             return builder_instance.as_streaming_dataset(split=split)
+
+        _validate_split_exists(builder_instance, split)
+        _align_builder_splits_with_data_files(builder_instance, split)
 
         builder_instance.download_and_prepare(
             download_config=download_config,
@@ -625,6 +704,7 @@ class DatasetsWrapperHF:
         storage_options: Optional[Dict] = None,
         trust_remote_code: Optional[bool] = None,
         _require_default_config_name=True,
+        split: Optional[Union[str, Split]] = None,
         **config_kwargs,
     ) -> DatasetBuilder:
 
@@ -645,6 +725,12 @@ class DatasetsWrapperHF:
             download_config = download_config.copy(
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
+        if split is not None:
+            download_config = download_config.copy(
+            ) if download_config else DownloadConfig()
+            if download_config.storage_options is None:
+                download_config.storage_options = {}
+            download_config.storage_options['split'] = split
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,

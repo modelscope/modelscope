@@ -9,12 +9,12 @@ by :func:`~hf_datasets_util.load_dataset_with_ctx`.
 import importlib
 import inspect
 import os
+import re
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
-from datasets import (BuilderConfig, DownloadConfig, DownloadMode, Features,
-                      Version, config, data_files)
+from datasets import (BuilderConfig, DownloadConfig, config)
 from datasets.data_files import (
     FILES_TO_IGNORE, DataFilesDict, EmptyDatasetError,
     _get_data_files_patterns, _is_inside_unrequested_special_dir,
@@ -24,17 +24,16 @@ from datasets.download.streaming_download_manager import (
     _prepare_path_and_storage_options, xbasename, xjoin)
 from datasets.exceptions import DataFilesNotFoundError
 from datasets.info import DatasetInfosDict
-from datasets.load import (BuilderConfigsParameters, DatasetModule,
+from datasets.load import (BuilderConfigsParameters,
+                           DatasetModule,
                            create_builder_configs_from_metadata_configs,
-                           get_dataset_builder_class, import_main_class,
+                           import_main_class,
                            infer_module_for_data_files)
 from datasets.naming import camelcase_to_snakecase
 from datasets.packaged_modules import (_MODULE_TO_EXTENSIONS,
                                        _PACKAGED_DATASETS_MODULES)
-from datasets.utils.file_utils import (cached_path, is_local_path,
-                                       relative_to_absolute_path)
+from datasets.utils.file_utils import (cached_path, is_local_path)
 from datasets.utils.metadata import MetadataConfigs
-from datasets.utils.track import tracked_str
 from fsspec import filesystem
 from fsspec.core import _un_chain
 from fsspec.utils import stringify_path
@@ -42,14 +41,16 @@ from huggingface_hub import DatasetCard, DatasetCardData
 from packaging import version
 
 from modelscope import HubApi
-from modelscope.msdatasets.utils._compat import (
-    _HAS_SCRIPT_LOADING, _create_importable_file, _get_importable_file_path,
-    _load_importable_file, files_to_hash, get_imports, init_dynamic_modules,
-    resolve_trust_remote_code)
+from modelscope.msdatasets.utils._compat import (_create_importable_file,
+                                                 _get_importable_file_path,
+                                                 _load_importable_file,
+                                                 files_to_hash,
+                                                 get_imports,
+                                                 init_dynamic_modules,
+                                                 resolve_trust_remote_code)
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        REPO_TYPE_DATASET)
 from modelscope.utils.file_utils import is_relative_path
-from modelscope.utils.import_utils import has_attr_in_class
 from modelscope.utils.logger import get_logger
 
 # ALL_ALLOWED_EXTENSIONS moved to datasets.packaged_modules in datasets 4.0
@@ -59,6 +60,73 @@ except ImportError:
     from datasets.load import ALL_ALLOWED_EXTENSIONS
 
 logger = get_logger()
+
+
+def _extract_split_names(split):
+    """Extract base split names from a split specification string.
+
+    Handles simple names ("tool"), sliced splits ("train[:100]"),
+    and combined splits ("train+test").
+
+    Args:
+        split: A split specification string, or None.
+
+    Returns:
+        A set of split name strings, or None if *split* is None or
+        cannot be parsed.
+    """
+    if split is None:
+        return None
+    split_str = str(split)
+    parts = split_str.split('+')
+    names = set()
+    for part in parts:
+        # Remove slice notation like "[:100]" or "[50%:]"
+        name = re.split(r'\[', part.strip())[0]
+        if name:
+            names.add(name)
+    return names if names else None
+
+
+def _filter_data_files_by_split(data_files, download_config):
+    """Filter data_files entries to only include the requested split(s).
+
+    Args:
+        data_files: The raw data_files value from metadata_configs.
+            Expected format: list of dicts with 'split' and 'path' keys.
+        download_config: The DownloadConfig instance (may be None).
+
+    Returns:
+        Filtered data_files if a split filter is active; otherwise
+        the original *data_files* unchanged.
+    """
+    # 1. Safely retrieve the split value
+    split_str = None
+    if download_config is not None:
+        storage_opts = getattr(download_config, 'storage_options', None)
+        if isinstance(storage_opts, dict):
+            split_str = storage_opts.get('split')
+
+    if split_str is None:
+        return data_files
+
+    # 2. Parse split names
+    split_names = _extract_split_names(split_str)
+    if not split_names:
+        return data_files
+
+    # 3. Only filter list[dict] format
+    if not isinstance(data_files, list):
+        return data_files
+    if not all(isinstance(item, dict) and 'split' in item for item in data_files):
+        return data_files
+
+    # 4. Filter
+    filtered = [df for df in data_files if df.get('split') in split_names]
+
+    # 5. Fallback: if filtered is empty, return original data
+    return filtered if filtered else data_files
+
 
 # ---------------------------------------------------------------------------
 # Shared HubApi instance (avoids creating a new requests.Session per call)
@@ -575,6 +643,8 @@ def get_module_without_script(self) -> DatasetModule:
         else:
             subset_data_files = next(iter(
                 metadata_configs.values()))['data_files']
+        subset_data_files = _filter_data_files_by_split(
+            subset_data_files, self.download_config)
         patterns = sanitize_patterns(subset_data_files)
     else:
         patterns = _get_data_patterns(

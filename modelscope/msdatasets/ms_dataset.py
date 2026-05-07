@@ -246,7 +246,7 @@ class MsDataset:
                 'you can trust the external codes.')
 
         # Raise csv field size limit to avoid errors with large cells
-        if config_kwargs.get('engine') == 'python':
+        if config_kwargs.pop('engine', None) == 'python':
             import csv as csv_module
             import sys
             try:

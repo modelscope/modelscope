@@ -2753,8 +2753,9 @@ class HubApi:
         )
         commit_description = commit_description or 'Uploading files'
 
-        # Exclude internal cache/checkpoint files from upload
-        _internal_ignore = [UPLOAD_HASH_CACHE_FILE, _LEGACY_PROGRESS_FILE]
+        # Exclude internal cache/checkpoint files from upload at any directory depth
+        _internal_files = [UPLOAD_HASH_CACHE_FILE, _LEGACY_PROGRESS_FILE]
+        _internal_ignore = [p for f in _internal_files for p in (f, f'*/{f}')]
         if ignore_patterns is None:
             ignore_patterns = _internal_ignore
         elif isinstance(ignore_patterns, str):

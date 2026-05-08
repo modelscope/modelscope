@@ -12,6 +12,7 @@ Sub-modules:
     _module_factories – dataset module factory functions & data-file resolution
 """
 import contextlib
+import inspect
 import os
 import warnings
 from dataclasses import fields
@@ -407,10 +408,26 @@ def _get_paths_info(
 
 
 # ===================================================================
-# HfFileSystem patch (_hf_fs_open)
+# HfFileSystem patches (_hf_fs_open, _hf_fs_init)
 # ===================================================================
 
 _hf_fs_open_original = None
+_hf_fs_init_original = None
+
+
+def _hf_fs_init_with_cookie(self, *args, endpoint=None, token=None, **kwargs):
+    """HfFileSystem.__init__ wrapper that injects ModelScope cookie auth.
+
+    ModelScope's /resolve/ endpoint authenticates via `m_session_id` cookie
+    rather than the `Authorization: Bearer` header used by HuggingFace Hub.
+    This wrapper ensures the cookie is included in all subsequent HTTP
+    requests made by the HfFileSystem instance.
+    """
+    _hf_fs_init_original(self, *args, endpoint=endpoint, token=token, **kwargs)
+    if token and isinstance(token, str):
+        if not hasattr(self._api, 'headers') or self._api.headers is None:
+            self._api.headers = {}
+        self._api.headers['Cookie'] = f'm_session_id={token}'
 
 
 def _hf_fs_open(self, path, mode='rb', **kwargs):
@@ -769,6 +786,24 @@ class DatasetsWrapperHF:
         builder_cls = get_dataset_builder_class(
             dataset_module, dataset_name=dataset_name)
 
+        _config_cls = builder_cls.BUILDER_CONFIG_CLASS
+        if hasattr(_config_cls, '__dataclass_fields__'):
+            _valid_fields = set(_config_cls.__dataclass_fields__.keys())
+            # Also preserve parameters accepted by the builder's
+            # __init__ (e.g. writer_batch_size, base_path, repo_id)
+            # so they are not inadvertently stripped.
+            try:
+                _init_params = set(
+                    inspect.signature(builder_cls.__init__).parameters.keys()
+                )
+            except (ValueError, TypeError):
+                _init_params = set()
+            _valid_fields = _valid_fields | _init_params
+            config_kwargs = {
+                k: v for k, v in config_kwargs.items()
+                if k in _valid_fields
+            }
+
         builder_instance: DatasetBuilder = builder_cls(
             cache_dir=cache_dir,
             dataset_name=dataset_name,
@@ -1032,7 +1067,7 @@ def load_dataset_with_ctx(*args, **kwargs):
     non-streaming mode) or kept alive (for streaming mode, where lazy
     iteration needs the patches to remain active).
     """
-    global _hf_fs_open_original
+    global _hf_fs_open_original, _hf_fs_init_original
 
     # Save originals
     hf_endpoint_origin = config.HF_ENDPOINT
@@ -1048,6 +1083,7 @@ def load_dataset_with_ctx(*args, **kwargs):
         HubDatasetModuleFactoryWithScript.get_module if _HAS_SCRIPT_LOADING else None)
     generate_from_dict_origin = features.generate_from_dict
     hf_fs_open_origin = HfFileSystem._open
+    hf_fs_init_origin = HfFileSystem.__init__
 
     # Apply patches
     config.HF_ENDPOINT = get_endpoint()
@@ -1066,6 +1102,8 @@ def load_dataset_with_ctx(*args, **kwargs):
     features.generate_from_dict = generate_from_dict_ms
     _hf_fs_open_original = hf_fs_open_origin
     HfFileSystem._open = _hf_fs_open
+    _hf_fs_init_original = hf_fs_init_origin
+    HfFileSystem.__init__ = _hf_fs_init_with_cookie
 
     streaming = kwargs.get('streaming', False)
 
@@ -1076,10 +1114,12 @@ def load_dataset_with_ctx(*args, **kwargs):
         _repo_tree_cache.clear()
         HubApi._dataset_id_type_cache.clear()
 
-        HfFileSystem._open = hf_fs_open_origin
-        _hf_fs_open_original = None
-
         if not streaming:
+            HfFileSystem._open = hf_fs_open_origin
+            _hf_fs_open_original = None
+            HfFileSystem.__init__ = hf_fs_init_origin
+            _hf_fs_init_original = None
+
             config.HF_ENDPOINT = hf_endpoint_origin
             file_utils.get_from_cache = get_from_cache_origin
             features.generate_from_dict = generate_from_dict_origin

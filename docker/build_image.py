@@ -517,9 +517,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
         cann_version = parts[0]
         os_tag = parts[2]
         if not cls._CANN_VERSION_PATTERN.fullmatch(cann_version):
-            raise ValueError(
-                f'Invalid CANN version in Ascend base image tag: '
-                f'{cann_version}')
+            raise ValueError(f'Invalid CANN version in Ascend base image tag: '
+                             f'{cann_version}')
         if not cls._OS_TAG_PATTERN.fullmatch(os_tag):
             raise ValueError(
                 f'Invalid OS tag in Ascend base image tag: {os_tag}')

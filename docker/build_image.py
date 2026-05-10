@@ -2,6 +2,7 @@ import argparse
 import os
 import platform
 import subprocess
+from copy import copy
 from datetime import datetime
 from typing import Any
 
@@ -25,9 +26,9 @@ class Builder:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.9.1'
-            args.torchaudio_version = '2.9.1'
-            args.torchvision_version = '0.24.1'
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
         if not args.optimum_version:
             args.optimum_version = '2.0.0'
         if not args.tf_version:
@@ -35,7 +36,7 @@ class Builder:
         if not args.cuda_version:
             args.cuda_version = '12.8.1'
         if not args.vllm_version:
-            args.vllm_version = '0.15.1'
+            args.vllm_version = '0.19.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
@@ -571,4 +572,5 @@ else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
 for builder in builder_cls:
+    args = copy(args)
     builder(args, args.dry_run)()

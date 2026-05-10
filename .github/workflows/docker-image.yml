@@ -36,6 +36,8 @@ run-name: Docker-${{ inputs.modelscope_branch }}-${{ inputs.image_type }}-${{ in
 jobs:
   build:
     runs-on: [modelscope-self-hosted-us]
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
     - name: ResetFileMode
@@ -47,7 +49,7 @@ jobs:
         source ~/.bashrc
         sudo chown -R $USER:$USER  $ACTION_RUNNER_DIR
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.event.inputs.modelscope_branch }}
 

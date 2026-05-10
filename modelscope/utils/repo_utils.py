@@ -16,7 +16,7 @@ from typing import (Any, BinaryIO, Callable, Generator, Iterable, Iterator,
 
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
 from modelscope.hub.utils.utils import convert_timestamp
-from modelscope.utils.file_utils import get_file_hash
+from modelscope.utils.file_utils import compute_file_hash
 
 T = TypeVar('T')
 # Always ignore `.git` and `.cache/modelscope` folders in commits
@@ -419,7 +419,7 @@ class UploadInfo:
 
     @classmethod
     def from_path(cls, path: str, file_hash_info: dict = None):
-        file_hash_info = file_hash_info or get_file_hash(path)
+        file_hash_info = file_hash_info or compute_file_hash(path)
         size = file_hash_info['file_size']
         sha = file_hash_info['file_hash']
         with open(path, 'rb') as f:
@@ -429,13 +429,13 @@ class UploadInfo:
 
     @classmethod
     def from_bytes(cls, data: bytes, file_hash_info: dict = None):
-        file_hash_info = file_hash_info or get_file_hash(data)
+        file_hash_info = file_hash_info or compute_file_hash(data)
         sha = file_hash_info['file_hash']
         return cls(size=len(data), sample=data[:512], sha256=sha)
 
     @classmethod
     def from_fileobj(cls, fileobj: BinaryIO, file_hash_info: dict = None):
-        file_hash_info: dict = file_hash_info or get_file_hash(fileobj)
+        file_hash_info: dict = file_hash_info or compute_file_hash(fileobj)
         fileobj.seek(0, os.SEEK_SET)
         sample = fileobj.read(512)
         fileobj.seek(0, os.SEEK_SET)

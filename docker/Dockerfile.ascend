@@ -1,64 +1,51 @@
 FROM {base_image}
 
+# Use bash so that `source` and other bash builtins work in all following RUN steps.
+SHELL ["/bin/bash", "-c"]
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_DEFAULT_TIMEOUT=300
+ENV PIP_RETRIES=10
+ENV TRANSFORMERS_VERBOSITY=error
+ENV TRANSFORMERS_NO_ADVISORY_WARNINGS=1
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f && \
+    apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+        wget git curl jq vim build-essential ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com
 
-# Prepare required system dependencies
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends gcc g++ cmake libnuma-dev wget git curl jq vim build-essential && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    pip install --upgrade pip setuptools packaging && \
-    pip cache purge
-
 {extra_content}
 
-# Prepare repositories with low update frequency
-RUN ARCH=$(uname -m) && \
-    # Set extra pip index for x86_64 platform
-    echo "[LOG INFO] Detected architecture: $ARCH" && \
-    if [ "$ARCH" = "x86_64" ]; then \
-        pip config set global.extra-index-url "https://download.pytorch.org/whl/cpu/"; \
-    fi && \
-    # Clone libs
-    git clone --depth 1 --branch v0.11.0 https://github.com/vllm-project/vllm && \
-    git clone --depth 1 --branch v0.11.0rc1 https://github.com/vllm-project/vllm-ascend.git && \
-    git clone https://gitcode.com/Ascend/MindSpeed.git && \
-    cd MindSpeed && git checkout f2b0977e && cd .. && \
-    git clone --depth 1 --branch core_v0.12.1 https://github.com/NVIDIA/Megatron-LM.git
+# Reuse the vllm-ascend base image and only add the extra repos we need.
+# --depth 1 keeps the image smaller; branch/tag names work with shallow clone.
+RUN git clone --depth 1 --branch v0.15.3 https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
+    git clone --depth 1 --branch core_r0.15.3 https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
+    GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift && \
+    git clone --depth 1 https://github.com/modelscope/mcore-bridge.git /mcore-bridge
 
-# Install repositories with low update frequency
-RUN ARCH=$(uname -m) && \
-    # Export and source env
-    if [ "$ARCH" = "aarch64" ]; then \
-        export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/8.3.RC1/aarch64-linux/devlib/linux/aarch64:$LD_LIBRARY_PATH; \
-    elif [ "$ARCH" = "x86_64" ]; then \
-        export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/8.3.RC1/x86_64-linux/devlib/linux/x86_64/:$LD_LIBRARY_PATH; \
-    fi && \
-    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
-    source /usr/local/Ascend/nnal/atb/set_env.sh && \
-    # Install torch & torch_npu & torchvision
-    pip install torch==2.7.1 torch_npu==2.7.1 torchvision==0.22.1 && \
-    # Install vllm
-    cd vllm && VLLM_TARGET_DEVICE=empty pip install -v -e . && cd .. && \
-    # Install vllm-ascend
-    cd vllm-ascend && pip install -v -e . && cd .. && \
-    # Install MindSpeed & Megatron
-    pip install -e MindSpeed && \
-    # Clear extra files
-    rm -rf /tmp/* /var/tmp/* && \
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    cd /MindSpeed && pip install --no-cache-dir -e . && \
+    cd /mcore-bridge && pip install --no-cache-dir -e . && \
     pip cache purge
-
-ENV PYTHONPATH ${PYTHONPATH}:/Megatron-LM
 
 ARG INSTALL_MS_DEPS={install_ms_deps}
 
+ENV MEGATRON_LM_PATH=/Megatron-LM
+ENV PYTHONPATH=/Megatron-LM:${PYTHONPATH}
 # install dependencies
 COPY requirements /var/modelscope
 
-RUN pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.* -U && \
+RUN pip uninstall ms-swift modelscope -y && pip install --no-cache-dir pip==23.* -U && \
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
-    pip --no-cache-dir install omegaconf==2.0.6 && \
+    pip install --no-cache-dir omegaconf==2.0.6 && \
     pip install 'editdistance==0.8.1' && \
     pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' && \
     pip install --no-cache-dir -r /var/modelscope/framework.txt && \
@@ -68,7 +55,7 @@ if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --no-dependencies --force && \
     pip install --no-cache-dir 'scipy<1.13.0' && \
     pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn && \
-    pip install --no-cache-dir decord>=0.6.0 mpi4py paint_ldm ipykernel fasttext && \
+    pip install --no-cache-dir 'decord>=0.6.0' mpi4py paint_ldm ipykernel fasttext && \
     pip install --no-cache-dir 'blobfile>=1.0.5' && \
     pip uninstall MinDAEC -y && \
     pip install https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/MinDAEC-0.0.2-py3-none-any.whl && \
@@ -81,17 +68,22 @@ fi
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
-RUN pip install --no-cache-dir -U funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
-    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
-    cd ms-swift && pip install .[llm] && \
-    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
-    cd / && rm -fr /tmp/ms-swift && pip cache purge; \
-    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    pip install --no-cache-dir -U funasr scikit-learn && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
+    cd /ms-swift && pip install --no-cache-dir -e '.[llm]' && \
+    pip install --no-cache-dir -e '.[eval]' && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
+    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {modelscope_branch} --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
-    cd / && rm -fr /tmp/modelscope && pip cache purge; \
-    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
-    pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge;
+    cd / && rm -fr /tmp/modelscope && \
+    pip install --no-cache-dir diffusers && \
+    pip install --no-cache-dir omegaconf==2.3.0 && \
+    pip cache purge
+
+RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
+    echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \
+    echo 'set +H' >> /root/.bashrc
 
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV VLLM_USE_MODELSCOPE=True
@@ -100,5 +92,6 @@ ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
 
 # Show install results
 RUN pip list
+WORKDIR /workspace
 
-SHELL ["/bin/bash", "-c"]
+CMD ["/bin/bash"]

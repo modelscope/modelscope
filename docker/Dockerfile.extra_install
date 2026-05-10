@@ -112,6 +112,7 @@ RUN set -eux; \
         done
 
 # if this is called "PIP_VERSION", pip explodes with "ValueError: invalid truth value '<VERSION>'"
+# pip>=23.3 required for Python 3.12 (pkgutil.ImpImporter removed; older pip crashes on any install)
 ENV PYTHON_PIP_VERSION 24.3.1
 # https://github.com/docker-library/python/issues/365
 ENV PYTHON_SETUPTOOLS_VERSION 75.8.2

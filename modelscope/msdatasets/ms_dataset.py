@@ -245,6 +245,15 @@ class MsDataset:
                 f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make sure that '
                 'you can trust the external codes.')
 
+        # Raise csv field size limit to avoid errors with large cells
+        if config_kwargs.get('engine') == 'python':
+            import csv as csv_module
+            import sys
+            try:
+                csv_module.field_size_limit(sys.maxsize)
+            except OverflowError:
+                csv_module.field_size_limit(2147483647)
+
         # Init context config
         dataset_context_config = DatasetContextConfig(
             dataset_name=dataset_name,

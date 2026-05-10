@@ -186,7 +186,7 @@ class AigcModel:
 
     def _process_model_path(self):
         """Process model_path to extract weight information"""
-        from modelscope.utils.file_utils import get_file_hash
+        from modelscope.utils.file_utils import compute_file_hash
 
         # Expand user path
         self.model_path = os.path.expanduser(self.model_path)
@@ -266,7 +266,7 @@ class AigcModel:
         if target_file:
             # Calculate file hash and size for the target file
             logger.info('Computing hash and size for %s...', target_file)
-            hash_info = get_file_hash(target_file)
+            hash_info = compute_file_hash(target_file)
 
             # Store weight information
             self.weight_filename = os.path.basename(target_file)

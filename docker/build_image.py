@@ -54,6 +54,13 @@ class Builder:
     def generate_dockerfile(self) -> str:
         raise NotImplementedError
 
+    @staticmethod
+    def _remove_pynini_related_dependency(content: str) -> str:
+        return content.replace(
+            'pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html &&',  # noqa: E501
+            'pip install --no-cache-dir typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html &&'  # noqa: E501
+        )
+
     def _save_dockerfile(self, content: str) -> None:
         if os.path.exists('./Dockerfile'):
             os.remove('./Dockerfile')
@@ -302,7 +309,7 @@ class StableCPUImageBuilder(Builder):
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
-        return content
+        return self._remove_pynini_related_dependency(content)
 
     def image(self) -> str:
         return (
@@ -363,7 +370,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
-        return content
+        return self._remove_pynini_related_dependency(content)
 
     def image(self) -> str:
         return (
@@ -464,8 +471,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args) -> Any:
         if not args.base_image:
-            # other vision search for: https://hub.docker.com/r/ascendai/cann/tags
-            args.base_image = 'swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1-a3-ubuntu22.04-py3.11'
+            # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
+            args.base_image = 'quay.io/ascend/vllm-ascend:v0.14.0rc1-a3'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:

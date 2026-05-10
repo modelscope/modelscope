@@ -1,6 +1,8 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import csv as csv_module
 import os
+import sys
 from typing import Dict, Union
 
 import datasets
@@ -57,6 +59,10 @@ class CsvDatasetBuilder(csv.Csv):
         self.csv_delimiter = DEFAULT_CSV_DELIMITER
         if DELIMITER_NAME in self.input_config_kwargs:
             self.csv_delimiter = self.input_config_kwargs[DELIMITER_NAME]
+
+        # Extract engine and chunksize before passing kwargs to parent class
+        self.csv_engine = self.input_config_kwargs.pop('engine', None)
+        self.csv_chunksize = self.input_config_kwargs.pop('chunksize', None)
 
         split = self.split or list(dataset_context_config.data_meta_config.
                                    target_dataset_structure.keys())
@@ -132,6 +138,13 @@ class CsvDatasetBuilder(csv.Csv):
         return splits
 
     def _generate_tables(self, files, base_dir):
+        # Raise csv field size limit to avoid errors with large cells
+        if self.csv_engine == 'python':
+            try:
+                csv_module.field_size_limit(sys.maxsize)
+            except OverflowError:
+                csv_module.field_size_limit(2147483647)
+
         schema = pa.schema(self.config.features.type
                            ) if self.config.features is not None else None
         dtype = {
@@ -139,8 +152,14 @@ class CsvDatasetBuilder(csv.Csv):
             for name, dtype in zip(schema.names, schema.types)
         } if schema else None
         for file_idx, file in enumerate(files):
-            csv_file_reader = pd.read_csv(
-                file, iterator=True, dtype=dtype, delimiter=self.csv_delimiter)
+            pd_kwargs = dict(
+                iterator=True,
+                dtype=dtype,
+                delimiter=self.csv_delimiter,
+                chunksize=self.csv_chunksize or 10000)
+            if self.csv_engine is not None:
+                pd_kwargs['engine'] = self.csv_engine
+            csv_file_reader = pd.read_csv(file, **pd_kwargs)
             transform_fields = []
             for field_name in csv_file_reader._engine.names:
                 if field_name.endswith(':FILE'):
@@ -215,8 +234,10 @@ class CsvDatasetBuilder(csv.Csv):
 
     def _convert_csv_to_dataset(self, split_name, csv_file_path):
 
-        df = pd.read_csv(
-            csv_file_path, iterator=False, delimiter=self.csv_delimiter)
+        pd_kwargs = dict(iterator=False, delimiter=self.csv_delimiter)
+        if self.csv_engine is not None:
+            pd_kwargs['engine'] = self.csv_engine
+        df = pd.read_csv(csv_file_path, **pd_kwargs)
 
         transform_fields = []
         for field_name in df.columns.tolist():

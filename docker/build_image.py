@@ -339,6 +339,15 @@ class StableCPUImageBuilder(Builder):
 class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
 
+    def init_args(self, args: Any) -> Any:
+        if not args.torch_version:
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
+        if not args.vllm_version:
+            args.vllm_version = '0.19.1'
+        return super().init_args(args)
+
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -400,11 +409,6 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 class LatestGPUImageBuilder(StableGPUImageBuilder):
     """Dependencies will be latest versions"""
 
-    def init_args(self, args: Any) -> Any:
-        if not args.vllm_version:
-            args.vllm_version = '0.16.0'
-        return super().init_args(args)
-
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -417,8 +421,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}  '
-            f'{self.args.optimum_version}'
-            f'{self.args.flashattn_version}')
+            f'{self.args.flashattn_version} {self.args.optimum_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
@@ -426,7 +429,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
@@ -533,7 +536,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.11.11')
+parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)

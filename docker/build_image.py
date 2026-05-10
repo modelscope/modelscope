@@ -394,11 +394,11 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args: Any) -> Any:
         if not args.torch_version:
-            args.torch_version = '2.10.0'
-            args.torchaudio_version = '2.10.0'
-            args.torchvision_version = '0.25.0'
+            args.torch_version = '2.11.0'
+            args.torchaudio_version = '2.11.0'
+            args.torchvision_version = '0.26.0'
         if not args.vllm_version:
-            args.vllm_version = '0.19.1'
+            args.vllm_version = '0.20.1'
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:13.0.3-cudnn-devel-ubuntu22.04'

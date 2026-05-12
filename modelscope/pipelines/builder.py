@@ -162,8 +162,8 @@ def pipeline(task: str = None,
                     if cfg:
                         plugins = cfg.safe_get('plugins')
                         allow_remote = cfg.get('allow_remote', False)
-                        plugins = filter_plugin_in_whitelist(plugins)
-                        if (plugins or allow_remote) and not trust_remote_code:
+                        if (filter_plugin_in_whitelist(plugins)
+                                or allow_remote) and not trust_remote_code:
                             raise RuntimeError(
                                 'Detected plugins or allow_remote field in the model '
                                 'configuration file, but trust_remote_code=True was not '

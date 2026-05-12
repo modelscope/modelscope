@@ -41,8 +41,8 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
             if configuration:
                 plugins = configuration.safe_get('plugins')
                 allow_remote = configuration.get('allow_remote', False)
-                plugins = filter_plugin_in_whitelist(plugins)
-                if (plugins or allow_remote) and not trust_remote_code:
+                if (filter_plugin_in_whitelist(plugins)
+                        or allow_remote) and not trust_remote_code:
                     raise RuntimeError(
                         'Detected plugins or allow_remote field in the model '
                         'configuration file, but trust_remote_code=True was '

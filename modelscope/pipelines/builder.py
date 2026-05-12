@@ -12,7 +12,8 @@ from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke, Tasks,
 from modelscope.utils.hub import read_config
 from modelscope.utils.import_utils import is_transformers_available
 from modelscope.utils.logger import get_logger
-from modelscope.utils.plugins import (register_modelhub_repo,
+from modelscope.utils.plugins import (filter_plugin_in_whitelist,
+                                      register_modelhub_repo,
                                       register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
 from modelscope.utils.task_utils import is_embedding_task
@@ -161,7 +162,8 @@ def pipeline(task: str = None,
                     if cfg:
                         plugins = cfg.safe_get('plugins')
                         allow_remote = cfg.get('allow_remote', False)
-                        if (plugins or allow_remote) and not trust_remote_code:
+                        if (filter_plugin_in_whitelist(plugins)
+                                or allow_remote) and not trust_remote_code:
                             raise RuntimeError(
                                 'Detected plugins or allow_remote field in the model '
                                 'configuration file, but trust_remote_code=True was not '

@@ -135,6 +135,7 @@ class EpochBasedTrainer(BaseTrainer):
         self._inner_iter = 0
         self._stop_training = False
         self._compile = kwargs.get('compile', False)
+        self.trust_remote_code = kwargs.get('trust_remote_code', False)
 
         self.train_dataloader = None
         self.eval_dataloader = None
@@ -814,7 +815,10 @@ class EpochBasedTrainer(BaseTrainer):
         override this method in a subclass.
 
         """
-        model = Model.from_pretrained(self.model_dir, cfg_dict=self.cfg)
+        model = Model.from_pretrained(
+            self.model_dir,
+            cfg_dict=self.cfg,
+            trust_remote_code=self.trust_remote_code)
         if not isinstance(model, nn.Module) and hasattr(model, 'model'):
             return model.model
         elif isinstance(model, nn.Module):

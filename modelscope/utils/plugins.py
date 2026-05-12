@@ -8,6 +8,7 @@ import importlib
 import importlib.metadata
 import os
 import pkgutil
+import re
 import shutil
 import subprocess
 import sys
@@ -46,6 +47,18 @@ OFFICIAL_PLUGINS = [
 LOCAL_PLUGINS_FILENAME = '.modelscope_plugins'
 GLOBAL_PLUGINS_FILENAME = os.path.join(Path.home(), '.modelscope', 'plugins')
 DEFAULT_PLUGINS = []
+PLUGIN_WHITE_LIST = ['pai-easycv']
+
+
+def filter_plugin_not_in_whitelist(plugins):
+    if not plugins:
+        return plugins
+    if isinstance(plugins, str):
+        plugins = [plugins]
+    return [
+        plugin for plugin in plugins if re.split(r'[><=!~]', plugin.strip())
+        [0].strip() not in PLUGIN_WHITE_LIST
+    ]
 
 
 @contextmanager

@@ -4,7 +4,7 @@ from modelscope.pipelines.builder import normalize_model_input
 from modelscope.pipelines.util import is_official_hub_path
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.hub import read_config
-from modelscope.utils.plugins import (filter_plugin_not_in_whitelist,
+from modelscope.utils.plugins import (filter_plugin_in_whitelist,
                                       register_modelhub_repo,
                                       register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
@@ -41,7 +41,7 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
             if configuration:
                 plugins = configuration.safe_get('plugins')
                 allow_remote = configuration.get('allow_remote', False)
-                plugins = filter_plugin_not_in_whitelist(plugins)
+                plugins = filter_plugin_in_whitelist(plugins)
                 if (plugins or allow_remote) and not trust_remote_code:
                     raise RuntimeError(
                         'Detected plugins or allow_remote field in the model '

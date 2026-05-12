@@ -50,7 +50,7 @@ DEFAULT_PLUGINS = []
 PLUGIN_WHITE_LIST = ['pai-easycv']
 
 
-def filter_plugin_not_in_whitelist(plugins):
+def filter_plugin_in_whitelist(plugins):
     if not plugins:
         return plugins
     if isinstance(plugins, str):

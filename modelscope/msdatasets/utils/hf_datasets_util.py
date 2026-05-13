@@ -481,7 +481,7 @@ class _DryRunDownloadManager:
     (which carry split names) without triggering actual network or disk I/O.
     """
 
-    _PLACEHOLDER = '/dev/null'
+    _PLACEHOLDER = os.devnull
 
     def download(self, url_or_urls):
         return self._map(url_or_urls)
@@ -512,7 +512,7 @@ class _DryRunDownloadManager:
     def _map(self, input_):
         if isinstance(input_, dict):
             return {k: self._PLACEHOLDER for k in input_}
-        if isinstance(input_, (list, tuple)):
+        if isinstance(input_, (list, tuple, set)):
             return type(input_)(self._PLACEHOLDER for _ in input_)
         return self._PLACEHOLDER
 
@@ -532,7 +532,8 @@ def _discover_splits_from_builder(builder_instance):
     try:
         generators = builder_instance._split_generators(_DryRunDownloadManager())
         return {str(sg.name) for sg in generators}
-    except Exception:
+    except Exception as e:
+        logger.debug(f'Failed to discover splits from builder: {e}')
         return set()
 
 
@@ -728,8 +729,12 @@ class DatasetsWrapperHF:
 
             # Case 2: Try builder_configs with data_files (packaged datasets)
             _tmp_builder_configs = getattr(builder_instance, 'builder_configs', None)
-            if _tmp_builder_configs and hasattr(_tmp_builder_configs, 'items'):
-                for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
+            if _tmp_builder_configs:
+                if hasattr(_tmp_builder_configs, 'items'):
+                    configs_iter = _tmp_builder_configs.items()
+                else:
+                    configs_iter = [(getattr(c, 'name', 'default'), c) for c in _tmp_builder_configs]
+                for tmp_config_name, tmp_builder_config in configs_iter:
                     tmp_config_name = str(tmp_config_name)
                     if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
                         ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]

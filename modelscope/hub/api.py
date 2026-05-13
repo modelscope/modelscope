@@ -2316,6 +2316,18 @@ class HubApi:
             commit_message=commit_message,
         )
 
+        # Guard: skip sending empty commits (no effective file changes)
+        if not payload['actions']:
+            logger.info(
+                'Commit skipped: no effective actions in payload '
+                '(all files already exist).')
+            return CommitInfo(
+                commit_url='',
+                commit_message=commit_message,
+                commit_description=commit_description or '',
+                oid='no-op',
+            )
+
         response = self.session.post(
             url,
             headers=self.builder_headers(self.headers),
@@ -2958,18 +2970,27 @@ class HubApi:
                     except Exception as e:
                         logger.error(
                             f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
-                        for r in results:
-                            tracker.mark_failed(
-                                r['file_path_in_repo'], r['file_mtime'],
-                                r['file_size_on_disk'],
-                                error_type='commit_failed')
-                        # Recover uploaded files to retry queue
-                        for r in results:
-                            total_failed_files.append(
-                                ((r['file_path_in_repo'], r['file_path']), e))
-                        logger.warning(
-                            f'Batch {batch_idx + 1}/{num_batches}: '
-                            f'{len(results)} uploaded file(s) recovered to retry queue.')
+                        category = classify_error(e)
+                        if not category.is_retryable:
+                            # Permanent error: mark files as failed, do not retry
+                            for r in results:
+                                tracker.mark_failed(
+                                    r['file_path_in_repo'], r['file_mtime'],
+                                    r['file_size_on_disk'],
+                                    error_type='commit_' + category.value)
+                            logger.error(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'permanent failure ({category.value}), '
+                                f'{len(results)} file(s) will not be retried.')
+                        else:
+                            # Transient error: recover to retry queue
+                            for r in results:
+                                total_failed_files.append(
+                                    ((r['file_path_in_repo'], r['file_path']), e))
+                            logger.warning(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'{len(results)} file(s) recovered to retry queue '
+                                f'(error_category={category.value}).')
         finally:
             tracker.save()
 
@@ -3031,10 +3052,19 @@ class HubApi:
                         except Exception as e:
                             logger.error(
                                 f'  Retry round {retry_round + 1} commit failed: {e}')
-                            for result in retry_successes:
-                                retry_failures.append(
-                                    ((result['file_path_in_repo'],
-                                      result.get('file_path', '')), e))
+                            category = classify_error(e)
+                            if not category.is_retryable:
+                                for result in retry_successes:
+                                    tracker.mark_failed(
+                                        result['file_path_in_repo'],
+                                        result['file_mtime'],
+                                        result['file_size_on_disk'],
+                                        error_type='commit_' + category.value)
+                            else:
+                                for result in retry_successes:
+                                    retry_failures.append(
+                                        ((result['file_path_in_repo'],
+                                          result.get('file_path', '')), e))
                 total_failed_files = retry_failures
 
         # Final tracker save
@@ -3254,7 +3284,7 @@ class HubApi:
                         repo_type=repo_type,
                         revision=revision)
                     commit_infos.append(commit_info)
-                    # Mark committed
+                    # Mark committed only after successful commit
                     self._track_committed_batch(tracker, batch)
                     logger.info(
                         f'[ReAct] {round_name}: '
@@ -3262,11 +3292,18 @@ class HubApi:
                 except Exception as e:
                     logger.error(
                         f'[ReAct] {round_name} commit failed: {e}')
-                    # Recover uploaded files back to failures
-                    for r in batch:
-                        round_failures.append(
-                            ((r['file_path_in_repo'],
-                              r['file_path']), e))
+                    category = classify_error(e)
+                    if not category.is_retryable:
+                        for r in batch:
+                            tracker.mark_failed(
+                                r['file_path_in_repo'], r['file_mtime'],
+                                r['file_size_on_disk'],
+                                error_type='commit_' + category.value)
+                    else:
+                        for r in batch:
+                            round_failures.append(
+                                ((r['file_path_in_repo'],
+                                  r['file_path']), e))
 
             # OBSERVE: classify new failures, enforce per-file retry limit
             new_retryable = []

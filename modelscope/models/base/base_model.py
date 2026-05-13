@@ -14,7 +14,8 @@ from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
-from modelscope.utils.plugins import (register_modelhub_repo,
+from modelscope.utils.plugins import (filter_plugin_in_whitelist,
+                                      register_modelhub_repo,
                                       register_plugins_repo)
 
 logger = get_logger()
@@ -190,7 +191,7 @@ class Model(ABC):
 
         # Security check: Only allow execution of remote code or plugins if trust_remote_code is True
         plugins = cfg.safe_get('plugins')
-        if plugins and not trust_remote_code:
+        if filter_plugin_in_whitelist(plugins) and not trust_remote_code:
             raise RuntimeError(
                 'Detected plugins field in the model configuration file, but '
                 'trust_remote_code=True was not explicitly set.\n'

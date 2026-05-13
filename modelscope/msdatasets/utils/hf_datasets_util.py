@@ -473,6 +473,69 @@ def _hf_fs_open(self, path, mode='rb', **kwargs):
     return _hf_fs_open_original(self, path, mode=mode, **kwargs)
 
 
+class _DryRunDownloadManager:
+    """Minimal download-manager stub for split discovery without I/O.
+
+    Returns placeholder paths for all download/extract calls, allowing
+    _split_generators() to execute and return SplitGenerator objects
+    (which carry split names) without triggering actual network or disk I/O.
+    """
+
+    _PLACEHOLDER = '/dev/null'
+
+    def download(self, url_or_urls):
+        return self._map(url_or_urls)
+
+    def download_and_extract(self, url_or_urls):
+        return self._map(url_or_urls)
+
+    def extract(self, path_or_paths):
+        return self._map(path_or_paths)
+
+    def download_custom(self, url_or_urls, custom_download):
+        return self._map(url_or_urls)
+
+    def iter_archive(self, path):
+        return iter([])
+
+    def iter_files(self, paths):
+        return iter([])
+
+    @property
+    def manual_dir(self):
+        return None
+
+    @property
+    def is_streaming(self):
+        return False
+
+    def _map(self, input_):
+        if isinstance(input_, dict):
+            return {k: self._PLACEHOLDER for k in input_}
+        if isinstance(input_, (list, tuple)):
+            return type(input_)(self._PLACEHOLDER for _ in input_)
+        return self._PLACEHOLDER
+
+
+def _discover_splits_from_builder(builder_instance):
+    """Discover available split names by dry-running _split_generators().
+
+    For script-based datasets that lack README split metadata, this calls
+    the builder's _split_generators() with a stub download manager to
+    extract split names without performing any actual downloads.
+
+    Returns:
+        A set of split name strings, or an empty set if discovery fails.
+    """
+    if not hasattr(builder_instance, '_split_generators'):
+        return set()
+    try:
+        generators = builder_instance._split_generators(_DryRunDownloadManager())
+        return {str(sg.name) for sg in generators}
+    except Exception:
+        return set()
+
+
 def _validate_split_exists(builder_instance, split):
     """Fail-fast check: raise ValueError before downloading if the
     requested split does not exist in the dataset metadata.
@@ -493,20 +556,29 @@ def _validate_split_exists(builder_instance, split):
     if not split_names:
         return
 
-    # Prefer info.splits (original metadata); fall back to data_files keys
+    # Source 1: info.splits (original metadata from README)
     available = set()
     info = getattr(builder_instance, 'info', None)
     if info is not None and info.splits:
         available = set(info.splits.keys())
 
+    # Source 2: config.data_files keys
     if not available:
         config = getattr(builder_instance, 'config', None)
         data_files = getattr(config, 'data_files', None)
         if isinstance(data_files, dict):
             available = set(data_files.keys())
 
+    # Source 3: dry-run _split_generators() for script-based datasets
     if not available:
-        return  # Cannot determine available splits; let downstream handle
+        available = _discover_splits_from_builder(builder_instance)
+
+    if not available:
+        logger.debug(
+            'Cannot determine available splits from dataset metadata; '
+            'split validation skipped. Invalid splits will be caught downstream.'
+        )
+        return
 
     missing = split_names - available
     if missing:
@@ -662,10 +734,11 @@ class DatasetsWrapperHF:
                     ret_dict[tmp_config_name] = []
             return ret_dict
 
+        _validate_split_exists(builder_instance, split)
+
         if streaming:
             return builder_instance.as_streaming_dataset(split=split)
 
-        _validate_split_exists(builder_instance, split)
         _align_builder_splits_with_data_files(builder_instance, split)
 
         builder_instance.download_and_prepare(

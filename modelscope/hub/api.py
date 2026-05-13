@@ -2668,21 +2668,10 @@ class HubApi:
             self,
             results: list,
             repo_type: str,
-            skip_reused: bool = False,
     ) -> list:
-        """Build CommitOperationAdd list from upload results.
-
-        Args:
-            results: List of upload result dicts from _upload_single_file().
-            repo_type: Repository type (model/dataset).
-            skip_reused: If True, exclude files that already exist globally
-                (is_reused=True). These files need no commit action since
-                they are already present on the server.
-        """
+        """Build CommitOperationAdd list from upload results."""
         operations = []
         for item_d in results:
-            if skip_reused and item_d.get('is_reused', False):
-                continue
             opt = CommitOperationAdd(
                 path_in_repo=item_d['file_path_in_repo'],
                 path_or_fileobj=item_d['file_path'],
@@ -2983,20 +2972,25 @@ class HubApi:
                             f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
                         category = classify_error(e)
                         if not category.is_retryable:
-                            # Permanent error: mark files as failed
+                            # Permanent error: mark files as failed, do not retry
                             for r in results:
                                 tracker.mark_failed(
                                     r['file_path_in_repo'], r['file_mtime'],
                                     r['file_size_on_disk'],
                                     error_type='commit_' + category.value)
-                        # Recover to retry queue regardless of category
-                        for r in results:
-                            total_failed_files.append(
-                                ((r['file_path_in_repo'], r['file_path']), e))
-                        logger.warning(
-                            f'Batch {batch_idx + 1}/{num_batches}: '
-                            f'{len(results)} file(s) recovered to retry queue '
-                            f'(error_category={category.value}).')
+                            logger.error(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'permanent failure ({category.value}), '
+                                f'{len(results)} file(s) will not be retried.')
+                        else:
+                            # Transient error: recover to retry queue
+                            for r in results:
+                                total_failed_files.append(
+                                    ((r['file_path_in_repo'], r['file_path']), e))
+                            logger.warning(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'{len(results)} file(s) recovered to retry queue '
+                                f'(error_category={category.value}).')
         finally:
             tracker.save()
 
@@ -3066,10 +3060,11 @@ class HubApi:
                                         result['file_mtime'],
                                         result['file_size_on_disk'],
                                         error_type='commit_' + category.value)
-                            for result in retry_successes:
-                                retry_failures.append(
-                                    ((result['file_path_in_repo'],
-                                      result.get('file_path', '')), e))
+                            else:
+                                for result in retry_successes:
+                                    retry_failures.append(
+                                        ((result['file_path_in_repo'],
+                                          result.get('file_path', '')), e))
                 total_failed_files = retry_failures
 
         # Final tracker save
@@ -3304,10 +3299,11 @@ class HubApi:
                                 r['file_path_in_repo'], r['file_mtime'],
                                 r['file_size_on_disk'],
                                 error_type='commit_' + category.value)
-                    for r in batch:
-                        round_failures.append(
-                            ((r['file_path_in_repo'],
-                              r['file_path']), e))
+                    else:
+                        for r in batch:
+                            round_failures.append(
+                                ((r['file_path_in_repo'],
+                                  r['file_path']), e))
 
             # OBSERVE: classify new failures, enforce per-file retry limit
             new_retryable = []

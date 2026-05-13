@@ -714,24 +714,47 @@ class DatasetsWrapperHF:
 
         if dataset_info_only:
             ret_dict = {}
+
+            # Case 1: Local .py script file
             if isinstance(path, str) and path.endswith('.py') and os.path.exists(path):
                 from datasets import get_dataset_config_names
                 subset_list = get_dataset_config_names(path)
                 ret_dict = {_subset: [] for _subset in subset_list}
                 return ret_dict
 
-            if builder_instance is None or not hasattr(builder_instance,
-                                                       'builder_configs'):
-                logger.error(f'No builder_configs found for {path} dataset.')
+            if builder_instance is None:
+                logger.error(f'No builder instance created for {path} dataset.')
                 return ret_dict
 
-            _tmp_builder_configs = builder_instance.builder_configs
-            for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
-                tmp_config_name = str(tmp_config_name)
-                if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
-                    ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
-                else:
-                    ret_dict[tmp_config_name] = []
+            # Case 2: Try builder_configs with data_files (packaged datasets)
+            _tmp_builder_configs = getattr(builder_instance, 'builder_configs', None)
+            if _tmp_builder_configs and hasattr(_tmp_builder_configs, 'items'):
+                for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
+                    tmp_config_name = str(tmp_config_name)
+                    if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
+                        ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
+
+            # Case 3: Fallback for script datasets — use info.splits or dry-run discovery
+            if not ret_dict or all(not v for v in ret_dict.values()):
+                config_name = getattr(builder_instance, 'config_name', 'default') or 'default'
+                splits = []
+
+                # Try info.splits (from README metadata)
+                info = getattr(builder_instance, 'info', None)
+                if info is not None and info.splits:
+                    splits = sorted(info.splits.keys())
+
+                # Fallback: dry-run _split_generators()
+                if not splits:
+                    discovered = _discover_splits_from_builder(builder_instance)
+                    if discovered:
+                        splits = sorted(discovered)
+
+                if splits:
+                    ret_dict = {config_name: splits}
+                elif not ret_dict:
+                    ret_dict = {config_name: []}
+
             return ret_dict
 
         _validate_split_exists(builder_instance, split)

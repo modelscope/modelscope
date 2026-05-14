@@ -28,8 +28,8 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
 # ---------- Install vllm + vllm-ascend ----------
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
-    git clone --depth 1 --branch v0.14.0 https://github.com/vllm-project/vllm && \
-    git clone --depth 1 --branch v0.14.0rc1 https://github.com/vllm-project/vllm-ascend.git
+    git clone --depth 1 --branch v0.18.0 https://github.com/vllm-project/vllm && \
+    git clone --depth 1 --branch v0.18.0 https://github.com/vllm-project/vllm-ascend.git
 
 RUN ARCH=$(uname -m) && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \

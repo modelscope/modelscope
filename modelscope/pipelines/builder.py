@@ -245,7 +245,10 @@ def pipeline(task: str = None,
     if preprocessor is not None:
         cfg.preprocessor = preprocessor
 
-    return build_pipeline(cfg, task_name=task)
+    return build_pipeline(
+        cfg,
+        task_name=task,
+        default_args={'trust_remote_code': trust_remote_code})
 
 
 def add_default_pipeline_info(task: str,

@@ -141,6 +141,7 @@ class OldCPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_cpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:
@@ -198,6 +199,7 @@ class OldGPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_gpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:

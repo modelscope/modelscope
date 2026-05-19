@@ -208,6 +208,7 @@ class Preprocessor(ABC):
                         revision: Optional[str] = DEFAULT_MODEL_REVISION,
                         cfg_dict: Config = None,
                         preprocessor_mode=ModeKeys.INFERENCE,
+                        trust_remote_code=False,
                         **kwargs):
         """Instantiate a preprocessor from local directory or remote model repo. Note
         that when loading from remote, the model revision can be specified.

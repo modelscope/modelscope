@@ -14,7 +14,7 @@ from modelscope.utils.import_utils import is_transformers_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.plugins import (filter_plugin_in_whitelist,
                                       register_modelhub_repo,
-                                      register_plugins_repo)
+                                      register_plugins_repo, is_trusted_group)
 from modelscope.utils.registry import Registry, build_from_cfg
 from modelscope.utils.task_utils import is_embedding_task
 from .base import Pipeline
@@ -117,6 +117,7 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
+    trust_remote_code = trust_remote_code or is_trusted_group(model)
     pipeline_props = None
     if pipeline_name is None:
         # get default pipeline for this task

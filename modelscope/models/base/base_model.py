@@ -16,7 +16,7 @@ from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
 from modelscope.utils.plugins import (filter_plugin_in_whitelist,
                                       register_modelhub_repo,
-                                      register_plugins_repo)
+                                      register_plugins_repo, is_trusted_group)
 
 logger = get_logger()
 
@@ -137,7 +137,7 @@ class Model(ABC):
             kwargs.pop(Invoke.KEY)
         else:
             invoked_by = Invoke.PRETRAINED
-
+        trust_remote_code = trust_remote_code or is_trusted_group(model_name_or_path)
         ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path

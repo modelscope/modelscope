@@ -6,7 +6,7 @@ from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.hub import read_config
 from modelscope.utils.plugins import (filter_plugin_in_whitelist,
                                       register_modelhub_repo,
-                                      register_plugins_repo)
+                                      register_plugins_repo, is_trusted_group)
 from modelscope.utils.registry import Registry, build_from_cfg
 
 TRAINERS = Registry('trainers')
@@ -27,7 +27,7 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
     default_args = default_args or {}
     model = default_args.get('model', None)
     model_revision = default_args.get('model_revision', DEFAULT_MODEL_REVISION)
-    trust_remote_code = default_args.get('trust_remote_code', False)
+    trust_remote_code = default_args.get('trust_remote_code', False) or is_trusted_group(model)
 
     if isinstance(model, str) \
             or (isinstance(model, list) and isinstance(model[0], str)):

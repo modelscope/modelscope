@@ -61,6 +61,17 @@ def filter_plugin_in_whitelist(plugins):
     ]
 
 
+def is_trusted_group(model_id: Optional[str] = None) -> bool:
+    if not isinstance(model_id, str) or os.path.exists(model_id):
+        return False
+    pattern = re.compile(r'^([^/]+)/[^/]+$')
+    m = pattern.match(model_id)
+    if not m:
+        return False
+    group = m.group(1)
+    return group in ['iic', 'damo', 'modelscope']
+
+
 @contextmanager
 def pushd(new_dir: str, verbose: bool = False):
     """

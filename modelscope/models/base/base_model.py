@@ -4,8 +4,6 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
-from tinker.types import model_id
-
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model

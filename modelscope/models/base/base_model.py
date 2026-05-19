@@ -4,6 +4,8 @@ import os.path as osp
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
+from tinker.types import model_id
+
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Tasks
 from modelscope.models.builder import build_backbone, build_model
@@ -137,8 +139,8 @@ class Model(ABC):
             kwargs.pop(Invoke.KEY)
         else:
             invoked_by = Invoke.PRETRAINED
-        trust_remote_code = trust_remote_code or is_trusted_group(
-            model_name_or_path)
+        _model_trusted = is_trusted_group(model_name_or_path)
+        trust_remote_code = trust_remote_code or _model_trusted
         ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
@@ -205,7 +207,7 @@ class Model(ABC):
                 'Please make sure that you can trust the external codes.')
         register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
         default_args = {}
-        if trust_remote_code:
+        if trust_remote_code and not _model_trusted:
             default_args = {'trust_remote_code': trust_remote_code}
         register_plugins_repo(plugins)
         for k, v in kwargs.items():

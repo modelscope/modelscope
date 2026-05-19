@@ -119,7 +119,8 @@ def pipeline(task: str = None,
 
     model_id = model[0] if isinstance(model,
                                       list) and len(model) > 0 else model
-    trust_remote_code = trust_remote_code or is_trusted_group(model_id)
+    _model_trusted = is_trusted_group(model_id)
+    trust_remote_code = trust_remote_code or _model_trusted
     pipeline_props = None
     if pipeline_name is None:
         # get default pipeline for this task
@@ -248,10 +249,13 @@ def pipeline(task: str = None,
     if preprocessor is not None:
         cfg.preprocessor = preprocessor
 
-    return build_pipeline(
-        cfg,
-        task_name=task,
-        default_args={'trust_remote_code': trust_remote_code})
+    if _model_trusted:
+        return build_pipeline(cfg, task_name=task)
+    else:
+        return build_pipeline(
+            cfg,
+            task_name=task,
+            default_args={'trust_remote_code': trust_remote_code})
 
 
 def add_default_pipeline_info(task: str,

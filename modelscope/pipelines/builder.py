@@ -117,7 +117,9 @@ def pipeline(task: str = None,
     if task is None and pipeline_name is None:
         raise ValueError('task or pipeline_name is required')
 
-    trust_remote_code = trust_remote_code or is_trusted_group(model)
+    model_id = model[0] if isinstance(model,
+                                      list) and len(model) > 0 else model
+    trust_remote_code = trust_remote_code or is_trusted_group(model_id)
     pipeline_props = None
     if pipeline_name is None:
         # get default pipeline for this task

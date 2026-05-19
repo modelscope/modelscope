@@ -27,8 +27,10 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
     default_args = default_args or {}
     model = default_args.get('model', None)
     model_revision = default_args.get('model_revision', DEFAULT_MODEL_REVISION)
+    model_id = model[0] if isinstance(model,
+                                      list) and len(model) > 0 else model
     trust_remote_code = default_args.get('trust_remote_code',
-                                         False) or is_trusted_group(model)
+                                         False) or is_trusted_group(model_id)
 
     if isinstance(model, str) \
             or (isinstance(model, list) and isinstance(model[0], str)):

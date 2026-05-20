@@ -193,7 +193,8 @@ class DiscoDiffusionPipeline(DiffusersPipeline):
         self.check_trust_remote_code(
             'This pipeline requires `trust_remote_code=True` to load the module defined'
             ' in `model_index.json`, setting this to True means you trust the code and files'
-            ' listed in this model repo.')
+            ' listed in this model repo.',
+            model_dir=model)
 
         model_path = model
 
@@ -208,12 +209,6 @@ class DiscoDiffusionPipeline(DiffusersPipeline):
                 param.requires_grad_()
         if model_config['use_fp16']:
             self.unet.convert_to_fp16()
-
-        self.trust_remote_code = kwargs.get('trust_remote_code', False)
-        self.check_trust_remote_code(
-            'This pipeline requires import modules listed in `model_index.json`, '
-            'please add `trust_remote_code=True` if you trust this model repo.'
-        )
 
         with open(
                 os.path.join(model_path, 'model_index.json'),

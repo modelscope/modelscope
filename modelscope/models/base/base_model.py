@@ -32,7 +32,8 @@ class Model(ABC):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self._device_name = device_name
-        self.trust_remote_code = kwargs.get('trust_remote_code', False)
+        self.trust_remote_code = kwargs.get(
+            'trust_remote_code', False) or is_trusted_group(model_dir)
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.postprocess(self.forward(*args, **kwargs))

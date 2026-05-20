@@ -33,7 +33,7 @@ class DROEstimation(TorchModel):
     def __init__(self, model_dir: str, **kwargs):
         """str -- model file root."""
         super().__init__(model_dir, **kwargs)
-        self.check_trust_remote_code()
+        self.check_trust_remote_code(model_dir=model_dir)
 
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
 

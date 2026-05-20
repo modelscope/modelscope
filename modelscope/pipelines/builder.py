@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
+from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke, Tasks,
                                        ThirdParty)
@@ -13,7 +14,7 @@ from modelscope.utils.hub import read_config
 from modelscope.utils.import_utils import is_transformers_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.plugins import (filter_plugin_in_whitelist,
-                                      is_trusted_group, register_modelhub_repo,
+                                      register_modelhub_repo,
                                       register_plugins_repo)
 from modelscope.utils.registry import Registry, build_from_cfg
 from modelscope.utils.task_utils import is_embedding_task
@@ -119,7 +120,7 @@ def pipeline(task: str = None,
 
     model_id = model[0] if isinstance(model,
                                       list) and len(model) > 0 else model
-    _model_trusted = is_trusted_group(model_id)
+    _model_trusted = check_model_from_owner_group(model_id)
     trust_remote_code = trust_remote_code or _model_trusted
     pipeline_props = None
     if pipeline_name is None:

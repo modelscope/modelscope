@@ -76,7 +76,7 @@ RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
     cd / && rm -fr /tmp/apex && pip cache purge; \
     pip install --no-cache-dir "megatron-core==0.16.*" -U; \
 elif [ "$IMAGE_TYPE" = "cpu" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
+    pip install --no-cache-dir huggingface-hub "transformers<5.9" peft diffusers -U; \
 else \
     pip install "transformers<5.0" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi

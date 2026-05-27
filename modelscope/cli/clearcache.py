@@ -77,9 +77,9 @@ class ClearCacheCMD(CLICommand):
                 print('Cache cleared.')
             else:
                 entity_directory = os.path.join(
-                    self.cache_dir, 'hub' if single_model else 'datasets', id)
+                    self.cache_dir, 'hub', 'models' if single_model else 'datasets', id)
                 temp_directory = os.path.join(
-                    self.cache_dir, 'hub' if single_model else 'datasets',
+                    self.cache_dir, 'hub', 'models' if single_model else 'datasets',
                     TEMPORARY_FOLDER_NAME, id)
                 entity_removed = self._remove_directory(entity_directory)
                 temp_removed = self._remove_directory(temp_directory)

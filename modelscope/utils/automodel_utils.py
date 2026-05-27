@@ -137,7 +137,7 @@ def check_model_from_owner_group(model_dir: str,
     Returns:
         bool: Whether the group can be trusted
     """
-    if not model_dir:
+    if not model_dir or not isinstance(model_dir, str):
         return False
     if owner_group is None:
         owner_group = ['iic', 'damo']

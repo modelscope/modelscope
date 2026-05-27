@@ -502,9 +502,12 @@ class HubApi:
 
         tag_timeout = (API_HTTP_CLIENT_CONNECT_TIMEOUT,
                        API_HTTP_CLIENT_TIMEOUT)
-        last_exc = None
+
+        retryable_status = {500, 502, 503, 504}
         attempts = max(1, CREATE_TAG_MAX_RETRIES)
+        r = None
         for attempt in range(1, attempts + 1):
+            retry_reason = None
             try:
                 r = self.session.post(
                     path,
@@ -512,11 +515,9 @@ class HubApi:
                     cookies=cookies,
                     headers=self.builder_headers(self.headers),
                     timeout=tag_timeout)
-                break
             except (requests.exceptions.ReadTimeout,
                     requests.exceptions.ConnectTimeout,
                     requests.exceptions.ConnectionError) as e:
-                last_exc = e
                 if attempt >= attempts:
                     logger.error(
                         f'create_model_tag POST failed after {attempts} '
@@ -526,14 +527,19 @@ class HubApi:
                         f'MODELSCOPE_CREATE_TAG_MAX_RETRIES '
                         f'(current={CREATE_TAG_MAX_RETRIES}).')
                     raise
-                sleep_s = CREATE_TAG_RETRY_BACKOFF * (2 ** (attempt - 1))
-                logger.warning(
-                    f'create_model_tag POST attempt {attempt}/{attempts} '
-                    f'failed with {type(e).__name__}: {e}. '
-                    f'Retrying in {sleep_s}s...')
-                time.sleep(sleep_s)
-        else:
-            raise last_exc
+                retry_reason = f'{type(e).__name__}: {e}'
+            else:
+                if r.status_code in retryable_status and attempt < attempts:
+                    retry_reason = (f'retryable HTTP {r.status_code} '
+                                    f'from server')
+                else:
+                    break
+
+            sleep_s = CREATE_TAG_RETRY_BACKOFF * (2 ** (attempt - 1))
+            logger.warning(
+                f'create_model_tag POST attempt {attempt}/{attempts} '
+                f'failed with {retry_reason}. Retrying in {sleep_s}s...')
+            time.sleep(sleep_s)
 
         raise_for_http_status(r)
         d = r.json()

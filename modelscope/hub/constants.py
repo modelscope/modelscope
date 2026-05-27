@@ -22,7 +22,7 @@ REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
 # Default per-socket timeout (seconds) applied to all session HTTP methods
 # in HubApi.__init__. User-tunable via env to mitigate transient ReadTimeout
 # on heavy server-side ops (e.g. create_model_tag which performs git ops on
-# the remote repo). Default kept at 60 for backward compatibility.
+# the remote repo). Default raised to 90 to mitigate transient timeouts.
 API_HTTP_CLIENT_TIMEOUT = int(
     os.environ.get('MODELSCOPE_API_HTTP_CLIENT_TIMEOUT', 90))
 

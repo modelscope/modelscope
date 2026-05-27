@@ -32,13 +32,16 @@ from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import HTTPError
 from tqdm.auto import tqdm
 
-from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
+from modelscope.hub.constants import (API_HTTP_CLIENT_CONNECT_TIMEOUT,
+                                      API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
+                                      CREATE_TAG_MAX_RETRIES,
+                                      CREATE_TAG_RETRY_BACKOFF,
                                       DEFAULT_MAX_WORKERS,
                                       DEFAULT_MODELSCOPE_INTL_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
@@ -497,11 +500,40 @@ class HubApi:
                 'Ref': revision
             }
 
-        r = self.session.post(
-            path,
-            json=body,
-            cookies=cookies,
-            headers=self.builder_headers(self.headers))
+        tag_timeout = (API_HTTP_CLIENT_CONNECT_TIMEOUT,
+                       API_HTTP_CLIENT_TIMEOUT)
+        last_exc = None
+        attempts = max(1, CREATE_TAG_MAX_RETRIES)
+        for attempt in range(1, attempts + 1):
+            try:
+                r = self.session.post(
+                    path,
+                    json=body,
+                    cookies=cookies,
+                    headers=self.builder_headers(self.headers),
+                    timeout=tag_timeout)
+                break
+            except (requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectTimeout,
+                    requests.exceptions.ConnectionError) as e:
+                last_exc = e
+                if attempt >= attempts:
+                    logger.error(
+                        f'create_model_tag POST failed after {attempts} '
+                        f'attempt(s) due to transient network error: {e}. '
+                        f'Consider raising MODELSCOPE_API_HTTP_CLIENT_TIMEOUT '
+                        f'(current={API_HTTP_CLIENT_TIMEOUT}s) or '
+                        f'MODELSCOPE_CREATE_TAG_MAX_RETRIES '
+                        f'(current={CREATE_TAG_MAX_RETRIES}).')
+                    raise
+                sleep_s = CREATE_TAG_RETRY_BACKOFF * (2 ** (attempt - 1))
+                logger.warning(
+                    f'create_model_tag POST attempt {attempt}/{attempts} '
+                    f'failed with {type(e).__name__}: {e}. '
+                    f'Retrying in {sleep_s}s...')
+                time.sleep(sleep_s)
+        else:
+            raise last_exc
 
         raise_for_http_status(r)
         d = r.json()

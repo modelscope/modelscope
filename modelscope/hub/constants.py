@@ -19,9 +19,22 @@ DEFAULT_CREDENTIALS_PATH = Path.home().joinpath('.modelscope', 'credentials')
 MODELSCOPE_CREDENTIALS_PATH = os.environ.get(
     'MODELSCOPE_CREDENTIALS_PATH', DEFAULT_CREDENTIALS_PATH.as_posix())
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
-API_HTTP_CLIENT_TIMEOUT = 60
+# Default per-socket timeout (seconds) applied to all session HTTP methods
+# in HubApi.__init__. User-tunable via env to mitigate transient ReadTimeout
+# on heavy server-side ops (e.g. create_model_tag which performs git ops on
+# the remote repo). Default kept at 60 for backward compatibility.
+API_HTTP_CLIENT_TIMEOUT = int(
+    os.environ.get('MODELSCOPE_API_HTTP_CLIENT_TIMEOUT', 90))
+
+API_HTTP_CLIENT_CONNECT_TIMEOUT = int(
+    os.environ.get('MODELSCOPE_API_HTTP_CLIENT_CONNECT_TIMEOUT', 10))
 API_HTTP_CLIENT_MAX_RETRIES = int(
     os.environ.get('API_HTTP_CLIENT_MAX_RETRIES', 5))
+
+CREATE_TAG_MAX_RETRIES = int(
+    os.environ.get('MODELSCOPE_CREATE_TAG_MAX_RETRIES', 3))
+CREATE_TAG_RETRY_BACKOFF = int(
+    os.environ.get('MODELSCOPE_CREATE_TAG_RETRY_BACKOFF', 2))
 
 # Application-level retry for blob upload
 UPLOAD_BLOB_MAX_RETRIES = int(os.environ.get('UPLOAD_BLOB_MAX_RETRIES', 5))

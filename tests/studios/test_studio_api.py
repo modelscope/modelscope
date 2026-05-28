@@ -9,7 +9,10 @@ response is decoded correctly.
 import unittest
 from unittest.mock import MagicMock, patch
 
+from tests.studios.conftest_env import get_test_config
+
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import Visibility
 from modelscope.hub.errors import InvalidParameter
 from modelscope.utils.constant import (REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT,
                                        StudioHardware, StudioSDKType,
@@ -90,9 +93,12 @@ class TestStudioApiMocked(unittest.TestCase):
     def setUp(self):
         self.api = HubApi()
         self.api.endpoint = 'https://modelscope.cn'
-        self.studio_id = 'testuser/my-studio'
-        self.owner = 'testuser'
-        self.name = 'my-studio'
+        config = get_test_config()
+        self.owner = config['owner']
+        # Mock tests use a fixed test name to keep assertions deterministic.
+        self.name = 'mock-studio'
+        self.studio_id = f'{self.owner}/{self.name}'
+        self.visibility = config['visibility']
 
     # ------------------------------------------------------------------
     # create_repo studio branch
@@ -110,12 +116,18 @@ class TestStudioApiMocked(unittest.TestCase):
                     'owner': self.owner,
                 }
             })
+        # Map configured visibility string -> Visibility enum value.
+        visibility_value = (
+            Visibility.PRIVATE
+            if self.visibility == 'private' else Visibility.PUBLIC)
+        expected_private = self.visibility == 'private'
         with patch.object(
                 self.api.session, 'post', return_value=mock_resp) as mock_post:
             url = self.api.create_repo(
                 self.studio_id,
                 token='test-token',
                 repo_type=REPO_TYPE_STUDIO,
+                visibility=visibility_value,
                 sdk_type=StudioSDKType.GRADIO,
                 sdk_version='6.2.0',
                 hardware=StudioHardware.DEFAULT,
@@ -132,9 +144,9 @@ class TestStudioApiMocked(unittest.TestCase):
             self.assertEqual(body.get('sdk_type'), StudioSDKType.GRADIO)
             self.assertEqual(body.get('sdk_version'), '6.2.0')
             self.assertEqual(body.get('hardware'), StudioHardware.DEFAULT)
-            # Public visibility translates to private=False, kept by the
-            # filter because False is not None.
-            self.assertEqual(body.get('private'), False)
+            # Visibility translates to ``private`` boolean; the filter keeps
+            # explicit False values because they are not None.
+            self.assertEqual(body.get('private'), expected_private)
             self.assertIn('Authorization', kwargs.get('headers', {}))
             # Returned URL points at the studios path.
             self.assertEqual(

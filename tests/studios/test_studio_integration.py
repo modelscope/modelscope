@@ -10,6 +10,7 @@ import uuid
 from tests.studios.conftest_env import get_test_config, load_test_env
 
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import Visibility
 from modelscope.utils.constant import REPO_TYPE_STUDIO, StudioSDKType
 from modelscope.utils.test_utils import test_level
 
@@ -28,7 +29,7 @@ class TestStudioIntegration(unittest.TestCase):
         cls.token = config['token']
         cls.owner = config['owner']
         cls.endpoint = config['endpoint']
-        cls.studio_id = config['studio_id']
+        cls.visibility = config['visibility']
         if not cls.token or cls.token == 'your_access_token_here':
             raise unittest.SkipTest('MODELSCOPE_API_TOKEN not set')
         cls.api = HubApi(token=cls.token, endpoint=cls.endpoint)
@@ -41,22 +42,30 @@ class TestStudioIntegration(unittest.TestCase):
         for sid in getattr(cls, 'created_studios', []):
             print(f'[integration] created studio left behind: {sid}')
 
+    def setUp(self):
+        # Generate a unique repo name per test; studio_id is owner + name.
+        self.name = f'ut-studio-{uuid.uuid4().hex[:8]}'
+        self.studio_id = f'{self.owner}/{self.name}'
+
     def test_create_and_check_studio(self):
         """Create a studio and verify it is visible via repo_exists."""
-        name = f'ut-studio-{uuid.uuid4().hex[:8]}'
-        studio_id = f'{self.owner}/{name}'
+        # Map configured visibility string -> Visibility enum value.
+        visibility_value = (
+            Visibility.PRIVATE
+            if self.visibility == 'private' else Visibility.PUBLIC)
 
         url = self.api.create_repo(
-            studio_id,
+            self.studio_id,
             repo_type=REPO_TYPE_STUDIO,
             token=self.token,
+            visibility=visibility_value,
             sdk_type=StudioSDKType.GRADIO,
         )
-        self.assertIn(name, url)
-        self.__class__.created_studios.append(studio_id)
+        self.assertIn(self.name, url)
+        self.__class__.created_studios.append(self.studio_id)
 
         exists = self.api.repo_exists(
-            studio_id, repo_type=REPO_TYPE_STUDIO, token=self.token)
+            self.studio_id, repo_type=REPO_TYPE_STUDIO, token=self.token)
         self.assertTrue(exists)
 
     def test_repo_exists_nonexistent(self):
@@ -67,9 +76,23 @@ class TestStudioIntegration(unittest.TestCase):
         self.assertFalse(exists)
 
     def test_secrets_lifecycle(self):
-        """Round-trip add → list → update → delete on a real studio."""
-        if not self.studio_id or self.studio_id == 'test_user/test-studio':
-            self.skipTest('TEST_STUDIO_ID is not configured')
+        """Round-trip add → list → update → delete on a real studio.
+
+        Creates a fresh studio (using configured visibility) so the test is
+        self-contained and does not rely on a pre-existing repo.
+        """
+        visibility_value = (
+            Visibility.PRIVATE
+            if self.visibility == 'private' else Visibility.PUBLIC)
+        self.api.create_repo(
+            self.studio_id,
+            repo_type=REPO_TYPE_STUDIO,
+            token=self.token,
+            visibility=visibility_value,
+            sdk_type=StudioSDKType.GRADIO,
+        )
+        self.__class__.created_studios.append(self.studio_id)
+
         secret_key = f'TEST_KEY_{uuid.uuid4().hex[:6]}'
 
         self.api.add_studio_secret(

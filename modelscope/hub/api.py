@@ -97,11 +97,11 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH, META_FILES_FORMAT,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
-                                       REPO_TYPE_SUPPORT, ConfigFields,
-                                       DatasetFormations, DatasetMetaFormats,
-                                       DownloadChannel, DownloadMode,
-                                       Frameworks, ModelFile, Tasks,
-                                       VirgoDatasetConfig)
+                                       REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT,
+                                       ConfigFields, DatasetFormations,
+                                       DatasetMetaFormats, DownloadChannel,
+                                       DownloadMode, Frameworks, ModelFile,
+                                       Tasks, VirgoDatasetConfig)
 from modelscope.utils.file_utils import (compute_file_hash, get_file_size,
                                          is_relative_path)
 from modelscope.utils.logger import get_logger
@@ -734,6 +734,18 @@ class HubApi:
         if repo_type == REPO_TYPE_DATASET:
             return self.dataset_info(repo_id=repo_id, revision=revision, endpoint=endpoint)
 
+        if repo_type == REPO_TYPE_STUDIO:
+            if (repo_id is None) or repo_id.count('/') != 1:
+                raise InvalidParameter(
+                    f'Invalid repo_id: {repo_id}, must be of format owner/repo_name')
+            _endpoint = endpoint or self.endpoint
+            owner, name = repo_id.split('/', 1)
+            path = f'{_endpoint}/openapi/v1/studios/{owner}/{name}'
+            headers = self._build_bearer_headers(token=None, token_required=False)
+            r = self.session.get(path, headers=headers)
+            handle_http_response(r, logger, None, repo_id)
+            return r.json().get('data', {})
+
         raise InvalidParameter(
             f'Arg repo_type {repo_type} not supported. Please choose from {REPO_TYPE_SUPPORT}.')
 
@@ -755,7 +767,7 @@ class HubApi:
                 by a `/`.
             repo_type (`str`, *optional*):
                 `None` or `"model"` if getting repository info from a model. Default is `None`.
-                TODO: support studio
+                Supported values are `"model"`, `"dataset"` and `"studio"`.
             endpoint(`str`):
                 None or specific endpoint to use, when None, use the default endpoint
                 set in HubApi class (self.endpoint)
@@ -774,13 +786,18 @@ class HubApi:
 
         cookies = self.get_cookies(access_token=token, cookies_required=False)
         owner_or_group, name = model_id_to_group_owner_name(repo_id)
-        if (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
+        if (repo_type is not None) and repo_type.lower() == REPO_TYPE_STUDIO:
+            path = f'{endpoint}/openapi/v1/studios/{owner_or_group}/{name}'
+            headers = self._build_bearer_headers(token=token, token_required=False)
+            r = self.session.get(path, headers=headers)
+        elif (repo_type is not None) and repo_type.lower() == REPO_TYPE_DATASET:
             path = f'{endpoint}/api/v1/datasets/{owner_or_group}/{name}'
+            r = self.session.get(path, cookies=cookies,
+                                 headers=self.builder_headers(self.headers))
         else:
             path = f'{endpoint}/api/v1/models/{owner_or_group}/{name}'
-
-        r = self.session.get(path, cookies=cookies,
-                             headers=self.builder_headers(self.headers))
+            r = self.session.get(path, cookies=cookies,
+                                 headers=self.builder_headers(self.headers))
         code = handle_http_response(r, logger, cookies, repo_id, False)
         if code == 200:
             return True
@@ -2255,10 +2272,245 @@ class HubApi:
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 
+        elif repo_type == REPO_TYPE_STUDIO:
+            repo_url = self._create_studio_repo(
+                owner=namespace,
+                repo_name=repo_name,
+                visibility=visibility,
+                license=license,
+                chinese_name=chinese_name,
+                token=token,
+                endpoint=endpoint,
+                **kwargs,
+            )
+            print(f'New studio created successfully at {repo_url}.', flush=True)
+
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
         return repo_url
+
+    # --- Studio Operations ---
+
+    @staticmethod
+    def _parse_studio_id(studio_id: str):
+        """Parse a studio_id of the form ``owner/repo_name`` into (owner, name)."""
+        if not studio_id or studio_id.count('/') != 1:
+            raise InvalidParameter(
+                f'Invalid studio_id: {studio_id}, must be of format owner/repo_name')
+        owner, name = studio_id.split('/', 1)
+        if not owner or not name:
+            raise InvalidParameter(
+                f'Invalid studio_id: {studio_id}, must be of format owner/repo_name')
+        return owner, name
+
+    def _create_studio_repo(self,
+                            owner: str,
+                            repo_name: str,
+                            visibility: Optional[str] = Visibility.PUBLIC,
+                            license: Optional[str] = None,
+                            chinese_name: Optional[str] = None,
+                            token: Optional[str] = None,
+                            endpoint: Optional[str] = None,
+                            **kwargs) -> str:
+        """Create a studio repo via the OpenAPI ``/openapi/v1/studios`` endpoint.
+
+        Supported optional studio fields in ``kwargs``:
+            description, sdk_type, sdk_version, base_image, hardware, cover_image.
+        """
+        endpoint = endpoint or self.endpoint
+        path = f'{endpoint}/openapi/v1/studios'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+
+        is_private = visibility is not None and visibility != Visibility.PUBLIC
+        body = {
+            'repo_name': repo_name,
+            'owner': owner,
+            'private': is_private,
+            'license': license,
+            'display_name': chinese_name,
+            'description': kwargs.get('description'),
+            'sdk_type': kwargs.get('sdk_type'),
+            'sdk_version': kwargs.get('sdk_version'),
+            'base_image': kwargs.get('base_image'),
+            'hardware': kwargs.get('hardware'),
+            'cover_image': kwargs.get('cover_image'),
+        }
+        body = {k: v for k, v in body.items() if v is not None}
+
+        r = self.session.post(path, json=body, headers=headers)
+        handle_http_response(r, logger, None, f'{owner}/{repo_name}')
+        return f'{endpoint}/studios/{owner}/{repo_name}'
+
+    def deploy_studio(self, studio_id, token=None, endpoint=None):
+        """Deploy a studio (re-pull code and rebuild).
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+
+        Returns:
+            dict: Runtime status info including status and active_config.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/deploy'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.post(path, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+        return r.json().get('data', {})
+
+    def stop_studio(self, studio_id, token=None, endpoint=None):
+        """Stop a running studio.
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+
+        Returns:
+            dict: Runtime status info.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/stop'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.post(path, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+        return r.json().get('data', {})
+
+    def get_studio_logs(self, studio_id, log_type='runtime', page_num=1,
+                        page_size=100, keyword=None, start_timestamp=None,
+                        end_timestamp=None, token=None, endpoint=None):
+        """Get studio build or runtime logs.
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            log_type: Log type, ``'build'`` or ``'runtime'``.
+            page_num: Page number, starting from 1.
+            page_size: Number of log entries per page.
+            keyword: Optional keyword filter.
+            start_timestamp: Optional start timestamp in seconds.
+            end_timestamp: Optional end timestamp in seconds.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+
+        Returns:
+            dict: Logs data with pagination info.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/logs/{log_type}'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        params = {'page_num': page_num, 'page_size': page_size}
+        if keyword:
+            params['keyword'] = keyword
+        if start_timestamp is not None:
+            params['start_timestamp'] = start_timestamp
+        if end_timestamp is not None:
+            params['end_timestamp'] = end_timestamp
+        r = self.session.get(path, params=params, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+        return r.json().get('data', {})
+
+    def update_studio_settings(self, studio_id, token=None, endpoint=None, **settings):
+        """Update studio settings (PATCH, only specified fields are modified).
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+            **settings: Fields to update. Supported: ``display_name``, ``license``,
+                ``private``, ``description``, ``cover_image``, ``sdk_type``,
+                ``sdk_version``, ``base_image``, ``hardware``. Note:
+                ``sdk_type``/``sdk_version``/``base_image``/``hardware`` changes
+                require redeployment.
+
+        Returns:
+            dict: Updated studio info.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/settings'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        body = {k: v for k, v in settings.items() if v is not None}
+        r = self.session.patch(path, json=body, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+        return r.json().get('data', {})
+
+    def list_studio_secrets(self, studio_id, token=None, endpoint=None):
+        """List studio environment variable keys (values not returned for security).
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+
+        Returns:
+            list: List of secret key dicts, e.g. ``[{'key': 'API_KEY'}, ...]``.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/secrets'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.get(path, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+        return r.json().get('data', {}).get('secrets', [])
+
+    def add_studio_secret(self, studio_id, key, value, token=None, endpoint=None):
+        """Add an environment variable to a studio.
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            key: Secret name (max 128 chars).
+            value: Secret value (max 4096 chars).
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/secrets'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.post(
+            path, json={'key': key, 'value': value}, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+
+    def update_studio_secret(self, studio_id, key, value, token=None, endpoint=None):
+        """Update an existing environment variable in a studio.
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            key: Secret name (max 128 chars).
+            value: New secret value (max 4096 chars).
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/secrets'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.put(
+            path, json={'key': key, 'value': value}, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+
+    def delete_studio_secret(self, studio_id, key, token=None, endpoint=None):
+        """Delete an environment variable from a studio.
+
+        Args:
+            studio_id: Studio ID in format ``owner/repo_name``.
+            key: Secret name to delete.
+            token: Optional access token.
+            endpoint: Optional API endpoint.
+        """
+        endpoint = endpoint or self.endpoint
+        owner, name = self._parse_studio_id(studio_id)
+        path = f'{endpoint}/openapi/v1/studios/{owner}/{name}/secrets'
+        headers = self._build_bearer_headers(token=token, token_required=True)
+        r = self.session.delete(path, json={'key': key}, headers=headers)
+        handle_http_response(r, logger, None, studio_id)
+
+    # --- End Studio Operations ---
 
     def create_commit(
             self,

@@ -11,7 +11,9 @@ from modelscope.hub.file_download import (dataset_file_download,
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
 from modelscope.hub.utils.utils import convert_patterns, resolve_endpoint
-from modelscope.utils.constant import DEFAULT_DATASET_REVISION
+from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
+                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL,
+                                       REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
@@ -60,8 +62,8 @@ class DownloadCMD(CLICommand):
         )
         parser.add_argument(
             '--repo-type',
-            choices=['model', 'dataset'],
-            default='model',
+            choices=REPO_TYPE_SUPPORT,
+            default=REPO_TYPE_MODEL,
             help="Type of repo to download from (defaults to 'model').",
         )
         parser.add_argument(
@@ -135,9 +137,11 @@ class DownloadCMD(CLICommand):
                     self.args.files = [self.args.repo_id]
         else:
             if self.args.repo_id is not None:
-                if self.args.repo_type == 'model':
+                if self.args.repo_type in (REPO_TYPE_MODEL, REPO_TYPE_STUDIO):
+                    # studio repos share the same snapshot_download path
+                    # as model repos.
                     self.args.model = self.args.repo_id
-                elif self.args.repo_type == 'dataset':
+                elif self.args.repo_type == REPO_TYPE_DATASET:
                     self.args.dataset = self.args.repo_id
                 else:
                     raise Exception('Not support repo-type: %s'

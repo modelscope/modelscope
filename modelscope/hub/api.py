@@ -2414,7 +2414,7 @@ class HubApi:
         headers = self._build_bearer_headers(token=token, token_required=True)
         r = self.session.post(path, headers=headers)
         handle_http_response(r, logger, None, studio_id)
-        return r.json().get('data', {})
+        return self._parse_openapi_response(r)
 
     def stop_studio(self, studio_id, token=None, endpoint=None):
         """Stop a running studio.
@@ -2433,7 +2433,7 @@ class HubApi:
         headers = self._build_bearer_headers(token=token, token_required=True)
         r = self.session.post(path, headers=headers)
         handle_http_response(r, logger, None, studio_id)
-        return r.json().get('data', {})
+        return self._parse_openapi_response(r)
 
     def get_studio_logs(self, studio_id, log_type='run', page_num=1,
                         page_size=100, keyword=None, start_timestamp=None,
@@ -2467,7 +2467,7 @@ class HubApi:
             params['end_timestamp'] = end_timestamp
         r = self.session.get(path, params=params, headers=headers)
         handle_http_response(r, logger, None, studio_id)
-        return r.json().get('data', {})
+        return self._parse_openapi_response(r)
 
     def update_studio_settings(self, studio_id, token=None, endpoint=None, **settings):
         """Update studio settings (PATCH, only specified fields are modified).
@@ -2492,7 +2492,7 @@ class HubApi:
         body = {k: v for k, v in settings.items() if v is not None}
         r = self.session.patch(path, json=body, headers=headers)
         handle_http_response(r, logger, None, studio_id)
-        return r.json().get('data', {})
+        return self._parse_openapi_response(r)
 
     def list_studio_secrets(self, studio_id, token=None, endpoint=None):
         """List studio environment variable keys (values not returned for security).
@@ -2511,7 +2511,8 @@ class HubApi:
         headers = self._build_bearer_headers(token=token, token_required=True)
         r = self.session.get(path, headers=headers)
         handle_http_response(r, logger, None, studio_id)
-        return r.json().get('data', {}).get('secrets', [])
+        data = self._parse_openapi_response(r)
+        return data.get('secrets', []) if isinstance(data, dict) else []
 
     def add_studio_secret(self, studio_id, key, value, token=None, endpoint=None):
         """Add an environment variable to a studio.

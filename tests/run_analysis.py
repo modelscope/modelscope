@@ -94,8 +94,12 @@ def get_models_info(groups: list) -> dict:
 def gather_test_suites_files(test_dir='./tests',
                              pattern='test_*.py',
                              is_full_path=True):
+    # Directories excluded from CI (manual-only test suites)
+    _CI_EXCLUDED_DIRS = {'studios'}
     case_file_list = []
     for dirpath, dirnames, filenames in os.walk(test_dir):
+        # Skip excluded directories
+        dirnames[:] = [d for d in dirnames if d not in _CI_EXCLUDED_DIRS]
         for file in filenames:
             if fnmatch(file, pattern):
                 if is_full_path:
@@ -183,7 +187,8 @@ def analysis_diff():
                 get_file_register_modules(modified_file))
         elif ((modified_file.startswith('./tests')
                or modified_file.startswith('tests'))
-              and os.path.basename(modified_file).startswith('test_')):
+              and os.path.basename(modified_file).startswith('test_')
+              and '/studios/' not in modified_file):
             modified_cases.append(modified_file)
 
     return modified_register_modules, modified_cases

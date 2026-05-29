@@ -8,7 +8,8 @@ from modelscope.hub.constants import (Licenses, ModelVisibility, Visibility,
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import resolve_endpoint
 from modelscope.utils.constant import (REPO_TYPE_MODEL, REPO_TYPE_STUDIO,
-                                       REPO_TYPE_SUPPORT)
+                                       REPO_TYPE_SUPPORT, StudioHardware,
+                                       StudioSDKType)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -101,7 +102,7 @@ class CreateCMD(CLICommand):
         studio_group.add_argument(
             '--sdk-type',
             dest='sdk_type',
-            choices=['gradio', 'streamlit', 'docker', 'static'],
+            choices=StudioSDKType.SUPPORTED,
             default=None,
             help='Studio SDK type (only for studio repo-type).')
         studio_group.add_argument(
@@ -119,7 +120,7 @@ class CreateCMD(CLICommand):
         studio_group.add_argument(
             '--hardware',
             dest='hardware',
-            type=str,
+            choices=StudioHardware.SUPPORTED,
             default=None,
             help='Studio hardware configuration.')
 

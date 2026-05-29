@@ -24,6 +24,7 @@ import json
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
 from modelscope.hub.utils.utils import resolve_endpoint
+from modelscope.utils.constant import StudioSDKType
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -169,7 +170,7 @@ class StudioCMD(CLICommand):
         sub.add_argument(
             '--sdk-type',
             dest='sdk_type',
-            choices=['gradio', 'streamlit', 'docker', 'static'],
+            choices=StudioSDKType.SUPPORTED,
             default=None,
             help='Studio SDK type (requires redeployment).')
         sub.add_argument(

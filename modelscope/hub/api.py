@@ -827,19 +827,12 @@ class HubApi:
                 A namespace (user or an organization) and a repo name separated
                 by a `/`.
             repo_type (`str`):
-                The type of the repository. Supported types are `model` and `dataset`.
+                The type of the repository. Supported types are `model`, `dataset` and `studio`.
             endpoint(`str`):
                 The endpoint to use. If not provided, the default endpoint is `https://www.modelscope.cn`
                 Could be set to `https://ai.modelscope.ai` for international version.
             token (str): Access token of the ModelScope.
         """
-        warnings.warn(
-            'This function is deprecated due to security reasons, '
-            'and will be recovered in future versions with proper token authentication. ',
-            DeprecationWarning,
-            stacklevel=2
-        )
-
         if not endpoint:
             endpoint = self.endpoint
 
@@ -854,6 +847,12 @@ class HubApi:
                 model_id=repo_id,
                 endpoint=endpoint,
                 token=token)
+        elif repo_type == REPO_TYPE_STUDIO:
+            owner, name = self._parse_studio_id(repo_id)
+            path = f'{endpoint}/openapi/v1/studios/{owner}/{name}'
+            headers = self._build_bearer_headers(token=token, token_required=True)
+            r = self.session.delete(path, headers=headers)
+            handle_http_response(r, logger, None, repo_id)
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 

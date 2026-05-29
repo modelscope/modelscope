@@ -181,10 +181,14 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # Best-effort cleanup: delete created test studios if possible
-        # Note: ModelScope may not expose a public delete studio API,
-        # so we just log a warning if cleanup fails.
-        pass
+        """Best-effort cleanup of test studios."""
+        api = HubApi()
+        for repo_id in cls._created_studios:
+            try:
+                api.delete_repo(
+                    repo_id, repo_type='studio', token=cls.token)
+            except Exception:
+                pass
 
     def _create_and_track(self, **kwargs):
         """Create a studio with unique name, track for cleanup."""
@@ -264,6 +268,17 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
         if not cls.studio_id:
             cls.studio_id = create_temp_studio(config)
             cls._auto_created_studio = True
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up auto-created temporary studio."""
+        if cls._auto_created_studio and cls.studio_id:
+            try:
+                api = HubApi()
+                api.delete_repo(
+                    cls.studio_id, repo_type='studio', token=cls.token)
+            except Exception:
+                pass
 
     def setUp(self):
         # Track secret keys created during a test for cleanup.

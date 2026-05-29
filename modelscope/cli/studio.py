@@ -29,7 +29,7 @@ from modelscope.utils.logger import get_logger
 logger = get_logger()
 
 # Common log type choices for `studio logs --type ...`.
-_LOG_TYPES = ('runtime', 'build')
+_LOG_TYPES = ('run', 'build')
 
 
 def subparser_func(args):
@@ -105,8 +105,8 @@ class StudioCMD(CLICommand):
             '--type',
             dest='log_type',
             choices=_LOG_TYPES,
-            default='runtime',
-            help="Log type to fetch (defaults to 'runtime').")
+            default='run',
+            help="Log type to fetch (defaults to 'run').")
         sub.add_argument(
             '--keyword',
             type=str,

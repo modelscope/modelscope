@@ -2435,14 +2435,14 @@ class HubApi:
         handle_http_response(r, logger, None, studio_id)
         return r.json().get('data', {})
 
-    def get_studio_logs(self, studio_id, log_type='runtime', page_num=1,
+    def get_studio_logs(self, studio_id, log_type='run', page_num=1,
                         page_size=100, keyword=None, start_timestamp=None,
                         end_timestamp=None, token=None, endpoint=None):
         """Get studio build or runtime logs.
 
         Args:
             studio_id: Studio ID in format ``owner/repo_name``.
-            log_type: Log type, ``'build'`` or ``'runtime'``.
+            log_type: Log type, ``'run'`` or ``'build'``.
             page_num: Page number, starting from 1.
             page_size: Number of log entries per page.
             keyword: Optional keyword filter.

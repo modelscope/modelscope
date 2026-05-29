@@ -38,6 +38,46 @@ def get_test_config():
     }
 
 
+def create_temp_studio(config, name_prefix='_test_cli'):
+    """Create a temporary studio for testing purposes.
+
+    Args:
+        config: dict from get_test_config()
+        name_prefix: prefix for the generated studio name
+
+    Returns:
+        str: The studio_id (owner/name) of the created studio.
+
+    Raises:
+        unittest.SkipTest: If token or owner are not configured.
+    """
+    import unittest
+    from uuid import uuid4
+    from modelscope.hub.api import HubApi
+
+    token = config['token']
+    owner = config['owner']
+    if not token or not owner:
+        raise unittest.SkipTest(
+            'MODELSCOPE_API_TOKEN and TEST_STUDIO_OWNER required')
+
+    name = f'{name_prefix}_{uuid4().hex[:8]}'
+    repo_id = f'{owner}/{name}'
+    visibility = config.get('visibility', 'private')
+
+    api = HubApi()
+    api.create_repo(
+        repo_id,
+        repo_type='studio',
+        visibility=visibility,
+        token=token,
+        endpoint=config.get('endpoint'),
+        sdk_type='gradio',
+        create_default_config=False,
+    )
+    return repo_id
+
+
 class TestResultMixin:
     """Mixin that prints test pass/fail status after each test method.
 

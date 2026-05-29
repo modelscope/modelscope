@@ -19,7 +19,8 @@ import unittest
 from unittest.mock import ANY, patch
 from uuid import uuid4
 
-from tests.studios.conftest_env import TestResultMixin, get_test_config
+from tests.studios.conftest_env import (TestResultMixin, create_temp_studio,
+                                         get_test_config)
 
 from modelscope.cli.studio import StudioCMD
 from modelscope.hub.api import HubApi
@@ -164,6 +165,87 @@ class TestStudioCLIErrors(TestResultMixin, unittest.TestCase):
                 cmd.execute()
 
 
+class TestStudioCreate(TestResultMixin, unittest.TestCase):
+    """Test studio creation via HubApi.create_repo(repo_type='studio')."""
+
+    @classmethod
+    def setUpClass(cls):
+        config = get_test_config()
+        cls.token = config['token']
+        cls.owner = config['owner']
+        cls.config = config
+        if not cls.token or not cls.owner:
+            raise unittest.SkipTest(
+                'MODELSCOPE_API_TOKEN and TEST_STUDIO_OWNER required')
+        cls._created_studios = []
+
+    @classmethod
+    def tearDownClass(cls):
+        # Best-effort cleanup: delete created test studios if possible
+        # Note: ModelScope may not expose a public delete studio API,
+        # so we just log a warning if cleanup fails.
+        pass
+
+    def _create_and_track(self, **kwargs):
+        """Create a studio with unique name, track for cleanup."""
+        name = f'_test_create_{uuid4().hex[:8]}'
+        repo_id = f'{self.owner}/{name}'
+        api = HubApi()
+        url = api.create_repo(
+            repo_id,
+            repo_type='studio',
+            visibility=self.config.get('visibility', 'private'),
+            token=self.token,
+            endpoint=self.config.get('endpoint'),
+            create_default_config=False,
+            **kwargs,
+        )
+        self._created_studios.append(repo_id)
+        return repo_id, url
+
+    def test_create_studio_basic(self):
+        """Create a basic studio and verify it exists."""
+        repo_id, url = self._create_and_track(sdk_type='gradio')
+        self.assertIn(repo_id, url)
+        # Verify it actually exists
+        api = HubApi()
+        exists = api.repo_exists(
+            repo_id, repo_type='studio', token=self.token)
+        self.assertTrue(exists,
+                        f'Studio {repo_id} should exist after creation')
+
+    def test_create_studio_exist_ok(self):
+        """Creating an existing studio with exist_ok=True should not raise."""
+        repo_id, _ = self._create_and_track(sdk_type='gradio')
+        api = HubApi()
+        # Create again with exist_ok=True
+        url = api.create_repo(
+            repo_id,
+            repo_type='studio',
+            visibility=self.config.get('visibility', 'private'),
+            token=self.token,
+            endpoint=self.config.get('endpoint'),
+            exist_ok=True,
+            create_default_config=False,
+        )
+        self.assertIn(repo_id, url)
+
+    def test_create_studio_exist_raises(self):
+        """Creating an existing studio without exist_ok should raise ValueError."""
+        repo_id, _ = self._create_and_track(sdk_type='gradio')
+        api = HubApi()
+        with self.assertRaises(ValueError):
+            api.create_repo(
+                repo_id,
+                repo_type='studio',
+                visibility=self.config.get('visibility', 'private'),
+                token=self.token,
+                endpoint=self.config.get('endpoint'),
+                exist_ok=False,
+                create_default_config=False,
+            )
+
+
 class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
     """Drive ``StudioCMD.execute`` with real API calls (no HubApi mocks)."""
 
@@ -172,10 +254,16 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
         config = get_test_config()
         cls.token = config['token']
         cls.studio_id = config['studio_id']
-        if not cls.token or not cls.studio_id:
+        cls._auto_created_studio = False
+
+        if not cls.token:
             raise unittest.SkipTest(
-                'TEST_STUDIO_ID and MODELSCOPE_API_TOKEN required '
-                'for real API tests')
+                'MODELSCOPE_API_TOKEN required for real API tests')
+
+        # If no TEST_STUDIO_ID configured, create a temporary one
+        if not cls.studio_id:
+            cls.studio_id = create_temp_studio(config)
+            cls._auto_created_studio = True
 
     def setUp(self):
         # Track secret keys created during a test for cleanup.

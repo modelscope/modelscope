@@ -136,23 +136,28 @@ def handle_http_response(response: requests.Response,
     if 404 == response.status_code:
         http_error_msg = (
             u'404 Not Found: %s does not exist or is not accessible, '
-            u'Request id: %s for url: %s%s' % (model_id, request_id, response.url, server_message))
+            u'Request id: %s for url: %s%s' %
+            (model_id, request_id, response.url, server_message))
     elif 403 == response.status_code:
         if cookies is None:
             http_error_msg = (
                 f'Authentication token does not exist, failed to access {model_id} '
-                f'which may not exist or may be private. Please login first.{server_message}')
+                f'which may not exist or may be private. Please login first.{server_message}'
+            )
 
         else:
             http_error_msg = (
-                f'The authentication token is invalid, failed to access {model_id}.{server_message}')
+                f'The authentication token is invalid, failed to access {model_id}.{server_message}'
+            )
     elif 400 <= response.status_code < 500:
         http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s%s' % (
-            response.status_code, reason, request_id, response.url, server_message)
+            response.status_code, reason, request_id, response.url,
+            server_message)
 
     elif 500 <= response.status_code < 600:
         http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s%s' % (
-            response.status_code, reason, request_id, response.url, server_message)
+            response.status_code, reason, request_id, response.url,
+            server_message)
     if http_error_msg and raise_on_error:  # there is error.
         logger.error(http_error_msg)
         raise HTTPError(http_error_msg, response=response)

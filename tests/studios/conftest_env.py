@@ -30,22 +30,30 @@ def get_test_config():
     load_test_env()
     cleanup_raw = os.environ.get('TEST_CLEANUP_REMOTE', 'true').strip().lower()
     return {
-        'token': os.environ.get('MODELSCOPE_API_TOKEN'),
-        'owner': os.environ.get('TEST_STUDIO_OWNER', 'test_user'),
-        'visibility': os.environ.get('TEST_STUDIO_VISIBILITY', 'private'),
-        'endpoint': os.environ.get('MODELSCOPE_ENDPOINT',
-                                   'https://modelscope.cn'),
-        'studio_id': os.environ.get('TEST_STUDIO_ID'),
-        'cleanup': cleanup_raw not in ('false', '0', 'no'),
+        'token':
+        os.environ.get('MODELSCOPE_API_TOKEN'),
+        'owner':
+        os.environ.get('TEST_STUDIO_OWNER', 'test_user'),
+        'visibility':
+        os.environ.get('TEST_STUDIO_VISIBILITY', 'private'),
+        'endpoint':
+        os.environ.get('MODELSCOPE_ENDPOINT', 'https://modelscope.cn'),
+        'studio_id':
+        os.environ.get('TEST_STUDIO_ID'),
+        'cleanup':
+        cleanup_raw not in ('false', '0', 'no'),
         # Studio creation defaults (required by OpenAPI)
-        'license': os.environ.get('TEST_STUDIO_LICENSE', 'apache-2.0'),
-        'sdk_type': os.environ.get('TEST_STUDIO_SDK_TYPE', 'gradio'),
-        'sdk_version': os.environ.get('TEST_STUDIO_SDK_VERSION', '6.2.0'),
-        'base_image': os.environ.get(
-            'TEST_STUDIO_BASE_IMAGE',
-            'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
-        'hardware': os.environ.get(
-            'TEST_STUDIO_HARDWARE', 'platform/2v-cpu-16g-mem'),
+        'license':
+        os.environ.get('TEST_STUDIO_LICENSE', 'apache-2.0'),
+        'sdk_type':
+        os.environ.get('TEST_STUDIO_SDK_TYPE', 'gradio'),
+        'sdk_version':
+        os.environ.get('TEST_STUDIO_SDK_VERSION', '6.2.0'),
+        'base_image':
+        os.environ.get('TEST_STUDIO_BASE_IMAGE',
+                       'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
+        'hardware':
+        os.environ.get('TEST_STUDIO_HARDWARE', 'platform/2v-cpu-16g-mem'),
     }
 
 

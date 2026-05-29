@@ -20,7 +20,7 @@ from unittest.mock import ANY, patch
 from uuid import uuid4
 
 from tests.studios.conftest_env import (TestResultMixin, create_temp_studio,
-                                         get_test_config)
+                                        get_test_config)
 
 from modelscope.cli.studio import StudioCMD
 from modelscope.hub.api import HubApi
@@ -196,13 +196,15 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         api = HubApi()
         # Merge studio creation defaults from config with caller overrides
         create_kwargs = {
-            'sdk_type': self.config.get('sdk_type', 'gradio'),
-            'sdk_version': self.config.get('sdk_version', '6.2.0'),
-            'base_image': self.config.get(
-                'base_image',
-                'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
-            'hardware': self.config.get(
-                'hardware', 'platform/2v-cpu-16g-mem'),
+            'sdk_type':
+            self.config.get('sdk_type', 'gradio'),
+            'sdk_version':
+            self.config.get('sdk_version', '6.2.0'),
+            'base_image':
+            self.config.get('base_image',
+                            'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
+            'hardware':
+            self.config.get('hardware', 'platform/2v-cpu-16g-mem'),
         }
         create_kwargs.update(kwargs)
         print(f'Creating studio {repo_id} with config: {self.config}')
@@ -226,8 +228,7 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         self.assertIn(repo_id, url)
         # Verify it actually exists
         api = HubApi()
-        exists = api.repo_exists(
-            repo_id, repo_type='studio', token=self.token)
+        exists = api.repo_exists(repo_id, repo_type='studio', token=self.token)
         self.assertTrue(exists,
                         f'Studio {repo_id} should exist after creation')
 

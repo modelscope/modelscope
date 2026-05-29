@@ -17,7 +17,7 @@ import sys
 import unittest
 from unittest.mock import ANY, patch
 
-from tests.studios.conftest_env import get_test_config
+from tests.studios.conftest_env import TestResultMixin, get_test_config
 
 from modelscope.cli.studio import StudioCMD
 from modelscope.hub.api import HubApi
@@ -40,7 +40,7 @@ def _cli_invocation():
 CLI_PREFIX = _cli_invocation()
 
 
-class TestStudioCLIHelp(unittest.TestCase):
+class TestStudioCLIHelp(TestResultMixin, unittest.TestCase):
     """Smoke-test the help output of every studio subcommand."""
 
     def _run_help(self, *cli_args):
@@ -98,7 +98,7 @@ class TestStudioCLIHelp(unittest.TestCase):
         self.assertIn('studio', output)
 
 
-class TestStudioCLIErrors(unittest.TestCase):
+class TestStudioCLIErrors(TestResultMixin, unittest.TestCase):
     """Validate user-facing error paths that don't need the network."""
 
     def setUp(self):
@@ -107,6 +107,8 @@ class TestStudioCLIErrors(unittest.TestCase):
         # Mock tests use a fixed repo name to keep assertions deterministic.
         self.name = 'mock-studio'
         self.studio_id = f'{self.owner}/{self.name}'
+        # Token from .env (MODELSCOPE_API_TOKEN); fallback for pure-mock runs.
+        self.token = config['token'] or 'test-token-placeholder'
 
     def test_studio_deploy_missing_id(self):
         cmd = f'{CLI_PREFIX} studio deploy'
@@ -124,7 +126,7 @@ class TestStudioCLIErrors(unittest.TestCase):
         args = argparse.Namespace(
             studio_action='settings',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
             display_name=None,
             description=None,
@@ -139,7 +141,7 @@ class TestStudioCLIErrors(unittest.TestCase):
         with patch.object(
                 HubApi,
                 '_build_bearer_headers',
-                return_value={'Authorization': 'Bearer fake'}):
+                return_value={'Authorization': f'Bearer {self.token}'}):
             cmd = StudioCMD(args)
             with self.assertRaises(SystemExit):
                 cmd.execute()
@@ -154,13 +156,13 @@ class TestStudioCLIErrors(unittest.TestCase):
         with patch.object(
                 HubApi,
                 '_build_bearer_headers',
-                return_value={'Authorization': 'Bearer fake'}):
+                return_value={'Authorization': f'Bearer {self.token}'}):
             cmd = StudioCMD(args)
             with self.assertRaises(SystemExit):
                 cmd.execute()
 
 
-class TestStudioCLIDirectCall(unittest.TestCase):
+class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
     """Directly drive ``StudioCMD.execute`` with mocked ``HubApi`` methods."""
 
     def setUp(self):
@@ -169,11 +171,13 @@ class TestStudioCLIDirectCall(unittest.TestCase):
         # Mock tests use a fixed repo name to keep assertions deterministic.
         self.name = 'mock-studio'
         self.studio_id = f'{self.owner}/{self.name}'
+        # Token from .env (MODELSCOPE_API_TOKEN); fallback for pure-mock runs.
+        self.token = config['token'] or 'test-token-placeholder'
 
     @patch.object(HubApi, 'deploy_studio')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_deploy_direct(self, mock_headers, mock_deploy):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_deploy.return_value = {
             'status': 'Deploying',
             'active_config': {
@@ -183,7 +187,7 @@ class TestStudioCLIDirectCall(unittest.TestCase):
         args = argparse.Namespace(
             studio_action='deploy',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print'):
@@ -191,17 +195,17 @@ class TestStudioCLIDirectCall(unittest.TestCase):
         mock_deploy.assert_called_once()
         call_args, call_kwargs = mock_deploy.call_args
         self.assertEqual(call_args[0], self.studio_id)
-        self.assertEqual(call_kwargs.get('token'), 'fake-token')
+        self.assertEqual(call_kwargs.get('token'), self.token)
 
     @patch.object(HubApi, 'stop_studio')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_stop_direct(self, mock_headers, mock_stop):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_stop.return_value = {'status': 'Stopping'}
         args = argparse.Namespace(
             studio_action='stop',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print'):
@@ -212,7 +216,7 @@ class TestStudioCLIDirectCall(unittest.TestCase):
     @patch.object(HubApi, 'get_studio_logs')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_logs_direct(self, mock_headers, mock_logs):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_logs.return_value = {
             'logs': ['line1', 'line2'],
             'total': 2,
@@ -220,7 +224,7 @@ class TestStudioCLIDirectCall(unittest.TestCase):
         args = argparse.Namespace(
             studio_action='logs',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
             log_type='runtime',
             keyword=None,
@@ -241,12 +245,12 @@ class TestStudioCLIDirectCall(unittest.TestCase):
     @patch.object(HubApi, 'update_studio_settings')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_settings_direct(self, mock_headers, mock_settings):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_settings.return_value = {'display_name': 'Updated'}
         args = argparse.Namespace(
             studio_action='settings',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
             display_name='Updated',
             description=None,
@@ -270,13 +274,13 @@ class TestStudioCLIDirectCall(unittest.TestCase):
     @patch.object(HubApi, 'list_studio_secrets')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_secret_list_direct(self, mock_headers, mock_list):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_list.return_value = [{'key': 'API_KEY'}, {'key': 'SECRET'}]
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='list',
             studio_id=self.studio_id,
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print') as mock_print:
@@ -289,7 +293,7 @@ class TestStudioCLIDirectCall(unittest.TestCase):
     @patch.object(HubApi, 'list_studio_secrets')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_secret_list_empty_direct(self, mock_headers, mock_list):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         mock_list.return_value = []
         args = argparse.Namespace(
             studio_action='secret',
@@ -307,14 +311,14 @@ class TestStudioCLIDirectCall(unittest.TestCase):
     @patch.object(HubApi, 'add_studio_secret')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_secret_add_direct(self, mock_headers, mock_add):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='add',
             studio_id=self.studio_id,
             key='MY_KEY',
             value='my_value',
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print'):
@@ -323,20 +327,20 @@ class TestStudioCLIDirectCall(unittest.TestCase):
             self.studio_id,
             'MY_KEY',
             'my_value',
-            token='fake-token',
+            token=self.token,
             endpoint=ANY)
 
     @patch.object(HubApi, 'update_studio_secret')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_secret_update_direct(self, mock_headers, mock_update):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='update',
             studio_id=self.studio_id,
             key='MY_KEY',
             value='new_value',
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print'):
@@ -345,25 +349,25 @@ class TestStudioCLIDirectCall(unittest.TestCase):
             self.studio_id,
             'MY_KEY',
             'new_value',
-            token='fake-token',
+            token=self.token,
             endpoint=ANY)
 
     @patch.object(HubApi, 'delete_studio_secret')
     @patch.object(HubApi, '_build_bearer_headers')
     def test_secret_delete_direct(self, mock_headers, mock_delete):
-        mock_headers.return_value = {'Authorization': 'Bearer fake'}
+        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='delete',
             studio_id=self.studio_id,
             key='MY_KEY',
-            token='fake-token',
+            token=self.token,
             endpoint=None,
         )
         with patch('builtins.print'):
             StudioCMD(args).execute()
         mock_delete.assert_called_once_with(
-            self.studio_id, 'MY_KEY', token='fake-token', endpoint=ANY)
+            self.studio_id, 'MY_KEY', token=self.token, endpoint=ANY)
 
 
 if __name__ == '__main__':

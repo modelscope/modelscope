@@ -35,3 +35,34 @@ def get_test_config():
         'endpoint': os.environ.get('MODELSCOPE_ENDPOINT',
                                    'https://modelscope.cn'),
     }
+
+
+class TestResultMixin:
+    """Mixin that prints test pass/fail status after each test method.
+
+    Must be placed BEFORE ``unittest.TestCase`` in the MRO so that this
+    ``tearDown`` runs and still chains to ``TestCase.tearDown`` via ``super``.
+    """
+
+    def tearDown(self):
+        try:
+            super().tearDown()
+        finally:
+            status = 'PASSED'
+            outcome = getattr(self, '_outcome', None)
+            if outcome is not None:
+                # Python <= 3.10 exposes ``result`` directly.
+                result = getattr(outcome, 'result', None)
+                if result is not None and hasattr(result, 'failures'):
+                    test_failed = any(test is self
+                                      for test, _ in (result.failures
+                                                      + result.errors))
+                    status = 'FAILED' if test_failed else 'PASSED'
+                elif hasattr(outcome, 'errors'):
+                    # Python 3.11+: inspect ``errors`` list of (ctx, exc_info).
+                    errors = getattr(outcome, 'errors', [])
+                    test_failed = any(exc_info is not None
+                                      for _, exc_info in errors)
+                    status = 'FAILED' if test_failed else 'PASSED'
+                # else: running under pytest or other runner — cannot detect
+            print(f'[TEST {status}] {self.id()}')

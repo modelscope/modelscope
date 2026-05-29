@@ -28,6 +28,7 @@ def load_test_env():
 def get_test_config():
     """Return the merged Studio test configuration dictionary."""
     load_test_env()
+    cleanup_raw = os.environ.get('TEST_CLEANUP_REMOTE', 'true').strip().lower()
     return {
         'token': os.environ.get('MODELSCOPE_API_TOKEN'),
         'owner': os.environ.get('TEST_STUDIO_OWNER', 'test_user'),
@@ -35,6 +36,7 @@ def get_test_config():
         'endpoint': os.environ.get('MODELSCOPE_ENDPOINT',
                                    'https://modelscope.cn'),
         'studio_id': os.environ.get('TEST_STUDIO_ID'),
+        'cleanup': cleanup_raw not in ('false', '0', 'no'),
     }
 
 

@@ -174,6 +174,7 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         cls.token = config['token']
         cls.owner = config['owner']
         cls.config = config
+        cls._cleanup = config.get('cleanup', True)
         if not cls.token or not cls.owner:
             raise unittest.SkipTest(
                 'MODELSCOPE_API_TOKEN and TEST_STUDIO_OWNER required')
@@ -182,6 +183,8 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Best-effort cleanup of test studios."""
+        if not cls._cleanup:
+            return
         api = HubApi()
         for repo_id in cls._created_studios:
             try:
@@ -259,6 +262,7 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
         cls.token = config['token']
         cls.studio_id = config['studio_id']
         cls._auto_created_studio = False
+        cls._cleanup = config.get('cleanup', True)
 
         if not cls.token:
             raise unittest.SkipTest(
@@ -272,6 +276,8 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Clean up auto-created temporary studio."""
+        if not cls._cleanup:
+            return
         if cls._auto_created_studio and cls.studio_id:
             try:
                 api = HubApi()
@@ -286,6 +292,8 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
 
     def tearDown(self):
         # Best-effort cleanup of any secrets created during the test.
+        if not self._cleanup:
+            return
         api = HubApi()
         for key in self._secrets_to_cleanup:
             try:

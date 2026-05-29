@@ -37,6 +37,15 @@ def get_test_config():
                                    'https://modelscope.cn'),
         'studio_id': os.environ.get('TEST_STUDIO_ID'),
         'cleanup': cleanup_raw not in ('false', '0', 'no'),
+        # Studio creation defaults (required by OpenAPI)
+        'license': os.environ.get('TEST_STUDIO_LICENSE', 'apache-2.0'),
+        'sdk_type': os.environ.get('TEST_STUDIO_SDK_TYPE', 'gradio'),
+        'sdk_version': os.environ.get('TEST_STUDIO_SDK_VERSION', '6.2.0'),
+        'base_image': os.environ.get(
+            'TEST_STUDIO_BASE_IMAGE',
+            'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
+        'hardware': os.environ.get(
+            'TEST_STUDIO_HARDWARE', 'platform/2v-cpu-16g-mem'),
     }
 
 
@@ -72,9 +81,14 @@ def create_temp_studio(config, name_prefix='ut_test_cli'):
         repo_id,
         repo_type='studio',
         visibility=visibility,
+        license=config.get('license', 'apache-2.0'),
         token=token,
         endpoint=config.get('endpoint'),
-        sdk_type='gradio',
+        sdk_type=config.get('sdk_type', 'gradio'),
+        sdk_version=config.get('sdk_version', '6.2.0'),
+        base_image=config.get('base_image',
+                              'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
+        hardware=config.get('hardware', 'platform/2v-cpu-16g-mem'),
         create_default_config=False,
     )
     return repo_id

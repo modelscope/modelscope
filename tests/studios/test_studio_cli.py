@@ -194,16 +194,30 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         name = f'ut_test_create_{uuid4().hex[:8]}'
         repo_id = f'{self.owner}/{name}'
         api = HubApi()
+        # Merge studio creation defaults from config with caller overrides
+        create_kwargs = {
+            'sdk_type': self.config.get('sdk_type', 'gradio'),
+            'sdk_version': self.config.get('sdk_version', '6.2.0'),
+            'base_image': self.config.get(
+                'base_image',
+                'ubuntu22.04-py311-torch2.9.1-modelscope1.35.0'),
+            'hardware': self.config.get(
+                'hardware', 'platform/2v-cpu-16g-mem'),
+        }
+        create_kwargs.update(kwargs)
+        print(f'Creating studio {repo_id} with config: {self.config}')
         url = api.create_repo(
             repo_id,
             repo_type='studio',
             visibility=self.config.get('visibility', 'private'),
+            license=self.config.get('license', 'apache-2.0'),
             token=self.token,
             endpoint=self.config.get('endpoint'),
             create_default_config=False,
-            **kwargs,
+            **create_kwargs,
         )
         self._created_studios.append(repo_id)
+        print(f'Created studio {repo_id} at {url}')
         return repo_id, url
 
     def test_create_studio_basic(self):

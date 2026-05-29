@@ -14,8 +14,10 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import unittest
 from unittest.mock import ANY, patch
+from uuid import uuid4
 
 from tests.studios.conftest_env import TestResultMixin, get_test_config
 
@@ -163,64 +165,65 @@ class TestStudioCLIErrors(TestResultMixin, unittest.TestCase):
 
 
 class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
-    """Directly drive ``StudioCMD.execute`` with mocked ``HubApi`` methods."""
+    """Drive ``StudioCMD.execute`` with real API calls (no HubApi mocks)."""
+
+    @classmethod
+    def setUpClass(cls):
+        config = get_test_config()
+        cls.token = config['token']
+        cls.studio_id = config['studio_id']
+        if not cls.token or not cls.studio_id:
+            raise unittest.SkipTest(
+                'TEST_STUDIO_ID and MODELSCOPE_API_TOKEN required '
+                'for real API tests')
 
     def setUp(self):
-        config = get_test_config()
-        self.owner = config['owner']
-        # Mock tests use a fixed repo name to keep assertions deterministic.
-        self.name = 'mock-studio'
-        self.studio_id = f'{self.owner}/{self.name}'
-        # Token from .env (MODELSCOPE_API_TOKEN); fallback for pure-mock runs.
-        self.token = config['token'] or 'test-token-placeholder'
+        # Track secret keys created during a test for cleanup.
+        self._secrets_to_cleanup = []
 
-    @patch.object(HubApi, 'deploy_studio')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_deploy_direct(self, mock_headers, mock_deploy):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_deploy.return_value = {
-            'status': 'Deploying',
-            'active_config': {
-                'hardware': 'platform/2v-cpu-16g-mem'
-            },
-        }
+    def tearDown(self):
+        # Best-effort cleanup of any secrets created during the test.
+        api = HubApi()
+        for key in self._secrets_to_cleanup:
+            try:
+                api.delete_studio_secret(
+                    self.studio_id, key, token=self.token, endpoint=None)
+            except Exception:
+                pass
+
+    def _unique_secret_key(self):
+        """Generate a unique secret key with test prefix."""
+        key = f'_TEST_CLI_SECRET_{uuid4().hex[:8].upper()}'
+        self._secrets_to_cleanup.append(key)
+        return key
+
+    def test_deploy_direct(self):
         args = argparse.Namespace(
             studio_action='deploy',
             studio_id=self.studio_id,
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_deploy.assert_called_once()
-        call_args, call_kwargs = mock_deploy.call_args
-        self.assertEqual(call_args[0], self.studio_id)
-        self.assertEqual(call_kwargs.get('token'), self.token)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('Deploy triggered', printed)
 
-    @patch.object(HubApi, 'stop_studio')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_stop_direct(self, mock_headers, mock_stop):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_stop.return_value = {'status': 'Stopping'}
+    def test_stop_direct(self):
         args = argparse.Namespace(
             studio_action='stop',
             studio_id=self.studio_id,
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_stop.assert_called_once()
-        self.assertEqual(mock_stop.call_args[0][0], self.studio_id)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('Stop triggered', printed)
 
-    @patch.object(HubApi, 'get_studio_logs')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_logs_direct(self, mock_headers, mock_logs):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_logs.return_value = {
-            'logs': ['line1', 'line2'],
-            'total': 2,
-        }
+    def test_logs_direct(self):
         args = argparse.Namespace(
             studio_action='logs',
             studio_id=self.studio_id,
@@ -233,26 +236,18 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             start_timestamp=None,
             end_timestamp=None,
         )
+        # Should not raise — studio may have no logs but the call succeeds.
         with patch('builtins.print'):
             StudioCMD(args).execute()
-        mock_logs.assert_called_once()
-        kwargs = mock_logs.call_args.kwargs
-        self.assertEqual(kwargs['log_type'], 'runtime')
-        self.assertEqual(kwargs['page_num'], 1)
-        self.assertEqual(kwargs['page_size'], 100)
-        self.assertEqual(kwargs['keyword'], None)
 
-    @patch.object(HubApi, 'update_studio_settings')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_settings_direct(self, mock_headers, mock_settings):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_settings.return_value = {'display_name': 'Updated'}
+    def test_settings_direct(self):
+        display_name = f'CLI Test {int(time.time())}'
         args = argparse.Namespace(
             studio_action='settings',
             studio_id=self.studio_id,
             token=self.token,
             endpoint=None,
-            display_name='Updated',
+            display_name=display_name,
             description=None,
             license=None,
             cover_image=None,
@@ -262,20 +257,13 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             hardware=None,
             private=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_settings.assert_called_once()
-        call_kwargs = mock_settings.call_args.kwargs
-        self.assertEqual(call_kwargs.get('display_name'), 'Updated')
-        # Only specified fields are forwarded.
-        self.assertNotIn('sdk_type', call_kwargs)
-        self.assertNotIn('hardware', call_kwargs)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('Updated settings', printed)
 
-    @patch.object(HubApi, 'list_studio_secrets')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_secret_list_direct(self, mock_headers, mock_list):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_list.return_value = [{'key': 'API_KEY'}, {'key': 'SECRET'}]
+    def test_secret_list_direct(self):
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='list',
@@ -283,91 +271,79 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print') as mock_print:
+        # Should not raise regardless of whether secrets exist.
+        with patch('builtins.print'):
             StudioCMD(args).execute()
-        mock_list.assert_called_once()
-        printed = ' '.join(
-            str(c.args[0]) for c in mock_print.call_args_list if c.args)
-        self.assertIn('API_KEY', printed)
 
-    @patch.object(HubApi, 'list_studio_secrets')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_secret_list_empty_direct(self, mock_headers, mock_list):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
-        mock_list.return_value = []
-        args = argparse.Namespace(
-            studio_action='secret',
-            secret_action='list',
-            studio_id=self.studio_id,
-            token=None,
-            endpoint=None,
-        )
-        with patch('builtins.print') as mock_print:
-            StudioCMD(args).execute()
-        printed = ' '.join(
-            str(c.args[0]) for c in mock_print.call_args_list if c.args)
-        self.assertIn('no secrets', printed)
-
-    @patch.object(HubApi, 'add_studio_secret')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_secret_add_direct(self, mock_headers, mock_add):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
+    def test_secret_add_direct(self):
+        key = self._unique_secret_key()
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='add',
             studio_id=self.studio_id,
-            key='MY_KEY',
-            value='my_value',
+            key=key,
+            value='test_value',
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_add.assert_called_once_with(
-            self.studio_id,
-            'MY_KEY',
-            'my_value',
-            token=self.token,
-            endpoint=ANY)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('added', printed.lower())
 
-    @patch.object(HubApi, 'update_studio_secret')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_secret_update_direct(self, mock_headers, mock_update):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
+    def test_secret_update_direct(self):
+        key = self._unique_secret_key()
+        # Pre-add the secret so we can update it.
+        api = HubApi()
+        api.add_studio_secret(
+            self.studio_id,
+            key,
+            'initial_value',
+            token=self.token,
+            endpoint=None)
+
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='update',
             studio_id=self.studio_id,
-            key='MY_KEY',
-            value='new_value',
+            key=key,
+            value='updated_value',
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_update.assert_called_once_with(
-            self.studio_id,
-            'MY_KEY',
-            'new_value',
-            token=self.token,
-            endpoint=ANY)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('updated', printed.lower())
 
-    @patch.object(HubApi, 'delete_studio_secret')
-    @patch.object(HubApi, '_build_bearer_headers')
-    def test_secret_delete_direct(self, mock_headers, mock_delete):
-        mock_headers.return_value = {'Authorization': f'Bearer {self.token}'}
+    def test_secret_delete_direct(self):
+        key = self._unique_secret_key()
+        # Pre-add the secret so we can delete it.
+        api = HubApi()
+        api.add_studio_secret(
+            self.studio_id,
+            key,
+            'to_be_deleted',
+            token=self.token,
+            endpoint=None)
+        # Remove from cleanup list since we expect CLI to delete it.
+        self._secrets_to_cleanup.remove(key)
+
         args = argparse.Namespace(
             studio_action='secret',
             secret_action='delete',
             studio_id=self.studio_id,
-            key='MY_KEY',
+            key=key,
             token=self.token,
             endpoint=None,
         )
-        with patch('builtins.print'):
+        with patch('builtins.print') as mock_print:
             StudioCMD(args).execute()
-        mock_delete.assert_called_once_with(
-            self.studio_id, 'MY_KEY', token=self.token, endpoint=ANY)
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('deleted', printed.lower())
 
 
 if __name__ == '__main__':

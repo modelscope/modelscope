@@ -34,6 +34,7 @@ def get_test_config():
         'visibility': os.environ.get('TEST_STUDIO_VISIBILITY', 'private'),
         'endpoint': os.environ.get('MODELSCOPE_ENDPOINT',
                                    'https://modelscope.cn'),
+        'studio_id': os.environ.get('TEST_STUDIO_ID'),
     }
 
 

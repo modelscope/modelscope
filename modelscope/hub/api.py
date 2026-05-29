@@ -886,11 +886,13 @@ class HubApi:
                 endpoint=endpoint,
                 token=token)
         elif repo_type == REPO_TYPE_STUDIO:
-            owner, name = self._parse_studio_id(repo_id)
-            path = f'{endpoint}/openapi/v1/studios/{owner}/{name}'
-            headers = self._build_bearer_headers(token=token, token_required=True)
-            r = self.session.delete(path, headers=headers)
-            handle_http_response(r, logger, None, repo_id)
+            logger.warning(
+                f'Deleting an entire studio repo ({repo_id}) is not supported '
+                f'via the OpenAPI for security reasons. '
+                f'To delete studio environment variables, use '
+                f'HubApi.delete_studio_secret(studio_id, key). '
+                f'To delete the studio itself, please use the web console.')
+            return
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 
@@ -2341,6 +2343,19 @@ class HubApi:
                 f'Invalid studio_id: {studio_id}, must be of format owner/repo_name')
         return owner, name
 
+    # Map Licenses display names to SPDX identifiers expected by the
+    # Studio OpenAPI endpoint.
+    _LICENSE_TO_SPDX = {
+        'Apache License 2.0': 'apache-2.0',
+        'GPL-2.0': 'gpl-2.0',
+        'GPL-3.0': 'gpl-3.0',
+        'LGPL-2.1': 'lgpl-2.1',
+        'LGPL-3.0': 'lgpl-3.0',
+        'AFL-3.0': 'afl-3.0',
+        'ECL-2.0': 'ecl-2.0',
+        'MIT': 'mit',
+    }
+
     def _create_studio_repo(self,
                             owner: str,
                             repo_name: str,
@@ -2360,11 +2375,14 @@ class HubApi:
         headers = self._build_bearer_headers(token=token, token_required=True)
 
         is_private = visibility is not None and visibility != Visibility.PUBLIC
+        # Convert license display name to SPDX identifier if needed.
+        license_spdx = self._LICENSE_TO_SPDX.get(license, license) if license else None
+
         body = {
             'repo_name': repo_name,
             'owner': owner,
             'private': is_private,
-            'license': license,
+            'license': license_spdx,
             'display_name': chinese_name,
             'description': kwargs.get('description'),
             'sdk_type': kwargs.get('sdk_type'),

@@ -182,20 +182,16 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Best-effort cleanup of test studios."""
-        if not cls._cleanup:
-            return
-        api = HubApi()
-        for repo_id in cls._created_studios:
-            try:
-                api.delete_repo(
-                    repo_id, repo_type='studio', token=cls.token)
-            except Exception:
-                pass
+        """Studio deletion is not supported via OpenAPI. Log created studios for manual cleanup."""
+        if cls._created_studios:
+            import logging
+            logging.getLogger('modelscope').info(
+                f'Test studios created (manual cleanup needed): '
+                f'{", ".join(cls._created_studios)}')
 
     def _create_and_track(self, **kwargs):
         """Create a studio with unique name, track for cleanup."""
-        name = f'_test_create_{uuid4().hex[:8]}'
+        name = f'ut_test_create_{uuid4().hex[:8]}'
         repo_id = f'{self.owner}/{name}'
         api = HubApi()
         url = api.create_repo(
@@ -275,16 +271,12 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Clean up auto-created temporary studio."""
-        if not cls._cleanup:
-            return
+        """Studio deletion is not supported via OpenAPI. Log for manual cleanup."""
         if cls._auto_created_studio and cls.studio_id:
-            try:
-                api = HubApi()
-                api.delete_repo(
-                    cls.studio_id, repo_type='studio', token=cls.token)
-            except Exception:
-                pass
+            import logging
+            logging.getLogger('modelscope').info(
+                f'Auto-created test studio (manual cleanup needed): '
+                f'{cls.studio_id}')
 
     def setUp(self):
         # Track secret keys created during a test for cleanup.

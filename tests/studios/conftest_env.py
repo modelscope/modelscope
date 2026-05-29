@@ -40,7 +40,7 @@ def get_test_config():
     }
 
 
-def create_temp_studio(config, name_prefix='_test_cli'):
+def create_temp_studio(config, name_prefix='ut_test_cli'):
     """Create a temporary studio for testing purposes.
 
     Args:

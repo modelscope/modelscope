@@ -1001,7 +1001,7 @@ def _download_file_lists(
     @thread_executor(
         max_workers=max_workers, disable_tqdm=False, fault_tolerant=True)
     def _download_single_file(repo_file):
-        if repo_type == REPO_TYPE_MODEL:
+        if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
             url = get_file_download_url(
                 model_id=repo_id,
                 file_path=repo_file['Path'],

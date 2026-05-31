@@ -235,7 +235,7 @@ def _repo_file_download(
         endpoint = _api.get_endpoint_for_read(
             repo_id=repo_id, repo_type=repo_type, token=token)
     file_to_download_meta = None
-    if repo_type == REPO_TYPE_MODEL:
+    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
         revision = _api.get_valid_revision(
             repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
         # we need to confirm the version is up-to-date
@@ -313,7 +313,7 @@ def _repo_file_download(
                             (file_path, repo_id))
 
     # we need to download again
-    if repo_type == REPO_TYPE_MODEL:
+    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
         url_to_download = get_file_download_url(repo_id, file_path, revision,
                                                 endpoint)
     elif repo_type == REPO_TYPE_DATASET:
@@ -375,7 +375,7 @@ def create_temporary_directory_and_cache(model_id: str,
         default_cache_root = get_dataset_cache_root()
     else:
         raise ValueError(
-            f'repo_type only support model and dataset, but now is : {repo_type}'
+            f'repo_type only support {REPO_TYPE_SUPPORT}, but now is : {repo_type}'
         )
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)

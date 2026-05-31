@@ -489,7 +489,7 @@ def _unpatch_pretrained_class(all_imported_modules):
             setattr(var, attr, origin)
         try:
             delattr(var, origin_attr)
-        except:  # noqa
+        except Exception:  # noqa
             pass
 
     for var in all_imported_modules:

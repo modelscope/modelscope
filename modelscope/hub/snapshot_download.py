@@ -16,8 +16,8 @@ from tqdm.auto import tqdm
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
-                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL,
-                                       REPO_TYPE_SUPPORT)
+                                       REPO_TYPE_DATASET, REPO_TYPE_KERNEL,
+                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
@@ -324,7 +324,7 @@ def _snapshot_download(
                 repo_id=repo_id, repo_type=repo_type, token=token)
         if cookies is None:
             cookies = _api.get_cookies()
-        if repo_type == REPO_TYPE_MODEL:
+        if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
             if local_dir:
                 directory = os.path.abspath(local_dir)
             elif cache_dir:

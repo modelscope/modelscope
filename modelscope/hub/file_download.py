@@ -26,8 +26,8 @@ from modelscope.hub.constants import (
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
-                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL,
-                                       REPO_TYPE_SUPPORT)
+                                       REPO_TYPE_DATASET, REPO_TYPE_KERNEL,
+                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import (get_dataset_cache_root,
                                          get_model_cache_root)
 from modelscope.utils.logger import get_logger
@@ -369,7 +369,7 @@ def create_temporary_directory_and_cache(model_id: str,
                                          local_dir: str = None,
                                          cache_dir: str = None,
                                          repo_type: str = REPO_TYPE_MODEL):
-    if repo_type == REPO_TYPE_MODEL:
+    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
         default_cache_root = get_model_cache_root()
     elif repo_type == REPO_TYPE_DATASET:
         default_cache_root = get_dataset_cache_root()

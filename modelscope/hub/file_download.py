@@ -26,8 +26,8 @@ from modelscope.hub.constants import (
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
-                                       REPO_TYPE_DATASET, REPO_TYPE_KERNEL,
-                                       REPO_TYPE_MODEL, REPO_TYPE_SUPPORT)
+                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL,
+                                       REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import (get_dataset_cache_root,
                                          get_model_cache_root)
 from modelscope.utils.logger import get_logger
@@ -235,7 +235,7 @@ def _repo_file_download(
         endpoint = _api.get_endpoint_for_read(
             repo_id=repo_id, repo_type=repo_type, token=token)
     file_to_download_meta = None
-    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
+    if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(
             repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
         # we need to confirm the version is up-to-date
@@ -313,7 +313,7 @@ def _repo_file_download(
                             (file_path, repo_id))
 
     # we need to download again
-    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
+    if repo_type == REPO_TYPE_MODEL:
         url_to_download = get_file_download_url(repo_id, file_path, revision,
                                                 endpoint)
     elif repo_type == REPO_TYPE_DATASET:
@@ -369,7 +369,7 @@ def create_temporary_directory_and_cache(model_id: str,
                                          local_dir: str = None,
                                          cache_dir: str = None,
                                          repo_type: str = REPO_TYPE_MODEL):
-    if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_KERNEL):
+    if repo_type == REPO_TYPE_MODEL:
         default_cache_root = get_model_cache_root()
     elif repo_type == REPO_TYPE_DATASET:
         default_cache_root = get_dataset_cache_root()

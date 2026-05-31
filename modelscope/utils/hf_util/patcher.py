@@ -567,6 +567,8 @@ class _MsKernelApi:
                           local_files_only=False,
                           **kwargs):
         from modelscope import snapshot_download as ms_snapshot_download
+        if kwargs.get('repo_type') == 'kernel':
+            kwargs['repo_type'] = 'model'
         return ms_snapshot_download(
             repo_id,
             revision=_ms_revision(revision),

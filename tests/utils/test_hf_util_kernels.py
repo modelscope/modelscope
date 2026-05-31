@@ -256,7 +256,8 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
         import modelscope
         # Routes through `try_import_from_hf` and scopes the ModelScope
         # monkey-patch to this single call.
-        module = modelscope.get_kernel(self.REPO)
+        module = modelscope.get_kernel(
+            self.REPO, trust_remote_code=True, revision='master')
         self.assertIsNotNone(module)
         # Wrapper must leave `_get_hf_api` restored afterwards.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
@@ -264,7 +265,8 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
     def test_patch_hub_then_kernels_get_kernel(self):
         with _isolate_hub_patches(), patch_context():
             from kernels import get_kernel
-            module = get_kernel(self.REPO)
+            module = get_kernel(
+                self.REPO, trust_remote_code=True, revision='master')
             self.assertIsNotNone(module)
         # `patch_context` rolled the kernels patch back on exit.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)

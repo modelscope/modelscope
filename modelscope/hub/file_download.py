@@ -375,7 +375,7 @@ def create_temporary_directory_and_cache(model_id: str,
         default_cache_root = get_dataset_cache_root()
     else:
         raise ValueError(
-            f'repo_type only support {REPO_TYPE_SUPPORT}, but now is : {repo_type}'
+            f'repo_type only support model and dataset, but now is : {repo_type}'
         )
 
     group_or_owner, name = model_id_to_group_owner_name(model_id)

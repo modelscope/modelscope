@@ -69,7 +69,6 @@ RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
     pip install --no-cache-dir pybind11 liger_kernel wandb swanlab nvitop pre-commit "transformers<5.9" "trl<1.0" "peft<0.20" huggingface-hub -U && \
     pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable --no-build-isolation; \
-    pip install "flash-attn-4[cu13]==4.0.0b15"; \
     pip install git+https://github.com/deepseek-ai/DeepGEMM.git@v2.1.1.post3 --no-build-isolation; \
     pip install -U flash-linear-attention --no-build-isolation; \
     pip install -U git+https://github.com/Dao-AILab/causal-conv1d --no-build-isolation; \

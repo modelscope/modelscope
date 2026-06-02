@@ -3940,7 +3940,6 @@ class HubApi:
         if protected_mode is not None and visibility != 'private':
             logger.warning('ProtectedMode is only effective when visibility is private, ignored.')
             protected_mode = None
-        protected_mode_code: int = protected_mode if protected_mode is not None else 2
 
         if repo_type == REPO_TYPE_MODEL:
             model_info = self.get_model(model_id=repo_id, token=token)
@@ -3955,7 +3954,7 @@ class HubApi:
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),
                 'Visibility': visibility_code,
-                'ProtectedMode': protected_mode_code,
+                'ProtectedMode': protected_mode if protected_mode is not None else model_info.get('ProtectedMode', 2),
                 'ApprovalMode': model_info.get('ApprovalMode', 2),
                 'Description': model_info.get('Description', ''),
                 'AigcType': model_info.get('AigcType', ''),
@@ -3982,7 +3981,7 @@ class HubApi:
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
             payload = {
                 'Visibility': visibility_code,
-                'ProtectedMode': protected_mode_code,
+                'ProtectedMode': protected_mode if protected_mode is not None else 2,
             }
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')

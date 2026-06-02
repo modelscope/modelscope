@@ -169,6 +169,16 @@ class Visibility(object):
     PUBLIC = 'public'
 
 
+class ProtectedMode(object):
+    """Protected mode for private repositories.
+
+    Only effective when Visibility is PRIVATE.
+    API payload key: ``ProtectedMode``.
+    """
+    PROTECTED = 1
+    OFF = 2
+
+
 VisibilityMap = {
     ModelVisibility.PRIVATE: Visibility.PRIVATE,
     ModelVisibility.INTERNAL: Visibility.INTERNAL,

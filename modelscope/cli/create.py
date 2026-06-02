@@ -3,8 +3,8 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import (Licenses, ModelVisibility, Visibility,
-                                      VisibilityMap)
+from modelscope.hub.constants import (Licenses, ModelVisibility, ProtectedMode,
+                                      Visibility, VisibilityMap)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import resolve_endpoint
 from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
@@ -81,6 +81,16 @@ class CreateCMD(CLICommand):
             default=False,
             help=
             'If True, do not raise error when repo already exists. Defaults to False.',
+        )
+        parser.add_argument(
+            '--protected_mode',
+            type=int,
+            choices=[ProtectedMode.PROTECTED, ProtectedMode.OFF],
+            default=None,
+            help='Protected mode for private repos. '
+            '1 = protected (application-based download), '
+            '2 = off (normal private). '
+            'Only effective when --visibility is private.',
         )
         parser.add_argument(
             '--endpoint',
@@ -176,6 +186,7 @@ class CreateCMD(CLICommand):
             exist_ok=self.args.exist_ok,
             create_default_config=True,
             endpoint=endpoint,
+            protected_mode=self.args.protected_mode,
         )
 
     def _create_aigc_model(self):
@@ -225,7 +236,8 @@ class CreateCMD(CLICommand):
                 visibility=visibility_idx,
                 license=self.args.license,
                 chinese_name=self.args.chinese_name,
-                aigc_model=aigc_model)
+                aigc_model=aigc_model,
+                protected_mode=self.args.protected_mode)
             print(f'Successfully created AIGC model: {model_url}')
         except Exception as e:
             print(f'Error creating AIGC model: {e}')

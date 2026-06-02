@@ -1,5 +1,4 @@
 import os
-import os.path as osp
 import shutil
 import subprocess
 import tempfile
@@ -7,7 +6,10 @@ import unittest
 import uuid
 
 from modelscope.hub.api import HubApi
+from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import TEST_ACCESS_TOKEN1, TEST_MODEL_ORG
+
+logger = get_logger()
 
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
@@ -28,7 +30,11 @@ class ModelUploadCMDTest(unittest.TestCase):
         print(self.tmp_dir, self.task_name, self.model_name)
 
     def tearDown(self):
-        self.api.delete_model(model_id=self.model_id)
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'Failed to delete model {self.model_id}: {e}')
+
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 

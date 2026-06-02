@@ -8,6 +8,7 @@ from modelscope.models import Model
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -25,7 +26,9 @@ class TextToImageSynthesisTest(unittest.TestCase):
         'debug': True
     }
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_run_with_model_from_modelhub(self):
         model = Model.from_pretrained(self.model_id)
         pipe_line_text_to_image_synthesis = pipeline(

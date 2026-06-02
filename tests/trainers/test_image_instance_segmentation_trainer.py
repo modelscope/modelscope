@@ -3,13 +3,10 @@ import os
 import shutil
 import tempfile
 import unittest
-import zipfile
 from functools import partial
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.cv.image_instance_segmentation import \
-    CascadeMaskRCNNSwinModel
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
@@ -76,7 +73,7 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer(self):
         kwargs = dict(
             model=self.model_id,
@@ -95,6 +92,8 @@ class TestImageInstanceSegmentationTrainer(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_model_and_args(self):
+        from modelscope.models.cv.image_instance_segmentation import \
+            CascadeMaskRCNNSwinModel
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)

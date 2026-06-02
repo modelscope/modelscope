@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 from modelscope.models.base import TorchModel
 from modelscope.preprocessors import Preprocessor
+from modelscope.utils.import_utils import exists
 from modelscope.utils.regress_test_utils import (compare_arguments_nested,
                                                  numpify_tensor_nested)
 
@@ -71,6 +72,9 @@ class TorchBaseTest(unittest.TestCase):
         self.assertEqual((1, 20, 2, 2), out.shape)
         self.assertTrue(np.all(out.detach().numpy() > (add_bias - 10)))
 
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_save_pretrained(self):
         preprocessor = Preprocessor.from_pretrained(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny')

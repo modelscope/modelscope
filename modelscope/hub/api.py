@@ -14,7 +14,9 @@ import tempfile
 import time
 import uuid
 import warnings
+import zipfile
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 from http.cookiejar import CookieJar
 from os.path import expanduser
@@ -30,13 +32,16 @@ from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import HTTPError
 from tqdm.auto import tqdm
 
-from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
+from modelscope.hub.constants import (API_HTTP_CLIENT_CONNECT_TIMEOUT,
+                                      API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,
                                       API_RESPONSE_FIELD_DATA,
                                       API_RESPONSE_FIELD_EMAIL,
                                       API_RESPONSE_FIELD_GIT_ACCESS_TOKEN,
                                       API_RESPONSE_FIELD_MESSAGE,
                                       API_RESPONSE_FIELD_USERNAME,
+                                      CREATE_TAG_MAX_RETRIES,
+                                      CREATE_TAG_RETRY_BACKOFF,
                                       DEFAULT_MAX_WORKERS,
                                       DEFAULT_MODELSCOPE_INTL_DOMAIN,
                                       MODELSCOPE_CLOUD_ENVIRONMENT,
@@ -48,13 +53,27 @@ from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       MODELSCOPE_URL_SCHEME, ONE_YEAR_SECONDS,
                                       REQUESTS_API_HTTP_METHOD,
                                       TEMPORARY_FOLDER_NAME,
+                                      UPLOAD_ADAPTIVE_BATCH_SIZE,
+                                      UPLOAD_BLOB_MAX_RETRIES,
+                                      UPLOAD_BLOB_RETRY_BACKOFF,
+                                      UPLOAD_BLOB_RETRY_MAX_WAIT,
+                                      UPLOAD_BLOB_TIMEOUT,
                                       UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
                                       UPLOAD_COMMIT_BATCH_SIZE,
+                                      UPLOAD_FAILED_FILE_MAX_RETRIES,
                                       UPLOAD_MAX_FILE_COUNT,
                                       UPLOAD_MAX_FILE_COUNT_IN_DIR,
                                       UPLOAD_MAX_FILE_SIZE,
                                       UPLOAD_NORMAL_FILE_SIZE_TOTAL_LIMIT,
+                                      UPLOAD_REACT_BACKOFF_MAX_EXPONENT,
+                                      UPLOAD_REACT_ENABLED,
+                                      UPLOAD_REACT_MAX_DELAY,
+                                      UPLOAD_REACT_ROUND2_BASE_DELAY,
+                                      UPLOAD_REACT_ROUND3_FILE_DELAY,
+                                      UPLOAD_RETRY_ALLOWED_METHODS,
                                       UPLOAD_SIZE_THRESHOLD_TO_ENFORCE_LFS,
+                                      UPLOAD_USE_CACHE,
+                                      UPLOAD_VALIDATE_BLOB_BATCH_SIZE,
                                       VALID_SORT_KEYS, DatasetVisibility,
                                       Licenses, ModelVisibility, Visibility,
                                       VisibilityMap)
@@ -67,6 +86,10 @@ from modelscope.hub.errors import (InvalidParameter, NotExistError,
 from modelscope.hub.git import GitCommandWrapper
 from modelscope.hub.info import DatasetInfo, ModelInfo
 from modelscope.hub.repository import Repository
+from modelscope.hub.upload_cache import UPLOAD_HASH_CACHE_FILE
+from modelscope.hub.upload_pipeline import BatchTracker
+from modelscope.hub.upload_tracker import (_LEGACY_PROGRESS_FILE, NullTracker,
+                                           UploadTracker, classify_error)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import (add_content_to_file, get_domain,
                                         get_endpoint, get_readable_folder_size,
@@ -82,7 +105,8 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DownloadChannel, DownloadMode,
                                        Frameworks, ModelFile, Tasks,
                                        VirgoDatasetConfig)
-from modelscope.utils.file_utils import get_file_hash, get_file_size
+from modelscope.utils.file_utils import (compute_file_hash, get_file_size,
+                                         is_relative_path)
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          DEFAULT_IGNORE_PATTERNS,
@@ -90,9 +114,72 @@ from modelscope.utils.repo_utils import (DATASET_LFS_SUFFIX,
                                          CommitHistoryResponse, CommitInfo,
                                          CommitOperation, CommitOperationAdd,
                                          RepoUtils)
-from modelscope.utils.thread_utils import thread_executor
 
 logger = get_logger()
+
+
+def _calculate_adaptive_batch_size(total_files: int) -> int:
+    """Calculate optimal commit batch size based on total file count.
+
+    Adaptive strategy ensures batch granularity scales with workload:
+    - Very few files (1-10): no splitting, single batch
+    - Few files (11-100): ~10 batches for failure isolation
+    - Medium (101-10K): 64-256 files per batch
+    - Large (>10K): 512 files per batch to limit commit frequency
+
+    Args:
+        total_files: Total number of files (including checkpoint-skipped).
+
+    Returns:
+        Recommended batch size (>= 1).
+    """
+    if total_files <= 0:
+        return 1
+    if total_files <= 10:
+        return total_files
+    if total_files <= 100:
+        return max(1, total_files // 10)
+    if total_files <= 10_000:
+        return max(64, min(256, total_files // 80))
+    return 512
+
+
+class _CountedReadStream:
+    """File wrapper that counts bytes read and updates a progress bar.
+
+    Unlike a generator, this is a file-like object that requests can
+    use with Content-Length header for transfer integrity verification.
+    """
+
+    def __init__(self, file_obj, expected_size, pbar, chunk_size):
+        self._file = file_obj
+        self._expected_size = expected_size
+        self._pbar = pbar
+        self._chunk_size = chunk_size
+        self._bytes_read = 0
+
+    def read(self, size=-1):
+        """Read a chunk from the underlying file object."""
+        read_size = self._chunk_size if size < 0 else min(size, self._chunk_size)
+        chunk = self._file.read(read_size)
+        if chunk:
+            n = len(chunk)
+            self._bytes_read += n
+            self._pbar.update(n)
+        return chunk
+
+    @property
+    def bytes_read(self):
+        """Total bytes read so far."""
+        return self._bytes_read
+
+    def verify_complete(self):
+        """Raise IOError if bytes read does not match expected size."""
+        if self._bytes_read != self._expected_size:
+            raise IOError(
+                f'Upload data incomplete: read {self._bytes_read} bytes, '
+                f'expected {self._expected_size} bytes. '
+                f'File may have been modified during upload.')
 
 
 class HubApi:
@@ -102,22 +189,25 @@ class HubApi:
     def __init__(self,
                  endpoint: Optional[str] = None,
                  timeout=API_HTTP_CLIENT_TIMEOUT,
-                 max_retries=API_HTTP_CLIENT_MAX_RETRIES):
+                 max_retries=API_HTTP_CLIENT_MAX_RETRIES,
+                 token: Optional[str] = None):
         """The ModelScope HubApi。
 
         Args:
             endpoint (str, optional): The modelscope server http|https address. Defaults to None.
         """
         self.endpoint = endpoint if endpoint is not None else get_endpoint()
+        self.token = token
         self.headers = {'user-agent': ModelScopeConfig.get_user_agent()}
         self.session = Session()
         retry = Retry(
             total=max_retries,
             read=2,
             connect=2,
-            backoff_factor=1,
+            backoff_factor=2,
             status_forcelist=(500, 502, 503, 504),
-            respect_retry_after_header=False,
+            allowed_methods=UPLOAD_RETRY_ALLOWED_METHODS,
+            respect_retry_after_header=True,
         )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
@@ -154,12 +244,12 @@ class HubApi:
                 path='/')
         return jar
 
-    def get_cookies(self, access_token, cookies_required: Optional[bool] = False):
+    def get_cookies(self, access_token: Optional[str] = None, cookies_required: Optional[bool] = False):
         """
         Get cookies for authentication from local cache or access_token.
 
         Args:
-            access_token (str): user access token on ModelScope
+            access_token (Optional[str]): user access token on ModelScope. If not provided, try to get from local cache.
             cookies_required (bool): whether to raise error if no cookies found, defaults to `False`.
 
         Returns:
@@ -168,8 +258,9 @@ class HubApi:
         Raises:
             ValueError: If no credentials found and cookies_required is True.
         """
-        if access_token:
-            cookies = self._get_cookies(access_token=access_token)
+        token = access_token or self.token or os.environ.get('MODELSCOPE_API_TOKEN')
+        if token:
+            cookies = self._get_cookies(access_token=token)
         else:
             cookies = ModelScopeConfig.get_cookies()
 
@@ -203,8 +294,7 @@ class HubApi:
         Note:
             You only have to login once within 30 days.
         """
-        if access_token is None:
-            access_token = os.environ.get('MODELSCOPE_API_TOKEN')
+        access_token = access_token or self.token or os.environ.get('MODELSCOPE_API_TOKEN')
         if not access_token:
             return None, None
         if not endpoint:
@@ -410,11 +500,46 @@ class HubApi:
                 'Ref': revision
             }
 
-        r = self.session.post(
-            path,
-            json=body,
-            cookies=cookies,
-            headers=self.builder_headers(self.headers))
+        tag_timeout = (API_HTTP_CLIENT_CONNECT_TIMEOUT,
+                       API_HTTP_CLIENT_TIMEOUT)
+
+        retryable_status = {500, 502, 503, 504}
+        attempts = max(1, CREATE_TAG_MAX_RETRIES)
+        r = None
+        for attempt in range(1, attempts + 1):
+            retry_reason = None
+            try:
+                r = self.session.post(
+                    path,
+                    json=body,
+                    cookies=cookies,
+                    headers=self.builder_headers(self.headers),
+                    timeout=tag_timeout)
+            except (requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectTimeout,
+                    requests.exceptions.ConnectionError) as e:
+                if attempt >= attempts:
+                    logger.error(
+                        f'create_model_tag POST failed after {attempts} '
+                        f'attempt(s) due to transient network error: {e}. '
+                        f'Consider raising MODELSCOPE_API_HTTP_CLIENT_TIMEOUT '
+                        f'(current={API_HTTP_CLIENT_TIMEOUT}s) or '
+                        f'MODELSCOPE_CREATE_TAG_MAX_RETRIES '
+                        f'(current={CREATE_TAG_MAX_RETRIES}).')
+                    raise
+                retry_reason = f'{type(e).__name__}: {e}'
+            else:
+                if r.status_code in retryable_status and attempt < attempts:
+                    retry_reason = (f'retryable HTTP {r.status_code} '
+                                    f'from server')
+                else:
+                    break
+
+            sleep_s = CREATE_TAG_RETRY_BACKOFF * (2 ** (attempt - 1))
+            logger.warning(
+                f'create_model_tag POST attempt {attempt}/{attempts} '
+                f'failed with {retry_reason}. Retrying in {sleep_s}s...')
+            time.sleep(sleep_s)
 
         raise_for_http_status(r)
         d = r.json()
@@ -423,12 +548,15 @@ class HubApi:
         tag_url = f'{endpoint}/models/{model_id}/tags/{tag_name}'
         return tag_url
 
-    def delete_model(self, model_id: str, endpoint: Optional[str] = None):
-        """Delete model_id from ModelScope.
+    def delete_model(self, model_id: str, endpoint: Optional[str] = None, token: Optional[str] = None):
+        """
+        @deprecated
+        Delete model_id from ModelScope.
 
         Args:
             model_id (str): The model id.
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Raises:
             ValueError: If not login.
@@ -436,7 +564,13 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -458,7 +592,8 @@ class HubApi:
             self,
             model_id: str,
             revision: Optional[str] = DEFAULT_MODEL_REVISION,
-            endpoint: Optional[str] = None
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None,
     ) -> dict:
         """Get model information at ModelScope
 
@@ -466,6 +601,7 @@ class HubApi:
             model_id (str): The model id.
             revision (str optional): revision of model.
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Returns:
             The model detail information.
@@ -476,7 +612,7 @@ class HubApi:
         Note:
             model_id = {owner}/{name}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         owner_or_group, name = model_id_to_group_owner_name(model_id)
         if not endpoint:
             endpoint = self.endpoint
@@ -500,7 +636,8 @@ class HubApi:
     def get_endpoint_for_read(self,
                               repo_id: str,
                               *,
-                              repo_type: Optional[str] = None) -> str:
+                              repo_type: Optional[str] = None,
+                              token: Optional[str] = None) -> str:
         """Get proper endpoint for read operation (such as download, list etc.)
         1. If user has set MODELSCOPE_DOMAIN, construct endpoint with user-specified domain.
            If the repo does not exist on that endpoint, throw 404 error, otherwise return the endpoint.
@@ -515,7 +652,7 @@ class HubApi:
         if s is not None and s.strip() != '':
             endpoint = MODELSCOPE_URL_SCHEME + s
             try:
-                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True)
+                self.repo_exists(repo_id=repo_id, repo_type=repo_type, endpoint=endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} does not exist on {endpoint}.')
                 raise
@@ -524,13 +661,13 @@ class HubApi:
         check_cn_first = not is_env_true(MODELSCOPE_PREFER_AI_SITE)
         prefer_endpoint = get_endpoint(cn_site=check_cn_first)
         if not self.repo_exists(
-                repo_id, repo_type=repo_type, endpoint=prefer_endpoint):
+                repo_id, repo_type=repo_type, endpoint=prefer_endpoint, token=token):
             alternative_endpoint = get_endpoint(cn_site=(not check_cn_first))
             logger.warning(f'Repo {repo_id} not exists on {prefer_endpoint}, '
                            f'will try on alternative endpoint {alternative_endpoint}.')
             try:
                 self.repo_exists(
-                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True)
+                    repo_id, repo_type=repo_type, endpoint=alternative_endpoint, re_raise=True, token=token)
             except Exception:
                 logger.error(f'Repo {repo_id} not exists on either {prefer_endpoint} or {alternative_endpoint}')
                 raise
@@ -696,8 +833,14 @@ class HubApi:
                 'Failed to check existence of repo: %s, make sure you have access authorization.'
                 % repo_type)
 
-    def delete_repo(self, repo_id: str, repo_type: str, endpoint: Optional[str] = None):
+    def delete_repo(self,
+                    repo_id: str,
+                    repo_type: str,
+                    endpoint: Optional[str] = None,
+                    token: Optional[str] = None
+                    ):
         """
+        @deprecated
         Delete a repository from ModelScope.
 
         Args:
@@ -709,15 +852,29 @@ class HubApi:
             endpoint(`str`):
                 The endpoint to use. If not provided, the default endpoint is `https://www.modelscope.cn`
                 Could be set to `https://ai.modelscope.ai` for international version.
+            token (str): Access token of the ModelScope.
         """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
 
         if not endpoint:
             endpoint = self.endpoint
 
         if repo_type == REPO_TYPE_DATASET:
-            self.delete_dataset(repo_id, endpoint)
+            self.delete_dataset(
+                dataset_id=repo_id,
+                endpoint=endpoint,
+                token=token
+            )
         elif repo_type == REPO_TYPE_MODEL:
-            self.delete_model(repo_id, endpoint)
+            self.delete_model(
+                model_id=repo_id,
+                endpoint=endpoint,
+                token=token)
         else:
             raise Exception(f'Arg repo_type {repo_type} not supported.')
 
@@ -744,7 +901,8 @@ class HubApi:
                    revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                    original_model_id: Optional[str] = None,
                    ignore_file_pattern: Optional[Union[List[str], str]] = None,
-                   lfs_suffix: Optional[Union[str, List[str]]] = None):
+                   lfs_suffix: Optional[Union[str, List[str]]] = None,
+                   token: Optional[str] = None):
         warnings.warn(
             'This function is deprecated and will be removed in future versions. '
             'Please use git command directly or use HubApi().upload_folder instead',
@@ -810,7 +968,7 @@ class HubApi:
                 f'No {ModelFile.CONFIGURATION} file found in {model_dir}, creating a default one.')
             HubApi._create_default_config(model_dir)
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if cookies is None:
             raise NotLoginException('Must login before upload!')
         files_to_save = os.listdir(model_dir)
@@ -821,23 +979,25 @@ class HubApi:
             ignore_file_pattern = [ignore_file_pattern]
         if visibility is None or license is None:
             raise InvalidParameter('Visibility and License cannot be empty for new model.')
-        if not self.repo_exists(model_id):
-            logger.info('Creating new model [%s]' % model_id)
+        if not self.repo_exists(model_id, token=token):
+            logger.info(f'Creating new model [{model_id}]')
             self.create_model(
                 model_id=model_id,
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                original_model_id=original_model_id)
+                original_model_id=original_model_id,
+                token=token,
+                endpoint=self.endpoint)
         tmp_dir = os.path.join(model_dir, TEMPORARY_FOLDER_NAME)  # make temporary folder
         git_wrapper = GitCommandWrapper()
         logger.info(f'Pushing folder {model_dir} as model {model_id}.')
         logger.info(f'Total folder size {folder_size}, this may take a while depending on actual pushing size...')
         try:
-            repo = Repository(model_dir=tmp_dir, clone_from=model_id)
+            repo = Repository(model_dir=tmp_dir, clone_from=model_id, auth_token=token, endpoint=self.endpoint)
             branches = git_wrapper.get_remote_branches(tmp_dir)
             if revision not in branches:
-                logger.info('Creating new branch %s' % revision)
+                logger.info(f'Creating new branch {revision}')
                 git_wrapper.new_branch(tmp_dir, revision)
             git_wrapper.checkout(tmp_dir, revision)
             files_in_repo = os.listdir(tmp_dir)
@@ -881,7 +1041,8 @@ class HubApi:
                     owner_or_group: str,
                     page_number: Optional[int] = 1,
                     page_size: Optional[int] = 10,
-                    endpoint: Optional[str] = None) -> dict:
+                    endpoint: Optional[str] = None,
+                    token: Optional[str] = None) -> dict:
         """List models in owner or group.
 
         Args:
@@ -889,6 +1050,7 @@ class HubApi:
             page_number(int, optional): The page number, default: 1
             page_size(int, optional): The page size, default: 10
             endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            token (str, optional): access token for authentication
 
         Raises:
             RequestError: The request error.
@@ -896,7 +1058,7 @@ class HubApi:
         Returns:
             dict: {"models": "list of models", "TotalCount": total_number_of_models_in_owner_or_group}
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=False)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/models/'
@@ -925,7 +1087,7 @@ class HubApi:
                       sort: Optional[str] = None,
                       search: Optional[str] = None,
                       endpoint: Optional[str] = None,
-                      ) -> dict:
+                      token: Optional[str] = None) -> dict:
         """List datasets via OpenAPI with pagination, filtering and sorting.
 
         Args:
@@ -937,6 +1099,7 @@ class HubApi:
             search (str, optional): Search by substring keywords in the dataset's Chinese name,
                 English name, and authors (including organizations and individuals).
             endpoint (str, optional): Hub endpoint to use. When None, use the endpoint specified in the class.
+            token (str, optional): Access token for authentication.
 
         Returns:
             dict: The OpenAPI data payload, e.g.
@@ -966,34 +1129,18 @@ class HubApi:
         if owner_or_group:
             params['author'] = owner_or_group
 
-        cookies = ModelScopeConfig.get_cookies()
-        headers = self.builder_headers(self.headers)
+        headers = self._build_bearer_headers(token=token, token_required=False)
 
-        r = self.session.get(
-            path,
-            params=params,
-            cookies=cookies,
-            headers=headers
-        )
+        r = self.session.get(path, params=params, headers=headers)
         raise_for_http_status(r)
-        resp = r.json()
-
-        # OpenAPI success schema
-        if resp.get('success') is True and 'data' in resp:
-            return resp['data']
-        else:
-            # Fallback for unexpected schema
-            msg = resp.get('message') or 'Failed to list datasets'
-            raise RequestError(msg)
+        return self._parse_openapi_response(r)
 
     def _check_cookie(self, use_cookies: Union[bool, CookieJar] = False) -> CookieJar:  # noqa
         cookies = None
         if isinstance(use_cookies, CookieJar):
             cookies = use_cookies
         elif isinstance(use_cookies, bool):
-            cookies = ModelScopeConfig.get_cookies()
-            if use_cookies and cookies is None:
-                raise ValueError('Token does not exist, please login first.')
+            cookies = self.get_cookies(cookies_required=use_cookies)
         return cookies
 
     def list_model_revisions(
@@ -1080,15 +1227,14 @@ class HubApi:
             if revision is None:
                 revision = MASTER_MODEL_BRANCH
                 logger.info(
-                    'Model revision not specified, using default [%s] version.'
-                    % revision)
+                    f'Model revision not specified, using default [{revision}] version.')
             if revision not in all_branches and revision not in all_tags:
                 raise NotExistError('The model: %s has no revision : %s .' % (model_id, revision))
 
             revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
             if revision_detail is None:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
-            logger.debug('Development mode use revision: %s' % revision)
+            logger.debug(f'Development mode use revision: {revision}')
         else:
             if revision is not None and revision in all_branches:
                 revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
@@ -1112,8 +1258,8 @@ class HubApi:
                         revision = MASTER_MODEL_BRANCH
                         revision_detail = self.get_branch_tag_detail(all_branches_detail, revision)
                         vl = '[%s]' % ','.join(all_tags)
-                        logger.warning('Model revision should be specified from revisions: %s' % (vl))
-                    logger.warning('Model revision not specified, use revision: %s' % revision)
+                        logger.warning(f'Model revision should be specified from revisions: {vl}')
+                    logger.warning(f'Model revision not specified, use revision: {revision}')
                 else:
                     # use user-specified revision
                     if revision not in all_tags:
@@ -1126,7 +1272,7 @@ class HubApi:
                                                 (model_id, revision, vl))
                     else:
                         revision_detail = self.get_branch_tag_detail(all_tags_detail, revision)
-                    logger.info('Use user-specified model revision: %s' % revision)
+                    logger.info(f'Use user-specified model revision: {revision}')
         return revision_detail
 
     def get_valid_revision(self,
@@ -1251,6 +1397,7 @@ class HubApi:
             filename: str,
             *,
             revision: Optional[str] = None,
+            token: Optional[str] = None,
     ):
         """Get if the specified file exists
 
@@ -1259,10 +1406,11 @@ class HubApi:
             filename (`str`): The queried filename, if the file exists in a sub folder,
                 please pass <sub-folder-name>/<file-name>
             revision (`Optional[str]`): The repo revision
+            token (`Optional[str]`): The access token
         Returns:
             The query result in bool value
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         files = self.get_model_files(
             repo_id,
             recursive=True,
@@ -1279,14 +1427,29 @@ class HubApi:
                        license: Optional[str] = Licenses.APACHE_V2,
                        visibility: Optional[int] = DatasetVisibility.PUBLIC,
                        description: Optional[str] = '',
-                       endpoint: Optional[str] = None, ) -> str:
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None) -> str:
+        """
+        Create a dataset in ModelScope.
+
+        Args:
+            dataset_name (str): The name of the dataset.
+            namespace (str): The namespace (user or organization) for the dataset.
+            chinese_name (str, optional): The Chinese name of the dataset. Defaults to ''.
+            license (str, optional): The license of the dataset. Defaults to Licenses.APACHE_V2.
+            visibility (int, optional): The visibility of the dataset. Defaults to DatasetVisibility.PUBLIC.
+            description (str, optional): The description of the dataset. Defaults to ''.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            str: The URL of the created dataset repository.
+        """
 
         if dataset_name is None or namespace is None:
             raise InvalidParameter('dataset_name and namespace are required!')
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         path = f'{endpoint}/api/v1/datasets'
@@ -1310,11 +1473,32 @@ class HubApi:
         raise_on_error(r.json())
         dataset_repo_url = f'{endpoint}/datasets/{namespace}/{dataset_name}'
         logger.info(f'Create dataset success: {dataset_repo_url}')
+
         return dataset_repo_url
 
-    def delete_dataset(self, dataset_id: str, endpoint: Optional[str] = None):
+    def delete_dataset(self,
+                       dataset_id: str,
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None):
+        """
+        @deprecated
+        Delete a dataset from ModelScope.
 
-        cookies = ModelScopeConfig.get_cookies()
+        Args:
+            dataset_id (str): The dataset id to delete.
+            endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
+            token (str, optional): The access token for authentication.
+
+        Returns:
+            None
+        """
+        warnings.warn(
+            'This function is deprecated due to security reasons, '
+            'and will be recovered in future versions with proper token authentication. ',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -1327,17 +1511,28 @@ class HubApi:
         raise_for_http_status(r)
         raise_on_error(r.json())
 
-    def get_dataset_id_and_type(self, dataset_name: str, namespace: str, endpoint: Optional[str] = None):
+    _dataset_id_type_cache: dict = {}
+
+    def get_dataset_id_and_type(self,
+                                dataset_name: str,
+                                namespace: str,
+                                endpoint: Optional[str] = None,
+                                token: Optional[str] = None):
         """ Get the dataset id and type. """
         if not endpoint:
             endpoint = self.endpoint
+        cache_key = (namespace, dataset_name, endpoint)
+        cached = HubApi._dataset_id_type_cache.get(cache_key)
+        if cached is not None:
+            return cached
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url, cookies=cookies)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp, r)
         dataset_id = resp['Data']['Id']
         dataset_type = resp['Data']['Type']
+        HubApi._dataset_id_type_cache[cache_key] = (dataset_id, dataset_type)
         return dataset_id, dataset_type
 
     def list_repo_tree(self,
@@ -1348,7 +1543,8 @@ class HubApi:
                        recursive: bool = True,
                        page_number: int = 1,
                        page_size: int = 100,
-                       endpoint: Optional[str] = None):
+                       endpoint: Optional[str] = None,
+                       token: Optional[str] = None):
         """
         @deprecated: Use `get_dataset_files` instead.
         """
@@ -1356,7 +1552,7 @@ class HubApi:
                       DeprecationWarning)
 
         dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=dataset_name, namespace=namespace, endpoint=endpoint)
+            dataset_name=dataset_name, namespace=namespace, endpoint=endpoint, token=token)
 
         recursive = 'True' if recursive else 'False'
         if not endpoint:
@@ -1365,7 +1561,7 @@ class HubApi:
         params = {'Revision': revision if revision else 'master',
                   'Root': root_path if root_path else '/', 'Recursive': recursive,
                   'PageNumber': page_number, 'PageSize': page_size}
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
@@ -1380,7 +1576,8 @@ class HubApi:
                           revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
                           page_number: int = 1,
                           page_size: int = 50,
-                          endpoint: Optional[str] = None):
+                          endpoint: Optional[str] = None,
+                          token: Optional[str] = None):
         """
         Get the commit history for a repository.
 
@@ -1391,6 +1588,7 @@ class HubApi:
             page_number (int): The page number for pagination. Defaults to 1.
             page_size (int): The number of commits per page. Defaults to 50.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
 
         Returns:
             CommitHistoryResponse: The commit history response.
@@ -1403,7 +1601,6 @@ class HubApi:
             >>> for commit in commit_history.commits:
             ...     print(f"{commit.short_id}: {commit.title}")
         """
-        from datasets.utils.file_utils import is_relative_path
 
         if is_relative_path(repo_id) and repo_id.count('/') == 1:
             _owner, _dataset_name = repo_id.split('/')
@@ -1420,7 +1617,7 @@ class HubApi:
             'PageNumber': page_number,
             'PageSize': page_size
         }
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         try:
             r = self.session.get(commits_url, params=params,
@@ -1443,7 +1640,9 @@ class HubApi:
                           recursive: bool = True,
                           page_number: int = 1,
                           page_size: int = 100,
-                          endpoint: Optional[str] = None):
+                          endpoint: Optional[str] = None,
+                          token: Optional[str] = None,
+                          dataset_hub_id: Optional[str] = None):
         """
         Get the dataset files.
 
@@ -1455,20 +1654,24 @@ class HubApi:
             page_number (int): The page number for pagination. Defaults to 1.
             page_size (int): The number of items per page. Defaults to 100.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
+            dataset_hub_id (Optional[str]): Pre-fetched dataset hub id. When provided,
+                skips the internal ``get_dataset_id_and_type`` lookup. Useful in pagination
+                loops to avoid redundant API calls per page.
 
         Returns:
             List: The response containing the dataset repository tree information.
                 e.g. [{'CommitId': None, 'CommitMessage': '...', 'Size': 0, 'Type': 'tree'}, ...]
         """
-        from datasets.utils.file_utils import is_relative_path
 
-        if is_relative_path(repo_id) and repo_id.count('/') == 1:
-            _owner, _dataset_name = repo_id.split('/')
-        else:
-            raise ValueError(f'Invalid repo_id: {repo_id} !')
+        if dataset_hub_id is None:
+            if is_relative_path(repo_id) and repo_id.count('/') == 1:
+                _owner, _dataset_name = repo_id.split('/')
+            else:
+                raise ValueError(f'Invalid repo_id: {repo_id} !')
 
-        dataset_hub_id, dataset_type = self.get_dataset_id_and_type(
-            dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
+            dataset_hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1480,19 +1683,23 @@ class HubApi:
             'PageNumber': page_number,
             'PageSize': page_size
         }
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(datahub_url, params=params, cookies=cookies)
         resp = r.json()
         datahub_raise_on_error(datahub_url, resp, r)
 
-        return resp['Data']['Files']
+        data = resp.get('Data')
+        if data is None:
+            return []
+        return data.get('Files') or []
 
     def get_dataset(
         self,
         dataset_id: str,
         revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-        endpoint: Optional[str] = None
+        endpoint: Optional[str] = None,
+        token: Optional[str] = None
     ):
         """
         Get the dataset information.
@@ -1501,11 +1708,12 @@ class HubApi:
             dataset_id (str): The dataset id.
             revision (Optional[str]): The revision of the dataset.
             endpoint (Optional[str]): The endpoint to use, defaults to None to use the endpoint specified in the class.
+            token (Optional[str]): The access token.
 
         Returns:
             dict: The dataset information.
         """
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         if not endpoint:
             endpoint = self.endpoint
 
@@ -1522,12 +1730,13 @@ class HubApi:
         return resp[API_RESPONSE_FIELD_DATA]
 
     def get_dataset_meta_file_list(self, dataset_name: str, namespace: str,
-                                   dataset_id: str, revision: str, endpoint: Optional[str] = None):
+                                   dataset_id: str, revision: str, endpoint: Optional[str] = None,
+                                   token: Optional[str] = None):
         """ Get the meta file-list of the dataset. """
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{dataset_id}/repo/tree?Revision={revision}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(datahub_url,
                              cookies=cookies,
                              headers=self.builder_headers(self.headers))
@@ -1559,11 +1768,12 @@ class HubApi:
                                            namespace: str,
                                            revision: str,
                                            meta_cache_dir: str, dataset_type: int, file_list: list,
-                                           endpoint: Optional[str] = None):
+                                           endpoint: Optional[str] = None,
+                                           token: Optional[str] = None):
         local_paths = defaultdict(list)
         dataset_formation = DatasetFormations(dataset_type)
         dataset_meta_format = DatasetMetaFormats[dataset_formation]
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
 
         # Dump the data_type as a local file
         HubApi.dump_datatype_file(dataset_type=dataset_type, meta_cache_dir=meta_cache_dir)
@@ -1591,7 +1801,8 @@ class HubApi:
         return local_paths, dataset_formation
 
     @staticmethod
-    def fetch_meta_files_from_url(url, out_path, chunk_size=1024, mode=DownloadMode.REUSE_DATASET_IF_EXISTS):
+    def fetch_meta_files_from_url(url, out_path, chunk_size=1024, mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+                                  token: Optional[str] = None):
         """
         Fetch the meta-data files from the url, e.g. csv/jsonl files.
         """
@@ -1605,7 +1816,7 @@ class HubApi:
         if os.path.exists(out_path):
             logger.info(f'Reusing cached meta-data file: {out_path}')
             return out_path
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = HubApi().get_cookies(access_token=token)
 
         # Make the request and get the response content as TextIO
         logger.info('Loading meta-data file ...')
@@ -1697,12 +1908,13 @@ class HubApi:
             dataset_name: str,
             namespace: str,
             revision: Optional[str] = DEFAULT_DATASET_REVISION,
-            endpoint: Optional[str] = None):
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/' \
                       f'ststoken?Revision={revision}'
-        return self.datahub_remote_call(datahub_url)
+        return self.datahub_remote_call(datahub_url, token=token)
 
     def get_dataset_access_config_session(
             self,
@@ -1710,7 +1922,8 @@ class HubApi:
             namespace: str,
             check_cookie: bool,
             revision: Optional[str] = DEFAULT_DATASET_REVISION,
-            endpoint: Optional[str] = None):
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None):
 
         if not endpoint:
             endpoint = self.endpoint
@@ -1719,7 +1932,7 @@ class HubApi:
         if check_cookie:
             cookies = self._check_cookie(use_cookies=True)
         else:
-            cookies = ModelScopeConfig.get_cookies()
+            cookies = self.get_cookies(access_token=token)
 
         r = self.session.get(
             url=datahub_url,
@@ -1729,7 +1942,7 @@ class HubApi:
         raise_on_error(resp)
         return resp['Data']
 
-    def get_virgo_meta(self, dataset_id: str, version: int = 1) -> dict:
+    def get_virgo_meta(self, dataset_id: str, version: int = 1, token: Optional[str] = None) -> dict:
         """
         Get virgo dataset meta info.
         """
@@ -1738,7 +1951,7 @@ class HubApi:
             raise RuntimeError(f'Virgo endpoint is not set in env: {VirgoDatasetConfig.env_virgo_endpoint}')
 
         virgo_dataset_url = f'{virgo_endpoint}/data/set/download'
-        cookies = requests.utils.dict_from_cookiejar(ModelScopeConfig.get_cookies())
+        cookies = requests.utils.dict_from_cookiejar(self.get_cookies(access_token=token))
 
         dataset_info = dict(
             dataSetId=dataset_id,
@@ -1763,11 +1976,12 @@ class HubApi:
                                                namespace: str,
                                                revision: str,
                                                zip_file_name: str,
-                                               endpoint: Optional[str] = None):
+                                               endpoint: Optional[str] = None,
+                                               token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         datahub_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}'
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(url=datahub_url, cookies=cookies,
                              headers=self.builder_headers(self.headers))
         resp = r.json()
@@ -1787,13 +2001,14 @@ class HubApi:
         return data_sts
 
     def list_oss_dataset_objects(self, dataset_name, namespace, max_limit,
-                                 is_recursive, is_filter_dir, revision, endpoint: Optional[str] = None):
+                                 is_recursive, is_filter_dir, revision, endpoint: Optional[str] = None,
+                                 token: Optional[str] = None):
         if not endpoint:
             endpoint = self.endpoint
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/tree/?' \
               f'MaxLimit={max_limit}&Revision={revision}&Recursive={is_recursive}&FilterDir={is_filter_dir}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token)
         resp = self.session.get(url=url, cookies=cookies, timeout=1800)
         resp = resp.json()
         raise_on_error(resp)
@@ -1801,14 +2016,15 @@ class HubApi:
         return resp
 
     def delete_oss_dataset_object(self, object_name: str, dataset_name: str,
-                                  namespace: str, revision: str, endpoint: Optional[str] = None) -> str:
+                                  namespace: str, revision: str, endpoint: Optional[str] = None,
+                                  token: Optional[str] = None) -> str:
         if not object_name or not dataset_name or not namespace or not revision:
             raise ValueError('Args cannot be empty!')
         if not endpoint:
             endpoint = self.endpoint
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss?Path={object_name}&Revision={revision}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
@@ -1816,7 +2032,8 @@ class HubApi:
         return resp
 
     def delete_oss_dataset_dir(self, object_name: str, dataset_name: str,
-                               namespace: str, revision: str, endpoint: Optional[str] = None) -> str:
+                               namespace: str, revision: str, endpoint: Optional[str] = None,
+                               token: Optional[str] = None) -> str:
         if not object_name or not dataset_name or not namespace or not revision:
             raise ValueError('Args cannot be empty!')
         if not endpoint:
@@ -1824,15 +2041,15 @@ class HubApi:
         url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/oss/prefix?Prefix={object_name}/' \
               f'&Revision={revision}'
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         resp = self.session.delete(url=url, cookies=cookies)
         resp = resp.json()
         raise_on_error(resp)
         resp = resp['Message']
         return resp
 
-    def datahub_remote_call(self, url):
-        cookies = ModelScopeConfig.get_cookies()
+    def datahub_remote_call(self, url, token: Optional[str] = None):
+        cookies = self.get_cookies(access_token=token)
         r = self.session.get(
             url,
             cookies=cookies,
@@ -1842,13 +2059,14 @@ class HubApi:
         return resp['Data']
 
     def dataset_download_statistics(self, dataset_name: str, namespace: str,
-                                    use_streaming: bool = False, endpoint: Optional[str] = None) -> None:
+                                    use_streaming: bool = False, endpoint: Optional[str] = None,
+                                    token: Optional[str] = None) -> None:
         is_ci_test = os.getenv('CI_TEST') == 'True'
         if not endpoint:
             endpoint = self.endpoint
         if dataset_name and namespace and not is_ci_test and not use_streaming:
             try:
-                cookies = ModelScopeConfig.get_cookies()
+                cookies = self.get_cookies(access_token=token)
 
                 # Download count
                 download_count_url = f'{endpoint}/api/v1/datasets/{namespace}/{dataset_name}/download/increase'
@@ -1877,6 +2095,90 @@ class HubApi:
     def builder_headers(self, headers):
         return {MODELSCOPE_REQUEST_ID: str(uuid.uuid4().hex),
                 **headers}
+
+    def _build_bearer_headers(self,
+                              token: Optional[str] = None,
+                              token_required: bool = False) -> Dict[str, str]:
+        """
+        Build HTTP headers with optional Bearer token for OpenAPI endpoints.
+
+        Token resolution order:
+            1. Explicit token param
+            2. self.token (set at construction)
+            3. MODELSCOPE_API_TOKEN env var
+            4. Locally cached cookies (m_session_id from login())
+
+        Args:
+            token: Optional access token for one-time authentication.
+            token_required: If True, raise ValueError when no token is available.
+
+        Returns:
+            Headers dict with user-agent, request-id, and optionally Authorization.
+
+        Raises:
+            ValueError: If token_required is True but no token is available.
+        """
+        headers = self.builder_headers(self.headers)
+
+        # Priority: explicit token > self.token > env var > local cookies
+        resolved_token = token or self.token or os.environ.get(
+            'MODELSCOPE_API_TOKEN')
+
+        # Fall back to locally cached cookies (m_session_id saved by login())
+        if not resolved_token:
+            cookies = self.get_cookies()
+            if cookies:
+                for cookie in cookies:
+                    if cookie.name == 'm_session_id':
+                        resolved_token = cookie.value
+                        break
+
+        if resolved_token:
+            headers['Authorization'] = f'Bearer {resolved_token}'
+        elif token_required:
+            raise ValueError(
+                'Authentication required but no token found. '
+                'You can pass the `token` argument, '
+                'or set MODELSCOPE_API_TOKEN environment variable, '
+                'or use HubApi(token=`your_sdk_token`). '
+                'Your token is available at https://modelscope.cn/my/myaccesstoken'
+            )
+        return headers
+
+    @staticmethod
+    def _parse_openapi_response(response: 'requests.Response') -> Dict[str, Any]:
+        """
+        Parse OpenAPI response with unified JSON parsing and data extraction.
+
+        Handles the standard OpenAPI response envelope:
+            {"success": bool, "data": {...}, "message": str}
+        Also handles the simpler envelope where only "data" is present.
+
+        Args:
+            response: requests Response object (HTTP status already validated).
+
+        Returns:
+            Parsed 'data' dict from the response envelope.
+
+        Raises:
+            RequestError: If JSON parsing fails or business-level error is returned.
+        """
+        try:
+            resp = response.json()
+        except (requests.exceptions.JSONDecodeError, ValueError) as e:
+            logger.error(f'JSON parsing failed: {e}')
+            raise RequestError(f'Invalid JSON response: {e}') from e
+
+        # OpenAPI envelope with explicit success field
+        if isinstance(resp, dict) and 'success' in resp:
+            if resp.get('success') is True and 'data' in resp:
+                return resp['data']
+            else:
+                msg = resp.get('message') or 'OpenAPI request failed'
+                raise RequestError(msg)
+
+        # Simple envelope with data field only (e.g., MCP API)
+        return resp.get('data', {}) if isinstance(resp, dict) else {}
 
     def get_file_base_path(self, repo_id: str, endpoint: Optional[str] = None) -> str:
         _namespace, _dataset_name = repo_id.split('/')
@@ -1926,8 +2228,6 @@ class HubApi:
         if not endpoint:
             endpoint = self.endpoint
 
-        self.login(access_token=token, endpoint=endpoint)
-
         repo_exists: bool = self.repo_exists(repo_id, repo_type=repo_type, endpoint=endpoint, token=token)
         if repo_exists:
             if exist_ok:
@@ -1953,12 +2253,14 @@ class HubApi:
                 visibility=visibility,
                 license=license,
                 chinese_name=chinese_name,
-                aigc_model=aigc_model
+                aigc_model=aigc_model,
+                token=token,
+                endpoint=endpoint,
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
                     from modelscope.hub.repository import Repository
-                    repo = Repository(temp_cache_dir, repo_id)
+                    repo = Repository(temp_cache_dir, repo_id, auth_token=token, endpoint=endpoint)
                     default_config = {
                         'framework': 'pytorch',
                         'task': 'text-generation',
@@ -1986,6 +2288,8 @@ class HubApi:
                 chinese_name=chinese_name,
                 license=license,
                 visibility=visibility,
+                token=token,
+                endpoint=endpoint,
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 
@@ -2005,11 +2309,9 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
             endpoint: Optional[str] = None,
-            max_retries: int = 3,
-            timeout: int = 180,
     ) -> CommitInfo:
         """
-        Create a commit on the ModelScope Hub with retry mechanism.
+        Create a commit on the ModelScope Hub.
 
         Args:
             repo_id (str): The repo id in the format of `owner_name/repo_name`.
@@ -2022,14 +2324,14 @@ class HubApi:
             revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
             endpoint (Optional[str]): The endpoint to use.
                 In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
-            max_retries (int): Number of max retry attempts (default: 3).
             timeout (int): Timeout for each request in seconds (default: 180).
 
         Returns:
             CommitInfo: The commit info.
 
         Raises:
-            requests.exceptions.RequestException: If all retry attempts fail.
+            ValueError: If the request fails with a 4xx client error.
+            requests.exceptions.RequestException: If a network-level error occurs.
         """
         if not repo_id:
             raise ValueError('Repo id cannot be empty!')
@@ -2052,66 +2354,41 @@ class HubApi:
             commit_message=commit_message,
         )
 
-        # POST with retry mechanism
-        last_exception = None
-        for attempt in range(max_retries):
+        # Guard: skip sending empty commits (no effective file changes)
+        if not payload['actions']:
+            logger.info(
+                'Commit skipped: no effective actions in payload '
+                '(all files already exist).')
+            return CommitInfo(
+                commit_url='',
+                commit_message=commit_message,
+                commit_description=commit_description or '',
+                oid='no-op',
+            )
+
+        response = self.session.post(
+            url,
+            headers=self.builder_headers(self.headers),
+            data=json.dumps(payload),
+            cookies=cookies,
+        )
+
+        if response.status_code != 200:
             try:
-                if attempt > 0:
-                    logger.info(f'Attempt {attempt + 1} to create commit for {repo_id}...')
-                response = requests.post(
-                    url,
-                    headers=self.builder_headers(self.headers),
-                    data=json.dumps(payload),
-                    cookies=cookies,
-                    timeout=timeout,
-                )
+                error_detail = response.json()
+            except json.JSONDecodeError:
+                error_detail = response.text
+            error_msg = f'HTTP {response.status_code} error from {url}: {error_detail}'
+            raise ValueError(error_msg)
 
-                if response.status_code != 200:
-                    try:
-                        error_detail = response.json()
-                    except json.JSONDecodeError:
-                        error_detail = response.text
-
-                    error_msg = (
-                        f'HTTP {response.status_code} error from {url}: '
-                        f'{error_detail}'
-                    )
-
-                    # If server error (5xx), we can retry, otherwise (4xx) raise immediately
-                    if 500 <= response.status_code < 600:
-                        logger.warning(
-                            f'Server error on attempt {attempt + 1}: {error_msg}'
-                        )
-                    else:
-                        raise ValueError(f'Client request failed: {error_msg}')
-                else:
-                    resp = response.json()
-
-                    oid = resp.get('Data', {}).get('oid', '')
-                    logger.info(f'Commit succeeded: {url}')
-                    return CommitInfo(
-                        commit_url=url,
-                        commit_message=commit_message,
-                        commit_description=commit_description,
-                        oid=oid,
-                    )
-
-            except requests.exceptions.RequestException as e:
-                last_exception = e
-                logger.warning(f'Request failed on attempt {attempt + 1}: {str(e)}')
-
-            except Exception as e:
-                last_exception = e
-                logger.error(f'Unexpected error on attempt {attempt + 1}: {str(e)}')
-                if attempt == max_retries - 1:
-                    raise
-
-            if attempt < max_retries - 1:
-                time.sleep(1)
-
-        # All retries exhausted
-        raise requests.exceptions.RequestException(
-            f'Failed to create commit after {max_retries} attempts. Last error: {last_exception}'
+        resp = response.json()
+        oid = resp.get('Data', {}).get('oid', '')
+        logger.info(f'Commit succeeded: {url}')
+        return CommitInfo(
+            commit_url=url,
+            commit_message=commit_message,
+            commit_description=commit_description,
+            oid=oid,
         )
 
     def upload_file(
@@ -2124,7 +2401,7 @@ class HubApi:
             repo_type: Optional[str] = REPO_TYPE_MODEL,
             commit_message: Optional[str] = None,
             commit_description: Optional[str] = None,
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
             tqdm_desc: Optional[str] = '[Uploading]',
             disable_tqdm: Optional[bool] = False,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION
@@ -2161,7 +2438,6 @@ class HubApi:
             ... )
             >>> print(commit_info)
         """
-
         if repo_type not in REPO_TYPE_SUPPORT:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')
 
@@ -2197,7 +2473,7 @@ class HubApi:
         if buffer_size_mb <= 0:
             raise ValueError('Buffer size: `buffer_size_mb` must be greater than 0')
 
-        hash_info_d: dict = get_file_hash(
+        hash_info_d: dict = compute_file_hash(
             file_path_or_obj=path_or_fileobj,
             buffer_size_mb=buffer_size_mb,
         )
@@ -2219,6 +2495,7 @@ class HubApi:
             data=path_or_fileobj,
             disable_tqdm=disable_tqdm,
             tqdm_desc=tqdm_desc,
+            token=token,
         )
 
         # Construct commit info and create commit
@@ -2244,6 +2521,206 @@ class HubApi:
 
         return commit_info
 
+    def _track_uploaded_batch(self, tracker, results):
+        """Mark files as uploaded and persist tracker state."""
+        for r in results:
+            tracker.mark_uploaded(
+                r['file_path_in_repo'], r['file_mtime'],
+                r['file_size_on_disk'])
+        tracker.save()
+
+    def _track_committed_batch(self, tracker, results):
+        """Mark files as committed and persist tracker state."""
+        tracker.mark_committed_batch([
+            (r['file_path_in_repo'], r['file_mtime'],
+             r['file_size_on_disk'])
+            for r in results])
+        tracker.save()
+
+    def _upload_single_file(
+            self,
+            file_path_in_repo: str,
+            file_path: str,
+            *,
+            repo_id: str,
+            repo_type: str,
+            token: str,
+            tracker=None,
+            pre_validated=None,
+    ) -> dict:
+        """Hash and upload a single file, returning result dict."""
+        if tracker is None:
+            tracker = NullTracker()
+        hash_info_d = None
+        file_stat = None
+        is_real_path = isinstance(file_path, (str, os.PathLike))
+        if is_real_path:
+            try:
+                file_stat = os.stat(file_path)
+                cached = tracker.get_hash(
+                    file_path_in_repo, file_stat.st_mtime, file_stat.st_size)
+                if cached is not None:
+                    hash_info_d = cached
+                    hash_info_d['file_path_or_obj'] = file_path
+            except OSError:
+                file_stat = None
+
+        if hash_info_d is None:
+            hash_info_d = compute_file_hash(file_path_or_obj=file_path)
+            if is_real_path:
+                try:
+                    if file_stat is None:
+                        file_stat = os.stat(file_path)
+                    tracker.put_hash(
+                        file_path_in_repo, file_stat.st_mtime,
+                        file_stat.st_size, hash_info_d)
+                except OSError:
+                    pass
+
+        # Ensure file_stat is available for real path files
+        if file_stat is None and is_real_path:
+            try:
+                file_stat = os.stat(file_path)
+            except OSError:
+                pass
+
+        file_size: int = hash_info_d['file_size']
+        file_hash: str = hash_info_d['file_hash']
+
+        # Application-level retry for transient blob upload failures
+        last_error = None
+        for attempt in range(UPLOAD_BLOB_MAX_RETRIES):
+            try:
+                # Validate file size has not changed since hash computation
+                if isinstance(file_path, (str, os.PathLike)):
+                    current_size = os.path.getsize(str(file_path))
+                    if current_size != file_size:
+                        raise IOError(
+                            f'File size changed since hash computation: '
+                            f'was {file_size}, now {current_size}. '
+                            f'File may have been modified: {file_path_in_repo}')
+                upload_res: dict = self._upload_blob(
+                    repo_id=repo_id,
+                    repo_type=repo_type,
+                    sha256=file_hash,
+                    size=file_size,
+                    data=file_path,
+                    disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
+                    tqdm_desc='[Uploading ' + file_path_in_repo + ']',
+                    token=token,
+                    pre_validated=pre_validated,
+                )
+                break
+            except (ConnectionError, requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError, IOError) as e:
+                # Only retry on 5xx / connection errors; 4xx are not retryable
+                if isinstance(e, requests.exceptions.HTTPError):
+                    if hasattr(e, 'response') and e.response is not None:
+                        if e.response.status_code < 500:
+                            raise
+                last_error = e
+                if attempt < UPLOAD_BLOB_MAX_RETRIES - 1:
+                    wait = min(UPLOAD_BLOB_RETRY_BACKOFF ** attempt,
+                               UPLOAD_BLOB_RETRY_MAX_WAIT)
+                    logger.warning(
+                        f'Blob upload attempt {attempt + 1}/{UPLOAD_BLOB_MAX_RETRIES} '
+                        f'failed for {file_path_in_repo}: {e}, retrying in {wait}s ...')
+                    time.sleep(wait)
+        else:
+            raise RuntimeError(
+                f'Blob upload failed after {UPLOAD_BLOB_MAX_RETRIES} attempts '
+                f'for {file_path_in_repo}: {last_error}') from last_error
+
+        return {
+            'file_path_in_repo': file_path_in_repo,
+            'file_path': file_path,
+            'file_mtime': file_stat.st_mtime if file_stat else 0,
+            'file_size_on_disk': file_stat.st_size if file_stat else hash_info_d.get('file_size', 0),
+            'is_uploaded': upload_res['is_uploaded'],
+            'is_reused': upload_res.get('is_reused', False),
+            'file_hash_info': hash_info_d,
+        }
+
+    def _commit_with_retry(
+            self,
+            *,
+            repo_id: str,
+            operations,
+            commit_message: str,
+            commit_description: Optional[str] = None,
+            token: str = None,
+            repo_type: str = REPO_TYPE_MODEL,
+            revision: str = DEFAULT_REPOSITORY_REVISION,
+            max_retries: int = 5,
+    ) -> CommitInfo:
+        """Commit with application-level exponential backoff retry.
+
+        Retries on transient errors (5xx, ConnectionError) and specific
+        retryable 4xx errors (e.g. git ref conflicts).
+        Raises immediately on non-retryable client errors (4xx).
+        """
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                return self.create_commit(
+                    repo_id=repo_id,
+                    operations=operations,
+                    commit_message=commit_message,
+                    commit_description=commit_description,
+                    token=token,
+                    repo_type=repo_type,
+                    revision=revision,
+                )
+            except (ConnectionError, requests.exceptions.ConnectionError) as e:
+                last_error = e
+            # Defensive: create_commit raises ValueError, kept for future-proofing
+            except (HTTPError, requests.exceptions.HTTPError) as e:
+                if hasattr(e, 'response') and e.response is not None:
+                    if 400 <= e.response.status_code < 500:
+                        raise
+                last_error = e
+            except ValueError as e:
+                error_str = str(e)
+                if re.search(r'HTTP 4\d{2}', error_str):
+                    retryable_patterns = [
+                        'Could not update refs',
+                        'try again',
+                    ]
+                    if not any(p in error_str for p in retryable_patterns):
+                        raise
+                last_error = e
+            except Exception as e:
+                last_error = e
+
+            wait = min(2 ** attempt, 60)
+            logger.warning(
+                f'Commit attempt {attempt + 1}/{max_retries} failed: {last_error}, '
+                f'retrying in {wait}s ...')
+            time.sleep(wait)
+
+        raise RuntimeError(
+            f'Commit failed after {max_retries} attempts: {last_error}'
+        ) from last_error
+
+    def _build_batch_operations(
+            self,
+            results: list,
+            repo_type: str,
+    ) -> list:
+        """Build CommitOperationAdd list from upload results."""
+        operations = []
+        for item_d in results:
+            opt = CommitOperationAdd(
+                path_in_repo=item_d['file_path_in_repo'],
+                path_or_fileobj=item_d['file_path'],
+                file_hash_info=item_d['file_hash_info'],
+            )
+            opt._upload_mode = 'lfs' if self.upload_checker.is_lfs(
+                item_d['file_path'], repo_type) else 'normal'
+            opt._is_uploaded = item_d['is_uploaded']
+            operations.append(opt)
+        return operations
+
     def upload_folder(
             self,
             *,
@@ -2257,42 +2734,42 @@ class HubApi:
             allow_patterns: Optional[Union[List[str], str]] = None,
             ignore_patterns: Optional[Union[List[str], str]] = None,
             max_workers: int = DEFAULT_MAX_WORKERS,
+            use_cache: bool = UPLOAD_USE_CACHE,
             revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-    ) -> Union[CommitInfo, List[CommitInfo]]:
-        """
-        Upload a folder to the ModelScope Hub.
+    ) -> Optional[Union[CommitInfo, List[CommitInfo]]]:
+        """Upload a folder to ModelScope Hub with resumable support.
+
+        Upload files from a local folder (or explicit file list) to a remote
+        repository, with automatic batching, parallel upload, and progressive
+        retry fallback (ReAct) for failed files.
 
         Args:
-            repo_id (str): The repo id in the format of `owner_name/repo_name`.
-            folder_path (Union[str, Path, List[str], List[Path]]): The folder path or list of file paths to upload.
-            path_in_repo (Optional[str]): The path in the repo to upload to.
-            commit_message (Optional[str]): The commit message.
-            commit_description (Optional[str]): The commit description.
-            token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
-                See `https://modelscope.cn/my/myaccesstoken` to get your token.
-            repo_type (Optional[str]): The repo type, default to `model`.
-            allow_patterns (Optional[Union[List[str], str]]): The patterns to allow.
-            ignore_patterns (Optional[Union[List[str], str]]): The patterns to ignore.
-            max_workers (int): The maximum number of workers to use for uploading files concurrently.
-                Defaults to `DEFAULT_MAX_WORKERS`.
-            revision (Optional[str]): The branch or tag name. Defaults to `DEFAULT_REPOSITORY_REVISION`.
+            repo_id: Repository identifier in 'owner/repo' format.
+            folder_path: Local folder path, or a list of (path_in_repo, local_path) tuples.
+            path_in_repo: Target directory path within the repository.
+            commit_message: Commit message for the upload.
+            commit_description: Optional extended commit description.
+            revision: Branch or tag name (default: 'master').
+            token: Authentication token. If None, uses stored credentials.
+            repo_type: One of 'model', 'dataset', or 'space'.
+            ignore_patterns: Glob patterns for files to exclude.
+            max_workers: Max concurrent upload threads.
+            use_cache: If True, uses .ms_upload_cache for resumable uploads.
+                Files with matching path, mtime, and size that are already
+                committed will be skipped automatically.
 
         Returns:
-            Union[CommitInfo, List[CommitInfo]]:
-                The commit info or list of commit infos if multiple batches are committed.
+            None if all files were already committed (nothing to do).
+            A single CommitInfo if only one batch was committed.
+            A list of CommitInfo if multiple batches were committed.
 
-        Examples:
-            >>> from modelscope.hub.api import HubApi
-            >>> api = HubApi()
-            >>> commit_info = api.upload_folder(
-            ...     repo_id='your-namespace/your-repo-name',
-            ...     folder_path='/path/to/your/folder',
-            ...     path_in_repo='optional/path/in/repo',
-            ...     commit_message='Upload my folder',
-            ...     token='your-access-token'
-            ... )
-            >>> print(commit_info.commit_url)
+        Raises:
+            ValueError: If folder_path is empty or contains no valid files.
+            RuntimeError: If any files remain failed after all retry rounds,
+                with a message indicating the count and a retry hint.
         """
+        start_time = time.time()
+
         if not repo_id:
             raise ValueError('The arg `repo_id` cannot be empty!')
 
@@ -2317,8 +2794,6 @@ class HubApi:
 
         # Cover the ignore patterns if both allow and ignore patterns are provided
         if allow_patterns is not None:
-            if '**' in allow_patterns:
-                ignore_patterns = []
             ignore_patterns = [
                 p for p in ignore_patterns if p not in allow_patterns
             ]
@@ -2327,6 +2802,16 @@ class HubApi:
             commit_message if commit_message is not None else f'Upload to {repo_id} on ModelScope hub'
         )
         commit_description = commit_description or 'Uploading files'
+
+        # Exclude internal cache/checkpoint files from upload at any directory depth
+        _internal_files = [UPLOAD_HASH_CACHE_FILE, _LEGACY_PROGRESS_FILE]
+        _internal_ignore = [p for f in _internal_files for p in (f, f'*/{f}')]
+        if ignore_patterns is None:
+            ignore_patterns = _internal_ignore
+        elif isinstance(ignore_patterns, str):
+            ignore_patterns = [ignore_patterns] + _internal_ignore
+        else:
+            ignore_patterns = list(ignore_patterns) + _internal_ignore
 
         # Get the list of files to upload, e.g. [('data/abc.png', '/path/to/abc.png'), ...]
         logger.info('Preparing files to upload ...')
@@ -2352,88 +2837,572 @@ class HubApi:
                          exist_ok=True,
                          create_default_config=False)
 
-        @thread_executor(max_workers=max_workers, disable_tqdm=False)
-        def _upload_items(item_pair, **kwargs):
-            file_path_in_repo, file_path = item_pair
+        # Sort for deterministic batch assignment
+        sorted_files = sorted(prepared_repo_objects, key=lambda x: x[0])
 
-            hash_info_d: dict = get_file_hash(
-                file_path_or_obj=file_path,
-            )
-            file_size: int = hash_info_d['file_size']
-            file_hash: str = hash_info_d['file_hash']
+        # Calculate batch size (adaptive or fixed)
+        if UPLOAD_ADAPTIVE_BATCH_SIZE:
+            commit_batch_size = _calculate_adaptive_batch_size(len(sorted_files))
+            logger.info(
+                f'Adaptive batch size: {commit_batch_size} '
+                f'(for {len(sorted_files)} files)')
+        else:
+            commit_batch_size = (
+                UPLOAD_COMMIT_BATCH_SIZE
+                if UPLOAD_COMMIT_BATCH_SIZE > 0
+                else len(sorted_files))
 
-            upload_res: dict = self._upload_blob(
-                repo_id=repo_id,
-                repo_type=repo_type,
-                sha256=file_hash,
-                size=file_size,
-                data=file_path,
-                disable_tqdm=file_size <= UPLOAD_BLOB_TQDM_DISABLE_THRESHOLD,
-                tqdm_desc='[Uploading ' + file_path_in_repo + ']',
-            )
+        # Initialize unified upload tracker for resume support
+        folder_path_resolved = Path(folder_path).resolve() \
+            if isinstance(folder_path, (str, Path)) else Path(folder_path[0]).resolve().parent
+        if use_cache:
+            cache_path = folder_path_resolved / UPLOAD_HASH_CACHE_FILE
+            tracker = UploadTracker(cache_path, repo_id=repo_id)
+        else:
+            tracker = NullTracker()
+        batch_tracker = BatchTracker(len(sorted_files), commit_batch_size)
 
-            return {
-                'file_path_in_repo': file_path_in_repo,
-                'file_path': file_path,
-                'is_uploaded': upload_res['is_uploaded'],
-                'file_hash_info': hash_info_d,
-            }
+        # File-level filtering: skip individually committed files
+        files_to_upload = []
+        skipped_indices = set()
+        for file_idx, (path_in_repo, file_path) in enumerate(sorted_files):
+            if isinstance(file_path, (str, os.PathLike)):
+                try:
+                    st = os.stat(file_path)
+                    if tracker.is_committed(path_in_repo, st.st_mtime, st.st_size):
+                        skipped_indices.add(file_idx)
+                        batch_tracker.mark_file_skipped(file_idx)
+                        continue
+                except OSError as e:
+                    logger.warning(
+                        f'Cannot stat file {path_in_repo}, will re-upload: {e}')
+            files_to_upload.append((file_idx, (path_in_repo, file_path)))
 
-        uploaded_items_list = _upload_items(
-            prepared_repo_objects,
-            repo_id=repo_id,
-            token=token,
-            repo_type=repo_type,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            buffer_size_mb=1,
-            disable_tqdm=False,
-        )
+        # Batch pre-validation for files with cached hashes
+        pre_validated_map = {}  # oid -> upload_url or None
+        hash_info_map = {}      # file_idx -> (hash_info, file_stat)
+        files_need_hash = []    # files without cached hash
 
-        # Construct commit info and create commit
-        operations = []
+        for file_idx, (path_in_repo, file_path) in files_to_upload:
+            if isinstance(file_path, (str, os.PathLike)):
+                try:
+                    st = os.stat(file_path)
+                    cached = tracker.get_hash(
+                        path_in_repo, st.st_mtime, st.st_size)
+                    if cached is not None:
+                        hash_info_map[file_idx] = (cached, st)
+                        continue
+                except OSError:
+                    pass
+            files_need_hash.append((file_idx, (path_in_repo, file_path)))
 
-        for item_d in uploaded_items_list:
-            prepared_path_in_repo: str = item_d['file_path_in_repo']
-            prepared_file_path: str = item_d['file_path']
-            is_uploaded: bool = item_d['is_uploaded']
-            file_hash_info: dict = item_d['file_hash_info']
-            opt = CommitOperationAdd(
-                path_in_repo=prepared_path_in_repo,
-                path_or_fileobj=prepared_file_path,
-                file_hash_info=file_hash_info,
-            )
+        # Batch validate cached hashes against server
+        if hash_info_map:
+            objects = [
+                {'oid': info['file_hash'], 'size': info['file_size']}
+                for info, _ in hash_info_map.values()
+            ]
+            validated = self._validate_blob(
+                repo_id=repo_id, repo_type=repo_type,
+                objects=objects, token=token)
+            pre_validated_map = validated
+            reused = sum(1 for v in validated.values() if v is None)
+            logger.info(
+                f'Pre-validated {len(objects)} cached hash(es): '
+                f'{reused} globally existing, '
+                f'{len(objects) - reused} need upload.')
 
-            # check normal or lfs
-            opt._upload_mode = 'lfs' if self.upload_checker.is_lfs(prepared_file_path, repo_type) else 'normal'
-            opt._is_uploaded = is_uploaded
-            operations.append(opt)
+        skipped_count = len(skipped_indices)
+        if skipped_count > 0:
+            logger.info(f'{skipped_count} file(s) already committed, skipping.')
 
-        if len(operations) == 0:
-            raise ValueError(f'No files to upload in the folder: {folder_path} !')
+        logger.info(
+            f'Scan complete: {len(sorted_files)} total, '
+            f'{skipped_count} committed (skip), '
+            f'{len(files_to_upload)} to process.')
 
-        # Commit the operations in batches
-        commit_batch_size: int = UPLOAD_COMMIT_BATCH_SIZE if UPLOAD_COMMIT_BATCH_SIZE > 0 else len(operations)
-        num_batches = (len(operations) - 1) // commit_batch_size + 1
-        print(f'Committing {len(operations)} files in {num_batches} batch(es) of size {commit_batch_size}.',
-              flush=True)
+        logger.info(
+            f'Uploading {len(files_to_upload)} file(s) in {batch_tracker.num_batches} batch(es) '
+            f'of size {commit_batch_size} (pipeline mode).')
+
+        # Submit upload tasks to thread pool
+        def _upload_worker(file_idx: int, file_info: tuple,
+                           pre_validated=None):
+            path_in_repo, file_path = file_info
+            try:
+                logger.debug(f'Uploading: {path_in_repo} ...')
+                result = self._upload_single_file(
+                    path_in_repo, file_path,
+                    repo_id=repo_id, repo_type=repo_type,
+                    token=token, tracker=tracker,
+                    pre_validated=pre_validated)
+                logger.debug(f'Uploaded: {path_in_repo}')
+                batch_tracker.record_success(file_idx, result)
+            except Exception as e:
+                logger.error(f'Upload failed: {path_in_repo} - {e}')
+                batch_tracker.record_failure(file_idx, file_info, e)
+
+        # Pipeline: consume batches in order, commit as each becomes ready
         commit_infos: List[CommitInfo] = []
-        for i in tqdm(range(num_batches), desc='[Committing batches] ', total=num_batches):
-            batch_operations = operations[i * commit_batch_size: (i + 1) * commit_batch_size]
-            batch_commit_message = f'{commit_message} (batch {i + 1}/{num_batches})'
+        all_results: List[dict] = []
+        total_failed_files: List[tuple] = []
+        num_batches = batch_tracker.num_batches
 
-            commit_info: CommitInfo = self.create_commit(
+        try:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                for file_idx, file_info in files_to_upload:
+                    # Look up pre-validated status by file hash
+                    pv = None
+                    if file_idx in hash_info_map:
+                        cached_hash = hash_info_map[file_idx][0]['file_hash']
+                        pv = pre_validated_map.get(cached_hash)
+                        # pv: None=exists(True), str=upload_url
+                        if pv is None:
+                            pv = True  # globally existing, skip upload
+                    executor.submit(_upload_worker, file_idx, file_info, pv)
+
+                for batch_idx in tqdm(range(num_batches), desc='[Committing batches]', total=num_batches):
+                    # Skip fully-committed batches
+                    batch_start = batch_idx * commit_batch_size
+                    batch_end = min(batch_start + commit_batch_size, len(sorted_files))
+                    if all(i in skipped_indices for i in range(batch_start, batch_end)):
+                        logger.info(f'Batch {batch_idx + 1}/{num_batches} fully committed, skipping.')
+                        continue
+
+                    results, failures = batch_tracker.wait_for_batch(batch_idx)
+
+                    if failures:
+                        total_failed_files.extend(failures)
+                        for item, err in failures:
+                            logger.error(f'  Failed: {item[0]} - {err}')
+
+                    # Mark successfully uploaded files in tracker (BEFORE commit attempt)
+                    self._track_uploaded_batch(tracker, results)
+
+                    operations = self._build_batch_operations(results, repo_type)
+                    if not operations:
+                        logger.error(
+                            f'Batch {batch_idx + 1}/{num_batches}: '
+                            f'all files failed, skipping commit.')
+                        continue
+
+                    batch_commit_message = (
+                        f'{commit_message} (batch {batch_idx + 1}/{num_batches})')
+                    try:
+                        commit_info = self._commit_with_retry(
+                            repo_id=repo_id,
+                            operations=operations,
+                            commit_message=batch_commit_message,
+                            commit_description=commit_description,
+                            token=token,
+                            repo_type=repo_type,
+                            revision=revision,
+                        )
+                        commit_infos.append(commit_info)
+                        all_results.extend(results)
+                        logger.info(
+                            f'Batch {batch_idx + 1}/{num_batches}: '
+                            f'committed {len(results)} file(s).')
+                        # Mark all files in this batch as committed
+                        self._track_committed_batch(tracker, results)
+                    except Exception as e:
+                        logger.error(
+                            f'Batch {batch_idx + 1}/{num_batches} commit failed: {e}')
+                        category = classify_error(e)
+                        if not category.is_retryable:
+                            # Permanent error: mark files as failed, do not retry
+                            for r in results:
+                                tracker.mark_failed(
+                                    r['file_path_in_repo'], r['file_mtime'],
+                                    r['file_size_on_disk'],
+                                    error_type='commit_' + category.value)
+                            logger.error(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'permanent failure ({category.value}), '
+                                f'{len(results)} file(s) will not be retried.')
+                        else:
+                            # Transient error: recover to retry queue
+                            for r in results:
+                                total_failed_files.append(
+                                    ((r['file_path_in_repo'], r['file_path']), e))
+                            logger.warning(
+                                f'Batch {batch_idx + 1}/{num_batches}: '
+                                f'{len(results)} file(s) recovered to retry queue '
+                                f'(error_category={category.value}).')
+        finally:
+            tracker.save()
+
+        # ReAct progressive retry fallback
+        if total_failed_files and UPLOAD_REACT_ENABLED:
+            total_failed_files, react_commits, react_results = self._retry_failed_files_react(
+                failed_files=total_failed_files,
+                tracker=tracker,
                 repo_id=repo_id,
-                operations=batch_operations,
-                commit_message=batch_commit_message,
-                commit_description=commit_description,
-                token=token,
                 repo_type=repo_type,
+                token=token,
+                commit_message=commit_message,
+                commit_description=commit_description,
                 revision=revision,
+                max_workers=max_workers,
             )
-            commit_infos.append(commit_info)
+            commit_infos.extend(react_commits)
+            all_results.extend(react_results)
+        elif total_failed_files:
+            # Simple fallback when ReAct is disabled
+            for retry_round in range(UPLOAD_FAILED_FILE_MAX_RETRIES):
+                if not total_failed_files:
+                    break
+                logger.info(
+                    f'Retry round {retry_round + 1}/{UPLOAD_FAILED_FILE_MAX_RETRIES}: '
+                    f're-uploading {len(total_failed_files)} failed file(s) ...')
+                retry_failures = []
+                retry_successes = []
+                for (path_in_repo, file_path), _err in total_failed_files:
+                    try:
+                        result = self._upload_single_file(
+                            path_in_repo, file_path,
+                            repo_id=repo_id, repo_type=repo_type,
+                            token=token, tracker=tracker)
+                        retry_successes.append(result)
+                    except Exception as e:
+                        logger.error(f'  Retry failed: {path_in_repo} - {e}')
+                        retry_failures.append(((path_in_repo, file_path), e))
+                if retry_successes:
+                    self._track_uploaded_batch(tracker, retry_successes)
+                    operations = self._build_batch_operations(
+                        retry_successes, repo_type)
+                    if operations:
+                        try:
+                            commit_info = self._commit_with_retry(
+                                repo_id=repo_id,
+                                operations=operations,
+                                commit_message=f'{commit_message} (retry round {retry_round + 1})',
+                                commit_description=commit_description,
+                                token=token,
+                                repo_type=repo_type,
+                                revision=revision)
+                            commit_infos.append(commit_info)
+                            all_results.extend(retry_successes)
+                            self._track_committed_batch(tracker, retry_successes)
+                            logger.info(
+                                f'  Retry round {retry_round + 1}: '
+                                f'committed {len(retry_successes)} file(s).')
+                        except Exception as e:
+                            logger.error(
+                                f'  Retry round {retry_round + 1} commit failed: {e}')
+                            category = classify_error(e)
+                            if not category.is_retryable:
+                                for result in retry_successes:
+                                    tracker.mark_failed(
+                                        result['file_path_in_repo'],
+                                        result['file_mtime'],
+                                        result['file_size_on_disk'],
+                                        error_type='commit_' + category.value)
+                            else:
+                                for result in retry_successes:
+                                    retry_failures.append(
+                                        ((result['file_path_in_repo'],
+                                          result.get('file_path', '')), e))
+                total_failed_files = retry_failures
+
+        # Final tracker save
+        tracker.save()
+
+        # Upload report
+        elapsed = time.time() - start_time
+        total_files = len(sorted_files)
+        failed_count = len(total_failed_files)
+        reused_count = sum(
+            1 for r in all_results if r.get('is_reused'))
+        uploaded_count = sum(
+            1 for r in all_results if not r.get('is_reused'))
+
+        print('=' * 60)
+        print('Upload Report')
+        print('-' * 60)
+        print(f'  Total files      : {total_files}')
+        print(f'  Skipped (cached) : {skipped_count}')
+        print(f'  Existed (server) : {reused_count}')
+        print(f'  Uploaded (PUT)   : {uploaded_count}')
+        print(f'  Failed           : {failed_count}')
+        committed_count = reused_count + uploaded_count
+        print(f'  Committed        : {committed_count}')
+        print(f'  Elapsed          : {elapsed:.1f}s')
+        print('=' * 60)
+
+        # Final error if there are still failed files after all retries
+        if total_failed_files:
+            for (path_in_repo, _), err in total_failed_files:
+                logger.error(f'  - {path_in_repo}: {type(err).__name__}: {err}')
+            succeeded = total_files - failed_count
+            raise RuntimeError(
+                f'ERROR - {failed_count} file(s) failed to upload. '
+                f'Please manually try again. Successfully uploaded '
+                f'{succeeded} file(s) will be automatically skipped '
+                f'during the retry.')
+
+        if not commit_infos:
+            if skipped_count == len(sorted_files):
+                logger.info('All files were already committed.')
+                return None
+            return None
 
         return commit_infos[0] if len(commit_infos) == 1 else commit_infos
+
+    def _retry_failed_files_react(
+            self,
+            failed_files,
+            tracker,
+            repo_id,
+            repo_type,
+            token,
+            commit_message,
+            commit_description,
+            revision,
+            max_workers,
+    ):
+        """ReAct-style progressive retry for failed files.
+
+        Implements Reason-Act-Observe loop with three escalating rounds:
+          Round 1: Parallel retry with reduced concurrency (workers//2, batch=16)
+          Round 2: Serial retry with exponential backoff (delay * 2^min(i, max_exp))
+          Round 3: Single-file commit with long delays (one file per commit)
+
+        Files that exceed the per-file retry limit are classified as permanent
+        failures and will not be retried further.
+
+        Args:
+            failed_files: List of ((path_in_repo, file_path), error) tuples.
+            tracker: UploadTracker or NullTracker instance.
+            repo_id: Repository identifier.
+            repo_type: Repository type.
+            token: Authentication token.
+            commit_message: Base commit message.
+            commit_description: Commit description.
+            revision: Branch or tag name.
+            max_workers: Max upload concurrency from caller.
+
+        Returns:
+            Tuple of (all_failures, commit_infos, all_successes) where:
+              - all_failures: list of ((path_in_repo, file_path), error) for
+                files that could not be resolved (permanent + exhausted retries).
+              - commit_infos: list of CommitInfo for successful retry commits.
+              - all_successes: list of upload result dicts for successfully
+                retried files (to be merged into the upload report).
+        """
+        commit_infos = []
+        all_successes: list = []
+        retry_counts: dict = {}  # path_in_repo -> cumulative retry count
+        permanent_failures = []
+        retryable = list(failed_files)
+
+        # Separate permanent failures
+        remaining = []
+        for item_err in retryable:
+            (path_in_repo, file_path), err = item_err
+            category = classify_error(err)
+            if category.is_retryable:
+                remaining.append(item_err)
+            else:
+                permanent_failures.append(item_err)
+                try:
+                    st = os.stat(file_path) if isinstance(
+                        file_path, (str, os.PathLike)) else None
+                except OSError:
+                    st = None
+                tracker.mark_failed(
+                    path_in_repo,
+                    st.st_mtime if st else 0,
+                    st.st_size if st else 0,
+                    error_type=category.value)
+                logger.error(
+                    f'[ReAct] Permanent failure: {path_in_repo} '
+                    f'({category.value}: {err})')
+        retryable = remaining
+
+        round_configs = [
+            {
+                'name': 'Round 1 (parallel)',
+                'parallel': True,
+                'workers': max(1, max_workers // 2),
+                'batch_size': 16,
+                'delay': 0,
+            },
+            {
+                'name': 'Round 2 (serial+backoff)',
+                'parallel': False,
+                'workers': 1,
+                'batch_size': 8,
+                'delay': UPLOAD_REACT_ROUND2_BASE_DELAY,
+            },
+            {
+                'name': 'Round 3 (single-file)',
+                'parallel': False,
+                'workers': 1,
+                'batch_size': 1,
+                'delay': UPLOAD_REACT_ROUND3_FILE_DELAY,
+            },
+        ]
+
+        for round_idx, cfg in enumerate(round_configs):
+            if not retryable:
+                break
+
+            round_name = cfg['name']
+            logger.info(
+                f'[ReAct] {round_name}: retrying {len(retryable)} file(s) ...')
+
+            round_successes = []
+            round_failures = []
+
+            # ACT: upload files
+            if cfg['parallel'] and len(retryable) > 1:
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+                with ThreadPoolExecutor(max_workers=cfg['workers']) as executor:
+                    future_map = {}
+                    for (path_in_repo, file_path), _err in retryable:
+                        future = executor.submit(
+                            self._upload_single_file,
+                            path_in_repo, file_path,
+                            repo_id=repo_id, repo_type=repo_type,
+                            token=token, tracker=tracker)
+                        future_map[future] = (path_in_repo, file_path)
+                    for future in as_completed(future_map):
+                        path_in_repo, file_path = future_map[future]
+                        try:
+                            result = future.result()
+                            round_successes.append(result)
+                        except Exception as e:
+                            round_failures.append(
+                                ((path_in_repo, file_path), e))
+            else:
+                for i, ((path_in_repo, file_path), _err) in enumerate(retryable):
+                    if cfg['delay'] > 0 and i > 0:
+                        delay = (cfg['delay'] * (2 ** min(i, UPLOAD_REACT_BACKOFF_MAX_EXPONENT))
+                                 if round_idx == 1
+                                 else cfg['delay'])
+                        delay = min(delay, UPLOAD_REACT_MAX_DELAY)
+                        logger.info(
+                            f'[ReAct] Waiting {delay}s before '
+                            f'retrying {path_in_repo} ...')
+                        time.sleep(delay)
+                    try:
+                        result = self._upload_single_file(
+                            path_in_repo, file_path,
+                            repo_id=repo_id, repo_type=repo_type,
+                            token=token, tracker=tracker)
+                        round_successes.append(result)
+                    except Exception as e:
+                        logger.error(
+                            f'[ReAct] {round_name}: '
+                            f'failed {path_in_repo} - {e}')
+                        round_failures.append(
+                            ((path_in_repo, file_path), e))
+
+            all_successes.extend(round_successes)
+
+            # ACT: commit successful uploads in small batches
+            batch_size = min(cfg['batch_size'], max(1, len(round_successes)))
+            for batch_start in range(0, len(round_successes), batch_size):
+                batch = round_successes[batch_start:batch_start + batch_size]
+                # Mark uploaded
+                self._track_uploaded_batch(tracker, batch)
+
+                operations = self._build_batch_operations(batch, repo_type)
+                if not operations:
+                    continue
+                try:
+                    commit_info = self._commit_with_retry(
+                        repo_id=repo_id,
+                        operations=operations,
+                        commit_message=(
+                            f'{commit_message} ({round_name})'),
+                        commit_description=commit_description,
+                        token=token,
+                        repo_type=repo_type,
+                        revision=revision)
+                    commit_infos.append(commit_info)
+                    # Mark committed only after successful commit
+                    self._track_committed_batch(tracker, batch)
+                    logger.info(
+                        f'[ReAct] {round_name}: '
+                        f'committed {len(batch)} file(s).')
+                except Exception as e:
+                    logger.error(
+                        f'[ReAct] {round_name} commit failed: {e}')
+                    category = classify_error(e)
+                    if not category.is_retryable:
+                        for r in batch:
+                            tracker.mark_failed(
+                                r['file_path_in_repo'], r['file_mtime'],
+                                r['file_size_on_disk'],
+                                error_type='commit_' + category.value)
+                    else:
+                        for r in batch:
+                            round_failures.append(
+                                ((r['file_path_in_repo'],
+                                  r['file_path']), e))
+
+            # OBSERVE: classify new failures, enforce per-file retry limit
+            new_retryable = []
+            for item_err in round_failures:
+                (path_in_repo, file_path), err = item_err
+                retry_counts[path_in_repo] = retry_counts.get(path_in_repo, 0) + 1
+                if retry_counts[path_in_repo] >= 3:
+                    permanent_failures.append(item_err)
+                    try:
+                        st = os.stat(file_path) if isinstance(
+                            file_path, (str, os.PathLike)) else None
+                    except OSError:
+                        st = None
+                    tracker.mark_failed(
+                        path_in_repo,
+                        st.st_mtime if st else 0,
+                        st.st_size if st else 0,
+                        error_type='max_retries_exceeded')
+                    logger.error(
+                        f'[ReAct] Max retries exceeded for {path_in_repo}')
+                    continue
+                category = classify_error(err)
+                if category.is_retryable:
+                    new_retryable.append(item_err)
+                else:
+                    permanent_failures.append(item_err)
+                    try:
+                        st = os.stat(file_path) if isinstance(
+                            file_path, (str, os.PathLike)) else None
+                    except OSError:
+                        st = None
+                    tracker.mark_failed(
+                        path_in_repo,
+                        st.st_mtime if st else 0,
+                        st.st_size if st else 0,
+                        error_type=category.value)
+                    logger.error(
+                        f'[ReAct] Permanent failure: {path_in_repo} '
+                        f'({category.value})')
+
+            progress = len(retryable) - len(new_retryable)
+            if progress > 0:
+                logger.info(
+                    f'[ReAct] {round_name}: made progress — '
+                    f'{progress} file(s) resolved, '
+                    f'{len(new_retryable)} remaining.')
+            elif new_retryable:
+                logger.warning(
+                    f'[ReAct] {round_name}: no progress, '
+                    f'escalating to next round.')
+
+            retryable = new_retryable
+
+        # Any remaining retryable failures become permanent at this point
+        all_failures = permanent_failures + retryable
+        if retryable:
+            logger.error(
+                f'[ReAct] {len(retryable)} file(s) still failing '
+                f'after all retry rounds.')
+
+        return all_failures, commit_infos, all_successes
 
     def _upload_blob(
             self,
@@ -2445,32 +3414,42 @@ class HubApi:
             data: Union[str, Path, bytes, BinaryIO],
             disable_tqdm: Optional[bool] = False,
             tqdm_desc: Optional[str] = '[Uploading]',
-            buffer_size_mb: Optional[int] = 1,
+            buffer_size_mb: Optional[int] = 16,
+            token: Optional[str] = None,
+            pre_validated=None,
     ) -> dict:
 
         res_d: dict = dict(
             url=None,
             is_uploaded=False,
+            is_reused=False,
             status_code=None,
             status_msg=None,
         )
 
-        objects = [{'oid': sha256, 'size': size}]
-        upload_objects = self._validate_blob(
-            repo_id=repo_id,
-            repo_type=repo_type,
-            objects=objects,
-        )
-
-        # upload_object: {'url': 'xxx', 'oid': 'xxx'}
-        upload_object = upload_objects[0] if len(upload_objects) == 1 else None
-
-        if upload_object is None:
-            logger.debug(f'Blob {sha256[:8]} has already uploaded, reuse it.')
+        if pre_validated is True:
+            logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
             res_d['is_uploaded'] = True
+            res_d['is_reused'] = True
             return res_d
 
-        cookies = ModelScopeConfig.get_cookies()
+        if isinstance(pre_validated, str):
+            upload_url = pre_validated
+        else:
+            validated = self._validate_blob(
+                repo_id=repo_id,
+                repo_type=repo_type,
+                objects=[{'oid': sha256, 'size': size}],
+                token=token,
+            )
+            upload_url = validated.get(sha256)
+            if upload_url is None:
+                logger.info(f'Blob {sha256[:8]} already exists globally, reuse.')
+                res_d['is_uploaded'] = True
+                res_d['is_reused'] = True
+                return res_d
+
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         cookies = dict(cookies) if cookies else None
         if cookies is None:
             raise ValueError('Token does not exist, please login first.')
@@ -2478,14 +3457,8 @@ class HubApi:
         self.headers.update({'Cookie': f"m_session_id={cookies['m_session_id']}"})
         headers = self.builder_headers(self.headers)
 
-        def read_in_chunks(file_object, pbar, chunk_size=buffer_size_mb * 1024 * 1024):
-            """Lazy function (generator) to read a file piece by piece."""
-            while True:
-                ck = file_object.read(chunk_size)
-                if not ck:
-                    break
-                pbar.update(len(ck))
-                yield ck
+        chunk_size = buffer_size_mb * 1024 * 1024
+        headers['Content-Length'] = str(size)
 
         with tqdm(
                 total=size,
@@ -2494,28 +3467,39 @@ class HubApi:
                 desc=tqdm_desc,
                 disable=disable_tqdm
         ) as pbar:
-
             if isinstance(data, (str, Path)):
                 with open(data, 'rb') as f:
-                    response = requests.put(
-                        upload_object['url'],
+                    stream = _CountedReadStream(
+                        f, size, pbar, chunk_size)
+                    response = self.session.put(
+                        upload_url,
                         headers=headers,
-                        data=read_in_chunks(f, pbar)
+                        data=stream,
+                        timeout=UPLOAD_BLOB_TIMEOUT,
                     )
+                stream.verify_complete()
 
             elif isinstance(data, bytes):
-                response = requests.put(
-                    upload_object['url'],
+                stream = _CountedReadStream(
+                    io.BytesIO(data), size, pbar, chunk_size)
+                response = self.session.put(
+                    upload_url,
                     headers=headers,
-                    data=read_in_chunks(io.BytesIO(data), pbar)
+                    data=stream,
+                    timeout=UPLOAD_BLOB_TIMEOUT,
                 )
+                stream.verify_complete()
 
             elif isinstance(data, io.BufferedIOBase):
-                response = requests.put(
-                    upload_object['url'],
+                stream = _CountedReadStream(
+                    data, size, pbar, chunk_size)
+                response = self.session.put(
+                    upload_url,
                     headers=headers,
-                    data=read_in_chunks(data, pbar)
+                    data=stream,
+                    timeout=UPLOAD_BLOB_TIMEOUT,
                 )
+                stream.verify_complete()
 
             else:
                 raise ValueError('Invalid data type to upload')
@@ -2524,7 +3508,8 @@ class HubApi:
         resp = response.json()
         raise_on_error(rsp=resp)
 
-        res_d['url'] = upload_object['url']
+        res_d['url'] = upload_url
+        res_d['is_uploaded'] = True
         res_d['status_code'] = resp['Code']
         res_d['status_msg'] = resp['Message']
 
@@ -2536,58 +3521,65 @@ class HubApi:
             repo_id: str,
             repo_type: str,
             objects: List[Dict[str, Any]],
-            endpoint: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """
-        Check the blob has already uploaded.
-        True -- uploaded; False -- not uploaded.
+            endpoint: Optional[str] = None,
+            token: Optional[str] = None,
+    ) -> Dict[str, Optional[str]]:
+        """Validate whether blobs need uploading.
+
+        Queries the LFS batch API in chunks of UPLOAD_VALIDATE_BLOB_BATCH_SIZE.
 
         Args:
-            repo_id (str): The repo id ModelScope.
-            repo_type (str): The repo type. `dataset`, `model`, etc.
-            objects (List[Dict[str, Any]]): The objects to check.
-                oid (str): The sha256 hash value.
-                size (int): The size of the blob.
-            endpoint: the endpoint to use, default to None to use endpoint specified in the class
+            repo_id: The repo id on ModelScope.
+            repo_type: The repo type ('dataset', 'model', etc.).
+            objects: Objects to check, each with 'oid' (sha256) and 'size'.
+            endpoint: API endpoint override.
+            token: Access token.
 
         Returns:
-            List[Dict[str, Any]]: The result of the check.
+            Dict mapping oid -> upload_url (needs upload) or None (already exists).
         """
-
-        # construct URL
         if not endpoint:
             endpoint = self.endpoint
-        url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch'
 
-        # build payload
-        payload = {
-            'operation': 'upload',
-            'objects': objects,
-        }
+        result: Dict[str, Optional[str]] = {}
+        batch_size = UPLOAD_VALIDATE_BLOB_BATCH_SIZE
 
-        cookies = ModelScopeConfig.get_cookies()
-        if cookies is None:
-            raise ValueError('Token does not exist, please login first.')
-        response = requests.post(
-            url,
-            headers=self.builder_headers(self.headers),
-            data=json.dumps(payload),
-            cookies=cookies
-        )
+        for i in range(0, len(objects), batch_size):
+            chunk = objects[i:i + batch_size]
 
-        raise_for_http_status(rsp=response)
-        resp = response.json()
-        raise_on_error(rsp=resp)
+            url = f'{endpoint}/api/v1/repos/{repo_type}s/{repo_id}/info/lfs/objects/batch'
+            payload = {
+                'operation': 'upload',
+                'objects': chunk,
+            }
 
-        upload_objects = []  # list of objects to upload, [{'url': 'xxx', 'oid': 'xxx'}, ...]
-        resp_objects = resp['Data']['objects']
-        for obj in resp_objects:
-            upload_objects.append(
-                {'url': obj['actions']['upload']['href'],
-                 'oid': obj['oid']}
+            cookies = self.get_cookies(access_token=token, cookies_required=True)
+            response = self.session.post(
+                url,
+                headers=self.builder_headers(self.headers),
+                data=json.dumps(payload),
+                cookies=cookies
             )
 
-        return upload_objects
+            raise_for_http_status(rsp=response)
+            resp = response.json()
+            raise_on_error(rsp=resp)
+
+            resp_objects = resp['Data']['objects']
+            needs_upload = set()
+            for obj in resp_objects:
+                actions = obj.get('actions', {})
+                upload_action = actions.get('upload')
+                if upload_action:
+                    result[obj['oid']] = upload_action['href']
+                    needs_upload.add(obj['oid'])
+
+            # Objects not needing upload are globally existing
+            for o in chunk:
+                if o['oid'] not in needs_upload:
+                    result[o['oid']] = None
+
+        return result
 
     def _prepare_upload_folder(
             self,
@@ -2675,7 +3667,7 @@ class HubApi:
             if isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'normal':
 
                 commit_action = {
-                    'action': 'update' if operation._is_uploaded else 'create',
+                    'action': 'create',
                     'path': operation.path_in_repo,
                     'type': 'normal',
                     'size': operation.upload_info.size,
@@ -2689,7 +3681,7 @@ class HubApi:
             elif isinstance(operation, CommitOperationAdd) and operation._upload_mode == 'lfs':
 
                 commit_action = {
-                    'action': 'update' if operation._is_uploaded else 'create',
+                    'action': 'create',
                     'path': operation.path_in_repo,
                     'type': 'lfs',
                     'size': operation.upload_info.size,
@@ -2755,7 +3747,8 @@ class HubApi:
                      delete_patterns: Union[str, List[str]],
                      *,
                      revision: Optional[str] = DEFAULT_MODEL_REVISION,
-                     endpoint: Optional[str] = None) -> Dict[str, Any]:
+                     endpoint: Optional[str] = None,
+                     token: Optional[str] = None) -> Dict[str, Any]:
         """
         Delete files in batch using glob (wildcard) patterns, e.g. '*.py', 'data/*.csv', 'foo*', etc.
 
@@ -2780,6 +3773,7 @@ class HubApi:
             delete_patterns (str or List[str]): List of glob patterns, e.g. '*.py', 'data/*.csv', 'foo*'
             revision (str, optional): Branch or tag name
             endpoint (str, optional): API endpoint
+            token (str, optional): Access token
         Returns:
             dict: Deletion result
         """
@@ -2790,7 +3784,7 @@ class HubApi:
         if isinstance(delete_patterns, str):
             delete_patterns = [delete_patterns]
 
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = self.get_cookies(access_token=token, cookies_required=True)
         if not endpoint:
             endpoint = self.endpoint
         if cookies is None:
@@ -2809,6 +3803,9 @@ class HubApi:
             file_paths = [f['Path'] for f in files]
         elif repo_type == REPO_TYPE_DATASET:
             file_paths = []
+            _owner, _dataset_name = repo_id.split('/')
+            _hub_id, _ = self.get_dataset_id_and_type(
+                dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint, token=token)
             page_number = 1
             page_size = 100
             while True:
@@ -2820,6 +3817,8 @@ class HubApi:
                         page_number=page_number,
                         page_size=page_size,
                         endpoint=endpoint,
+                        token=token,
+                        dataset_hub_id=_hub_id,
                     )
                 except Exception as e:
                     logger.error(f'Get dataset: {repo_id} file list failed, message: {str(e)}')
@@ -2909,8 +3908,14 @@ class HubApi:
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
         if repo_type == REPO_TYPE_MODEL:
-            model_info = self.get_model(model_id=repo_id)
+            model_info = self.get_model(model_id=repo_id, token=token)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
+            tasks = model_info.get('Tasks')
+            model_tasks = ''
+            if isinstance(tasks, list) and tasks:
+                first = tasks[0]
+                if isinstance(first, dict) and first:
+                    model_tasks = first.get('name')
             payload = {
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),
@@ -2924,7 +3929,7 @@ class HubApi:
                 'SubScientificField': model_info.get('SubScientificField', None),
                 'ScientificField': model_info.get('NEXA', {}).get('ScientificField', ''),
                 'Source': model_info.get('NEXA', {}).get('Source', ''),
-                'ModelTask': model_info.get('Tasks', [{}])[0].get('name'),
+                'ModelTask': model_tasks,
                 'License': model_info.get('License', ''),
             }
         elif repo_type == REPO_TYPE_DATASET:
@@ -2936,6 +3941,7 @@ class HubApi:
             dataset_idx, _ = self.get_dataset_id_and_type(
                 dataset_name=repo_id_parts[1],
                 namespace=repo_id_parts[0],
+                token=token
             )
 
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
@@ -2957,6 +3963,116 @@ class HubApi:
         raise_on_error(resp)
 
         return resp
+
+    # ============= Collection API =============
+    def get_collection(self,
+                       collection_id: str,
+                       repo_type: str = 'skill',
+                       page_number: int = 1,
+                       page_size: int = 50,
+                       endpoint: Optional[str] = None) -> dict:
+        """Get collection details and its elements.
+
+        Args:
+            collection_id (str): The collection ID (Fid).
+            repo_type (str): Element type filter, only 'skill' is supported currently.
+            page_number (int): Page number for pagination.
+            page_size (int): Page size for pagination.
+
+        Returns:
+            dict: Collection details including elements.
+
+        Raises:
+            ValueError: If repo_type is not 'skill'.
+            RequestError: If the API request fails.
+        """
+        if not endpoint:
+            endpoint = self.endpoint
+        if repo_type != 'skill':
+            raise ValueError(
+                f'repo_type={repo_type} is not supported, '
+                'only "skill" is currently supported.')
+        cookies = self.get_cookies()
+        path = f'{endpoint}/api/v1/collections'
+        params = {
+            'Fid': collection_id,
+            'ElementType': repo_type,
+            'PageNumber': page_number,
+            'PageSize': page_size,
+        }
+        r = self.session.get(path, params=params, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+        d = r.json()
+        raise_on_error(d)
+        return d[API_RESPONSE_FIELD_DATA]
+
+    def download_skill(self, skill_id: str,
+                       local_dir: Optional[str] = None,
+                       endpoint: Optional[str] = None) -> str:
+        """Download a single skill archive and extract it.
+
+        Args:
+            skill_id (str): The skill identifier in format '<path>/<name>'.
+            local_dir (Optional[str]): Target directory for extraction.
+                Defaults to current directory.
+
+        Returns:
+            str: Path to the extracted skill directory.
+
+        Raises:
+            ValueError: If skill_id format is invalid.
+            RequestError: If the download request fails.
+        """
+        if not endpoint:
+            endpoint = self.endpoint
+        element_path, element_name = RepoUtils.validate_repo_id(skill_id)
+
+        cookies = self.get_cookies()
+        url = f'{endpoint}/api/v1/skills/{element_path}/{element_name}/archive/zip/master'
+
+        if local_dir is None:
+            local_dir = os.getcwd()
+        os.makedirs(local_dir, exist_ok=True)
+
+        # Build skill directory name: use element_name directly, overwrite if exists, to avoid corrupted state
+        skill_dir = os.path.join(local_dir, element_name)
+
+        r = self.session.get(url, stream=True, cookies=cookies,
+                             headers=self.builder_headers(self.headers))
+        raise_for_http_status(r)
+
+        # Save to temp zip file then extract
+        zip_path = os.path.join(local_dir, f'{element_name}.zip')
+        try:
+            with open(zip_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
+            # Clean existing directory to avoid corrupted state
+            if os.path.exists(skill_dir):
+                shutil.rmtree(skill_dir)
+            os.makedirs(skill_dir, exist_ok=True)
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                zf.extractall(skill_dir)
+
+            # Flatten if zip contains a single top-level directory
+            entries = os.listdir(skill_dir)
+            if len(entries) == 1:
+                nested_dir = os.path.join(skill_dir, entries[0])
+                if os.path.isdir(nested_dir):
+                    for item in os.listdir(nested_dir):
+                        shutil.move(
+                            os.path.join(nested_dir, item),
+                            os.path.join(skill_dir, item))
+                    os.rmdir(nested_dir)
+        finally:
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+
+        logger.info(f'Skill {element_path}/{element_name} downloaded to {skill_dir}')
+        return skill_dir
 
 
 class ModelScopeConfig:
@@ -2986,6 +4102,8 @@ class ModelScopeConfig:
         if os.path.exists(cookies_path):
             with open(cookies_path, 'rb') as f:
                 cookies = pickle.load(f)
+                if not cookies:
+                    return None
                 for cookie in cookies:
                     if cookie.name == 'm_session_id' and cookie.is_expired() and \
                             not ModelScopeConfig.cookie_expired_warning:

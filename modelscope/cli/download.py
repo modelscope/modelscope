@@ -1,16 +1,20 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
+import logging
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
+from modelscope.cli.utils import concurrent_download
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import DEFAULT_MAX_WORKERS
+from modelscope.hub.constants import DEFAULT_MAX_WORKERS, DEFAULT_SKILLS_DIR
 from modelscope.hub.file_download import (dataset_file_download,
                                           model_file_download)
 from modelscope.hub.snapshot_download import (dataset_snapshot_download,
                                               snapshot_download)
-from modelscope.hub.utils.utils import convert_patterns
+from modelscope.hub.utils.utils import convert_patterns, resolve_endpoint
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION
+from modelscope.utils.logger import get_logger
+
+logger = get_logger(log_level=logging.WARNING)
 
 
 def subparser_func(args):
@@ -41,6 +45,11 @@ class DownloadCMD(CLICommand):
             type=str,
             help='The id of the dataset to be downloaded. For download, '
             'the id of either a model or dataset must be provided.')
+        group.add_argument(
+            '--collection',
+            type=str,
+            default=None,
+            help='The ID of the collection to download (skills only)')
         parser.add_argument(
             'repo_id',
             type=str,
@@ -98,6 +107,17 @@ class DownloadCMD(CLICommand):
             help='Glob patterns to exclude from files to download.'
             'Ignored if file is specified')
         parser.add_argument(
+            '--endpoint',
+            type=str,
+            default=None,
+            help='ModelScope server endpoint, e.g. modelscope.cn or '
+            'modelscope.ai   Full URL like '
+            'https://modelscope.cn is also accepted. Scheme (https://) is '
+            'auto-completed if omitted. Falls back to env MODELSCOPE_DOMAIN, '
+            'then defaults to https://www.modelscope.cn. '
+            'When omitted, the CLI auto-detects the correct site '
+            '(cn/intl) for download.')
+        parser.add_argument(
             '--max-workers',
             type=int,
             default=DEFAULT_MAX_WORKERS,
@@ -122,11 +142,15 @@ class DownloadCMD(CLICommand):
                 else:
                     raise Exception('Not support repo-type: %s'
                                     % self.args.repo_type)
-        if not self.args.model and not self.args.dataset:
-            raise Exception('Model or dataset must be set.')
+        if not self.args.model and not self.args.dataset and not self.args.collection:
+            raise Exception('Model, dataset, or collection must be set.')
+        if self.args.endpoint:
+            endpoint = resolve_endpoint(self.args.endpoint)
+        else:
+            endpoint = None
         cookies = None
         if self.args.token is not None:
-            api = HubApi()
+            api = HubApi(endpoint=endpoint)
             cookies = api.get_cookies(access_token=self.args.token)
         if self.args.model:
             if len(self.args.files) == 1:  # download single file
@@ -136,7 +160,9 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     revision=self.args.revision,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 snapshot_download(
@@ -146,7 +172,9 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             else:  # download repo
                 snapshot_download(
                     self.args.model,
@@ -156,7 +184,9 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=convert_patterns(self.args.include),
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             print(f'\nSuccessfully Downloaded from model {self.args.model}.\n')
         elif self.args.dataset:
             dataset_revision: str = self.args.revision if self.args.revision else DEFAULT_DATASET_REVISION
@@ -167,7 +197,9 @@ class DownloadCMD(CLICommand):
                     cache_dir=self.args.cache_dir,
                     local_dir=self.args.local_dir,
                     revision=dataset_revision,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             elif len(
                     self.args.files) > 1:  # download specified multiple files.
                 dataset_snapshot_download(
@@ -177,7 +209,9 @@ class DownloadCMD(CLICommand):
                     local_dir=self.args.local_dir,
                     allow_file_pattern=self.args.files,
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             else:  # download repo
                 dataset_snapshot_download(
                     self.args.dataset,
@@ -187,9 +221,63 @@ class DownloadCMD(CLICommand):
                     allow_file_pattern=convert_patterns(self.args.include),
                     ignore_file_pattern=convert_patterns(self.args.exclude),
                     max_workers=self.args.max_workers,
-                    cookies=cookies)
+                    cookies=cookies,
+                    token=self.args.token,
+                    endpoint=endpoint)
             print(
                 f'\nSuccessfully Downloaded from dataset {self.args.dataset}.\n'
             )
+        elif self.args.collection:
+            api = HubApi(endpoint=endpoint, token=self.args.token)
+            local_dir = self.args.local_dir or DEFAULT_SKILLS_DIR
+            data = api.get_collection(
+                self.args.collection, repo_type='skill', endpoint=endpoint)
+            elements = data.get('CollectionElements',
+                                {}).get('CollectionElementVoList', [])
+
+            logger.info(
+                f'Collection {self.args.collection} has {len(elements)} elements.'
+            )
+
+            if not elements:
+                print(f'No skill elements found in collection: '
+                      f'{self.args.collection}')
+                return
+
+            # Validate elements have required fields
+            valid_elements = []
+            for elem in elements:
+                if not elem.get('ElementPath') or not elem.get('ElementName'):
+                    logger.warning('Skipping malformed collection element: %s',
+                                   elem)
+                    continue
+                valid_elements.append(elem)
+
+            if not valid_elements:
+                print(f'No valid skill elements found in collection: '
+                      f'{self.args.collection}')
+                return
+
+            print(f'Found {len(valid_elements)} skill(s) in collection, '
+                  f'downloading...')
+
+            def _download_one_skill(element):
+                element_path = element['ElementPath']
+                element_name = element['ElementName']
+                skill_id = f'{element_path}/{element_name}'
+                try:
+                    skill_dir = api.download_skill(
+                        skill_id=skill_id,
+                        local_dir=local_dir,
+                        endpoint=endpoint)
+                    return (skill_id, skill_dir, None)
+                except Exception as e:
+                    return (skill_id, None, str(e))
+
+            concurrent_download(
+                _download_one_skill,
+                valid_elements,
+                max_workers=self.args.max_workers,
+                item_name='skill')
         else:
             pass  # noop

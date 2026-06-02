@@ -18,7 +18,7 @@ from modelscope.trainers import build_trainer
 from modelscope.trainers.default_config import merge_hooks
 from modelscope.utils.constant import LogKeys, ModelFile, TrainerStages
 from modelscope.utils.registry import default_group
-from modelscope.utils.test_utils import create_dummy_test_dataset
+from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
 dummy_dataset = create_dummy_test_dataset(
     np.random.random(size=(5, )), np.random.randint(0, 4, (1, )), 10)
@@ -70,6 +70,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_lr_scheduler_hook(self):
         global _global_iter
         _global_iter = 0
@@ -133,6 +134,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         self.assertListEqual(log_lrs, target_lrs)
         self.assertListEqual(optim_lrs, target_lrs)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_accumulation_step(self):
         json_cfg = {
             'task': 'image_classification',
@@ -217,6 +219,7 @@ class LrSchedulerHookTest(unittest.TestCase):
         self.assertTrue(all(np.isclose(log_lrs, target_lrs)))
         self.assertTrue(all(np.isclose(optim_lrs, target_lrs)))
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_warmup_lr_scheduler_hook(self):
         global _global_iter
         _global_iter = 0
@@ -308,6 +311,7 @@ class PlateauLrSchedulerHookTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_plateau_lr_scheduler_hook(self):
         global _global_iter
         _global_iter = 0

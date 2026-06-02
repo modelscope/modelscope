@@ -141,4 +141,4 @@ class UniDeepFsmnDilated(nn.Module):
         out = self.conv(x_per)
         out1 = out.permute(0, 3, 2, 1)
 
-        return input + out1.squeeze()
+        return input + out1.squeeze(dim=1)

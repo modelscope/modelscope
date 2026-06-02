@@ -1,0 +1,214 @@
+ARG BUILD_BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
+ARG PYTHON_VERSION=3.12
+ARG UV_EXTRA_INDEX_URL=https://repos.metax-tech.com/r/maca-pypi/simple
+ARG UV_TRUSTED_HOST=repos.metax-tech.com
+
+# may need passing a particular vllm version during build
+ARG VLLM_VERSION
+ARG MACA_VERSION
+ARG CU_BRIDGE_VERSION=${MACA_VERSION}
+
+#################### BASE BUILD IMAGE ####################
+FROM ${BUILD_BASE_IMAGE} AS base
+ARG UV_TRUSTED_HOST
+# maca environment variables
+ENV MACA_PATH=/opt/maca
+ENV MACA_CLANG_PATH=/opt/maca/mxgpu_llvm/bin
+ENV CUCC_PATH="${MACA_PATH}/tools/cu-bridge"
+ENV CUDA_PATH=/root/cu-bridge/CUDA_DIR
+ENV CUCC_CMAKE_ENTRY=2
+ENV PATH="/opt/venv/bin:/root/.local/bin:$PATH"
+ENV PATH=/opt/mxdriver/bin:${MACA_PATH}/bin:${MACA_PATH}/mxgpu_llvm/bin:${MACA_PATH}/tools/cu-bridge/tools:${MACA_PATH}/tools/cu-bridge/bin:${PATH}
+ENV LD_LIBRARY_PATH=/opt/mxdriver/lib:${MACA_PATH}/lib:${MACA_PATH}/mxgpu_llvm/lib:${MACA_PATH}/ompi/lib:${MACA_PATH}/ucx/lib:${LD_LIBRARY_PATH}
+
+# uv environment variables
+ENV VIRTUAL_ENV=/opt/venv
+ENV UV_INDEX_STRATEGY="unsafe-best-match"
+ENV UV_HTTP_TIMEOUT=6000
+ENV UV_LINK_MODE=copy
+ARG UV_EXTRA_INDEX_URL
+ENV UV_EXTRA_INDEX_URL=${UV_EXTRA_INDEX_URL}
+ARG UV_INDEX_URL
+ENV UV_INDEX_URL=http://mirrors.aliyun.com/pypi/simple
+ENV UV_TRUSTED_INDEX_HOST=mirrors.aliyun.com
+ENV UV_OVERRIDE=/workspace/override.txt
+# vllm compile option
+ENV VLLM_INSTALL_PUNICA_KERNELS=1
+
+# AI version arguments
+ARG PYTHON_VERSION
+ARG VLLM_VERSION
+ARG VLLM_METAX_VERSION
+ARG MACA_VERSION
+ARG MEGATRON_VERSION
+ARG SWIFT_VERSION
+ARG CU_BRIDGE_VERSION
+ARG TE_VERSION
+# ARG UV_INDEX_URL
+
+
+WORKDIR /workspace
+COPY override.txt /workspace/override.txt
+COPY requirements_extra.txt /workspace/requirements_extra.txt
+
+RUN printf "[metax-centos]\n\
+name=Maca Driver Yum Repository\n\
+baseurl=https://repos.metax-tech.com/r/metax-driver-centos-$(uname -m)/\n\
+enabled=1\n\
+gpgcheck=0" > /etc/yum.repos.d/metax-driver-centos.repo
+
+RUN cat /etc/yum.repos.d/ubi.repo
+
+RUN dnf -y install python3-pip  hostname && \
+    dnf clean all
+
+RUN python3 -m pip install  uv -i $UV_INDEX_URL --trusted-host ${UV_TRUSTED_INDEX_HOST} && \
+    uv venv /opt/venv --python=${PYTHON_VERSION}
+
+RUN python3 --version && \
+    uv self version
+
+RUN yum makecache && yum install -y \
+    unzip vim git openblas-devel make cmake \
+    ninja-build gcc g++ procps-ng \
+    libibverbs librdmacm libibumad \
+    && yum clean all
+
+
+RUN git clone --branch ${SWIFT_VERSION} https://github.com/modelscope/ms-swift.git
+RUN git clone --branch ${VLLM_METAX_VERSION} https://github.com/MetaX-MACA/vLLM-metax.git
+RUN git clone --branch ${VLLM_VERSION} https://github.com/vllm-project/vllm.git
+RUN git clone --branch ${MEGATRON_VERSION} https://github.com/NVIDIA/Megatron-LM.git
+
+# ======================
+# Step 1: install MACA SDK  Metax-Driver and cu-bridge
+# ======================
+RUN printf "[metax-centos]\n\
+name=Maca Driver Yum Repository\n\
+baseurl=https://repos.metax-tech.com/r/metax-driver-centos-$(uname -m)/\n\
+enabled=1\n\
+gpgcheck=0" > /etc/yum.repos.d/metax-driver-centos.repo
+
+# would install the newest 3.1.0.x release
+# Metax-Driver mainly contains vbios and kmd file, which are not needed in a container.
+# Here we want to get the mx-smi management tool.
+# kernel version mismatch errors are ignored
+RUN yum makecache && \
+    yum install -y metax-driver-${MACA_VERSION}* mxgvm && \
+    yum clean all && rm -rf /var/cache/yum /tmp/*
+
+# Installing MACA SDK
+RUN printf "[maca-sdk]\n\
+name=Maca Sdk Yum Repository\n\
+baseurl=https://repos.metax-tech.com/r/maca-sdk-rpm-$(uname -m)/\n\
+enabled=1\n\
+gpgcheck=0" > /etc/yum.repos.d/maca-sdk-rpm.repo
+
+RUN yum makecache && \
+    yum install -y maca_sdk-${MACA_VERSION}* && \
+    yum clean all && rm -rf /var/cache/yum /tmp/*
+
+RUN cd /tmp/ && \
+    export MACA_PATH=/opt/maca && \
+    curl -o ${CU_BRIDGE_VERSION}.zip -LsSf https://gitee.com/metax-maca/cu-bridge/repository/archive/${CU_BRIDGE_VERSION}.zip && \
+    unzip ${CU_BRIDGE_VERSION}.zip && \
+    mv cu-bridge-${CU_BRIDGE_VERSION} cu-bridge && \
+    chmod 755 cu-bridge -Rf && \
+    cd cu-bridge && \
+    mkdir build && cd ./build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/opt/maca/tools/cu-bridge ../ && \
+    make && make install
+
+# ======================
+# Step 2: install Metax  requirements
+# ======================
+
+RUN rpm -e --nodeps \
+        mcflashattn_${MACA_VERSION} \
+        mcflashinfer_${MACA_VERSION} \
+        mxreport-${MACA_VERSION} \
+        mccltests-${MACA_VERSION} && \
+    find /opt/maca/ -type f -name "*.a" -delete && \
+    yum clean all && rm -rf /var/cache/yum /tmp/*
+
+
+RUN echo $PATH
+ARG UV_EXTRA_INDEX_URL=https://repos.metax-tech.com/r/maca-pypi/simple
+ARG UV_TRUSTED_HOST=repos.metax-tech.com
+RUN cd vLLM-metax \
+    &&  uv pip install -r requirements/build.txt \
+    && uv pip install build
+
+
+
+RUN yum makecache && yum install -y \
+    gcc \
+    binutils \
+    procps-ng \
+    libibverbs \
+    librdmacm \
+    libibumad \
+    openblas \
+    numactl-libs \
+    && yum clean all && rm -rf /var/cache/yum /tmp/*
+
+
+# ======================
+# Step 3: install Metax python requirements
+# ======================
+
+
+RUN cd vLLM-metax \
+    && UV_HTTP_TIMEOUT=960 uv pip install -r requirements/maca.txt --trusted-host ${UV_TRUSTED_HOST}
+
+# ======================
+# Step 4: Build vLLM with empty device (to avoid CUDA dependency)
+# ======================
+RUN cd vllm \
+    && python3 use_existing_torch.py \
+    && uv pip install -r requirements/build.txt
+
+RUN cd vllm \
+    && VLLM_TARGET_DEVICE=empty uv pip install -v . --no-build-isolation
+
+# ======================
+# Step 5: Build vLLM-metax
+# ======================
+RUN  uv pip list
+RUN cd vLLM-metax \
+    && uv pip install -r requirements/build.txt \
+    && python3 -m build -w -n\
+    && uv pip install dist/*.whl
+
+
+# ======================
+# Step 6: Clone and patch Megatron-LM
+# ======================
+RUN  sed -i 's/nvcc/cucc/g' /workspace/Megatron-LM/megatron/legacy/fused_kernels/__init__.py
+RUN cd Megatron-LM \
+    && uv pip install .
+
+# ======================
+# Step 6: install TE
+# ======================
+
+RUN uv pip install transformer_engine==${TE_VERSION} -i https://repos.metax-tech.com/r/maca-pypi/simple --trusted-host ${UV_TRUSTED_HOST}
+# ======================
+# Step 5: Clone, patch and install ms-swift
+# ======================
+
+RUN sed -i '0,/^\(from \|import \)/{s//import vllm_metax.patch\n&/}' ms-swift/swift/__init__.py \
+    && cd ms-swift \
+    && uv pip install -r requirements.txt \
+    && uv pip install .
+
+# ======================
+# Step 6: other requirements
+# ======================
+RUN uv pip install deepspeed -i https://repos.metax-tech.com/r/maca-pypi/simple --trusted-host ${UV_TRUSTED_HOST}
+RUN uv pip install pip
+RUN uv pip install -r requirements_extra.txt
+RUN ln -sf ${CUDA_PATH}/bin/nvcc ${CUDA_PATH}/bin/cucc
+# Fix(hank): don't know why vllm installation also brings in flashinfer-python, remove it here.
+RUN uv pip uninstall flashinfer-python cupy-cuda12x
+#################### FINAL IMAGE ####################

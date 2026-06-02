@@ -20,7 +20,8 @@ repos:
             (?x)^(
                 examples/|
                 modelscope/utils/ast_index_file.py|
-                modelscope/fileio/format/jsonplus.py
+                modelscope/fileio/format/jsonplus.py|
+                modelscope/msdatasets/utils/_module_factories\.py
             )$
   - repo: https://github.com/pre-commit/mirrors-yapf.git
     rev: v0.30.0
@@ -31,7 +32,8 @@ repos:
                 thirdparty/|
                 examples/|
                 modelscope/utils/ast_index_file.py|
-                modelscope/fileio/format/jsonplus.py
+                modelscope/fileio/format/jsonplus.py|
+                modelscope/msdatasets/utils/_module_factories\.py
             )$
   - repo: https://github.com/pre-commit/pre-commit-hooks.git
     rev: v3.1.0

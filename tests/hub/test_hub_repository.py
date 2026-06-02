@@ -45,7 +45,10 @@ class HubRepositoryTest(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(self.old_cwd)
-        self.api.delete_model(model_id=self.model_id)
+        try:
+            self.api.delete_model(model_id=self.model_id)
+        except Exception as e:
+            logger.warning(f'Failed to delete model {self.model_id}: {e}')
 
     def test_clone_repo(self):
         Repository(self.model_dir, clone_from=self.model_id)

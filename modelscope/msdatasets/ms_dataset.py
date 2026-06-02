@@ -9,7 +9,6 @@ import numpy as np
 from datasets import (Dataset, DatasetDict, Features, IterableDataset,
                       IterableDatasetDict)
 from datasets.packaged_modules import _PACKAGED_DATASETS_MODULES
-from datasets.utils.file_utils import is_relative_path
 
 from modelscope.hub.repository import DatasetRepository
 from modelscope.msdatasets.context.dataset_context_config import \
@@ -32,6 +31,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        REPO_TYPE_DATASET, ConfigFields,
                                        DatasetFormations, DownloadMode, Hubs,
                                        ModeKeys, Tasks, UploadMode)
+from modelscope.utils.file_utils import is_relative_path
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 
@@ -245,6 +245,15 @@ class MsDataset:
                 f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make sure that '
                 'you can trust the external codes.')
 
+        # Raise csv field size limit to avoid errors with large cells
+        if config_kwargs.pop('engine', None) == 'python':
+            import csv as csv_module
+            import sys
+            try:
+                csv_module.field_size_limit(sys.maxsize)
+            except OverflowError:
+                csv_module.field_size_limit(2147483647)
+
         # Init context config
         dataset_context_config = DatasetContextConfig(
             dataset_name=dataset_name,
@@ -283,10 +292,15 @@ class MsDataset:
             return load_dataset(
                 dataset_name,
                 name=subset_name,
+                data_dir=data_dir,
+                data_files=data_files,
                 split=split,
-                streaming=use_streaming,
+                cache_dir=cache_dir,
+                features=features,
                 download_mode=download_mode.value,
-                trust_remote_code=trust_remote_code,
+                revision=version,
+                token=token,
+                streaming=use_streaming,
                 **config_kwargs)
 
         # Load from the modelscope hub

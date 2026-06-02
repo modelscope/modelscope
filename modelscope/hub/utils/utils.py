@@ -1,11 +1,11 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import contextlib
+import errno
 import hashlib
 import os
 import sys
 import time
-import zoneinfo
 from datetime import datetime
 from pathlib import Path
 from typing import Generator, List, Optional, Union
@@ -18,7 +18,6 @@ from modelscope.hub.constants import (DEFAULT_MODELSCOPE_DOMAIN,
                                       MODEL_ID_SEPARATOR, MODELSCOPE_DOMAIN,
                                       MODELSCOPE_SDK_DEBUG,
                                       MODELSCOPE_URL_SCHEME)
-from modelscope.hub.errors import FileIntegrityError
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -65,6 +64,83 @@ def convert_patterns(raw_input: Union[str, List[str]]):
                 else:
                     output.append(s.strip())
     return output
+
+
+def extract_root_from_patterns(
+    allow_file_pattern: Optional[List[str]] = None,
+    allow_patterns: Optional[List[str]] = None,
+) -> Optional[str]:
+    """Extract common directory prefix from include patterns for server-side filtering.
+
+    Only processes allow/include patterns (ignore/exclude is irrelevant for prefix).
+    Returns None if no meaningful prefix can be extracted.
+
+    Algorithm:
+    1. Merge allow_file_pattern and allow_patterns into one list
+    2. For each pattern, find position of first wildcard char (* ? [)
+    3. Extract text before that position, then take directory part (up to last '/')
+    4. Find longest common directory prefix (path-segment-aware)
+    5. Return None if no valid common prefix
+
+    Examples:
+        ['TacExo/*'] -> 'TacExo'
+        ['data/train/*.parquet'] -> 'data/train'
+        ['data/train/*', 'data/valid/*'] -> 'data'
+        ['*.safetensors'] -> None
+        ['TacExo/*', 'OtherDir/*'] -> None (no common prefix)
+        ['data/*/train.csv'] -> 'data'
+    """
+    # Merge both pattern lists
+    patterns = []
+    if allow_file_pattern:
+        patterns.extend(allow_file_pattern)
+    if allow_patterns:
+        patterns.extend(allow_patterns)
+
+    if not patterns:
+        return None
+
+    extracted_dirs = []
+    for pattern in patterns:
+        # Find position of first wildcard character
+        first_wildcard = len(pattern)
+        for wc in ('*', '?', '['):
+            pos = pattern.find(wc)
+            if pos != -1:
+                first_wildcard = min(first_wildcard, pos)
+
+        # Get text before wildcard
+        prefix = pattern[:first_wildcard]
+
+        # Extract directory part (up to last '/')
+        last_sep = prefix.rfind('/')
+        if last_sep > 0:
+            dir_part = prefix[:last_sep]
+            # Validate: no wildcards should remain in dir_part
+            if not any(c in dir_part for c in ('*', '?', '[')):
+                extracted_dirs.append(dir_part)
+        # If no '/' found or only at position 0, this pattern has no directory prefix
+
+    if not extracted_dirs:
+        return None
+
+    # Find longest common directory prefix (path-segment-aware)
+    if len(extracted_dirs) == 1:
+        return extracted_dirs[0]
+
+    # Split all paths into segments and find common prefix segments
+    split_paths = [d.split('/') for d in extracted_dirs]
+    common_segments = []
+    for segments in zip(*split_paths):
+        if len(set(segments)) == 1:
+            common_segments.append(segments[0])
+        else:
+            break
+
+    if not common_segments:
+        return None
+
+    return '/'.join(common_segments)
 
 
 # during model download, the '.' would be converted to '___' to produce
@@ -134,8 +210,44 @@ def get_endpoint(cn_site=True):
     return MODELSCOPE_URL_SCHEME + get_domain(cn_site)
 
 
+def resolve_endpoint(cli_endpoint: Optional[str] = None,
+                     cn_site: bool = True) -> str:
+    """Resolve the ModelScope API endpoint with automatic scheme completion.
+
+    Priority (highest to lowest):
+        1. ``cli_endpoint`` (explicit CLI --endpoint argument)
+        2. Environment variable ``MODELSCOPE_DOMAIN``
+        3. Built-in default (https://www.modelscope.cn)
+
+    Scheme auto-completion:
+        If the resolved value does not start with ``http://`` or ``https://``,
+        ``https://`` is prepended automatically so that callers may pass bare
+        domain names such as ``modelscope.ai``.
+
+    Args:
+        cli_endpoint: Value from the CLI ``--endpoint`` flag.  When *None*,
+            the function falls back to :func:`get_endpoint`.
+        cn_site: Forwarded to :func:`get_endpoint` when *cli_endpoint* is
+            *None*.  ``True`` selects the Chinese site, ``False`` the
+            international site.
+
+    Returns:
+        A fully-qualified endpoint URL, e.g. ``https://www.modelscope.cn``.
+    """
+    if cli_endpoint is None:
+        return get_endpoint(cn_site=cn_site)
+    endpoint = cli_endpoint.strip().rstrip('/')
+    if not endpoint:
+        return get_endpoint(cn_site=cn_site)
+    if not endpoint.startswith('http://') and not endpoint.startswith(
+            'https://'):
+        endpoint = MODELSCOPE_URL_SCHEME + endpoint
+    return endpoint
+
+
 def compute_hash(file_path):
-    BUFFER_SIZE = 1024 * 64  # 64k buffer size
+    # 16MB buffer for large file hash computation
+    BUFFER_SIZE = 1024 * 1024 * 16
     sha256_hash = hashlib.sha256()
     with open(file_path, 'rb') as f:
         while True:
@@ -288,6 +400,16 @@ def weak_file_lock(lock_file: Union[str, Path],
                     lock_file)
                 lock = SoftFileLock(lock_file, timeout=default_interval)
                 continue
+            raise
+        except OSError as e:
+            # Handle NFS stale file handle and similar issues
+            if e.errno in (errno.ESTALE, errno.ENOENT, errno.EREMOTEIO):
+                logger.warning(
+                    'Encountered OSError (errno=%d) on %s, Falling back to SoftFileLock.',
+                    e.errno, lock_file)
+                lock = SoftFileLock(lock_file, timeout=default_interval)
+                continue
+            raise
         else:
             break
 
@@ -312,6 +434,7 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
     Returns:
         Timezone-aware datetime object or None if input is None
     """
+    import zoneinfo
     if not time_stamp:
         return None
 
@@ -381,6 +504,30 @@ def convert_timestamp(time_stamp: Union[int, str, datetime],
         )
 
 
+# Fallback MIME types for common media formats that may not be registered
+# in the system's MIME database on certain platforms.
+_FALLBACK_MIME_TYPES = {
+    '.webp': 'image/webp',
+    '.avif': 'image/avif',
+    '.heic': 'image/heic',
+    '.heif': 'image/heif',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.svg': 'image/svg+xml',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.ico': 'image/x-icon',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.mkv': 'video/x-matroska',
+}
+
+
 def encode_media_to_base64(media_file_path: str) -> str:
     """
     Encode image or video file to base64 string.
@@ -407,8 +554,13 @@ def encode_media_to_base64(media_file_path: str) -> str:
     if not os.path.isfile(media_file_path):
         raise ValueError(f'Path is not a file: {media_file_path}')
 
-    # Get MIME type
+    # Get MIME type, with fallback for formats that may not be registered
+    # in the system's MIME database on some platforms (e.g. Linux servers,
+    # Docker containers).
     mime_type, _ = mimetypes.guess_type(media_file_path)
+    if not mime_type:
+        mime_type = _FALLBACK_MIME_TYPES.get(
+            os.path.splitext(media_file_path)[1].lower())
     if not mime_type:
         raise ValueError(f'File is not a valid format: {media_file_path}')
 

@@ -217,8 +217,11 @@ class LLMPipeline(Pipeline, PipelineStreamingOutputMixin):
             tokenizer_class) if tokenizer is None else tokenizer
 
     def _init_swift(self, model_id, device) -> None:
-        from swift.llm import prepare_model_template
-        from swift.llm import InferArguments, get_model_info_meta
+        try:
+            from swift.pipelines import prepare_model_template
+            from swift.arguments import InferArguments
+        except ImportError:
+            from swift.llm import prepare_model_template, InferArguments
 
         def format_messages(messages: Dict[str, List[Dict[str, str]]],
                             tokenizer: PreTrainedTokenizer,

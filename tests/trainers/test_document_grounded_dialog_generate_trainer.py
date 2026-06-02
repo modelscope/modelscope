@@ -5,10 +5,7 @@ import unittest
 import json
 
 from modelscope.msdatasets import MsDataset
-from modelscope.trainers.nlp.document_grounded_dialog_generate_trainer import \
-    DocumentGroundedDialogGenerateTrainer
-from modelscope.utils.constant import DownloadMode, ModelFile
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.constant import DownloadMode
 
 
 class DocumentGroundedDialogGenerateTest(unittest.TestCase):
@@ -18,6 +15,8 @@ class DocumentGroundedDialogGenerateTest(unittest.TestCase):
 
     @unittest.skip
     def test_trainer_with_model_name(self):
+        from modelscope.trainers.nlp.document_grounded_dialog_generate_trainer import \
+            DocumentGroundedDialogGenerateTrainer
         # load data
         train_dataset = MsDataset.load(
             'DAMO_ConvAI/FrDoc2BotGeneration',

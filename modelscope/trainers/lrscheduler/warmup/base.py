@@ -21,8 +21,7 @@ class BaseWarmup(_LRScheduler):
         optimizer = self.base_scheduler.optimizer
         self._is_init_step = True
 
-        super(BaseWarmup, self).__init__(
-            optimizer, last_epoch=last_epoch, verbose=verbose)
+        super(BaseWarmup, self).__init__(optimizer, last_epoch=last_epoch)
 
     def get_lr(self):
         return self.base_scheduler.get_lr()

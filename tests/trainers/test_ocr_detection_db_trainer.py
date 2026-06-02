@@ -13,6 +13,7 @@ from modelscope.pipelines import pipeline
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import DistributedTestCase, test_level
 
 
@@ -40,7 +41,9 @@ class TestOCRDetectionDBTrainerSingleGPU(unittest.TestCase):
         shutil.rmtree(self.saved_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_finetune_singleGPU(self):
 
         kwargs = dict(

@@ -6,7 +6,6 @@ import unittest
 
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
-from modelscope.models.nlp import GPT3ForTextGeneration, PalmForTextGeneration
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.constant import ModelFile
@@ -68,7 +67,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_palm_with_model_and_args(self):
-
+        from modelscope.models.nlp import PalmForTextGeneration
         cache_path = snapshot_download(
             'damo/nlp_palm2.0_text-generation_english-base')
         model = PalmForTextGeneration.from_pretrained(cache_path)
@@ -88,7 +87,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_gpt3(self):
 
         kwargs = dict(
@@ -108,7 +107,7 @@ class TestFinetuneTextGeneration(unittest.TestCase):
 
     @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_trainer_with_gpt3_with_model_and_args(self):
-
+        from modelscope.models.nlp import GPT3ForTextGeneration
         cache_path = snapshot_download(
             'damo/nlp_gpt3_text-generation_chinese-base')
         model = GPT3ForTextGeneration.from_pretrained(cache_path)

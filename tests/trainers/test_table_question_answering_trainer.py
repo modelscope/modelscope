@@ -13,7 +13,7 @@ from modelscope.utils.test_utils import test_level
 
 class TableQuestionAnsweringTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_with_model_name(self):
         # load data
         input_dataset = MsDataset.load(

@@ -23,6 +23,7 @@ from modelscope.trainers.builder import TRAINERS
 from modelscope.trainers.trainer import EpochBasedTrainer
 from modelscope.utils.constant import LogKeys, ModeKeys, ModelFile, Tasks
 from modelscope.utils.hub import read_config
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import create_dummy_test_dataset, test_level
 
 
@@ -84,7 +85,9 @@ class TrainerTest(unittest.TestCase):
         super().tearDown()
         shutil.rmtree(self.tmp_dir)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_0(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -167,7 +170,9 @@ class TrainerTest(unittest.TestCase):
         self.assertIn('tensorboard_output', results_files)
         self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_visualization(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -247,7 +252,9 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
         self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_1(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -312,7 +319,9 @@ class TrainerTest(unittest.TestCase):
         self.assertIn(f'{LogKeys.EPOCH}_3.pth', results_files)
         self.assertTrue(len(glob.glob(f'{self.tmp_dir}/*/*events*')) > 0)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_with_default_config(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -431,7 +440,9 @@ class TrainerTest(unittest.TestCase):
         for i in [2, 5, 8]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_with_iters_per_epoch(self):
         json_cfg = {
             'task': Tasks.image_classification,
@@ -550,7 +561,9 @@ class TrainerTest(unittest.TestCase):
         for i in [2, 5, 8]:
             self.assertIn(MetricKeys.ACCURACY, lines[i])
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_train_with_old_and_new_cfg(self):
         old_cfg = {
             'task': Tasks.image_classification,
@@ -693,7 +706,9 @@ class TrainerTest(unittest.TestCase):
 
 class DummyTrainerTest(unittest.TestCase):
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_dummy(self):
         default_args = dict(cfg_file='configs/examples/train.json')
         trainer = build_trainer('dummy', default_args)

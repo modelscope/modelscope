@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from modelscope.hub.api import HubApi
-from modelscope.hub.errors import raise_for_http_status
+from modelscope.hub.errors import RequestError, raise_for_http_status
 from modelscope.utils.logger import get_logger
 
 # Configure logging
@@ -46,39 +46,19 @@ class MCPApi(HubApi):
     Different methods have different token requirements - see individual method docs.
     """
 
-    def __init__(self, endpoint: Optional[str] = None) -> None:
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 token: Optional[str] = None) -> None:
         """
         Initialize MCP API.
 
         Args:
             endpoint: The modelscope server address. Defaults to None (uses default endpoint).
+            token: Optional access token for Bearer authentication.
         """
-        super().__init__(endpoint=endpoint)
+        super().__init__(endpoint=endpoint, token=token)
 
         self.mcp_base_url = self.endpoint + MCP_API_PATH
-
-    @staticmethod
-    def _handle_response(r: requests.Response) -> Dict[str, Any]:
-        """
-        Handle HTTP response with unified error handling and JSON parsing.
-
-        Args:
-            r: requests Response object
-
-        Returns:
-            Parsed response data dict
-
-        Raises:
-            MCPApiResponseError: If JSON parsing fails
-        """
-        try:
-            resp = r.json()
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f'JSON parsing failed: {e}')
-            logger.error(f'Response content: {r.text}')
-            raise MCPApiResponseError(f'Invalid JSON response: {e}') from e
-
-        return resp.get('data', {})
 
     @staticmethod
     def _get_server_name_from_id(server_id: str) -> str:
@@ -141,18 +121,21 @@ class MCPApi(HubApi):
         }
 
         try:
-            cookies = self.get_cookies(token)
+            headers = self._build_bearer_headers(
+                token=token, token_required=False)
             r = self.session.put(
-                url=self.mcp_base_url,
-                headers=self.builder_headers(self.headers),
-                json=body,
-                cookies=cookies)
+                url=self.mcp_base_url, headers=headers, json=body)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error('Failed to get MCP servers: %s', e)
             raise MCPApiRequestError(f'Failed to get MCP servers: {e}') from e
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from MCP servers list: {e}') from e
+
         mcp_server_list = data.get('mcp_server_list', [])
         mcp_config_list = [{
             'name': item.get('name', ''),
@@ -204,12 +187,11 @@ class MCPApi(HubApi):
             }
         """
         url = f'{self.mcp_base_url}/operational'
-        headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self.get_cookies(
-                access_token=token, cookies_required=True)
-            r = self.session.get(url, headers=headers, cookies=cookies)
+            headers = self._build_bearer_headers(
+                token=token, token_required=True)
+            r = self.session.get(url, headers=headers)
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get operational MCP servers: {e}')
@@ -218,7 +200,12 @@ class MCPApi(HubApi):
 
         logger.debug(f'Response status code: {r.status_code}')
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from operational MCP servers: {e}') from e
+
         mcp_server_list = data.get('mcp_server_list', [])
 
         mcp_config_list = []
@@ -230,8 +217,7 @@ class MCPApi(HubApi):
             mcp_config['mcp_servers'] = []
             for operational_url in item.get('operational_urls', []):
                 mcp_config['mcp_servers'].append({
-                    'type':
-                    operational_url.get('url').split('/')[-1],
+                    'type': (operational_url.get('url') or '').split('/')[-1],
                     'url':
                     operational_url.get('url', '')
                 })
@@ -286,23 +272,23 @@ class MCPApi(HubApi):
             raise ValueError('server_id cannot be empty')
 
         url = f'{self.mcp_base_url}/{server_id}'
-        headers = self.builder_headers(self.headers)
 
         try:
-            cookies = self.get_cookies(token)
+            headers = self._build_bearer_headers(
+                token=token, token_required=False)
             r = self.session.get(
-                url,
-                headers=headers,
-                params={'get_operational_url':
-                        True},  # Always get operational URLs
-                cookies=cookies)
+                url, headers=headers, params={'get_operational_url': True})
             raise_for_http_status(r)
         except requests.exceptions.RequestException as e:
             logger.error(f'Failed to get MCP server {server_id}: {e}')
             raise MCPApiRequestError(
                 f'Failed to get MCP server {server_id}: {e}') from e
 
-        data = self._handle_response(r)
+        try:
+            data = self._parse_openapi_response(r)
+        except RequestError as e:
+            raise MCPApiResponseError(
+                f'Invalid response from MCP server {server_id}: {e}') from e
 
         result = {
             'name': data.get('name', ''),
@@ -318,7 +304,7 @@ class MCPApi(HubApi):
         if server_name and operational_urls:
             for operational_url in operational_urls:
                 mcp_config = {
-                    'type': operational_url.get('url').split('/')[-1],
+                    'type': (operational_url.get('url') or '').split('/')[-1],
                     'url': operational_url.get('url', '')
                 }
                 mcp_config_list.append(mcp_config)

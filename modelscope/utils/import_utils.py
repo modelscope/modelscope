@@ -3,17 +3,22 @@
 import ast
 import functools
 import importlib
+import importlib.metadata
+import importlib.util
 import inspect
 import logging
 import os
 import os.path as osp
 import sys
 from collections import OrderedDict
+from functools import lru_cache
 from importlib import import_module
 from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+
+from packaging.requirements import Requirement
 
 from modelscope.utils.ast_utils import (INDEX_KEY, MODULE_KEY, REQUIREMENT_KEY,
                                         load_index)
@@ -288,6 +293,30 @@ def is_diffusers_available():
 
 def is_tensorrt_llm_available():
     return importlib.util.find_spec('tensorrt_llm') is not None
+
+
+@lru_cache
+def _requires(package: str):
+    req = Requirement(package)
+    pkg_name = req.name
+    try:
+        installed_version = importlib.metadata.version(pkg_name)
+        if req.specifier:
+            if not req.specifier.contains(installed_version):
+                raise ImportError(
+                    f"Package '{pkg_name}' version {installed_version} "
+                    f'does not satisfy {req.specifier}')
+    except importlib.metadata.PackageNotFoundError:
+        raise ImportError(f"Required package '{pkg_name}' is not installed")
+
+
+@lru_cache
+def exists(package: str):
+    try:
+        _requires(package)
+        return True
+    except ImportError:
+        return False
 
 
 REQUIREMENTS_MAAPING = OrderedDict([

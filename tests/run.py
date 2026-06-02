@@ -3,9 +3,7 @@
 
 import argparse
 import datetime
-import importlib
 import math
-import multiprocessing
 import os
 import subprocess
 import sys
@@ -13,23 +11,20 @@ import tempfile
 import time
 import unittest
 from fnmatch import fnmatch
-from multiprocessing.managers import BaseManager
 from pathlib import Path
-from turtle import shape
-from unittest import TestResult, TextTestResult
+from unittest import TextTestResult
 
 import pandas
-# NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
-#         A segmentation fault may be raise by pytorch cpp library
-#         if 'import tensorflow' in front of 'import torch'.
-#         Putting a 'import torch' here can bypass this incompatibility.
-import torch
-import yaml
 
 from modelscope.utils.logger import get_logger
 from modelscope.utils.model_tag import ModelTag, commit_model_ut_result
 from modelscope.utils.test_utils import (get_case_model_info, set_test_level,
                                          test_level)
+
+# NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
+#         A segmentation fault may be raise by pytorch cpp library
+#         if 'import tensorflow' in front of 'import torch'.
+#         Putting a 'import torch' here can bypass this incompatibility.
 
 logger = get_logger()
 
@@ -91,18 +86,20 @@ def statistics_test_result(df):
 
 
 def gather_test_suites_in_files(test_dir, case_file_list, list_tests):
+    test_dir = test_dir.split(',')
     test_suite = unittest.TestSuite()
-    for case in case_file_list:
-        test_case = unittest.defaultTestLoader.discover(
-            start_dir=test_dir, pattern=case)
-        test_suite.addTest(test_case)
-        if hasattr(test_case, '__iter__'):
-            for subcase in test_case:
+    for _test_dir in test_dir:
+        for case in case_file_list:
+            test_case = unittest.defaultTestLoader.discover(
+                start_dir=_test_dir, pattern=case)
+            test_suite.addTest(test_case)
+            if hasattr(test_case, '__iter__'):
+                for subcase in test_case:
+                    if list_tests:
+                        print(subcase)
+            else:
                 if list_tests:
-                    print(subcase)
-        else:
-            if list_tests:
-                print(test_case)
+                    print(test_case)
     return test_suite
 
 
@@ -525,25 +522,27 @@ class TimeCostTextTestRunner(unittest.runner.TextTestRunner):
 
 
 def gather_test_cases(test_dir, pattern, list_tests):
-    case_list = []
-    for dirpath, dirnames, filenames in os.walk(test_dir):
-        for file in filenames:
-            if fnmatch(file, pattern):
-                case_list.append(file)
-
+    test_dir = test_dir.split(',')
     test_suite = unittest.TestSuite()
+    for _test_dir in test_dir:
+        _test_dir = os.path.abspath(_test_dir)
+        case_list = []
+        for dirpath, dirnames, filenames in os.walk(_test_dir):
+            for file in filenames:
+                if fnmatch(file, pattern):
+                    case_list.append(file)
 
-    for case in case_list:
-        test_case = unittest.defaultTestLoader.discover(
-            start_dir=test_dir, pattern=case)
-        test_suite.addTest(test_case)
-        if hasattr(test_case, '__iter__'):
-            for subcase in test_case:
+        for case in case_list:
+            test_case = unittest.defaultTestLoader.discover(
+                start_dir=_test_dir, pattern=case)
+            test_suite.addTest(test_case)
+            if hasattr(test_case, '__iter__'):
+                for subcase in test_case:
+                    if list_tests:
+                        print(subcase)
+            else:
                 if list_tests:
-                    print(subcase)
-        else:
-            if list_tests:
-                print(test_case)
+                    print(test_case)
     return test_suite
 
 
@@ -573,8 +572,8 @@ def main(args):
         test_suite = gather_test_suites_in_files(args.test_dir, args.suites,
                                                  args.list_tests)
     else:
-        test_suite = gather_test_cases(
-            os.path.abspath(args.test_dir), args.pattern, args.list_tests)
+        test_suite = gather_test_cases(args.test_dir, args.pattern,
+                                       args.list_tests)
     if not args.list_tests:
         result = runner.run(test_suite)
         logger.info('Running case completed, pid: %s, suites: %s' %
@@ -620,8 +619,12 @@ if __name__ == '__main__':
         '--list_tests', action='store_true', help='list all tests')
     parser.add_argument(
         '--pattern', default='test_*.py', help='test file pattern')
+    # Ignore old models and tests
     parser.add_argument(
-        '--test_dir', default='tests', help='directory to be tested')
+        '--test_dir',
+        default=
+        'tests/cli,tests/fileio,tests/hub,tests/mcp,tests/msdatasets,tests/tools,tests/utils',
+        help='directory to be tested')
     parser.add_argument(
         '--level', default=0, type=int, help='2 -- all, 1 -- p1, 0 -- p0')
     parser.add_argument(

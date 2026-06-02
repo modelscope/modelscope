@@ -2,6 +2,8 @@
 
 import unittest
 
+from modelscope.utils.import_utils import exists
+
 
 class CompatibilityTest(unittest.TestCase):
 
@@ -11,6 +13,8 @@ class CompatibilityTest(unittest.TestCase):
     def tearDown(self):
         super().tearDown()
 
+    @unittest.skipUnless(
+        exists('xtcocotools'), 'Skip because xtcocotools is not installed.')
     def test_xtcocotools(self):
         from xtcocotools.coco import COCO
 

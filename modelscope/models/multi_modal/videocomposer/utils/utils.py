@@ -22,7 +22,6 @@ from multiprocessing.pool import ThreadPool as Pool
 import imageio
 import json
 import numpy as np
-import oss2 as oss
 import requests
 import skvideo.io
 import torch
@@ -81,6 +80,8 @@ def setup_seed(seed):
 
 
 def parse_oss_url(path):
+    import oss2 as oss
+
     if path.startswith('oss://'):
         path = path[len('oss://'):]
 

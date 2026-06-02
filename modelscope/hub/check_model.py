@@ -33,6 +33,7 @@ def get_model_id_from_cache(model_root_path: str, ) -> str:
 def check_local_model_is_latest(
     model_root_path: str,
     user_agent: Optional[Union[Dict, str]] = None,
+    token: Optional[str] = None,
 ):
     """Check local model repo is latest.
     Check local model repo is same as hub latest version.
@@ -45,7 +46,8 @@ def check_local_model_is_latest(
             'user-agent':
             ModelScopeConfig.get_user_agent(user_agent=user_agent, )
         }
-        cookies = ModelScopeConfig.get_cookies()
+        _api = HubApi(timeout=20, token=token)
+        cookies = _api.get_cookies()
 
         snapshot_header = headers if 'CI_TEST' in os.environ else {
             **headers,
@@ -53,7 +55,6 @@ def check_local_model_is_latest(
                 'Snapshot': 'True'
             }
         }
-        _api = HubApi(timeout=20)
         try:
             _, revisions = _api.get_model_branches_and_tags(
                 model_id=model_id, use_cookies=cookies)

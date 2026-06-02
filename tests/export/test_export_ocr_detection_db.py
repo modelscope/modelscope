@@ -8,6 +8,7 @@ from collections import OrderedDict
 from modelscope.exporters import Exporter
 from modelscope.models import Model
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -20,7 +21,8 @@ class TestExportOCRDetectionDB(unittest.TestCase):
             os.makedirs(self.tmp_dir)
         self.model_id = 'damo/cv_resnet18_ocr-detection-db-line-level_damo'
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('pyclipper'), 'Skip because pyclipper is not installed')
     def test_export_ocr_detection_db(self):
 
         model = Model.from_pretrained(self.model_id)

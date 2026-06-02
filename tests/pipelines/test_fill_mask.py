@@ -10,6 +10,7 @@ from modelscope.pipelines import pipeline
 from modelscope.pipelines.nlp import FillMaskPipeline
 from modelscope.preprocessors import FillMaskTransformersPreprocessor
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.regress_test_utils import IgnoreKeyFn, MsRegressTool
 from modelscope.utils.test_utils import test_level
 
@@ -95,7 +96,8 @@ class FillMaskTest(unittest.TestCase):
         print(f'\nori_text: {ori_text}\ninput: {test_input}\npipeline1: '
               f'{pipeline1(test_input)}\npipeline2: {pipeline2(test_input)}\n')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'), 'skip test when transformers >= 5.0')
     def test_run_with_model_from_modelhub(self):
 
         # sbert

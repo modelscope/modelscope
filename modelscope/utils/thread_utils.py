@@ -13,7 +13,8 @@ logger = get_logger()
 
 def thread_executor(max_workers: int = DEFAULT_MAX_WORKERS,
                     disable_tqdm: bool = False,
-                    tqdm_desc: str = None):
+                    tqdm_desc: str = None,
+                    fault_tolerant: bool = False):
     """
     A decorator to execute a function in a threaded manner using ThreadPoolExecutor.
 
@@ -61,9 +62,20 @@ def thread_executor(max_workers: int = DEFAULT_MAX_WORKERS,
                     }
 
                     # Update the progress bar as tasks complete
+                    failed_items = []
                     for future in as_completed(futures):
                         pbar.update(1)
-                        results.append(future.result())
+                        if fault_tolerant:
+                            try:
+                                results.append(future.result())
+                            except Exception as e:
+                                item = futures[future]
+                                logger.error(f'Task failed for {item}: {e}')
+                                failed_items.append((item, e))
+                        else:
+                            results.append(future.result())
+            if fault_tolerant:
+                return results, failed_items
             return results
 
         return wrapper

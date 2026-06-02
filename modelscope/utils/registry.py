@@ -205,6 +205,8 @@ def build_from_cfg(cfg,
         raise TypeError(
             f'type must be a str or valid type, but got {type(obj_type)}')
     try:
+        if not obj_cls.__module__.startswith('modelscope'):
+            args.pop('trust_remote_code', None)
         if hasattr(obj_cls, '_instantiate'):
             return obj_cls._instantiate(**args)
         else:

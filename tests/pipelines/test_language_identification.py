@@ -3,7 +3,7 @@ import unittest
 
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
-from modelscope.utils.test_utils import test_level
+from modelscope.utils.import_utils import exists
 
 
 class LanguageIdentificationTest(unittest.TestCase):
@@ -12,8 +12,8 @@ class LanguageIdentificationTest(unittest.TestCase):
         self.task = Tasks.text_classification
         self.model_id = 'damo/nlp_language_identification-classification-base'
 
-    @unittest.skipUnless(test_level() >= 0,
-                         'skip test case in current test level')
+    @unittest.skipUnless(
+        exists('tensorflow'), 'Skip because tensorflow is not installed.')
     def test_run_with_model_name_for_en2de(self):
         inputs = 'Elon Musk, co-founder and chief executive officer of Tesla Motors.\n' \
                  'Gleichzeitig nahm die Legion an der Befriedung Algeriens teil, die von.\n' \

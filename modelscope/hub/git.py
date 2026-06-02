@@ -3,6 +3,7 @@
 import os
 import subprocess
 from typing import List, Optional
+from urllib.parse import urlparse, urlunparse
 
 from modelscope.utils.logger import get_logger
 from ..utils.constant import MASTER_MODEL_BRANCH
@@ -57,8 +58,8 @@ class GitCommandWrapper(metaclass=Singleton):
             response.check_returncode()
             return response
         except subprocess.CalledProcessError as error:
-            std_out = response.stdout.decode('utf8')
-            std_err = error.stderr.decode('utf8')
+            std_out = response.stdout.decode('utf-8', errors='replace')
+            std_err = error.stderr.decode('utf-8', errors='replace')
             if 'nothing to commit' in std_out:
                 logger.info(
                     'Nothing to commit, your local repo is upto date with remote'
@@ -80,10 +81,51 @@ class GitCommandWrapper(metaclass=Singleton):
             logger.debug(rsp.stdout.decode('utf8'))
 
     def _add_token(self, token: str, url: str):
-        if token:
-            if '//oauth2' not in url:
-                url = url.replace('//', '//oauth2:%s@' % token)
-        return url
+        """Inject OAuth2 token into an HTTP(S) git URL.
+
+        Uses ``urllib.parse`` for reliable URL component handling,
+        avoiding naive string replacement that can corrupt URLs
+        containing multiple ``://`` sequences.
+
+        Args:
+            token: OAuth2 access token.
+            url:   Remote URL (HTTP, HTTPS, or SSH).
+
+        Returns:
+            URL with ``oauth2:<token>@`` injected into the *netloc*,
+            or the original *url* unchanged when:
+
+            * *token* is falsy,
+            * the URL already carries an ``oauth2`` credential,
+            * the scheme is not HTTP/HTTPS (e.g. ``ssh://``, ``git@``).
+        """
+        if not token:
+            return url
+
+        # SSH URLs authenticate via keys, not tokens.
+        if url.startswith('git@'):
+            return url
+
+        try:
+            parsed = urlparse(url)
+        except Exception:
+            return url
+
+        # Only inject into HTTP(S) URLs.
+        if parsed.scheme not in ('http', 'https'):
+            return url
+
+        # Prevent double injection.
+        if parsed.username == 'oauth2':
+            return url
+
+        # Reconstruct netloc: oauth2:<token>@host[:port]
+        host = parsed.hostname or ''
+        if parsed.port:
+            host = f'{host}:{parsed.port}'
+        netloc = f'oauth2:{token}@{host}'
+
+        return urlunparse(parsed._replace(netloc=netloc))
 
     def remove_token_from_url(self, url: str):
         if url and '//oauth2' in url:
@@ -101,7 +143,7 @@ class GitCommandWrapper(metaclass=Singleton):
             return False
 
     def git_lfs_install(self, repo_dir):
-        cmd = ['-C', repo_dir, 'lfs', 'install']
+        cmd = ['-C', repo_dir, 'lfs', 'install', '--force']
         try:
             self._run_git_command(*cmd)
             return True
@@ -135,9 +177,24 @@ class GitCommandWrapper(metaclass=Singleton):
             clone_args = '-C %s clone %s' % (repo_base_dir, url)
         logger.debug(clone_args)
         clone_args = clone_args.split(' ')
-        response = self._run_git_command(*clone_args)
-        logger.debug(response.stdout.decode('utf8'))
-        return response
+        try:
+            response = self._run_git_command(*clone_args)
+            logger.debug(response.stdout.decode('utf8'))
+            return response
+        except GitError:
+            # git clone may succeed but still exit non-zero when an
+            # external hook (e.g. a custom core.hooksPath that wraps
+            # ``git lfs post-merge``) returns a non-zero code.  When the
+            # repository was actually cloned, treat this as a warning.
+            repo_dir = os.path.join(repo_base_dir, repo_name)
+            if os.path.isdir(os.path.join(repo_dir, '.git')):
+                logger.warning(
+                    'git clone exited with non-zero status but the '
+                    'repository was cloned successfully at %s. '
+                    'This is usually caused by a post-clone hook '
+                    '(e.g. core.hooksPath). Continuing.', repo_dir)
+                return None
+            raise
 
     def add_user_info(self, repo_base_dir, repo_name):
         from modelscope.hub.api import ModelScopeConfig

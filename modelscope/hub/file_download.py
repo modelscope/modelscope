@@ -39,6 +39,9 @@ from .utils.utils import (file_integrity_validation, get_endpoint,
 
 logger = get_logger()
 
+# Maximum number of retries for hash validation failures
+HASH_RETRY_TIMES = 3
+
 
 def model_file_download(
     model_id: str,
@@ -49,6 +52,8 @@ def model_file_download(
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
+    token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
     """Download from a given URL and cache it if it's not already present in the local cache.
 
@@ -67,6 +72,8 @@ def model_file_download(
             local cached file if it exists. if `False`, download the file anyway even it exists.
         cookies (CookieJar, optional): The cookie of download request.
         local_dir (str, optional): Specific local directory path to which the file will be downloaded.
+        token (str, optional): The user token.
+        endpoint (str, optional): The remote endpoint.
 
     Returns:
         string: string of local file or if networking is off, last version of
@@ -95,7 +102,9 @@ def model_file_download(
         user_agent=user_agent,
         local_files_only=local_files_only,
         cookies=cookies,
-        local_dir=local_dir)
+        local_dir=local_dir,
+        token=token,
+        endpoint=endpoint)
 
 
 def dataset_file_download(
@@ -107,6 +116,8 @@ def dataset_file_download(
     user_agent: Optional[Union[Dict, str]] = None,
     local_files_only: Optional[bool] = False,
     cookies: Optional[CookieJar] = None,
+    token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> str:
     """Download raw files of a dataset.
     Downloads all files at the specified revision. This
@@ -129,6 +140,8 @@ def dataset_file_download(
         local_files_only (bool, optional): If `True`, avoid downloading the file and return the path to the
             local cached file if it exists.
         cookies (CookieJar, optional): The cookie of the request, default None.
+        token (str, optional): The user token.
+        endpoint (str, optional): The remote endpoint.
     Raises:
         ValueError: the value details.
 
@@ -153,7 +166,9 @@ def dataset_file_download(
         user_agent=user_agent,
         local_files_only=local_files_only,
         cookies=cookies,
-        local_dir=local_dir)
+        local_dir=local_dir,
+        token=token,
+        endpoint=endpoint)
 
 
 def _repo_file_download(
@@ -168,6 +183,8 @@ def _repo_file_download(
     cookies: Optional[CookieJar] = None,
     local_dir: Optional[str] = None,
     disable_tqdm: bool = False,
+    token: Optional[str] = None,
+    endpoint: Optional[str] = None,
 ) -> Optional[str]:  # pragma: no cover
 
     if not repo_type:
@@ -194,7 +211,7 @@ def _repo_file_download(
                 ' traffic has been disabled. To enable look-ups and downloads'
                 " online, set 'local_files_only' to False.")
 
-    _api = HubApi()
+    _api = HubApi(token=token)
 
     headers = {
         'user-agent': ModelScopeConfig.get_user_agent(user_agent=user_agent, ),
@@ -212,9 +229,11 @@ def _repo_file_download(
             headers['x-aliyun-region-id'] = region_id
 
     if cookies is None:
-        cookies = ModelScopeConfig.get_cookies()
+        cookies = _api.get_cookies()
     repo_files = []
-    endpoint = _api.get_endpoint_for_read(repo_id=repo_id, repo_type=repo_type)
+    if endpoint is None:
+        endpoint = _api.get_endpoint_for_read(
+            repo_id=repo_id, repo_type=repo_type, token=token)
     file_to_download_meta = None
     if repo_type == REPO_TYPE_MODEL:
         revision = _api.get_valid_revision(
@@ -245,6 +264,11 @@ def _repo_file_download(
         group_or_owner, name = model_id_to_group_owner_name(repo_id)
         if not revision:
             revision = DEFAULT_DATASET_REVISION
+        _hub_id, _ = _api.get_dataset_id_and_type(
+            dataset_name=name,
+            namespace=group_or_owner,
+            endpoint=endpoint,
+            token=token)
         page_number = 1
         page_size = 100
         while True:
@@ -256,7 +280,9 @@ def _repo_file_download(
                     recursive=True,
                     page_number=page_number,
                     page_size=page_size,
-                    endpoint=endpoint)
+                    endpoint=endpoint,
+                    token=token,
+                    dataset_hub_id=_hub_id)
             except Exception as e:
                 logger.error(
                     f'Get dataset: {repo_id} file list failed, error: {e}')
@@ -431,6 +457,7 @@ def download_part_with_retry(params):
                     headers=get_headers,
                     cookies=cookies,
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
+                r.raise_for_status()
                 for chunk in r.iter_content(
                         chunk_size=API_FILE_DOWNLOAD_CHUNK_SIZE):
                     if chunk:  # filter out keep-alive new chunks
@@ -695,43 +722,66 @@ def download_file(
     disable_tqdm=False,
     progress_callbacks: List[Type[ProgressCallback]] = None,
 ):
-    if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
-            'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
-        file_digest = parallel_download(
-            url,
-            temporary_cache_dir,
-            file_meta['Path'],
-            headers=headers,
-            cookies=None if cookies is None else cookies.get_dict(),
-            file_size=file_meta['Size'],
-            disable_tqdm=disable_tqdm,
-            progress_callbacks=progress_callbacks,
-        )
-    else:
-        file_digest = http_get_model_file(
-            url,
-            temporary_cache_dir,
-            file_meta['Path'],
-            file_size=file_meta['Size'],
-            headers=headers,
-            cookies=cookies,
-            disable_tqdm=disable_tqdm,
-            progress_callbacks=progress_callbacks,
-        )
-
-    # check file integrity
     temp_file = os.path.join(temporary_cache_dir, file_meta['Path'])
-    if FILE_HASH in file_meta:
-        expected_hash = file_meta[FILE_HASH]
-        # if a real-time hash has been computed
-        if file_digest is not None:
-            # if real-time hash mismatched, try to compute it again
-            if file_digest != expected_hash:
-                print(
-                    'Mismatched real-time digest found, falling back to lump-sum hash computation'
-                )
-                file_integrity_validation(temp_file, expected_hash)
+
+    for hash_attempt in range(HASH_RETRY_TIMES):
+        if MODELSCOPE_PARALLEL_DOWNLOAD_THRESHOLD_MB * 1000 * 1000 < file_meta[
+                'Size'] and MODELSCOPE_DOWNLOAD_PARALLELS > 1:  # parallel download large file.
+            file_digest = parallel_download(
+                url,
+                temporary_cache_dir,
+                file_meta['Path'],
+                headers=headers,
+                cookies=None if cookies is None else cookies.get_dict(),
+                file_size=file_meta['Size'],
+                disable_tqdm=disable_tqdm,
+                progress_callbacks=progress_callbacks,
+            )
         else:
-            file_integrity_validation(temp_file, expected_hash)
-    # put file into to cache
+            file_digest = http_get_model_file(
+                url,
+                temporary_cache_dir,
+                file_meta['Path'],
+                file_size=file_meta['Size'],
+                headers=headers,
+                cookies=cookies,
+                disable_tqdm=disable_tqdm,
+                progress_callbacks=progress_callbacks,
+            )
+
+        # Check file integrity
+        if FILE_HASH in file_meta:
+            expected_hash = file_meta[FILE_HASH]
+            hash_valid = True
+            if file_digest is not None:
+                if file_digest != expected_hash:
+                    logger.warning(
+                        'Mismatched real-time digest for %s, falling back to full hash check',
+                        file_meta['Path'])
+                    if not file_integrity_validation(temp_file, expected_hash):
+                        hash_valid = False
+            else:
+                if not file_integrity_validation(temp_file, expected_hash):
+                    hash_valid = False
+
+            if not hash_valid:
+                if hash_attempt < HASH_RETRY_TIMES - 1:
+                    logger.warning(
+                        'Hash validation failed for %s, '
+                        'retrying download (attempt %d/%d)', file_meta['Path'],
+                        hash_attempt + 1, HASH_RETRY_TIMES)
+                    # Clean up corrupted file before retry
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                    continue
+                else:
+                    raise FileDownloadError(
+                        'File %s hash validation failed after %d attempts, '
+                        'the file may be corrupted.' %
+                        (file_meta['Path'], HASH_RETRY_TIMES))
+
+        # Hash validation passed or no hash to validate, exit retry loop
+        break
+
+    # Put file into cache
     return cache.put_file(file_meta, temp_file)

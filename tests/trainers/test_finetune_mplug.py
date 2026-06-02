@@ -10,6 +10,7 @@ from modelscope.models.multi_modal import MPlugForAllTasks
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.constant import ModelFile, Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -37,7 +38,8 @@ class TestFinetuneMPlug(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip test because fairseq is not installed.')
     def test_trainer_with_caption(self):
         kwargs = dict(
             model='damo/mplug_backbone_base_en',
@@ -72,7 +74,8 @@ class TestFinetuneMPlug(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip test because fairseq is not installed.')
     def test_trainer_with_vqa(self):
         kwargs = dict(
             model='damo/mplug_backbone_base_en',
@@ -108,7 +111,8 @@ class TestFinetuneMPlug(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('fairseq'), 'Skip test because fairseq is not installed.')
     def test_trainer_with_retrieval(self):
         kwargs = dict(
             model='damo/mplug_backbone_base_en',

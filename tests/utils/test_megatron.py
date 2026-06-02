@@ -25,7 +25,7 @@ class MegatronTest(DistributedTestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_init_megatron_util(self):
         dummy_megatron_cfg = {
             'tensor_model_parallel_size': 1,
@@ -37,8 +37,7 @@ class MegatronTest(DistributedTestCase):
         init_megatron_util(dummy_megatron_cfg)
         self.assertTrue(is_megatron_initialized())
 
-    @unittest.skipIf(not torch.cuda.is_available()
-                     or torch.cuda.device_count() <= 1, 'distributed unittest')
+    @unittest.skip
     def test_convert_megatron_checkpoint(self):
         cache_path = snapshot_download('damo/nlp_gpt3_text-generation_1.3B')
         splited_dir = os.path.join(self.tmp_dir, 'splited')

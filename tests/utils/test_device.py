@@ -12,9 +12,6 @@ from modelscope.utils.constant import Frameworks
 from modelscope.utils.device import (create_device, device_placement,
                                      verify_device)
 
-# import tensorflow must be imported after torch is imported when using tf1.15
-import tensorflow as tf  # isort:skip
-
 
 class DeviceTest(unittest.TestCase):
 
@@ -89,6 +86,8 @@ class DeviceTest(unittest.TestCase):
 
     @unittest.skip('skip this test to avoid debug logging.')
     def test_device_placement_tf_gpu(self):
+        # import tensorflow must be imported after torch is imported when using tf1.15
+        import tensorflow as tf  # isort:skip
         tf.debugging.set_log_device_placement(True)
         with device_placement(Frameworks.tf, 'gpu:0'):
             a = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])

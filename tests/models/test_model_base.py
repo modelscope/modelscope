@@ -8,6 +8,7 @@ import unittest
 import torch
 
 from modelscope.models.base import Model
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -43,6 +44,9 @@ class BaseTest(unittest.TestCase):
         print(model.__class__.__name__)
         self.assertIsNotNone(model)
 
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_from_pretrained_ms(self):
         model = Model.from_pretrained(
             'damo/nlp_structbert_sentence-similarity_chinese-tiny',

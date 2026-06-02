@@ -70,7 +70,8 @@ class LinearAECPipeline(Pipeline):
         self.check_trust_remote_code(
             'This pipeline requires `trust_remote_code=True` to load the module defined'
             ' in the `dey_mini.yaml`, setting this to True means you trust the code and files'
-            ' listed in this model repo.')
+            ' listed in this model repo.',
+            model_dir=model)
 
         self.use_cuda = torch.cuda.is_available()
         with open(

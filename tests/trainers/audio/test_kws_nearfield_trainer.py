@@ -78,7 +78,7 @@ class TestKwsNearfieldTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_normal(self):
         print('test start ...')
         kwargs = dict(

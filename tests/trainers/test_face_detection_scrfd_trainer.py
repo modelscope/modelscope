@@ -62,7 +62,7 @@ class TestFaceDetectionScrfdTrainerSingleGPU(unittest.TestCase):
         cfg.data.samples_per_gpu = 4  # batch size
         return cfg
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_trainer_from_scratch(self):
         kwargs = dict(
             cfg_file=os.path.join(self.cache_path, 'mmcv_scrfd.py'),

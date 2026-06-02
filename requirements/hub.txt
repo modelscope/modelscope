@@ -1,4 +1,5 @@
 filelock
+packaging
 requests>=2.25
 setuptools
 tqdm>=4.64.0

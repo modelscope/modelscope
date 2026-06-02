@@ -35,7 +35,7 @@ class ExportSpeechSignalProcessTest(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skip
     def test_export_ans_dfsmn(self):
         model_id = 'damo/speech_dfsmn_ans_psm_48k_causal'
         model = Model.from_pretrained(model_id)

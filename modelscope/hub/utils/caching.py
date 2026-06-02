@@ -54,8 +54,47 @@ class FileSystemCache(object):
         cache_keys_file_path = os.path.join(self.cache_root_location,
                                             FileSystemCache.KEY_FILE_NAME)
         if os.path.exists(cache_keys_file_path):
-            with open(cache_keys_file_path, 'rb') as f:
-                self.cached_files = pickle.load(f)
+            try:
+                with open(cache_keys_file_path, 'rb') as f:
+                    data = pickle.load(f)
+                if isinstance(data, list):
+                    self.cached_files = data
+                else:
+                    logger.warning(
+                        'Cache index %s has unexpected type %s, resetting.',
+                        cache_keys_file_path,
+                        type(data).__name__)
+            except Exception as e:
+                logger.warning(
+                    'Failed to load cache index %s: %s. '
+                    'Resetting — already-downloaded files will be re-validated on next run.',
+                    cache_keys_file_path, e)
+                try:
+                    os.replace(cache_keys_file_path,
+                               cache_keys_file_path + '.corrupted')
+                except OSError:
+                    pass
+
+    def _save_cached_files_unlocked(self):
+        """Write .msc atomically. Caller must hold ``_cache_lock``."""
+        cache_keys_file_path = os.path.join(self.cache_root_location,
+                                            FileSystemCache.KEY_FILE_NAME)
+        fd, temp_filename = tempfile.mkstemp(
+            suffix='.tmp', dir=self.cache_root_location)
+        try:
+            with os.fdopen(fd, 'wb') as f:
+                pickle.dump(list(self.cached_files), f)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_filename, cache_keys_file_path)
+        except Exception:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            if os.path.exists(temp_filename):
+                os.unlink(temp_filename)
+            raise
 
     def save_cached_files(self):
         """
@@ -65,23 +104,7 @@ class FileSystemCache(object):
             [{'Path': 'configuration.json', 'Revision': 'f01dxxx'}, {'Path': 'model.bin', 'Revision': '1159xxx'}, ...]
         """
         with self._cache_lock:
-            cache_keys_file_path = os.path.join(self.cache_root_location,
-                                                FileSystemCache.KEY_FILE_NAME)
-            fd, temp_filename = tempfile.mkstemp(
-                suffix='.tmp', dir=self.cache_root_location)
-
-            try:
-                with os.fdopen(fd, 'wb') as f:
-                    pickle.dump(self.cached_files, f)
-                move(temp_filename, cache_keys_file_path)
-            except Exception:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
-                if os.path.exists(temp_filename):
-                    os.unlink(temp_filename)
-                raise
+            self._save_cached_files_unlocked()
 
     def get_file(self, key):
         """Check the key is in the cache, if exist, return the file, otherwise return None.
@@ -170,10 +193,22 @@ class ModelFileSystemCache(FileSystemCache):
         meta_file_path = os.path.join(self.cache_root_location,
                                       FileSystemCache.MODEL_META_FILE_NAME)
         if os.path.exists(meta_file_path):
-            with open(meta_file_path, 'rb') as f:
-                self.model_meta = pickle.load(f)
-        else:
-            self.model_meta = {FileSystemCache.MODEL_META_MODEL_ID: 'unknown'}
+            try:
+                with open(meta_file_path, 'rb') as f:
+                    data = pickle.load(f)
+                if isinstance(data, dict):
+                    self.model_meta = data
+                    return
+                logger.warning('Model meta %s has unexpected type, resetting.',
+                               meta_file_path)
+            except Exception as e:
+                logger.warning('Failed to load model meta %s: %s. Resetting.',
+                               meta_file_path, e)
+                try:
+                    os.replace(meta_file_path, meta_file_path + '.corrupted')
+                except OSError:
+                    pass
+        self.model_meta = {FileSystemCache.MODEL_META_MODEL_ID: 'unknown'}
 
     def load_model_version(self):
         model_version_file_path = os.path.join(
@@ -341,16 +376,15 @@ class ModelFileSystemCache(FileSystemCache):
         Returns:
             str: The location of the cached file.
         """
-        self.remove_if_exists(model_file_info)  # backup old revision
+        self.remove_if_exists(model_file_info)
         cache_key = self.__get_cache_key(model_file_info)
-        cache_full_path = os.path.join(
-            self.cache_root_location,
-            cache_key['Path'])  # Branch and Tag do not have same name.
+        cache_full_path = os.path.join(self.cache_root_location,
+                                       cache_key['Path'])
         cache_file_dir = os.path.dirname(cache_full_path)
         if not os.path.exists(cache_file_dir):
             os.makedirs(cache_file_dir, exist_ok=True)
-        # We can't make operation transaction
         move(model_file_location, cache_full_path)
-        self.cached_files.append(cache_key)
-        self.save_cached_files()
+        with self._cache_lock:
+            self.cached_files.append(cache_key)
+            self._save_cached_files_unlocked()
         return cache_full_path

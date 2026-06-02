@@ -87,7 +87,6 @@ class LocalDataLoaderManager(DataLoaderManager):
                 cache_dir=cache_root_dir,
                 download_mode=download_mode.value,
                 streaming=use_streaming,
-                trust_remote_code=trust_remote_code,
                 **input_config_kwargs)
         raise f'Expected local data loader type: {LocalDataLoaderType.HF_DATA_LOADER.value}.'
 
@@ -97,7 +96,8 @@ class RemoteDataLoaderManager(DataLoaderManager):
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         super().__init__(dataset_context_config=dataset_context_config)
-        self.api = HubApi()
+
+        self.api = HubApi(token=dataset_context_config.token)
 
     def load_dataset(self, data_loader_type: enum.Enum):
         # Get args from context
@@ -112,6 +112,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
         use_streaming = self.dataset_context_config.use_streaming
         input_config_kwargs = self.dataset_context_config.config_kwargs
         trust_remote_code = self.dataset_context_config.trust_remote_code
+        token = self.dataset_context_config.token
 
         # To use the huggingface data loader
         if data_loader_type == RemoteDataLoaderType.HF_DATA_LOADER:
@@ -128,7 +129,7 @@ class RemoteDataLoaderManager(DataLoaderManager):
                 data_files=data_files,
                 download_mode=download_mode_val,
                 streaming=use_streaming,
-                trust_remote_code=trust_remote_code,
+                token=token,
                 **input_config_kwargs)
             # download statistics
             self.api.dataset_download_statistics(

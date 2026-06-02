@@ -1,0 +1,5 @@
+setuptools>=77.0.3,<80
+datasets>=3.0,<4.0
+flash-linear-attention
+mcoplib
+transformers<5.4.0

@@ -8,6 +8,7 @@ import unittest
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.metainfo import Trainers
 from modelscope.trainers import build_trainer
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -29,7 +30,9 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
         super().tearDown()
         shutil.rmtree('./workdirs', ignore_errors=True)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_from_scratch_singleGPU(self):
         kwargs = dict(
             cfg_file=os.path.join(self.cache_path, 'configuration.json'),
@@ -57,7 +60,9 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             checkpoint_path=os.path.join('./workdirs/damoyolo_s',
                                          'epoch_3_ckpt.pth'))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_from_scratch_singleGPU_model_id(self):
         kwargs = dict(
             model=self.model_id,
@@ -110,7 +115,9 @@ class TestTinynasDamoyoloTrainerSingleGPU(unittest.TestCase):
             name=Trainers.tinynas_damoyolo, default_args=kwargs)
         trainer.train()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_finetune_singleGPU(self):
         kwargs = dict(
             cfg_file=os.path.join(self.cache_path, 'configuration.json'),

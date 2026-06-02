@@ -4,7 +4,6 @@ import shutil
 import unittest
 
 from modelscope.msdatasets import MsDataset
-from modelscope.trainers.cv import NeRFReconAccTrainer
 from modelscope.utils.constant import DownloadMode
 from modelscope.utils.test_utils import test_level
 
@@ -25,7 +24,7 @@ class TestNeRFReconAccTrainer(unittest.TestCase):
             split='train',
             download_mode=DownloadMode.FORCE_REDOWNLOAD
         ).config_kwargs['split_config']['train']
-
+        from modelscope.trainers.cv import NeRFReconAccTrainer
         trainer = NeRFReconAccTrainer(
             model=model_id,
             data_type='blender',

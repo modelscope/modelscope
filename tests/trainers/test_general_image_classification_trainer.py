@@ -12,6 +12,7 @@ from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DownloadMode, ModelFile
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -45,7 +46,7 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(exists('mmcv'), 'Skip because mmcv is not installed.')
     def test_nextvit_dailylife_train(self):
         model_id = 'damo/cv_nextvit-small_image-classification_Dailylife-labels'
 
@@ -76,7 +77,7 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(exists('mmcv'), 'Skip because mmcv is not installed.')
     def test_nextvit_dailylife_eval(self):
         model_id = 'damo/cv_nextvit-small_image-classification_Dailylife-labels'
 
@@ -91,7 +92,7 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         result = trainer.evaluate()
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(exists('mmcv'), 'Skip because mmcv is not installed.')
     def test_convnext_garbage_train(self):
         model_id = 'damo/cv_convnext-base_image-classification_garbage'
 
@@ -122,7 +123,7 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(exists('mmcv'), 'Skip because mmcv is not installed.')
     def test_convnext_garbage_eval(self):
         model_id = 'damo/cv_convnext-base_image-classification_garbage'
 
@@ -137,7 +138,7 @@ class TestGeneralImageClassificationTestTrainer(unittest.TestCase):
         result = trainer.evaluate()
         print(result)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(exists('mmcv'), 'Skip because mmcv is not installed.')
     def test_beitv2_train_eval(self):
         model_id = 'damo/cv_beitv2-base_image-classification_patch16_224_pt1k_ft22k_in1k'
 

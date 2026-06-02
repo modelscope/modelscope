@@ -7,7 +7,7 @@ import unittest
 from modelscope.metainfo import Trainers
 from modelscope.msdatasets import MsDataset
 from modelscope.trainers import build_trainer
-from modelscope.utils.import_utils import is_swift_available
+from modelscope.utils.import_utils import exists, is_swift_available
 from modelscope.utils.test_utils import test_level
 
 
@@ -40,10 +40,11 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
-                         'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_lora_train(self):
-        from swift import LoRAConfig
+        from swift.tuners import LoRAConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-lora'
 
         def cfg_modify_fn(cfg):
@@ -81,10 +82,11 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
-                         'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_adapter_train(self):
-        from swift import AdapterConfig
+        from swift.tuners import AdapterConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-adapter'
 
         def cfg_modify_fn(cfg):
@@ -120,10 +122,11 @@ class TestVisionEfficientTuningSwiftTrainer(unittest.TestCase):
         for i in range(self.max_epochs):
             self.assertIn(f'epoch_{i+1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0 and is_swift_available(),
-                         'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_vision_efficient_tuning_swift_prompt_train(self):
-        from swift import PromptConfig
+        from swift.tuners import PromptConfig
         model_id = 'damo/cv_vitb16_classification_vision-efficient-tuning-prompt'
 
         def cfg_modify_fn(cfg):

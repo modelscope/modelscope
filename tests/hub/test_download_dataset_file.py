@@ -7,6 +7,7 @@ import unittest
 
 from modelscope.hub.file_download import dataset_file_download
 from modelscope.hub.snapshot_download import dataset_snapshot_download
+from modelscope.utils.test_utils import test_level
 
 
 class DownloadDatasetTest(unittest.TestCase):
@@ -14,6 +15,7 @@ class DownloadDatasetTest(unittest.TestCase):
     def setUp(self):
         pass
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_dataset_file_download(self):
         dataset_id = 'citest/test_dataset_download'
         file_path = 'open_qa.jsonl'
@@ -67,6 +69,7 @@ class DownloadDatasetTest(unittest.TestCase):
             file_modify_time2 = os.path.getmtime(cache_file_path)
             assert file_modify_time == file_modify_time2
 
+    @unittest.skipUnless(test_level() >= 2, 'skip test in current test level')
     def test_dataset_snapshot_download(self):
         dataset_id = 'citest/test_dataset_download'
         file_path = 'open_qa.jsonl'

@@ -39,7 +39,8 @@ class CreateCMDTest(unittest.TestCase):
 
         print(f'Test {type(self).__name__}.{self._testMethodName} finished')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(test_level() >= 1,
+                         'skip test because the security hook')
     def test_create_repo_cmd(self):
 
         cmd: str = f'python -m modelscope.cli.cli create {self.repo_id} --token {self.token} --repo_type {self.repo_type} --visibility {self.visibility} --chinese_name {self.chinese_name} --license {self.license}'  # noqa: E501

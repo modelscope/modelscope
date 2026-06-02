@@ -21,6 +21,7 @@ from modelscope.trainers import EpochBasedTrainer, build_trainer
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.hub import read_config
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -42,7 +43,9 @@ class TestTrainerWithNlp(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
         kwargs = dict(
@@ -79,7 +82,9 @@ class TestTrainerWithNlp(unittest.TestCase):
         output_dir = os.path.join(self.tmp_dir, ModelFile.TRAIN_OUTPUT_DIR)
         pipeline_sentence_similarity(output_dir)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_callback(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
 
@@ -101,9 +106,8 @@ class TestTrainerWithNlp(unittest.TestCase):
 
         self.assertEqual(trainer.iter, 3)
 
-    @unittest.skipIf(
-        version.parse(torch.__version__) < version.parse('2.0.0.dev'),
-        'skip test when torch version < 2.0')
+    @unittest.skipUnless(
+        exists('torch<2.4'), 'Skip test because torch version is too high.')
     def test_trainer_compile(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
 
@@ -406,7 +410,9 @@ class TestTrainerWithNlp(unittest.TestCase):
                 trainer, 'trainer_continue_train', level='strict'):
             trainer.train(os.path.join(self.tmp_dir, 'iter_3'))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_with_new_style_configuration(self):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
@@ -481,7 +487,9 @@ class TestTrainerWithNlp(unittest.TestCase):
                 cache_path + '/pytorch_model.bin', saving_fn=saving_fn))
         self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_with_custom_sampler(self):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
@@ -509,7 +517,9 @@ class TestTrainerWithNlp(unittest.TestCase):
             type(trainer.train_dataloader.sampler) == CustomSampler)
         self.assertTrue(type(trainer.eval_dataloader.sampler) == CustomSampler)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_with_prediction(self):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
@@ -551,7 +561,9 @@ class TestTrainerWithNlp(unittest.TestCase):
             checkpoint_path=cache_path + '/pytorch_model.bin')
         self.assertTrue(os.path.isfile(f'{tmp_dir}/predicts.txt'))
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_with_prediction_msdataset(self):
         tmp_dir = tempfile.TemporaryDirectory().name
         if not os.path.exists(tmp_dir):
@@ -608,7 +620,9 @@ class TestTrainerWithNlp(unittest.TestCase):
         for i in range(2):
             self.assertIn(f'epoch_{i + 1}.pth', results_files)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip test because transformers version is too high.')
     def test_trainer_with_hook_register(self):
         model_id = 'damo/nlp_structbert_sentence-similarity_chinese-tiny'
 

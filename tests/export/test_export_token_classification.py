@@ -8,6 +8,7 @@ from collections import OrderedDict
 from modelscope.exporters import Exporter, TorchModelExporter
 from modelscope.models import Model
 from modelscope.utils.constant import Tasks
+from modelscope.utils.import_utils import exists
 from modelscope.utils.test_utils import test_level
 
 
@@ -24,7 +25,9 @@ class TestExportTokenClassification(unittest.TestCase):
         shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    @unittest.skipUnless(
+        exists('transformers<5.0'),
+        'Skip because transformers version is too high.')
     def test_export_token_classification(self):
         model = Model.from_pretrained(self.model_id)
         with self.subTest(format='onnx'):

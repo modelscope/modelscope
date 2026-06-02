@@ -169,14 +169,16 @@ class Visibility(object):
     PUBLIC = 'public'
 
 
-class ProtectedMode(object):
-    """Protected mode for private repositories.
+class GatedMode(object):
+    """Gated mode for private repositories.
 
     Only effective when Visibility is PRIVATE.
     API payload key: ``ProtectedMode``.
+    Values: True = gated (application-based download),
+            False = off (normal private).
     """
-    PROTECTED = 1
-    OFF = 2
+    GATED = True
+    OFF = False
 
 
 VisibilityMap = {

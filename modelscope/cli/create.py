@@ -3,7 +3,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
-from modelscope.hub.constants import (Licenses, ModelVisibility, ProtectedMode,
+from modelscope.hub.constants import (GatedMode, Licenses, ModelVisibility,
                                       Visibility, VisibilityMap)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import resolve_endpoint
@@ -83,14 +83,18 @@ class CreateCMD(CLICommand):
             'If True, do not raise error when repo already exists. Defaults to False.',
         )
         parser.add_argument(
-            '--protected_mode',
-            type=int,
-            choices=[ProtectedMode.PROTECTED, ProtectedMode.OFF],
+            '--gated',
+            dest='gated_mode',
+            action='store_true',
             default=None,
-            help='Protected mode for private repos. '
-            '1 = protected (application-based download), '
-            '2 = off (normal private). '
-            'Only effective when --visibility is private.',
+            help=
+            'Enable gated mode (application-based download) for private repos.',
+        )
+        parser.add_argument(
+            '--no-gated',
+            dest='gated_mode',
+            action='store_false',
+            help='Disable gated mode for private repos (normal private).',
         )
         parser.add_argument(
             '--endpoint',
@@ -186,7 +190,7 @@ class CreateCMD(CLICommand):
             exist_ok=self.args.exist_ok,
             create_default_config=True,
             endpoint=endpoint,
-            protected_mode=self.args.protected_mode,
+            gated_mode=self.args.gated_mode,
         )
 
     def _create_aigc_model(self):
@@ -237,7 +241,7 @@ class CreateCMD(CLICommand):
                 license=self.args.license,
                 chinese_name=self.args.chinese_name,
                 aigc_model=aigc_model,
-                protected_mode=self.args.protected_mode)
+                gated_mode=self.args.gated_mode)
             print(f'Successfully created AIGC model: {model_url}')
         except Exception as e:
             print(f'Error creating AIGC model: {e}')

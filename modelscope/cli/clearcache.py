@@ -2,11 +2,13 @@
 import os
 import shutil
 from argparse import ArgumentParser
-from pathlib import Path
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.constants import TEMPORARY_FOLDER_NAME
 from modelscope.hub.utils.utils import get_model_masked_directory
+from modelscope.utils.file_utils import (get_dataset_cache_root,
+                                         get_model_cache_root,
+                                         get_modelscope_cache_dir)
 
 
 def subparser_func(args):
@@ -20,9 +22,7 @@ class ClearCacheCMD(CLICommand):
 
     def __init__(self, args):
         self.args = args
-        self.cache_dir = os.getenv(
-            'MODELSCOPE_CACHE',
-            Path.home().joinpath('.cache', 'modelscope'))
+        self.cache_dir = get_modelscope_cache_dir()
 
     @staticmethod
     def define_args(parsers: ArgumentParser):
@@ -76,11 +76,11 @@ class ClearCacheCMD(CLICommand):
                 self._remove_directory(self.cache_dir)
                 print('Cache cleared.')
             else:
-                entity_directory = os.path.join(
-                    self.cache_dir, 'hub', 'models' if single_model else 'datasets', id)
-                temp_directory = os.path.join(
-                    self.cache_dir, 'hub', 'models' if single_model else 'datasets',
-                    TEMPORARY_FOLDER_NAME, id)
+                entity_root = get_model_cache_root(
+                ) if single_model else get_dataset_cache_root()
+                entity_directory = os.path.join(entity_root, id)
+                temp_directory = os.path.join(entity_root,
+                                              TEMPORARY_FOLDER_NAME, id)
                 entity_removed = self._remove_directory(entity_directory)
                 temp_removed = self._remove_directory(temp_directory)
                 if (not entity_removed) and (not temp_removed):

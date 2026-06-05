@@ -55,6 +55,11 @@ class StudioCMD(CLICommand):
     # Argument parsing
     # ------------------------------------------------------------------
     @staticmethod
+    def register(subparsers) -> None:
+        """Register studio subcommand (CLICommand ABC contract)."""
+        StudioCMD.define_args(subparsers)
+
+    @staticmethod
     def define_args(parsers: _SubParsersAction):
         parser: ArgumentParser = parsers.add_parser(
             StudioCMD.name, help='Manage ModelScope studios at runtime.')

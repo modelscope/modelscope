@@ -1,10 +1,13 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""``modelscope pipeline`` — scaffold a custom pipeline from a template."""
+
 import logging
 import os
 from argparse import ArgumentParser
 from string import Template
 
-from modelscope.cli.base import CLICommand
+from modelscope_hub.cli.base import CLICommand
+
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
@@ -13,23 +16,13 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(current_path, 'template')
 
 
-def subparser_func(args):
-    """ Function which will be called for a specific sub parser.
-    """
-    return PipelineCMD(args)
-
-
 class PipelineCMD(CLICommand):
     name = 'pipeline'
 
-    def __init__(self, args):
-        self.args = args
-
     @staticmethod
-    def define_args(parsers: ArgumentParser):
-        """ define args for create pipeline template command.
-        """
-        parser = parsers.add_parser(PipelineCMD.name)
+    def register(subparsers: ArgumentParser) -> None:
+        parser = subparsers.add_parser(
+            PipelineCMD.name, help='Scaffold a custom pipeline from a template.')
         parser.add_argument(
             '-act',
             '--action',
@@ -85,7 +78,7 @@ class PipelineCMD(CLICommand):
             type=str,
             default='./',
             help='the path of configuration.json for ModelScope')
-        parser.set_defaults(func=subparser_func)
+        parser.set_defaults(_command=PipelineCMD)
 
     def create_template(self):
         if self.args.tpl_file_path not in os.listdir(template_path):

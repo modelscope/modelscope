@@ -1,3 +1,4 @@
+modelscope-hub>=0.2.0
 filelock
 packaging
 requests>=2.25

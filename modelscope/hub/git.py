@@ -1,271 +1,137 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""Git wrapper — shim delegating to ``modelscope_hub._git``.
+
+Preserves the legacy ``GitCommandWrapper`` Singleton interface used
+throughout the SDK while routing primitive Git operations through
+:class:`modelscope_hub._git.GitCommand`.
+"""
+from __future__ import annotations
 
 import os
-import subprocess
+from pathlib import Path
 from typing import List, Optional
-from urllib.parse import urlparse, urlunparse
 
+from modelscope_hub._git import GitCommand as _GitCommand
+
+from modelscope.hub.errors import GitError
+from modelscope.utils.constant import MASTER_MODEL_BRANCH
 from modelscope.utils.logger import get_logger
-from ..utils.constant import MASTER_MODEL_BRANCH
-from .errors import GitError
 
 logger = get_logger()
 
+__all__ = ['GitError', 'GitCommandWrapper', 'Singleton']
+
 
 class Singleton(type):
-    _instances = {}
+    """Metaclass enforcing one instance per class — preserved for parity."""
+
+    _instances: dict = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton,
-                                        cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
 class GitCommandWrapper(metaclass=Singleton):
-    """Some git operation wrapper
+    """Backward-compatible Git wrapper.
+
+    Wraps :class:`modelscope_hub._git.GitCommand` to expose the legacy
+    instance-method API (``clone``, ``push``, ``pull``, ``tag``…) used
+    by callers that pre-date the SDK refactor.
     """
-    default_git_path = 'git'  # The default git command line
 
-    def __init__(self, path: str = None):
+    default_git_path = 'git'
+
+    def __init__(self, path: Optional[str] = None):
         self.git_path = path or self.default_git_path
+        _GitCommand.set_git_path(self.git_path)
 
-    def _run_git_command(self, *args) -> subprocess.CompletedProcess:
-        """Run git command, if command return 0, return subprocess.response
-             otherwise raise GitError, message is stdout and stderr.
-
-        Args:
-            args: List of command args.
-
-        Raises:
-            GitError: Exception with stdout and stderr.
-
-        Returns:
-            subprocess.CompletedProcess: the command response
-        """
-        logger.debug(' '.join(args))
-        git_env = os.environ.copy()
-        git_env['GIT_TERMINAL_PROMPT'] = '0'
-        command = [self.git_path, *args]
-        command = [item for item in command if item]
-        response = subprocess.run(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=git_env,
-        )  # compatible for python3.6
+    # ------------------------------------------------------------------
+    # Low-level subprocess passthrough (legacy contract)
+    # ------------------------------------------------------------------
+    def _run_git_command(self, *args):
+        """Run a git subcommand, raising :class:`GitError` on failure."""
         try:
-            response.check_returncode()
-            return response
-        except subprocess.CalledProcessError as error:
-            std_out = response.stdout.decode('utf-8', errors='replace')
-            std_err = error.stderr.decode('utf-8', errors='replace')
-            if 'nothing to commit' in std_out:
-                logger.info(
-                    'Nothing to commit, your local repo is upto date with remote'
-                )
-                return response
-            else:
-                logger.error(
-                    'Running git command: %s failed \n stdout: %s \n stderr: %s'
-                    % (command, std_out, std_err))
-                raise GitError(std_err)
+            return _GitCommand._run(*[a for a in args if a])
+        except Exception as exc:  # _git.GitError → legacy GitError
+            raise GitError(str(exc)) from exc
 
-    def config_auth_token(self, repo_dir, auth_token):
-        url = self.get_repo_remote_url(repo_dir)
-        if '//oauth2' not in url:
-            auth_url = self._add_token(auth_token, url)
-            cmd_args = '-C %s remote set-url origin %s' % (repo_dir, auth_url)
-            cmd_args = cmd_args.split(' ')
-            rsp = self._run_git_command(*cmd_args)
-            logger.debug(rsp.stdout.decode('utf8'))
+    # ------------------------------------------------------------------
+    # URL / token helpers
+    # ------------------------------------------------------------------
+    def _add_token(self, token: str, url: str) -> str:
+        return _GitCommand._inject_token(url, token)
 
-    def _add_token(self, token: str, url: str):
-        """Inject OAuth2 token into an HTTP(S) git URL.
+    def remove_token_from_url(self, url: str) -> str:
+        return _GitCommand.strip_token_from_url(url)
 
-        Uses ``urllib.parse`` for reliable URL component handling,
-        avoiding naive string replacement that can corrupt URLs
-        containing multiple ``://`` sequences.
+    # ------------------------------------------------------------------
+    # LFS
+    # ------------------------------------------------------------------
+    def is_lfs_installed(self) -> bool:
+        return _GitCommand.is_lfs_available()
 
-        Args:
-            token: OAuth2 access token.
-            url:   Remote URL (HTTP, HTTPS, or SSH).
-
-        Returns:
-            URL with ``oauth2:<token>@`` injected into the *netloc*,
-            or the original *url* unchanged when:
-
-            * *token* is falsy,
-            * the URL already carries an ``oauth2`` credential,
-            * the scheme is not HTTP/HTTPS (e.g. ``ssh://``, ``git@``).
-        """
-        if not token:
-            return url
-
-        # SSH URLs authenticate via keys, not tokens.
-        if url.startswith('git@'):
-            return url
-
+    def git_lfs_install(self, repo_dir: str) -> bool:
         try:
-            parsed = urlparse(url)
+            _GitCommand.lfs_install(Path(repo_dir))
+            return True
         except Exception:
-            return url
-
-        # Only inject into HTTP(S) URLs.
-        if parsed.scheme not in ('http', 'https'):
-            return url
-
-        # Prevent double injection.
-        if parsed.username == 'oauth2':
-            return url
-
-        # Reconstruct netloc: oauth2:<token>@host[:port]
-        host = parsed.hostname or ''
-        if parsed.port:
-            host = f'{host}:{parsed.port}'
-        netloc = f'oauth2:{token}@{host}'
-
-        return urlunparse(parsed._replace(netloc=netloc))
-
-    def remove_token_from_url(self, url: str):
-        if url and '//oauth2' in url:
-            start_index = url.find('oauth2')
-            end_index = url.find('@')
-            url = url[:start_index] + url[end_index + 1:]
-        return url
-
-    def is_lfs_installed(self):
-        cmd = ['lfs', 'env']
-        try:
-            self._run_git_command(*cmd)
-            return True
-        except GitError:
             return False
 
-    def git_lfs_install(self, repo_dir):
-        cmd = ['-C', repo_dir, 'lfs', 'install', '--force']
-        try:
-            self._run_git_command(*cmd)
-            return True
-        except GitError:
-            return False
+    def list_lfs_files(self, repo_dir: str) -> List[str]:
+        rsp = self._run_git_command('-C', repo_dir, 'lfs', 'ls-files')
+        return [line.split(' ')[-1]
+                for line in rsp.stdout.strip().split(os.linesep) if line]
 
+    # ------------------------------------------------------------------
+    # Auth / user config
+    # ------------------------------------------------------------------
+    def config_auth_token(self, repo_dir: str, auth_token: str) -> None:
+        url = self.get_repo_remote_url(repo_dir)
+        if '//oauth2' in url:
+            return
+        auth_url = self._add_token(auth_token, url)
+        self._run_git_command('-C', repo_dir, 'remote', 'set-url',
+                              'origin', auth_url)
+
+    def add_user_info(self, repo_base_dir: str, repo_name: str) -> None:
+        from modelscope.hub.api import ModelScopeConfig
+        user_name, user_email = ModelScopeConfig.get_user_info()
+        if not (user_name and user_email):
+            return
+        repo_dir = os.path.join(repo_base_dir, repo_name)
+        self._run_git_command('-C', repo_dir, 'config',
+                              'user.name', user_name)
+        self._run_git_command('-C', repo_dir, 'config',
+                              'user.email', user_email)
+
+    # ------------------------------------------------------------------
+    # Clone / pull / push
+    # ------------------------------------------------------------------
     def clone(self,
               repo_base_dir: str,
-              token: str,
+              token: Optional[str],
               url: str,
               repo_name: str,
               branch: Optional[str] = None):
-        """ git clone command wrapper.
-        For public project, token can None, private repo, there must token.
-
-        Args:
-            repo_base_dir (str): The local base dir, the repository will be clone to local_dir/repo_name
-            token (str): The git token, must be provided for private project.
-            url (str): The remote url
-            repo_name (str): The local repository path name.
-            branch (str, optional): _description_. Defaults to None.
-
-        Returns:
-            The popen response.
-        """
-        url = self._add_token(token, url)
-        if branch:
-            clone_args = '-C %s clone %s %s --branch %s' % (repo_base_dir, url,
-                                                            repo_name, branch)
-        else:
-            clone_args = '-C %s clone %s' % (repo_base_dir, url)
-        logger.debug(clone_args)
-        clone_args = clone_args.split(' ')
+        target = Path(repo_base_dir) / repo_name
         try:
-            response = self._run_git_command(*clone_args)
-            logger.debug(response.stdout.decode('utf8'))
-            return response
-        except GitError:
-            # git clone may succeed but still exit non-zero when an
-            # external hook (e.g. a custom core.hooksPath that wraps
-            # ``git lfs post-merge``) returns a non-zero code.  When the
-            # repository was actually cloned, treat this as a warning.
-            repo_dir = os.path.join(repo_base_dir, repo_name)
-            if os.path.isdir(os.path.join(repo_dir, '.git')):
+            _GitCommand.clone(
+                url=url, target_dir=target, branch=branch, token=token)
+        except Exception as exc:
+            if (target / '.git').is_dir():
                 logger.warning(
-                    'git clone exited with non-zero status but the '
-                    'repository was cloned successfully at %s. '
-                    'This is usually caused by a post-clone hook '
-                    '(e.g. core.hooksPath). Continuing.', repo_dir)
+                    'git clone exited non-zero but repository was cloned '
+                    'at %s. Likely a post-clone hook. Continuing.', target)
                 return None
-            raise
-
-    def add_user_info(self, repo_base_dir, repo_name):
-        from modelscope.hub.api import ModelScopeConfig
-        user_name, user_email = ModelScopeConfig.get_user_info()
-        if user_name and user_email:
-            # config user.name and user.email if exist
-            config_user_name_args = '-C %s/%s config user.name %s' % (
-                repo_base_dir, repo_name, user_name)
-            response = self._run_git_command(*config_user_name_args.split(' '))
-            logger.debug(response.stdout.decode('utf8'))
-            config_user_email_args = '-C %s/%s config user.email %s' % (
-                repo_base_dir, repo_name, user_email)
-            response = self._run_git_command(
-                *config_user_email_args.split(' '))
-            logger.debug(response.stdout.decode('utf8'))
-
-    def add(self,
-            repo_dir: str,
-            files: List[str] = list(),
-            all_files: bool = False):
-        if all_files:
-            add_args = '-C %s add -A' % repo_dir
-        elif len(files) > 0:
-            files_str = ' '.join(files)
-            add_args = '-C %s add %s' % (repo_dir, files_str)
-        add_args = add_args.split(' ')
-        rsp = self._run_git_command(*add_args)
-        logger.debug(rsp.stdout.decode('utf8'))
-        return rsp
-
-    def commit(self, repo_dir: str, message: str):
-        """Run git commit command
-
-        Args:
-            repo_dir (str): the repository directory.
-            message (str): commit message.
-
-        Returns:
-            The command popen response.
-        """
-        commit_args = ['-C', '%s' % repo_dir, 'commit', '-m', "'%s'" % message]
-        rsp = self._run_git_command(*commit_args)
-        logger.info(rsp.stdout.decode('utf8'))
-        return rsp
-
-    def checkout(self, repo_dir: str, revision: str):
-        cmds = ['-C', '%s' % repo_dir, 'checkout', '%s' % revision]
-        return self._run_git_command(*cmds)
-
-    def new_branch(self, repo_dir: str, revision: str):
-        cmds = ['-C', '%s' % repo_dir, 'checkout', '-b', revision]
-        return self._run_git_command(*cmds)
-
-    def get_remote_branches(self, repo_dir: str):
-        cmds = ['-C', '%s' % repo_dir, 'branch', '-r']
-        rsp = self._run_git_command(*cmds)
-        info = [
-            line.strip()
-            for line in rsp.stdout.decode('utf8').strip().split(os.linesep)
-        ]
-        if len(info) == 1:
-            return ['/'.join(info[0].split('/')[1:])]
-        else:
-            return ['/'.join(line.split('/')[1:]) for line in info[1:]]
+            raise GitError(str(exc)) from exc
 
     def pull(self,
              repo_dir: str,
              remote: str = 'origin',
              branch: str = 'master'):
-        cmds = ['-C', repo_dir, 'pull', remote, branch]
-        return self._run_git_command(*cmds)
+        return self._run_git_command('-C', repo_dir, 'pull', remote, branch)
 
     def push(self,
              repo_dir: str,
@@ -274,50 +140,59 @@ class GitCommandWrapper(metaclass=Singleton):
              local_branch: str,
              remote_branch: str,
              force: bool = False):
-        url = self._add_token(token, url)
-
-        push_args = '-C %s push %s %s:%s' % (repo_dir, url, local_branch,
-                                             remote_branch)
+        auth_url = self._add_token(token, url)
+        args = ['-C', repo_dir, 'push', auth_url,
+                f'{local_branch}:{remote_branch}']
         if force:
-            push_args += ' -f'
-        push_args = push_args.split(' ')
-        rsp = self._run_git_command(*push_args)
-        logger.debug(rsp.stdout.decode('utf8'))
-        return rsp
+            args.append('-f')
+        return self._run_git_command(*args)
 
-    def get_repo_remote_url(self, repo_dir: str):
-        cmd_args = '-C %s config --get remote.origin.url' % repo_dir
-        cmd_args = cmd_args.split(' ')
-        rsp = self._run_git_command(*cmd_args)
-        url = rsp.stdout.decode('utf8')
-        return url.strip()
+    # ------------------------------------------------------------------
+    # Add / commit / branch / checkout
+    # ------------------------------------------------------------------
+    def add(self,
+            repo_dir: str,
+            files: Optional[List[str]] = None,
+            all_files: bool = False):
+        if all_files:
+            return self._run_git_command('-C', repo_dir, 'add', '-A')
+        return self._run_git_command('-C', repo_dir, 'add', *(files or []))
 
-    def list_lfs_files(self, repo_dir: str):
-        cmd_args = '-C %s lfs ls-files' % repo_dir
-        cmd_args = cmd_args.split(' ')
-        rsp = self._run_git_command(*cmd_args)
-        out = rsp.stdout.decode('utf8').strip()
-        files = []
-        for line in out.split(os.linesep):
-            files.append(line.split(' ')[-1])
+    def commit(self, repo_dir: str, message: str):
+        return self._run_git_command(
+            '-C', repo_dir, 'commit', '-m', f"'{message}'")
 
-        return files
+    def checkout(self, repo_dir: str, revision: str):
+        return self._run_git_command('-C', repo_dir, 'checkout', revision)
 
+    def new_branch(self, repo_dir: str, revision: str):
+        return self._run_git_command(
+            '-C', repo_dir, 'checkout', '-b', revision)
+
+    def get_remote_branches(self, repo_dir: str) -> List[str]:
+        rsp = self._run_git_command('-C', repo_dir, 'branch', '-r')
+        info = [line.strip()
+                for line in rsp.stdout.strip().split(os.linesep) if line]
+        if len(info) <= 1:
+            return ['/'.join(info[0].split('/')[1:])] if info else []
+        return ['/'.join(line.split('/')[1:]) for line in info[1:]]
+
+    def get_repo_remote_url(self, repo_dir: str) -> str:
+        rsp = self._run_git_command(
+            '-C', repo_dir, 'config', '--get', 'remote.origin.url')
+        return rsp.stdout.strip()
+
+    # ------------------------------------------------------------------
+    # Tags
+    # ------------------------------------------------------------------
     def tag(self,
             repo_dir: str,
             tag_name: str,
             message: str,
             ref: str = MASTER_MODEL_BRANCH):
-        cmd_args = [
-            '-C', repo_dir, 'tag', tag_name, '-m',
-            '"%s"' % message, ref
-        ]
-        rsp = self._run_git_command(*cmd_args)
-        logger.debug(rsp.stdout.decode('utf8'))
-        return rsp
+        return self._run_git_command(
+            '-C', repo_dir, 'tag', tag_name, '-m', f'"{message}"', ref)
 
-    def push_tag(self, repo_dir: str, tag_name):
-        cmd_args = ['-C', repo_dir, 'push', 'origin', tag_name]
-        rsp = self._run_git_command(*cmd_args)
-        logger.debug(rsp.stdout.decode('utf8'))
-        return rsp
+    def push_tag(self, repo_dir: str, tag_name: str):
+        return self._run_git_command(
+            '-C', repo_dir, 'push', 'origin', tag_name)

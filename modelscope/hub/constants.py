@@ -169,6 +169,18 @@ class Visibility(object):
     PUBLIC = 'public'
 
 
+class GatedMode(object):
+    """Gated mode for private repositories.
+
+    Only effective when Visibility is PRIVATE.
+    API payload key: ``ProtectedMode``.
+    Values: True = gated (application-based download),
+            False = off (normal private).
+    """
+    GATED = True
+    OFF = False
+
+
 VisibilityMap = {
     ModelVisibility.PRIVATE: Visibility.PRIVATE,
     ModelVisibility.INTERNAL: Visibility.INTERNAL,

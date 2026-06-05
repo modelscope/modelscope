@@ -73,9 +73,8 @@ class ClearCacheCMD(CLICommand):
                 id = self.args.dataset
                 prompt = prompt + f'local cache for dataset {id}. '
         else:
-            prompt = prompt + (
-                f'entire ModelScope cache at {self.cache_dir}, '
-                f'including ALL models and dataset.\n')
+            prompt = prompt + (f'entire ModelScope cache at {self.cache_dir}, '
+                               f'including ALL models and dataset.\n')
             all = True
         user_input = input(
             prompt

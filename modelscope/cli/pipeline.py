@@ -22,7 +22,8 @@ class PipelineCMD(CLICommand):
     @staticmethod
     def register(subparsers: ArgumentParser) -> None:
         parser = subparsers.add_parser(
-            PipelineCMD.name, help='Scaffold a custom pipeline from a template.')
+            PipelineCMD.name,
+            help='Scaffold a custom pipeline from a template.')
         parser.add_argument(
             '-act',
             '--action',

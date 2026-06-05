@@ -56,8 +56,7 @@ class SkillsCMD(CLICommand):
         sub = parser.add_subparsers(
             dest='skills_action', help='skills subcommands')
 
-        add_parser = sub.add_parser(
-            'add', help='Download and install skills')
+        add_parser = sub.add_parser('add', help='Download and install skills')
         add_parser.add_argument(
             'skill_ids',
             type=str,
@@ -106,6 +105,7 @@ class SkillsCMD(CLICommand):
                 print(f'Failed to download skill {skill_ids[0]}: {e}')
                 sys.exit(1)
         else:
+
             def _download_one(skill_id):
                 try:
                     skill_dir = api.download_skill(

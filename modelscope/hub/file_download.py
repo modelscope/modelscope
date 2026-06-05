@@ -16,6 +16,9 @@ from http.cookiejar import CookieJar
 from typing import Dict, List, Optional, Type
 
 import requests
+# --- Hub file downloads (delegated) ---
+from modelscope_hub.compat import dataset_file_download  # noqa: E402,F401
+from modelscope_hub.compat import model_file_download
 from requests.adapters import Retry
 from tqdm.auto import tqdm
 
@@ -23,16 +26,11 @@ from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
                                       API_FILE_DOWNLOAD_RETRY_TIMES,
                                       API_FILE_DOWNLOAD_TIMEOUT)
 from modelscope.utils.logger import get_logger
-
 from .callback import ProgressCallback, TqdmCallback
 from .errors import FileDownloadError
 from .utils.utils import get_endpoint
 
-# --- Hub file downloads (delegated) ---
-from modelscope_hub.compat import model_file_download, dataset_file_download  # noqa: E402,F401
-
 logger = get_logger()
-
 
 # --- Direct HTTP downloads (retained - non-Hub API) ---
 

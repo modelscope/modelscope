@@ -7,13 +7,11 @@ constructors (auto-clone-on-init) and methods (``push``, ``pull``,
 pre-date the SDK refactor.
 """
 from __future__ import annotations
-
 import os
 import warnings
 from typing import Optional
 
-from modelscope.hub.errors import (GitError, InvalidParameter,
-                                   NotLoginException)
+from modelscope.hub.errors import GitError, InvalidParameter, NotLoginException
 from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_REPOSITORY_REVISION,
                                        MASTER_MODEL_BRANCH)
@@ -33,13 +31,9 @@ def _resolve_token(auth_token: Optional[str]) -> Optional[str]:
     return ModelScopeConfig.get_token()
 
 
-def _clone_if_needed(git_wrapper: GitCommandWrapper,
-                     base_dir: str,
-                     repo_name: str,
-                     repo_dir: str,
-                     url: str,
-                     token: Optional[str],
-                     revision: Optional[str]) -> bool:
+def _clone_if_needed(git_wrapper: GitCommandWrapper, base_dir: str,
+                     repo_name: str, repo_dir: str, url: str,
+                     token: Optional[str], revision: Optional[str]) -> bool:
     """Clone *url* into *repo_dir* unless it's already that working copy.
 
     Returns ``True`` if a clone was performed, ``False`` if skipped.
@@ -82,20 +76,19 @@ class Repository:
             logger.error('git lfs is not installed, please install.')
 
         url = self._get_model_id_url(clone_from)
-        cloned = _clone_if_needed(
-            self.git_wrapper, self.model_base_dir, self.model_repo_name,
-            self.model_dir, url, self.auth_token, revision)
+        cloned = _clone_if_needed(self.git_wrapper, self.model_base_dir,
+                                  self.model_repo_name, self.model_dir, url,
+                                  self.auth_token, revision)
         if not cloned:
             return
 
         if self.git_wrapper.is_lfs_installed():
             self.git_wrapper.git_lfs_install(self.model_dir)
 
-        self.git_wrapper.add_user_info(
-            self.model_base_dir, self.model_repo_name)
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
         if self.auth_token:
-            self.git_wrapper.config_auth_token(
-                self.model_dir, self.auth_token)
+            self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
 
     def _get_model_id_url(self, model_id: str) -> str:
         endpoint = self._endpoint or get_endpoint()
@@ -132,8 +125,8 @@ class Repository:
             raise NotLoginException('Must login to push, please login first.')
 
         self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
-        self.git_wrapper.add_user_info(
-            self.model_base_dir, self.model_repo_name)
+        self.git_wrapper.add_user_info(self.model_base_dir,
+                                       self.model_repo_name)
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
 
         self.git_wrapper.add(self.model_dir, all_files=True)
@@ -156,9 +149,8 @@ class Repository:
                 'We use tag-based revision, therefore tag_name '
                 'cannot be None or empty.')
         if not message:
-            raise InvalidParameter(
-                'We use annotated tag, therefore message '
-                'cannot None or empty.')
+            raise InvalidParameter('We use annotated tag, therefore message '
+                                   'cannot None or empty.')
         self.git_wrapper.tag(
             repo_dir=self.model_dir,
             tag_name=tag_name,
@@ -171,8 +163,7 @@ class Repository:
                      ref: Optional[str] = MASTER_MODEL_BRANCH):
         """Create *tag_name* and push it to the remote."""
         self.tag(tag_name, message, ref)
-        self.git_wrapper.push_tag(
-            repo_dir=self.model_dir, tag_name=tag_name)
+        self.git_wrapper.push_tag(repo_dir=self.model_dir, tag_name=tag_name)
 
 
 class DatasetRepository:
@@ -212,9 +203,10 @@ class DatasetRepository:
 
     def clone(self) -> str:
         """Clone the dataset repo if not already cloned, returning its path."""
-        cloned = _clone_if_needed(
-            self.git_wrapper, self.repo_base_dir, self.repo_name,
-            self.repo_work_dir, self.repo_url, self.auth_token, self.revision)
+        cloned = _clone_if_needed(self.git_wrapper, self.repo_base_dir,
+                                  self.repo_name, self.repo_work_dir,
+                                  self.repo_url, self.auth_token,
+                                  self.revision)
         return self.repo_work_dir if cloned else ''
 
     def push(self,

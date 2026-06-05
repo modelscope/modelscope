@@ -10,20 +10,11 @@ from pathlib import Path
 
 # --- Delegated constants (from modelscope_hub) ---
 from modelscope_hub.compat.constants import (  # noqa: F401
-    DEFAULT_DATASET_REVISION,
-    DEFAULT_MAX_WORKERS,
-    FILE_HASH,
-    MODELSCOPE_DOMAIN,
-    MODELSCOPE_PREFER_AI_SITE,
-    ModelVisibility_INTERNAL,
-    ModelVisibility_PRIVATE,
-    ModelVisibility_PUBLIC,
-    REPO_TYPE_DATASET,
-    REPO_TYPE_MODEL,
-    REPO_TYPE_STUDIO,
-    REPO_TYPE_SUPPORT,
-    TEMPORARY_FOLDER_NAME,
-)
+    DEFAULT_DATASET_REVISION, DEFAULT_MAX_WORKERS, FILE_HASH,
+    MODELSCOPE_DOMAIN, MODELSCOPE_PREFER_AI_SITE, REPO_TYPE_DATASET,
+    REPO_TYPE_MODEL, REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT,
+    TEMPORARY_FOLDER_NAME, ModelVisibility_INTERNAL, ModelVisibility_PRIVATE,
+    ModelVisibility_PUBLIC)
 
 # --- Local constants (not in modelscope_hub) ---
 MODELSCOPE_URL_SCHEME = 'https://'

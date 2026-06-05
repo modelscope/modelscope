@@ -6,7 +6,6 @@ throughout the SDK while routing primitive Git operations through
 :class:`modelscope_hub._git.GitCommand`.
 """
 from __future__ import annotations
-
 import os
 from pathlib import Path
 from typing import List, Optional
@@ -81,8 +80,10 @@ class GitCommandWrapper(metaclass=Singleton):
 
     def list_lfs_files(self, repo_dir: str) -> List[str]:
         rsp = self._run_git_command('-C', repo_dir, 'lfs', 'ls-files')
-        return [line.split(' ')[-1]
-                for line in rsp.stdout.strip().split(os.linesep) if line]
+        return [
+            line.split(' ')[-1]
+            for line in rsp.stdout.strip().split(os.linesep) if line
+        ]
 
     # ------------------------------------------------------------------
     # Auth / user config
@@ -92,8 +93,8 @@ class GitCommandWrapper(metaclass=Singleton):
         if '//oauth2' in url:
             return
         auth_url = self._add_token(auth_token, url)
-        self._run_git_command('-C', repo_dir, 'remote', 'set-url',
-                              'origin', auth_url)
+        self._run_git_command('-C', repo_dir, 'remote', 'set-url', 'origin',
+                              auth_url)
 
     def add_user_info(self, repo_base_dir: str, repo_name: str) -> None:
         from modelscope.hub.api import ModelScopeConfig
@@ -101,10 +102,9 @@ class GitCommandWrapper(metaclass=Singleton):
         if not (user_name and user_email):
             return
         repo_dir = os.path.join(repo_base_dir, repo_name)
-        self._run_git_command('-C', repo_dir, 'config',
-                              'user.name', user_name)
-        self._run_git_command('-C', repo_dir, 'config',
-                              'user.email', user_email)
+        self._run_git_command('-C', repo_dir, 'config', 'user.name', user_name)
+        self._run_git_command('-C', repo_dir, 'config', 'user.email',
+                              user_email)
 
     # ------------------------------------------------------------------
     # Clone / pull / push
@@ -141,8 +141,9 @@ class GitCommandWrapper(metaclass=Singleton):
              remote_branch: str,
              force: bool = False):
         auth_url = self._add_token(token, url)
-        args = ['-C', repo_dir, 'push', auth_url,
-                f'{local_branch}:{remote_branch}']
+        args = [
+            '-C', repo_dir, 'push', auth_url, f'{local_branch}:{remote_branch}'
+        ]
         if force:
             args.append('-f')
         return self._run_git_command(*args)
@@ -159,27 +160,29 @@ class GitCommandWrapper(metaclass=Singleton):
         return self._run_git_command('-C', repo_dir, 'add', *(files or []))
 
     def commit(self, repo_dir: str, message: str):
-        return self._run_git_command(
-            '-C', repo_dir, 'commit', '-m', f"'{message}'")
+        return self._run_git_command('-C', repo_dir, 'commit', '-m',
+                                     f"'{message}'")
 
     def checkout(self, repo_dir: str, revision: str):
         return self._run_git_command('-C', repo_dir, 'checkout', revision)
 
     def new_branch(self, repo_dir: str, revision: str):
-        return self._run_git_command(
-            '-C', repo_dir, 'checkout', '-b', revision)
+        return self._run_git_command('-C', repo_dir, 'checkout', '-b',
+                                     revision)
 
     def get_remote_branches(self, repo_dir: str) -> List[str]:
         rsp = self._run_git_command('-C', repo_dir, 'branch', '-r')
-        info = [line.strip()
-                for line in rsp.stdout.strip().split(os.linesep) if line]
+        info = [
+            line.strip() for line in rsp.stdout.strip().split(os.linesep)
+            if line
+        ]
         if len(info) <= 1:
             return ['/'.join(info[0].split('/')[1:])] if info else []
         return ['/'.join(line.split('/')[1:]) for line in info[1:]]
 
     def get_repo_remote_url(self, repo_dir: str) -> str:
-        rsp = self._run_git_command(
-            '-C', repo_dir, 'config', '--get', 'remote.origin.url')
+        rsp = self._run_git_command('-C', repo_dir, 'config', '--get',
+                                    'remote.origin.url')
         return rsp.stdout.strip()
 
     # ------------------------------------------------------------------
@@ -190,9 +193,9 @@ class GitCommandWrapper(metaclass=Singleton):
             tag_name: str,
             message: str,
             ref: str = MASTER_MODEL_BRANCH):
-        return self._run_git_command(
-            '-C', repo_dir, 'tag', tag_name, '-m', f'"{message}"', ref)
+        return self._run_git_command('-C', repo_dir, 'tag', tag_name, '-m',
+                                     f'"{message}"', ref)
 
     def push_tag(self, repo_dir: str, tag_name: str):
-        return self._run_git_command(
-            '-C', repo_dir, 'push', 'origin', tag_name)
+        return self._run_git_command('-C', repo_dir, 'push', 'origin',
+                                     tag_name)

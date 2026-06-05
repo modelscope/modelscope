@@ -10,31 +10,22 @@ from http import HTTPStatus
 from typing import Optional
 
 import requests
+from modelscope_hub.errors import AuthenticationError  # noqa: F401
+from modelscope_hub.errors import (APIError, CacheNotFound,
+                                   CorruptedCacheException, FileIntegrityError,
+                                   HubError, InvalidParameter, NetworkError,
+                                   NotExistError, NotSupportedError,
+                                   PermissionDeniedError, RequestTimeoutError,
+                                   ServerError)
 from requests.exceptions import HTTPError  # noqa: F401  (re-exported)
-
-from modelscope_hub.errors import (  # noqa: F401
-    APIError,
-    AuthenticationError,
-    CacheNotFound,
-    CorruptedCacheException,
-    FileIntegrityError,
-    HubError,
-    InvalidParameter,
-    NetworkError,
-    NotExistError,
-    NotSupportedError,
-    PermissionDeniedError,
-    RequestTimeoutError,
-    ServerError,
-)
 
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
 
-
 # --- Legacy exception aliases (maintain isinstance backward compatibility) ---
+
 
 class RequestError(APIError):
     """Legacy alias — use APIError for new code."""
@@ -74,6 +65,7 @@ class GitError(HubError):
 
 
 # --- Error handling functions (retained - contain unique logic) ---
+
 
 def get_request_id(response: requests.Response):
     if MODELSCOPE_REQUEST_ID in response.request.headers:

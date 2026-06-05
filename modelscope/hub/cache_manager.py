@@ -10,10 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Literal, Optional, Set, Union
 
-from modelscope_hub._cache_manager import (  # noqa: F401
-    clear_cache,
-    scan_cache,
-)
+from modelscope_hub._cache_manager import clear_cache, scan_cache  # noqa: F401
 
 from modelscope.hub.errors import CacheNotFound, CorruptedCacheException
 from modelscope.hub.utils.caching import ModelFileSystemCache

@@ -4,14 +4,13 @@ Delegates to ``modelscope_hub.compat`` while keeping ``revision``, ``cache_dir``
 and friends accessible as positional arguments for backward compatibility.
 """
 from __future__ import annotations
-
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from modelscope_hub.compat.snapshot_download import (
-    dataset_snapshot_download as _compat_dataset_snapshot_download,
-    snapshot_download as _compat_snapshot_download,
-)
+from modelscope_hub.compat.snapshot_download import \
+    dataset_snapshot_download as _compat_dataset_snapshot_download
+from modelscope_hub.compat.snapshot_download import \
+    snapshot_download as _compat_snapshot_download
 
 __all__ = ['snapshot_download', 'dataset_snapshot_download']
 
@@ -54,7 +53,8 @@ def snapshot_download(
         repo_type=repo_type,
         token=token,
         endpoint=endpoint,
-        local_files_only=bool(local_files_only) if local_files_only is not None else False,
+        local_files_only=bool(local_files_only)
+        if local_files_only is not None else False,
         user_agent=user_agent,
     )
 

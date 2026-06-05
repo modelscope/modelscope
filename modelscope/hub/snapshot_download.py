@@ -17,7 +17,7 @@ from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
                                        DEFAULT_MODEL_REVISION,
                                        INTRA_CLOUD_ACCELERATION,
                                        REPO_TYPE_DATASET, REPO_TYPE_MODEL,
-                                       REPO_TYPE_SUPPORT)
+                                       REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT)
 from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 from modelscope.utils.thread_utils import thread_executor
@@ -71,7 +71,7 @@ def snapshot_download(
         repo_id (str): A user or an organization name and a repo name separated by a `/`.
         model_id (str): A user or an organization name and a model name separated by a `/`.
             if `repo_id` is provided, `model_id` will be ignored.
-        repo_type (str, optional): The type of the repo, either 'model' or 'dataset'.
+        repo_type (str, optional): The type of the repo, one of 'model', 'dataset' or 'studio'.
         revision (str, optional): An optional Git revision id which can be a branch name, a tag, or a
             commit hash. NOTE: currently only branch and tag name is supported
         cache_dir (str, Path, optional): Path to the folder where cached files are stored, model will
@@ -324,16 +324,21 @@ def _snapshot_download(
                 repo_id=repo_id, repo_type=repo_type, token=token)
         if cookies is None:
             cookies = _api.get_cookies()
-        if repo_type == REPO_TYPE_MODEL:
+        # Studio repos are git-backed and share the model file/listing protocol,
+        # so they reuse the model code path with a distinct cache subdirectory.
+        if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_STUDIO):
             if local_dir:
                 directory = os.path.abspath(local_dir)
             elif cache_dir:
                 directory = os.path.join(system_cache, *repo_id.split('/'))
             else:
-                directory = os.path.join(system_cache, 'models',
+                subdir = 'studios' if repo_type == REPO_TYPE_STUDIO else 'models'
+                directory = os.path.join(system_cache, subdir,
                                          *repo_id.split('/'))
+            repo_label = 'Studio' if repo_type == REPO_TYPE_STUDIO else 'Model'
             print(
-                f'Downloading Model from {endpoint} to directory: {directory}')
+                f'Downloading {repo_label} from {endpoint} to directory: {directory}'
+            )
             revision_detail = _api.get_valid_revision_detail(
                 repo_id, revision=revision, cookies=cookies, endpoint=endpoint)
             revision = revision_detail['Revision']
@@ -1001,7 +1006,9 @@ def _download_file_lists(
     @thread_executor(
         max_workers=max_workers, disable_tqdm=False, fault_tolerant=True)
     def _download_single_file(repo_file):
-        if repo_type == REPO_TYPE_MODEL:
+        # Studio shares the model download URL template since both are
+        # single git-backed repos with the same file-fetch protocol.
+        if repo_type in (REPO_TYPE_MODEL, REPO_TYPE_STUDIO):
             url = get_file_download_url(
                 model_id=repo_id,
                 file_path=repo_file['Path'],

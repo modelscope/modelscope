@@ -116,23 +116,48 @@ def handle_http_response(response: requests.Response,
     else:
         reason = response.reason
     request_id = get_request_id(response)
+
+    # Try to extract server-side error detail from JSON response body.
+    server_message = ''
+    if response.status_code >= 400:
+        try:
+            resp_json = response.json()
+            # OpenAPI envelope: {"success": false, "code": "...", "message": "..."}
+            msg = resp_json.get('message') or resp_json.get('Message') or ''
+            code = resp_json.get('code') or ''
+            if msg:
+                server_message = f' | Server message: [{code}] {msg}' if code else f' | Server message: {msg}'
+        except (ValueError, AttributeError):
+            # Not JSON or unexpected structure; try raw text (truncated)
+            body_text = response.text[:500] if response.text else ''
+            if body_text:
+                server_message = f' | Response body: {body_text}'
+
     if 404 == response.status_code:
-        http_error_msg = 'The request model: %s does not exist!' % (model_id)
+        http_error_msg = (
+            u'404 Not Found: %s does not exist or is not accessible, '
+            u'Request id: %s for url: %s%s' %
+            (model_id, request_id, response.url, server_message))
     elif 403 == response.status_code:
         if cookies is None:
             http_error_msg = (
-                f'Authentication token does not exist, failed to access model {model_id} '
-                'which may not exist or may be private. Please login first.')
+                f'Authentication token does not exist, failed to access {model_id} '
+                f'which may not exist or may be private. Please login first.{server_message}'
+            )
 
         else:
-            http_error_msg = f'The authentication token is invalid, failed to access model {model_id}.'
+            http_error_msg = (
+                f'The authentication token is invalid, failed to access {model_id}.{server_message}'
+            )
     elif 400 <= response.status_code < 500:
-        http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s' % (
-            response.status_code, reason, request_id, response.url)
+        http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s%s' % (
+            response.status_code, reason, request_id, response.url,
+            server_message)
 
     elif 500 <= response.status_code < 600:
-        http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s' % (
-            response.status_code, reason, request_id, response.url)
+        http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s%s' % (
+            response.status_code, reason, request_id, response.url,
+            server_message)
     if http_error_msg and raise_on_error:  # there is error.
         logger.error(http_error_msg)
         raise HTTPError(http_error_msg, response=response)

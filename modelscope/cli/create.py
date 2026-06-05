@@ -7,7 +7,9 @@ from modelscope.hub.constants import (GatedMode, Licenses, ModelVisibility,
                                       Visibility, VisibilityMap)
 from modelscope.hub.utils.aigc import AigcModel
 from modelscope.hub.utils.utils import resolve_endpoint
-from modelscope.utils.constant import REPO_TYPE_MODEL, REPO_TYPE_SUPPORT
+from modelscope.utils.constant import (REPO_TYPE_MODEL, REPO_TYPE_STUDIO,
+                                       REPO_TYPE_SUPPORT, StudioHardware,
+                                       StudioSDKType)
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -107,6 +109,35 @@ class CreateCMD(CLICommand):
             'then defaults to https://www.modelscope.cn.',
         )
 
+        # Studio specific arguments (only meaningful when --repo_type studio)
+        studio_group = parser.add_argument_group(
+            'Studio Repo Creation',
+            'Optional arguments used only when `--repo_type studio` is set.')
+        studio_group.add_argument(
+            '--sdk-type',
+            dest='sdk_type',
+            choices=StudioSDKType.SUPPORTED,
+            default=None,
+            help='Studio SDK type (only for studio repo-type).')
+        studio_group.add_argument(
+            '--sdk-version',
+            dest='sdk_version',
+            type=str,
+            default=None,
+            help='Studio SDK version (only for gradio).')
+        studio_group.add_argument(
+            '--base-image',
+            dest='base_image',
+            type=str,
+            default=None,
+            help='Studio base image (only for gradio/streamlit).')
+        studio_group.add_argument(
+            '--hardware',
+            dest='hardware',
+            choices=StudioHardware.SUPPORTED,
+            default=None,
+            help='Studio hardware configuration.')
+
         # AIGC specific arguments
         aigc_group = parser.add_argument_group(
             'AIGC Model Creation',
@@ -179,6 +210,14 @@ class CreateCMD(CLICommand):
         endpoint = resolve_endpoint(self.args.endpoint)
         api = HubApi(endpoint=endpoint)
 
+        extra_kwargs = {}
+        if self.args.repo_type == REPO_TYPE_STUDIO:
+            # Pass studio-specific fields only when creating a studio repo.
+            for field in ('sdk_type', 'sdk_version', 'base_image', 'hardware'):
+                value = getattr(self.args, field, None)
+                if value is not None:
+                    extra_kwargs[field] = value
+
         # Create repo
         api.create_repo(
             repo_id=self.args.repo_id,
@@ -191,6 +230,7 @@ class CreateCMD(CLICommand):
             create_default_config=True,
             endpoint=endpoint,
             gated_mode=self.args.gated_mode,
+            **extra_kwargs,
         )
 
     def _create_aigc_model(self):

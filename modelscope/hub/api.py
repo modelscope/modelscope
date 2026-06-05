@@ -329,7 +329,8 @@ class HubApi:
                      original_model_id: Optional[str] = '',
                      endpoint: Optional[str] = None,
                      token: Optional[str] = None,
-                     aigc_model: Optional['AigcModel'] = None) -> str:
+                     aigc_model: Optional['AigcModel'] = None,
+                     gated_mode: Optional[bool] = None) -> str:
         """Create model repo at ModelScope Hub.
 
         Args:
@@ -343,6 +344,9 @@ class HubApi:
             aigc_model (AigcModel, optional): AigcModel instance for AIGC model creation.
                 If provided, will create an AIGC model with automatic file upload.
                 Refer to modelscope.hub.utils.aigc.AigcModel for details.
+            gated_mode (bool, optional): Gated mode for private repos.
+                True = gated (application-based download), False = off (normal private).
+                Only effective when visibility is PRIVATE (1).
 
         Returns:
             str: URL of the created model repository
@@ -373,6 +377,12 @@ class HubApi:
             'OriginalModelId': original_model_id,
             'TrainId': os.environ.get('MODELSCOPE_TRAIN_ID', '')
         }
+
+        if gated_mode is not None:
+            if visibility != ModelVisibility.PRIVATE:
+                logger.warning('gated_mode is only effective when visibility is PRIVATE, ignored.')
+            else:
+                body['ProtectedMode'] = 1 if gated_mode else 2
 
         # Set path based on model type
         if aigc_model is not None:
@@ -1428,7 +1438,8 @@ class HubApi:
                        visibility: Optional[int] = DatasetVisibility.PUBLIC,
                        description: Optional[str] = '',
                        endpoint: Optional[str] = None,
-                       token: Optional[str] = None) -> str:
+                       token: Optional[str] = None,
+                       gated_mode: Optional[bool] = None) -> str:
         """
         Create a dataset in ModelScope.
 
@@ -1441,6 +1452,9 @@ class HubApi:
             description (str, optional): The description of the dataset. Defaults to ''.
             endpoint (str, optional): The endpoint to use. If not provided, the default endpoint is used.
             token (str, optional): The access token for authentication.
+            gated_mode (bool, optional): Gated mode for private repos.
+                True = gated (application-based download), False = off (normal private).
+                Only effective when visibility is PRIVATE (1).
 
         Returns:
             str: The URL of the created dataset repository.
@@ -1461,6 +1475,12 @@ class HubApi:
             'Visibility': (None, visibility),
             'Description': (None, description)
         }
+
+        if gated_mode is not None:
+            if visibility != DatasetVisibility.PRIVATE:
+                logger.warning('gated_mode is only effective when visibility is PRIVATE, ignored.')
+            else:
+                files['ProtectedMode'] = (None, 1 if gated_mode else 2)
 
         r = self.session.post(
             path,
@@ -2200,6 +2220,7 @@ class HubApi:
             exist_ok: Optional[bool] = False,
             create_default_config: Optional[bool] = True,
             aigc_model: Optional[AigcModel] = None,
+            gated_mode: Optional[bool] = None,
             **kwargs,
     ) -> str:
         """
@@ -2217,6 +2238,9 @@ class HubApi:
                 In the format of `https://www.modelscope.cn` or 'https://www.modelscope.ai'
             exist_ok (Optional[bool]): If the repo exists, whether to return the repo url directly.
             create_default_config (Optional[bool]): If True, create a default configuration file in the model repo.
+            gated_mode (Optional[bool]): Gated mode for private repos.
+                True = gated (application-based download), False = off (normal private).
+                Only effective when visibility is ``private``.
             **kwargs: The additional arguments.
 
         Returns:
@@ -2256,6 +2280,7 @@ class HubApi:
                 aigc_model=aigc_model,
                 token=token,
                 endpoint=endpoint,
+                gated_mode=gated_mode,
             )
             if create_default_config:
                 with tempfile.TemporaryDirectory() as temp_cache_dir:
@@ -2290,6 +2315,7 @@ class HubApi:
                 visibility=visibility,
                 token=token,
                 endpoint=endpoint,
+                gated_mode=gated_mode,
             )
             print(f'New dataset created successfully at {repo_url}.', flush=True)
 
@@ -3882,7 +3908,8 @@ class HubApi:
                             repo_id: str,
                             repo_type: Literal['model', 'dataset'],
                             visibility: Literal['private', 'public'],
-                            token: Union[str, None] = None
+                            token: Union[str, None] = None,
+                            gated_mode: Optional[bool] = None,
                             ) -> dict:
         """
         Set the visibility of a repo.
@@ -3893,6 +3920,9 @@ class HubApi:
             visibility (Literal['private', 'public']): The visibility to set, `private` or `public`.
             token (Union[str, None]): The access token. If None, will use the cookies from the local cache.
                 See `https://modelscope.cn/my/myaccesstoken` to get your token.
+            gated_mode (Optional[bool]): Gated mode for private repos.
+                True = gated (application-based download), False = off (normal private).
+                Only effective when visibility is ``private``.
 
         Returns:
             dict: The response from the server.
@@ -3907,6 +3937,10 @@ class HubApi:
         visibility_code: int = visibility_map.get(visibility, 5)
         cookies = self.get_cookies(access_token=token, cookies_required=True)
 
+        if gated_mode is not None and visibility != 'private':
+            logger.warning('gated_mode is only effective when visibility is private, ignored.')
+            gated_mode = None
+
         if repo_type == REPO_TYPE_MODEL:
             model_info = self.get_model(model_id=repo_id, token=token)
             path = f'{self.endpoint}/api/v1/models/{repo_id}'
@@ -3916,11 +3950,15 @@ class HubApi:
                 first = tasks[0]
                 if isinstance(first, dict) and first:
                     model_tasks = first.get('name')
+            if gated_mode is not None:
+                pm = 1 if gated_mode else 2
+            else:
+                pm = model_info.get('ProtectedMode', 2)
             payload = {
                 'ChineseName': model_info.get('ChineseName', ''),
                 'ModelFramework': model_info.get('ModelFramework', 'Pytorch'),
                 'Visibility': visibility_code,
-                'ProtectedMode': 2,
+                'ProtectedMode': pm,
                 'ApprovalMode': model_info.get('ApprovalMode', 2),
                 'Description': model_info.get('Description', ''),
                 'AigcType': model_info.get('AigcType', ''),
@@ -3947,7 +3985,7 @@ class HubApi:
             path = f'{self.endpoint}/api/v1/datasets/{dataset_idx}'
             payload = {
                 'Visibility': visibility_code,
-                'ProtectedMode': 2,
+                'ProtectedMode': (1 if gated_mode else 2) if gated_mode is not None else 2,
             }
         else:
             raise ValueError(f'Invalid repo type: {repo_type}, supported repos: {REPO_TYPE_SUPPORT}')

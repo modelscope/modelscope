@@ -81,8 +81,8 @@ class GitCommandWrapper(metaclass=Singleton):
     def list_lfs_files(self, repo_dir: str) -> List[str]:
         rsp = self._run_git_command('-C', repo_dir, 'lfs', 'ls-files')
         return [
-            line.split(' ')[-1]
-            for line in rsp.stdout.strip().splitlines() if line
+            line.split(' ')[-1] for line in rsp.stdout.strip().splitlines()
+            if line
         ]
 
     # ------------------------------------------------------------------

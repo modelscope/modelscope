@@ -82,7 +82,7 @@ class GitCommandWrapper(metaclass=Singleton):
         rsp = self._run_git_command('-C', repo_dir, 'lfs', 'ls-files')
         return [
             line.split(' ')[-1]
-            for line in rsp.stdout.strip().split(os.linesep) if line
+            for line in rsp.stdout.strip().splitlines() if line
         ]
 
     # ------------------------------------------------------------------
@@ -173,8 +173,7 @@ class GitCommandWrapper(metaclass=Singleton):
     def get_remote_branches(self, repo_dir: str) -> List[str]:
         rsp = self._run_git_command('-C', repo_dir, 'branch', '-r')
         info = [
-            line.strip() for line in rsp.stdout.strip().split(os.linesep)
-            if line
+            line.strip() for line in rsp.stdout.strip().splitlines() if line
         ]
         if len(info) <= 1:
             return ['/'.join(info[0].split('/')[1:])] if info else []

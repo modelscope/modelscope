@@ -50,16 +50,14 @@ class PluginsCMD(CLICommand):
         uninstall.add_argument(
             '--yes',
             '-y',
-            type=str,
-            default=False,
+            action='store_true',
             help='Skip confirmation prompt.')
 
         list_p = sub.add_parser('list', help='List available plugins.')
         list_p.add_argument(
             '--all',
             '-a',
-            type=str,
-            default=None,
+            action='store_true',
             help='Show all of the plugins including those not installed.')
 
         parser.set_defaults(_command=PluginsCMD)

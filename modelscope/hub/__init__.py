@@ -25,9 +25,15 @@ def _sync_config() -> None:
     creds_path = _os.environ.get('MODELSCOPE_CREDENTIALS_PATH')
     if creds_path:
         resolved = _Path(creds_path).expanduser().resolve()
-        # Legacy convention points at the credentials directory itself; the
-        # new HubConfig wants its parent (e.g. ``~/.modelscope``).
-        config_dir = resolved.parent if resolved.name == 'credentials' else resolved
+        # Legacy convention may point at either the credentials directory
+        # (e.g. ``~/.modelscope``) or at a credentials file inside it; the
+        # new HubConfig always expects the directory. Treat the path as a
+        # file when it exists as one, falling back to the legacy
+        # ``credentials`` filename heuristic for paths that do not yet
+        # exist on disk.
+        is_file = resolved.is_file() or (not resolved.exists()
+                                         and resolved.name == 'credentials')
+        config_dir = resolved.parent if is_file else resolved
         cfg = _get_default_config()
         if cfg.config_dir != config_dir:
             cfg.config_dir = config_dir

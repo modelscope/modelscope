@@ -22,6 +22,16 @@ from modelscope.utils.logger import get_logger
 
 logger = get_logger()
 
+__all__ = [
+    'CachedFileInfo',
+    'CachedRevisionInfo',
+    'CachedRepoInfo',
+    'ModelScopeCacheInfo',
+    'scan_cache_dir',
+    'scan_cache',
+    'clear_cache',
+]
+
 # List of OS-created helper files that need to be ignored
 FILES_TO_IGNORE = ['.DS_Store', '._____temp']
 

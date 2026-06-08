@@ -88,7 +88,7 @@ class OssDownloader(BaseDownloader):
         Get credentials from cache and send to the modelscope-hub in the future. """
         cookies = HubApi().get_cookies(
             access_token=self.dataset_context_config.token)
-        git_token = ModelScopeConfig.get_token()
+        git_token = ModelScopeConfig.get_git_token()
         user_info = ModelScopeConfig.get_user_info()
 
         if not self.dataset_context_config.auth_config:

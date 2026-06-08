@@ -24,16 +24,17 @@ logger = get_logger()
 __all__ = ['Repository', 'DatasetRepository']
 
 
-def _resolve_token(auth_token: Optional[str]) -> Optional[str]:
+def _resolve_git_token(auth_token: Optional[str]) -> Optional[str]:
     if auth_token:
         return auth_token
     from modelscope.hub.api import ModelScopeConfig
-    return ModelScopeConfig.get_token()
+    return ModelScopeConfig.get_git_token()
 
 
 def _clone_if_needed(git_wrapper: GitCommandWrapper, base_dir: str,
                      repo_name: str, repo_dir: str, url: str,
-                     token: Optional[str], revision: Optional[str]) -> bool:
+                     git_token: Optional[str],
+                     revision: Optional[str]) -> bool:
     """Clone *url* into *repo_dir* unless it's already that working copy.
 
     Returns ``True`` if a clone was performed, ``False`` if skipped.
@@ -47,7 +48,7 @@ def _clone_if_needed(git_wrapper: GitCommandWrapper, base_dir: str,
                 return False
         except GitError:
             pass
-    git_wrapper.clone(base_dir, token, url, repo_name, revision)
+    git_wrapper.clone(base_dir, git_token, url, repo_name, revision)
     return True
 
 
@@ -58,9 +59,19 @@ class Repository:
                  model_dir: str,
                  clone_from: str,
                  revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-                 auth_token: Optional[str] = None,
+                 git_token: Optional[str] = None,
                  git_path: Optional[str] = None,
-                 endpoint: Optional[str] = None):
+                 endpoint: Optional[str] = None,
+                 auth_token: Optional[str] = None):
+        if auth_token is not None and git_token is None:
+            import warnings
+            warnings.warn(
+                'Repository(auth_token=...) is deprecated, '
+                'use Repository(git_token=...) instead.',
+                DeprecationWarning,
+                stacklevel=2)
+            git_token = auth_token
+
         if not revision:
             raise InvalidParameter(
                 'a non-default value of revision cannot be empty.')
@@ -69,7 +80,7 @@ class Repository:
         self.model_dir = model_dir
         self.model_base_dir = os.path.dirname(model_dir)
         self.model_repo_name = os.path.basename(model_dir)
-        self.auth_token = _resolve_token(auth_token)
+        self.git_token = _resolve_git_token(git_token)
 
         self.git_wrapper = GitCommandWrapper(git_path)
         if not self.git_wrapper.is_lfs_installed():
@@ -78,7 +89,7 @@ class Repository:
         url = self._get_model_id_url(clone_from)
         cloned = _clone_if_needed(self.git_wrapper, self.model_base_dir,
                                   self.model_repo_name, self.model_dir, url,
-                                  self.auth_token, revision)
+                                  self.git_token, revision)
         if not cloned:
             return
 
@@ -87,8 +98,8 @@ class Repository:
 
         self.git_wrapper.add_user_info(self.model_base_dir,
                                        self.model_repo_name)
-        if self.auth_token:
-            self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+        if self.git_token:
+            self.git_wrapper.config_git_token(self.model_dir, self.git_token)
 
     def _get_model_id_url(self, model_id: str) -> str:
         endpoint = self._endpoint or get_endpoint()
@@ -121,10 +132,10 @@ class Repository:
             raise InvalidParameter('commit_message must be provided!')
         if not isinstance(force, bool):
             raise InvalidParameter('force must be bool')
-        if not self.auth_token:
+        if not self.git_token:
             raise NotLoginException('Must login to push, please login first.')
 
-        self.git_wrapper.config_auth_token(self.model_dir, self.auth_token)
+        self.git_wrapper.config_git_token(self.model_dir, self.git_token)
         self.git_wrapper.add_user_info(self.model_base_dir,
                                        self.model_repo_name)
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
@@ -133,7 +144,7 @@ class Repository:
         self.git_wrapper.commit(self.model_dir, commit_message)
         self.git_wrapper.push(
             repo_dir=self.model_dir,
-            token=self.auth_token,
+            git_token=self.git_token,
             url=url,
             local_branch=local_branch,
             remote_branch=remote_branch,
@@ -173,9 +184,19 @@ class DatasetRepository:
                  repo_work_dir: str,
                  dataset_id: str,
                  revision: Optional[str] = DEFAULT_DATASET_REVISION,
-                 auth_token: Optional[str] = None,
+                 git_token: Optional[str] = None,
                  git_path: Optional[str] = None,
-                 endpoint: Optional[str] = None):
+                 endpoint: Optional[str] = None,
+                 auth_token: Optional[str] = None):
+        if auth_token is not None and git_token is None:
+            import warnings
+            warnings.warn(
+                'DatasetRepository(auth_token=...) is deprecated, '
+                'use DatasetRepository(git_token=...) instead.',
+                DeprecationWarning,
+                stacklevel=2)
+            git_token = auth_token
+
         if not repo_work_dir or not isinstance(repo_work_dir, str):
             raise InvalidParameter('dataset_work_dir must be provided!')
         repo_work_dir = repo_work_dir.rstrip('/')
@@ -191,7 +212,7 @@ class DatasetRepository:
         self.repo_base_dir = os.path.dirname(repo_work_dir)
         self.repo_name = os.path.basename(repo_work_dir)
         self.revision = revision
-        self.auth_token = _resolve_token(auth_token)
+        self.git_token = _resolve_git_token(git_token)
 
         self.git_wrapper = GitCommandWrapper(git_path)
         os.makedirs(self.repo_work_dir, exist_ok=True)
@@ -205,8 +226,7 @@ class DatasetRepository:
         """Clone the dataset repo if not already cloned, returning its path."""
         cloned = _clone_if_needed(self.git_wrapper, self.repo_base_dir,
                                   self.repo_name, self.repo_work_dir,
-                                  self.repo_url, self.auth_token,
-                                  self.revision)
+                                  self.repo_url, self.git_token, self.revision)
         return self.repo_work_dir if cloned else ''
 
     def push(self,
@@ -224,10 +244,10 @@ class DatasetRepository:
             raise InvalidParameter('commit_message must be provided!')
         if not isinstance(force, bool):
             raise InvalidParameter('force must be bool')
-        if not self.auth_token:
+        if not self.git_token:
             raise NotLoginException('Must login to push, please login first.')
 
-        self.git_wrapper.config_auth_token(self.repo_work_dir, self.auth_token)
+        self.git_wrapper.config_git_token(self.repo_work_dir, self.git_token)
         self.git_wrapper.add_user_info(self.repo_base_dir, self.repo_name)
         try:
             remote_url = self.git_wrapper.get_repo_remote_url(
@@ -241,7 +261,7 @@ class DatasetRepository:
         self.git_wrapper.commit(self.repo_work_dir, commit_message)
         self.git_wrapper.push(
             repo_dir=self.repo_work_dir,
-            token=self.auth_token,
+            git_token=self.git_token,
             url=remote_url,
             local_branch=branch,
             remote_branch=branch,

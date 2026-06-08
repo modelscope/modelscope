@@ -197,9 +197,19 @@ class ModelScopeConfig:
         return get_default_config().get_session_id()
 
     @staticmethod
-    def save_token(token: str) -> None:
+    def save_git_token(git_token: str) -> None:
         """Persist a git access token."""
-        get_default_config().save_git_token(token)
+        get_default_config().save_git_token(git_token)
+
+    @staticmethod
+    def save_token(token: str) -> None:
+        """Deprecated: use :meth:`save_git_token` instead."""
+        import warnings
+        warnings.warn(
+            'ModelScopeConfig.save_token() is deprecated, '
+            'use ModelScopeConfig.save_git_token() instead.',
+            DeprecationWarning, stacklevel=2)
+        ModelScopeConfig.save_git_token(token)
 
     @staticmethod
     def save_user_info(user_name: str, user_email: str) -> None:
@@ -220,9 +230,19 @@ class ModelScopeConfig:
         return None, None
 
     @staticmethod
-    def get_token() -> Optional[str]:
+    def get_git_token() -> Optional[str]:
         """Return the persisted git access token, or ``None`` if not set."""
         return get_default_config().load_git_token()
+
+    @staticmethod
+    def get_token() -> Optional[str]:
+        """Deprecated: use :meth:`get_git_token` instead."""
+        import warnings
+        warnings.warn(
+            'ModelScopeConfig.get_token() is deprecated, '
+            'use ModelScopeConfig.get_git_token() instead.',
+            DeprecationWarning, stacklevel=2)
+        return ModelScopeConfig.get_git_token()
 
     @staticmethod
     def get_user_agent(user_agent: Union[Dict, str, None] = None) -> str:

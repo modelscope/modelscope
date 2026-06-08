@@ -59,8 +59,8 @@ class GitCommandWrapper(metaclass=Singleton):
     # ------------------------------------------------------------------
     # URL / token helpers
     # ------------------------------------------------------------------
-    def _add_token(self, token: str, url: str) -> str:
-        return _GitCommand._inject_token(url, token)
+    def _add_git_token(self, git_token: str, url: str) -> str:
+        return _GitCommand._inject_token(url, git_token)
 
     def remove_token_from_url(self, url: str) -> str:
         return _GitCommand.strip_token_from_url(url)
@@ -88,11 +88,11 @@ class GitCommandWrapper(metaclass=Singleton):
     # ------------------------------------------------------------------
     # Auth / user config
     # ------------------------------------------------------------------
-    def config_auth_token(self, repo_dir: str, auth_token: str) -> None:
+    def config_git_token(self, repo_dir: str, git_token: str) -> None:
         url = self.get_repo_remote_url(repo_dir)
         if '//oauth2' in url:
             return
-        auth_url = self._add_token(auth_token, url)
+        auth_url = self._add_git_token(git_token, url)
         self._run_git_command('-C', repo_dir, 'remote', 'set-url', 'origin',
                               auth_url)
 
@@ -111,14 +111,14 @@ class GitCommandWrapper(metaclass=Singleton):
     # ------------------------------------------------------------------
     def clone(self,
               repo_base_dir: str,
-              token: Optional[str],
+              git_token: Optional[str],
               url: str,
               repo_name: str,
               branch: Optional[str] = None):
         target = Path(repo_base_dir) / repo_name
         try:
             _GitCommand.clone(
-                url=url, target_dir=target, branch=branch, token=token)
+                url=url, target_dir=target, branch=branch, token=git_token)
         except Exception as exc:
             if (target / '.git').is_dir():
                 logger.warning(
@@ -135,12 +135,12 @@ class GitCommandWrapper(metaclass=Singleton):
 
     def push(self,
              repo_dir: str,
-             token: str,
+             git_token: str,
              url: str,
              local_branch: str,
              remote_branch: str,
              force: bool = False):
-        auth_url = self._add_token(token, url)
+        auth_url = self._add_git_token(git_token, url)
         args = [
             '-C', repo_dir, 'push', auth_url, f'{local_branch}:{remote_branch}'
         ]

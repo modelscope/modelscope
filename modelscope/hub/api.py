@@ -13,12 +13,10 @@ from __future__ import annotations
 import os
 import platform
 from os.path import expanduser
-from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 
 from modelscope_hub.compat import LegacyHubApi as _LegacyHubApi
-from modelscope_hub.config import (HubConfig, get_default_config,
-                                   set_default_config)
+from modelscope_hub.config import get_default_config
 
 from modelscope.hub.constants import (API_HTTP_CLIENT_MAX_RETRIES,
                                       API_HTTP_CLIENT_TIMEOUT,

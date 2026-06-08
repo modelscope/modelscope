@@ -10,10 +10,14 @@ Single responsibility: thin compatibility layer. All real logic lives in
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import platform
 from os.path import expanduser
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
+
+import requests
 
 from modelscope_hub.compat import LegacyHubApi as _LegacyHubApi
 from modelscope_hub.config import get_default_config
@@ -135,6 +139,159 @@ class HubApi(_LegacyHubApi):
     def _prepare_upload_folder(self, value):
         """Allow CommitScheduler to monkey-patch ``_prepare_upload_folder``."""
         self._api.uploader._prepare_upload_folder = value
+
+    # ------------------------------------------------------------------
+    # Internal transport helper
+    # ------------------------------------------------------------------
+    def _legacy_request(
+        self,
+        method: str,
+        path: str,
+        **kwargs: Any,
+    ) -> dict:
+        """Send a request via the legacy client and validate the response envelope.
+
+        Combines ``legacy._request`` (HTTP-level error handling) with
+        application-level ``{"Code": 200, ...}`` envelope validation.
+        Returns the parsed JSON body dict on success.
+        """
+        from modelscope.hub.errors import raise_on_error
+        resp = self._api.legacy._request(method, path, **kwargs)
+        body = resp.json()
+        raise_on_error(body)
+        return body
+
+    # ------------------------------------------------------------------
+    # OSS dataset operations
+    # ------------------------------------------------------------------
+    def list_oss_dataset_objects(
+        self,
+        dataset_name: str,
+        namespace: str,
+        max_limit: int,
+        is_recursive: bool,
+        is_filter_dir: bool,
+        revision: str,
+        endpoint: Optional[str] = None,
+        token: Optional[str] = None,
+    ) -> list:
+        """List objects in a dataset's OSS storage."""
+        params = {
+            'MaxLimit': max_limit,
+            'Revision': revision,
+            'Recursive': is_recursive,
+            'FilterDir': is_filter_dir,
+        }
+        body = self._legacy_request(
+            'GET',
+            f'datasets/{namespace}/{dataset_name}/oss/tree/',
+            params=params,
+            timeout=1800,
+        )
+        return body.get(API_RESPONSE_FIELD_DATA, [])
+
+    def delete_oss_dataset_object(
+        self,
+        object_name: str,
+        dataset_name: str,
+        namespace: str,
+        revision: str,
+        endpoint: Optional[str] = None,
+        token: Optional[str] = None,
+    ) -> str:
+        """Delete a single object from dataset OSS storage."""
+        if not all([object_name, dataset_name, namespace, revision]):
+            raise ValueError('Args cannot be empty!')
+        body = self._legacy_request(
+            'DELETE',
+            f'datasets/{namespace}/{dataset_name}/oss',
+            params={'Path': object_name, 'Revision': revision},
+        )
+        return body[API_RESPONSE_FIELD_MESSAGE]
+
+    def delete_oss_dataset_dir(
+        self,
+        object_name: str,
+        dataset_name: str,
+        namespace: str,
+        revision: str,
+        endpoint: Optional[str] = None,
+        token: Optional[str] = None,
+    ) -> str:
+        """Delete a directory prefix from dataset OSS storage."""
+        if not all([object_name, dataset_name, namespace, revision]):
+            raise ValueError('Args cannot be empty!')
+        prefix = object_name.rstrip('/') + '/'
+        body = self._legacy_request(
+            'DELETE',
+            f'datasets/{namespace}/{dataset_name}/oss/prefix',
+            params={'Prefix': prefix, 'Revision': revision},
+        )
+        return body[API_RESPONSE_FIELD_MESSAGE]
+
+    # ------------------------------------------------------------------
+    # Meta file download
+    # ------------------------------------------------------------------
+    @staticmethod
+    def fetch_meta_files_from_url(
+        url: str,
+        out_path: str,
+        chunk_size: int = 1024,
+        mode=None,
+        token: Optional[str] = None,
+    ) -> str:
+        """Download a meta-data file (csv/jsonl) from a URL to local cache."""
+        from modelscope.utils.constant import DownloadMode
+        if mode is None:
+            mode = DownloadMode.REUSE_DATASET_IF_EXISTS
+
+        import pandas as pd
+        from tqdm.auto import tqdm
+
+        out_path = os.path.join(
+            out_path, hashlib.md5(url.encode('utf-8')).hexdigest())
+
+        if mode == DownloadMode.FORCE_REDOWNLOAD and os.path.exists(out_path):
+            os.remove(out_path)
+        if os.path.exists(out_path):
+            logger.info(f'Reusing cached meta-data file: {out_path}')
+            return out_path
+
+        cookies = HubApi().get_cookies(access_token=token)
+        logger.info('Loading meta-data file ...')
+        response = requests.get(url, cookies=cookies, stream=True)
+        total_size = int(response.headers.get('content-length', 0))
+        progress = tqdm(total=total_size, dynamic_ncols=True)
+
+        def get_chunk(resp):
+            chunk_data = []
+            for data in resp.iter_lines():
+                data = data.decode('utf-8')
+                chunk_data.append(data)
+                if len(chunk_data) >= chunk_size:
+                    yield chunk_data
+                    chunk_data = []
+            yield chunk_data
+
+        iter_num = 0
+        with open(out_path, 'a') as f:
+            for chunk in get_chunk(response):
+                progress.update(len(chunk))
+                if url.endswith('jsonl'):
+                    chunk = [json.loads(line) for line in chunk
+                             if line.strip()]
+                    if not chunk:
+                        continue
+                    chunk_df = pd.DataFrame(chunk)
+                    chunk_df.to_csv(
+                        f, index=False, header=(iter_num == 0),
+                        escapechar='\\')
+                    iter_num += 1
+                else:
+                    for line in chunk:
+                        f.write(line + '\n')
+        progress.close()
+        return out_path
 
     def __getattr__(self, name: str):
         """Transparent proxy to the internal ``modelscope_hub.HubApi``.

@@ -28,12 +28,11 @@ def get_models_info(groups: list) -> dict:
         page = 1
         total_count = 0
         while True:
-            query_result = api.list_models(group, page, 100)
+            query_result = api.list_models(group, page, 50)
             if query_result['Models'] is not None:
                 models.extend(query_result['Models'])
-            elif total_count != 0:
-                total_count = query_result['TotalCount']
-            if len(models) >= total_count:
+            total_count = query_result['TotalCount']
+            if total_count == 0 or len(models) >= total_count:
                 break
             page += 1
     models_info = {}  # key model id, value model info

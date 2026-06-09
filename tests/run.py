@@ -89,6 +89,7 @@ def gather_test_suites_in_files(test_dir, case_file_list, list_tests):
     test_dir = test_dir.split(',')
     test_suite = unittest.TestSuite()
     for _test_dir in test_dir:
+        _test_dir = os.path.abspath(_test_dir)
         for case in case_file_list:
             test_case = unittest.defaultTestLoader.discover(
                 start_dir=_test_dir, pattern=case)

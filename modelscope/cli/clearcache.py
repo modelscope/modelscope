@@ -1,11 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""Clear-cache CLI command — retained for backward compatibility.
+
+The ``modelscope_hub`` CLI now owns ``clear-cache`` as an alias for
+``cache clear``, but this module preserves the legacy :class:`ClearCacheCMD`
+class so that existing tests and callers that import it directly continue
+to work.
+"""
 import os
 import shutil
 from argparse import ArgumentParser
 
 from modelscope.cli.base import CLICommand
 from modelscope.hub.constants import TEMPORARY_FOLDER_NAME
-from modelscope.hub.utils.utils import get_model_masked_directory
 from modelscope.utils.file_utils import (get_dataset_cache_root,
                                          get_model_cache_root,
                                          get_modelscope_cache_dir)
@@ -25,6 +31,11 @@ class ClearCacheCMD(CLICommand):
         self.cache_dir = get_modelscope_cache_dir()
 
     @staticmethod
+    def register(subparsers) -> None:
+        """Register clear-cache subcommand (CLICommand ABC contract)."""
+        ClearCacheCMD.define_args(subparsers)
+
+    @staticmethod
     def define_args(parsers: ArgumentParser):
         """ define args for clear-cache command.
         """
@@ -33,17 +44,15 @@ class ClearCacheCMD(CLICommand):
         group.add_argument(
             '--model',
             type=str,
-            help=
-            'The id of the model whose cache will be cleared. For clear-cache, '
-            'if neither model or dataset id is provided, entire cache will be cleared.'
-        )
+            help='The id of the model whose cache will be cleared. '
+            'If neither model or dataset id is provided, entire cache '
+            'will be cleared.')
         group.add_argument(
             '--dataset',
             type=str,
-            help=
-            'The id of the dataset whose cache will be cleared. For clear-cache, '
-            'if neither model or dataset id is provided, entire cache will be cleared.'
-        )
+            help='The id of the dataset whose cache will be cleared. '
+            'If neither model or dataset id is provided, entire cache '
+            'will be cleared.')
 
         parser.set_defaults(func=subparser_func)
 
@@ -64,7 +73,8 @@ class ClearCacheCMD(CLICommand):
                 id = self.args.dataset
                 prompt = prompt + f'local cache for dataset {id}. '
         else:
-            prompt = prompt + f'entire ModelScope cache at {self.cache_dir}, including ALL models and dataset.\n'
+            prompt = prompt + (f'entire ModelScope cache at {self.cache_dir}, '
+                               f'including ALL models and dataset.\n')
             all = True
         user_input = input(
             prompt

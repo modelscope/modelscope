@@ -8,7 +8,8 @@ from requests.exceptions import HTTPError
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import Licenses, ModelVisibility
-from modelscope.hub.errors import GitError
+from modelscope.hub.errors import (CacheNotFound, GitError, HubError,
+                                   NotExistError)
 from modelscope.hub.file_download import model_file_download
 from modelscope.hub.repository import Repository
 from modelscope.hub.snapshot_download import snapshot_download
@@ -64,13 +65,13 @@ class HubPrivateFileDownloadTest(unittest.TestCase):
     def test_snapshot_download_private_model_no_permission(self):
         self.prepare_case()
         self.token, _ = self.api.login(TEST_ACCESS_TOKEN2)
-        with self.assertRaises(HTTPError):
+        with self.assertRaises((HTTPError, HubError)):
             snapshot_download(self.model_id, self.revision)
 
     def test_snapshot_download_private_model_without_login(self):
         self.prepare_case()
         delete_credential()
-        with self.assertRaises(HTTPError):
+        with self.assertRaises((HTTPError, HubError)):
             snapshot_download(self.model_id, self.revision)
 
     def test_download_file_private_model(self):
@@ -82,18 +83,18 @@ class HubPrivateFileDownloadTest(unittest.TestCase):
     def test_download_file_private_model_no_permission(self):
         self.prepare_case()
         self.token, _ = self.api.login(TEST_ACCESS_TOKEN2)
-        with self.assertRaises(HTTPError):
+        with self.assertRaises((HTTPError, HubError)):
             model_file_download(self.model_id, ModelFile.README, self.revision)
 
     def test_download_file_private_model_without_login(self):
         self.prepare_case()
         delete_credential()
-        with self.assertRaises(HTTPError):
+        with self.assertRaises((HTTPError, HubError)):
             model_file_download(self.model_id, ModelFile.README, self.revision)
 
     def test_snapshot_download_local_only(self):
         self.prepare_case()
-        with self.assertRaises(ValueError):
+        with self.assertRaises((ValueError, CacheNotFound)):
             snapshot_download(
                 self.model_id, self.revision, local_files_only=True)
         snapshot_path = snapshot_download(self.model_id, self.revision)
@@ -104,7 +105,7 @@ class HubPrivateFileDownloadTest(unittest.TestCase):
 
     def test_file_download_local_only(self):
         self.prepare_case()
-        with self.assertRaises(ValueError):
+        with self.assertRaises((ValueError, CacheNotFound)):
             model_file_download(
                 self.model_id,
                 ModelFile.README,

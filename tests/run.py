@@ -21,6 +21,11 @@ from modelscope.utils.model_tag import ModelTag, commit_model_ut_result
 from modelscope.utils.test_utils import (get_case_model_info, set_test_level,
                                          test_level)
 
+# Ensure the project root is importable for unittest discover.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 # NOTICE: Tensorflow 1.15 seems not so compatible with pytorch.
 #         A segmentation fault may be raise by pytorch cpp library
 #         if 'import tensorflow' in front of 'import torch'.
@@ -92,7 +97,7 @@ def gather_test_suites_in_files(test_dir, case_file_list, list_tests):
         _test_dir = os.path.abspath(_test_dir)
         for case in case_file_list:
             test_case = unittest.defaultTestLoader.discover(
-                start_dir=_test_dir, pattern=case)
+                start_dir=_test_dir, pattern=case, top_level_dir=PROJECT_ROOT)
             test_suite.addTest(test_case)
             if hasattr(test_case, '__iter__'):
                 for subcase in test_case:
@@ -381,49 +386,9 @@ def run_non_parallelizable_test_suites(suites, result_dir):
     run_command_with_popen(cmd)
 
 
-# Selected cases:
-def get_selected_cases():
-    cmd = ['python', '-u', 'tests/run_analysis.py']
-    selected_cases = []
-    with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1,
-            encoding='utf8') as sub_process:
-        for line in iter(sub_process.stdout.readline, ''):
-            sys.stdout.write(line)
-            if line.startswith('Selected cases:'):
-                line = line.replace('Selected cases:', '').strip()
-                selected_cases = line.split(',')
-        sub_process.wait()
-        if sub_process.returncode != 0:
-            msg = 'Run analysis exception, returncode: %s!' % sub_process.returncode
-            logger.error(msg)
-            raise Exception(msg)
-    return selected_cases
-
-
 def run_in_subprocess(args):
-    # only case args.isolated_cases run in subporcess, all other run in a subprocess
-    if not args.no_diff:  # run based on git diff
-        try:
-            test_suite_files = get_selected_cases()
-            logger.info('Tests suite to run: ')
-            for f in test_suite_files:
-                logger.info(f)
-        except Exception:
-            logger.error(
-                'Get test suite based diff exception!, will run all cases.')
-            test_suite_files = gather_test_suites_files(
-                os.path.abspath(args.test_dir), args.pattern)
-        if len(test_suite_files) == 0:
-            logger.error('Get no test suite based on diff, run all the cases.')
-            test_suite_files = gather_test_suites_files(
-                os.path.abspath(args.test_dir), args.pattern)
-    else:
-        test_suite_files = gather_test_suites_files(
-            os.path.abspath(args.test_dir), args.pattern)
+    test_suite_files = gather_test_suites_files(
+        os.path.abspath(args.test_dir), args.pattern)
 
     non_parallelizable_suites = [
         'test_download_dataset.py',
@@ -535,7 +500,7 @@ def gather_test_cases(test_dir, pattern, list_tests):
 
         for case in case_list:
             test_case = unittest.defaultTestLoader.discover(
-                start_dir=_test_dir, pattern=case)
+                start_dir=_test_dir, pattern=case, top_level_dir=PROJECT_ROOT)
             test_suite.addTest(test_case)
             if hasattr(test_case, '__iter__'):
                 for subcase in test_case:
@@ -647,12 +612,6 @@ if __name__ == '__main__':
         default=1,
         type=int,
         help='Set case parallels, default single process, set with gpu number.'
-    )
-    parser.add_argument(
-        '--no-diff',
-        action='store_true',
-        help=
-        'Default running case based on git diff(with master), disable with --no-diff)'
     )
     parser.add_argument(
         '--suites',

@@ -9,6 +9,7 @@ import hashlib
 import io
 import os
 import tempfile
+import time
 import urllib
 import uuid
 from functools import partial
@@ -18,19 +19,77 @@ from typing import Dict, List, Optional, Type
 import requests
 # --- Hub file downloads (delegated) ---
 from modelscope_hub.compat import dataset_file_download  # noqa: E402,F401
-from modelscope_hub.compat import model_file_download
+from modelscope_hub.compat.file_download import \
+    model_file_download as _compat_model_file_download
 from requests.adapters import Retry
 from tqdm.auto import tqdm
 
 from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
                                       API_FILE_DOWNLOAD_RETRY_TIMES,
-                                      API_FILE_DOWNLOAD_TIMEOUT)
+                                      API_FILE_DOWNLOAD_TIMEOUT,
+                                      MODELSCOPE_SDK_DEBUG)
 from modelscope.utils.logger import get_logger
 from .callback import ProgressCallback, TqdmCallback
 from .errors import FileDownloadError
 from .utils.utils import get_endpoint
 
 logger = get_logger()
+
+
+def _get_release_timestamp():
+    """Compute the release timestamp for revision resolution.
+
+    Returns None (dev-mode) when MODELSCOPE_SDK_DEBUG is set.
+    """
+    if os.environ.get(MODELSCOPE_SDK_DEBUG):
+        return None
+    try:
+        from modelscope import version
+        dt = getattr(version, '__release_datetime__', None)
+        if not dt:
+            return None
+        return int(time.mktime(time.strptime(dt, '%Y-%m-%d %H:%M:%S')))
+    except Exception:
+        return None
+
+
+def model_file_download(
+    model_id: str,
+    file_path: str,
+    revision: str = None,
+    *,
+    cache_dir: str = None,
+    local_dir: str = None,
+    cookies: dict = None,
+    token: str = None,
+    endpoint: str = None,
+    local_files_only: bool = False,
+    user_agent=None,
+) -> str:
+    """Download a single model file with release-mode revision resolution."""
+    if revision is None:
+        try:
+            from modelscope.hub.api import HubApi
+            api = HubApi()
+            release_ts = _get_release_timestamp()
+            detail = api.get_valid_revision_detail(
+                model_id, revision=None, release_timestamp=release_ts)
+            revision = detail.get('Revision')
+        except Exception:
+            pass
+    return _compat_model_file_download(
+        model_id,
+        file_path,
+        revision=revision,
+        cache_dir=cache_dir,
+        local_dir=local_dir,
+        cookies=cookies,
+        token=token,
+        endpoint=endpoint,
+        local_files_only=local_files_only,
+        user_agent=user_agent,
+    )
+
 
 # --- Direct HTTP downloads (retained - non-Hub API) ---
 

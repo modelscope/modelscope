@@ -1,5 +1,5 @@
 filelock
-modelscope-hub @ git+https://github.com/modelscope/modelscope_hub.git@main
+modelscope-hub>=0.0.7
 packaging
 requests>=2.25
 setuptools

@@ -354,28 +354,6 @@ class MsDataset:
                         dataset_inst.is_custom = True
                 return dataset_inst
 
-        elif hub == Hubs.virgo:
-            warnings.warn(
-                'The option `Hubs.virgo` is deprecated, '
-                'will be removed in the future version.', DeprecationWarning)
-            from modelscope.msdatasets.data_loader.data_loader import VirgoDownloader
-            from modelscope.utils.constant import VirgoDatasetConfig
-            # Rewrite the namespace, version and cache_dir for virgo dataset.
-            if namespace == DEFAULT_DATASET_NAMESPACE:
-                dataset_context_config.namespace = VirgoDatasetConfig.default_virgo_namespace
-            if version == DEFAULT_DATASET_REVISION:
-                dataset_context_config.version = VirgoDatasetConfig.default_dataset_version
-            if cache_dir == MS_DATASETS_CACHE:
-                from modelscope.utils.config_ds import CACHE_HOME
-                cache_dir = os.path.join(CACHE_HOME, 'virgo', 'hub',
-                                         'datasets')
-                dataset_context_config.cache_root_dir = cache_dir
-
-            virgo_downloader = VirgoDownloader(dataset_context_config)
-            virgo_downloader.process()
-
-            return virgo_downloader.dataset
-
         else:
             raise 'Please adjust input args to specify a loading mode, we support following scenes: ' \
                   'loading from local disk, huggingface hub and modelscope hub.'

@@ -10,7 +10,7 @@ authors = [
   {email = "contact@modelscope.cn"}
 ]
 keywords = ["python", "nlp", "science", "cv", "speech", "multi-modal"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     'Development Status :: 4 - Beta',
     'Operating System :: OS Independent',
@@ -26,6 +26,14 @@ Homepage = "https://github.com/modelscope/modelscope"
 [project.scripts]
 modelscope = "modelscope.cli.cli:run_cmd"
 ms = "modelscope.cli.cli:run_cmd"
+
+[project.entry-points."modelscope_hub.cli_plugins"]
+pipeline = "modelscope.cli.pipeline:PipelineCMD"
+server = "modelscope.cli.server:ServerCMD"
+plugins = "modelscope.cli.plugins:PluginsCMD"
+skills = "modelscope.cli.skills:SkillsCMD"
+llamafile = "modelscope.cli.llamafile:LlamafileCMD"
+modelcard = "modelscope.cli.modelcard:ModelCardCMD"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

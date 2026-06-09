@@ -47,4 +47,5 @@ else
 fi
 
 pip config set global.index-url https://mirrors.cloud.aliyuncs.com/pypi/simple
+pip config set global.extra-index-url https://pypi.org/simple
 pip config set install.trusted-host mirrors.cloud.aliyuncs.com

@@ -38,6 +38,11 @@ if not hasattr(np, 'NaN'):
 def delete_credential():
     path_credential = expanduser(DEFAULT_CREDENTIALS_PATH)
     shutil.rmtree(path_credential, ignore_errors=True)
+    try:
+        from modelscope_hub.config import get_default_config
+        get_default_config().clear_token()
+    except Exception:
+        pass
 
 
 def test_level():

@@ -12,7 +12,7 @@ from modelscope.hub.api import HubApi
 from modelscope.hub.commit_scheduler import CommitScheduler, PartialFileIO
 from modelscope.hub.constants import Visibility
 from modelscope.hub.errors import NotExistError
-from modelscope.hub.file_download import _repo_file_download
+from modelscope.hub.file_download import dataset_file_download
 from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
 from modelscope.utils.logger import get_logger
 from modelscope.utils.repo_utils import CommitInfo, CommitOperationAdd
@@ -375,12 +375,11 @@ class TestCommitScheduler(unittest.TestCase):
 
         def _download(filename: str, revision: str) -> Path:
             return Path(
-                _repo_file_download(
-                    repo_id=repo_id,
+                dataset_file_download(
+                    dataset_id=repo_id,
                     file_path=filename,
                     revision=revision,
-                    cache_dir=hub_cache,
-                    repo_type='dataset'))
+                    cache_dir=hub_cache))
 
         # Check file.txt consistency
         txt_push = _download(filename='file.txt', revision='master')

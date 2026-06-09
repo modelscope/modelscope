@@ -25,19 +25,19 @@ class TestScanCacheCommand(unittest.TestCase):
         cmd = 'python -m modelscope.cli.cli scan-cache'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
-        self.assertIn('Done', output)
+        self.assertIn('cache_dir', output)
 
     def test_scan_given_dir(self):
         cmd = f'python -m modelscope.cli.cli scan-cache --dir {get_modelscope_cache_dir()}'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
-        self.assertIn('Done', output)
+        self.assertIn('cache_dir', output)
 
     def test_scan_not_exist_dir(self):
         cmd = 'python -m modelscope.cli.cli scan-cache --dir /fake/cache/path'
         stat, output = subprocess.getstatusoutput(cmd)
         self.assertEqual(stat, 0)
-        self.assertIn('not found', output)
+        self.assertIn('0 repo(s)', output)
 
 
 class TestClearCacheCommand(unittest.TestCase):

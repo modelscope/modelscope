@@ -1,28 +1,25 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""``modelscope llamafile`` — download and run a llamafile from a model repo."""
+
 import logging
 import os
 import sys
 from argparse import ArgumentParser
 
+from modelscope_hub.cli.base import CLICommand
+
 from modelscope import model_file_download
-from modelscope.cli.base import CLICommand
 from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
 
 
-def subparser_func(args):
-    """ Function which will be called for a specific sub parser.
-    """
-    return LlamafileCMD(args)
-
-
 class LlamafileCMD(CLICommand):
     name = 'llamafile'
 
     def __init__(self, args):
-        self.args = args
+        super().__init__(args)
         self.model_id = self.args.model
         if self.model_id is None or self.model_id.count('/') != 1:
             raise ValueError(f'Invalid model id [{self.model_id}].')
@@ -34,10 +31,10 @@ class LlamafileCMD(CLICommand):
         self.api = HubApi()
 
     @staticmethod
-    def define_args(parsers: ArgumentParser):
-        """ define args for clear-cache command.
-        """
-        parser = parsers.add_parser(LlamafileCMD.name)
+    def register(subparsers: ArgumentParser) -> None:
+        parser = subparsers.add_parser(
+            LlamafileCMD.name,
+            help='Download and run a llamafile from a model repo.')
         parser.add_argument(
             '--model',
             type=str,
@@ -80,7 +77,7 @@ class LlamafileCMD(CLICommand):
             'Whether to launch model with the downloaded llamafile, default to True.'
         )
 
-        parser.set_defaults(func=subparser_func)
+        parser.set_defaults(_command=LlamafileCMD)
 
     def execute(self):
         if self.args.file:

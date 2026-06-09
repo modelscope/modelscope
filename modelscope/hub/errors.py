@@ -1,67 +1,70 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""Error classes — core exceptions delegate to modelscope_hub, legacy aliases retained.
 
+Exception classes from modelscope_hub provide the structured hierarchy.
+Legacy aliases maintain isinstance compatibility for existing code.
+Error handling functions with unique logic are retained.
+"""
 import logging
 from http import HTTPStatus
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import requests
-from requests.exceptions import HTTPError
+from modelscope_hub.errors import AuthenticationError  # noqa: F401
+from modelscope_hub.errors import (APIError, CacheNotFound,
+                                   CorruptedCacheException, FileIntegrityError,
+                                   HubError, InvalidParameter, NetworkError,
+                                   NotExistError, NotSupportedError,
+                                   PermissionDeniedError, RequestTimeoutError,
+                                   ServerError)
+from requests.exceptions import HTTPError  # noqa: F401  (re-exported)
 
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
 
+# --- Legacy exception aliases (maintain isinstance backward compatibility) ---
 
-class NotSupportError(Exception):
+
+class RequestError(APIError):
+    """Legacy alias — use APIError for new code."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        # Preserve legacy single-positional-arg constructor signature.
+        super().__init__(message, **kwargs)
+
+
+class NotLoginException(AuthenticationError):
+    """Legacy alias — use AuthenticationError for new code."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        super().__init__(message, **kwargs)
+
+
+class FileDownloadError(NetworkError):
+    """Legacy alias — use NetworkError for new code."""
     pass
 
 
-class NoValidRevisionError(Exception):
+class NotSupportError(NotSupportedError):
+    """Legacy alias — use NotSupportedError for new code."""
     pass
 
 
-class NotExistError(Exception):
+class NoValidRevisionError(NotExistError):
+    """Legacy alias — raised when no valid revision is found."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        super().__init__(message, **kwargs)
+
+
+class GitError(HubError):
+    """Git operation failure."""
     pass
 
 
-class RequestError(Exception):
-    pass
-
-
-class GitError(Exception):
-    pass
-
-
-class InvalidParameter(Exception):
-    pass
-
-
-class NotLoginException(Exception):
-    pass
-
-
-class FileIntegrityError(Exception):
-    pass
-
-
-class FileDownloadError(Exception):
-    pass
-
-
-class CacheNotFound(Exception):
-    """Exception thrown when the ModelScope cache is not found."""
-
-    cache_dir: Union[str, Path]
-
-    def __init__(self, msg: str, cache_dir: Union[str, Path], *args, **kwargs):
-        super().__init__(msg, *args, **kwargs)
-        self.cache_dir = cache_dir
-
-
-class CorruptedCacheException(Exception):
-    """Exception for any unexpected structure in the ModelScope cache-system."""
+# --- Error handling functions (retained - contain unique logic) ---
 
 
 def get_request_id(response: requests.Response):

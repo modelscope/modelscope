@@ -75,9 +75,11 @@ class HubOperationTest(unittest.TestCase):
             revision=self.revision)
         assert os.path.exists(downloaded_file)
         mdtime1 = os.path.getmtime(downloaded_file)
-        # download again
+        # download again with same revision to verify cache hit
         downloaded_file = model_file_download(
-            model_id=self.model_id, file_path=download_model_file_name)
+            model_id=self.model_id,
+            file_path=download_model_file_name,
+            revision=self.revision)
         mdtime2 = os.path.getmtime(downloaded_file)
         assert mdtime1 == mdtime2
 
@@ -167,7 +169,9 @@ class HubOperationTest(unittest.TestCase):
         cache_dir = '/tmp/snapshot_download_cache_test'
         snapshot_download_path = snapshot_download(
             self.model_id, revision=self.revision, cache_dir=cache_dir)
-        expect_path = os.path.join(cache_dir, self.model_id)
+        safe_id = self.model_id.replace('/', '--')
+        expect_path = os.path.join(cache_dir, 'models', safe_id, 'snapshots',
+                                   self.revision)
         assert snapshot_download_path == expect_path
         assert os.path.exists(
             os.path.join(snapshot_download_path, ModelFile.README))

@@ -34,6 +34,7 @@ if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir 'scipy' && \
     pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir 'decord>=0.6.0' mpi4py paint_ldm ipykernel fasttext -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir ipywidgets && \
     pip install --no-cache-dir 'blobfile>=1.0.5' && \
     pip uninstall MinDAEC -y && \
     pip install https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/MinDAEC-0.0.2-py3-none-any.whl && \

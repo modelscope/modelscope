@@ -40,7 +40,7 @@ class ModelCheckpoint:
         self.kth_best_model = ''
         self.best = 0
         # Monitoring modes
-        torch_inf = torch.tensor(np.Inf)
+        torch_inf = torch.tensor(np.inf)
         mode_dict = {
             'min': (torch_inf, 'min'),
             'max': (-torch_inf, 'max'),

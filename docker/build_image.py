@@ -523,7 +523,7 @@ class AscendImageBuilder(StableGPUImageBuilder):
             raise ValueError(
                 f'Invalid OS tag in Ascend base image tag: {os_tag}')
 
-        return f'CANN{cann_version}', os_tag
+        return cann_version, f'CANN{cann_version}', os_tag
 
     def init_args(self, args) -> Any:
         if not args.base_image:
@@ -531,8 +531,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
         args.arch = self._normalize_arch(args.arch)
         args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
-        args.cann_version_tag, args.os_tag = self._get_cann_os_tags(
-            args.base_image)
+        args.cann_version, args.cann_version_tag, args.os_tag = (
+            self._get_cann_os_tags(args.base_image))
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -543,12 +543,17 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
             content = content.replace('{soc_version}', self.args.soc_version)
+            content = content.replace('{cann_version}', self.args.cann_version)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
+            content = content.replace('{megatron_branch}',
+                                      self.args.megatron_branch)
+            content = content.replace('{mindspeed_branch}',
+                                      self.args.mindspeed_branch)
         return content
 
     def image(self) -> str:
@@ -581,6 +586,8 @@ parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
+parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
+parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
 parser.add_argument('--dry_run', type=int, default=0)

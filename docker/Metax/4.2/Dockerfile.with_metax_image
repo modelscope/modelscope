@@ -24,7 +24,6 @@ ENV LD_LIBRARY_PATH=${CUDA_PATH}/lib64:${MACA_PATH}/lib:${MACA_PATH}/mxgpu_llvm/
 WORKDIR /workspace
 COPY requirements_extra.txt /workspace/requirements_extra.txt
 
-RUN echo $PATH
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Initialize cu-bridge if it is not already prepared in the base image.
@@ -33,12 +32,11 @@ RUN if [ ! -d /root/cu-bridge ]; then \
     fi
 
 # Clone all GitHub sources while the external proxy is enabled.
-RUN rm -rf /workspace/ms-swift /workspace/vLLM-metax /workspace/vllm /workspace/Megatron-LM
-
-RUN git clone --depth 1 --branch ${SWIFT_VERSION} https://github.com/modelscope/ms-swift.git
-RUN git clone --depth 1 --branch ${VLLM_METAX_VERSION} https://github.com/MetaX-MACA/vLLM-metax.git
-RUN git clone --depth 1 --branch ${VLLM_VERSION} https://github.com/vllm-project/vllm.git
-RUN git clone --depth 1 --branch ${MEGATRON_VERSION} https://github.com/NVIDIA/Megatron-LM.git
+RUN rm -rf /workspace/ms-swift /workspace/vLLM-metax /workspace/vllm /workspace/Megatron-LM && \
+    git clone --depth 1 --branch ${SWIFT_VERSION} https://github.com/modelscope/ms-swift.git && \
+    git clone --depth 1 --branch ${VLLM_METAX_VERSION} https://github.com/MetaX-MACA/vLLM-metax.git && \
+    git clone --depth 1 --branch ${VLLM_VERSION} https://github.com/vllm-project/vllm.git && \
+    git clone --depth 1 --branch ${MEGATRON_VERSION} https://github.com/NVIDIA/Megatron-LM.git
 
 # install cmake
 RUN pip install cmake ninja
@@ -46,10 +44,7 @@ RUN pip install cmake ninja
 # Step 1: build original vLLM for torch setup
 RUN cd vllm && \
     python3 use_existing_torch.py && \
-    pip install -r requirements/build/cuda.txt
-
-# Step 2: build vLLM with empty device to avoid CUDA dependency
-RUN cd vllm && \
+    pip install -r requirements/build/cuda.txt && \
     VLLM_TARGET_DEVICE=empty pip install -v . --no-build-isolation
 
 # Step 3: build vLLM-metax

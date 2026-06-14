@@ -39,8 +39,15 @@ class ScrfdDetect(TorchModel):
         from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.backbones import ResNetV1e
         from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.dense_heads import SCRFDHead
         from modelscope.models.cv.face_detection.scrfd.mmdet_patch.models.detectors import SCRFD
+        from modelscope.utils.config import \
+            check_trust_remote_code_for_config
         cfg_file = kwargs.get('config_file', 'mmcv_scrfd.py')
-        cfg = Config.fromfile(osp.join(model_dir, cfg_file))
+        cfg_path = osp.join(model_dir, cfg_file)
+        check_trust_remote_code_for_config(
+            cfg_path,
+            trust_remote_code=self.trust_remote_code,
+            model_dir=model_dir)
+        cfg = Config.fromfile(cfg_path)
         model_file = kwargs.get('model_file', ModelFile.TORCH_MODEL_BIN_FILE)
         ckpt_path = osp.join(model_dir, model_file)
         cfg.model.test_cfg.score_thr = kwargs.get('score_thr', 0.3)

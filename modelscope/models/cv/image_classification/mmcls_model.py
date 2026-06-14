@@ -16,12 +16,18 @@ class ClassificationModel(TorchModel):
         from mmcls.models import build_classifier
         import modelscope.models.cv.image_classification.backbones
         from modelscope.utils.hub import read_config
+        from modelscope.utils.config import \
+            check_trust_remote_code_for_config
 
         super().__init__(model_dir)
 
         self.config_type = 'ms_config'
         mm_config = os.path.join(model_dir, 'config.py')
         if os.path.exists(mm_config):
+            check_trust_remote_code_for_config(
+                mm_config,
+                trust_remote_code=self.trust_remote_code,
+                model_dir=model_dir)
             cfg = mmcv.Config.fromfile(mm_config)
             cfg.model.pretrained = None
             self.cls_model = build_classifier(cfg.model)

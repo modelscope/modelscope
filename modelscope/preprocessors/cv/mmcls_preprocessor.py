@@ -38,11 +38,19 @@ class ImageClassificationMmcvPreprocessor(Preprocessor):
         import mmcv
         from mmcls.datasets.pipelines import Compose
         from modelscope.models.cv.image_classification.utils import preprocess_transform
+        from modelscope.utils.config import \
+            check_trust_remote_code_for_config
+        # Preprocessor base does not carry trust_remote_code; read it directly.
+        trust_remote_code = kwargs.get('trust_remote_code', False)
         super().__init__(**kwargs)
 
         self.config_type = 'ms_config'
         mm_config = os.path.join(model_dir, 'config.py')
         if os.path.exists(mm_config):
+            check_trust_remote_code_for_config(
+                mm_config,
+                trust_remote_code=trust_remote_code,
+                model_dir=model_dir)
             cfg = mmcv.Config.fromfile(mm_config)
             cfg.model.pretrained = None
             config_type = 'mmcv_config'

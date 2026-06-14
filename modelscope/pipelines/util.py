@@ -17,7 +17,7 @@ logger = get_logger()
 def _hub_api_get_model_has_revision() -> bool:
     try:
         return 'revision' in inspect.signature(HubApi.get_model).parameters
-    except Exception:
+    except Exception:  # noqa
         return False
 
 

@@ -89,7 +89,6 @@ class VideoDetMapper:
             if isinstance(actions, bytes):
                 actions = actions.decode('utf-8')
             if isinstance(actions, str):
-                # `ast.literal_eval` rejects anything beyond plain literal containers, blocking RCE via crafted dataset entries (#1667).
                 actions = ast.literal_eval(actions)
             data_dict['actions'] = actions
         else:

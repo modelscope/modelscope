@@ -125,9 +125,7 @@ class Config:
             raise IOError('Only py/yml/yaml/json type are supported now!')
 
         check_trust_remote_code_for_config(
-            filename,
-            trust_remote_code=trust_remote_code,
-            model_dir=model_dir)
+            filename, trust_remote_code=trust_remote_code, model_dir=model_dir)
 
         with tempfile.TemporaryDirectory() as tmp_cfg_dir:
             tmp_cfg_file = tempfile.NamedTemporaryFile(
@@ -169,9 +167,7 @@ class Config:
         if isinstance(filename, Path):
             filename = str(filename)
         cfg_dict, cfg_text = Config._file2dict(
-            filename,
-            trust_remote_code=trust_remote_code,
-            model_dir=model_dir)
+            filename, trust_remote_code=trust_remote_code, model_dir=model_dir)
         return Config(cfg_dict, cfg_text=cfg_text, filename=filename)
 
     @staticmethod

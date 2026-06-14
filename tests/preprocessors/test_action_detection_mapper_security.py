@@ -12,6 +12,9 @@ import sys
 import types
 import unittest
 
+from modelscope.preprocessors.cv.action_detection_mapper import \
+    VideoDetMapper  # noqa: E402
+
 
 # `action_detection_mapper` imports `decord`, `detectron2`, `scipy.interpolate`
 # at module level. Stub the heavy ones so the test can run on machines that do
@@ -28,8 +31,10 @@ def _stub_module(name, attrs=None):
 try:
     import decord  # noqa: F401
 except Exception:
-    _stub_module('decord', {'cpu': lambda *a, **kw: None,
-                            'VideoReader': object})
+    _stub_module('decord', {
+        'cpu': lambda *a, **kw: None,
+        'VideoReader': object
+    })
 
 try:
     import detectron2  # noqa: F401
@@ -47,18 +52,16 @@ except Exception:
             'RandomFlip': object,
             'ResizeShortestEdge': object,
         })
-    _stub_module('detectron2.structures', {'Boxes': object,
-                                           'Instances': object})
+    _stub_module('detectron2.structures', {
+        'Boxes': object,
+        'Instances': object
+    })
 
 try:
     import scipy.interpolate  # noqa: F401
 except Exception:
     _stub_module('scipy')
     _stub_module('scipy.interpolate', {'interp1d': lambda *a, **kw: None})
-
-from modelscope.preprocessors.cv.action_detection_mapper import (  # noqa: E402
-    VideoDetMapper,
-)
 
 
 class ActionDetectionMapperSecurityTest(unittest.TestCase):
@@ -101,8 +104,14 @@ class ActionDetectionMapperSecurityTest(unittest.TestCase):
     def test_already_parsed_list_passes_through(self):
         # If a downstream caller pre-parses the JSON, we should not try to
         # literal_eval a list (which would raise TypeError).
-        already = [{'start': 0, 'end': 1, 'label': 'x',
-                    'boxes': {'0': [0, 0, 1, 1]}}]
+        already = [{
+            'start': 0,
+            'end': 1,
+            'label': 'x',
+            'boxes': {
+                '0': [0, 0, 1, 1]
+            }
+        }]
         self.assertEqual(self._parse(already), already)
 
     def test_malicious_import_payload_blocked(self):
@@ -125,7 +134,7 @@ class ActionDetectionMapperSecurityTest(unittest.TestCase):
 
     def test_malicious_attribute_access_blocked(self):
         with self.assertRaises((ValueError, SyntaxError)):
-            self._parse("().__class__.__bases__[0].__subclasses__()")
+            self._parse('().__class__.__bases__[0].__subclasses__()')
 
     def test_mapper_call_swallows_malicious_payload(self):
         # The public `__call__` wraps `_call` in try/except and returns None
@@ -134,11 +143,9 @@ class ActionDetectionMapperSecurityTest(unittest.TestCase):
         canary = '/tmp/ms_action_det_rce_canary_call'
         if os.path.exists(canary):
             os.remove(canary)
-        mal = ("__import__('os').system("
-               "'touch {}')").format(canary)
+        mal = ("__import__('os').system(" "'touch {}')").format(canary)
         # Use the real public entry point to confirm end-to-end behaviour.
-        out = self.mapper.__call__({'path:FILE': 'dummy.mp4',
-                                    'actions': mal})
+        out = self.mapper.__call__({'path:FILE': 'dummy.mp4', 'actions': mal})
         self.assertIsNone(out)
         self.assertFalse(os.path.exists(canary))
 

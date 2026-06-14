@@ -32,8 +32,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from modelscope.utils.config import (Config,
-                                     check_trust_remote_code_for_config)
+from modelscope.utils.config import Config, check_trust_remote_code_for_config
 
 
 def _make_repo(root, owner, name):
@@ -185,7 +184,8 @@ class CheckTrustRemoteCodeForConfigTest(unittest.TestCase):
         except RuntimeError:
             return
         except AssertionError:
-            self.fail('Gate used `assert`; would be a no-op under `python -O`.')
+            self.fail(
+                'Gate used `assert`; would be a no-op under `python -O`.')
         self.fail('Gate did not raise on untrusted `.py` config.')
 
 
@@ -223,9 +223,8 @@ class SinkWiringTest(unittest.TestCase):
             f'{dotted} does not call check_trust_remote_code_for_config')
         self.assertGreater(sink_pos, -1,
                            f'{dotted} no longer contains `{sink_call}`')
-        self.assertLess(
-            helper_pos, sink_pos,
-            f'{dotted}: helper call must precede `{sink_call}`')
+        self.assertLess(helper_pos, sink_pos,
+                        f'{dotted}: helper call must precede `{sink_call}`')
 
     def test_classification_model_wires_helper(self):
         self._assert_helper_precedes_sink(

@@ -35,8 +35,7 @@ def is_official_hub_path(path: Union[str, List],
             try:
                 api = HubApi()
                 kwargs = {}
-                if 'revision' in inspect.signature(
-                        api.get_model).parameters:
+                if 'revision' in inspect.signature(api.get_model).parameters:
                     kwargs['revision'] = revision
                 _ = api.get_model(path, **kwargs)
                 return True

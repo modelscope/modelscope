@@ -137,7 +137,8 @@ class ControllableImageGenerationPreprocessor(Preprocessor):
     def __init__(self, mode=ModeKeys.INFERENCE, *args, **kwargs):
         super().__init__(mode=ModeKeys.INFERENCE, *args, **kwargs)
         self.detector = build_detector(
-            kwargs.get('control_type', 'hed'), kwargs.get('model_path', None),
+            kwargs.get('control_type', 'hed'),
+            kwargs.get('model_path', None),
             kwargs.get('device', 'cuda'),
             trust_remote_code=kwargs.get('trust_remote_code', False))
 

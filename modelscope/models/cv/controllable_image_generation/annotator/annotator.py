@@ -361,7 +361,9 @@ def show_result_pyplot(model,
 
 class SegformerDetector:
 
-    def __init__(self, annotator_ckpts_path, device='cuda',
+    def __init__(self,
+                 annotator_ckpts_path,
+                 device='cuda',
                  trust_remote_code=False):
         from modelscope.utils.config import \
             check_trust_remote_code_for_config

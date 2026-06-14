@@ -13,6 +13,10 @@ import tempfile
 import types
 import unittest
 
+import torch  # noqa: E402
+
+from modelscope.pipelines.cv.tinynas_classification_pipeline import \
+    TinynasClassificationPipeline  # noqa: E402
 
 # `tinynas_classification_pipeline` imports torch/torchvision and our own
 # `tinynas_classfication` module at top level. Stub the latter only when
@@ -25,12 +29,6 @@ if 'modelscope.models.cv.tinynas_classfication' not in sys.modules:
         stub = types.ModuleType('modelscope.models.cv.tinynas_classfication')
         stub.get_zennet = lambda *a, **kw: None
         sys.modules['modelscope.models.cv.tinynas_classfication'] = stub
-
-import torch  # noqa: E402
-
-from modelscope.pipelines.cv.tinynas_classification_pipeline import (  # noqa: E402
-    TinynasClassificationPipeline,
-)
 
 
 class TinynasLabelMapSecurityTest(unittest.TestCase):
@@ -82,7 +80,7 @@ class TinynasLabelMapSecurityTest(unittest.TestCase):
             self.pipe.postprocess(self._fake_inputs(0))
 
     def test_malicious_subclass_escape_blocked(self):
-        self._write("().__class__.__bases__[0].__subclasses__()")
+        self._write('().__class__.__bases__[0].__subclasses__()')
         with self.assertRaises((ValueError, SyntaxError)):
             self.pipe.postprocess(self._fake_inputs(0))
 

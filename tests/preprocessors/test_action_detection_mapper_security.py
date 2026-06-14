@@ -74,7 +74,9 @@ class ActionDetectionMapperSecurityTest(unittest.TestCase):
         data_dict = {'path:FILE': 'dummy.mp4', 'actions': actions_value}
         if data_dict['actions'] is not None:
             actions = data_dict['actions']
-            if isinstance(actions, (bytes, str)):
+            if isinstance(actions, bytes):
+                actions = actions.decode('utf-8')
+            if isinstance(actions, str):
                 import ast
                 actions = ast.literal_eval(actions)
             data_dict['actions'] = actions
@@ -104,6 +106,12 @@ class ActionDetectionMapperSecurityTest(unittest.TestCase):
         already = [{'start': 0, 'end': 1, 'label': 'x',
                     'boxes': {'0': [0, 0, 1, 1]}}]
         self.assertEqual(self._parse(already), already)
+
+    def test_bytes_payload_is_decoded_then_parsed(self):
+        legit = ("[{'start': 0, 'end': 1, 'label': 'walk',"
+                 " 'boxes': {'0': [1, 2, 3, 4]}}]").encode('utf-8')
+        result = self._parse(legit)
+        self.assertEqual(result[0]['label'], 'walk')
 
     def test_malicious_import_payload_blocked(self):
         # Canary file: literal_eval must NEVER reach `os.system`.

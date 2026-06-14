@@ -86,9 +86,10 @@ class VideoDetMapper:
         video_name = data_dict['path:FILE']
         if data_dict['actions'] is not None:
             actions = data_dict['actions']
-            if isinstance(actions, (bytes, str)):
-                # `ast.literal_eval` rejects anything beyond plain literal
-                # containers, blocking RCE via crafted dataset entries (#1667).
+            if isinstance(actions, bytes):
+                actions = actions.decode('utf-8')
+            if isinstance(actions, str):
+                # `ast.literal_eval` rejects anything beyond plain literal containers, blocking RCE via crafted dataset entries (#1667).
                 actions = ast.literal_eval(actions)
             data_dict['actions'] = actions
         else:

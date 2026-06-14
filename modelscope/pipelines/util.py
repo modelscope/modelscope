@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import functools
 import inspect
 import os.path as osp
 from typing import List, Optional, Union
@@ -10,6 +11,14 @@ from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+
+@functools.lru_cache(maxsize=1)
+def _hub_api_get_model_has_revision() -> bool:
+    try:
+        return 'revision' in inspect.signature(HubApi.get_model).parameters
+    except Exception:
+        return False
 
 
 def is_config_has_model(cfg_file):
@@ -35,8 +44,7 @@ def is_official_hub_path(path: Union[str, List],
             try:
                 api = HubApi()
                 kwargs = {}
-                if 'revision' in inspect.signature(
-                        api.get_model).parameters:
+                if _hub_api_get_model_has_revision():
                     kwargs['revision'] = revision
                 _ = api.get_model(path, **kwargs)
                 return True

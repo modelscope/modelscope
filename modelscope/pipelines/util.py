@@ -1,4 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+import inspect
 import os.path as osp
 from typing import List, Optional, Union
 
@@ -32,7 +33,12 @@ def is_official_hub_path(path: Union[str, List],
             return osp.exists(cfg_file)
         else:
             try:
-                _ = HubApi().get_model(path, revision=revision)
+                api = HubApi()
+                kwargs = {}
+                if 'revision' in inspect.signature(
+                        api.get_model).parameters:
+                    kwargs['revision'] = revision
+                _ = api.get_model(path, **kwargs)
                 return True
             except Exception as e:
                 raise ValueError(f'invalid model repo path {e}')

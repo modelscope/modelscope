@@ -53,7 +53,9 @@ class Model(ABC):
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
         if not check_model_from_owner_group(model_dir=model_dir):
-            assert self.trust_remote_code, info_str
+            # `raise` (not `assert`) so the gate also holds under `python -O`.
+            if not self.trust_remote_code:
+                raise RuntimeError(info_str)
 
     @abstractmethod
     def forward(self, *args, **kwargs) -> Dict[str, Any]:

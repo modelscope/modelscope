@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ast
 import copy
 import random
 
@@ -84,7 +85,12 @@ class VideoDetMapper:
     def _call(self, data_dict):
         video_name = data_dict['path:FILE']
         if data_dict['actions'] is not None:
-            data_dict['actions'] = eval(data_dict['actions'])
+            actions = data_dict['actions']
+            if isinstance(actions, (bytes, str)):
+                # `ast.literal_eval` rejects anything beyond plain literal
+                # containers, blocking RCE via crafted dataset entries (#1667).
+                actions = ast.literal_eval(actions)
+            data_dict['actions'] = actions
         else:
             data_dict['actions'] = []
 

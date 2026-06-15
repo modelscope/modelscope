@@ -115,7 +115,9 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     pip install --no-cache-dir -U funasr scikit-learn && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
     cd /ms-swift && pip install --no-cache-dir -e '.[llm]' && \
-    pip install --no-cache-dir -e '.[eval]' && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
+    pip install --no-cache-dir -e '.[eval]' && pip install evalscope -U --no-dependencies && \
+    pip install --no-cache-dir "numpy>=2.0" --force-reinstall --no-deps && \
+    pip install ms-agent -U --no-dependencies && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {modelscope_branch} --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && \

@@ -3,7 +3,8 @@ FROM {base_image}
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=300 \
     PIP_RETRIES=10 \
-    SOC_VERSION={soc_version}
+    SOC_VERSION={soc_version} \
+    CANN_VERSION={cann_version}
 
 SHELL ["/bin/bash", "-c"]
 
@@ -36,15 +37,15 @@ RUN ARCH=$(uname -m) && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     source /usr/local/Ascend/nnal/atb/set_env.sh && \
     # Install torch & torch_npu & torchvision
-    pip install torch==2.9.0 torch_npu==2.9.0 torchvision==0.24.0 && \
+    pip install torch==2.9.0 torch_npu==2.9.0.post2 torchvision==0.24.0 && \
     # Install vllm
     cd vllm && VLLM_TARGET_DEVICE=empty pip install -v -e . && cd .. && \
     # Install vllm-ascend
     cd vllm-ascend && pip install -v -e . && cd ..
 
 # ---------- Clone training-side repositories ----------
-RUN git clone --depth 1 --branch v0.15.3 https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
-    git clone --depth 1 --branch core_r0.15.3 https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
+RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
+    git clone --depth 1 --branch {mindspeed_branch} https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
     GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift && \
     git clone --depth 1 https://github.com/modelscope/mcore-bridge.git /mcore-bridge
 
@@ -70,7 +71,7 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
             torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0; \
     fi && \
     pip install --no-cache-dir --force-reinstall --no-deps \
-        torch_npu==2.9.0 && \
+        torch_npu==2.9.0.post2 && \
     rm -rf /root/.cache/pip
 
 # ---------- Remove CUDA-only dependencies pulled in by vllm (they cause missing libtorch_cuda.so errors on NPU) ----------
@@ -122,6 +123,37 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     pip install --no-cache-dir diffusers && \
     pip install --no-cache-dir omegaconf==2.3.0 && \
     pip cache purge
+
+# ---------- Reinstall triton-ascend for the selected CANN version ----------
+RUN set -eux; \
+    pip uninstall -y triton || true; \
+    pip uninstall -y triton-ascend || true; \
+    case "${CANN_VERSION}" in \
+        8.5.*) \
+            pip install --no-cache-dir --force-reinstall triton-ascend==3.2.0; \
+            ;; \
+        9.0.0) \
+            PY_ABI="cp$(python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"; \
+            case "${PY_ABI}" in \
+                cp310|cp311|cp312|cp313) ;; \
+                *) echo "Unsupported Python ABI for triton-ascend 3.2.1: ${PY_ABI}" >&2; exit 1 ;; \
+            esac; \
+            ARCH="$(uname -m)"; \
+            case "${ARCH}" in \
+                aarch64|x86_64) ;; \
+                *) echo "Unsupported architecture for triton-ascend 3.2.1: ${ARCH}" >&2; exit 1 ;; \
+            esac; \
+            WHEEL_NAME="triton_ascend-3.2.1-${PY_ABI}-${PY_ABI}-manylinux_2_27_${ARCH}.manylinux_2_28_${ARCH}.whl"; \
+            WHEEL_PATH="/tmp/${WHEEL_NAME}"; \
+            curl -fL "https://gitcode.com/Ascend/triton-ascend/releases/download/v3.2.1/${WHEEL_NAME}" -o "${WHEEL_PATH}"; \
+            pip install --no-cache-dir --force-reinstall "${WHEEL_PATH}"; \
+            rm -f "${WHEEL_PATH}"; \
+            ;; \
+        *) \
+            echo "Unsupported CANN_VERSION for triton-ascend install: ${CANN_VERSION}" >&2; \
+            exit 1; \
+            ;; \
+    esac
 
 RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
     echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \

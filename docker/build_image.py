@@ -1,6 +1,7 @@
 import argparse
 import os
 import platform
+import re
 import subprocess
 from datetime import datetime
 from typing import Any
@@ -462,6 +463,9 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
 class AscendImageBuilder(StableGPUImageBuilder):
 
+    _CANN_VERSION_PATTERN = re.compile(r'^\d+(?:\.[0-9A-Za-z]+)+$')
+    _OS_TAG_PATTERN = re.compile(r'^[A-Za-z]+[0-9][0-9A-Za-z.]*$')
+
     @staticmethod
     def _normalize_arch(arch: str = None) -> str:
         arch = arch or platform.machine()
@@ -496,12 +500,39 @@ class AscendImageBuilder(StableGPUImageBuilder):
                 'ascend310p1, and values starting with ascend950.')
         return atlas_mapping[soc_version]
 
+    @classmethod
+    def _get_cann_os_tags(cls, base_image: str) -> tuple:
+        if ':' not in base_image.rsplit('/', 1)[-1]:
+            raise ValueError(
+                f'Ascend base image must include a tag: {base_image}')
+
+        base_tag = base_image.rsplit(':', 1)[1]
+        parts = base_tag.split('-')
+        if len(parts) < 4:
+            raise ValueError(
+                'Ascend base image tag must look like '
+                f'<cann_version>-<hardware>-<os_tag>-py<version>, got: '
+                f'{base_tag}')
+
+        cann_version = parts[0]
+        os_tag = parts[2]
+        if not cls._CANN_VERSION_PATTERN.fullmatch(cann_version):
+            raise ValueError(f'Invalid CANN version in Ascend base image tag: '
+                             f'{cann_version}')
+        if not cls._OS_TAG_PATTERN.fullmatch(os_tag):
+            raise ValueError(
+                f'Invalid OS tag in Ascend base image tag: {os_tag}')
+
+        return cann_version, f'CANN{cann_version}', os_tag
+
     def init_args(self, args) -> Any:
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
         args.arch = self._normalize_arch(args.arch)
         args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
+        args.cann_version, args.cann_version_tag, args.os_tag = (
+            self._get_cann_os_tags(args.base_image))
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -512,18 +543,24 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
             content = content.replace('{soc_version}', self.args.soc_version)
+            content = content.replace('{cann_version}', self.args.cann_version)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
+            content = content.replace('{megatron_branch}',
+                                      self.args.megatron_branch)
+            content = content.replace('{mindspeed_branch}',
+                                      self.args.mindspeed_branch)
         return content
 
     def image(self) -> str:
         return (
             f'{docker_registry}:{self.args.swift_branch}-'
-            f'{self.args.atlas_hardware}-{self.args.python_tag}-{self.args.arch}'
+            f'{self.args.atlas_hardware}-{self.args.python_tag}-'
+            f'{self.args.cann_version_tag}-{self.args.os_tag}-{self.args.arch}'
         )
 
     def push(self):
@@ -549,6 +586,8 @@ parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
+parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
+parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
 parser.add_argument('--dry_run', type=int, default=0)

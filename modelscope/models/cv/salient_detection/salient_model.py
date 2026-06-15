@@ -32,7 +32,8 @@ class SalientDetection(TorchModel):
             self.model = U2NET(3, 1)
         else:
             self.model = SENet(backbone_path=None, pretrained=False)
-            config = Config.from_file(config_path)
+            config = Config.from_file(
+                config_path, trust_remote_code=self.trust_remote_code)
             self.norm_mean = config.norm_mean
             self.norm_std = config.norm_std
             self.norm_size = config.norm_size

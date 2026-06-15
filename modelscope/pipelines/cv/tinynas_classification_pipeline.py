@@ -1,5 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ast
 import math
 import os.path as osp
 from typing import Any, Dict
@@ -83,10 +84,11 @@ class TinynasClassificationPipeline(Pipeline):
 
     def postprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         label_mapping_path = osp.join(self.path, 'label_map.txt')
-        f = open(label_mapping_path, encoding='utf-8')
-        content = f.read()
-        f.close()
-        label_dict = eval(content)
+        with open(label_mapping_path, encoding='utf-8') as f:
+            content = f.read()
+        # `label_map.txt` ships from a remote model repo; restrict parsing to
+        # plain literal containers so a malicious file cannot trigger RCE (#1668).
+        label_dict = ast.literal_eval(content)
 
         output_prob = torch.nn.functional.softmax(inputs['outputs'], dim=-1)
         score = torch.max(output_prob)

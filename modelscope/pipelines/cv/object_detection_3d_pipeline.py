@@ -49,7 +49,8 @@ class ObjectDetection3DPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         config_path = osp.join(model, 'mmcv_depe.py')
-        self.cfg = Config.from_file(config_path)
+        self.cfg = Config.from_file(
+            config_path, trust_remote_code=self.trust_remote_code)
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:

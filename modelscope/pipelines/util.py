@@ -1,6 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import functools
-import inspect
 import os.path as osp
 from typing import List, Optional, Union
 
@@ -11,14 +9,6 @@ from modelscope.utils.constant import DEFAULT_MODEL_REVISION, ModelFile
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
-
-
-@functools.lru_cache(maxsize=1)
-def _hub_api_get_model_has_revision() -> bool:
-    try:
-        return 'revision' in inspect.signature(HubApi.get_model).parameters
-    except Exception:  # noqa
-        return False
 
 
 def is_config_has_model(cfg_file):
@@ -42,11 +32,7 @@ def is_official_hub_path(path: Union[str, List],
             return osp.exists(cfg_file)
         else:
             try:
-                api = HubApi()
-                kwargs = {}
-                if _hub_api_get_model_has_revision():
-                    kwargs['revision'] = revision
-                _ = api.get_model(path, **kwargs)
+                _ = HubApi().get_model(path, revision=revision)
                 return True
             except Exception as e:
                 raise ValueError(f'invalid model repo path {e}')

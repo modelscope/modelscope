@@ -52,7 +52,9 @@ RUN bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
-    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
+    pip install .[eval] && pip install evalscope -U --no-dependencies && \
+    pip install --no-cache-dir "numpy>=2.0" --force-reinstall --no-deps && \
+    pip install ms-agent -U --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

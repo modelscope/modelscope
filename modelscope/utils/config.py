@@ -28,6 +28,40 @@ DEPRECATION_KEY = '_deprecation_'
 RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 
 
+def check_trust_remote_code_for_config(filename,
+                                       trust_remote_code: bool = False,
+                                       model_dir=None):
+    """Refuse to exec a `.py` config file that comes from an untrusted source.
+
+    Loading a Python config (via `Config.from_file`, `mmcv.Config.fromfile`,
+    `mmseg.apis.init_segmentor`, etc.) imports the file as a module, which
+    runs any top-level code it contains. Anything that ultimately reads a
+    `.py` config from a remote model repo MUST gate that load with this
+    helper. JSON / YAML configs are passive data and pass through.
+
+    Args:
+        filename: Path to the candidate config file.
+        trust_remote_code: Caller opt-in flag; pass through
+            ``self.trust_remote_code`` from ``Model`` / ``Pipeline`` /
+            ``Preprocessor`` callers.
+        model_dir: Repo root used by the owner-group check. Defaults to the
+            parent directory of ``filename``.
+    """
+    if not str(filename).endswith('.py'):
+        return
+    from modelscope.utils.automodel_utils import check_model_from_owner_group
+    if model_dir is None:
+        model_dir = osp.dirname(osp.abspath(osp.expanduser(str(filename))))
+    if check_model_from_owner_group(model_dir=model_dir):
+        return
+    if trust_remote_code:
+        return
+    raise RuntimeError(
+        f'Refusing to load Python config "{filename}": doing so would execute '
+        'code from the model repository. Pass `trust_remote_code=True` to opt '
+        'in if you trust the source.')
+
+
 class ConfigDict(addict.Dict):
     """ Dict which support get value through getattr
 
@@ -82,13 +116,16 @@ class Config:
     """
 
     @staticmethod
-    def _file2dict(filename):
+    def _file2dict(filename, trust_remote_code: bool = False, model_dir=None):
         filename = osp.abspath(osp.expanduser(filename))
         if not osp.exists(filename):
             raise ValueError(f'File does not exists {filename}')
         fileExtname = osp.splitext(filename)[1]
         if fileExtname not in ['.py', '.json', '.yaml', '.yml']:
             raise IOError('Only py/yml/yaml/json type are supported now!')
+
+        check_trust_remote_code_for_config(
+            filename, trust_remote_code=trust_remote_code, model_dir=model_dir)
 
         with tempfile.TemporaryDirectory() as tmp_cfg_dir:
             tmp_cfg_file = tempfile.NamedTemporaryFile(
@@ -126,10 +163,11 @@ class Config:
         return cfg_dict, cfg_text
 
     @staticmethod
-    def from_file(filename):
+    def from_file(filename, trust_remote_code: bool = False, model_dir=None):
         if isinstance(filename, Path):
             filename = str(filename)
-        cfg_dict, cfg_text = Config._file2dict(filename)
+        cfg_dict, cfg_text = Config._file2dict(
+            filename, trust_remote_code=trust_remote_code, model_dir=model_dir)
         return Config(cfg_dict, cfg_text=cfg_text, filename=filename)
 
     @staticmethod
@@ -156,7 +194,9 @@ class Config:
             temp_file.write(cfg_str)
             # on windows, previous implementation cause error
             # see PR 1077 for details
-        cfg = Config.from_file(temp_file.name)
+        # `from_string` materializes a caller-provided in-process string into
+        # a tempfile; the threat model for `trust_remote_code` does not apply.
+        cfg = Config.from_file(temp_file.name, trust_remote_code=True)
         os.remove(temp_file.name)
         return cfg
 

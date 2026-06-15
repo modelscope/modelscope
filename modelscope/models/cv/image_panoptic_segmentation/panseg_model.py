@@ -20,9 +20,15 @@ class SwinLPanopticSegmentation(TorchModel):
         from mmcv.runner import load_checkpoint
         import mmcv
         from mmdet.models import build_detector
+        from modelscope.utils.config import \
+            check_trust_remote_code_for_config
 
         config = osp.join(model_dir, 'config.py')
 
+        check_trust_remote_code_for_config(
+            config,
+            trust_remote_code=self.trust_remote_code,
+            model_dir=model_dir)
         cfg = mmcv.Config.fromfile(config)
         if 'pretrained' in cfg.model:
             cfg.model.pretrained = None

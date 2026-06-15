@@ -361,14 +361,22 @@ def show_result_pyplot(model,
 
 class SegformerDetector:
 
-    def __init__(self, annotator_ckpts_path, device='cuda'):
+    def __init__(self,
+                 annotator_ckpts_path,
+                 device='cuda',
+                 trust_remote_code=False):
+        from modelscope.utils.config import \
+            check_trust_remote_code_for_config
         modelpath = os.path.join(
             annotator_ckpts_path,
             'segformer_mit-b4_512x512_160k_ade20k_20220620_112216-4fa4f58f.pth'
         )
-        config_file = os.path.join(
-            annotator_ckpts_path.replace('ckpt/annotator/', ''),
-            'config/config.py')
+        annotator_root = annotator_ckpts_path.replace('ckpt/annotator/', '')
+        config_file = os.path.join(annotator_root, 'config/config.py')
+        check_trust_remote_code_for_config(
+            config_file,
+            trust_remote_code=trust_remote_code,
+            model_dir=annotator_root)
         self.model = init_segmentor(config_file, modelpath).to(device)
 
     def __call__(self, img):

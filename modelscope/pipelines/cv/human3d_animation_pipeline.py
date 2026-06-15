@@ -72,6 +72,16 @@ class Human3DAnimationPipeline(Pipeline):
                                      (case_name, action_name))
         exec_path = os.path.join(self.model_dir, 'skinning.py')
 
+        # `skinning.py` ships inside the model repo and is executed via Blender;
+        # gate it behind trust_remote_code to prevent RCE from untrusted repos.
+        self.check_trust_remote_code(
+            info_str=
+            ('Human3DAnimationPipeline executes `skinning.py` from the model '
+             'repository via Blender, which can run arbitrary code. '
+             'Pass `trust_remote_code=True` to pipeline() to opt in if you '
+             'trust the model repository.'),
+            model_dir=self.model_dir)
+
         cmd = f'{self.blender} -b -P {exec_path}  -- --input {self.case_dir}' \
               f' --gltf_path {gltf_path} --action {self.action}'
         os.system(cmd)

@@ -12,6 +12,7 @@ Sub-modules:
     _module_factories – dataset module factory functions & data-file resolution
 """
 import contextlib
+import inspect
 import os
 import warnings
 from dataclasses import fields
@@ -25,7 +26,7 @@ from datasets import (Dataset, DatasetBuilder, DatasetDict,
                       DownloadConfig, DownloadManager, DownloadMode, Features,
                       IterableDataset, IterableDatasetDict, Split,
                       VerificationMode, Version, config, data_files, LargeList,
-                      Sequence as SequenceHf)
+                      Sequence as SequenceHf, SplitDict)
 
 try:
     from datasets import List as DatasetList
@@ -407,10 +408,26 @@ def _get_paths_info(
 
 
 # ===================================================================
-# HfFileSystem patch (_hf_fs_open)
+# HfFileSystem patches (_hf_fs_open, _hf_fs_init)
 # ===================================================================
 
 _hf_fs_open_original = None
+_hf_fs_init_original = None
+
+
+def _hf_fs_init_with_cookie(self, *args, endpoint=None, token=None, **kwargs):
+    """HfFileSystem.__init__ wrapper that injects ModelScope cookie auth.
+
+    ModelScope's /resolve/ endpoint authenticates via `m_session_id` cookie
+    rather than the `Authorization: Bearer` header used by HuggingFace Hub.
+    This wrapper ensures the cookie is included in all subsequent HTTP
+    requests made by the HfFileSystem instance.
+    """
+    _hf_fs_init_original(self, *args, endpoint=endpoint, token=token, **kwargs)
+    if token and isinstance(token, str):
+        if not hasattr(self._api, 'headers') or self._api.headers is None:
+            self._api.headers = {}
+        self._api.headers['Cookie'] = f'm_session_id={token}'
 
 
 def _hf_fs_open(self, path, mode='rb', **kwargs):
@@ -454,6 +471,154 @@ def _hf_fs_open(self, path, mode='rb', **kwargs):
         except Exception:
             pass
     return _hf_fs_open_original(self, path, mode=mode, **kwargs)
+
+
+class _DryRunDownloadManager:
+    """Minimal download-manager stub for split discovery without I/O.
+
+    Returns placeholder paths for all download/extract calls, allowing
+    _split_generators() to execute and return SplitGenerator objects
+    (which carry split names) without triggering actual network or disk I/O.
+    """
+
+    _PLACEHOLDER = os.devnull
+
+    def download(self, url_or_urls):
+        return self._map(url_or_urls)
+
+    def download_and_extract(self, url_or_urls):
+        return self._map(url_or_urls)
+
+    def extract(self, path_or_paths):
+        return self._map(path_or_paths)
+
+    def download_custom(self, url_or_urls, custom_download):
+        return self._map(url_or_urls)
+
+    def iter_archive(self, path):
+        return iter([])
+
+    def iter_files(self, paths):
+        return iter([])
+
+    @property
+    def manual_dir(self):
+        return None
+
+    @property
+    def is_streaming(self):
+        return False
+
+    def _map(self, input_):
+        if isinstance(input_, dict):
+            return {k: self._PLACEHOLDER for k in input_}
+        if isinstance(input_, (list, tuple, set)):
+            return type(input_)(self._PLACEHOLDER for _ in input_)
+        return self._PLACEHOLDER
+
+
+def _discover_splits_from_builder(builder_instance):
+    """Discover available split names by dry-running _split_generators().
+
+    For script-based datasets that lack README split metadata, this calls
+    the builder's _split_generators() with a stub download manager to
+    extract split names without performing any actual downloads.
+
+    Returns:
+        A set of split name strings, or an empty set if discovery fails.
+    """
+    if not hasattr(builder_instance, '_split_generators'):
+        return set()
+    try:
+        generators = builder_instance._split_generators(_DryRunDownloadManager())
+        return {str(sg.name) for sg in generators}
+    except Exception as e:
+        logger.debug(f'Failed to discover splits from builder: {e}')
+        return set()
+
+
+def _validate_split_exists(builder_instance, split):
+    """Fail-fast check: raise ValueError before downloading if the
+    requested split does not exist in the dataset metadata.
+
+    Args:
+        builder_instance: The DatasetBuilder instance with info/config.
+        split: The user-requested split specification (may be None).
+
+    Raises:
+        ValueError: If any requested split name is not found among
+            the available splits declared in the dataset metadata.
+    """
+    if split is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    # Source 1: info.splits (original metadata from README)
+    available = set()
+    info = getattr(builder_instance, 'info', None)
+    if info is not None and info.splits:
+        available = set(info.splits.keys())
+
+    # Source 2: config.data_files keys
+    if not available:
+        config = getattr(builder_instance, 'config', None)
+        data_files = getattr(config, 'data_files', None)
+        if isinstance(data_files, dict):
+            available = set(data_files.keys())
+
+    # Source 3: dry-run _split_generators() for script-based datasets
+    if not available:
+        available = _discover_splits_from_builder(builder_instance)
+
+    if not available:
+        logger.debug(
+            'Cannot determine available splits from dataset metadata; '
+            'split validation skipped. Invalid splits will be caught downstream.'
+        )
+        return
+
+    missing = split_names - available
+    if missing:
+        raise ValueError(
+            f'Split {sorted(missing)} not found in dataset. '
+            f'Available splits: {sorted(available)}'
+        )
+
+
+def _align_builder_splits_with_data_files(builder_instance, split):
+    """Align builder.info.splits with the actually requested split(s).
+
+    When data_files have been filtered to a subset of splits (see
+    _filter_data_files_by_split in _module_factories.py), the builder's
+    info.splits metadata may still list all original splits from the
+    README.  download_and_prepare() calls verify_splits() which would
+    then raise ExpectedMoreSplitsError.  This helper prunes info.splits
+    to only contain the splits that will actually be generated.
+    """
+    if split is None:
+        return
+    info = getattr(builder_instance, 'info', None)
+    if info is None or info.splits is None:
+        return
+
+    from modelscope.msdatasets.utils._module_factories import _extract_split_names
+    split_names = _extract_split_names(split)
+    if not split_names:
+        return
+
+    existing_keys = set(info.splits.keys())
+    if split_names >= existing_keys:
+        return  # All splits requested, no filtering needed
+
+    filtered = {k: v for k, v in info.splits.items() if k in split_names}
+    if not filtered:
+        return  # Safety: don't empty out splits
+
+    info.splits = SplitDict(filtered, dataset_name=info.splits.dataset_name)
 
 
 # ===================================================================
@@ -544,33 +709,65 @@ class DatasetsWrapperHF:
             storage_options=storage_options,
             trust_remote_code=trust_remote_code,
             _require_default_config_name=name is None,
+            split=split,
             **config_kwargs,
         )
 
         if dataset_info_only:
             ret_dict = {}
+
+            # Case 1: Local .py script file
             if isinstance(path, str) and path.endswith('.py') and os.path.exists(path):
                 from datasets import get_dataset_config_names
                 subset_list = get_dataset_config_names(path)
                 ret_dict = {_subset: [] for _subset in subset_list}
                 return ret_dict
 
-            if builder_instance is None or not hasattr(builder_instance,
-                                                       'builder_configs'):
-                logger.error(f'No builder_configs found for {path} dataset.')
+            if builder_instance is None:
+                logger.error(f'No builder instance created for {path} dataset.')
                 return ret_dict
 
-            _tmp_builder_configs = builder_instance.builder_configs
-            for tmp_config_name, tmp_builder_config in _tmp_builder_configs.items():
-                tmp_config_name = str(tmp_config_name)
-                if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
-                    ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
+            # Case 2: Try builder_configs with data_files (packaged datasets)
+            _tmp_builder_configs = getattr(builder_instance, 'builder_configs', None)
+            if _tmp_builder_configs:
+                if hasattr(_tmp_builder_configs, 'items'):
+                    configs_iter = _tmp_builder_configs.items()
                 else:
-                    ret_dict[tmp_config_name] = []
+                    configs_iter = [(getattr(c, 'name', 'default'), c) for c in _tmp_builder_configs]
+                for tmp_config_name, tmp_builder_config in configs_iter:
+                    tmp_config_name = str(tmp_config_name)
+                    if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
+                        ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
+
+            # Case 3: Fallback for script datasets — use info.splits or dry-run discovery
+            if not ret_dict or all(not v for v in ret_dict.values()):
+                config_name = getattr(builder_instance, 'config_name', 'default') or 'default'
+                splits = []
+
+                # Try info.splits (from README metadata)
+                info = getattr(builder_instance, 'info', None)
+                if info is not None and info.splits:
+                    splits = sorted(info.splits.keys())
+
+                # Fallback: dry-run _split_generators()
+                if not splits:
+                    discovered = _discover_splits_from_builder(builder_instance)
+                    if discovered:
+                        splits = sorted(discovered)
+
+                if splits:
+                    ret_dict = {config_name: splits}
+                elif not ret_dict:
+                    ret_dict = {config_name: []}
+
             return ret_dict
+
+        _validate_split_exists(builder_instance, split)
 
         if streaming:
             return builder_instance.as_streaming_dataset(split=split)
+
+        _align_builder_splits_with_data_files(builder_instance, split)
 
         builder_instance.download_and_prepare(
             download_config=download_config,
@@ -624,6 +821,7 @@ class DatasetsWrapperHF:
         storage_options: Optional[Dict] = None,
         trust_remote_code: Optional[bool] = None,
         _require_default_config_name=True,
+        split: Optional[Union[str, Split]] = None,
         **config_kwargs,
     ) -> DatasetBuilder:
 
@@ -644,6 +842,12 @@ class DatasetsWrapperHF:
             download_config = download_config.copy(
             ) if download_config else DownloadConfig()
             download_config.storage_options.update(storage_options)
+        if split is not None:
+            download_config = download_config.copy(
+            ) if download_config else DownloadConfig()
+            if download_config.storage_options is None:
+                download_config.storage_options = {}
+            download_config.storage_options['split'] = split
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
@@ -682,6 +886,24 @@ class DatasetsWrapperHF:
 
         builder_cls = get_dataset_builder_class(
             dataset_module, dataset_name=dataset_name)
+
+        _config_cls = builder_cls.BUILDER_CONFIG_CLASS
+        if hasattr(_config_cls, '__dataclass_fields__'):
+            _valid_fields = set(_config_cls.__dataclass_fields__.keys())
+            # Also preserve parameters accepted by the builder's
+            # __init__ (e.g. writer_batch_size, base_path, repo_id)
+            # so they are not inadvertently stripped.
+            try:
+                _init_params = set(
+                    inspect.signature(builder_cls.__init__).parameters.keys()
+                )
+            except (ValueError, TypeError):
+                _init_params = set()
+            _valid_fields = _valid_fields | _init_params
+            config_kwargs = {
+                k: v for k, v in config_kwargs.items()
+                if k in _valid_fields
+            }
 
         builder_instance: DatasetBuilder = builder_cls(
             cache_dir=cache_dir,
@@ -946,7 +1168,7 @@ def load_dataset_with_ctx(*args, **kwargs):
     non-streaming mode) or kept alive (for streaming mode, where lazy
     iteration needs the patches to remain active).
     """
-    global _hf_fs_open_original
+    global _hf_fs_open_original, _hf_fs_init_original
 
     # Save originals
     hf_endpoint_origin = config.HF_ENDPOINT
@@ -962,6 +1184,7 @@ def load_dataset_with_ctx(*args, **kwargs):
         HubDatasetModuleFactoryWithScript.get_module if _HAS_SCRIPT_LOADING else None)
     generate_from_dict_origin = features.generate_from_dict
     hf_fs_open_origin = HfFileSystem._open
+    hf_fs_init_origin = HfFileSystem.__init__
 
     # Apply patches
     config.HF_ENDPOINT = get_endpoint()
@@ -980,6 +1203,8 @@ def load_dataset_with_ctx(*args, **kwargs):
     features.generate_from_dict = generate_from_dict_ms
     _hf_fs_open_original = hf_fs_open_origin
     HfFileSystem._open = _hf_fs_open
+    _hf_fs_init_original = hf_fs_init_origin
+    HfFileSystem.__init__ = _hf_fs_init_with_cookie
 
     streaming = kwargs.get('streaming', False)
 
@@ -990,10 +1215,12 @@ def load_dataset_with_ctx(*args, **kwargs):
         _repo_tree_cache.clear()
         HubApi._dataset_id_type_cache.clear()
 
-        HfFileSystem._open = hf_fs_open_origin
-        _hf_fs_open_original = None
-
         if not streaming:
+            HfFileSystem._open = hf_fs_open_origin
+            _hf_fs_open_original = None
+            HfFileSystem.__init__ = hf_fs_init_origin
+            _hf_fs_init_original = None
+
             config.HF_ENDPOINT = hf_endpoint_origin
             file_utils.get_from_cache = get_from_cache_origin
             features.generate_from_dict = generate_from_dict_origin

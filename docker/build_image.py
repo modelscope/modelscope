@@ -1,6 +1,8 @@
 import argparse
 import os
+import platform
 import subprocess
+from copy import copy
 from datetime import datetime
 from typing import Any
 
@@ -24,9 +26,9 @@ class Builder:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.9.1'
-            args.torchaudio_version = '2.9.1'
-            args.torchvision_version = '0.24.1'
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
         if not args.optimum_version:
             args.optimum_version = '2.0.0'
         if not args.tf_version:
@@ -34,7 +36,7 @@ class Builder:
         if not args.cuda_version:
             args.cuda_version = '12.8.1'
         if not args.vllm_version:
-            args.vllm_version = '0.15.1'
+            args.vllm_version = '0.19.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
@@ -139,6 +141,7 @@ class OldCPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_cpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:
@@ -196,6 +199,7 @@ class OldGPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_gpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:
@@ -338,6 +342,15 @@ class StableCPUImageBuilder(Builder):
 class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
 
+    def init_args(self, args: Any) -> Any:
+        if not args.torch_version:
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
+        if not args.vllm_version:
+            args.vllm_version = '0.19.1'
+        return super().init_args(args)
+
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -469,10 +482,46 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
 class AscendImageBuilder(StableGPUImageBuilder):
 
+    @staticmethod
+    def _normalize_arch(arch: str = None) -> str:
+        arch = arch or platform.machine()
+        arch = arch.lower()
+        arch_mapping = {
+            'x86': 'x86',
+            'x86_64': 'x86',
+            'amd64': 'x86',
+            'arm': 'arm',
+            'aarch64': 'arm',
+            'arm64': 'arm',
+        }
+        if arch not in arch_mapping:
+            raise ValueError(f'Unsupported architecture: {arch}. '
+                             'Please pass --arch x86 or --arch arm.')
+        return arch_mapping[arch]
+
+    @staticmethod
+    def _get_atlas_hardware(soc_version: str) -> str:
+        soc_version = soc_version.lower()
+        atlas_mapping = {
+            'ascend910b1': 'A2',
+            'ascend910_9391': 'A3',
+            'ascend310p1': '300I',
+        }
+        if soc_version.startswith('ascend950'):
+            return 'A5'
+        if soc_version not in atlas_mapping:
+            raise ValueError(
+                f'Unsupported soc_version: {soc_version}. '
+                'Supported values are ascend910b1, ascend910_9391, '
+                'ascend310p1, and values starting with ascend950.')
+        return atlas_mapping[soc_version]
+
     def init_args(self, args) -> Any:
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
-            args.base_image = 'quay.io/ascend/vllm-ascend:v0.14.0rc1-a3'
+            args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
+        args.arch = self._normalize_arch(args.arch)
+        args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -482,6 +531,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         with open('docker/Dockerfile.ascend', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{soc_version}', self.args.soc_version)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
@@ -492,8 +542,9 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
     def image(self) -> str:
         return (
-            f'{docker_registry}:{self.args.base_image.split(":")[-1]}-torch2.7.1'
-            f'-{self.args.modelscope_version}-ascend-test')
+            f'{docker_registry}:{self.args.swift_branch}-'
+            f'{self.args.atlas_hardware}-{self.args.python_tag}-{self.args.arch}'
+        )
 
     def push(self):
         return 0
@@ -518,6 +569,8 @@ parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
 parser.add_argument('--swift_branch', type=str, default='main')
+parser.add_argument('--soc_version', type=str, default='ascend910_9391')
+parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
 parser.add_argument('--dry_run', type=int, default=0)
 args = parser.parse_args()
 
@@ -535,4 +588,5 @@ else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
 for builder in builder_cls:
+    args = copy(args)
     builder(args, args.dry_run)()

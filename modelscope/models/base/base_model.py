@@ -14,7 +14,8 @@ from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
 from modelscope.utils.device import verify_device
 from modelscope.utils.logger import get_logger
-from modelscope.utils.plugins import (register_modelhub_repo,
+from modelscope.utils.plugins import (filter_plugin_in_whitelist,
+                                      register_modelhub_repo,
                                       register_plugins_repo)
 
 logger = get_logger()
@@ -31,7 +32,9 @@ class Model(ABC):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self._device_name = device_name
-        self.trust_remote_code = kwargs.get('trust_remote_code', False)
+        self.trust_remote_code = kwargs.get(
+            'trust_remote_code',
+            False) or check_model_from_owner_group(model_dir)
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.postprocess(self.forward(*args, **kwargs))
@@ -136,7 +139,8 @@ class Model(ABC):
             kwargs.pop(Invoke.KEY)
         else:
             invoked_by = Invoke.PRETRAINED
-
+        _model_trusted = check_model_from_owner_group(model_name_or_path)
+        trust_remote_code = trust_remote_code or _model_trusted
         ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
@@ -190,7 +194,7 @@ class Model(ABC):
 
         # Security check: Only allow execution of remote code or plugins if trust_remote_code is True
         plugins = cfg.safe_get('plugins')
-        if plugins and not trust_remote_code:
+        if filter_plugin_in_whitelist(plugins) and not trust_remote_code:
             raise RuntimeError(
                 'Detected plugins field in the model configuration file, but '
                 'trust_remote_code=True was not explicitly set.\n'
@@ -203,7 +207,7 @@ class Model(ABC):
                 'Please make sure that you can trust the external codes.')
         register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
         default_args = {}
-        if trust_remote_code:
+        if trust_remote_code and not _model_trusted:
             default_args = {'trust_remote_code': trust_remote_code}
         register_plugins_repo(plugins)
         for k, v in kwargs.items():

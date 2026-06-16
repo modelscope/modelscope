@@ -524,6 +524,7 @@ def _patch_kernels():
     """
     try:
         from kernels import utils as kernels_utils
+        from kernels.utils import _get_hf_api
     except ImportError:
         return
     if hasattr(kernels_utils, '_get_hf_api_origin'):
@@ -535,6 +536,7 @@ def _patch_kernels():
 def _unpatch_kernels():
     try:
         from kernels import utils as kernels_utils
+        from kernels.utils import _get_hf_api
     except ImportError:
         return
     origin = getattr(kernels_utils, '_get_hf_api_origin', None)

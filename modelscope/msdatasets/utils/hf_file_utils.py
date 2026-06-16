@@ -53,11 +53,12 @@ def _request_with_retry_ms(
     url: str,
     max_retries: int = 2,
     base_wait_time: float = 0.5,
-    max_wait_time: float = 2,
+    max_wait_time: float = 3,
     timeout: float = 10.0,
     **params,
 ) -> requests.Response:
-    """Wrapper around requests to retry in case it fails with a ConnectTimeout, with exponential backoff.
+    """Wrapper around requests to retry in case it fails with a ConnectTimeout,
+    ReadTimeout or ConnectionError, with exponential backoff.
 
     Note that if the environment variable HF_DATASETS_OFFLINE is set to 1, then a OfflineModeIsEnabled error is raised.
 
@@ -72,12 +73,35 @@ def _request_with_retry_ms(
     """
     tries, success = 0, False
     response = None
+    range_header = (params.get('headers') or {}).get('Range', '')
     while not success:
         tries += 1
         try:
+            logger.debug(
+                '[MS_DOWNLOAD] _request_with_retry_ms sending request: '
+                'method=%s, url=%s, timeout=%s, Range=%s',
+                method, url, timeout, range_header or 'N/A',
+            )
+            t0 = time.perf_counter()
             response = requests.request(method=method.upper(), url=url, timeout=timeout, **params)
+            elapsed = time.perf_counter() - t0
+            logger.debug(
+                '[MS_DOWNLOAD] _request_with_retry_ms response: '
+                'status=%s, content_length=%s, elapsed=%.3fs, url=%s',
+                response.status_code,
+                response.headers.get('Content-Length', 'N/A'),
+                elapsed,
+                url,
+            )
             success = True
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as err:
+        except (requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError) as err:
+            logger.error(
+                '[MS_DOWNLOAD] _request_with_retry_ms %s: '
+                'method=%s, url=%s, timeout=%s, error=%s',
+                type(err).__name__, method, url, timeout, err,
+            )
             if tries > max_retries:
                 raise err
             else:
@@ -88,7 +112,7 @@ def _request_with_retry_ms(
 
 
 def http_head_ms(
-    url, proxies=None, headers=None, cookies=None, allow_redirects=True, timeout=10.0, max_retries=0
+    url, proxies=None, headers=None, cookies=None, allow_redirects=True, timeout=10.0, max_retries=3
 ) -> requests.Response:
     headers = copy.deepcopy(headers) or {}
     headers['user-agent'] = get_datasets_user_agent_ms(user_agent=headers.get('user-agent'))
@@ -106,8 +130,12 @@ def http_head_ms(
 
 
 def http_get_ms(
-    url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=100.0, max_retries=0, desc=None
+    url, temp_file, proxies=None, resume_size=0, headers=None, cookies=None, timeout=300.0, max_retries=3, desc=None
 ) -> Optional[requests.Response]:
+    logger.debug(
+        '[MS_DOWNLOAD] http_get_ms entry: url=%s, timeout=%s, resume_size=%s',
+        url, timeout, resume_size,
+    )
     headers = dict(headers) if headers is not None else {}
     headers['user-agent'] = get_datasets_user_agent_ms(user_agent=headers.get('user-agent'))
     if resume_size > 0:
@@ -147,7 +175,7 @@ def get_from_cache_ms(
     user_agent=None,
     local_files_only=False,
     use_etag=True,
-    max_retries=0,
+    max_retries=3,
     token=None,
     use_auth_token='deprecated',
     ignore_url_params=False,
@@ -320,6 +348,7 @@ def get_from_cache_ms(
             if scheme not in ('http', 'https'):
                 fsspec_get(url, temp_file, storage_options=storage_options, desc=download_desc)
             else:
+                logger.info('[MS_DOWNLOAD] get_from_cache_ms downloading: url=%s', url)
                 http_get_ms(
                     url,
                     temp_file=temp_file,

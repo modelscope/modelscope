@@ -418,12 +418,12 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             args.torchaudio_version = '2.11.0'
             args.torchvision_version = '0.26.0'
         if not args.vllm_version:
-            args.vllm_version = '0.21.0'
+            args.vllm_version = '0.23.0'
         if not args.base_image:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:13.0.2-cudnn-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:13.0.3-cudnn-devel-ubuntu22.04'
         if not args.cuda_version:
-            args.cuda_version = '13.0.2'
+            args.cuda_version = '13.0.3'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:

@@ -147,10 +147,12 @@ def check_model_from_owner_group(model_dir: str,
     if group in owner_group:
         return True
     # Also check cache path pattern: {cache_root}/{owner}--{model_name}/snapshots/{revision}
-    # Only check the grandparent directory to avoid path traversal attacks
+    # Require exactly "{owner}--{name}" format (2 segments split by --)
+    # to prevent spoofing via accounts like "iic--hacked" which would
+    # produce paths like "iic--hacked--evil" and bypass the check.
     grandparent = os.path.basename(os.path.dirname(parent_dir))
     if '--' in grandparent:
-        prefix = grandparent.split('--', 1)[0]
-        if prefix in owner_group:
+        parts = grandparent.split('--')
+        if len(parts) == 2 and parts[0] in owner_group:
             return True
     return False

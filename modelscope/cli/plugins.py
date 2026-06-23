@@ -11,7 +11,7 @@ plugins_manager = PluginsManager()
 
 
 class PluginsCMD(CLICommand):
-    name = 'plugin'
+    name = 'plugins'
 
     @staticmethod
     def register(subparsers: ArgumentParser) -> None:

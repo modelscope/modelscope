@@ -34,6 +34,7 @@ plugins = "modelscope.cli.plugins:PluginsCMD"
 skills = "modelscope.cli.skills:SkillsCMD"
 llamafile = "modelscope.cli.llamafile:LlamafileCMD"
 modelcard = "modelscope.cli.modelcard:ModelCardCMD"
+studio = "modelscope.cli.studio:StudioCMD"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

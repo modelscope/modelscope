@@ -32,6 +32,7 @@ pipeline = "modelscope.cli.pipeline:PipelineCMD"
 server = "modelscope.cli.server:ServerCMD"
 plugins = "modelscope.cli.plugins:PluginsCMD"
 skills = "modelscope.cli.skills:SkillsCMD"
+agent = "modelscope.cli.agent:AgentCMD"
 llamafile = "modelscope.cli.llamafile:LlamafileCMD"
 modelcard = "modelscope.cli.modelcard:ModelCardCMD"
 
@@ -52,6 +53,7 @@ dependencies = {file = ["requirements/hub.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
 hub        = {file = ["requirements/hub.txt"]}
+agent      = {file = ["requirements/agent.txt"]}
 datasets   = {file = ["requirements/datasets.txt"]}
 framework  = {file = ["requirements/framework.txt"]}
 server     = {file = ["requirements/server.txt"]}

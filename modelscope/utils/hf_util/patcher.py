@@ -1014,5 +1014,7 @@ def unpatch_hub():
 @contextlib.contextmanager
 def patch_context():
     patch_hub()
-    yield
-    unpatch_hub()
+    try:
+        yield
+    finally:
+        unpatch_hub()

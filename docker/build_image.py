@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import subprocess
+from copy import copy
 from datetime import datetime
 from typing import Any
 
@@ -26,9 +27,9 @@ class Builder:
             # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
             args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.9.1'
-            args.torchaudio_version = '2.9.1'
-            args.torchvision_version = '0.24.1'
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
         if not args.optimum_version:
             args.optimum_version = '2.0.0'
         if not args.tf_version:
@@ -36,7 +37,7 @@ class Builder:
         if not args.cuda_version:
             args.cuda_version = '12.8.1'
         if not args.vllm_version:
-            args.vllm_version = '0.15.1'
+            args.vllm_version = '0.19.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
@@ -141,6 +142,7 @@ class OldCPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_cpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:
@@ -198,6 +200,7 @@ class OldGPUImageBuilder(Builder):
         content = content.replace('{base_image}', old_gpu_image)
         content = content.replace('{modelscope_branch}',
                                   self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
         return content
 
     def image(self) -> str:
@@ -340,6 +343,15 @@ class StableCPUImageBuilder(Builder):
 class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
 
+    def init_args(self, args: Any) -> Any:
+        if not args.torch_version:
+            args.torch_version = '2.10.0'
+            args.torchaudio_version = '2.10.0'
+            args.torchvision_version = '0.25.0'
+        if not args.vllm_version:
+            args.vllm_version = '0.19.1'
+        return super().init_args(args)
+
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -401,11 +413,6 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 class LatestGPUImageBuilder(StableGPUImageBuilder):
     """Dependencies will be latest versions"""
 
-    def init_args(self, args: Any) -> Any:
-        if not args.vllm_version:
-            args.vllm_version = '0.16.0'
-        return super().init_args(args)
-
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -418,8 +425,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}  '
-            f'{self.args.optimum_version}'
-            f'{self.args.flashattn_version}')
+            f'{self.args.flashattn_version} {self.args.optimum_version}')
         with open('docker/Dockerfile.ubuntu', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
@@ -427,7 +433,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{meta_file}', meta_file)
             content = content.replace('{version_args}', version_args)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'True')
+            content = content.replace('{install_ms_deps}', 'False')
             content = content.replace('{image_type}', 'gpu')
             content = content.replace('{torch_version}',
                                       self.args.torch_version)
@@ -570,7 +576,7 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 parser = argparse.ArgumentParser()
 parser.add_argument('--base_image', type=str, default=None)
 parser.add_argument('--image_type', type=str)
-parser.add_argument('--python_version', type=str, default='3.11.11')
+parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)
@@ -607,4 +613,5 @@ else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
 for builder in builder_cls:
+    args = copy(args)
     builder(args, args.dry_run)()

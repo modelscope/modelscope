@@ -12,12 +12,25 @@ from modelscope_hub.cli.base import CLICommand
 from modelscope_hub.config import HubConfig
 
 
+def _normalize_endpoint(endpoint: str) -> str:
+    """Ensure the endpoint URL has a scheme (default https)."""
+    if not endpoint:
+        return endpoint
+    if not endpoint.startswith(("http://", "https://")):
+        endpoint = f"https://{endpoint}"
+    return endpoint.rstrip("/")
+
+
 def _get_config(args) -> HubConfig:
     """Build a HubConfig using the global --endpoint/--token from the CLI."""
-    return HubConfig(
+    config = HubConfig(
         endpoint=getattr(args, "endpoint", None),
         token=getattr(args, "token", None),
     )
+    # HubConfig may resolve endpoint from env (MODELSCOPE_ENDPOINT) without scheme
+    if config.endpoint:
+        config.endpoint = _normalize_endpoint(config.endpoint)
+    return config
 
 
 def _get_username(config: HubConfig) -> str:
@@ -41,21 +54,22 @@ class AgentCMD(CLICommand):
     @staticmethod
     def register(subparsers: ArgumentParser) -> None:
         parser = subparsers.add_parser(
-            AgentCMD.name, help='Manage agent files (upload, download, watch, restore, stop).')
+            AgentCMD.name, help='Manage agent files (upload, download, watch, restore, stop, list).')
         sub = parser.add_subparsers(dest='agent_action', help='agent subcommands')
 
         # ---- upload ----
         p_upload = sub.add_parser('upload', help='Upload local agent files to remote repository')
         p_upload.add_argument('-f', '--framework', required=True, help='Agent framework name')
-        p_upload.add_argument('-n', '--name', required=True, help='Sub-agent name')
+        p_upload.add_argument('-n', '--name', default=None, help='Local sub-agent name (auto-selects if only one)')
+        p_upload.add_argument('-r', '--repo', default=None, help='Remote repo name. Supports group/name format.')
         p_upload.add_argument('--local_dir', default=None, help='Override local workspace root')
         p_upload.add_argument('--dry-run', action='store_true', help='Show what would be uploaded without uploading')
-        p_upload.add_argument('--list', action='store_true', help='List discoverable sub-agents and exit')
 
         # ---- download ----
         p_download = sub.add_parser('download', help='Download agent files from remote repository')
         p_download.add_argument('-f', '--framework', required=True, help='Agent framework name')
-        p_download.add_argument('-n', '--name', required=True, help='Sub-agent name')
+        p_download.add_argument('-r', '--repo', required=True, help='Remote repo name (required). Supports group/name format.')
+        p_download.add_argument('-n', '--name', default=None, help='Local sub-agent name to write as (default: default)')
         p_download.add_argument('--local_dir', default=None, help='Override local workspace root')
         p_download.add_argument('--target', default=None, help='Convert to a different framework on download')
         p_download.add_argument('--dry-run', action='store_true', help='Show what would be written without writing')
@@ -63,9 +77,15 @@ class AgentCMD(CLICommand):
         # ---- watch ----
         p_watch = sub.add_parser('watch', help='Start background sync for agent files')
         p_watch.add_argument('-f', '--framework', required=True, help='Agent framework name')
-        p_watch.add_argument('-n', '--name', default=None, help='Sub-agent name (default: all)')
+        p_watch.add_argument('-n', '--name', default=None, help='Local sub-agent name (default: global/shared only)')
+        p_watch.add_argument('-r', '--repo', default=None, help='Remote repo name. Supports group/name format.')
         p_watch.add_argument('--local_dir', default=None, help='Override local workspace root')
         p_watch.add_argument('--pull', action='store_true', help='Enable bidirectional sync (pull remote changes)')
+
+        # ---- list ----
+        p_list = sub.add_parser('list', help='List discoverable sub-agents for a framework')
+        p_list.add_argument('-f', '--framework', required=True, help='Agent framework name')
+        p_list.add_argument('--local_dir', default=None, help='Override local workspace root')
 
         # ---- restore ----
         p_restore = sub.add_parser('restore', help='Restore agent files from a backup')
@@ -83,13 +103,14 @@ class AgentCMD(CLICommand):
     def execute(self):
         action = getattr(self.args, 'agent_action', None)
         if not action:
-            print('Usage: modelscope agent <upload|download|watch|restore|stop>')
+            print('Usage: modelscope agent <upload|download|watch|list|restore|stop>')
             return
 
         handler = {
             'upload': self._upload,
             'download': self._download,
             'watch': self._watch,
+            'list': self._list,
             'restore': self._restore,
             'stop': self._stop,
         }.get(action)
@@ -106,29 +127,27 @@ class AgentCMD(CLICommand):
     def _upload(self):
         from ultron.cli.client import ApiError, UltronClient
         from ultron.cli.commands import (
-            ALL_AGENT_NAME, _build_allowlist, _frameworks, _repo_name,
+            _build_allowlist, _frameworks, _resolve_local_name, _resolve_remote,
         )
-        from ultron.services.harness.allowlist import ALLOWLIST_REGISTRY
+        from ultron.services.harness.allowlist import (
+            ALLOWLIST_REGISTRY, DEFAULT_AGENT_NAME, GLOBAL_AGENT_NAME,
+        )
 
         framework = self.args.framework
         if framework not in ALLOWLIST_REGISTRY:
             _fail(f"unknown framework '{framework}'. Available: {_frameworks()}")
 
-        if self.args.list:
-            spec = _build_allowlist(framework, self.args.name or "default", self.args.local_dir)
-            agents = spec.list_agents()
-            print(f"Sub-agents for {framework}:")
-            for a in agents:
-                print(f"  {a}")
-            return
+        # Resolve local agent name.
+        local_name, err = _resolve_local_name(
+            self.args.name, framework, self.args.local_dir)
+        if err:
+            _fail(err)
 
-        if not self.args.name:
-            _fail("--name is required (the internal sub-agent name)")
-
-        spec = _build_allowlist(framework, self.args.name, self.args.local_dir)
+        spec = _build_allowlist(framework, local_name, self.args.local_dir)
         resources = spec.collect()
         if not resources:
-            _fail(f"no files found for {framework}/{self.args.name} under {spec.workspace_root}.")
+            display_name = local_name if local_name != GLOBAL_AGENT_NAME else "global"
+            _fail(f"no files found for {framework}/{display_name} under {spec.workspace_root}.")
 
         total_bytes = sum(len(c.encode("utf-8")) for c in resources.values())
         print(f"Found {len(resources)} file(s) ({total_bytes} bytes):")
@@ -143,46 +162,63 @@ class AgentCMD(CLICommand):
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(config.endpoint, config.token)
-        repo = _repo_name(framework, self.args.name)
+        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
+
+        # Resolve remote target.
+        effective_name = self.args.name if self.args.name else None
+        group, repo = _resolve_remote(
+            repo=getattr(self.args, 'repo', None),
+            name=effective_name,
+            framework=framework,
+            username=username,
+        )
 
         try:
             file_id = client.upload_file(resources)
-            client.create_repo(username, repo, framework, system_prompt_files=file_id)
+            client.create_repo(group, repo, framework, system_prompt_files=file_id)
         except ApiError as e:
             _fail(f"upload failed (HTTP {e.status}: {e.detail})")
 
-        print(f"\nUploaded {len(resources)} file(s) to {username}/{repo}.")
+        print(f"\nUploaded {len(resources)} file(s) to {group}/{repo}.")
 
     def _download(self):
         from ultron.cli.client import ApiError, UltronClient
         from ultron.cli.commands import (
-            _build_allowlist, _convert, _frameworks, _repo_name,
+            _build_allowlist, _convert, _frameworks, _resolve_remote,
         )
-        from ultron.services.harness.allowlist import ALLOWLIST_REGISTRY
+        from ultron.services.harness.allowlist import (
+            ALLOWLIST_REGISTRY, DEFAULT_AGENT_NAME,
+        )
 
         framework = self.args.framework
         if framework not in ALLOWLIST_REGISTRY:
             _fail(f"unknown framework '{framework}'. Available: {_frameworks()}")
 
-        if not self.args.name:
-            _fail("--name is required")
+        if not getattr(self.args, 'repo', None):
+            _fail("--repo is required for download")
 
         config = _get_config(self.args)
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(config.endpoint, config.token)
-        repo = _repo_name(framework, self.args.name)
+        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
+
+        # Resolve remote target.
+        group, repo = _resolve_remote(
+            repo=self.args.repo,
+            name=self.args.name,
+            framework=framework,
+            username=username,
+        )
 
         try:
-            info = client.repo_info(username, repo)
+            info = client.repo_info(group, repo)
             if info is None:
-                _fail(f"repository {username}/{repo} not found.")
-            paths = client.list_repo_files(username, repo)
+                _fail(f"repository {group}/{repo} not found.")
+            paths = client.list_repo_files(group, repo)
             if not paths:
-                _fail(f"repository {username}/{repo} has no files.")
-            resources = {p: client.download_repo_file(username, repo, p) for p in paths}
+                _fail(f"repository {group}/{repo} has no files.")
+            resources = {p: client.download_repo_file(group, repo, p) for p in paths}
         except ApiError as e:
             _fail(f"download failed (HTTP {e.status}: {e.detail})")
 
@@ -193,58 +229,88 @@ class AgentCMD(CLICommand):
             resources = _convert(resources, framework, target_fw)
             print(f"Converted {framework} -> {target_fw} ({len(resources)} file(s)).")
 
-        spec = _build_allowlist(target_fw, self.args.name, self.args.local_dir)
+        # Resolve local agent name for writing.
+        local_name = self.args.name or DEFAULT_AGENT_NAME
+        spec = _build_allowlist(target_fw, local_name, self.args.local_dir)
         root = spec.workspace_root
-        print(f"{len(resources)} file(s) for {username}/{repo} (framework={target_fw}):")
-        for rel in sorted(resources):
+
+        # Filter downloaded resources by allowlist patterns.
+        patterns = spec._resolved_patterns()
+        filtered = {k: v for k, v in resources.items() if spec._matches(k, patterns)}
+        skipped = set(resources.keys()) - set(filtered.keys())
+        if skipped:
+            print(f"Skipped {len(skipped)} file(s) not matching allowlist:")
+            for s in sorted(skipped):
+                print(f"  [skip] {s}")
+
+        if not filtered:
+            _fail("no downloaded files match the local allowlist patterns.")
+
+        print(f"{len(filtered)} file(s) for {group}/{repo} (framework={target_fw}):")
+        for rel in sorted(filtered):
             print(f"  {rel} -> {root / rel}")
 
         if self.args.dry_run:
             print("\n[dry-run] nothing written.")
             return
 
-        written = spec.apply(resources)
+        written = spec.apply(filtered)
         print(f"\nWrote {len(written)} file(s) under {root}.")
 
     def _watch(self):
         from ultron.cli.cache import pid_file
         from ultron.cli.client import ApiError, UltronClient
         from ultron.cli.commands import (
-            ALL_AGENT_NAME, _build_allowlist, _frameworks, _repo_name,
+            _build_allowlist, _frameworks, _resolve_local_name, _resolve_remote,
         )
         from ultron.cli.watcher import daemonize, stop_daemon, watch_loop
-        from ultron.services.harness.allowlist import ALLOWLIST_REGISTRY
+        from ultron.services.harness.allowlist import (
+            ALLOWLIST_REGISTRY, ALL_AGENT_NAME, DEFAULT_AGENT_NAME, GLOBAL_AGENT_NAME,
+        )
 
         framework = self.args.framework
         if framework not in ALLOWLIST_REGISTRY:
             _fail(f"unknown framework '{framework}'. Available: {_frameworks()}")
 
-        name = self.args.name or ALL_AGENT_NAME
+        # Resolve local agent name: default to global mode.
+        local_name, err = _resolve_local_name(
+            self.args.name, framework, self.args.local_dir)
+        if err:
+            # For watch, if multiple agents, default to global.
+            local_name = GLOBAL_AGENT_NAME
 
         config = _get_config(self.args)
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(config.endpoint, config.token)
+        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
 
         # Clean up stale processes
         pf = pid_file()
-        if pf.exists():
-            stop_daemon()
+        stop_daemon(extra_patterns=["modelscope agent watch"])
 
-        spec = _build_allowlist(framework, name, self.args.local_dir)
+        spec = _build_allowlist(framework, local_name, self.args.local_dir)
 
-        if not spec.supports_individual_watch and name != ALL_AGENT_NAME:
+        # Guard: file-per-agent frameworks with a specific agent name.
+        if (not spec.supports_individual_watch
+                and local_name not in (GLOBAL_AGENT_NAME, ALL_AGENT_NAME, DEFAULT_AGENT_NAME)):
             _fail(
                 f"'{framework}' has shared files across sub-agents; "
-                f"watch only supports '--name all'."
+                f"watch only supports global/default mode."
             )
 
-        repo = _repo_name(framework, name)
+        # Resolve remote target.
+        effective_name = self.args.name if self.args.name else None
+        group, repo = _resolve_remote(
+            repo=getattr(self.args, 'repo', None),
+            name=effective_name,
+            framework=framework,
+            username=username,
+        )
 
         # Framework mismatch guard
         try:
-            info = client.repo_info(username, repo)
+            info = client.repo_info(group, repo)
             if info:
                 remote_fw = info.get("Framework") or info.get("framework") or ""
                 if remote_fw and remote_fw != framework:
@@ -259,7 +325,7 @@ class AgentCMD(CLICommand):
         interval = 120
         push_only = not self.args.pull
 
-        print(f"Starting sync for {username}/{repo} (interval={interval}s)...")
+        print(f"Starting sync for {group}/{repo} (interval={interval}s)...")
         print(f"  Framework: {framework}")
         print(f"  Root: {spec.workspace_root}")
         if push_only:
@@ -269,7 +335,21 @@ class AgentCMD(CLICommand):
         print(f"  Stop: modelscope agent stop")
 
         daemonize(watch_loop, spec, client, username, repo, framework, interval, push_only=push_only)
+        from ultron.cli.cache import log_file
         print(f"  Watch started (PID file: {pf}).")
+        print(f"  Logs: {log_file()}")
+
+    def _list(self):
+        from ultron.cli.commands import cmd_list
+        from types import SimpleNamespace
+
+        ns = SimpleNamespace(
+            framework=self.args.framework,
+            local_dir=getattr(self.args, 'local_dir', None),
+        )
+        rc = cmd_list(ns)
+        if rc:
+            sys.exit(rc)
 
     def _restore(self):
         from ultron.cli.commands import cmd_recover
@@ -290,7 +370,7 @@ class AgentCMD(CLICommand):
     def _stop(self):
         from ultron.cli.watcher import stop_daemon
 
-        stopped = stop_daemon()
+        stopped = stop_daemon(extra_patterns=["modelscope agent watch"])
         if stopped:
             print("Watch process stopped.")
         else:

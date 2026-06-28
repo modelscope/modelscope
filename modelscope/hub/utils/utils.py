@@ -207,7 +207,10 @@ def get_release_datetime():
 
 
 def get_endpoint(cn_site=True):
-    return MODELSCOPE_URL_SCHEME + get_domain(cn_site)
+    domain = get_domain(cn_site)
+    if domain.startswith(('http://', 'https://')):
+        return domain
+    return MODELSCOPE_URL_SCHEME + domain
 
 
 def resolve_endpoint(cli_endpoint: Optional[str] = None,

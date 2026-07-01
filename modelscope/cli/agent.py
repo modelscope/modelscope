@@ -1,15 +1,34 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """``modelscope agent`` — upload, download, watch, restore, and stop agent files.
 
-Thin integration layer that delegates to ``ultron.cli`` commands while using
-modelscope's own endpoint and token (no separate ``--server`` needed).
+Integration layer that provides agent file management using modelscope's own
+endpoint and token (no separate server configuration needed).
+
+Cache data is stored under ``$MODELSCOPE_CACHE/agent/`` by default
+(typically ``~/.cache/modelscope/hub/agent/``).
 """
 
+import os
 import sys
 from argparse import ArgumentParser
 
 from modelscope_hub.cli.base import CLICommand
 from modelscope_hub.config import HubConfig
+
+
+def _init_agent_data_dir():
+    """Set agent cache directory under modelscope cache hierarchy.
+
+    Uses the standard ``MODELSCOPE_CACHE`` env var (default ``~/.cache/modelscope/hub``),
+    placing agent data at ``$MODELSCOPE_CACHE/agent/``.
+    """
+    if os.environ.get("ULTRON_DATA_DIR"):
+        return  # already explicitly configured by caller
+    from pathlib import Path
+    cache_root = os.environ.get("MODELSCOPE_CACHE", "").strip()
+    if not cache_root:
+        cache_root = str(Path.home() / ".cache" / "modelscope" / "hub")
+    os.environ["ULTRON_DATA_DIR"] = str(Path(cache_root) / "agent")
 
 
 def _normalize_endpoint(endpoint: str) -> str:
@@ -101,6 +120,7 @@ class AgentCMD(CLICommand):
         parser.set_defaults(_command=AgentCMD)
 
     def execute(self):
+        _init_agent_data_dir()
         action = getattr(self.args, 'agent_action', None)
         if not action:
             print('Usage: modelscope agent <upload|download|watch|list|restore|stop>')
@@ -144,15 +164,15 @@ class AgentCMD(CLICommand):
             _fail(err)
 
         spec = _build_allowlist(framework, local_name, self.args.local_dir)
-        resources = spec.collect()
+        resources = spec.collect_bytes()
         if not resources:
             display_name = local_name if local_name != GLOBAL_AGENT_NAME else "global"
             _fail(f"no files found for {framework}/{display_name} under {spec.workspace_root}.")
 
-        total_bytes = sum(len(c.encode("utf-8")) for c in resources.values())
+        total_bytes = sum(len(v) for v in resources.values())
         print(f"Found {len(resources)} file(s) ({total_bytes} bytes):")
         for rel in sorted(resources):
-            print(f"  {rel} ({len(resources[rel].encode('utf-8'))} B)")
+            print(f"  {rel} ({len(resources[rel])} B)")
 
         if self.args.dry_run:
             print("\n[dry-run] nothing uploaded.")
@@ -235,8 +255,8 @@ class AgentCMD(CLICommand):
         root = spec.workspace_root
 
         # Filter downloaded resources by allowlist patterns.
-        patterns = spec._resolved_patterns()
-        filtered = {k: v for k, v in resources.items() if spec._matches(k, patterns)}
+        patterns = spec.resolved_patterns()
+        filtered = {k: v for k, v in resources.items() if spec.matches(k, patterns)}
         skipped = set(resources.keys()) - set(filtered.keys())
         if skipped:
             print(f"Skipped {len(skipped)} file(s) not matching allowlist:")

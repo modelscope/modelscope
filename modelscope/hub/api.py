@@ -90,9 +90,19 @@ class HubApi(_LegacyHubApi):
     # ------------------------------------------------------------------
     # Legacy method shims missing from LegacyHubApi
     # ------------------------------------------------------------------
-    def create_model(self, model_id: str, **kwargs) -> None:
-        """Create a model repo — delegates to ``create_repo`` (model type)."""
-        return self.create_repo(model_id, repo_type='model', **kwargs)
+    def create_model(self, model_id: str, **kwargs) -> str:
+        """Create a model repo — delegates to ``create_repo`` (model type).
+
+        Returns the model repository URL for backward compatibility.
+        Authentication errors are converted to ``ValueError`` by the compat layer.
+        """
+        # LegacyHubApi.create_model handles exception conversion;
+        # override endpoint in the returned URL with local self.endpoint.
+        result = super().create_model(model_id, **kwargs)
+        # Replace endpoint in URL with the one resolved at __init__ time
+        if result and self.endpoint and self.endpoint not in result:
+            return f'{self.endpoint}/models/{model_id}'
+        return result
 
     def get_model_url(self, model_id: str) -> str:
         """Return the model page URL ``{endpoint}/{model_id}``."""

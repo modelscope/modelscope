@@ -35,6 +35,7 @@ skills = "modelscope.cli.skills:SkillsCMD"
 agent = "modelscope.cli.agent:AgentCMD"
 llamafile = "modelscope.cli.llamafile:LlamafileCMD"
 modelcard = "modelscope.cli.modelcard:ModelCardCMD"
+studio = "modelscope.cli.studio:StudioCMD"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

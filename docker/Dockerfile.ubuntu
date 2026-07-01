@@ -25,15 +25,16 @@ RUN pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.*
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip --no-cache-dir install omegaconf==2.0.6 && \
     pip install 'editdistance==0.8.1' && \
-    pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' && \
+    pip install --no-cache-dir 'cython>=3.0' versioneer 'numpy>=2.0' && \
     pip install --no-cache-dir -r /var/modelscope/framework.txt && \
     pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/tests.txt && \
     pip install --no-cache-dir -r /var/modelscope/server.txt && \
     pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --no-dependencies --force && \
-    pip install --no-cache-dir 'scipy<1.13.0' && \
+    pip install --no-cache-dir 'scipy' && \
     pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir 'decord>=0.6.0' mpi4py paint_ldm ipykernel fasttext -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir ipywidgets && \
     pip install --no-cache-dir 'blobfile>=1.0.5' && \
     pip uninstall MinDAEC -y && \
     pip install https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/MinDAEC-0.0.2-py3-none-any.whl && \
@@ -51,7 +52,9 @@ RUN bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
-    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
+    pip install .[eval] && pip install evalscope -U --no-dependencies && \
+    pip install --no-cache-dir "numpy>=2.0" --force-reinstall --no-deps && \
+    pip install ms-agent -U --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
@@ -66,16 +69,16 @@ RUN bash /tmp/install.sh {version_args} && \
 
 
 RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
-    pip install --no-cache-dir math_verify "gradio<5.33" "deepspeed<0.18" ray -U && \
-    pip install --no-cache-dir liger_kernel wandb swanlab nvitop pre-commit "transformers" "trl<0.25" "peft<0.18" huggingface-hub -U && \
+    pip install --no-cache-dir math_verify "gradio<5.33" "deepspeed<0.19" ray -U && \
+    pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
+    pip install --no-cache-dir liger_kernel wandb swanlab nvitop pre-commit "transformers<5.9" "trl<1.0" "peft<0.20" huggingface-hub -U && \
     pip install --no-cache-dir --no-build-isolation transformer_engine[pytorch]; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \
-    pip install --no-cache-dir "megatron-core==0.15.*"; \
-    pip uninstall autoawq -y; \
+    pip install --no-cache-dir "megatron-core==0.16.*" -U; \
 elif [ "$IMAGE_TYPE" = "cpu" ]; then \
-    pip install --no-cache-dir huggingface-hub transformers peft diffusers -U; \
+    pip install --no-cache-dir huggingface-hub "transformers<5.9" peft diffusers -U; \
 else \
     pip install "transformers<5.0" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi

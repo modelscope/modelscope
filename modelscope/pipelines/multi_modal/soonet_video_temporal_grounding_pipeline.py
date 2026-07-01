@@ -1,5 +1,6 @@
 # Copyright 2022-2023 The Alibaba Fundamental Vision  Team Authors. All rights reserved.
 
+import math
 import os
 from typing import Any, Dict
 
@@ -144,12 +145,12 @@ class SOONetVideoTemporalGroundingPipeline(Pipeline):
         start_ts, end_ts, scale_boundaries = list(), list(), [0]
         ori_video_length = len(imgs)
         pad_video_length = int(
-            np.math.ceil(ori_video_length / self.max_anchor_length)
+            math.ceil(ori_video_length / self.max_anchor_length)
             * self.max_anchor_length)
         for i in range(self.config.nscales):
             anchor_length = self.config.snippet_length * (2**i)
             pad_feat_length = pad_video_length // anchor_length
-            nfeats = np.math.ceil(ori_video_length / anchor_length)
+            nfeats = math.ceil(ori_video_length / anchor_length)
             s_times = np.arange(0, nfeats).astype(np.float32) * (
                 anchor_length // self.fps)
             e_times = np.arange(1, nfeats + 1).astype(np.float32) * (
@@ -180,7 +181,7 @@ class SOONetVideoTemporalGroundingPipeline(Pipeline):
             #
             ori_video_length, feat_dim = video_feats.shape
             pad_video_length = int(
-                np.math.ceil(ori_video_length / self.max_anchor_length)
+                math.ceil(ori_video_length / self.max_anchor_length)
                 * self.max_anchor_length)
             pad_video_feats = torch.zeros((pad_video_length, feat_dim),
                                           dtype=float)

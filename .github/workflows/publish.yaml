@@ -20,7 +20,10 @@ jobs:
         with:
           python-version: '3.10'
       - name: Install wheel
-        run: pip install wheel && pip install -r requirements/framework.txt
+        run: |
+          pip install wheel
+          pip install -r requirements/framework.txt
+          pip install -r requirements/hub.txt
       - name: Build ModelScope
         # Build AST template before packaging
         run: |

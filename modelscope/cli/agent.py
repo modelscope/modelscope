@@ -292,12 +292,14 @@ class AgentCMD(CLICommand):
         if framework not in ALLOWLIST_REGISTRY:
             _fail(f"unknown framework '{framework}'. Available: {_frameworks()}")
 
-        # Resolve local agent name: default to global mode.
-        local_name, err = _resolve_local_name(
-            self.args.name, framework, self.args.local_dir)
-        if err:
-            # For watch, if multiple agents, default to global.
-            local_name = GLOBAL_AGENT_NAME
+        # Resolve local agent name: if --name not given, default to ALL mode.
+        if self.args.name:
+            local_name, err = _resolve_local_name(
+                self.args.name, framework, self.args.local_dir)
+            if err:
+                _fail(err)
+        else:
+            local_name = ALL_AGENT_NAME
 
         config = _get_config(self.args)
         if not config.token:

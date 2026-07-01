@@ -10,5 +10,5 @@ setuptools
 simplejson>=3.3.0
 sortedcontainers>=1.5.9
 transformers
-urllib3>=1.26
 ultron
+urllib3>=1.26

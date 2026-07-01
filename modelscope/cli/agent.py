@@ -56,7 +56,12 @@ def _get_username(config: HubConfig) -> str:
     """Resolve current username via /openapi/v1/users/me."""
     from modelscope_hub._openapi import OpenAPIClient
     client = OpenAPIClient(config=config)
-    data = client.get_current_user()
+    try:
+        data = client.get_current_user()
+    except Exception as e:
+        _fail(f"failed to resolve current user: {e}")
+    if not data:
+        _fail("failed to resolve current user: empty response from server.")
     return data.get("username", data.get("Username", ""))
 
 
@@ -182,7 +187,7 @@ class AgentCMD(CLICommand):
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
+        client = UltronClient(config.endpoint, config.token)
 
         # Resolve remote target.
         effective_name = self.args.name if self.args.name else None
@@ -198,6 +203,8 @@ class AgentCMD(CLICommand):
             client.create_repo(group, repo, framework, system_prompt_files=file_id)
         except ApiError as e:
             _fail(f"upload failed (HTTP {e.status}: {e.detail})")
+        except Exception as e:
+            _fail(f"upload failed: {e}")
 
         print(f"\nUploaded {len(resources)} file(s) to {group}/{repo}.")
 
@@ -221,7 +228,7 @@ class AgentCMD(CLICommand):
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
+        client = UltronClient(config.endpoint, config.token)
 
         # Resolve remote target.
         group, repo = _resolve_remote(
@@ -241,6 +248,8 @@ class AgentCMD(CLICommand):
             resources = {p: client.download_repo_file(group, repo, p) for p in paths}
         except ApiError as e:
             _fail(f"download failed (HTTP {e.status}: {e.detail})")
+        except Exception as e:
+            _fail(f"download failed: {e}")
 
         target_fw = self.args.target or framework
         if target_fw not in ALLOWLIST_REGISTRY:
@@ -305,7 +314,7 @@ class AgentCMD(CLICommand):
         if not config.token:
             _fail("not logged in. Run 'modelscope login' first.")
         username = _get_username(config)
-        client = UltronClient(_normalize_endpoint(config.endpoint), config.token)
+        client = UltronClient(config.endpoint, config.token)
 
         # Clean up stale processes
         pf = pid_file()
@@ -343,6 +352,12 @@ class AgentCMD(CLICommand):
         except ApiError as e:
             if e.status in (403, 401):
                 _fail(f"authentication failed (HTTP {e.status})")
+            elif e.status == 404:
+                pass  # repo not found — first push will create it
+            else:
+                _fail(f"failed to get repository info (HTTP {e.status}: {e.detail})")
+        except Exception as e:
+            _fail(f"failed to get repository info: {e}")
 
         interval = 120
         push_only = not self.args.pull

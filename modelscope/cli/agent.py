@@ -62,7 +62,10 @@ def _get_username(config: HubConfig) -> str:
         _fail(f'failed to resolve current user: {e}')
     if not data:
         _fail('failed to resolve current user: empty response from server.')
-    return data.get('username', data.get('Username', ''))
+    username = data.get('username', data.get('Username', ''))
+    if not username:
+        _fail('failed to resolve current user: server returned empty username.')
+    return username
 
 
 def _fail(message: str) -> None:
@@ -70,8 +73,20 @@ def _fail(message: str) -> None:
     sys.exit(1)
 
 
+def _resolve_repo(repo: str, username: str = '') -> 'tuple[str, str]':
+    """Parse --repo value into (group, repo_name).
+
+    - repo contains '/' → split into (group, repo_name)
+    - repo without '/' → (username, repo)
+    """
+    if '/' in repo:
+        parts = repo.split('/', 1)
+        return parts[0], parts[1]
+    return username, repo
+
+
 class AgentCMD(CLICommand):
-    """Command for managing agent resources (upload/download/watch/restore/stop)."""
+    """Command for managing agent resources (upload/download/watch/list/status/backups/convert/restore/stop)."""
 
     name = 'agent'
 
@@ -79,9 +94,7 @@ class AgentCMD(CLICommand):
     def register(subparsers: ArgumentParser) -> None:
         parser = subparsers.add_parser(
             AgentCMD.name,
-            help=
-            'Manage agent files (upload, download, watch, restore, stop, list).'
-        )
+            help='Manage agent files (upload, download, watch, list, status, restore, backups, convert, stop).')
         sub = parser.add_subparsers(
             dest='agent_action', help='agent subcommands')
 
@@ -91,20 +104,15 @@ class AgentCMD(CLICommand):
         p_upload.add_argument(
             '-f', '--framework', required=True, help='Agent framework name')
         p_upload.add_argument(
-            '-n',
-            '--name',
-            default=None,
-            help='Local sub-agent name (auto-selects if only one)')
+            '-n', '--name', default=None,
+            help='Agent name (auto-selects if only one exists locally)')
         p_upload.add_argument(
-            '-r',
-            '--repo',
-            default=None,
-            help='Remote repo name. Supports group/name format.')
+            '-r', '--repo', required=True,
+            help='Remote repo name (required). Supports owner/name format.')
         p_upload.add_argument(
-            '--local_dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None, help='Override local workspace root')
         p_upload.add_argument(
-            '--dry-run',
-            action='store_true',
+            '--dry-run', action='store_true',
             help='Show what would be uploaded without uploading')
 
         # ---- download ----
@@ -113,24 +121,18 @@ class AgentCMD(CLICommand):
         p_download.add_argument(
             '-f', '--framework', required=True, help='Agent framework name')
         p_download.add_argument(
-            '-r',
-            '--repo',
-            required=True,
-            help='Remote repo name (required). Supports group/name format.')
+            '-r', '--repo', required=True,
+            help='Remote repo name (required). Supports owner/name format.')
         p_download.add_argument(
-            '-n',
-            '--name',
-            default=None,
-            help='Local sub-agent name to write as (default: default)')
+            '-n', '--name', default=None,
+            help='Agent name to write as locally (default: default)')
         p_download.add_argument(
-            '--local_dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None, help='Override local workspace root')
         p_download.add_argument(
-            '--target',
-            default=None,
+            '--target-framework', default=None,
             help='Convert to a different framework on download')
         p_download.add_argument(
-            '--dry-run',
-            action='store_true',
+            '--dry-run', action='store_true',
             help='Show what would be written without writing')
 
         # ---- watch ----
@@ -139,46 +141,85 @@ class AgentCMD(CLICommand):
         p_watch.add_argument(
             '-f', '--framework', required=True, help='Agent framework name')
         p_watch.add_argument(
-            '-n',
-            '--name',
-            default=None,
-            help='Local sub-agent name (default: global/shared only)')
+            '-n', '--name', default=None,
+            help='Agent name (default: sync all agents)')
         p_watch.add_argument(
-            '-r',
-            '--repo',
-            default=None,
-            help='Remote repo name. Supports group/name format.')
+            '-r', '--repo', required=True,
+            help='Remote repo name (required). Supports owner/name format.')
         p_watch.add_argument(
-            '--local_dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None, help='Override local workspace root')
         p_watch.add_argument(
-            '--pull',
-            action='store_true',
+            '--pull', action='store_true',
             help='Enable bidirectional sync (pull remote changes)')
 
-        # ---- list ----
+        # ---- list (remote) ----
         p_list = sub.add_parser(
-            'list', help='List discoverable sub-agents for a framework')
+            'list', help='List remote agent repositories')
         p_list.add_argument(
+            '--owner', default=None,
+            help='Filter by owner (user or organization)')
+        p_list.add_argument(
+            '--page', dest='page_number', type=int, default=1,
+            help='Page number (default: 1)')
+        p_list.add_argument(
+            '--page-size', dest='page_size', type=int, default=10,
+            help='Items per page (default: 10)')
+
+        # ---- status (local) ----
+        p_status = sub.add_parser(
+            'status', help='Show local agent status for a framework')
+        p_status.add_argument(
             '-f', '--framework', required=True, help='Agent framework name')
-        p_list.add_argument(
-            '--local_dir', default=None, help='Override local workspace root')
+        p_status.add_argument(
+            '--local-dir', default=None, help='Override local workspace root')
+
+        # ---- backups ----
+        p_backups = sub.add_parser(
+            'backups', help='List available backups')
+        p_backups.add_argument(
+            '-f', '--framework', default=None, help='Agent framework name')
+        p_backups.add_argument(
+            '-n', '--name', default=None, help='Agent name')
+        p_backups.add_argument(
+            '--local-dir', default=None, help='Override local workspace root')
 
         # ---- restore ----
         p_restore = sub.add_parser(
             'restore', help='Restore agent files from a backup')
         p_restore.add_argument(
-            'target',
-            nargs='?',
-            default=None,
-            help="'last' or a backup filename")
+            '--from-backup', required=True,
+            help="Backup to restore: 'last' or a specific backup filename")
         p_restore.add_argument(
             '-f', '--framework', default=None, help='Agent framework name')
         p_restore.add_argument(
-            '-n', '--name', default=None, help='Sub-agent name')
+            '-n', '--name', default=None, help='Agent name')
         p_restore.add_argument(
-            '--local_dir', default=None, help='Override local workspace root')
-        p_restore.add_argument(
-            '--list', action='store_true', help='List available backups')
+            '--local-dir', default=None, help='Override local workspace root')
+
+        # ---- convert (local only, no network) ----
+        p_convert = sub.add_parser(
+            'convert', help='Convert local agent files between frameworks')
+        p_convert.add_argument(
+            '--from-framework', required=True,
+            help='Source framework to read from')
+        p_convert.add_argument(
+            '--target-framework', required=True,
+            help='Target framework to write to')
+        p_convert.add_argument(
+            '--from-name', default=None,
+            help='Source agent name to read (default: auto-select or default)')
+        p_convert.add_argument(
+            '--target-name', default=None,
+            help='Target agent name to write as (default: same as --from-name)')
+        p_convert.add_argument(
+            '--local-dir', default=None,
+            help='Source workspace root to read from')
+        p_convert.add_argument(
+            '--out', default=None,
+            help='Destination directory to write to (default: target framework path)')
+        p_convert.add_argument(
+            '--dry-run', action='store_true',
+            help='Show what would be written without writing')
 
         # ---- stop ----
         sub.add_parser('stop', help='Stop background watch process')
@@ -190,8 +231,8 @@ class AgentCMD(CLICommand):
         action = getattr(self.args, 'agent_action', None)
         if not action:
             print(
-                'Usage: modelscope agent <upload|download|watch|list|restore|stop>'
-            )
+                'Usage: modelscope agent '
+                '<upload|download|watch|list|status|backups|restore|convert|stop>')
             return
 
         handler = {
@@ -199,7 +240,10 @@ class AgentCMD(CLICommand):
             'download': self._download,
             'watch': self._watch,
             'list': self._list,
+            'status': self._status,
+            'backups': self._backups,
             'restore': self._restore,
+            'convert': self._convert,
             'stop': self._stop,
         }.get(action)
 
@@ -218,11 +262,9 @@ class AgentCMD(CLICommand):
             _build_allowlist,
             _frameworks,
             _resolve_local_name,
-            _resolve_remote,
         )
         from ultron.services.harness.allowlist import (
             ALLOWLIST_REGISTRY,
-            DEFAULT_AGENT_NAME,
             GLOBAL_AGENT_NAME,
         )
 
@@ -242,8 +284,7 @@ class AgentCMD(CLICommand):
         if not resources:
             display_name = local_name if local_name != GLOBAL_AGENT_NAME else 'global'
             _fail(
-                f'no files found for {framework}/{display_name} under {spec.workspace_root}.'
-            )
+                f'no files found for {framework}/{display_name} under {spec.workspace_root}.')
 
         total_bytes = sum(len(v) for v in resources.values())
         print(f'Found {len(resources)} file(s) ({total_bytes} bytes):')
@@ -260,14 +301,7 @@ class AgentCMD(CLICommand):
         username = _get_username(config)
         client = UltronClient(config.endpoint, config.token)
 
-        # Resolve remote target.
-        effective_name = self.args.name if self.args.name else None
-        group, repo = _resolve_remote(
-            repo=getattr(self.args, 'repo', None),
-            name=effective_name,
-            framework=framework,
-            username=username,
-        )
+        group, repo = _resolve_repo(self.args.repo, username)
 
         try:
             file_id = client.upload_file(resources)
@@ -286,7 +320,6 @@ class AgentCMD(CLICommand):
             _build_allowlist,
             _convert,
             _frameworks,
-            _resolve_remote,
         )
         from ultron.services.harness.allowlist import (
             ALLOWLIST_REGISTRY,
@@ -298,22 +331,19 @@ class AgentCMD(CLICommand):
             _fail(
                 f"unknown framework '{framework}'. Available: {_frameworks()}")
 
-        if not getattr(self.args, 'repo', None):
-            _fail('--repo is required for download')
-
         config = _get_config(self.args)
-        if not config.token:
-            _fail("not logged in. Run 'modelscope login' first.")
-        username = _get_username(config)
-        client = UltronClient(config.endpoint, config.token)
 
-        # Resolve remote target.
-        group, repo = _resolve_remote(
-            repo=self.args.repo,
-            name=self.args.name,
-            framework=framework,
-            username=username,
-        )
+        # Token is optional for download (public repos don't require auth).
+        # But if --repo doesn't contain '/', we need username to derive group.
+        repo_val = self.args.repo
+        if '/' not in repo_val and not config.token:
+            _fail(
+                f"--repo '{repo_val}' requires login to resolve owner. "
+                f"Use 'owner/name' format or run 'modelscope login' first.")
+        username = _get_username(config) if config.token else ''
+        group, repo = _resolve_repo(repo_val, username)
+
+        client = UltronClient(config.endpoint, config.token or '')
 
         try:
             info = client.repo_info(group, repo)
@@ -331,16 +361,14 @@ class AgentCMD(CLICommand):
         except Exception as e:
             _fail(f'download failed: {e}')
 
-        target_fw = self.args.target or framework
+        target_fw = self.args.target_framework or framework
         if target_fw not in ALLOWLIST_REGISTRY:
             _fail(
-                f"unknown target framework '{target_fw}'. Available: {_frameworks()}"
-            )
+                f"unknown target framework '{target_fw}'. Available: {_frameworks()}")
         if target_fw != framework:
             resources = _convert(resources, framework, target_fw)
             print(
-                f'Converted {framework} -> {target_fw} ({len(resources)} file(s)).'
-            )
+                f'Converted {framework} -> {target_fw} ({len(resources)} file(s)).')
 
         # Resolve local agent name for writing.
         local_name = self.args.name or DEFAULT_AGENT_NAME
@@ -363,8 +391,7 @@ class AgentCMD(CLICommand):
             _fail('no downloaded files match the local allowlist patterns.')
 
         print(
-            f'{len(filtered)} file(s) for {group}/{repo} (framework={target_fw}):'
-        )
+            f'{len(filtered)} file(s) for {group}/{repo} (framework={target_fw}):')
         for rel in sorted(filtered):
             print(f'  {rel} -> {root / rel}')
 
@@ -382,7 +409,6 @@ class AgentCMD(CLICommand):
             _build_allowlist,
             _frameworks,
             _resolve_local_name,
-            _resolve_remote,
         )
         from ultron.cli.watcher import daemonize, stop_daemon, watch_loop
         from ultron.services.harness.allowlist import (
@@ -425,14 +451,7 @@ class AgentCMD(CLICommand):
             _fail(f"'{framework}' has shared files across sub-agents; "
                   f'watch only supports global/default mode.')
 
-        # Resolve remote target.
-        effective_name = self.args.name if self.args.name else None
-        group, repo = _resolve_remote(
-            repo=getattr(self.args, 'repo', None),
-            name=effective_name,
-            framework=framework,
-            username=username,
-        )
+        group, repo = _resolve_repo(self.args.repo, username)
 
         # Framework mismatch guard
         try:
@@ -443,7 +462,7 @@ class AgentCMD(CLICommand):
                 if remote_fw and remote_fw != framework:
                     _fail(
                         f'framework mismatch: local={framework}, remote={remote_fw}. '
-                        f"Use 'modelscope agent download --target' for cross-framework sync."
+                        f"Use 'modelscope agent download --target-framework' for cross-framework sync."
                     )
         except ApiError as e:
             if e.status in (403, 401):
@@ -452,8 +471,7 @@ class AgentCMD(CLICommand):
                 pass  # repo not found — first push will create it
             else:
                 _fail(
-                    f'failed to get repository info (HTTP {e.status}: {e.detail})'
-                )
+                    f'failed to get repository info (HTTP {e.status}: {e.detail})')
         except Exception as e:
             _fail(f'failed to get repository info: {e}')
 
@@ -465,12 +483,10 @@ class AgentCMD(CLICommand):
         print(f'  Root: {spec.workspace_root}')
         if push_only:
             print(
-                '  Mode: push-only (local -> remote, will NOT pull remote changes)'
-            )
+                '  Mode: push-only (local -> remote, will NOT pull remote changes)')
         else:
             print(
-                '  Mode: bidirectional (local <-> remote, WILL pull remote changes)'
-            )
+                '  Mode: bidirectional (local <-> remote, WILL pull remote changes)')
         print('  Stop: modelscope agent stop')
 
         daemonize(
@@ -487,32 +503,157 @@ class AgentCMD(CLICommand):
         print(f'  Logs: {log_file()}')
 
     def _list(self):
+        """List remote agent repositories."""
+        config = _get_config(self.args)
+        # list does not require token (public repos are visible without auth)
+        from ultron.cli.client import ApiError, UltronClient
+        client = UltronClient(
+            config.endpoint, config.token or '')
+
+        owner = self.args.owner
+        page_number = self.args.page_number
+        page_size = self.args.page_size
+
+        try:
+            result = client.list_agents(
+                owner=owner,
+                page_number=page_number,
+                page_size=page_size,
+            )
+        except ApiError as e:
+            _fail(f'list failed (HTTP {e.status}: {e.detail})')
+        except Exception as e:
+            _fail(f'list failed: {e}')
+
+        items = result.get('items', [])
+        total = result.get('total_count', len(items))
+
+        if not items:
+            print('(no agent repositories found)')
+            return
+
+        # Render table aligned with `ms list` style
+        headers = ['repo_id', 'framework', 'visibility', 'updated']
+        rows = []
+        for item in items:
+            owner_name = item.get('Path') or item.get('owner') or ''
+            repo_name = item.get('Name') or item.get('name') or ''
+            repo_id = f'{owner_name}/{repo_name}' if owner_name else repo_name
+            fw = item.get('Framework') or item.get('framework') or '-'
+            vis = item.get('Visibility') or item.get('visibility') or '-'
+            updated = item.get('LastUpdatedDate') or item.get('updated_at') or '-'
+            if isinstance(updated, str) and 'T' in updated:
+                updated = updated.split('T')[0]
+            rows.append((repo_id, fw, vis, updated))
+
+        # Simple table rendering
+        col_widths = [len(h) for h in headers]
+        for row in rows:
+            for i, val in enumerate(row):
+                col_widths[i] = max(col_widths[i], len(str(val)))
+
+        fmt = '  '.join(f'{{:<{w}}}' for w in col_widths)
+        print(fmt.format(*headers))
+        print(fmt.format(*['-' * w for w in col_widths]))
+        for row in rows:
+            print(fmt.format(*[str(v) for v in row]))
+
+        print(f'\npage {page_number} / total {total} (page_size={page_size})')
+
+    def _status(self):
+        """Show local agent status for a framework."""
         from ultron.cli.commands import cmd_list
         from types import SimpleNamespace
 
         ns = SimpleNamespace(
             framework=self.args.framework,
-            local_dir=getattr(self.args, 'local_dir', None),
+            local_dir=self.args.local_dir,
         )
         rc = cmd_list(ns)
         if rc:
             sys.exit(rc)
 
-    def _restore(self):
+    def _backups(self):
+        """List available backups."""
         from ultron.cli.commands import cmd_recover
         from types import SimpleNamespace
 
-        # Map our args to what cmd_recover expects
         ns = SimpleNamespace(
-            target=self.args.target,
+            target=None,
             framework=self.args.framework,
             name=self.args.name,
             local_dir=self.args.local_dir,
-            list=self.args.list,
+            list=True,
         )
         rc = cmd_recover(ns)
         if rc:
             sys.exit(rc)
+
+    def _restore(self):
+        """Restore agent files from a backup."""
+        from ultron.cli.commands import cmd_recover
+        from types import SimpleNamespace
+
+        ns = SimpleNamespace(
+            target=self.args.from_backup,
+            framework=self.args.framework,
+            name=self.args.name,
+            local_dir=self.args.local_dir,
+            list=False,
+        )
+        rc = cmd_recover(ns)
+        if rc:
+            sys.exit(rc)
+
+    def _convert(self):
+        """Convert local agent files between frameworks."""
+        from ultron.cli.commands import _build_allowlist, _convert, _frameworks
+        from ultron.services.harness.allowlist import (
+            ALLOWLIST_REGISTRY,
+            DEFAULT_AGENT_NAME,
+        )
+
+        source_fw = self.args.from_framework
+        target_fw = self.args.target_framework
+        for fw, label in ((source_fw, '--from-framework'),
+                          (target_fw, '--target-framework')):
+            if fw not in ALLOWLIST_REGISTRY:
+                _fail(f"unknown framework '{fw}' for {label}. "
+                      f"Available: {_frameworks()}")
+
+        # Source agent name
+        from_name = self.args.from_name or DEFAULT_AGENT_NAME
+        # Target agent name defaults to source name
+        target_name = self.args.target_name or from_name
+
+        # Read source files
+        src_spec = _build_allowlist(source_fw, from_name, self.args.local_dir)
+        src_root = src_spec.workspace_root
+        resources = src_spec.collect()
+        if not resources:
+            _fail(f"no {source_fw} files found for agent '{from_name}' "
+                  f"under {src_root}.")
+
+        # Convert
+        converted = _convert(resources, source_fw, target_fw)
+
+        # Destination
+        out_dir = getattr(self.args, 'out', None)
+        dst_spec = _build_allowlist(target_fw, target_name, out_dir)
+        dst_root = dst_spec.workspace_root
+
+        print(f'Convert {source_fw}/{from_name} ({src_root}) -> '
+              f'{target_fw}/{target_name} ({dst_root}):')
+        print(f'  {len(resources)} file(s) in, {len(converted)} file(s) out')
+        for rel in sorted(converted):
+            print(f'  {rel} -> {dst_root / rel}')
+
+        if self.args.dry_run:
+            print('\n[dry-run] nothing written.')
+            return
+
+        written = dst_spec.apply(converted)
+        print(f'\nWrote {len(written)} file(s) under {dst_root}.')
 
     def _stop(self):
         from ultron.cli.watcher import stop_daemon

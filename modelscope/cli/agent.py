@@ -10,10 +10,16 @@ Cache data is stored under ``$MODELSCOPE_CACHE/agent/`` by default
 
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from modelscope_hub.cli.base import CLICommand
 from modelscope_hub.config import HubConfig
+
+
+# Lazy-load framework list from ultron registry
+def _get_fw_list() -> str:
+    from ultron.services.harness.allowlist import ALLOWLIST_REGISTRY
+    return ', '.join(ALLOWLIST_REGISTRY.keys())
 
 
 def _init_agent_data_dir():
@@ -92,137 +98,219 @@ class AgentCMD(CLICommand):
 
     @staticmethod
     def register(subparsers: ArgumentParser) -> None:
+        _FW_LIST = _get_fw_list()
+
         parser = subparsers.add_parser(
             AgentCMD.name,
-            help='Manage agent files (upload, download, watch, list, status, restore, backups, convert, stop).')
+            help='Manage agent files (upload, download, watch, list, status, restore, backups, convert, stop).',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Manage agent files across local workspace and remote repositories.',
+            epilog=f'''\
+subcommand arguments:
+  upload    -f FRAMEWORK -r REPO [-n NAME] [--local-dir DIR] [--dry-run]
+  download  -f FRAMEWORK -r REPO [-n NAME] [--local-dir DIR] [--target-framework FW] [--dry-run]
+  watch     -f FRAMEWORK -r REPO [-n NAME] [--local-dir DIR] [--pull]
+  list      [--owner OWNER] [--page N] [--page-size N]
+  status    -f FRAMEWORK [--local-dir DIR]
+  backups   [-f FRAMEWORK] [-n NAME] [--local-dir DIR]
+  restore   --from-backup TARGET [-f FRAMEWORK] [-n NAME] [--local-dir DIR]
+  convert   --from-framework FW --target-framework FW [--from-name NAME] [--target-name NAME] [--local-dir DIR] [--out-dir DIR] [--dry-run]
+  stop      (no arguments)
+
+supported frameworks:
+  {_FW_LIST}
+
+examples:
+  modelscope agent upload -f qwenpaw -r user/my-agent
+  modelscope agent download -f qwenpaw -r user/my-agent
+  modelscope agent watch -f qwenpaw -r user/my-agent --pull
+  modelscope agent convert --from-framework qoder --target-framework qwenpaw
+  modelscope agent status -f qwenpaw
+  modelscope agent backups -f qwenpaw
+  modelscope agent restore --from-backup last -f qwenpaw
+  modelscope agent list --owner user
+  modelscope agent stop
+''')
         sub = parser.add_subparsers(
             dest='agent_action', help='agent subcommands')
 
+        _fw_help = f'Agent framework ({_FW_LIST})'
+
         # ---- upload ----
         p_upload = sub.add_parser(
-            'upload', help='Upload local agent files to remote repository')
+            'upload',
+            help='Upload local agent files to remote repository',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Pack and upload local agent workspace files to a remote repository.',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_upload.add_argument(
-            '-f', '--framework', required=True, help='Agent framework name')
+            '-f', '--framework', required=True,
+            help=_fw_help)
         p_upload.add_argument(
             '-n', '--name', default=None,
-            help='Agent name (auto-selects if only one exists locally)')
+            help='Local agent name; auto-selects if only one exists, errors if multiple')
         p_upload.add_argument(
             '-r', '--repo', required=True,
-            help='Remote repo name (required). Supports owner/name format.')
+            help='Remote repo identifier, supports owner/name format (e.g. user/my-agent)')
         p_upload.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override local workspace root (default: framework standard path)')
         p_upload.add_argument(
             '--dry-run', action='store_true',
-            help='Show what would be uploaded without uploading')
+            help='List files that would be uploaded, without actually uploading')
 
         # ---- download ----
         p_download = sub.add_parser(
-            'download', help='Download agent files from remote repository')
+            'download',
+            help='Download agent files from remote repository',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Download remote agent files and write to local workspace.',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_download.add_argument(
-            '-f', '--framework', required=True, help='Agent framework name')
+            '-f', '--framework', required=True,
+            help=_fw_help)
         p_download.add_argument(
             '-r', '--repo', required=True,
-            help='Remote repo name (required). Supports owner/name format.')
+            help='Remote repo identifier, supports owner/name format (e.g. user/my-agent)')
         p_download.add_argument(
             '-n', '--name', default=None,
-            help='Agent name to write as locally (default: default)')
+            help='Local agent name to write as (default: "default")')
         p_download.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override local workspace root (default: framework standard path)')
         p_download.add_argument(
             '--target-framework', default=None,
-            help='Convert to a different framework on download')
+            help=f'Convert to a different framework on download ({_FW_LIST})')
         p_download.add_argument(
             '--dry-run', action='store_true',
-            help='Show what would be written without writing')
+            help='List files that would be written, without actually writing')
 
         # ---- watch ----
         p_watch = sub.add_parser(
-            'watch', help='Start background sync for agent files')
+            'watch',
+            help='Start background sync for agent files',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Launch a background daemon that watches local changes and pushes to remote.\n'
+                        'With --pull, also pulls remote changes to local (bidirectional sync).',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_watch.add_argument(
-            '-f', '--framework', required=True, help='Agent framework name')
+            '-f', '--framework', required=True,
+            help=_fw_help)
         p_watch.add_argument(
             '-n', '--name', default=None,
-            help='Agent name (default: sync all agents)')
+            help='Agent name to sync (default: ALL agents in the workspace)')
         p_watch.add_argument(
             '-r', '--repo', required=True,
-            help='Remote repo name (required). Supports owner/name format.')
+            help='Remote repo identifier, supports owner/name format (e.g. user/my-agent)')
         p_watch.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override local workspace root (default: framework standard path)')
         p_watch.add_argument(
             '--pull', action='store_true',
-            help='Enable bidirectional sync (pull remote changes)')
+            help='Enable bidirectional sync; pull remote changes to local (default: push-only)')
 
         # ---- list (remote) ----
         p_list = sub.add_parser(
-            'list', help='List remote agent repositories')
+            'list',
+            help='List remote agent repositories',
+            description='Query and display remote agent repositories with pagination.')
         p_list.add_argument(
             '--owner', default=None,
-            help='Filter by owner (user or organization)')
+            help='Filter by owner username or organization name')
         p_list.add_argument(
             '--page', dest='page_number', type=int, default=1,
-            help='Page number (default: 1)')
+            help='Page number for pagination (default: 1)')
         p_list.add_argument(
             '--page-size', dest='page_size', type=int, default=10,
-            help='Items per page (default: 10)')
+            help='Number of items per page (default: 10)')
 
         # ---- status (local) ----
         p_status = sub.add_parser(
-            'status', help='Show local agent status for a framework')
+            'status',
+            help='Show local agent status for a framework',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Display discovered agents, file counts, and file paths for a framework.',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_status.add_argument(
-            '-f', '--framework', required=True, help='Agent framework name')
+            '-f', '--framework', required=True,
+            help=_fw_help)
         p_status.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override local workspace root (default: framework standard path)')
 
         # ---- backups ----
         p_backups = sub.add_parser(
-            'backups', help='List available backups')
+            'backups',
+            help='List available backups',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='List backup zip files. Backups are named: {framework}_{name}_{date}_{time}.zip',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_backups.add_argument(
-            '-f', '--framework', default=None, help='Agent framework name')
+            '-f', '--framework', default=None,
+            help='Filter backups by framework name prefix')
         p_backups.add_argument(
-            '-n', '--name', default=None, help='Agent name')
+            '-n', '--name', default=None,
+            help='Filter backups by agent name (matches _{name}_ in filename)')
         p_backups.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override local workspace root')
 
         # ---- restore ----
         p_restore = sub.add_parser(
-            'restore', help='Restore agent files from a backup')
+            'restore',
+            help='Restore agent files from a backup',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Restore workspace from a backup zip. Backs up current state before overwriting.',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_restore.add_argument(
             '--from-backup', required=True,
-            help="Backup to restore: 'last' or a specific backup filename")
+            help="'last' (most recent matching backup) or a specific backup filename")
         p_restore.add_argument(
-            '-f', '--framework', default=None, help='Agent framework name')
+            '-f', '--framework', default=None,
+            help='Filter backup candidates by framework (used with "last")')
         p_restore.add_argument(
-            '-n', '--name', default=None, help='Agent name')
+            '-n', '--name', default=None,
+            help='Filter backup candidates by agent name (used with "last")')
         p_restore.add_argument(
-            '--local-dir', default=None, help='Override local workspace root')
+            '--local-dir', default=None,
+            help='Override restore target directory')
 
         # ---- convert (local only, no network) ----
         p_convert = sub.add_parser(
-            'convert', help='Convert local agent files between frameworks')
+            'convert',
+            help='Convert local agent files between frameworks',
+            formatter_class=RawDescriptionHelpFormatter,
+            description='Convert agent workspace files from one framework format to another.\n'
+                        'Skips default template files that have no custom content.\n'
+                        'Automatically backs up existing target files before writing.',
+            epilog=f'supported frameworks: {_FW_LIST}')
         p_convert.add_argument(
             '--from-framework', required=True,
-            help='Source framework to read from')
+            help=f'Source framework to read from ({_FW_LIST})')
         p_convert.add_argument(
             '--target-framework', required=True,
-            help='Target framework to write to')
+            help=f'Target framework to write to ({_FW_LIST})')
         p_convert.add_argument(
             '--from-name', default=None,
-            help='Source agent name to read (default: auto-select or default)')
+            help='Source agent name to read (default: "default")')
         p_convert.add_argument(
             '--target-name', default=None,
             help='Target agent name to write as (default: same as --from-name)')
         p_convert.add_argument(
             '--local-dir', default=None,
-            help='Source workspace root to read from')
+            help='Source workspace root to read from (default: source framework path)')
         p_convert.add_argument(
-            '--out', default=None,
+            '--out-dir', default=None,
             help='Destination directory to write to (default: target framework path)')
         p_convert.add_argument(
             '--dry-run', action='store_true',
             help='Show what would be written without writing')
 
         # ---- stop ----
-        sub.add_parser('stop', help='Stop background watch process')
+        sub.add_parser(
+            'stop',
+            help='Stop background watch process',
+            description='Gracefully stop the background watch daemon (cross-platform: stop-file + SIGTERM).')
 
         parser.set_defaults(_command=AgentCMD)
 
@@ -621,7 +709,7 @@ class AgentCMD(CLICommand):
         target_name = self.args.target_name or from_name
 
         src_spec = _build_allowlist(source_fw, from_name, self.args.local_dir)
-        dst_spec = _build_allowlist(target_fw, target_name, getattr(self.args, 'out', None))
+        dst_spec = _build_allowlist(target_fw, target_name, self.args.out_dir)
 
         rc = convert_workspace(src_spec, source_fw, target_fw, dst_spec, dry_run=self.args.dry_run)
         if rc:

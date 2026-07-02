@@ -62,7 +62,7 @@ def _get_username(config: HubConfig) -> str:
         _fail(f'failed to resolve current user: {e}')
     if not data:
         _fail('failed to resolve current user: empty response from server.')
-    username = data.get('username', data.get('Username', ''))
+    username = data.get('username') or data.get('Username') or ''
     if not username:
         _fail('failed to resolve current user: server returned empty username.')
     return username
@@ -457,8 +457,7 @@ class AgentCMD(CLICommand):
         try:
             info = client.repo_info(group, repo)
             if info:
-                remote_fw = info.get('Framework') or info.get(
-                    'framework') or ''
+                remote_fw = info.get('Framework', '')
                 if remote_fw and remote_fw != framework:
                     _fail(
                         f'framework mismatch: local={framework}, remote={remote_fw}. '
@@ -505,7 +504,6 @@ class AgentCMD(CLICommand):
     def _list(self):
         """List remote agent repositories."""
         config = _get_config(self.args)
-        # list does not require token (public repos are visible without auth)
         from ultron.cli.client import ApiError, UltronClient
         client = UltronClient(
             config.endpoint, config.token or '')
@@ -532,21 +530,19 @@ class AgentCMD(CLICommand):
             print('(no agent repositories found)')
             return
 
-        # Render table aligned with `ms list` style
         headers = ['repo_id', 'framework', 'visibility', 'updated']
         rows = []
         for item in items:
-            owner_name = item.get('Path') or item.get('owner') or ''
-            repo_name = item.get('Name') or item.get('name') or ''
+            owner_name = item.get('Path', '')
+            repo_name = item.get('Name', '')
             repo_id = f'{owner_name}/{repo_name}' if owner_name else repo_name
-            fw = item.get('Framework') or item.get('framework') or '-'
-            vis = item.get('Visibility') or item.get('visibility') or '-'
-            updated = item.get('LastUpdatedDate') or item.get('updated_at') or '-'
+            fw = item.get('Framework', '-')
+            vis = item.get('Visibility', '-')
+            updated = item.get('LastUpdatedDate', '-')
             if isinstance(updated, str) and 'T' in updated:
                 updated = updated.split('T')[0]
             rows.append((repo_id, fw, vis, updated))
 
-        # Simple table rendering
         col_widths = [len(h) for h in headers]
         for row in rows:
             for i, val in enumerate(row):
@@ -562,14 +558,14 @@ class AgentCMD(CLICommand):
 
     def _status(self):
         """Show local agent status for a framework."""
-        from ultron.cli.commands import cmd_list
+        from ultron.cli.commands import cmd_status
         from types import SimpleNamespace
 
         ns = SimpleNamespace(
             framework=self.args.framework,
             local_dir=self.args.local_dir,
         )
-        rc = cmd_list(ns)
+        rc = cmd_status(ns)
         if rc:
             sys.exit(rc)
 
@@ -607,7 +603,7 @@ class AgentCMD(CLICommand):
 
     def _convert(self):
         """Convert local agent files between frameworks."""
-        from ultron.cli.commands import _build_allowlist, _convert, _frameworks
+        from ultron.cli.commands import _build_allowlist, _frameworks, convert_workspace
         from ultron.services.harness.allowlist import (
             ALLOWLIST_REGISTRY,
             DEFAULT_AGENT_NAME,
@@ -621,39 +617,15 @@ class AgentCMD(CLICommand):
                 _fail(f"unknown framework '{fw}' for {label}. "
                       f"Available: {_frameworks()}")
 
-        # Source agent name
         from_name = self.args.from_name or DEFAULT_AGENT_NAME
-        # Target agent name defaults to source name
         target_name = self.args.target_name or from_name
 
-        # Read source files
         src_spec = _build_allowlist(source_fw, from_name, self.args.local_dir)
-        src_root = src_spec.workspace_root
-        resources = src_spec.collect()
-        if not resources:
-            _fail(f"no {source_fw} files found for agent '{from_name}' "
-                  f"under {src_root}.")
+        dst_spec = _build_allowlist(target_fw, target_name, getattr(self.args, 'out', None))
 
-        # Convert
-        converted = _convert(resources, source_fw, target_fw)
-
-        # Destination
-        out_dir = getattr(self.args, 'out', None)
-        dst_spec = _build_allowlist(target_fw, target_name, out_dir)
-        dst_root = dst_spec.workspace_root
-
-        print(f'Convert {source_fw}/{from_name} ({src_root}) -> '
-              f'{target_fw}/{target_name} ({dst_root}):')
-        print(f'  {len(resources)} file(s) in, {len(converted)} file(s) out')
-        for rel in sorted(converted):
-            print(f'  {rel} -> {dst_root / rel}')
-
-        if self.args.dry_run:
-            print('\n[dry-run] nothing written.')
-            return
-
-        written = dst_spec.apply(converted)
-        print(f'\nWrote {len(written)} file(s) under {dst_root}.')
+        rc = convert_workspace(src_spec, source_fw, target_fw, dst_spec, dry_run=self.args.dry_run)
+        if rc:
+            sys.exit(rc)
 
     def _stop(self):
         from ultron.cli.watcher import stop_daemon

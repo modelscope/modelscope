@@ -88,6 +88,18 @@ class HubApi(_LegacyHubApi):
             )
 
     # ------------------------------------------------------------------
+    # Backward-compat properties
+    # ------------------------------------------------------------------
+    @property
+    def session(self):
+        """Backward compatibility: expose the underlying requests.Session.
+
+        .. deprecated::
+            New code should use HubApi public methods instead of direct HTTP calls.
+        """
+        return self._api.legacy._session
+
+    # ------------------------------------------------------------------
     # Legacy method shims missing from LegacyHubApi
     # ------------------------------------------------------------------
     def create_model(self, model_id: str, **kwargs) -> str:

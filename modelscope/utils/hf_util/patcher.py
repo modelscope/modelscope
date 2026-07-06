@@ -155,6 +155,79 @@ def _decide_allow_file_pattern(module_name, cls=None):
     return extra_allow_file_pattern
 
 
+def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
+    """Wrapper that redirects dynamic-module downloads to ModelScope.
+
+    When a config's ``auto_map`` references another repo, transformers calls
+    ``get_class_from_dynamic_module`` to fetch it.  This wrapper ensures that
+    fetch goes through ModelScope instead of HuggingFace.
+    """
+    from transformers.dynamic_module_utils import origin_get_class_from_dynamic_module
+    if 'pretrained_model_name_or_path' in inspect.signature(
+            origin_get_class_from_dynamic_module).parameters:
+        pretrained_model_name_or_path = args[0]
+        if not os.path.exists(pretrained_model_name_or_path):
+            from modelscope import snapshot_download
+            args[0] = snapshot_download(pretrained_model_name_or_path)
+    if '--' in class_reference:
+        repo_id, class_reference = class_reference.split('--')
+        if not os.path.exists(repo_id):
+            download_kwargs = {}
+            extra_allow_file_pattern = _decide_allow_file_pattern(
+                class_reference)
+            if extra_allow_file_pattern is not None:
+                download_kwargs[
+                    'allow_file_pattern'] = extra_allow_file_pattern
+            if 'Config' in class_reference or 'Processor' in class_reference or 'Tokenizer' in class_reference:
+                download_kwargs['ignore_file_pattern'] = ignore_file_pattern
+            from modelscope import snapshot_download
+            repo_id = snapshot_download(repo_id, **download_kwargs)
+        class_reference = repo_id + '--' + class_reference
+    return origin_get_class_from_dynamic_module(class_reference, *args,
+                                                **kwargs)
+
+
+def _patch_dynamic_module():
+    """Globally patch ``get_class_from_dynamic_module`` to redirect to ModelScope."""
+    from transformers import dynamic_module_utils
+    if not hasattr(dynamic_module_utils,
+                   'origin_get_class_from_dynamic_module'):
+        dynamic_module_utils.origin_get_class_from_dynamic_module = dynamic_module_utils.get_class_from_dynamic_module
+        dynamic_module_utils.get_class_from_dynamic_module = _get_class_from_dynamic_module
+        from transformers.models.auto import configuration_auto
+        configuration_auto.get_class_from_dynamic_module = _get_class_from_dynamic_module
+
+
+def _unpatch_dynamic_module():
+    from transformers import dynamic_module_utils
+    if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
+        dynamic_module_utils.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
+        from transformers.models.auto import configuration_auto
+        configuration_auto.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
+        delattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module')
+
+
+@contextlib.contextmanager
+def _dynamic_module_patch_scope():
+    """Temporarily patch ``get_class_from_dynamic_module`` for the duration of
+    the ``with`` block, unless an outer patch (e.g. ``patch_hub()``) is already
+    in effect.
+
+    This ensures that ``auto_map`` references inside a config are resolved via
+    ModelScope when loading through a modelscope-wrapped class, without
+    polluting the global transformers state for unrelated callers.
+    """
+    from transformers import dynamic_module_utils
+    if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
+        yield
+        return
+    _patch_dynamic_module()
+    try:
+        yield
+    finally:
+        _unpatch_dynamic_module()
+
+
 def _patch_pretrained_class(all_imported_modules, wrap=False):
     """Patch all class to download from modelscope
 
@@ -272,8 +345,9 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     cls=module_class,
                     **kwargs)
 
-            module_obj = module_class.from_pretrained(model, model_dir,
-                                                      *model_args, **kwargs)
+            with _dynamic_module_patch_scope():
+                module_obj = module_class.from_pretrained(
+                    model, model_dir, *model_args, **kwargs)
 
             return module_obj
 
@@ -286,8 +360,9 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                     model_dir = get_model_dir(pretrained_model_name_or_path,
                                               **kwargs)
 
-                module_obj = module_class.from_pretrained(
-                    model_dir, *model_args, **kwargs)
+                with _dynamic_module_patch_scope():
+                    module_obj = module_class.from_pretrained(
+                        model_dir, *model_args, **kwargs)
 
                 if module_class.__name__.startswith('AutoModel'):
                     module_obj.model_dir = model_dir
@@ -315,8 +390,9 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                         allow_file_pattern=allow_file_pattern,
                         **kwargs)
 
-                module_obj = module_class.get_config_dict(
-                    model_dir, *model_args, **kwargs)
+                with _dynamic_module_patch_scope():
+                    module_obj = module_class.get_config_dict(
+                        model_dir, *model_args, **kwargs)
                 return module_obj
 
             def save_pretrained(
@@ -441,39 +517,13 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
             all_available_modules.append(var)
 
-    def get_class_from_dynamic_module(class_reference, *args, **kwargs):
-        from transformers.dynamic_module_utils import origin_get_class_from_dynamic_module
-        if 'pretrained_model_name_or_path' in inspect.signature(
-                origin_get_class_from_dynamic_module).parameters:
-            pretrained_model_name_or_path = args[0]
-            if not os.path.exists(pretrained_model_name_or_path):
-                from modelscope import snapshot_download
-                args[0] = snapshot_download(pretrained_model_name_or_path)
-        if '--' in class_reference:
-            repo_id, class_reference = class_reference.split('--')
-            if not os.path.exists(repo_id):
-                download_kwargs = {}
-                extra_allow_file_pattern = _decide_allow_file_pattern(
-                    class_reference)
-                if extra_allow_file_pattern is not None:
-                    download_kwargs[
-                        'allow_file_pattern'] = extra_allow_file_pattern
-                if 'Config' in class_reference or 'Processor' in class_reference or 'Tokenizer' in class_reference:
-                    download_kwargs[
-                        'ignore_file_pattern'] = ignore_file_pattern
-                from modelscope import snapshot_download
-                repo_id = snapshot_download(repo_id, **download_kwargs)
-            class_reference = repo_id + '--' + class_reference
-        return origin_get_class_from_dynamic_module(class_reference, *args,
-                                                    **kwargs)
-
-    from transformers import dynamic_module_utils
-    if not hasattr(dynamic_module_utils,
-                   'origin_get_class_from_dynamic_module'):
-        dynamic_module_utils.origin_get_class_from_dynamic_module = dynamic_module_utils.get_class_from_dynamic_module
-        dynamic_module_utils.get_class_from_dynamic_module = get_class_from_dynamic_module
-        from transformers.models.auto import configuration_auto
-        configuration_auto.get_class_from_dynamic_module = get_class_from_dynamic_module
+    # Only apply the global get_class_from_dynamic_module monkey-patch in
+    # direct-patch mode (wrap=False).  In wrap mode the ClassWrapper scopes
+    # the patch to each from_pretrained / get_config_dict call via
+    # _dynamic_module_patch_scope(), so the global state stays clean for
+    # unrelated ``from transformers import AutoConfig`` callers (issue #1751).
+    if not wrap:
+        _patch_dynamic_module()
     return all_available_modules
 
 
@@ -509,12 +559,7 @@ def _unpatch_pretrained_class(all_imported_modules):
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
             _restore(var, 'get_config_dict', '_get_config_dict_origin')
 
-    from transformers import dynamic_module_utils
-    if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
-        dynamic_module_utils.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
-        from transformers.models.auto import configuration_auto
-        configuration_auto.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
-        delattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module')
+    _unpatch_dynamic_module()
 
 
 def _patch_kernels():

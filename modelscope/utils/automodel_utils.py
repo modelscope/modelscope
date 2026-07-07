@@ -141,7 +141,7 @@ def check_model_from_owner_group(model_dir: str,
         return False
     if owner_group is None:
         owner_group = ['iic', 'damo']
-    model_dir = model_dir.rstrip('/').rstrip('\\')
+    model_dir = os.path.normpath(model_dir.rstrip('/').rstrip('\\'))
     parent_dir = os.path.dirname(model_dir)
     group = os.path.basename(parent_dir)
     if group in owner_group:

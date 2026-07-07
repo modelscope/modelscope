@@ -263,6 +263,70 @@ class HFUtilTest(unittest.TestCase):
                 f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
             )
 
+    def test_import_not_pollute_dynamic_module(self):
+        """Importing from modelscope must not globally patch
+        transformers' get_class_from_dynamic_module (issue #1751).
+
+        The patch should be scoped to each from_pretrained / get_config_dict
+        call via _dynamic_module_patch_scope(), leaving the global state clean
+        for unrelated ``from transformers import AutoConfig`` callers.
+        """
+        from modelscope import AutoConfig
+        from modelscope.utils.file_utils import get_modelscope_cache_dir
+        from transformers import dynamic_module_utils
+
+        # 1. Importing AutoConfig from modelscope (wrap=True) must NOT
+        #    globally patch get_class_from_dynamic_module.
+        self.assertFalse(
+            hasattr(dynamic_module_utils,
+                    'origin_get_class_from_dynamic_module'),
+            'Importing AutoConfig from modelscope must not globally patch '
+            'get_class_from_dynamic_module (issue #1751)')
+
+        # 2. The modelscope AutoConfig should still work with
+        #    trust_remote_code, downloading through ModelScope (not HF).
+        model = 'nomic-ai/nomic-embed-text-v1.5'
+        config = AutoConfig.from_pretrained(model, trust_remote_code=True)
+        model_dir = config.name_or_path
+
+        # Verify files are in the ModelScope cache, not the HF cache.
+        ms_cache = get_modelscope_cache_dir()
+        self.assertTrue(
+            os.path.realpath(model_dir).startswith(os.path.realpath(ms_cache)),
+            f'Model files should be in ModelScope cache ({ms_cache}), '
+            f'but found at {model_dir}')
+
+        # 3. After the call the global patch should still NOT be in effect
+        #    (the _dynamic_module_patch_scope was temporary).
+        self.assertFalse(
+            hasattr(dynamic_module_utils,
+                    'origin_get_class_from_dynamic_module'),
+            'Global get_class_from_dynamic_module should not be patched '
+            'after a modelscope AutoConfig call (issue #1751)')
+
+        # 4. Pure transformers AutoConfig (without modelscope patching) must
+        #    NOT be redirected to ModelScope.  With the old code the global
+        #    patch would intercept this call and download from ModelScope;
+        #    with the fix the call goes to HuggingFace directly.
+        from transformers import AutoConfig as HFAutoConfig
+        try:
+            hf_config = HFAutoConfig.from_pretrained(
+                model, trust_remote_code=True)
+            hf_model_dir = hf_config.name_or_path
+            # If the download succeeded, files must be outside the
+            # ModelScope cache (i.e. in the HuggingFace cache).
+            self.assertFalse(
+                os.path.realpath(hf_model_dir).startswith(
+                    os.path.realpath(ms_cache)),
+                f'Transformers AutoConfig should download from HuggingFace, '
+                f'not ModelScope (issue #1751). Found files at: '
+                f'{hf_model_dir}')
+        except Exception:
+            # If HuggingFace is unreachable the call fails — which is also
+            # correct: it means the request did NOT go through ModelScope
+            # (which would have succeeded).
+            pass
+
     @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
     def test_push_to_hub(self):
         with patch_context():

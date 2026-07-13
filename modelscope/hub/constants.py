@@ -1,7 +1,22 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""Hub constants — shared constants delegate to modelscope_hub, local-only constants retained.
+
+Constants that have equivalents in modelscope_hub are imported from there.
+Constants unique to this project (endpoint configs, enum classes, env-driven tunables)
+are retained locally.
+"""
 import os
 from pathlib import Path
 
+# --- Delegated constants (from modelscope_hub) ---
+from modelscope_hub.compat.constants import (  # noqa: F401
+    DEFAULT_DATASET_REVISION, DEFAULT_MAX_WORKERS, FILE_HASH,
+    MODELSCOPE_DOMAIN, MODELSCOPE_PREFER_AI_SITE, REPO_TYPE_DATASET,
+    REPO_TYPE_MODEL, REPO_TYPE_STUDIO, REPO_TYPE_SUPPORT,
+    TEMPORARY_FOLDER_NAME, ModelVisibility_INTERNAL, ModelVisibility_PRIVATE,
+    ModelVisibility_PUBLIC)
+
+# --- Local constants (not in modelscope_hub) ---
 MODELSCOPE_URL_SCHEME = 'https://'
 DEFAULT_MODELSCOPE_DOMAIN = 'www.modelscope.cn'
 DEFAULT_MODELSCOPE_INTL_DOMAIN = 'www.modelscope.ai'
@@ -13,15 +28,27 @@ MODELSCOPE_DOWNLOAD_PARALLELS = int(
     os.environ.get('MODELSCOPE_DOWNLOAD_PARALLELS', 1))
 DEFAULT_MODELSCOPE_GROUP = 'damo'
 MODEL_ID_SEPARATOR = '/'
-FILE_HASH = 'Sha256'
 LOGGER_NAME = 'ModelScopeHub'
 DEFAULT_CREDENTIALS_PATH = Path.home().joinpath('.modelscope', 'credentials')
 MODELSCOPE_CREDENTIALS_PATH = os.environ.get(
     'MODELSCOPE_CREDENTIALS_PATH', DEFAULT_CREDENTIALS_PATH.as_posix())
 REQUESTS_API_HTTP_METHOD = ['get', 'head', 'post', 'put', 'patch', 'delete']
-API_HTTP_CLIENT_TIMEOUT = 60
+# Default per-socket timeout (seconds) applied to all session HTTP methods
+# in HubApi.__init__. User-tunable via env to mitigate transient ReadTimeout
+# on heavy server-side ops (e.g. create_model_tag which performs git ops on
+# the remote repo). Default raised to 90 to mitigate transient timeouts.
+API_HTTP_CLIENT_TIMEOUT = int(
+    os.environ.get('MODELSCOPE_API_HTTP_CLIENT_TIMEOUT', 90))
+
+API_HTTP_CLIENT_CONNECT_TIMEOUT = int(
+    os.environ.get('MODELSCOPE_API_HTTP_CLIENT_CONNECT_TIMEOUT', 10))
 API_HTTP_CLIENT_MAX_RETRIES = int(
     os.environ.get('API_HTTP_CLIENT_MAX_RETRIES', 5))
+
+CREATE_TAG_MAX_RETRIES = int(
+    os.environ.get('MODELSCOPE_CREATE_TAG_MAX_RETRIES', 3))
+CREATE_TAG_RETRY_BACKOFF = int(
+    os.environ.get('MODELSCOPE_CREATE_TAG_RETRY_BACKOFF', 2))
 
 # Application-level retry for blob upload
 UPLOAD_BLOB_MAX_RETRIES = int(os.environ.get('UPLOAD_BLOB_MAX_RETRIES', 5))
@@ -59,15 +86,9 @@ API_RESPONSE_FIELD_MESSAGE = 'Message'
 MODELSCOPE_CLOUD_ENVIRONMENT = 'MODELSCOPE_ENVIRONMENT'
 MODELSCOPE_CLOUD_USERNAME = 'MODELSCOPE_USERNAME'
 MODELSCOPE_SDK_DEBUG = 'MODELSCOPE_SDK_DEBUG'
-MODELSCOPE_PREFER_AI_SITE = 'MODELSCOPE_PREFER_AI_SITE'
-MODELSCOPE_DOMAIN = 'MODELSCOPE_DOMAIN'
 MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION = 'MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION'
 ONE_YEAR_SECONDS = 24 * 365 * 60 * 60
 MODELSCOPE_REQUEST_ID = 'X-Request-ID'
-TEMPORARY_FOLDER_NAME = '._____temp'
-DEFAULT_MAX_WORKERS = int(
-    os.getenv('DEFAULT_MAX_WORKERS', min(8,
-                                         os.cpu_count() + 4)))
 DEFAULT_SKILLS_DIR = os.path.join(os.path.expanduser('~'), '.agents', 'skills')
 
 # Upload check env
@@ -154,6 +175,18 @@ class Visibility(object):
     PRIVATE = 'private'
     INTERNAL = 'internal'
     PUBLIC = 'public'
+
+
+class GatedMode(object):
+    """Gated mode for private repositories.
+
+    Only effective when Visibility is PRIVATE.
+    API payload key: ``ProtectedMode``.
+    Values: True = gated (application-based download),
+            False = off (normal private).
+    """
+    GATED = True
+    OFF = False
 
 
 VisibilityMap = {

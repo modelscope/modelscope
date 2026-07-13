@@ -9,6 +9,7 @@ import requests
 from urllib3.exceptions import MaxRetryError
 
 from modelscope.hub.api import HubApi
+from modelscope.hub.errors import ServerError
 from modelscope.hub.file_download import http_get_model_file
 
 
@@ -21,11 +22,16 @@ class HubRetryTest(unittest.TestCase):
     @patch('urllib3.connectionpool.HTTPConnectionPool._get_conn')
     def test_retry_exception(self, getconn_mock):
         getconn_mock.return_value.getresponse.side_effect = [
-            Mock(status=500, msg=HTTPMessage()),
-            Mock(status=502, msg=HTTPMessage()),
-            Mock(status=500, msg=HTTPMessage()),
+            Mock(status=500, msg=HTTPMessage(), headers={}),
+            Mock(status=502, msg=HTTPMessage(), headers={}),
+            Mock(status=500, msg=HTTPMessage(), headers={}),
+            Mock(status=502, msg=HTTPMessage(), headers={}),
+            Mock(status=500, msg=HTTPMessage(), headers={}),
+            Mock(status=502, msg=HTTPMessage(), headers={}),
         ]
-        with self.assertRaises(requests.exceptions.RetryError):
+        with self.assertRaises(
+            (requests.exceptions.RetryError,
+             requests.exceptions.ConnectionError, ServerError)):
             self.api.get_model_files(
                 model_id=self.model_id,
                 recursive=True,
@@ -61,10 +67,11 @@ class HubRetryTest(unittest.TestCase):
         rsp.headers = {}
         # retry 2 times and success.
         getconn_mock.return_value.getresponse.side_effect = [
-            Mock(status=500, msg=HTTPMessage()),
+            Mock(status=500, msg=HTTPMessage(), headers={}),
             Mock(
                 status=502,
                 msg=HTTPMessage(),
+                headers={},
                 body=response_body,
                 read=StringIO(response_body)),
             rsp,

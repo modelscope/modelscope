@@ -31,7 +31,8 @@ class DetectionModel(TorchModel):
 
         model_path = osp.join(model_dir, ModelFile.TORCH_MODEL_FILE)
         config_path = osp.join(model_dir, 'mmcv_config.py')
-        config = Config.from_file(config_path)
+        config = Config.from_file(
+            config_path, trust_remote_code=self.trust_remote_code)
         config.model.pretrained = None
         self.model = build_detector(config.model)
 

@@ -1,9 +1,16 @@
-"""Contains utilities to manage the ModelScope cache directory."""
+"""Contains utilities to manage the ModelScope cache directory.
+
+:func:`scan_cache_dir` retains the legacy file-grain scan that is unique
+to this SDK; the modelscope_hub repo-grain :func:`scan_cache` and
+:func:`clear_cache` are re-exported here for forward compatibility.
+"""
 
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Literal, Optional, Set, Union
+
+from modelscope_hub._cache_manager import clear_cache, scan_cache  # noqa: F401
 
 from modelscope.hub.errors import CacheNotFound, CorruptedCacheException
 from modelscope.hub.utils.caching import ModelFileSystemCache
@@ -14,6 +21,16 @@ from modelscope.utils.file_utils import get_modelscope_cache_dir
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
+
+__all__ = [
+    'CachedFileInfo',
+    'CachedRevisionInfo',
+    'CachedRepoInfo',
+    'ModelScopeCacheInfo',
+    'scan_cache_dir',
+    'scan_cache',
+    'clear_cache',
+]
 
 # List of OS-created helper files that need to be ignored
 FILES_TO_IGNORE = ['.DS_Store', '._____temp']

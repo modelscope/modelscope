@@ -376,7 +376,6 @@ class Hubs(enum.Enum):
     """
     modelscope = 'modelscope'
     huggingface = 'huggingface'
-    virgo = 'virgo'
 
 
 class DownloadMode(enum.Enum):
@@ -506,7 +505,8 @@ class Frameworks(object):
 
 REPO_TYPE_MODEL = 'model'
 REPO_TYPE_DATASET = 'dataset'
-REPO_TYPE_SUPPORT = [REPO_TYPE_MODEL, REPO_TYPE_DATASET]
+REPO_TYPE_STUDIO = 'studio'
+REPO_TYPE_SUPPORT = [REPO_TYPE_MODEL, REPO_TYPE_DATASET, REPO_TYPE_STUDIO]
 DEFAULT_MODEL_REVISION = 'master'
 MASTER_MODEL_BRANCH = 'master'
 DEFAULT_REPOSITORY_REVISION = 'master'
@@ -603,26 +603,6 @@ class DatasetTensorflowConfig:
     DEFAULT_BATCH_SIZE_VALUE = 5
 
 
-class VirgoDatasetConfig:
-
-    default_virgo_namespace = 'default_namespace'
-
-    default_dataset_version = '1'
-
-    env_virgo_endpoint = 'VIRGO_ENDPOINT'
-
-    # Columns for meta request
-    meta_content = 'metaContent'
-    sampling_type = 'samplingType'
-
-    # Columns for meta content
-    col_id = 'id'
-    col_meta_info = 'meta_info'
-    col_analysis_result = 'analysis_result'
-    col_external_info = 'external_info'
-    col_cache_file = 'cache_file'
-
-
 DEFAULT_MAXCOMPUTE_ENDPOINT = 'http://service-corp.odps.aliyun-inc.com/api'
 
 
@@ -635,3 +615,37 @@ class MaxComputeEnvs:
     PROJECT_NAME = 'ODPS_PROJECT_NAME'
 
     ENDPOINT = 'ODPS_ENDPOINT'
+
+
+class StudioSDKType(object):
+    """Studio SDK type enumeration."""
+    GRADIO = 'gradio'
+    STREAMLIT = 'streamlit'
+    DOCKER = 'docker'
+    STATIC = 'static'
+
+    SUPPORTED = [GRADIO, STREAMLIT, DOCKER, STATIC]
+
+
+class StudioHardware(object):
+    """Studio hardware configuration enumeration."""
+    CPU_2V_16G = 'platform/2v-cpu-16g-mem'
+    GPU_16G = 'xgpu/8v-cpu-32g-mem-16g'
+    GPU_48G = 'xgpu/8v-cpu-64g-mem-48g'
+
+    SUPPORTED = [CPU_2V_16G, GPU_16G, GPU_48G]
+    DEFAULT = CPU_2V_16G
+
+
+class StudioStatus(object):
+    """Studio runtime status enumeration."""
+    INITIALIZED = 'Initialized'
+    BUILDING = 'Building'
+    BUILD_FAILED = 'BuildFailed'
+    DEPLOYING = 'Deploying'
+    DEPLOY_FAILED = 'DeployFailed'
+    RUNNING = 'Running'
+    STOPPING = 'Stopping'
+    STOPPED = 'Stopped'
+    DUPLICATING = 'Duplicating'
+    SLEEPING = 'Sleeping'

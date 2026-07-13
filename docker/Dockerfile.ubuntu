@@ -25,15 +25,16 @@ RUN pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.*
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip --no-cache-dir install omegaconf==2.0.6 && \
     pip install 'editdistance==0.8.1' && \
-    pip install --no-cache-dir 'cython<=0.29.36' versioneer 'numpy<2.0' && \
+    pip install --no-cache-dir 'cython>=3.0' versioneer 'numpy>=2.0' && \
     pip install --no-cache-dir -r /var/modelscope/framework.txt && \
     pip install --no-cache-dir -r /var/modelscope/audio.txt -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir -r /var/modelscope/tests.txt && \
     pip install --no-cache-dir -r /var/modelscope/server.txt && \
     pip install --no-cache-dir https://modelscope.oss-cn-beijing.aliyuncs.com/packages/imageio_ffmpeg-0.4.9-py3-none-any.whl --no-dependencies --force && \
-    pip install --no-cache-dir 'scipy<1.13.0' && \
+    pip install --no-cache-dir 'scipy' && \
     pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
-    pip install --no-cache-dir decord>=0.6.0 mpi4py paint_ldm ipykernel fasttext -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir 'decord>=0.6.0' mpi4py paint_ldm ipykernel fasttext -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    pip install --no-cache-dir ipywidgets && \
     pip install --no-cache-dir 'blobfile>=1.0.5' && \
     pip uninstall MinDAEC -y && \
     pip install https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/MinDAEC-0.0.2-py3-none-any.whl && \
@@ -51,15 +52,18 @@ RUN bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
     cd ms-swift && pip install .[llm] && \
-    pip install .[eval] && pip install evalscope -U --no-dependencies && pip install ms-agent -U --no-dependencies && \
+    pip install .[eval] && pip install evalscope -U --no-dependencies && \
+    pip install --no-cache-dir "numpy>=2.0" --force-reinstall --no-deps && \
+    pip install ms-agent -U --no-dependencies && \
     cd / && rm -fr /tmp/ms-swift && pip cache purge; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b  {modelscope_branch}  --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     cd / && rm -fr /tmp/modelscope && pip cache purge; \
     pip install --no-cache-dir torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} {index_url} && \
-    pip install --no-cache-dir transformers diffusers timm>=0.9.0 && pip cache purge; \
+    pip install --no-cache-dir transformers diffusers 'timm>=0.9.0' && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set global.extra-index-url https://pypi.org/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 

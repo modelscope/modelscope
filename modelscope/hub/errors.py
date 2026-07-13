@@ -1,67 +1,70 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""Error classes — core exceptions delegate to modelscope_hub, legacy aliases retained.
 
+Exception classes from modelscope_hub provide the structured hierarchy.
+Legacy aliases maintain isinstance compatibility for existing code.
+Error handling functions with unique logic are retained.
+"""
 import logging
 from http import HTTPStatus
-from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import requests
-from requests.exceptions import HTTPError
+from modelscope_hub.errors import AuthenticationError  # noqa: F401
+from modelscope_hub.errors import (APIError, CacheNotFound,
+                                   CorruptedCacheException, FileIntegrityError,
+                                   HubError, InvalidParameter, NetworkError,
+                                   NotExistError, NotSupportedError,
+                                   PermissionDeniedError, RequestTimeoutError,
+                                   ServerError)
+from requests.exceptions import HTTPError  # noqa: F401  (re-exported)
 
 from modelscope.hub.constants import MODELSCOPE_REQUEST_ID
 from modelscope.utils.logger import get_logger
 
 logger = get_logger(log_level=logging.WARNING)
 
+# --- Legacy exception aliases (maintain isinstance backward compatibility) ---
 
-class NotSupportError(Exception):
+
+class RequestError(APIError):
+    """Legacy alias — use APIError for new code."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        # Preserve legacy single-positional-arg constructor signature.
+        super().__init__(message, **kwargs)
+
+
+class NotLoginException(AuthenticationError):
+    """Legacy alias — use AuthenticationError for new code."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        super().__init__(message, **kwargs)
+
+
+class FileDownloadError(NetworkError):
+    """Legacy alias — use NetworkError for new code."""
     pass
 
 
-class NoValidRevisionError(Exception):
+class NotSupportError(NotSupportedError):
+    """Legacy alias — use NotSupportedError for new code."""
     pass
 
 
-class NotExistError(Exception):
+class NoValidRevisionError(NotExistError):
+    """Legacy alias — raised when no valid revision is found."""
+
+    def __init__(self, message: str = '', *args, **kwargs):
+        super().__init__(message, **kwargs)
+
+
+class GitError(HubError):
+    """Git operation failure."""
     pass
 
 
-class RequestError(Exception):
-    pass
-
-
-class GitError(Exception):
-    pass
-
-
-class InvalidParameter(Exception):
-    pass
-
-
-class NotLoginException(Exception):
-    pass
-
-
-class FileIntegrityError(Exception):
-    pass
-
-
-class FileDownloadError(Exception):
-    pass
-
-
-class CacheNotFound(Exception):
-    """Exception thrown when the ModelScope cache is not found."""
-
-    cache_dir: Union[str, Path]
-
-    def __init__(self, msg: str, cache_dir: Union[str, Path], *args, **kwargs):
-        super().__init__(msg, *args, **kwargs)
-        self.cache_dir = cache_dir
-
-
-class CorruptedCacheException(Exception):
-    """Exception for any unexpected structure in the ModelScope cache-system."""
+# --- Error handling functions (retained - contain unique logic) ---
 
 
 def get_request_id(response: requests.Response):
@@ -116,23 +119,48 @@ def handle_http_response(response: requests.Response,
     else:
         reason = response.reason
     request_id = get_request_id(response)
+
+    # Try to extract server-side error detail from JSON response body.
+    server_message = ''
+    if response.status_code >= 400:
+        try:
+            resp_json = response.json()
+            # OpenAPI envelope: {"success": false, "code": "...", "message": "..."}
+            msg = resp_json.get('message') or resp_json.get('Message') or ''
+            code = resp_json.get('code') or ''
+            if msg:
+                server_message = f' | Server message: [{code}] {msg}' if code else f' | Server message: {msg}'
+        except (ValueError, AttributeError):
+            # Not JSON or unexpected structure; try raw text (truncated)
+            body_text = response.text[:500] if response.text else ''
+            if body_text:
+                server_message = f' | Response body: {body_text}'
+
     if 404 == response.status_code:
-        http_error_msg = 'The request model: %s does not exist!' % (model_id)
+        http_error_msg = (
+            u'404 Not Found: %s does not exist or is not accessible, '
+            u'Request id: %s for url: %s%s' %
+            (model_id, request_id, response.url, server_message))
     elif 403 == response.status_code:
         if cookies is None:
             http_error_msg = (
-                f'Authentication token does not exist, failed to access model {model_id} '
-                'which may not exist or may be private. Please login first.')
+                f'Authentication token does not exist, failed to access {model_id} '
+                f'which may not exist or may be private. Please login first.{server_message}'
+            )
 
         else:
-            http_error_msg = f'The authentication token is invalid, failed to access model {model_id}.'
+            http_error_msg = (
+                f'The authentication token is invalid, failed to access {model_id}.{server_message}'
+            )
     elif 400 <= response.status_code < 500:
-        http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s' % (
-            response.status_code, reason, request_id, response.url)
+        http_error_msg = u'%s Client Error: %s, Request id: %s for url: %s%s' % (
+            response.status_code, reason, request_id, response.url,
+            server_message)
 
     elif 500 <= response.status_code < 600:
-        http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s' % (
-            response.status_code, reason, request_id, response.url)
+        http_error_msg = u'%s Server Error: %s, Request id: %s, for url: %s%s' % (
+            response.status_code, reason, request_id, response.url,
+            server_message)
     if http_error_msg and raise_on_error:  # there is error.
         logger.error(http_error_msg)
         raise HTTPError(http_error_msg, response=response)

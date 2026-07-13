@@ -131,7 +131,7 @@ def check_model_from_owner_group(model_dir: str,
     """This checking is for the torch.load, this function may eval malicious code into memory
 
     Args:
-        model_dir: The local model_dir
+        model_dir: The local model_dir or model_id
         owner_group: The owner group to trust
 
     Returns:
@@ -142,6 +142,17 @@ def check_model_from_owner_group(model_dir: str,
     if owner_group is None:
         owner_group = ['iic', 'damo']
     model_dir = model_dir.rstrip('/').rstrip('\\')
-    model_dir = os.path.dirname(model_dir)
-    group = os.path.basename(model_dir)
-    return group in owner_group
+    parent_dir = os.path.dirname(model_dir)
+    group = os.path.basename(parent_dir)
+    if group in owner_group:
+        return True
+    # Also check cache path pattern: {cache_root}/{owner}--{model_name}/snapshots/{revision}
+    # Require exactly "{owner}--{name}" format (2 segments split by --)
+    # to prevent spoofing via accounts like "iic--hacked" which would
+    # produce paths like "iic--hacked--evil" and bypass the check.
+    grandparent = os.path.basename(os.path.dirname(parent_dir))
+    if '--' in grandparent:
+        parts = grandparent.split('--')
+        if len(parts) == 2 and parts[0] in owner_group:
+            return True
+    return False

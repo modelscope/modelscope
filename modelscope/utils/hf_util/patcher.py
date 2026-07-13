@@ -478,6 +478,20 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
 
 def _unpatch_pretrained_class(all_imported_modules):
+    # The patcher captured `var.from_pretrained` via descriptor access, which
+    # returns a bound method. Re-wrap as classmethod so subclasses still get
+    # `cls` bound to themselves (not to the ancestor that was patched).
+    def _restore(var, attr, origin_attr):
+        origin = getattr(var, origin_attr)
+        if isinstance(origin, MethodType):
+            setattr(var, attr, classmethod(origin.__func__))
+        else:
+            setattr(var, attr, origin)
+        try:
+            delattr(var, origin_attr)
+        except Exception:  # noqa
+            pass
+
     for var in all_imported_modules:
         if var is None:
             continue
@@ -489,23 +503,11 @@ def _unpatch_pretrained_class(all_imported_modules):
         except:  # noqa
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
-            var.from_pretrained = var._from_pretrained_origin
-            try:
-                delattr(var, '_from_pretrained_origin')
-            except:  # noqa
-                pass
+            _restore(var, 'from_pretrained', '_from_pretrained_origin')
         if has_get_peft_type and hasattr(var, '_get_peft_type_origin'):
-            var._get_peft_type = var._get_peft_type_origin
-            try:
-                delattr(var, '_get_peft_type_origin')
-            except:  # noqa
-                pass
+            _restore(var, '_get_peft_type', '_get_peft_type_origin')
         if has_get_config_dict and hasattr(var, '_get_config_dict_origin'):
-            var.get_config_dict = var._get_config_dict_origin
-            try:
-                delattr(var, '_get_config_dict_origin')
-            except:  # noqa
-                pass
+            _restore(var, 'get_config_dict', '_get_config_dict_origin')
 
     from transformers import dynamic_module_utils
     if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
@@ -565,6 +567,8 @@ class _MsKernelApi:
                           local_files_only=False,
                           **kwargs):
         from modelscope import snapshot_download as ms_snapshot_download
+        if kwargs.get('repo_type') == 'kernel':
+            kwargs['repo_type'] = 'model'
         return ms_snapshot_download(
             repo_id,
             revision=_ms_revision(revision),
@@ -1010,5 +1014,7 @@ def unpatch_hub():
 @contextlib.contextmanager
 def patch_context():
     patch_hub()
-    yield
-    unpatch_hub()
+    try:
+        yield
+    finally:
+        unpatch_hub()

@@ -1,4 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
+"""``modelscope modelcard`` — create / upload / download a model card."""
+
 import logging
 import os
 import shutil
@@ -6,7 +8,8 @@ import tempfile
 from argparse import ArgumentParser
 from string import Template
 
-from modelscope.cli.base import CLICommand
+from modelscope_hub.cli.base import CLICommand
+
 from modelscope.hub.api import HubApi
 from modelscope.hub.snapshot_download import snapshot_download
 from modelscope.hub.utils.utils import get_endpoint
@@ -18,17 +21,11 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(current_path, 'template')
 
 
-def subparser_func(args):
-    """ Function which will be called for a specific sub parser.
-    """
-    return ModelCardCMD(args)
-
-
 class ModelCardCMD(CLICommand):
     name = 'modelcard'
 
     def __init__(self, args):
-        self.args = args
+        super().__init__(args)
         self.api = HubApi()
         if args.access_token:
             self.api.login(args.access_token)
@@ -38,10 +35,11 @@ class ModelCardCMD(CLICommand):
         self.url = os.path.join(get_endpoint(), self.model_id)
 
     @staticmethod
-    def define_args(parsers: ArgumentParser):
-        """ define args for create or upload modelcard command.
-        """
-        parser = parsers.add_parser(ModelCardCMD.name, aliases=['model'])
+    def register(subparsers: ArgumentParser) -> None:
+        parser = subparsers.add_parser(
+            ModelCardCMD.name,
+            aliases=['model'],
+            help='Create / upload / download a model card.')
         parser.add_argument(
             '-tk',
             '--access_token',
@@ -105,7 +103,7 @@ class ModelCardCMD(CLICommand):
             type=str,
             default=None,
             help='the info of uploaded model')
-        parser.set_defaults(func=subparser_func)
+        parser.set_defaults(_command=ModelCardCMD)
 
     def create_model(self):
         from modelscope.hub.constants import Licenses, ModelVisibility

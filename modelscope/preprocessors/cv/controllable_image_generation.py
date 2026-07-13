@@ -58,7 +58,7 @@ def resize_image(input_image, resolution):
     return img
 
 
-def build_detector(control_type, model_path, device):
+def build_detector(control_type, model_path, device, trust_remote_code=False):
     if control_type == 'scribble':
         detector = None
     elif control_type == 'canny':
@@ -74,7 +74,8 @@ def build_detector(control_type, model_path, device):
     elif control_type == 'pose':
         detector = OpenposeDetector(model_path, device)
     elif control_type == 'seg':
-        detector = SegformerDetector(model_path, device)
+        detector = SegformerDetector(
+            model_path, device, trust_remote_code=trust_remote_code)
     elif control_type == 'fake_scribble':
         detector = HEDdetector(model_path, device)
     else:
@@ -136,8 +137,10 @@ class ControllableImageGenerationPreprocessor(Preprocessor):
     def __init__(self, mode=ModeKeys.INFERENCE, *args, **kwargs):
         super().__init__(mode=ModeKeys.INFERENCE, *args, **kwargs)
         self.detector = build_detector(
-            kwargs.get('control_type', 'hed'), kwargs.get('model_path', None),
-            kwargs.get('device', 'cuda'))
+            kwargs.get('control_type', 'hed'),
+            kwargs.get('model_path', None),
+            kwargs.get('device', 'cuda'),
+            trust_remote_code=kwargs.get('trust_remote_code', False))
 
     @type_assert(object, object)
     def __call__(self, data: input, **kwargs) -> Dict[str, Any]:

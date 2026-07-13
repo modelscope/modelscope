@@ -83,9 +83,11 @@ class DownloadCMDTest(unittest.TestCase):
         if stat != 0:
             print(output)
         self.assertEqual(stat, 0)
+        found = any(download_model_file_name in files
+                    for _, _, files in os.walk(self.tmp_dir))
         self.assertTrue(
-            osp.exists(
-                f'{self.tmp_dir}/{self.model_id}/{download_model_file_name}'))
+            found,
+            f'{download_model_file_name} not found under {self.tmp_dir}')
 
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_download_with_revision(self):

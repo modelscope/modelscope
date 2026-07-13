@@ -55,7 +55,6 @@ class DatasetContextConfig:
         self.cache_root_dir = cache_root_dir
         self.use_streaming = use_streaming
         self.stream_batch_size = stream_batch_size
-        self.download_virgo_files: bool = False
         self.trust_remote_code: bool = trust_remote_code
 
     @property

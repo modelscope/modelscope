@@ -1185,6 +1185,8 @@ def load_dataset_with_ctx(*args, **kwargs):
     generate_from_dict_origin = features.generate_from_dict
     hf_fs_open_origin = HfFileSystem._open
     hf_fs_init_origin = HfFileSystem.__init__
+    hf_fs_open_was_patched = hf_fs_open_origin is _hf_fs_open
+    hf_fs_init_was_patched = hf_fs_init_origin is _hf_fs_init_with_cookie
 
     # Apply patches
     config.HF_ENDPOINT = get_endpoint()
@@ -1201,25 +1203,33 @@ def load_dataset_with_ctx(*args, **kwargs):
     if _HAS_SCRIPT_LOADING:
         HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
     features.generate_from_dict = generate_from_dict_ms
-    _hf_fs_open_original = hf_fs_open_origin
-    HfFileSystem._open = _hf_fs_open
-    _hf_fs_init_original = hf_fs_init_origin
-    HfFileSystem.__init__ = _hf_fs_init_with_cookie
+    if not hf_fs_open_was_patched:
+        _hf_fs_open_original = hf_fs_open_origin
+        HfFileSystem._open = _hf_fs_open
+    if not hf_fs_init_was_patched:
+        _hf_fs_init_original = hf_fs_init_origin
+        HfFileSystem.__init__ = _hf_fs_init_with_cookie
 
     streaming = kwargs.get('streaming', False)
 
+    _streaming_dataset_returned = False
+
     try:
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
+        _streaming_dataset_returned = streaming
         yield dataset_res
     finally:
         _repo_tree_cache.clear()
         HubApi._dataset_id_type_cache.clear()
 
-        if not streaming:
-            HfFileSystem._open = hf_fs_open_origin
-            _hf_fs_open_original = None
-            HfFileSystem.__init__ = hf_fs_init_origin
-            _hf_fs_init_original = None
+        should_restore = not _streaming_dataset_returned
+        if should_restore:
+            if not hf_fs_open_was_patched:
+                HfFileSystem._open = hf_fs_open_origin
+                _hf_fs_open_original = None
+            if not hf_fs_init_was_patched:
+                HfFileSystem.__init__ = hf_fs_init_origin
+                _hf_fs_init_original = None
 
             config.HF_ENDPOINT = hf_endpoint_origin
             file_utils.get_from_cache = get_from_cache_origin

@@ -1212,14 +1212,18 @@ def load_dataset_with_ctx(*args, **kwargs):
 
     streaming = kwargs.get('streaming', False)
 
+    _streaming_dataset_returned = False
+
     try:
         dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
+        _streaming_dataset_returned = streaming
         yield dataset_res
     finally:
         _repo_tree_cache.clear()
         HubApi._dataset_id_type_cache.clear()
 
-        if not streaming:
+        should_restore = not _streaming_dataset_returned
+        if should_restore:
             if not hf_fs_open_was_patched:
                 HfFileSystem._open = hf_fs_open_origin
                 _hf_fs_open_original = None

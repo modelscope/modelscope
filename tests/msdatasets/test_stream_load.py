@@ -1,6 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import unittest
+from unittest import mock
+
+from huggingface_hub.hf_file_system import HfFileSystem
 
 from modelscope import MsDataset
 from modelscope.utils.logger import get_logger
@@ -10,6 +13,39 @@ logger = get_logger()
 
 
 class TestStreamLoad(unittest.TestCase):
+
+    def test_hf_filesystem_patch_idempotent_for_repeated_streaming_loads(self):
+        from modelscope.msdatasets.utils import hf_datasets_util
+
+        hf_fs_open_before = HfFileSystem._open
+        hf_fs_init_before = HfFileSystem.__init__
+        open_original_before = hf_datasets_util._hf_fs_open_original
+        init_original_before = hf_datasets_util._hf_fs_init_original
+        try:
+            with mock.patch.object(
+                    hf_datasets_util.DatasetsWrapperHF,
+                    'load_dataset',
+                    return_value=object()):
+                with hf_datasets_util.load_dataset_with_ctx(streaming=True):
+                    pass
+                with hf_datasets_util.load_dataset_with_ctx(streaming=True):
+                    pass
+
+            self.assertIs(HfFileSystem._open, hf_datasets_util._hf_fs_open)
+            self.assertIsNot(
+                hf_datasets_util._hf_fs_open_original,
+                hf_datasets_util._hf_fs_open)
+            self.assertIs(
+                HfFileSystem.__init__,
+                hf_datasets_util._hf_fs_init_with_cookie)
+            self.assertIsNot(
+                hf_datasets_util._hf_fs_init_original,
+                hf_datasets_util._hf_fs_init_with_cookie)
+        finally:
+            HfFileSystem._open = hf_fs_open_before
+            HfFileSystem.__init__ = hf_fs_init_before
+            hf_datasets_util._hf_fs_open_original = open_original_before
+            hf_datasets_util._hf_fs_init_original = init_original_before
 
     def setUp(self):
         ...

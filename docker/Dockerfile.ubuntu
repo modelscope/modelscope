@@ -63,7 +63,6 @@ RUN bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir transformers diffusers 'timm>=0.9.0' && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set global.extra-index-url https://pypi.org/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 

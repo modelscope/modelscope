@@ -570,8 +570,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
                 'When overriding --torch_version for an Ascend image, also '
                 'pass matching --torchvision_version and '
                 '--torchaudio_version.')
-        if (torchvision_version_specified or
-                torchaudio_version_specified) and not torch_version_specified:
+        if (torchvision_version_specified
+                or torchaudio_version_specified) and not torch_version_specified:
             raise ValueError(
                 '--torchvision_version and --torchaudio_version require an '
                 'explicit --torch_version for an Ascend image.')

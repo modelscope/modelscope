@@ -44,15 +44,12 @@ class TestStreamLoad(unittest.TestCase):
                     pass
 
             self.assertIs(HfFileSystem._open, hf_datasets_util._hf_fs_open)
-            self.assertIsNot(
-                hf_datasets_util._hf_fs_open_original,
-                hf_datasets_util._hf_fs_open)
-            self.assertIs(
-                HfFileSystem.__init__,
-                hf_datasets_util._hf_fs_init_with_cookie)
-            self.assertIsNot(
-                hf_datasets_util._hf_fs_init_original,
-                hf_datasets_util._hf_fs_init_with_cookie)
+            self.assertIsNot(hf_datasets_util._hf_fs_open_original,
+                             hf_datasets_util._hf_fs_open)
+            self.assertIs(HfFileSystem.__init__,
+                          hf_datasets_util._hf_fs_init_with_cookie)
+            self.assertIsNot(hf_datasets_util._hf_fs_init_original,
+                             hf_datasets_util._hf_fs_init_with_cookie)
         finally:
             HfFileSystem._open = hf_fs_open_before
             HfFileSystem.__init__ = hf_fs_init_before
@@ -75,7 +72,8 @@ class TestStreamLoad(unittest.TestCase):
                     'load_dataset',
                     side_effect=RuntimeError('load failed')):
                 with self.assertRaises(RuntimeError):
-                    with hf_datasets_util.load_dataset_with_ctx(streaming=True):
+                    with hf_datasets_util.load_dataset_with_ctx(
+                            streaming=True):
                         pass
 
             self.assertIs(HfFileSystem._open, hf_fs_open_clean)

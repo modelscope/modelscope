@@ -9,14 +9,31 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 SHELL ["/bin/bash", "-c"]
 
 # ---------- System dependencies ----------
-RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
-    find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f && \
-    apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
-        wget git curl jq vim build-essential ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    . /etc/os-release; \
+    case "${ID,,}" in \
+        ubuntu) \
+            rm -f /etc/apt/apt.conf.d/docker-clean; \
+            find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f; \
+            apt-get update -y; \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+                wget git curl jq vim build-essential ca-certificates; \
+            apt-get clean; \
+            rm -rf /var/lib/apt/lists/* \
+            ;; \
+        openeuler) \
+            yum install -y \
+                gcc gcc-c++ cmake ninja-build numactl-devel mesa-libGL glib2 libSM libXext libXrender \
+                wget git curl jq vim make ca-certificates; \
+            yum clean all; \
+            rm -rf /var/cache/yum \
+            ;; \
+        *) \
+            echo "Unsupported base image OS: ${ID}" >&2; \
+            exit 1 \
+            ;; \
+    esac
 
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set global.extra-index-url "https://pypi.org/simple" && \
@@ -30,14 +47,14 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
 # ---------- Install vllm + vllm-ascend ----------
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
-    git clone --depth 1 --branch v0.18.0 https://github.com/vllm-project/vllm && \
-    git clone --depth 1 --branch v0.18.0 https://github.com/vllm-project/vllm-ascend.git
+    git clone --depth 1 --branch {vllm_git_ref} https://github.com/vllm-project/vllm && \
+    git clone --depth 1 --branch {vllm_ascend_git_ref} https://github.com/vllm-project/vllm-ascend.git
 
 RUN ARCH=$(uname -m) && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     source /usr/local/Ascend/nnal/atb/set_env.sh && \
     # Install torch & torch_npu & torchvision
-    pip install torch==2.9.0 torch_npu==2.9.0.post2 torchvision==0.24.0 && \
+    pip install torch=={torch_version} torch_npu=={torch_npu_version} torchvision=={torchvision_version} && \
     # Install vllm
     cd vllm && VLLM_TARGET_DEVICE=empty pip install -v -e . && cd .. && \
     # Install vllm-ascend
@@ -46,14 +63,13 @@ RUN ARCH=$(uname -m) && \
 # ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
     git clone --depth 1 --branch {mindspeed_branch} https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
-    GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift && \
-    git clone --depth 1 https://github.com/modelscope/mcore-bridge.git /mcore-bridge
+    GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift
 
 # ---------- Install training-side repositories ----------
 RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     cd /MindSpeed && pip install --no-cache-dir -e . && \
-    cd /mcore-bridge && pip install --no-cache-dir -e . && \
+    pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
     cd /ms-swift && pip install --no-cache-dir -e .
 
 # ---------- Pin torch to the correct version + torch_npu ----------
@@ -65,13 +81,13 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ "$ARCH" = "x86_64" ]; then \
         pip install --no-cache-dir --force-reinstall --no-deps \
             --index-url https://download.pytorch.org/whl/cpu \
-            torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0; \
+            torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version}; \
     else \
         pip install --no-cache-dir --force-reinstall --no-deps \
-            torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.0; \
+            torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version}; \
     fi && \
     pip install --no-cache-dir --force-reinstall --no-deps \
-        torch_npu==2.9.0.post2 && \
+        torch_npu=={torch_npu_version} && \
     rm -rf /root/.cache/pip
 
 # ---------- Remove CUDA-only dependencies pulled in by vllm (they cause missing libtorch_cuda.so errors on NPU) ----------
@@ -126,36 +142,13 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     pip install --no-cache-dir omegaconf==2.3.0 && \
     pip cache purge
 
-# ---------- Reinstall triton-ascend for the selected CANN version ----------
+# ---------- Install triton-ascend ----------
 RUN set -eux; \
     pip uninstall -y triton || true; \
     pip uninstall -y triton-ascend || true; \
-    case "${CANN_VERSION}" in \
-        8.5.*) \
-            pip install --no-cache-dir --force-reinstall triton-ascend==3.2.0; \
-            ;; \
-        9.0.0) \
-            PY_ABI="cp$(python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"; \
-            case "${PY_ABI}" in \
-                cp310|cp311|cp312|cp313) ;; \
-                *) echo "Unsupported Python ABI for triton-ascend 3.2.1: ${PY_ABI}" >&2; exit 1 ;; \
-            esac; \
-            ARCH="$(uname -m)"; \
-            case "${ARCH}" in \
-                aarch64|x86_64) ;; \
-                *) echo "Unsupported architecture for triton-ascend 3.2.1: ${ARCH}" >&2; exit 1 ;; \
-            esac; \
-            WHEEL_NAME="triton_ascend-3.2.1-${PY_ABI}-${PY_ABI}-manylinux_2_27_${ARCH}.manylinux_2_28_${ARCH}.whl"; \
-            WHEEL_PATH="/tmp/${WHEEL_NAME}"; \
-            curl -fL "https://gitcode.com/Ascend/triton-ascend/releases/download/v3.2.1/${WHEEL_NAME}" -o "${WHEEL_PATH}"; \
-            pip install --no-cache-dir --force-reinstall "${WHEEL_PATH}"; \
-            rm -f "${WHEEL_PATH}"; \
-            ;; \
-        *) \
-            echo "Unsupported CANN_VERSION for triton-ascend install: ${CANN_VERSION}" >&2; \
-            exit 1; \
-            ;; \
-    esac
+    pip install --no-cache-dir --force-reinstall \
+        triton-ascend=={triton_ascend_version} \
+        --extra-index-url=https://triton-ascend.osinfra.cn/pypi/simple
 
 RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
     echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \

@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import platform
 import re
@@ -9,6 +8,8 @@ import urllib.request
 from copy import copy
 from datetime import datetime
 from typing import Any, List, Optional
+
+import json
 
 docker_registry = os.environ['DOCKER_REGISTRY']
 assert docker_registry, 'You must pass a valid DOCKER_REGISTRY'
@@ -507,9 +508,8 @@ class AmdImageBuilder(Builder):
     @classmethod
     def _fetch_rocm_tags(cls, page_size: int = 100) -> List[dict]:
         tags: List[dict] = []
-        url = (
-            f'https://hub.docker.com/v2/repositories/{VLLM_ROCM_REPO}/tags'
-            f'?page_size={page_size}&ordering=-last_updated')
+        url = (f'https://hub.docker.com/v2/repositories/{VLLM_ROCM_REPO}/tags'
+               f'?page_size={page_size}&ordering=-last_updated')
         while url:
             req = urllib.request.Request(
                 url, headers={'User-Agent': 'modelscope-docker-builder'})
@@ -569,8 +569,8 @@ class AmdImageBuilder(Builder):
     def init_args(self, args: Any) -> Any:
         # Auto-discover from Docker Hub unless an explicit override is given.
         override = getattr(args, 'base_image_tag', None)
-        if override and str(override).strip() and str(override).strip().lower(
-        ) not in {'auto', 'latest'}:
+        if override and str(override).strip() and str(
+                override).strip().lower() not in {'auto', 'latest'}:
             args.base_image_tag = str(override).strip()
             if not self._is_specific_release_tag(args.base_image_tag):
                 raise ValueError(
@@ -630,9 +630,9 @@ class AmdImageBuilder(Builder):
             ' if os.environ.get(k): info[k.lower()]=os.environ[k]\n'
             'print(json.dumps(info))\n')
         for py in ('python3', 'python'):
-            result = cls._run_capture(
-                'docker', 'run', '--rm', '--network', 'none', '--entrypoint',
-                py, base_image, '-c', script)
+            result = cls._run_capture('docker', 'run', '--rm', '--network',
+                                      'none', '--entrypoint', py, base_image,
+                                      '-c', script)
             if result.returncode == 0 and result.stdout.strip():
                 try:
                     return json.loads(result.stdout.strip().splitlines()[-1])
@@ -714,9 +714,11 @@ class AmdImageBuilder(Builder):
 
         versions = {
             'rocm': cls._normalize_version(rocm) if rocm else None,
-            'python': cls._normalize_version(python_ver) if python_ver else None,
+            'python':
+            cls._normalize_version(python_ver) if python_ver else None,
             'torch': cls._normalize_version(torch_ver) if torch_ver else None,
-            'ubuntu': cls._normalize_version(ubuntu_ver) if ubuntu_ver else None,
+            'ubuntu':
+            cls._normalize_version(ubuntu_ver) if ubuntu_ver else None,
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
@@ -744,9 +746,8 @@ class AmdImageBuilder(Builder):
             raise RuntimeError(
                 'AMD image tag requires probed rocm/python/torch versions. '
                 f'Got rocm={rocm}, python={py_tag}, torch={torch}')
-        return (
-            f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
-            f'torch{torch}-{self.args.modelscope_version}-test')
+        return (f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
+                f'torch{torch}-{self.args.modelscope_version}-test')
 
     def _log_base_image_info(self) -> int:
         base_image = self.args.base_image
@@ -767,8 +768,8 @@ class AmdImageBuilder(Builder):
             print(f'AMD base image inspect warning: {result.stderr.strip()}')
 
         versions = self.probe_base_image_versions(base_image)
-        if not versions.get('rocm') or not versions.get('python') or not versions.get(
-                'torch'):
+        if not versions.get('rocm') or not versions.get(
+                'python') or not versions.get('torch'):
             print('ERROR: failed to probe rocm/python/torch from base image')
             return 1
         self.args.amd_rocm_version = versions['rocm']
@@ -779,9 +780,7 @@ class AmdImageBuilder(Builder):
             self.args.amd_ubuntu_version = versions['ubuntu']
         else:
             self.args.amd_ubuntu_version = self.args.ubuntu_version
-        print(
-            f'AMD output image tag will be: {self.image()}'
-        )
+        print(f'AMD output image tag will be: {self.image()}')
         print('=' * 60)
         return 0
 
@@ -801,10 +800,9 @@ class AmdImageBuilder(Builder):
         rocm = self.args.amd_rocm_version
         py_tag = self.args.amd_python_tag
         torch = self.args.amd_torch_version
-        image_tag2 = (
-            f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
-            f'torch{torch}-{self.args.modelscope_version}-'
-            f'{formatted_time}-test')
+        image_tag2 = (f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
+                      f'torch{torch}-{self.args.modelscope_version}-'
+                      f'{formatted_time}-test')
         ret = self.run_cmd('docker', 'tag', image_name, image_tag2)
         if ret != 0:
             return ret

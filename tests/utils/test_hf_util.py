@@ -259,7 +259,8 @@ class HFUtilTest(unittest.TestCase):
             cache_root = parent
             candidates = [
                 os.path.join(cache_root, 'nomic-ai', 'nomic-bert-2048'),
-                os.path.join(cache_root, 'models', 'nomic-ai--nomic-bert-2048'),
+                os.path.join(cache_root, 'models',
+                             'nomic-ai--nomic-bert-2048'),
             ]
             for model_dir_2 in candidates:
                 if not os.path.exists(model_dir_2):
@@ -307,18 +308,15 @@ class HFUtilTest(unittest.TestCase):
 
         captured = {}
 
-        def fake_origin(class_reference,
-                        pretrained_model_name_or_path,
-                        *args,
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
                         **kwargs):
             # Signature must match transformers so has_pretrained_arg is True.
             captured['class_reference'] = class_reference
             captured['pretrained'] = pretrained_model_name_or_path
             return type('DummyConfig', (), {})
 
-        class_ref = (
-            'nomic-ai/nomic-bert-2048--'
-            'configuration_hf_nomic_bert.NomicBertConfig')
+        class_ref = ('nomic-ai/nomic-bert-2048--'
+                     'configuration_hf_nomic_bert.NomicBertConfig')
 
         # create=True: do not permanently leave origin_* on the module
         # (would break test_import_not_pollute_dynamic_module).
@@ -355,9 +353,7 @@ class HFUtilTest(unittest.TestCase):
 
         captured = {}
 
-        def fake_origin(class_reference,
-                        pretrained_model_name_or_path,
-                        *args,
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
                         **kwargs):
             captured['class_reference'] = class_reference
             captured['pretrained'] = pretrained_model_name_or_path
@@ -398,9 +394,7 @@ class HFUtilTest(unittest.TestCase):
 
         captured = {}
 
-        def fake_origin(class_reference,
-                        pretrained_model_name_or_path,
-                        *args,
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
                         **kwargs):
             captured['class_reference'] = class_reference
             captured['pretrained'] = pretrained_model_name_or_path

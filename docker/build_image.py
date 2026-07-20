@@ -516,7 +516,7 @@ class AmdImageBuilder(Builder):
             try:
                 with urllib.request.urlopen(req, timeout=60) as resp:
                     payload = json.load(resp)
-            except urllib.error.URLError as exc:
+            except (urllib.error.URLError, json.JSONDecodeError) as exc:
                 raise RuntimeError(
                     f'Failed to query Docker Hub tags for {VLLM_ROCM_REPO}: '
                     f'{exc}') from exc

@@ -5,12 +5,15 @@ and friends accessible as positional arguments for backward compatibility.
 """
 from __future__ import annotations
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Type, Union
 
 from modelscope_hub.compat.snapshot_download import \
     dataset_snapshot_download as _compat_dataset_snapshot_download
 from modelscope_hub.compat.snapshot_download import \
     snapshot_download as _compat_snapshot_download
+
+if TYPE_CHECKING:
+    from .callback import ProgressCallback
 
 __all__ = ['snapshot_download', 'dataset_snapshot_download']
 
@@ -30,6 +33,7 @@ def snapshot_download(
     max_workers: Optional[int] = None,
     repo_id: Optional[str] = None,
     repo_type: Optional[str] = None,
+    progress_callbacks: Optional[List[Type[ProgressCallback]]] = None,
     token: Optional[str] = None,
     endpoint: Optional[str] = None,
 ) -> str:
@@ -37,6 +41,8 @@ def snapshot_download(
 
     Preserves the legacy positional-argument signature for backward
     compatibility while delegating to ``modelscope_hub.compat``.
+    ``progress_callbacks`` is a list of :class:`ProgressCallback` subclasses
+    (not instances), each instantiated per file to report download progress.
     """
     return _compat_snapshot_download(
         model_id=model_id,
@@ -56,6 +62,7 @@ def snapshot_download(
         local_files_only=bool(local_files_only)
         if local_files_only is not None else False,
         user_agent=user_agent,
+        progress_callbacks=progress_callbacks,
     )
 
 

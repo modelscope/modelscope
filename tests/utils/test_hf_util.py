@@ -336,6 +336,50 @@ class HFUtilTest(unittest.TestCase):
         # Local cache path (which contains '--') is pretrained_model_name_or_path.
         self.assertEqual(captured['pretrained'], local_path)
 
+    def test_dynamic_module_remote_pretrained_tuple_args(self):
+        """Remote pretrained_model_name_or_path must not mutate args in place.
+
+        ``*args`` is a tuple; ``args[0] = snapshot_download(...)`` raises
+        TypeError.  Rebuild the tuple instead (regression from 9379504f).
+        """
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        downloaded = os.path.join(tmp, 'models', 'org--model', 'snapshots',
+                                  'rev')
+        os.makedirs(downloaded)
+
+        captured = {}
+
+        def fake_origin(class_reference,
+                        pretrained_model_name_or_path,
+                        *args,
+                        **kwargs):
+            captured['class_reference'] = class_reference
+            captured['pretrained'] = pretrained_model_name_or_path
+            return type('DummyConfig', (), {})
+
+        # No '--' in class_reference: only the pretrained download branch runs.
+        remote_id = 'org/model-not-on-disk'
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download',
+                    return_value=downloaded) as sd:
+                # Must not raise TypeError: 'tuple' object does not support
+                # item assignment.
+                _get_class_from_dynamic_module('modeling.Foo', remote_id)
+
+        sd.assert_called_once_with(remote_id)
+        self.assertEqual(captured['class_reference'], 'modeling.Foo')
+        self.assertEqual(captured['pretrained'], downloaded)
+
     def test_import_not_pollute_dynamic_module(self):
         """Importing from modelscope must not globally patch
         transformers' get_class_from_dynamic_module (issue #1751).

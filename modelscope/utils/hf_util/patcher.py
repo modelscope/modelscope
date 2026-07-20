@@ -175,12 +175,26 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
     has_pretrained_arg = (
         'pretrained_model_name_or_path'
         in inspect.signature(origin_get_class_from_dynamic_module).parameters)
+    # Resolve pretrained_model_name_or_path from kwargs or positional args.
     # ``args`` is a tuple; never mutate it in place.
-    if has_pretrained_arg and args:
-        pretrained_model_name_or_path = args[0]
-        if not os.path.exists(pretrained_model_name_or_path):
-            from modelscope import snapshot_download
-            args = (snapshot_download(pretrained_model_name_or_path), ) + args[1:]
+    pretrained_in_kwargs = False
+    pretrained_model_name_or_path = None
+    if has_pretrained_arg:
+        if 'pretrained_model_name_or_path' in kwargs:
+            pretrained_model_name_or_path = kwargs[
+                'pretrained_model_name_or_path']
+            pretrained_in_kwargs = True
+        elif args:
+            pretrained_model_name_or_path = args[0]
+    if (pretrained_model_name_or_path is not None
+            and not os.path.exists(pretrained_model_name_or_path)):
+        from modelscope import snapshot_download
+        downloaded_path = snapshot_download(pretrained_model_name_or_path)
+        if pretrained_in_kwargs:
+            kwargs['pretrained_model_name_or_path'] = downloaded_path
+        else:
+            args = (downloaded_path, ) + args[1:]
+        pretrained_model_name_or_path = downloaded_path
     if '--' in class_reference:
         # Only the first ``--`` is the auto_map delimiter (repo vs module).
         repo_id, class_reference = class_reference.split('--', 1)
@@ -197,7 +211,11 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
             repo_id = snapshot_download(repo_id, **download_kwargs)
         if has_pretrained_arg:
             # Local path + bare class name; do not rejoin with ``--``.
-            args = (repo_id, ) + args[1:]
+            # Keep kwargs/positional form consistent with the original call.
+            if pretrained_in_kwargs:
+                kwargs['pretrained_model_name_or_path'] = repo_id
+            else:
+                args = (repo_id, ) + args[1:]
         else:
             # Legacy transformers without pretrained_model_name_or_path.
             # Unsafe if repo_id (local cache) contains '--'; modern

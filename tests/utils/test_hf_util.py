@@ -380,6 +380,58 @@ class HFUtilTest(unittest.TestCase):
         self.assertEqual(captured['class_reference'], 'modeling.Foo')
         self.assertEqual(captured['pretrained'], downloaded)
 
+    def test_dynamic_module_pretrained_via_kwargs(self):
+        """pretrained_model_name_or_path may be passed as a keyword argument."""
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        downloaded = os.path.join(tmp, 'models', 'org--model', 'snapshots',
+                                  'rev')
+        cross_repo = os.path.join(tmp, 'models', 'org--other', 'snapshots',
+                                  'rev')
+        os.makedirs(downloaded)
+        os.makedirs(cross_repo)
+
+        captured = {}
+
+        def fake_origin(class_reference,
+                        pretrained_model_name_or_path,
+                        *args,
+                        **kwargs):
+            captured['class_reference'] = class_reference
+            captured['pretrained'] = pretrained_model_name_or_path
+            captured['kwargs'] = kwargs
+            return type('DummyConfig', (), {})
+
+        remote_id = 'org/model-not-on-disk'
+        class_ref = 'org/other--configuration_foo.FooConfig'
+
+        def fake_download(repo_id, **kwargs):
+            if repo_id == remote_id:
+                return downloaded
+            if repo_id == 'org/other':
+                return cross_repo
+            raise AssertionError(f'unexpected download: {repo_id}')
+
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download', side_effect=fake_download):
+                # Keyword form: must download and not pass duplicate positional.
+                _get_class_from_dynamic_module(
+                    class_ref, pretrained_model_name_or_path=remote_id)
+
+        self.assertEqual(captured['class_reference'],
+                         'configuration_foo.FooConfig')
+        self.assertEqual(captured['pretrained'], cross_repo)
+        self.assertNotIn('pretrained_model_name_or_path', captured['kwargs'])
+
     def test_import_not_pollute_dynamic_module(self):
         """Importing from modelscope must not globally patch
         transformers' get_class_from_dynamic_module (issue #1751).

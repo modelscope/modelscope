@@ -3,12 +3,17 @@ FROM {base_image}
 ARG BASE_IMAGE_TAG={base_image_tag}
 LABEL modelscope.base_image="vllm/vllm-openai-rocm:${BASE_IMAGE_TAG}"
 
+# Build-time only (ARG does not persist into the image). Aliyun mirror can lag PyPI (~1h).
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
 
 ARG CUR_TIME={cur_time}
 RUN echo "CUR_TIME=${CUR_TIME}" && echo "BASE_IMAGE_TAG=${BASE_IMAGE_TAG}"
 
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {modelscope_branch} --single-branch https://github.com/modelscope/modelscope.git && \
     cd modelscope && pip install --no-cache-dir . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \

@@ -194,6 +194,78 @@ def get_cache_dir(model_id: Optional[str] = None):
         base_path, model_id + '/')
 
 
+def _modelscope_hub_cache_root() -> Path:
+    """Cache root used by ``modelscope_hub`` downloads (not SDK ``.../hub``)."""
+    env = os.environ.get('MODELSCOPE_CACHE')
+    if env:
+        return Path(env).expanduser()
+    return Path.home() / '.cache' / 'modelscope'
+
+
+def find_reusable_legacy_repo_dir(
+    repo_id: str,
+    repo_type: str = 'model',
+    cache_dir: Optional[Union[str, Path]] = None,
+) -> Optional[str]:
+    """Find old on-disk cache layouts that ``modelscope_hub`` download misses.
+
+    ``modelscope_hub`` reuses ``{cache}/{type}s/{owner}/{safe_name}/`` (dots in
+    ``name`` replaced by ``___``) and writes to
+    ``{cache}/{type}s/{owner}--{name}/snapshots/{rev}/``. Older SDKs also
+    stored repos at:
+
+    - ``{cache}/{owner}/{name}/`` (flat, when ``MODELSCOPE_CACHE`` was set)
+    - ``{cache}/hub/{owner}/{name}/`` (pre-``models/`` restructuring)
+    - ``{cache}/{type}s/{owner}/{name}/`` (unsafed name; hub only checks
+      ``safe_name``)
+
+    Returns a non-empty legacy path only when the layouts hub already handles
+    are absent, so callers can pass it as ``local_dir`` and avoid re-download.
+    """
+    if not repo_id or '/' not in repo_id:
+        return None
+
+    base = Path(cache_dir).expanduser() if cache_dir is not None else \
+        _modelscope_hub_cache_root()
+    segment = f'{repo_type}s' if not repo_type.endswith('s') else repo_type
+    owner, name = repo_id.split('/', 1)
+    safe_name = name.replace('.', '___')
+    safe_id = repo_id.replace('/', '--')
+
+    # Layouts already handled by modelscope_hub — do not override.
+    hub_known = [
+        base / segment / safe_id,
+        base / segment / owner / safe_name,
+    ]
+    for path in hub_known:
+        if _non_empty_dir(path):
+            return None
+
+    # Layouts hub download does not probe today.
+    legacy_candidates = [
+        base / owner / name,
+        base / owner / safe_name,
+        base / 'hub' / owner / name,
+        base / 'hub' / owner / safe_name,
+        base / segment / owner / name,
+    ]
+    for path in legacy_candidates:
+        if _non_empty_dir(path):
+            logger.info(
+                'Found legacy cache at %s for %s, reusing.', path, repo_id)
+            return str(path)
+    return None
+
+
+def _non_empty_dir(path: Path) -> bool:
+    if not path.is_dir():
+        return False
+    try:
+        return any(path.iterdir())
+    except OSError:
+        return False
+
+
 def get_release_datetime():
     if MODELSCOPE_SDK_DEBUG in os.environ:
         rt = int(round(datetime.now().timestamp()))

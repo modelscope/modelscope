@@ -13,6 +13,7 @@ from modelscope_hub.compat.snapshot_download import \
 from modelscope_hub.compat.snapshot_download import \
     snapshot_download as _compat_snapshot_download
 
+from modelscope.hub.utils.utils import find_reusable_legacy_repo_dir
 from modelscope.utils.logger import get_logger
 
 if TYPE_CHECKING:
@@ -83,10 +84,16 @@ def snapshot_download(
     (not instances), each instantiated per file to report download progress.
     """
     _warn_if_legacy_cache_detection_unavailable()
+    effective_id = repo_id or model_id
+    effective_type = repo_type or 'model'
+    cache_dir_str = str(cache_dir) if cache_dir is not None else None
+    if local_dir is None and effective_id is not None:
+        local_dir = find_reusable_legacy_repo_dir(
+            effective_id, repo_type=effective_type, cache_dir=cache_dir_str)
     return _compat_snapshot_download(
         model_id=model_id,
         revision=revision,
-        cache_dir=str(cache_dir) if cache_dir is not None else None,
+        cache_dir=cache_dir_str,
         local_dir=local_dir,
         allow_file_pattern=allow_file_pattern,
         ignore_file_pattern=ignore_file_pattern,
@@ -123,10 +130,14 @@ def dataset_snapshot_download(
     """Download a dataset repo snapshot (legacy positional-arg signature)."""
     _warn_if_legacy_cache_detection_unavailable()
     effective_id = dataset_id or repo_id
+    cache_dir_str = str(cache_dir) if cache_dir is not None else None
+    if local_dir is None and effective_id is not None:
+        local_dir = find_reusable_legacy_repo_dir(
+            effective_id, repo_type='dataset', cache_dir=cache_dir_str)
     return _compat_dataset_snapshot_download(
         dataset_id=effective_id,
         revision=revision,
-        cache_dir=str(cache_dir) if cache_dir is not None else None,
+        cache_dir=cache_dir_str,
         local_dir=local_dir,
         allow_file_pattern=allow_file_pattern,
         ignore_file_pattern=ignore_file_pattern,

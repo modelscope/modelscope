@@ -5,6 +5,8 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_RETRIES=10 \
     SOC_VERSION={soc_version} \
     CANN_VERSION={cann_version}
+# Build-time only (ARG does not persist into the image).
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
 
 SHELL ["/bin/bash", "-c"]
 
@@ -19,12 +21,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set global.extra-index-url "https://pypi.org/simple" && \
-    pip config set install.trusted-host mirrors.aliyun.com && \
-    ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-        pip config set global.extra-index-url "https://pypi.org/simple https://download.pytorch.org/whl/cpu/"; \
-    fi
+    pip config set install.trusted-host mirrors.aliyun.com
 
 {extra_content}
 # ---------- Install vllm + vllm-ascend ----------
@@ -34,6 +31,7 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     git clone --depth 1 --branch v0.18.0 https://github.com/vllm-project/vllm-ascend.git
 
 RUN ARCH=$(uname -m) && \
+    export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     source /usr/local/Ascend/nnal/atb/set_env.sh && \
     # Install torch & torch_npu & torchvision
@@ -50,7 +48,8 @@ RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Meg
     git clone --depth 1 https://github.com/modelscope/mcore-bridge.git /mcore-bridge
 
 # ---------- Install training-side repositories ----------
-RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     cd /MindSpeed && pip install --no-cache-dir -e . && \
     cd /mcore-bridge && pip install --no-cache-dir -e . && \
@@ -59,7 +58,8 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
 # ---------- Pin torch to the correct version + torch_npu ----------
 # x86: must force-install the CPU build from pytorch.org/whl/cpu
 # aarch64: PyPI only provides the CPU build, so install it directly from the Aliyun mirror
-RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -83,7 +83,8 @@ ENV PYTHONPATH=/Megatron-LM:${PYTHONPATH}
 # install dependencies
 COPY requirements /var/modelscope
 
-RUN pip uninstall ms-swift modelscope -y && pip install --no-cache-dir pip==23.* -U && \
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    pip uninstall ms-swift modelscope -y && pip install --no-cache-dir pip==23.* -U && \
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir omegaconf==2.0.6 && \
     pip install 'editdistance==0.8.1' && \
@@ -109,9 +110,11 @@ fi
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
-RUN pip install --no-cache-dir --no-build-isolation OpenCC
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    pip install --no-cache-dir --no-build-isolation OpenCC
 
-RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     pip install --no-cache-dir -U funasr scikit-learn && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
@@ -128,6 +131,7 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
 
 # ---------- Reinstall triton-ascend for the selected CANN version ----------
 RUN set -eux; \
+    export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}"; \
     pip uninstall -y triton || true; \
     pip uninstall -y triton-ascend || true; \
     case "${CANN_VERSION}" in \

@@ -18,7 +18,8 @@ from typing import Dict, List, Optional, Type
 
 import requests
 # --- Hub file downloads (delegated) ---
-from modelscope_hub.compat import dataset_file_download  # noqa: E402,F401
+from modelscope_hub.compat.file_download import \
+    dataset_file_download as _compat_dataset_file_download
 from modelscope_hub.compat.file_download import \
     model_file_download as _compat_model_file_download
 from requests.adapters import Retry
@@ -31,7 +32,7 @@ from modelscope.hub.constants import (API_FILE_DOWNLOAD_CHUNK_SIZE,
 from modelscope.utils.logger import get_logger
 from .callback import ProgressCallback, TqdmCallback
 from .errors import FileDownloadError
-from .utils.utils import get_endpoint
+from .utils.utils import find_reusable_legacy_repo_dir, get_endpoint
 
 logger = get_logger()
 
@@ -77,12 +78,46 @@ def model_file_download(
             revision = detail.get('Revision')
         except Exception:
             pass
+    if local_dir is None:
+        local_dir = find_reusable_legacy_repo_dir(
+            model_id, repo_type='model', cache_dir=cache_dir)
     return _compat_model_file_download(
         model_id,
         file_path,
         revision=revision,
         cache_dir=cache_dir,
         local_dir=local_dir,
+        cookies=cookies,
+        token=token,
+        endpoint=endpoint,
+        local_files_only=local_files_only,
+        user_agent=user_agent,
+    )
+
+
+def dataset_file_download(
+    dataset_id: str,
+    file_path: str,
+    *,
+    cache_dir: str = None,
+    local_dir: str = None,
+    revision: str = None,
+    cookies: dict = None,
+    token: str = None,
+    endpoint: str = None,
+    local_files_only: bool = False,
+    user_agent=None,
+) -> str:
+    """Download a single dataset file, reusing flat/hub legacy caches when present."""
+    if local_dir is None:
+        local_dir = find_reusable_legacy_repo_dir(
+            dataset_id, repo_type='dataset', cache_dir=cache_dir)
+    return _compat_dataset_file_download(
+        dataset_id,
+        file_path,
+        cache_dir=cache_dir,
+        local_dir=local_dir,
+        revision=revision,
         cookies=cookies,
         token=token,
         endpoint=endpoint,

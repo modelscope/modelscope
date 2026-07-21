@@ -372,7 +372,8 @@ class StableGPUImageBuilder(Builder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
             extra_content += """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -433,7 +434,8 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -886,7 +888,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
 
     def generate_dockerfile(self) -> str:
         extra_content = """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         with open('docker/Dockerfile.ascend', 'r') as f:
             content = f.read()

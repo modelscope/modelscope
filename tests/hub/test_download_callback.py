@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest import mock
 
 from tqdm import tqdm
 
@@ -46,6 +47,37 @@ class ProgressCallbackTest(unittest.TestCase):
             progress_callbacks=[],
             cache_dir=self.temp_dir.name)
         print(f'model_dir: {model_dir}')
+
+
+class SnapshotDownloadForwardTest(unittest.TestCase):
+    """Network-free tests: the shim forwards progress_callbacks to compat."""
+
+    # ``modelscope.hub.snapshot_download`` the attribute is shadowed by the
+    # re-exported function, so patch via the fully qualified module string.
+    _COMPAT_TARGET = \
+        'modelscope.hub.snapshot_download._compat_snapshot_download'
+
+    def test_progress_callbacks_forwarded_to_compat(self):
+        from modelscope.hub.snapshot_download import snapshot_download
+
+        with mock.patch(
+                self._COMPAT_TARGET, return_value='/tmp/snapshot') as m:
+            result = snapshot_download(
+                'owner/repo', progress_callbacks=[NewProgressCallback])
+
+        self.assertEqual(result, '/tmp/snapshot')
+        _, kwargs = m.call_args
+        self.assertEqual(kwargs['progress_callbacks'], [NewProgressCallback])
+
+    def test_progress_callbacks_default_none(self):
+        from modelscope.hub.snapshot_download import snapshot_download
+
+        with mock.patch(
+                self._COMPAT_TARGET, return_value='/tmp/snapshot') as m:
+            snapshot_download('owner/repo')
+
+        _, kwargs = m.call_args
+        self.assertIsNone(kwargs['progress_callbacks'])
 
 
 if __name__ == '__main__':

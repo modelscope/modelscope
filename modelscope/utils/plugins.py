@@ -374,6 +374,30 @@ def create_module_from_files(file_list, file_prefix, module_name):
     importlib.invalidate_caches()
 
 
+def _module_name_from_model_dir(model_dir: str) -> str:
+    """Derive a valid Python package name from a local model directory.
+
+    modelscope_hub 0.1.x returns paths like
+    ``{cache}/models/{owner}--{name}/snapshots/{revision}``.  Using
+    ``Path(model_dir).stem`` on a revision such as ``v1.0.4`` yields
+    ``v1.0``, and ``importlib.import_module('v1.0.xxx')`` fails with
+    ``ModuleNotFoundError: No module named 'v1'`` because dots are package
+    separators.  Prefer the ``{owner}--{name}`` segment (plus revision for
+    isolation) and sanitize to a valid identifier.
+    """
+    path = Path(model_dir).resolve()
+    if path.parent.name == 'snapshots':
+        base = f'{path.parent.parent.name}__{path.name}'
+    else:
+        # Use the full directory name, not .stem, so dotted names are kept
+        # intact before sanitization (stem would turn ``v1.0.4`` into ``v1.0``).
+        base = path.name
+    module_name = re.sub(r'[^0-9A-Za-z_]', '_', base)
+    if not module_name or module_name[0].isdigit():
+        module_name = f'm_{module_name}'
+    return module_name
+
+
 def import_module_from_model_dir(model_dir):
     """ import all the necessary module from a model dir
 
@@ -383,7 +407,6 @@ def import_module_from_model_dir(model_dir):
      No returns, raise error if failed
 
     """
-    from pathlib import Path
     file_scanner = FilesAstScanning()
     file_scanner.traversal_files(model_dir, include_init=True)
     file_dirs = file_scanner.file_dirs
@@ -395,7 +418,7 @@ def import_module_from_model_dir(model_dir):
     if BASE_MODULE_DIR not in sys.path:
         sys.path.append(BASE_MODULE_DIR)
 
-    module_name = Path(model_dir).stem
+    module_name = _module_name_from_model_dir(model_dir)
 
     # in order to keep forward compatibility, we add module path to
     # sys.path so that submodule can be imported directly as before

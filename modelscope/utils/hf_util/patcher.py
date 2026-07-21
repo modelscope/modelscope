@@ -161,16 +161,43 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
     When a config's ``auto_map`` references another repo, transformers calls
     ``get_class_from_dynamic_module`` to fetch it.  This wrapper ensures that
     fetch goes through ModelScope instead of HuggingFace.
+
+    Cross-repo ``auto_map`` entries use ``repo_id--module.Class``.  After
+    ``snapshot_download``, the local cache path may itself contain ``--``
+    (modelscope_hub 0.1.x layout: ``models/{owner}--{name}/snapshots/...``).
+    Re-joining that path with ``--`` would make transformers'
+    ``class_reference.split("--")`` raise ``ValueError``.  Instead, pass the
+    local directory as ``pretrained_model_name_or_path`` and the bare
+    ``module.Class`` as ``class_reference`` so transformers takes the
+    ``os.path.isdir`` branch.
     """
     from transformers.dynamic_module_utils import origin_get_class_from_dynamic_module
-    if 'pretrained_model_name_or_path' in inspect.signature(
-            origin_get_class_from_dynamic_module).parameters:
-        pretrained_model_name_or_path = args[0]
-        if not os.path.exists(pretrained_model_name_or_path):
-            from modelscope import snapshot_download
-            args[0] = snapshot_download(pretrained_model_name_or_path)
+    has_pretrained_arg = (
+        'pretrained_model_name_or_path'
+        in inspect.signature(origin_get_class_from_dynamic_module).parameters)
+    # Resolve pretrained_model_name_or_path from kwargs or positional args.
+    # ``args`` is a tuple; never mutate it in place.
+    pretrained_in_kwargs = False
+    pretrained_model_name_or_path = None
+    if has_pretrained_arg:
+        if 'pretrained_model_name_or_path' in kwargs:
+            pretrained_model_name_or_path = kwargs[
+                'pretrained_model_name_or_path']
+            pretrained_in_kwargs = True
+        elif args:
+            pretrained_model_name_or_path = args[0]
+    if (pretrained_model_name_or_path is not None
+            and not os.path.exists(pretrained_model_name_or_path)):
+        from modelscope import snapshot_download
+        downloaded_path = snapshot_download(pretrained_model_name_or_path)
+        if pretrained_in_kwargs:
+            kwargs['pretrained_model_name_or_path'] = downloaded_path
+        else:
+            args = (downloaded_path, ) + args[1:]
+        pretrained_model_name_or_path = downloaded_path
     if '--' in class_reference:
-        repo_id, class_reference = class_reference.split('--')
+        # Only the first ``--`` is the auto_map delimiter (repo vs module).
+        repo_id, class_reference = class_reference.split('--', 1)
         if not os.path.exists(repo_id):
             download_kwargs = {}
             extra_allow_file_pattern = _decide_allow_file_pattern(
@@ -182,7 +209,18 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
                 download_kwargs['ignore_file_pattern'] = ignore_file_pattern
             from modelscope import snapshot_download
             repo_id = snapshot_download(repo_id, **download_kwargs)
-        class_reference = repo_id + '--' + class_reference
+        if has_pretrained_arg:
+            # Local path + bare class name; do not rejoin with ``--``.
+            # Keep kwargs/positional form consistent with the original call.
+            if pretrained_in_kwargs:
+                kwargs['pretrained_model_name_or_path'] = repo_id
+            else:
+                args = (repo_id, ) + args[1:]
+        else:
+            # Legacy transformers without pretrained_model_name_or_path.
+            # Unsafe if repo_id (local cache) contains '--'; modern
+            # transformers always take the branch above.
+            class_reference = repo_id + '--' + class_reference
     return origin_get_class_from_dynamic_module(class_reference, *args,
                                                 **kwargs)
 

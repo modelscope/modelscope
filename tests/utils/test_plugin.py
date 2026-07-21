@@ -127,5 +127,40 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(len(result.items()), len(OFFICIAL_PLUGINS))
 
 
+class ModuleNameFromModelDirTest(unittest.TestCase):
+    """Regression: snapshot revision paths must not become dotted module names."""
+
+    def test_snapshot_revision_with_dots(self):
+        from modelscope.utils.plugins import _module_name_from_model_dir
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        model_dir = os.path.join(tmp, 'models',
+                                 'iic--cv_unet_skin_retouching_torch',
+                                 'snapshots', 'v1.0.4')
+        os.makedirs(model_dir)
+
+        name = _module_name_from_model_dir(model_dir)
+        self.assertNotIn('.', name)
+        self.assertTrue(
+            name.startswith('iic__cv_unet_skin_retouching_torch__v1_0_4'))
+        # Old Path(model_dir).stem produced 'v1.0', which importlib treats as
+        # package 'v1' → ModuleNotFoundError: No module named 'v1'.
+        self.assertNotEqual(name, 'v1.0')
+        self.assertFalse(name.startswith('v1'))
+
+    def test_flat_cache_layout_unchanged(self):
+        from modelscope.utils.plugins import _module_name_from_model_dir
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        model_dir = os.path.join(tmp, 'iic', 'cv_unet_skin_retouching_torch')
+        os.makedirs(model_dir)
+
+        self.assertEqual(
+            _module_name_from_model_dir(model_dir),
+            'cv_unet_skin_retouching_torch')
+
+
 if __name__ == '__main__':
     unittest.main()

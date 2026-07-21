@@ -249,19 +249,182 @@ class HFUtilTest(unittest.TestCase):
             f'Expected no weight files in {model_dir}, but found: '
             f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
         )
-        cache_dir = os.path.dirname(model_dir)
-        cache_dir = os.path.dirname(cache_dir)
-        model_dir_2 = os.path.join(cache_dir, 'nomic-ai', 'nomic-bert-2048')
-        if os.path.exists(model_dir_2):
-            files = os.listdir(model_dir_2)
-            has_weight_files = any(
-                f.endswith('.safetensors') or f.endswith('.bin')
-                for f in files)
-            self.assertFalse(
-                has_weight_files,
-                f'Expected no weight files in {model_dir}, but found: '
-                f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
-            )
+        # modelscope_hub 0.1.x layout uses models/{owner}--{name}/...;
+        # older layout used {owner}/{name}/.  Accept either.
+        cache_root = model_dir
+        for _ in range(4):
+            parent = os.path.dirname(cache_root)
+            if parent == cache_root:
+                break
+            cache_root = parent
+            candidates = [
+                os.path.join(cache_root, 'nomic-ai', 'nomic-bert-2048'),
+                os.path.join(cache_root, 'models',
+                             'nomic-ai--nomic-bert-2048'),
+            ]
+            for model_dir_2 in candidates:
+                if not os.path.exists(model_dir_2):
+                    continue
+                # Walk into snapshots/{rev} if present.
+                check_dirs = [model_dir_2]
+                snapshots = os.path.join(model_dir_2, 'snapshots')
+                if os.path.isdir(snapshots):
+                    check_dirs.extend(
+                        os.path.join(snapshots, d)
+                        for d in os.listdir(snapshots)
+                        if os.path.isdir(os.path.join(snapshots, d)))
+                for check_dir in check_dirs:
+                    files = os.listdir(check_dir)
+                    has_weight_files = any(
+                        f.endswith('.safetensors') or f.endswith('.bin')
+                        for f in files)
+                    self.assertFalse(
+                        has_weight_files,
+                        f'Expected no weight files in {check_dir}, but found: '
+                        f"{[f for f in files if f.endswith('.safetensors') or f.endswith('.bin')]}"
+                    )
+
+    def test_dynamic_module_double_dash_cache_path(self):
+        """Cross-repo auto_map must survive cache paths that contain '--'.
+
+        modelscope_hub 0.1.x stores repos under ``models/{owner}--{name}/``.
+        Rejoining that path into ``class_reference`` with ``--`` makes
+        transformers' ``split("--")`` raise ValueError.
+        """
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        local_path = os.path.join(tmp, 'models', 'nomic-ai--nomic-bert-2048',
+                                  'snapshots', 'rev')
+        os.makedirs(local_path)
+        pretrained = os.path.join(tmp, 'models',
+                                  'nomic-ai--nomic-embed-text-v1.5',
+                                  'snapshots', 'rev')
+        os.makedirs(pretrained)
+
+        captured = {}
+
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
+                        **kwargs):
+            # Signature must match transformers so has_pretrained_arg is True.
+            captured['class_reference'] = class_reference
+            captured['pretrained'] = pretrained_model_name_or_path
+            return type('DummyConfig', (), {})
+
+        class_ref = ('nomic-ai/nomic-bert-2048--'
+                     'configuration_hf_nomic_bert.NomicBertConfig')
+
+        # create=True: do not permanently leave origin_* on the module
+        # (would break test_import_not_pollute_dynamic_module).
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download', return_value=local_path):
+                _get_class_from_dynamic_module(class_ref, pretrained)
+
+        # Must pass bare module.Class (no '--') so transformers does not split.
+        self.assertEqual(captured['class_reference'],
+                         'configuration_hf_nomic_bert.NomicBertConfig')
+        # Local cache path (which contains '--') is pretrained_model_name_or_path.
+        self.assertEqual(captured['pretrained'], local_path)
+
+    def test_dynamic_module_remote_pretrained_tuple_args(self):
+        """Remote pretrained_model_name_or_path must not mutate args in place.
+
+        ``*args`` is a tuple; ``args[0] = snapshot_download(...)`` raises
+        TypeError.  Rebuild the tuple instead (regression from 9379504f).
+        """
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        downloaded = os.path.join(tmp, 'models', 'org--model', 'snapshots',
+                                  'rev')
+        os.makedirs(downloaded)
+
+        captured = {}
+
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
+                        **kwargs):
+            captured['class_reference'] = class_reference
+            captured['pretrained'] = pretrained_model_name_or_path
+            return type('DummyConfig', (), {})
+
+        # No '--' in class_reference: only the pretrained download branch runs.
+        remote_id = 'org/model-not-on-disk'
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download',
+                    return_value=downloaded) as sd:
+                # Must not raise TypeError: 'tuple' object does not support
+                # item assignment.
+                _get_class_from_dynamic_module('modeling.Foo', remote_id)
+
+        sd.assert_called_once_with(remote_id)
+        self.assertEqual(captured['class_reference'], 'modeling.Foo')
+        self.assertEqual(captured['pretrained'], downloaded)
+
+    def test_dynamic_module_pretrained_via_kwargs(self):
+        """pretrained_model_name_or_path may be passed as a keyword argument."""
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        downloaded = os.path.join(tmp, 'models', 'org--model', 'snapshots',
+                                  'rev')
+        cross_repo = os.path.join(tmp, 'models', 'org--other', 'snapshots',
+                                  'rev')
+        os.makedirs(downloaded)
+        os.makedirs(cross_repo)
+
+        captured = {}
+
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
+                        **kwargs):
+            captured['class_reference'] = class_reference
+            captured['pretrained'] = pretrained_model_name_or_path
+            captured['kwargs'] = kwargs
+            return type('DummyConfig', (), {})
+
+        remote_id = 'org/model-not-on-disk'
+        class_ref = 'org/other--configuration_foo.FooConfig'
+
+        def fake_download(repo_id, **kwargs):
+            if repo_id == remote_id:
+                return downloaded
+            if repo_id == 'org/other':
+                return cross_repo
+            raise AssertionError(f'unexpected download: {repo_id}')
+
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download', side_effect=fake_download):
+                # Keyword form: must download and not pass duplicate positional.
+                _get_class_from_dynamic_module(
+                    class_ref, pretrained_model_name_or_path=remote_id)
+
+        self.assertEqual(captured['class_reference'],
+                         'configuration_foo.FooConfig')
+        self.assertEqual(captured['pretrained'], cross_repo)
+        self.assertNotIn('pretrained_model_name_or_path', captured['kwargs'])
 
     def test_import_not_pollute_dynamic_module(self):
         """Importing from modelscope must not globally patch

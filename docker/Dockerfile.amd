@@ -1,0 +1,21 @@
+FROM {base_image}
+
+ARG BASE_IMAGE_TAG={base_image_tag}
+LABEL modelscope.base_image="vllm/vllm-openai-rocm:${BASE_IMAGE_TAG}"
+
+COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
+
+ARG CUR_TIME={cur_time}
+RUN echo "CUR_TIME=${CUR_TIME}" && echo "BASE_IMAGE_TAG=${BASE_IMAGE_TAG}"
+
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config set install.trusted-host mirrors.aliyun.com && \
+    cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {modelscope_branch} --single-branch https://github.com/modelscope/modelscope.git && \
+    cd modelscope && pip install --no-cache-dir . -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
+    cd / && rm -fr /tmp/modelscope && pip cache purge
+
+ENV VLLM_USE_MODELSCOPE=True
+ENV LMDEPLOY_USE_MODELSCOPE=True
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
+
+SHELL ["/bin/bash", "-c"]

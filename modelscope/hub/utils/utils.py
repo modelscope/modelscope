@@ -251,8 +251,8 @@ def find_reusable_legacy_repo_dir(
     ]
     for path in legacy_candidates:
         if _non_empty_dir(path):
-            logger.info(
-                'Found legacy cache at %s for %s, reusing.', path, repo_id)
+            logger.info('Found legacy cache at %s for %s, reusing.', path,
+                        repo_id)
             return str(path)
     return None
 

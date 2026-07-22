@@ -75,7 +75,8 @@ class LegacyCacheReuseTest(unittest.TestCase):
     def test_uses_modelscope_cache_env(self):
         legacy = self.cache / self.owner / self.name
         self._touch_model_dir(legacy)
-        with mock.patch.dict(os.environ, {'MODELSCOPE_CACHE': str(self.cache)}):
+        with mock.patch.dict(os.environ,
+                             {'MODELSCOPE_CACHE': str(self.cache)}):
             found = find_reusable_legacy_repo_dir(self.model_id)
         self.assertEqual(found, str(legacy))
 

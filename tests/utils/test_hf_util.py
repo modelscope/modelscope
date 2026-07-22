@@ -372,9 +372,130 @@ class HFUtilTest(unittest.TestCase):
                 # item assignment.
                 _get_class_from_dynamic_module('modeling.Foo', remote_id)
 
-        sd.assert_called_once_with(remote_id)
+        sd.assert_called_once_with(remote_id, local_files_only=False)
         self.assertEqual(captured['class_reference'], 'modeling.Foo')
         self.assertEqual(captured['pretrained'], downloaded)
+
+    def test_dynamic_module_local_files_only_forwarded(self):
+        """Download kwargs must be forwarded to both snapshot_download calls.
+
+        Cross-repo auto_map references previously omitted local_files_only /
+        cache_dir / token / code_revision, so offline and custom-cache loads
+        still hit the wrong download path for the referenced repo.
+        """
+        from unittest import mock
+
+        from modelscope.utils.hf_util.patcher import \
+            _get_class_from_dynamic_module
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        downloaded = os.path.join(tmp, 'models', 'org--model', 'snapshots',
+                                  'rev')
+        cross_repo = os.path.join(tmp, 'models', 'org--other', 'snapshots',
+                                  'rev')
+        os.makedirs(downloaded)
+        os.makedirs(cross_repo)
+
+        def fake_origin(class_reference, pretrained_model_name_or_path, *args,
+                        **kwargs):
+            return type('DummyConfig', (), {})
+
+        remote_id = 'org/model-not-on-disk'
+        class_ref = 'org/other--configuration_foo.FooConfig'
+        call_kwargs = []
+        cache_dir = os.path.join(tmp, 'custom_cache')
+        token = 'ms-test-token'
+
+        def fake_download(repo_id, **kwargs):
+            call_kwargs.append((repo_id, dict(kwargs)))
+            if repo_id == remote_id:
+                return downloaded
+            if repo_id == 'org/other':
+                return cross_repo
+            raise AssertionError(f'unexpected download: {repo_id}')
+
+        with mock.patch(
+                'transformers.dynamic_module_utils.origin_get_class_from_dynamic_module',
+                new=fake_origin,
+                create=True):
+            with mock.patch(
+                    'modelscope.snapshot_download', side_effect=fake_download):
+                _get_class_from_dynamic_module(
+                    class_ref,
+                    pretrained_model_name_or_path=remote_id,
+                    local_files_only=True,
+                    cache_dir=cache_dir,
+                    token=token,
+                    revision='model-rev',
+                    code_revision='code-rev')
+
+        self.assertEqual(len(call_kwargs), 2)
+        self.assertEqual(call_kwargs[0][0], remote_id)
+        self.assertEqual(
+            call_kwargs[0][1], {
+                'local_files_only': True,
+                'cache_dir': cache_dir,
+                'token': token,
+                'revision': 'model-rev',
+            })
+        self.assertEqual(call_kwargs[1][0], 'org/other')
+        self.assertEqual(call_kwargs[1][1]['local_files_only'], True)
+        self.assertEqual(call_kwargs[1][1]['cache_dir'], cache_dir)
+        self.assertEqual(call_kwargs[1][1]['token'], token)
+        self.assertEqual(call_kwargs[1][1]['revision'], 'code-rev')
+        self.assertIn('ignore_file_pattern', call_kwargs[1][1])
+
+    def test_ms_download_kwargs_from_hf(self):
+        """Shared HF→MS download kwargs mapping used by patcher download paths."""
+        from modelscope.utils.hf_util.patcher import _ms_download_kwargs_from_hf
+
+        self.assertEqual(
+            _ms_download_kwargs_from_hf({}), {'local_files_only': False})
+        got = _ms_download_kwargs_from_hf(
+            {
+                'local_files_only': True,
+                'cache_dir': '/tmp/c',
+                'token': 'sekrit',
+                'token_ignored': True,
+            },
+            revision='main')
+        self.assertEqual(
+            got, {
+                'local_files_only': True,
+                'cache_dir': '/tmp/c',
+                'token': 'sekrit',
+                'revision': 'master',
+            })
+        # HF token=True means "default creds"; only string tokens are forwarded.
+        self.assertNotIn('token', _ms_download_kwargs_from_hf({'token': True}))
+
+    def test_get_model_dir_forwards_cache_dir_and_token(self):
+        """from_pretrained download path must forward cache_dir and token."""
+        from unittest import mock
+
+        from modelscope import AutoConfig
+
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        with open(os.path.join(tmp, 'config.json'), 'w') as f:
+            f.write('{"model_type": "bert", "hidden_size": 8}')
+
+        cache_dir = os.path.join(tmp, 'custom_cache')
+        token = 'ms-test-token'
+        with mock.patch(
+                'modelscope.snapshot_download', return_value=tmp) as sd:
+            AutoConfig.from_pretrained(
+                'org/model-not-on-disk',
+                cache_dir=cache_dir,
+                token=token,
+                local_files_only=True)
+
+        sd.assert_called_once()
+        _, kwargs = sd.call_args
+        self.assertEqual(kwargs.get('cache_dir'), cache_dir)
+        self.assertEqual(kwargs.get('token'), token)
+        self.assertTrue(kwargs.get('local_files_only'))
 
     def test_dynamic_module_pretrained_via_kwargs(self):
         """pretrained_model_name_or_path may be passed as a keyword argument."""

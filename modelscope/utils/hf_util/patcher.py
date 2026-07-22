@@ -155,6 +155,31 @@ def _decide_allow_file_pattern(module_name, cls=None):
     return extra_allow_file_pattern
 
 
+def _ms_revision(revision):
+    """Translate an HF revision string into one ModelScope accepts."""
+    return 'master' if revision in (None, 'main') else revision
+
+
+def _ms_download_kwargs_from_hf(kwargs, revision=None):
+    """Map transformers download kwargs onto ``snapshot_download`` arguments.
+
+    Forwards ``local_files_only``, ``cache_dir``, string ``token``, and an
+    optional revision (normalized via ``_ms_revision``).
+    """
+    download_kwargs = {
+        'local_files_only': kwargs.get('local_files_only', False),
+    }
+    cache_dir = kwargs.get('cache_dir')
+    if cache_dir is not None:
+        download_kwargs['cache_dir'] = cache_dir
+    token = kwargs.get('token')
+    if isinstance(token, str):
+        download_kwargs['token'] = token
+    if revision is not None:
+        download_kwargs['revision'] = _ms_revision(revision)
+    return download_kwargs
+
+
 def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
     """Wrapper that redirects dynamic-module downloads to ModelScope.
 
@@ -189,7 +214,11 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
     if (pretrained_model_name_or_path is not None
             and not os.path.exists(pretrained_model_name_or_path)):
         from modelscope import snapshot_download
-        downloaded_path = snapshot_download(pretrained_model_name_or_path)
+        # Model weights/config: use ``revision`` (not ``code_revision``).
+        downloaded_path = snapshot_download(
+            pretrained_model_name_or_path,
+            **_ms_download_kwargs_from_hf(
+                kwargs, revision=kwargs.get('revision')))
         if pretrained_in_kwargs:
             kwargs['pretrained_model_name_or_path'] = downloaded_path
         else:
@@ -199,7 +228,9 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
         # Only the first ``--`` is the auto_map delimiter (repo vs module).
         repo_id, class_reference = class_reference.split('--', 1)
         if not os.path.exists(repo_id):
-            download_kwargs = {}
+            # Cross-repo code: transformers uses ``code_revision`` for this repo.
+            download_kwargs = _ms_download_kwargs_from_hf(
+                kwargs, revision=kwargs.get('code_revision'))
             extra_allow_file_pattern = _decide_allow_file_pattern(
                 class_reference)
             if extra_allow_file_pattern is not None:
@@ -286,18 +317,16 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         if subfolder:
             file_filter = f'{subfolder}/*'
         if not os.path.exists(pretrained_model_name_or_path):
-            revision = kwargs.pop('revision', None)
-            if revision is None or revision == 'main':
-                revision = 'master'
+            revision = _ms_revision(kwargs.pop('revision', None))
             if file_filter is not None:
                 allow_file_pattern = file_filter
-            local_files_only = kwargs.pop('local_files_only', False)
+            download_kwargs = _ms_download_kwargs_from_hf(
+                kwargs, revision=revision)
             model_dir = snapshot_download(
                 pretrained_model_name_or_path,
-                revision=revision,
-                local_files_only=local_files_only,
                 ignore_file_pattern=ignore_file_pattern,
-                allow_file_pattern=allow_file_pattern)
+                allow_file_pattern=allow_file_pattern,
+                **download_kwargs)
             if subfolder:
                 model_dir = os.path.join(model_dir, subfolder)
         else:
@@ -628,11 +657,6 @@ def _unpatch_kernels():
     if origin is not None:
         kernels_utils._get_hf_api = origin
         del kernels_utils._get_hf_api_origin
-
-
-def _ms_revision(revision):
-    """Translate an HF revision string into one ModelScope accepts."""
-    return 'master' if revision in (None, 'main') else revision
 
 
 class _MsKernelApi:

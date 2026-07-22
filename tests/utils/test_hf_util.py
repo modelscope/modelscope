@@ -372,8 +372,7 @@ class HFUtilTest(unittest.TestCase):
                 # item assignment.
                 _get_class_from_dynamic_module('modeling.Foo', remote_id)
 
-        sd.assert_called_once_with(
-            remote_id, local_files_only=False)
+        sd.assert_called_once_with(remote_id, local_files_only=False)
         self.assertEqual(captured['class_reference'], 'modeling.Foo')
         self.assertEqual(captured['pretrained'], downloaded)
 
@@ -453,25 +452,23 @@ class HFUtilTest(unittest.TestCase):
 
         self.assertEqual(
             _ms_download_kwargs_from_hf({}), {'local_files_only': False})
-        self.assertEqual(
-            _ms_download_kwargs_from_hf(
-                {
-                    'local_files_only': True,
-                    'cache_dir': '/tmp/c',
-                    'token': 'sekrit',
-                    'token_ignored': True,
-                },
-                revision='main'),
+        got = _ms_download_kwargs_from_hf(
             {
+                'local_files_only': True,
+                'cache_dir': '/tmp/c',
+                'token': 'sekrit',
+                'token_ignored': True,
+            },
+            revision='main')
+        self.assertEqual(
+            got, {
                 'local_files_only': True,
                 'cache_dir': '/tmp/c',
                 'token': 'sekrit',
                 'revision': 'master',
             })
         # HF token=True means "default creds"; only string tokens are forwarded.
-        self.assertNotIn(
-            'token',
-            _ms_download_kwargs_from_hf({'token': True}))
+        self.assertNotIn('token', _ms_download_kwargs_from_hf({'token': True}))
 
     def test_get_model_dir_forwards_cache_dir_and_token(self):
         """from_pretrained download path must forward cache_dir and token."""

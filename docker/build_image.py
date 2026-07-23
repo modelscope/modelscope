@@ -469,20 +469,33 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 
 class AscendImageBuilder(StableGPUImageBuilder):
 
+    _DEFAULT_TORCH_VERSION = '2.9.0'
+    _DEFAULT_TORCHVISION_VERSION = '0.24.0'
+    _DEFAULT_TORCHAUDIO_VERSION = '2.9.0'
+    _DEFAULT_TORCH_NPU_VERSION = '2.9.0.post2'
+    _DEFAULT_VLLM_VERSION = '0.18.0'
+    _DEFAULT_VLLM_ASCEND_VERSION = '0.18.0'
+    _DEFAULT_TRITON_ASCEND_VERSIONS = {
+        '8.5': '3.2.0',
+        '9.0': '3.2.1',
+    }
     _CANN_VERSION_PATTERN = re.compile(r'^\d+(?:\.[0-9A-Za-z]+)+$')
     _OS_TAG_PATTERN = re.compile(r'^[A-Za-z]+[0-9][0-9A-Za-z.]*$')
+    _PYTHON_TAG_PATTERN = re.compile(r'^py\d+\.\d+$', re.IGNORECASE)
+    _TORCH_NPU_VERSION_PATTERN = re.compile(
+        r'^(?P<torch_version>\d+\.\d+\.\d+)(?:\.post\d+)?$')
 
     @staticmethod
     def _normalize_arch(arch: str = None) -> str:
         arch = arch or platform.machine()
         arch = arch.lower()
         arch_mapping = {
-            'x86': 'x86',
-            'x86_64': 'x86',
-            'amd64': 'x86',
-            'arm': 'arm',
-            'aarch64': 'arm',
-            'arm64': 'arm',
+            'x86': 'x86_64',
+            'x86_64': 'x86_64',
+            'amd64': 'x86_64',
+            'arm': 'aarch64',
+            'aarch64': 'aarch64',
+            'arm64': 'aarch64',
         }
         if arch not in arch_mapping:
             raise ValueError(f'Unsupported architecture: {arch}. '
@@ -522,24 +535,106 @@ class AscendImageBuilder(StableGPUImageBuilder):
 
         cann_version = parts[0]
         os_tag = parts[2]
+        python_tag = parts[3]
         if not cls._CANN_VERSION_PATTERN.fullmatch(cann_version):
             raise ValueError(f'Invalid CANN version in Ascend base image tag: '
                              f'{cann_version}')
         if not cls._OS_TAG_PATTERN.fullmatch(os_tag):
             raise ValueError(
                 f'Invalid OS tag in Ascend base image tag: {os_tag}')
+        if not cls._PYTHON_TAG_PATTERN.fullmatch(python_tag):
+            raise ValueError(
+                f'Invalid Python tag in Ascend base image tag: {python_tag}')
 
-        return cann_version, f'CANN{cann_version}', os_tag
+        return cann_version, f'CANN{cann_version}', os_tag, python_tag
+
+    @staticmethod
+    def _get_os_family(os_tag: str) -> str:
+        os_tag = os_tag.lower()
+        if os_tag.startswith('ubuntu'):
+            return 'ubuntu'
+        if os_tag.startswith('openeuler'):
+            return 'openeuler'
+        raise ValueError(f'Unsupported Ascend base image OS tag: {os_tag}. '
+                         'Supported OS families are Ubuntu and openEuler.')
+
+    @classmethod
+    def _init_torch_versions(cls, args) -> None:
+        torch_version_specified = args.torch_version is not None
+        torchvision_version_specified = args.torchvision_version is not None
+        torchaudio_version_specified = args.torchaudio_version is not None
+
+        if torch_version_specified:
+            if (not torchvision_version_specified
+                    or not torchaudio_version_specified):
+                raise ValueError(
+                    'When overriding --torch_version for an Ascend image, also '
+                    'pass matching --torchvision_version and '
+                    '--torchaudio_version.')
+        elif torchvision_version_specified or torchaudio_version_specified:
+            raise ValueError(
+                '--torchvision_version and --torchaudio_version require an '
+                'explicit --torch_version for an Ascend image.')
+
+        args.torch_version = args.torch_version or cls._DEFAULT_TORCH_VERSION
+        args.torchvision_version = (
+            args.torchvision_version or cls._DEFAULT_TORCHVISION_VERSION)
+        args.torchaudio_version = (
+            args.torchaudio_version or cls._DEFAULT_TORCHAUDIO_VERSION)
+        args.torch_npu_version = (
+            args.torch_npu_version or cls._DEFAULT_TORCH_NPU_VERSION)
+
+        match = cls._TORCH_NPU_VERSION_PATTERN.fullmatch(
+            args.torch_npu_version)
+        if not match:
+            raise ValueError('Invalid --torch_npu_version. Expected '
+                             '<major>.<minor>.<patch> or '
+                             '<major>.<minor>.<patch>.post<revision>.')
+        if args.torch_version != match.group('torch_version'):
+            raise ValueError(
+                '--torch_version must exactly match the base version of '
+                f'--torch_npu_version, got torch={args.torch_version} and '
+                f'torch_npu={args.torch_npu_version}.')
+
+    @classmethod
+    def _init_component_versions(cls, args) -> None:
+        args.vllm_version = args.vllm_version or cls._DEFAULT_VLLM_VERSION
+        args.vllm_ascend_version = (
+            args.vllm_ascend_version or cls._DEFAULT_VLLM_ASCEND_VERSION)
+        args.vllm_git_ref = cls._get_vllm_git_ref(args.vllm_version)
+        args.vllm_ascend_git_ref = cls._get_vllm_git_ref(
+            args.vllm_ascend_version)
+
+        if not args.triton_ascend_version:
+            cann_series = '.'.join(args.cann_version.split('.')[:2])
+            try:
+                args.triton_ascend_version = (
+                    cls._DEFAULT_TRITON_ASCEND_VERSIONS[cann_series])
+            except KeyError as e:
+                raise ValueError('No default triton-ascend version for CANN '
+                                 f'{args.cann_version}. Please pass '
+                                 '--triton_ascend_version explicitly.') from e
+
+    @staticmethod
+    def _get_vllm_git_ref(version: str) -> str:
+        return version if version.startswith('v') else f'v{version}'
 
     def init_args(self, args) -> Any:
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
+        self._init_torch_versions(args)
         args.arch = self._normalize_arch(args.arch)
         args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
-        args.cann_version, args.cann_version_tag, args.os_tag = (
-            self._get_cann_os_tags(args.base_image))
+        (args.cann_version, args.cann_version_tag, args.os_tag,
+         args.ascend_python_tag) = (
+             self._get_cann_os_tags(args.base_image))
+        self._get_os_family(args.os_tag)
+        self._init_component_versions(args)
         return super().init_args(args)
+
+    def _generate_python_tag(self, _python_version: str) -> str:
+        return self.args.ascend_python_tag
 
     def generate_dockerfile(self) -> str:
         extra_content = """
@@ -550,6 +645,19 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
             content = content.replace('{base_image}', self.args.base_image)
             content = content.replace('{soc_version}', self.args.soc_version)
             content = content.replace('{cann_version}', self.args.cann_version)
+            content = content.replace('{torch_version}',
+                                      self.args.torch_version)
+            content = content.replace('{torchvision_version}',
+                                      self.args.torchvision_version)
+            content = content.replace('{torchaudio_version}',
+                                      self.args.torchaudio_version)
+            content = content.replace('{torch_npu_version}',
+                                      self.args.torch_npu_version)
+            content = content.replace('{vllm_git_ref}', self.args.vllm_git_ref)
+            content = content.replace('{vllm_ascend_git_ref}',
+                                      self.args.vllm_ascend_git_ref)
+            content = content.replace('{triton_ascend_version}',
+                                      self.args.triton_ascend_version)
             content = content.replace('{extra_content}', extra_content)
             content = content.replace('{cur_time}', formatted_time)
             content = content.replace('{install_ms_deps}', 'False')
@@ -563,11 +671,12 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         return content
 
     def image(self) -> str:
-        return (
-            f'{docker_registry}:{self.args.swift_branch}-'
-            f'{self.args.atlas_hardware}-{self.args.python_tag}-'
-            f'{self.args.cann_version_tag}-{self.args.os_tag}-{self.args.arch}'
-        )
+        tag = (f'{self.args.swift_branch}-{self.args.cann_version_tag}-'
+               f'torch_npu{self.args.torch_npu_version}-'
+               f'{self.args.atlas_hardware}-{self.args.os_tag}-'
+               f'{self.args.python_tag}-'
+               f'{self.args.arch}')
+        return f'{docker_registry}:{tag.lower()}'
 
     def push(self):
         return 0
@@ -579,12 +688,15 @@ parser.add_argument('--image_type', type=str)
 parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
 parser.add_argument('--torch_version', type=str, default=None)
+parser.add_argument('--torch_npu_version', type=str, default=None)
 parser.add_argument('--torchvision_version', type=str, default=None)
 parser.add_argument('--cuda_version', type=str, default=None)
 parser.add_argument('--ci_image', type=int, default=0)
 parser.add_argument('--torchaudio_version', type=str, default=None)
 parser.add_argument('--tf_version', type=str, default=None)
 parser.add_argument('--vllm_version', type=str, default=None)
+parser.add_argument('--vllm_ascend_version', type=str, default=None)
+parser.add_argument('--triton_ascend_version', type=str, default=None)
 parser.add_argument('--lmdeploy_version', type=str, default=None)
 parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)

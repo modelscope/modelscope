@@ -142,6 +142,12 @@ RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     pip install --no-cache-dir omegaconf==2.3.0 && \
     pip cache purge
 
+# ---------- Install training and evaluation dependencies ----------
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    TORCH_DEVICE_BACKEND_AUTOLOAD=0 pip install --no-cache-dir "deepspeed<0.19" ray liger_kernel pre-commit -U && \
+    pip cache purge
+
 # ---------- Install triton-ascend ----------
 RUN set -eux; \
     pip uninstall -y triton || true; \

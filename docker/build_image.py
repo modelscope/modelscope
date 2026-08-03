@@ -1017,7 +1017,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
 
     def generate_dockerfile(self) -> str:
         extra_content = """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         with open('docker/Dockerfile.ascend', 'r') as f:
             content = f.read()

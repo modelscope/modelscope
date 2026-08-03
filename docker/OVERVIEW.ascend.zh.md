@@ -10,7 +10,8 @@ ms-swift Ascend 镜像面向华为昇腾 Atlas NPU，提供可直接使用的 ms
 - 构建模板：`docker/Dockerfile.ascend`
 - 构建入口：`docker/build_image.py --image_type ascend`
 - 默认基础镜像：`quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11`
-- 默认输出 tag：`${DOCKER_REGISTRY}:main-A3-py311-CANN8.5.1-ubuntu22.04-<arch>`
+- 支持的基础 OS：Ubuntu 和 openEuler，由 CANN 基础镜像 tag 选择
+- 默认输出 tag：`${DOCKER_REGISTRY}:main-cann8.5.1-torch_npu2.9.0.post2-a3-ubuntu22.04-py3.11-<arch>`
 - Ascend runtime 环境来自 `/usr/local/Ascend/ascend-toolkit/set_env.sh`
 - 如果镜像内存在 NNAL/ATB，则会加载 `/usr/local/Ascend/nnal/atb/set_env.sh`
 
@@ -22,45 +23,46 @@ Ascend Dockerfile 会安装和配置：
 | --- | --- |
 | CANN | 继承自选定的 `quay.io/ascend/cann` 基础镜像 |
 | Python | 继承自基础镜像 tag，例如 `py3.11` |
-| PyTorch | `torch==2.9.0` |
-| torch-npu | `torch_npu==2.9.0.post2` |
-| torchvision / torchaudio | `torchvision==0.24.0`，`torchaudio==2.9.0` |
-| vLLM | 从 `vllm-project/vllm` 源码安装，默认分支 `v0.18.0` |
-| vLLM Ascend | 从 `vllm-project/vllm-ascend` 源码安装，默认分支 `v0.18.0` |
+| PyTorch | 默认 `torch==2.9.0`；可通过 `--torch_version` 配置 |
+| torch-npu | 默认 `torch_npu==2.9.0.post2`；可通过 `--torch_npu_version` 配置 |
+| torchvision / torchaudio | 默认 `torchvision==0.24.0`、`torchaudio==2.9.0`；覆盖 `--torch_version` 时必须同时显式传入两者 |
+| vLLM | 从 `vllm-project/vllm` 源码安装，默认 `0.18.0`；可通过 `--vllm_version` 配置 |
+| vLLM Ascend | 从 `vllm-project/vllm-ascend` 源码安装，默认 `0.18.0`；可通过 `--vllm_ascend_version` 配置 |
 | Megatron-LM | 源码 checkout，默认分支 `v0.15.3` |
 | MindSpeed | 源码 checkout，默认分支 `core_r0.15.3` |
-| mcore-bridge | 来自 `modelscope/mcore-bridge` 的源码 checkout |
+| mcore-bridge | PyPI 上的最新发布版 |
 | ms-swift | 来自 `modelscope/ms-swift` 的源码 checkout，默认分支 `main` |
 | ModelScope | 来自 `modelscope/modelscope` 的源码 checkout，默认分支 `master` |
-| triton-ascend | CANN `8.5.*` 安装 `3.2.0`；CANN `9.0.0` 下载并本地安装 `3.2.1` wheel |
+| triton-ascend | CANN `8.5.*` 默认 `3.2.0`；CANN `9.0.*` 默认 `3.2.1`；可通过 `--triton_ascend_version` 配置，并从 Triton Ascend PyPI 源安装 |
 
 ## 支持的 Tag 格式
 
 通过 `docker/build_image.py --image_type ascend` 构建的镜像使用以下 tag 格式：
 
 ```text
-${DOCKER_REGISTRY}:<swift-branch>-<atlas-hardware>-<python-tag>-<cann-version-tag>-<os-tag>-<arch>
+${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<torch-npu-version>-<atlas-hardware>-<os-tag>-<python-tag>-<arch>
 ```
 
 | 字段 | 示例 | 说明 |
 | --- | --- | --- |
 | `swift-branch` | `main` | 构建镜像时使用的 ms-swift 分支 |
-| `atlas-hardware` | `A2`、`A3`、`300I`、`A5` | 从 `--soc_version` 推导 |
-| `python-tag` | `py311` | 从 `--python_version` 推导 |
-| `cann-version-tag` | `CANN8.5.1`、`CANN9.0.0` | 从 CANN 基础镜像 tag 解析 |
-| `os-tag` | `ubuntu22.04` | 从 CANN 基础镜像 tag 解析 |
-| `arch` | `arm`、`x86` | 从宿主机架构或 `--arch` 推导 |
+| `cann-version-tag` | `cann8.5.1`、`cann9.0.0` | 从 CANN 基础镜像 tag 解析 |
+| `torch-npu-version` | `2.9.0.post2` | 来自 `--torch_npu_version`，默认 `2.9.0.post2` |
+| `atlas-hardware` | `a2`、`a3`、`300i`、`a5` | 从 `--soc_version` 推导 |
+| `os-tag` | `ubuntu22.04`、`openeuler24.03` | 从 CANN 基础镜像 tag 解析；避免不同 OS 的镜像 tag 冲突 |
+| `python-tag` | `py3.11` | 从 CANN 基础镜像 tag 解析 |
+| `arch` | `aarch64`、`x86_64` | 从宿主机架构或 `--arch` 推导 |
 
 ARM64 宿主机上的默认示例：
 
 ```text
-${DOCKER_REGISTRY}:main-A3-py311-CANN8.5.1-ubuntu22.04-arm
+${DOCKER_REGISTRY}:main-cann8.5.1-torch_npu2.9.0.post2-a3-ubuntu22.04-py3.11-aarch64
 ```
 
 A2 / CANN 9.0.0 示例：
 
 ```text
-${DOCKER_REGISTRY}:main-A2-py311-CANN9.0.0-ubuntu22.04-arm
+${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-a2-ubuntu22.04-py3.11-aarch64
 ```
 
 ## 本地构建
@@ -85,6 +87,36 @@ python docker/build_image.py \
   --soc_version ascend910b1
 ```
 
+构建 openEuler 镜像。系统依赖层会自动使用 `yum`，Ubuntu 镜像继续使用 `apt-get`：
+
+```bash
+python docker/build_image.py \
+  --image_type ascend \
+  --base_image quay.io/ascend/cann:8.5.1-a3-openeuler24.03-py3.11 \
+  --soc_version ascend910_9391
+```
+
+覆盖 PyTorch 版本组。`--torch_version` 必须与 `--torch_npu_version` 的基础版本一致；覆盖 PyTorch 时，必须显式传入匹配的 torchvision 和 torchaudio 版本：
+
+```bash
+python docker/build_image.py \
+  --image_type ascend \
+  --torch_version 2.9.0 \
+  --torch_npu_version 2.9.0.post2 \
+  --torchvision_version 0.24.0 \
+  --torchaudio_version 2.9.0
+```
+
+覆盖 vLLM 版本组或 triton-ascend。vLLM 版本参数会选择对应 Git tag，例如 `0.18.0` 会选择 `v0.18.0`。
+
+```bash
+python docker/build_image.py \
+  --image_type ascend \
+  --vllm_version 0.18.0 \
+  --vllm_ascend_version 0.18.0 \
+  --triton_ascend_version 3.2.1
+```
+
 需要时可以覆盖 Megatron 或 MindSpeed 源码分支：
 
 ```bash
@@ -94,11 +126,11 @@ python docker/build_image.py \
   --mindspeed_branch core_r0.15.3
 ```
 
-如果构建时网络较慢，Linux 宿主机可以在根目录 `Dockerfile` 生成后使用 host network 构建：
+如需手工构建生成后的根目录 `Dockerfile`，可使用：
 
 ```bash
-docker build --network host \
-  -t ${DOCKER_REGISTRY}:main-A2-py311-CANN9.0.0-ubuntu22.04-arm \
+docker build \
+  -t ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-a2-ubuntu22.04-py3.11-aarch64 \
   -f Dockerfile .
 ```
 
@@ -119,7 +151,7 @@ docker run --rm -it \
   -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
   -v /etc/ascend_install.info:/etc/ascend_install.info \
   -v /mnt/workspace:/mnt/workspace \
-  ${DOCKER_REGISTRY}:main-A2-py311-CANN9.0.0-ubuntu22.04-arm \
+  ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-a2-ubuntu22.04-py3.11-aarch64 \
   bash
 ```
 
@@ -147,7 +179,8 @@ pip show ms-swift modelscope torch-npu triton-ascend
 ## 注意事项
 
 - CANN、firmware 和 driver 版本必须互相兼容。
-- 这个 Dockerfile 对 CANN `8.5.*` 和 CANN `9.0.0` 使用不同的 `triton-ascend` 安装路径。
+- Ubuntu 基础镜像通过 `apt-get` 安装系统依赖；openEuler 基础镜像通过 `yum` 安装对应 RPM 包。
+- `triton-ascend` 从 `https://triton-ascend.osinfra.cn/pypi/simple` 安装；请选择与 CANN、Python 和架构兼容的版本。
 - 该镜像面向 Ascend NPU 上的 ms-swift 工作流。依赖安装过程中引入且与 NPU runtime 冲突的 CUDA-only 包会被移除。
 - 生产任务建议使用固定镜像 tag，不要依赖浮动分支名。
 

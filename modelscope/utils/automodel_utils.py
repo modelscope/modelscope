@@ -141,18 +141,19 @@ def check_model_from_owner_group(model_dir: str,
         return False
     if owner_group is None:
         owner_group = ['iic', 'damo']
-    model_dir = model_dir.rstrip('/').rstrip('\\')
+    model_dir = os.path.normpath(model_dir.rstrip('/').rstrip('\\'))
     parent_dir = os.path.dirname(model_dir)
     group = os.path.basename(parent_dir)
     if group in owner_group:
         return True
     # Also check cache path pattern: {cache_root}/{owner}--{model_name}/snapshots/{revision}
-    # Require exactly "{owner}--{name}" format (2 segments split by --)
-    # to prevent spoofing via accounts like "iic--hacked" which would
-    # produce paths like "iic--hacked--evil" and bypass the check.
+    # Require exactly "{owner}--{name}" with both segments non-empty
+    # to prevent spoofing via accounts like "iic--hacked" (paths like
+    # "iic--hacked--evil") or empty names like "iic--".
     grandparent = os.path.basename(os.path.dirname(parent_dir))
     if '--' in grandparent:
         parts = grandparent.split('--')
-        if len(parts) == 2 and parts[0] in owner_group:
+        # Both owner and name must be non-empty; reject "iic--" / "--name".
+        if len(parts) == 2 and all(parts) and parts[0] in owner_group:
             return True
     return False

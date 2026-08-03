@@ -613,8 +613,9 @@ class AmdImageBuilder(Builder):
     @classmethod
     def _probe_via_entrypoint(cls, base_image: str) -> dict:
         """Read versions with docker run --entrypoint (no GPU required)."""
+        # Keep this script compact: it runs inside the base image via python -c.
         script = (
-            'import json,os,pathlib,sys\n'
+            'import json,os,pathlib,subprocess,sys\n'
             'info={"python":"%d.%d.%d"%sys.version_info[:3]}\n'
             'try:\n'
             ' import torch\n'
@@ -630,6 +631,34 @@ class AmdImageBuilder(Builder):
             '  break\n'
             'for k in ("ROCM_VERSION","HIP_VERSION","TORCH_VERSION"):\n'
             ' if os.environ.get(k): info[k.lower()]=os.environ[k]\n'
+            'def _dpkg_ver(*names):\n'
+            ' for n in names:\n'
+            '  try:\n'
+            '   r=subprocess.run(["dpkg-query","-W","-f=${Version}",n],'
+            'capture_output=True,text=True)\n'
+            '   if r.returncode==0 and r.stdout.strip():\n'
+            '    return r.stdout.strip()\n'
+            '  except Exception:\n'
+            '   pass\n'
+            ' return None\n'
+            'def _dpkg_scan(prefixes):\n'
+            ' try:\n'
+            '  r=subprocess.run(["dpkg-query","-W","-f=${Package}\\t${Version}\\n"],'
+            'capture_output=True,text=True)\n'
+            ' except Exception:\n'
+            '  return {}\n'
+            ' found={}\n'
+            ' for line in (r.stdout or "").splitlines():\n'
+            '  if "\\t" not in line: continue\n'
+            '  pkg,ver=line.split("\\t",1)\n'
+            '  for pref in prefixes:\n'
+            '   if pkg==pref or pkg.startswith(pref+"-"):\n'
+            '    found.setdefault(pref,ver)\n'
+            ' return found\n'
+            'pkgs=_dpkg_scan(("rccl","miopen"))\n'
+            'info["system.library.rccl"]=_dpkg_ver("rccl") or pkgs.get("rccl")\n'
+            'info["system.library.miopen"]=('
+            '_dpkg_ver("miopen-hip","miopen") or pkgs.get("miopen"))\n'
             'print(json.dumps(info))\n')
         for py in ('python3', 'python'):
             result = cls._run_capture('docker', 'run', '--rm', '--network',
@@ -713,6 +742,9 @@ class AmdImageBuilder(Builder):
         python_ver = probed.get('python')
         torch_ver = probed.get('torch') or probed.get('torch_version')
         ubuntu_ver = probed.get('ubuntu')
+        # Keep dpkg package versions as-is (may contain '~', e.g. 2.27.7.70201-81~22.04).
+        rccl_ver = probed.get('system.library.rccl')
+        miopen_ver = probed.get('system.library.miopen')
 
         versions = {
             'rocm': cls._normalize_version(rocm) if rocm else None,
@@ -721,6 +753,8 @@ class AmdImageBuilder(Builder):
             'torch': cls._normalize_version(torch_ver) if torch_ver else None,
             'ubuntu':
             cls._normalize_version(ubuntu_ver) if ubuntu_ver else None,
+            'system.library.rccl': rccl_ver or None,
+            'system.library.miopen': miopen_ver or None,
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():

@@ -71,7 +71,7 @@ RUN bash /tmp/install.sh {version_args} && \
 RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install --no-cache-dir math_verify "datasets<4.8.5" "gradio<5.33" "deepspeed<0.19" ray -U && \
     pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
-    pip install --no-cache-dir pybind11 liger_kernel wandb swanlab nvitop pre-commit "transformers<5.13" "trl<1.0" "peft<0.20" huggingface-hub -U && \
+    pip install --no-cache-dir pybind11 liger_kernel wandb swanlab nvitop pre-commit "transformers<5.15" "trl<1.0" "peft<0.21" huggingface-hub -U && \
     pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable --no-build-isolation; \
     pip install git+https://github.com/deepseek-ai/DeepGEMM.git@v2.1.1.post3 --no-build-isolation; \
     pip install -U flash-linear-attention --no-build-isolation; \

@@ -616,7 +616,7 @@ class AmdImageBuilder(Builder):
         parts = version.strip().split('.')
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f'py{parts[0]}{parts[1]}'
-        return f'py{re.sub(r'[^0-9]', '', version)}'
+        return f'py{re.sub(r"[^0-9]", "", version)}'
 
     @classmethod
     def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
@@ -771,7 +771,7 @@ class AmdImageBuilder(Builder):
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
-            print(f'  {key}: {value or 'unknown'}')
+            print(f'  {key}: {value or "unknown"}')
         return versions
 
     def generate_dockerfile(self) -> str:

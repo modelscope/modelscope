@@ -1,0 +1,14 @@
+decord
+diffusers==0.35.2
+evalscope>=1.0.0
+evalscope[opencompass]
+evalscope[vlmeval]
+keye_vl_utils>=1.5.2
+librosa
+mpi4py
+optimum==1.27.0
+pytorchvideo
+qwen_omni_utils>=0.0.9
+qwen_vl_utils==0.0.14
+soundfile
+timm

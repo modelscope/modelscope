@@ -357,12 +357,18 @@ class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
 
     def init_args(self, args: Any) -> Any:
+        if not args.base_image:
+            # torch>=2.13 is built against CUDA 13 and pulls its own nvidia-cudnn-cu13,
+            # so the plain -devel tag is enough (matches vLLM's own Dockerfile).
+            args.base_image = 'nvidia/cuda:13.0.3-devel-ubuntu22.04'
+        if not args.cuda_version:
+            args.cuda_version = '13.0.3'
         if not args.torch_version:
-            args.torch_version = '2.10.0'
-            args.torchaudio_version = '2.10.0'
-            args.torchvision_version = '0.25.0'
+            args.torch_version = '2.13.0'
+            args.torchaudio_version = '2.11.0'
+            args.torchvision_version = '0.28.0'
         if not args.vllm_version:
-            args.vllm_version = '0.19.1'
+            args.vllm_version = '0.27.1'
         return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
@@ -373,7 +379,14 @@ class StableGPUImageBuilder(Builder):
                                                   self.args.python_version)
             extra_content += """
 RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy onnx onnxscript
+"""
+            # vLLM >= 0.27 requires flashinfer >= 0.6.14, whose wheels are no longer
+            # published to PyPI. Pre-install it from flashinfer's own index so the later
+            # `pip install vllm` resolves without touching install.sh.
+            extra_content += """
+RUN pip install --no-cache-dir flashinfer-python \
+    --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -603,7 +616,7 @@ class AmdImageBuilder(Builder):
         parts = version.strip().split('.')
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f'py{parts[0]}{parts[1]}'
-        return f'py{re.sub(r"[^0-9]", "", version)}'
+        return f'py{re.sub(r'[^0-9]', '', version)}'
 
     @classmethod
     def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
@@ -758,7 +771,7 @@ class AmdImageBuilder(Builder):
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
-            print(f'  {key}: {value or "unknown"}')
+            print(f'  {key}: {value or 'unknown'}')
         return versions
 
     def generate_dockerfile(self) -> str:

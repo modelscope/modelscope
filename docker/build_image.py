@@ -37,20 +37,19 @@ class Builder:
 
     def init_args(self, args: Any) -> Any:
         if not args.base_image:
-            # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:13.0.3-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.10.0'
-            args.torchaudio_version = '2.10.0'
-            args.torchvision_version = '0.25.0'
+            args.torch_version = '2.13.0'
+            args.torchaudio_version = '2.11.0'
+            args.torchvision_version = '0.28.0'
         if not args.optimum_version:
             args.optimum_version = '2.0.0'
         if not args.tf_version:
             args.tf_version = '2.16.1'
         if not args.cuda_version:
-            args.cuda_version = '12.8.1'
+            args.cuda_version = '13.0.3'
         if not args.vllm_version:
-            args.vllm_version = '0.19.1'
+            args.vllm_version = '0.27.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
@@ -363,21 +362,6 @@ class StableCPUImageBuilder(Builder):
 
 class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
-
-    def init_args(self, args: Any) -> Any:
-        if not args.base_image:
-            # torch>=2.13 is built against CUDA 13 and pulls its own nvidia-cudnn-cu13,
-            # so the plain -devel tag is enough (matches vLLM's own Dockerfile).
-            args.base_image = 'nvidia/cuda:13.0.3-devel-ubuntu22.04'
-        if not args.cuda_version:
-            args.cuda_version = '13.0.3'
-        if not args.torch_version:
-            args.torch_version = '2.13.0'
-            args.torchaudio_version = '2.11.0'
-            args.torchvision_version = '0.28.0'
-        if not args.vllm_version:
-            args.vllm_version = '0.27.1'
-        return super().init_args(args)
 
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
@@ -1134,5 +1118,4 @@ else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
 for builder in builder_cls:
-    args = copy(args)
-    builder(args, args.dry_run)()
+    builder(copy(args), args.dry_run)()

@@ -78,6 +78,11 @@ class Builder:
         )
 
     def _save_dockerfile(self, content: str) -> None:
+        content = content.replace(
+            '{modelscope_hub_install}',
+            'pip install --no-cache-dir '
+            '"modelscope_hub @ git+https://github.com/modelscope/modelscope_hub.git@release/0.3" &&'
+        )
         if os.path.exists('./Dockerfile'):
             os.remove('./Dockerfile')
         with open('./Dockerfile', 'w') as f:

@@ -61,12 +61,6 @@ ${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<TorchNPU-version>
 | `arch`             | `aarch64`, `x86_64`             | Derived from host architecture or `--arch` |
 ```
 
-Default example on an ARM64 host:
-
-```text
-${DOCKER_REGISTRY}:main-cann8.5.1-torch_npu2.9.0.post2-a3-ubuntu22.04-py3.11-aarch64
-```
-
 A2 / CANN 9.0.0 example (`910b` CANN hardware tag):
 
 ```text

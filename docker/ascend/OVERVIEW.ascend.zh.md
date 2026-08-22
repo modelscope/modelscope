@@ -61,12 +61,6 @@ ${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<TorchNPU-version>
 | `arch`             | `aarch64`、`x86_64`              | 从宿主机架构或 `--arch` 推导 |
 ```
 
-ARM64 宿主机上的默认示例：
-
-```text
-${DOCKER_REGISTRY}:main-cann8.5.1-torch_npu2.9.0.post2-a3-ubuntu22.04-py3.11-aarch64
-```
-
 A2 / CANN 9.0.0 示例（CANN 硬件 tag 为 `910b`）：
 
 ```text

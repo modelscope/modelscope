@@ -1031,8 +1031,7 @@ class AscendImageBuilder(StableGPUImageBuilder):
                                       self.args.torchaudio_version)
             content = content.replace('{torch_npu_version}',
                                       self.args.torch_npu_version)
-            content = content.replace('{vllm_git_ref}',
-                                      self.args.vllm_git_ref)
+            content = content.replace('{vllm_git_ref}', self.args.vllm_git_ref)
             content = content.replace('{vllm_ascend_git_ref}',
                                       self.args.vllm_ascend_git_ref)
             content = content.replace('{triton_ascend_version}',

@@ -73,6 +73,17 @@ A2 / CANN 9.0.0 example (`910b` CANN hardware tag):
 ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-aarch64
 ```
 
+## Latest Images
+
+The latest A2 and A3 images are hosted at [quay.io/ascend/ms-swift](https://quay.io/repository/ascend/ms-swift?tab=tags).
+
+**Device / CANN Base Image / OS / Image Tag / Dockerfile**
+
+- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+
 ## Build Locally
 
 Set the target registry first. The build script renders `docker/ascend/Dockerfile.ascend` into the root `Dockerfile`, builds it, and skips push for Ascend images.
@@ -84,28 +95,29 @@ python docker/build_image.py \
   --image_type ascend
 ```
 
-Complete version-pinned reference (CANN 8.5.1, Atlas A3, Ubuntu 22.04,
-Python 3.11, ARM64):
+Complete version-pinned reference (CANN 9.1.0, Atlas A2, Ubuntu 22.04,
+Python 3.12, ARM64):
 
 ```bash
 export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
 
 python docker/build_image.py \
   --image_type ascend \
-  --base_image quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11 \
-  --soc_version ascend910_9391 \
+  --base_image quay.io/ascend/cann:9.1.0-910b-ubuntu22.04-py3.12 \
+  --soc_version ascend910b1 \
   --arch arm \
-  --torch_version 2.9.0 \
-  --torch_npu_version 2.9.0.post2 \
-  --torchvision_version 0.24.0 \
-  --torchaudio_version 2.9.0 \
-  --vllm_version 0.18.0 \
-  --vllm_ascend_version 0.18.0 \
+  --torch_version 2.10.0 \
+  --torch_npu_version 2.10.0.post2 \
+  --torchvision_version 0.25.0 \
+  --torchaudio_version 2.10.0 \
+  --vllm_version v0.23.0 \
+  --vllm_ascend_version v0.23.0 \
   --fla_version main \
-  --triton_ascend_version 3.2.0 \
-  --swift_branch main \
-  --megatron_branch v0.15.3 \
-  --mindspeed_branch core_r0.15.3
+  --triton_ascend_version 3.2.2 \
+  --modelscope_branch master \
+  --swift_branch v4.5.2 \
+  --megatron_branch core_v0.16.0 \
+  --mindspeed_branch core_r0.16.0
 ```
 
 For Ascend builds, CANN, hardware, OS, and Python versions come from

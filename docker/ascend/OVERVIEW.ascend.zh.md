@@ -73,6 +73,17 @@ A2 / CANN 9.0.0 示例（CANN 硬件 tag 为 `910b`）：
 ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-aarch64
 ```
 
+## 最新镜像
+
+最新的 A2 和 A3 镜像发布在 [quay.io/ascend/ms-swift](https://quay.io/repository/ascend/ms-swift?tab=tags)。
+
+**设备 / CANN 基础镜像 / OS / 镜像 Tag / Dockerfile**
+
+- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+
 ## 本地构建
 
 先设置目标镜像仓库。构建脚本会把 `docker/ascend/Dockerfile.ascend` 渲染成根目录 `Dockerfile`，然后执行构建；Ascend 镜像分支当前不执行 push。
@@ -84,27 +95,28 @@ python docker/build_image.py \
   --image_type ascend
 ```
 
-完整固定版本参考（CANN 8.5.1、Atlas A3、Ubuntu 22.04、Python 3.11、ARM64）：
+完整固定版本参考（CANN 9.1.0、Atlas A2、Ubuntu 22.04、Python 3.12、ARM64）：
 
 ```bash
 export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
 
 python docker/build_image.py \
   --image_type ascend \
-  --base_image quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11 \
-  --soc_version ascend910_9391 \
+  --base_image quay.io/ascend/cann:9.1.0-910b-ubuntu22.04-py3.12 \
+  --soc_version ascend910b1 \
   --arch arm \
-  --torch_version 2.9.0 \
-  --torch_npu_version 2.9.0.post2 \
-  --torchvision_version 0.24.0 \
-  --torchaudio_version 2.9.0 \
-  --vllm_version 0.18.0 \
-  --vllm_ascend_version 0.18.0 \
+  --torch_version 2.10.0 \
+  --torch_npu_version 2.10.0.post2 \
+  --torchvision_version 0.25.0 \
+  --torchaudio_version 2.10.0 \
+  --vllm_version v0.23.0 \
+  --vllm_ascend_version v0.23.0 \
   --fla_version main \
-  --triton_ascend_version 3.2.0 \
-  --swift_branch main \
-  --megatron_branch v0.15.3 \
-  --mindspeed_branch core_r0.15.3
+  --triton_ascend_version 3.2.2 \
+  --modelscope_branch master \
+  --swift_branch v4.5.2 \
+  --megatron_branch core_v0.16.0 \
+  --mindspeed_branch core_r0.16.0
 ```
 
 Ascend 构建中，CANN、硬件、OS 和 Python 版本来自 `--base_image`；

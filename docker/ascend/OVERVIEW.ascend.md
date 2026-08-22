@@ -39,7 +39,7 @@ The Ascend Dockerfile installs and configures:
 | triton-ascend            | Installed before vLLM and re-pinned after all editable installs, using Huawei Cloud Ascend PyPI as the primary index and official PyPI as fallback; CANN `8.5.*` defaults to `3.2.0`, CANN `9.0.*` to `3.2.1`; configurable with `--triton_ascend_version` |
 ```
 
-## Supported Tag Format
+## Image Tag Description
 
 Images built by `docker/build_image.py --image_type ascend` use this tag format:
 
@@ -120,80 +120,37 @@ python docker/build_image.py \
   --mindspeed_branch core_r0.16.0
 ```
 
-For Ascend builds, CANN, hardware, OS, and Python versions come from
-`--base_image`; `--python_version` does not override the Python tag. The
-`--soc_version` value selects the target SoC used when building vLLM Ascend and
-remains available in the runtime environment, while the hardware field in the
-image tag comes directly from `--base_image`.
-The FLA clone uses the `main` branch by default; pass `--fla_version` with a
-branch name or release tag such as `v0.5.2` to select another revision.
+## Custom Build Parameters
 
-Build an A2 / CANN 9.0.0 image (`910b` CANN hardware tag):
+Use `--image_type ascend` to select the Ascend builder. The following options
+are consumed by the current Ascend build path:
 
-```bash
-export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
+- `--base_image` (default: `quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11`): selects CANN, hardware, OS, and Python. The tag must follow `<cann-version>-<hardware>-<os>-py<python-version>`.
+- `--soc_version` (default: `ascend910_9391`): sets the target SoC for the vLLM Ascend build and the runtime `SOC_VERSION`; it must match the target hardware. The [vLLM Ascend v0.23.0 installation guide](https://docs.vllm.ai/projects/ascend/en/v0.23.0/installation.html) provides the reference values below. These are upstream vLLM Ascend build targets, not a claim that every hardware path has been verified by this Dockerfile:
+  - Atlas A2: `ascend910b1`
+  - Atlas A3: `ascend910_9391`
+  - Atlas 300I DUO: `ascend310p1`
+  - Atlas 950DT: `ascend950dt_9582`
+- `--arch` (default: detected from the host): accepts `arm` or `x86`; normalized to `aarch64` or `x86_64` in the output tag.
+- `--torch_version` (default: `2.9.0`): selects PyTorch. If overridden, matching `--torchvision_version` and `--torchaudio_version` are required.
+- `--torch_npu_version` (default: `2.9.0.post2`): its base version must exactly match `--torch_version`.
+- `--torchvision_version` (default: `0.24.0`): selects torchvision; required when `--torch_version` is overridden.
+- `--torchaudio_version` (default: `2.9.0`): selects torchaudio; required when `--torch_version` is overridden.
+- `--vllm_version` (default: `0.18.0`): selects the official vLLM source tag; values with or without the leading `v` are accepted.
+- `--vllm_ascend_version` (default: `0.18.0`): selects the official vLLM Ascend source tag; values with or without the leading `v` are accepted.
+- `--fla_version` (default: `main`): selects the FLA branch or release tag.
+- `--triton_ascend_version` (CANN-specific default): uses `3.2.0` for CANN 8.5 and `3.2.1` for CANN 9.0. Other CANN series, including 9.1, require an explicit value.
+- `--pip_extra_index_url` (default: Huawei Cloud Ascend PyPI): sets the primary package index for Ascend-specific dependencies.
+- `--pypi_official_index_url` (default: `https://pypi.org/simple`): sets the fallback package index.
+- `--swift_branch` (default: `main`): selects the ms-swift source branch or tag and is included in the output image tag.
+- `--megatron_branch` (default: `v0.15.3`): selects the Megatron-LM source branch or tag.
+- `--mindspeed_branch` (default: `core_r0.15.3`): selects the MindSpeed source branch or tag.
 
-python docker/build_image.py \
-  --image_type ascend \
-  --base_image quay.io/ascend/cann:9.0.0-910b-ubuntu22.04-py3.11 \
-  --soc_version ascend910b1
-```
-
-Build an openEuler image. The system-dependency layer automatically uses `yum`; Ubuntu images continue to use `apt-get`.
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --base_image quay.io/ascend/cann:8.5.1-a3-openeuler24.03-py3.11 \
-  --soc_version ascend910_9391
-```
-
-Override the PyTorch stack. `--torch_version` must match the base version of
-`--torch_npu_version`; when overriding PyTorch, pass its matching torchvision
-and torchaudio versions explicitly.
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --torch_version 2.9.0 \
-  --torch_npu_version 2.9.0.post2 \
-  --torchvision_version 0.24.0 \
-  --torchaudio_version 2.9.0
-```
-
-Override the vLLM source tags or triton-ascend version. Both vLLM components
-are built from their official `v0.18.0` source tags. `triton-ascend` is first
-installed before vLLM and then re-pinned after all editable installs so that
-dependencies cannot replace the selected CANN-specific version. Both steps use
-Huawei Cloud Ascend PyPI as the primary index and official PyPI as fallback.
-The same index pair is used while installing vLLM Ascend and its dependencies.
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --vllm_version 0.18.0 \
-  --vllm_ascend_version 0.18.0 \
-  --triton_ascend_version 3.2.1 \
-  --pip_extra_index_url https://mirrors.huaweicloud.com/ascend/repos/pypi \
-  --pypi_official_index_url https://pypi.org/simple
-```
-
-Override Megatron or MindSpeed source branches when needed:
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --megatron_branch v0.15.3 \
-  --mindspeed_branch core_r0.15.3
-```
-
-To run the rendered Dockerfile manually, use:
-
-```bash
-docker build \
-  -t ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-aarch64 \
-  -f Dockerfile .
-```
+`--python_version` does not override the Python version for Ascend images;
+select it through `--base_image`. `--modelscope_branch` is accepted by the
+shared argument parser but is not consumed by the Ascend Dockerfile, which
+installs the latest published ModelScope package with `pip install -U
+modelscope`.
 
 ## Run An Ascend Container
 

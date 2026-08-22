@@ -39,7 +39,7 @@ Ascend Dockerfile 会安装和配置：
 | triton-ascend             | 在 vLLM 之前安装，并在所有 editable 安装完成后再次固定版本；安装时以华为云 Ascend PyPI 为主索引、官方 PyPI 为备用索引；CANN `8.5.*` 默认 `3.2.0`、CANN `9.0.*` 默认 `3.2.1`；可通过 `--triton_ascend_version` 配置 |
 ```
 
-## 支持的 Tag 格式
+## 镜像 Tag 说明
 
 通过 `docker/build_image.py --image_type ascend` 构建的镜像使用以下 tag 格式：
 
@@ -119,76 +119,35 @@ python docker/build_image.py \
   --mindspeed_branch core_r0.16.0
 ```
 
-Ascend 构建中，CANN、硬件、OS 和 Python 版本来自 `--base_image`；
-`--python_version` 不会覆盖基础镜像中的 Python tag。`--soc_version` 用于
-选择构建 vLLM Ascend 时的目标 SoC，并会保留在运行时环境中；镜像 tag 中的
-硬件字段仍直接来自 `--base_image`。
-FLA 默认 checkout `main` 分支；可以通过 `--fla_version` 传入其他分支名或
-release tag，例如 `v0.5.2`。
+## 自定义构建参数
 
-构建 A2 / CANN 9.0.0 镜像（CANN 硬件 tag 为 `910b`）：
+使用 `--image_type ascend` 选择 Ascend 构建器。当前 Ascend 构建路径实际使用的参数如下：
 
-```bash
-export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
+- `--base_image`（默认：`quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11`）：选择 CANN、硬件、OS 和 Python；tag 必须符合 `<cann-version>-<hardware>-<os>-py<python-version>` 格式。
+- `--soc_version`（默认：`ascend910_9391`）：设置 vLLM Ascend 构建的目标 SoC 和运行时 `SOC_VERSION`；必须与目标硬件匹配。[vLLM Ascend v0.23.0 安装文档](https://docs.vllm.ai/projects/ascend/en/v0.23.0/installation.html)给出了以下参考值。这些是 vLLM Ascend 上游的构建目标，不代表本 Dockerfile 已验证全部硬件路径：
+  - Atlas A2：`ascend910b1`
+  - Atlas A3：`ascend910_9391`
+  - Atlas 300I DUO：`ascend310p1`
+  - Atlas 950DT：`ascend950dt_9582`
+- `--arch`（默认：根据宿主机自动检测）：可选 `arm` 或 `x86`；输出 tag 中会规范化为 `aarch64` 或 `x86_64`。
+- `--torch_version`（默认：`2.9.0`）：选择 PyTorch；覆盖时必须同时传入匹配的 `--torchvision_version` 和 `--torchaudio_version`。
+- `--torch_npu_version`（默认：`2.9.0.post2`）：基础版本必须与 `--torch_version` 完全一致。
+- `--torchvision_version`（默认：`0.24.0`）：选择 torchvision；覆盖 `--torch_version` 时必须显式传入。
+- `--torchaudio_version`（默认：`2.9.0`）：选择 torchaudio；覆盖 `--torch_version` 时必须显式传入。
+- `--vllm_version`（默认：`0.18.0`）：选择官方 vLLM 源码 tag；可以带或不带前置 `v`。
+- `--vllm_ascend_version`（默认：`0.18.0`）：选择官方 vLLM Ascend 源码 tag；可以带或不带前置 `v`。
+- `--fla_version`（默认：`main`）：选择 FLA 分支或 release tag。
+- `--triton_ascend_version`（默认值取决于 CANN 版本）：CANN 8.5 使用 `3.2.0`，CANN 9.0 使用 `3.2.1`；其他 CANN 系列（包括 9.1）必须显式传入。
+- `--pip_extra_index_url`（默认：华为云 Ascend PyPI）：设置 Ascend 特定依赖的主索引。
+- `--pypi_official_index_url`（默认：`https://pypi.org/simple`）：设置备用包索引。
+- `--swift_branch`（默认：`main`）：选择 ms-swift 源码分支或 tag，并写入输出镜像 tag。
+- `--megatron_branch`（默认：`v0.15.3`）：选择 Megatron-LM 源码分支或 tag。
+- `--mindspeed_branch`（默认：`core_r0.15.3`）：选择 MindSpeed 源码分支或 tag。
 
-python docker/build_image.py \
-  --image_type ascend \
-  --base_image quay.io/ascend/cann:9.0.0-910b-ubuntu22.04-py3.11 \
-  --soc_version ascend910b1
-```
-
-构建 openEuler 镜像。系统依赖层会自动使用 `yum`，Ubuntu 镜像继续使用 `apt-get`：
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --base_image quay.io/ascend/cann:8.5.1-a3-openeuler24.03-py3.11 \
-  --soc_version ascend910_9391
-```
-
-覆盖 PyTorch 版本组。`--torch_version` 必须与 `--torch_npu_version` 的基础版本一致；覆盖 PyTorch 时，必须显式传入匹配的 torchvision 和 torchaudio 版本：
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --torch_version 2.9.0 \
-  --torch_npu_version 2.9.0.post2 \
-  --torchvision_version 0.24.0 \
-  --torchaudio_version 2.9.0
-```
-
-覆盖 vLLM 源码 tag 或 triton-ascend 版本。两个 vLLM 组件均从官方
-`v0.18.0` 源码 tag 构建。`triton-ascend` 会先在 vLLM 之前安装，再在所有
-editable 安装完成后重新固定，避免依赖覆盖所选的 CANN 特定版本；两个步骤都
-以华为云 Ascend PyPI 为主索引、官方 PyPI 为备用索引。vLLM Ascend 及其依赖
-的安装也使用同一组索引。
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --vllm_version 0.18.0 \
-  --vllm_ascend_version 0.18.0 \
-  --triton_ascend_version 3.2.1 \
-  --pip_extra_index_url https://mirrors.huaweicloud.com/ascend/repos/pypi \
-  --pypi_official_index_url https://pypi.org/simple
-```
-
-需要时可以覆盖 Megatron 或 MindSpeed 源码分支：
-
-```bash
-python docker/build_image.py \
-  --image_type ascend \
-  --megatron_branch v0.15.3 \
-  --mindspeed_branch core_r0.15.3
-```
-
-如需手工构建生成后的根目录 `Dockerfile`，可使用：
-
-```bash
-docker build \
-  -t ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-aarch64 \
-  -f Dockerfile .
-```
+Ascend 镜像的 Python 版本必须通过 `--base_image` 选择，`--python_version`
+不会覆盖它。`--modelscope_branch` 虽然会被共用参数解析器接受，但 Ascend
+Dockerfile 不使用该参数；当前通过 `pip install -U modelscope` 安装 ModelScope
+最新发布包。
 
 ## 运行 Ascend 容器
 

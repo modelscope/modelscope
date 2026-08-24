@@ -854,11 +854,16 @@ class AscendImageBuilder(StableGPUImageBuilder):
     _DEFAULT_TORCH_NPU_VERSION = '2.9.0.post2'
     _DEFAULT_VLLM_VERSION = '0.18.0'
     _DEFAULT_VLLM_ASCEND_VERSION = '0.18.0'
+    _DEFAULT_FLA_VERSION = 'main'
+    _DEFAULT_PIP_EXTRA_INDEX_URL = (
+        'https://mirrors.huaweicloud.com/ascend/repos/pypi')
+    _DEFAULT_PYPI_OFFICIAL_INDEX_URL = 'https://pypi.org/simple'
     _DEFAULT_TRITON_ASCEND_VERSIONS = {
         '8.5': '3.2.0',
         '9.0': '3.2.1',
     }
     _CANN_VERSION_PATTERN = re.compile(r'^\d+(?:\.[0-9A-Za-z]+)+$')
+    _HARDWARE_TAG_PATTERN = re.compile(r'^[0-9A-Za-z]+$')
     _OS_TAG_PATTERN = re.compile(r'^[A-Za-z]+[0-9][0-9A-Za-z.]*$')
     _PYTHON_TAG_PATTERN = re.compile(r'^py\d+\.\d+$', re.IGNORECASE)
     _TORCH_NPU_VERSION_PATTERN = re.compile(
@@ -881,25 +886,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
                              'Please pass --arch x86 or --arch arm.')
         return arch_mapping[arch]
 
-    @staticmethod
-    def _get_atlas_hardware(soc_version: str) -> str:
-        soc_version = soc_version.lower()
-        atlas_mapping = {
-            'ascend910b1': 'A2',
-            'ascend910_9391': 'A3',
-            'ascend310p1': '300I',
-        }
-        if soc_version.startswith('ascend950'):
-            return 'A5'
-        if soc_version not in atlas_mapping:
-            raise ValueError(
-                f'Unsupported soc_version: {soc_version}. '
-                'Supported values are ascend910b1, ascend910_9391, '
-                'ascend310p1, and values starting with ascend950.')
-        return atlas_mapping[soc_version]
-
     @classmethod
-    def _get_cann_os_tags(cls, base_image: str) -> tuple:
+    def _get_cann_image_tags(cls, base_image: str) -> tuple:
         if ':' not in base_image.rsplit('/', 1)[-1]:
             raise ValueError(
                 f'Ascend base image must include a tag: {base_image}')
@@ -913,11 +901,15 @@ class AscendImageBuilder(StableGPUImageBuilder):
                 f'{base_tag}')
 
         cann_version = parts[0]
+        hardware_tag = parts[1]
         os_tag = parts[2]
         python_tag = parts[3]
         if not cls._CANN_VERSION_PATTERN.fullmatch(cann_version):
             raise ValueError(f'Invalid CANN version in Ascend base image tag: '
                              f'{cann_version}')
+        if not cls._HARDWARE_TAG_PATTERN.fullmatch(hardware_tag):
+            raise ValueError(f'Invalid hardware tag in Ascend base image tag: '
+                             f'{hardware_tag}')
         if not cls._OS_TAG_PATTERN.fullmatch(os_tag):
             raise ValueError(
                 f'Invalid OS tag in Ascend base image tag: {os_tag}')
@@ -925,7 +917,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
             raise ValueError(
                 f'Invalid Python tag in Ascend base image tag: {python_tag}')
 
-        return cann_version, f'CANN{cann_version}', os_tag, python_tag
+        return (cann_version, f'CANN{cann_version}', hardware_tag, os_tag,
+                python_tag)
 
     @staticmethod
     def _get_os_family(os_tag: str) -> str:
@@ -983,6 +976,7 @@ class AscendImageBuilder(StableGPUImageBuilder):
         args.vllm_git_ref = cls._get_vllm_git_ref(args.vllm_version)
         args.vllm_ascend_git_ref = cls._get_vllm_git_ref(
             args.vllm_ascend_version)
+        args.fla_version = args.fla_version or cls._DEFAULT_FLA_VERSION
 
         if not args.triton_ascend_version:
             cann_series = '.'.join(args.cann_version.split('.')[:2])
@@ -1002,12 +996,16 @@ class AscendImageBuilder(StableGPUImageBuilder):
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
+        args.pip_extra_index_url = (
+            args.pip_extra_index_url or self._DEFAULT_PIP_EXTRA_INDEX_URL)
+        args.pypi_official_index_url = (
+            args.pypi_official_index_url
+            or self._DEFAULT_PYPI_OFFICIAL_INDEX_URL)
         self._init_torch_versions(args)
         args.arch = self._normalize_arch(args.arch)
-        args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
-        (args.cann_version, args.cann_version_tag, args.os_tag,
-         args.ascend_python_tag) = (
-             self._get_cann_os_tags(args.base_image))
+        (args.cann_version, args.cann_version_tag, args.hardware_tag,
+         args.os_tag, args.ascend_python_tag) = (
+             self._get_cann_image_tags(args.base_image))
         self._get_os_family(args.os_tag)
         self._init_component_versions(args)
         return super().init_args(args)
@@ -1016,13 +1014,13 @@ class AscendImageBuilder(StableGPUImageBuilder):
         return self.args.ascend_python_tag
 
     def generate_dockerfile(self) -> str:
-        extra_content = """
-RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
-"""
-        with open('docker/Dockerfile.ascend', 'r') as f:
+        with open('docker/ascend/Dockerfile.ascend', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{pip_extra_index_url}',
+                                      self.args.pip_extra_index_url)
+            content = content.replace('{pypi_official_index_url}',
+                                      self.args.pypi_official_index_url)
             content = content.replace('{soc_version}', self.args.soc_version)
             content = content.replace('{cann_version}', self.args.cann_version)
             content = content.replace('{torch_version}',
@@ -1038,11 +1036,8 @@ RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
                                       self.args.vllm_ascend_git_ref)
             content = content.replace('{triton_ascend_version}',
                                       self.args.triton_ascend_version)
-            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{fla_version}', self.args.fla_version)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{modelscope_branch}',
-                                      self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
             content = content.replace('{megatron_branch}',
                                       self.args.megatron_branch)
@@ -1053,7 +1048,7 @@ RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
     def image(self) -> str:
         tag = (f'{self.args.swift_branch}-{self.args.cann_version_tag}-'
                f'torch_npu{self.args.torch_npu_version}-'
-               f'{self.args.atlas_hardware}-{self.args.os_tag}-'
+               f'{self.args.hardware_tag}-{self.args.os_tag}-'
                f'{self.args.python_tag}-'
                f'{self.args.arch}')
         return f'{docker_registry}:{tag.lower()}'
@@ -1076,7 +1071,20 @@ parser.add_argument('--torchaudio_version', type=str, default=None)
 parser.add_argument('--tf_version', type=str, default=None)
 parser.add_argument('--vllm_version', type=str, default=None)
 parser.add_argument('--vllm_ascend_version', type=str, default=None)
+parser.add_argument('--fla_version', type=str, default=None)
 parser.add_argument('--triton_ascend_version', type=str, default=None)
+parser.add_argument(
+    '--pip_extra_index_url',
+    type=str,
+    default=None,
+    help='Primary Python package index for Ascend-specific installs. Defaults '
+    'to the Huawei Cloud Ascend PyPI repository for Ascend images.')
+parser.add_argument(
+    '--pypi_official_index_url',
+    type=str,
+    default=None,
+    help='Fallback Python package index for Ascend-specific installs. Defaults '
+    'to the official PyPI repository.')
 parser.add_argument('--lmdeploy_version', type=str, default=None)
 parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)

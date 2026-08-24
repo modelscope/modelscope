@@ -53,7 +53,9 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     fi && \
     PIP_EXTRA_INDEX_URL= pip install --no-cache-dir --index-url "$TORCH_INDEX" \
         torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} && \
-    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir --index-url https://repo.huaweicloud.com/repository/pypi/simple \
+    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir \
+        --index-url "${PIP_EXTRA_INDEX_URL}" \
+        --extra-index-url "${PYPI_OFFICIAL_INDEX_URL}" \
         torch_npu=={torch_npu_version}
 
 # ---------- Install triton-ascend before vLLM ----------
@@ -117,7 +119,9 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
         pip install --no-cache-dir --force-reinstall --no-deps \
             torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version}; \
     fi && \
-    pip install --no-cache-dir --force-reinstall --no-deps \
+    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir --force-reinstall --no-deps \
+        --index-url "${PIP_EXTRA_INDEX_URL}" \
+        --extra-index-url "${PYPI_OFFICIAL_INDEX_URL}" \
         torch_npu=={torch_npu_version} && \
     rm -rf /root/.cache/pip
 

@@ -1,5 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 
 from modelscope.hub.mcp_api import MCPApi
 from modelscope.utils.logger import get_logger
@@ -62,6 +64,42 @@ class MCPApiTest(unittest.TestCase):
         for field in ['name', 'id', 'description', 'servers']:
             self.assertIn(field, result)
         self.assertEqual(result['id'], '@modelcontextprotocol/fetch')
+
+
+class MCPApiCompatTest(unittest.TestCase):
+
+    def test_list_mcp_servers_delegates_to_modelscope_hub(self):
+        api = MCPApi()
+        delegated_api = mock.MagicMock()
+        delegated_api.list_mcp_servers.return_value = SimpleNamespace(
+            items=[{
+                'Name': 'Fetch',
+                'Id': '@modelcontextprotocol/fetch',
+                'Description': 'Fetch pages'
+            }],
+            total_count=1,
+        )
+
+        with mock.patch(
+                'modelscope_hub.api.HubApi',
+                return_value=delegated_api) as hub_api_cls:
+            result = api.list_mcp_servers(
+                token='ms-readonly',
+                filter={'category': 'tools'},
+                total_count=2,
+                search='fetch')
+
+        hub_api_cls.assert_called_once_with(
+            token='ms-readonly', endpoint=api.endpoint)
+        delegated_api.list_mcp_servers.assert_called_once_with(
+            search='fetch',
+            page_number=1,
+            page_size=2,
+            filter={'category': 'tools'},
+        )
+        self.assertEqual(result['total_count'], 1)
+        self.assertEqual(result['servers'][0]['id'],
+                         '@modelcontextprotocol/fetch')
 
 
 if __name__ == '__main__':

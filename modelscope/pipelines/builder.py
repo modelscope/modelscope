@@ -4,9 +4,9 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
+from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
 from modelscope.models.base import Model
-from modelscope.utils.automodel_utils import check_model_from_owner_group
+from modelscope.utils.automodel_utils import is_model_from_trusted_source
 from modelscope.utils.config import ConfigDict, check_config
 from modelscope.utils.constant import (DEFAULT_MODEL_REVISION, Invoke, Tasks,
                                        ThirdParty)
@@ -23,6 +23,13 @@ from .util import is_official_hub_path
 
 PIPELINES = Registry('pipelines')
 logger = get_logger()
+
+_CONFIG_ONLY_PIPELINES = frozenset({
+    Pipelines.speech_dfsmn_aec_psm_16k,
+    Pipelines.image_view_transform,
+    Pipelines.image_to_3d,
+    Pipelines.anydoor,
+})
 
 
 def normalize_model_input(model,
@@ -120,8 +127,9 @@ def pipeline(task: str = None,
 
     model_id = model[0] if isinstance(model,
                                       list) and len(model) > 0 else model
-    _model_trusted = check_model_from_owner_group(model_id)
-    trust_remote_code = trust_remote_code or _model_trusted
+    _model_trusted = (False if trust_remote_code else
+                      is_model_from_trusted_source(model_id, model_revision))
+    trust_remote_code = bool(trust_remote_code or _model_trusted)
     pipeline_props = None
     if pipeline_name is None:
         # get default pipeline for this task
@@ -165,8 +173,12 @@ def pipeline(task: str = None,
                         ignore_file_pattern=ignore_file_pattern)
 
                     if cfg:
-                        plugins = cfg.safe_get('plugins')
-                        allow_remote = cfg.get('allow_remote', False)
+                        builtin_config_pipeline = pipeline_name in _CONFIG_ONLY_PIPELINES
+                        plugins = None if builtin_config_pipeline else cfg.safe_get(
+                            'plugins')
+                        allow_remote = (
+                            cfg.get('allow_remote', False)
+                            and not builtin_config_pipeline)
                         if (filter_plugin_in_whitelist(plugins)
                                 or allow_remote) and not trust_remote_code:
                             raise RuntimeError(
@@ -207,6 +219,11 @@ def pipeline(task: str = None,
                 pipeline_props = first_model.pipeline
         else:
             pipeline_name, default_model_repo = get_default_pipeline_info(task)
+            model_id = default_model_repo
+            _model_trusted = (False if trust_remote_code else
+                              is_model_from_trusted_source(
+                                  model_id, model_revision))
+            trust_remote_code = bool(trust_remote_code or _model_trusted)
             model = normalize_model_input(default_model_repo, model_revision)
             pipeline_props = {'type': pipeline_name}
     else:
@@ -246,17 +263,17 @@ def pipeline(task: str = None,
     clear_llm_info(kwargs, pipeline_name)
     if kwargs:
         cfg.update(kwargs)
+    # Repository configuration cannot enable remote code execution; this value
+    # comes only from caller opt-in or a Hub-verified trusted publisher.
+    cfg['trust_remote_code'] = trust_remote_code
 
     if preprocessor is not None:
         cfg.preprocessor = preprocessor
 
-    if _model_trusted:
-        return build_pipeline(cfg, task_name=task)
-    else:
-        return build_pipeline(
-            cfg,
-            task_name=task,
-            default_args={'trust_remote_code': trust_remote_code})
+    return build_pipeline(
+        cfg,
+        task_name=task,
+        default_args={'trust_remote_code': trust_remote_code})
 
 
 def add_default_pipeline_info(task: str,

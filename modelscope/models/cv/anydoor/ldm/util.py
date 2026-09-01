@@ -1,10 +1,12 @@
-import importlib
 from inspect import isfunction
 
 import numpy as np
 import torch
 from PIL import Image, ImageDraw, ImageFont
 from torch import optim
+
+from modelscope.utils.architecture import (ArchitectureConfigError,
+                                           instantiate_registered_architecture)
 
 
 def log_txt_as_img(wh, xc, size=10):
@@ -66,27 +68,50 @@ def count_params(model, verbose=False):
     total_params = sum(p.numel() for p in model.parameters())
     if verbose:
         print(
-            f'{model.__class__.__name__} has {total_params*1.e-6:.2f} M params.'
+            f'{model.__class__.__name__} has {total_params * 1.e-6:.2f} M params.'
         )
     return total_params
 
 
+def _architecture_registry():
+    """Return the static architecture registry supported by AnyDoor."""
+    from torch.nn import Identity
+
+    from ..anydoor_model import ControlledUnetModel
+    from .models.autoencoder import AutoencoderKL
+    from .modules.encoders.modules import FrozenDinoV2Encoder
+
+    return {
+        'modelscope.models.cv.anydoor.anydoor_model.ControlledUnetModel':
+        lambda: ControlledUnetModel,
+        'modelscope.models.cv.anydoor.ldm.models.autoencoder.AutoencoderKL':
+        lambda: AutoencoderKL,
+        'modelscope.models.cv.anydoor.ldm.modules.encoders.modules.FrozenDinoV2Encoder':
+        lambda: FrozenDinoV2Encoder,
+        'torch.nn.Identity':
+        lambda: Identity,
+    }
+
+
 def instantiate_from_config(config):
-    if 'target' not in config:
-        if config == '__is_first_stage__':
-            return None
-        elif config == '__is_unconditional__':
-            return None
-        raise KeyError('Expected key `target` to instantiate.')
-    return get_obj_from_str(config['target'])(**config.get('params', dict()))
+    return instantiate_registered_architecture(
+        config,
+        _architecture_registry(),
+        context='anydoor architecture',
+        sentinels=frozenset({'__is_first_stage__', '__is_unconditional__'}))
 
 
 def get_obj_from_str(string, reload=False):
-    module, cls = string.rsplit('.', 1)
     if reload:
-        module_imp = importlib.import_module(module)
-        importlib.reload(module_imp)
-    return getattr(importlib.import_module(module, package=None), cls)
+        raise ArchitectureConfigError(
+            'Reloading a configuration-selected architecture is not supported.'
+        )
+    registry = _architecture_registry()
+    architecture = registry.get(string)
+    if architecture is None:
+        raise ArchitectureConfigError(
+            f'anydoor architecture {string!r} is not approved.')
+    return architecture()
 
 
 class AdamWwithEMAandWings(optim.Optimizer):

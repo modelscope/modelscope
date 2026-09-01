@@ -7,6 +7,7 @@ from torchvision.utils import make_grid
 from modelscope import Model
 from modelscope.metainfo import Models
 from modelscope.models.builder import MODELS
+from modelscope.utils.architecture import require_trust_remote_code
 from modelscope.utils.constant import Tasks
 from .cldm.ddim_hacked import DDIMSampler
 from .ldm.models.diffusion.ddpm import LatentDiffusion
@@ -94,7 +95,7 @@ class ControlNet(nn.Module):
         if context_dim is not None:
             assert use_spatial_transformer, 'Need to use the spatial transformer for your cross-attention conditioning'
             from omegaconf.listconfig import ListConfig
-            if type(context_dim) == ListConfig:
+            if isinstance(context_dim, ListConfig):
                 context_dim = list(context_dim)
 
         if num_heads_upsample == -1:
@@ -337,13 +338,13 @@ class ControlLDM(LatentDiffusion, Model):
 
     def __init__(self, control_stage_config, control_key, only_mid_control,
                  *args, **kwargs):
+        require_trust_remote_code(
+            bool(kwargs.get('trust_remote_code', False)), 'ControlLDM')
         super().__init__(*args, **kwargs)
         self.control_model = ControlNet(**control_stage_config)
         self.control_key = control_key
         self.only_mid_control = only_mid_control
         self.control_scales = [1.0] * 13
-        self.trust_remote_code = kwargs.get('trust_remote_code', False)
-        self.check_trust_remote_code(self.model_dir)
 
     @torch.no_grad()
     def get_input(self, batch, k, bs=None, *args, **kwargs):

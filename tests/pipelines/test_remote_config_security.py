@@ -87,8 +87,9 @@ class ConfigChokePointSecurityTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             Config.from_file(self.untrusted_py, trust_remote_code=True)
 
-    def test_trusted_owner_py_is_allowed_without_optin(self):
-        with self.assertRaises(SystemExit):
+    def test_trusted_owner_path_without_optin_is_blocked(self):
+        # Local directory names are spoofable and cannot authorize Python configuration execution.
+        with self.assertRaises(RuntimeError):
             Config.from_file(self.trusted_py)
 
     def test_json_passive_load_unaffected(self):
@@ -110,8 +111,8 @@ class ConfigChokePointSecurityTest(unittest.TestCase):
         _write(nested_py, _CANARY)
         with self.assertRaises(RuntimeError):
             Config.from_file(nested_py, model_dir=self.untrusted_dir)
-        # Same file, but with a trusted model_dir override -> allowed.
-        with self.assertRaises(SystemExit):
+        # Even a seemingly trusted local path still requires caller opt-in.
+        with self.assertRaises(RuntimeError):
             Config.from_file(nested_py, model_dir=self.trusted_dir)
 
 
@@ -156,11 +157,12 @@ class CheckTrustRemoteCodeForConfigTest(unittest.TestCase):
             trust_remote_code=True,
             model_dir=self.untrusted_dir)
 
-    def test_trusted_owner_py_passes(self):
-        check_trust_remote_code_for_config(
-            self.trusted_py,
-            trust_remote_code=False,
-            model_dir=self.trusted_dir)
+    def test_trusted_owner_path_without_optin_raises(self):
+        with self.assertRaises(RuntimeError):
+            check_trust_remote_code_for_config(
+                self.trusted_py,
+                trust_remote_code=False,
+                model_dir=self.trusted_dir)
 
     def test_default_model_dir_inferred_from_filename(self):
         # When `model_dir` is omitted, helper must infer it from the file's
@@ -168,9 +170,10 @@ class CheckTrustRemoteCodeForConfigTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             check_trust_remote_code_for_config(
                 self.untrusted_py, trust_remote_code=False)
-        # Trusted parent should pass.
-        check_trust_remote_code_for_config(
-            self.trusted_py, trust_remote_code=False)
+        # A local parent directory name cannot authorize Python configuration execution.
+        with self.assertRaises(RuntimeError):
+            check_trust_remote_code_for_config(
+                self.trusted_py, trust_remote_code=False)
 
     def test_helper_uses_raise_not_assert(self):
         # Security gates must survive `python -O`. The helper raises

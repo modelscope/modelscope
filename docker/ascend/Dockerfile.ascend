@@ -20,14 +20,14 @@ RUN set -eux; \
             find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f; \
             apt-get update -y; \
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-                gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+                gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 patch \
                 wget git curl jq vim build-essential ca-certificates; \
             apt-get clean; \
             rm -rf /var/lib/apt/lists/* \
             ;; \
         openeuler) \
             yum install -y \
-                gcc gcc-c++ cmake ninja-build numactl-devel mesa-libGL glib2 libSM libXext libXrender \
+                gcc gcc-c++ cmake ninja-build numactl-devel mesa-libGL glib2 libSM libXext libXrender patch \
                 wget git curl jq vim make ca-certificates; \
             yum clean all; \
             rm -rf /var/cache/yum \
@@ -86,7 +86,7 @@ RUN git clone --depth 1 --branch {vllm_ascend_git_ref} \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     PIP_INDEX_URL="${ASCEND_PYPI_INDEX_URL}" \
-    PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL}" \
+    PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL} https://download.pytorch.org/whl/cpu/" \
         pip install --no-cache-dir -v -e .
 
 # ---------- Clone training-side repositories ----------

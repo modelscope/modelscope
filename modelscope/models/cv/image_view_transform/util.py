@@ -150,7 +150,7 @@ def count_params(model, verbose=False):
 
 
 def _architecture_registry():
-    """返回图像视角变换可用的静态架构集合。"""
+    """Return the static architecture registry for image view transformation."""
     from torch.nn import Identity
 
     from .ldm.autoencoder import AutoencoderKL

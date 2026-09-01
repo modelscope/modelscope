@@ -56,7 +56,7 @@ class Model(ABC):
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
         if not self.trust_remote_code:
-            # 使用 raise（而非 assert），确保 python -O 下仍保持门禁有效。
+            # Raise instead of assert so the gate remains active under python -O.
             raise RuntimeError(info_str)
 
     @abstractmethod
@@ -224,7 +224,7 @@ class Model(ABC):
         register_plugins_repo(plugins)
         for k, v in kwargs.items():
             model_cfg[k] = v
-        # 仓库配置不得自行开启远程代码执行权限。
+        # Repository configuration cannot enable remote code execution.
         model_cfg.pop('trust_remote_code', None)
         if device is not None:
             model_cfg.device = device

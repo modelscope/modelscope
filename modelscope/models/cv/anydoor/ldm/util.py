@@ -74,7 +74,7 @@ def count_params(model, verbose=False):
 
 
 def _architecture_registry():
-    """返回 AnyDoor 可用的静态架构集合。"""
+    """Return the static architecture registry supported by AnyDoor."""
     from torch.nn import Identity
 
     from ..anydoor_model import ControlledUnetModel

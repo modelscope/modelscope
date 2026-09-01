@@ -151,7 +151,7 @@ def count_params(model, verbose=False):
 
 
 def _architecture_registry():
-    """返回 SyncDreamer 可用的静态架构集合。"""
+    """Return the static architecture registry supported by SyncDreamer."""
     from torch.nn import Identity
 
     from .models.autoencoder import AutoencoderKL

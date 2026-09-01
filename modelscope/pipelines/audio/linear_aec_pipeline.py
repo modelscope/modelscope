@@ -129,7 +129,7 @@ def _validate_aec_config(config: Any) -> Mapping[str, Any]:
 
 
 def initialize_config(module_cfg: Mapping[str, Any]):
-    """从受限的 AEC 架构注册表构造网络。"""
+    """Construct an AEC network from the restricted architecture registry."""
     return instantiate_registered_architecture(
         {
             'target': module_cfg['architecture'],

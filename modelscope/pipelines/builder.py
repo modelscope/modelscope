@@ -263,8 +263,8 @@ def pipeline(task: str = None,
     clear_llm_info(kwargs, pipeline_name)
     if kwargs:
         cfg.update(kwargs)
-    # 不允许仓库配置伪造 trust_remote_code；该值只能来自调用方或经过
-    # Hub 元数据验证的可信发布者。
+    # Repository configuration cannot enable remote code execution; this value
+    # comes only from caller opt-in or a Hub-verified trusted publisher.
     cfg['trust_remote_code'] = trust_remote_code
 
     if preprocessor is not None:

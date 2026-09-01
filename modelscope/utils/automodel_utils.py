@@ -142,10 +142,11 @@ def _is_valid_hub_model_id(model_id: str) -> bool:
 @lru_cache(maxsize=256)
 def _is_model_from_trusted_source(model_id: str, revision: Optional[str],
                                   trusted_owners: frozenset[str]) -> bool:
-    """通过 Hub 返回的仓库元数据验证可信发布者。
+    """Verify a trusted publisher using Hub repository metadata.
 
-    本地目录名和缓存布局均可由本地攻击者伪造，不能作为执行远程代码的
-    授权依据。离线或本地路径无法取得可验证的 Hub 元数据时保持不可信。
+    Local directory names and cache layouts are attacker-controlled and must
+    not authorize remote code execution. Local paths and offline lookups remain
+    untrusted because their Hub metadata cannot be verified.
     """
     if not _is_valid_hub_model_id(model_id):
         return False
@@ -166,7 +167,7 @@ def is_model_from_trusted_source(
         model_id: str,
         revision: Optional[str] = None,
         trusted_owners: Optional[List[str]] = None) -> bool:
-    """判断模型是否由 Hub 元数据确认的可信发布者发布。"""
+    """Return whether Hub metadata verifies a trusted model publisher."""
     owners = frozenset(owner.casefold()
                        for owner in (trusted_owners or TRUSTED_MODEL_OWNERS))
     return _is_model_from_trusted_source(model_id, revision, owners)
@@ -174,10 +175,10 @@ def is_model_from_trusted_source(
 
 def check_model_from_owner_group(model_dir: str,
                                  owner_group: List[str] = None) -> bool:
-    """仅为 import 兼容保留的本地路径启发式函数。
+    """Retained local-path heuristic for import compatibility only.
 
-    不得用该函数授权远程代码执行；新调用链必须使用
-    :func:`is_model_from_trusted_source` 校验 Hub 元数据。
+    Do not use this helper to authorize remote code execution. New call paths
+    must use :func:`is_model_from_trusted_source` to validate Hub metadata.
     """
     if not model_dir or not isinstance(model_dir, str):
         return False

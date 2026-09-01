@@ -88,7 +88,7 @@ class ConfigChokePointSecurityTest(unittest.TestCase):
             Config.from_file(self.untrusted_py, trust_remote_code=True)
 
     def test_trusted_owner_path_without_optin_is_blocked(self):
-        # 本地目录名可被伪造，不能再作为执行 Python 配置的授权依据。
+        # Local directory names are spoofable and cannot authorize Python configuration execution.
         with self.assertRaises(RuntimeError):
             Config.from_file(self.trusted_py)
 
@@ -111,7 +111,7 @@ class ConfigChokePointSecurityTest(unittest.TestCase):
         _write(nested_py, _CANARY)
         with self.assertRaises(RuntimeError):
             Config.from_file(nested_py, model_dir=self.untrusted_dir)
-        # 即使给出看似可信的本地路径，也必须由调用方显式授权。
+        # Even a seemingly trusted local path still requires caller opt-in.
         with self.assertRaises(RuntimeError):
             Config.from_file(nested_py, model_dir=self.trusted_dir)
 
@@ -170,7 +170,7 @@ class CheckTrustRemoteCodeForConfigTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             check_trust_remote_code_for_config(
                 self.untrusted_py, trust_remote_code=False)
-        # 本地父目录名也不能授予执行 Python 配置的权限。
+        # A local parent directory name cannot authorize Python configuration execution.
         with self.assertRaises(RuntimeError):
             check_trust_remote_code_for_config(
                 self.trusted_py, trust_remote_code=False)

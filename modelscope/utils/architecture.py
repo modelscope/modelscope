@@ -1,5 +1,5 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-"""受限的模型架构配置校验与实例化工具。"""
+"""Validation and instantiation helpers for restricted model architectures."""
 
 from __future__ import annotations
 import inspect
@@ -8,11 +8,11 @@ from typing import Any
 
 
 class ArchitectureConfigError(ValueError):
-    """模型配置未满足受限架构契约。"""
+    """Raised when model configuration violates the restricted architecture contract."""
 
 
 def require_trust_remote_code(trust_remote_code: bool, context: str) -> None:
-    """在读取模型仓库中可影响执行的文件前强制执行授权门禁。"""
+    """Enforce authorization before reading execution-affecting repo files."""
     if not trust_remote_code:
         raise RuntimeError(
             f'{context} requires `trust_remote_code=True` because it loads '
@@ -26,7 +26,7 @@ def validate_mapping_schema(
     optional: set[str],
     context: str,
 ) -> Mapping[str, Any]:
-    """验证 mapping 的字段集合，拒绝意外字段。"""
+    """Validate a mapping field set and reject unexpected fields."""
     if not isinstance(value, Mapping):
         raise ArchitectureConfigError(f'{context} must be a mapping.')
     keys = set(value)
@@ -92,7 +92,7 @@ def instantiate_registered_architecture(
         context: str,
         sentinels: frozenset[str] = frozenset(),
 ) -> Any:
-    """从固定注册表实例化配置中的架构，绝不导入配置指定的模块。"""
+    """Instantiate a configured architecture from a fixed registry only."""
     if isinstance(config, str) and config in sentinels:
         return None
     config = validate_mapping_schema(

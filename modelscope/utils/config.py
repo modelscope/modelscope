@@ -31,19 +31,20 @@ RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 def check_trust_remote_code_for_config(filename,
                                        trust_remote_code: bool = False,
                                        model_dir=None):
-    """拒绝执行未经显式授权的远程 Python 配置。
+    """Refuse Python configuration execution without explicit authorization.
 
-    加载 Python 配置会执行其顶层代码。目录名与缓存布局都可由本地攻击者
-    伪造，因此不再将 ``model_dir`` 的路径形态视为可信来源；调用方必须
-    传入经 Hub 元数据验证后得到的 ``trust_remote_code=True``，或显式授权。
-    JSON/YAML 配置仍以被动数据方式解析。
+    Loading a Python configuration runs its top-level code. Local directory
+    names and cache layouts are attacker-controlled, so ``model_dir`` no longer
+    establishes trust. Callers must pass ``trust_remote_code=True`` after Hub
+    metadata verification or through an explicit opt-in. JSON and YAML remain
+    passive data formats.
 
     Args:
         filename: Path to the candidate config file.
         trust_remote_code: Caller opt-in flag; pass through
             ``self.trust_remote_code`` from ``Model`` / ``Pipeline`` /
             ``Preprocessor`` callers.
-        model_dir: 保留该参数以兼容既有调用；不再根据本地路径授信。
+        model_dir: Retained for compatibility; it does not establish trust.
     """
     if not str(filename).endswith('.py'):
         return

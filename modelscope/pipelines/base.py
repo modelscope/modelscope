@@ -150,7 +150,7 @@ class Pipeline(ABC):
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
         if not self.trust_remote_code:
-            # 使用 raise（而非 assert），确保 python -O 下仍保持门禁有效。
+            # Raise instead of assert so the gate remains active under python -O.
             raise RuntimeError(info_str)
 
     def prepare_model(self):

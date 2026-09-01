@@ -1,10 +1,12 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import glob
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import requests
+from modelscope_hub.constants import (UPLOAD_BLOB_CONNECT_TIMEOUT_SECONDS,
+                                      UPLOAD_BLOB_READ_TIMEOUT_SECONDS)
 from tqdm.auto import tqdm
 
 from modelscope.hub.utils.utils import (MODELSCOPE_URL_SCHEME,
@@ -83,6 +85,7 @@ class AigcModel:
         official_tags: Optional[List[str]] = None,
         model_source: Optional[str] = 'USER_UPLOAD',
         base_model_sub_type: Optional[str] = '',
+        readme_content: Optional[str] = None,
     ):
         """
         Initializes the AigcModel helper.
@@ -101,7 +104,12 @@ class AigcModel:
             model_source (str, optional): Source of the model.
                 `USER_UPLOAD`, `TRAINED_FROM_MODELSCOPE` or `TRAINED_FROM_ALIYUN_FC`. Defaults to 'USER_UPLOAD'.
             base_model_sub_type (str, Optional): Sub vision foundation model type. Defaults to ''. e.g. `SD_1_5`
+            readme_content (str, optional): Complete README.md content. When creating an AIGC version,
+                it is committed to master before the immutable version snapshot is created.
+                Defaults to None.
         """
+        if readme_content is not None and not isinstance(readme_content, str):
+            raise TypeError('readme_content must be a string or None')
         self.model_path = model_path
         self.aigc_type = aigc_type
         self.base_model_type = base_model_type
@@ -109,6 +117,7 @@ class AigcModel:
         self.description = description
         self.model_source = model_source
         self.base_model_sub_type = base_model_sub_type
+        self.readme_content: Optional[str] = readme_content
         # Process cover images - convert local paths to base64 data URLs
         if cover_images is not None:
             processed_cover_images = []
@@ -310,7 +319,8 @@ class AigcModel:
     def preupload_weights(self,
                           *,
                           cookies: Optional[object] = None,
-                          timeout: int = 300,
+                          timeout: Optional[Union[int, Tuple[int,
+                                                             int]]] = None,
                           headers: Optional[dict] = None,
                           endpoint: Optional[str] = None) -> None:
         """Pre-upload aigc model weights to the LFS server.
@@ -320,15 +330,22 @@ class AigcModel:
 
         Args:
             cookies: Optional requests-style cookies (CookieJar/dict). If provided, preferred.
-            timeout: Request timeout seconds.
+            timeout: Optional requests timeout override. A scalar applies to
+                both connection and socket reads; a tuple is interpreted as
+                ``(connect timeout, read timeout)``. Defaults to the shared
+                modelscope-hub blob upload timeouts.
             headers: Optional headers.
         """
         endpoint = endpoint or get_endpoint()
+        if timeout is None:
+            timeout = (UPLOAD_BLOB_CONNECT_TIMEOUT_SECONDS,
+                       UPLOAD_BLOB_READ_TIMEOUT_SECONDS)
         endpoint_host: str = urlparse(endpoint.strip()).hostname.lstrip('www.')
 
         # https://lfs.modelscope.cn or https://pre-lfs.modelscope.cn
+        pre_endpoint_host = endpoint_host.lstrip('pre.')
         base_url: str = f'{MODELSCOPE_URL_SCHEME}lfs.{endpoint_host}' if not endpoint_host.startswith('pre') \
-            else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{endpoint_host.lstrip("pre.")}'
+            else f'{MODELSCOPE_URL_SCHEME}pre-lfs.{pre_endpoint_host}'
 
         url: str = f'{base_url}/api/v1/models/aigc/weights'
 
@@ -395,6 +412,7 @@ class AigcModel:
             'official_tags': self.official_tags,
             'model_source': self.model_source,
             'base_model_sub_type': self.base_model_sub_type,
+            'readme_content': self.readme_content,
         }
 
     @classmethod

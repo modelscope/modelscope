@@ -113,40 +113,31 @@ class MCPApi(HubApi):
         if total_count is None or total_count < 1 or total_count > 100:
             raise ValueError('total_count must be between 1 and 100')
 
-        body = {
-            'filter': filter or {},
-            'page_number': 1,
-            'page_size': total_count,
-            'search': search
-        }
-
         try:
-            headers = self._build_bearer_headers(
-                token=token, token_required=False)
-            r = self.session.put(
-                url=self.mcp_base_url, headers=headers, json=body)
-            raise_for_http_status(r)
-        except requests.exceptions.RequestException as e:
+            api = self._api
+            if token:
+                from modelscope_hub.api import HubApi as _HubApi
+                api = _HubApi(token=token, endpoint=self.endpoint)
+            result = api.list_mcp_servers(
+                search=search,
+                page_number=1,
+                page_size=total_count,
+                filter=filter,
+            )
+        except Exception as e:
             logger.error('Failed to get MCP servers: %s', e)
             raise MCPApiRequestError(f'Failed to get MCP servers: {e}') from e
 
-        try:
-            data = self._parse_openapi_response(r)
-        except RequestError as e:
-            raise MCPApiResponseError(
-                f'Invalid response from MCP servers list: {e}') from e
-
-        mcp_server_list = data.get('mcp_server_list', [])
         mcp_config_list = [{
-            'name': item.get('name', ''),
-            'id': item.get('id', ''),
-            'description': item.get('description', '')
-        } for item in mcp_server_list]
+            'name':
+            item.get('name') or item.get('Name') or '',
+            'id':
+            item.get('id') or item.get('Id') or '',
+            'description':
+            item.get('description') or item.get('Description') or ''
+        } for item in result.items]
 
-        return {
-            'total_count': data.get('total_count', 0),
-            'servers': mcp_config_list
-        }
+        return {'total_count': result.total_count, 'servers': mcp_config_list}
 
     def list_operational_mcp_servers(self,
                                      token: str = None) -> Dict[str, Any]:

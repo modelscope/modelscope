@@ -64,11 +64,13 @@ class ImageViewTransform(TorchModel):
         config = os.path.join(model_dir,
                               'sd-objaverse-finetune-c_concat-256.yaml')
         ckpt = os.path.join(model_dir, 'zero123-xl.ckpt')
+
+        self.check_trust_remote_code(model_dir=model_dir)
+
         config = OmegaConf.load(config)
         self.model = None
         self.model = load_model_from_config(
             self.model, config, ckpt, device=self.device)
-        self.check_trust_remote_code(model_dir=model_dir)
 
     def forward(self, model_path, x, y):
         pred_results = _infer(self.model, model_path, x, y, self.device)

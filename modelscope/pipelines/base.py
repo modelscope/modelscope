@@ -25,7 +25,6 @@ from modelscope.utils.hub import read_config, snapshot_download
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 from modelscope.utils.logger import get_logger
 from modelscope.utils.torch_utils import compile_model
-from ..utils.automodel_utils import check_model_from_owner_group
 from .util import is_model, is_official_hub_path
 
 if is_torch_available():
@@ -150,10 +149,9 @@ class Pipeline(ABC):
             'This pipeline requires `trust_remote_code` to be `True` because it needs to '
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
-        if not check_model_from_owner_group(model_dir=model_dir):
-            # `raise` (not `assert`) so the gate also holds under `python -O`.
-            if not self.trust_remote_code:
-                raise RuntimeError(info_str)
+        if not self.trust_remote_code:
+            # 使用 raise（而非 assert），确保 python -O 下仍保持门禁有效。
+            raise RuntimeError(info_str)
 
     def prepare_model(self):
         """ Place model on certain device for pytorch models before first inference
@@ -359,7 +357,7 @@ class Pipeline(ABC):
                 matched_type = None
                 for t in input_type:
                     if isinstance(input, (dict, tuple)):
-                        if type(t) == type(input):
+                        if type(t) is type(input):
                             matched_type = t
                             break
                     elif isinstance(t, str):
@@ -414,7 +412,7 @@ class Pipeline(ABC):
         """ Provide default implementation based on preprocess_cfg and user can reimplement it
         """
         assert self.preprocessor is not None, 'preprocess method should be implemented'
-        assert not isinstance(self.preprocessor, List),\
+        assert not isinstance(self.preprocessor, List), \
             'default implementation does not support using multiple preprocessors.'
         return self.preprocessor(inputs, **preprocess_params)
 

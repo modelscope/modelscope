@@ -1,7 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import importlib
 import os
+from collections.abc import Mapping
 from typing import Any, Dict
 
 import numpy as np
@@ -10,10 +10,15 @@ import torch
 import yaml
 
 from modelscope.metainfo import Pipelines
+from modelscope.models.audio.aec.network.se_net import MaskNet
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LinearAECAndFbank
+from modelscope.utils.architecture import (ArchitectureConfigError,
+                                           instantiate_registered_architecture,
+                                           require_trust_remote_code,
+                                           validate_mapping_schema)
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 
@@ -23,26 +28,115 @@ FEATURE_MVN = 'feature.DEY.mvn.txt'
 
 CONFIG_YAML = 'dey_mini.yaml'
 
+_AEC_NNET_ARCHITECTURES = {
+    'mask_net': lambda: MaskNet,
+}
+_AEC_LEGACY_NNETS = {
+    ('modelscope.models.audio.aec.network.se_net', 'MaskNet'): 'mask_net',
+}
+_AEC_IO_FIELDS = {
+    'mask_on',
+    'use_nearend_mic',
+    'use_out_linear',
+    'use_out_ref',
+    'use_out_echo',
+    'linear_aec_delay',
+    'linear_aec_block',
+    'feature_size',
+    'mitaec_library',
+    'fbank_config',
+    'feat_type',
+    'mvn',
+}
+_AEC_FBANK_FIELDS = {
+    'dither',
+    'frame_length',
+    'frame_shift',
+    'num_mel_bins',
+    'sample_frequency',
+    'window_type',
+}
 
-def initialize_config(module_cfg):
-    r"""According to config items, load specific module dynamically with params.
-        1. Load the module corresponding to the "module" param.
-        2. Call function (or instantiate class) corresponding to the "main" param.
-        3. Send the param (in "args") into the function (or class) when calling ( or instantiating).
 
-    Args:
-        module_cfg (dict): config items, eg:
-            {
-                "module": "models.model",
-                "main": "Model",
-                "args": {...}
-            }
+def _validate_aec_config(config: Any) -> Mapping[str, Any]:
+    config = validate_mapping_schema(
+        config,
+        required={'io', 'nnet', 'loss'},
+        optional=set(),
+        context=CONFIG_YAML)
+    io_config = validate_mapping_schema(
+        config['io'],
+        required={'fbank_config'},
+        optional=_AEC_IO_FIELDS - {'fbank_config'},
+        context=f'{CONFIG_YAML}.io')
+    validate_mapping_schema(
+        io_config['fbank_config'],
+        required=set(),
+        optional=_AEC_FBANK_FIELDS,
+        context=f'{CONFIG_YAML}.io.fbank_config')
 
-    Returns:
-        the module loaded.
-    """
-    module = importlib.import_module(module_cfg['module'])
-    return getattr(module, module_cfg['main'])(**module_cfg['args'])
+    nnet_config = config['nnet']
+    if not isinstance(nnet_config, Mapping):
+        raise ArchitectureConfigError(f'{CONFIG_YAML}.nnet must be a mapping.')
+    if 'architecture' in nnet_config:
+        nnet_config = validate_mapping_schema(
+            nnet_config,
+            required={'architecture', 'args'},
+            optional=set(),
+            context=f'{CONFIG_YAML}.nnet')
+        architecture = nnet_config['architecture']
+    else:
+        nnet_config = validate_mapping_schema(
+            nnet_config,
+            required={'module', 'main', 'args'},
+            optional=set(),
+            context=f'{CONFIG_YAML}.nnet')
+        architecture = _AEC_LEGACY_NNETS.get(
+            (nnet_config['module'], nnet_config['main']))
+        if architecture is None:
+            raise ArchitectureConfigError(
+                f'{CONFIG_YAML}.nnet contains an unsupported legacy architecture.'
+            )
+    if architecture not in _AEC_NNET_ARCHITECTURES:
+        raise ArchitectureConfigError(
+            f'{CONFIG_YAML}.nnet.architecture {architecture!r} is not approved.'
+        )
+    if not isinstance(nnet_config['args'], Mapping):
+        raise ArchitectureConfigError(
+            f'{CONFIG_YAML}.nnet.args must be a mapping.')
+
+    loss_config = validate_mapping_schema(
+        config['loss'],
+        required={'module', 'main', 'args'},
+        optional=set(),
+        context=f'{CONFIG_YAML}.loss')
+    if (loss_config['module'], loss_config['main']) != ('network.loss',
+                                                        'mask_loss_function'):
+        raise ArchitectureConfigError(
+            f'{CONFIG_YAML}.loss must use the built-in mask loss metadata.')
+    validate_mapping_schema(
+        loss_config['args'],
+        required={'loss_func', 'n_fft', 'hop_length'},
+        optional=set(),
+        context=f'{CONFIG_YAML}.loss.args')
+
+    normalized = dict(config)
+    normalized['nnet'] = {
+        'architecture': architecture,
+        'args': nnet_config['args'],
+    }
+    return normalized
+
+
+def initialize_config(module_cfg: Mapping[str, Any]):
+    """从受限的 AEC 架构注册表构造网络。"""
+    return instantiate_registered_architecture(
+        {
+            'target': module_cfg['architecture'],
+            'params': module_cfg['args'],
+        },
+        _AEC_NNET_ARCHITECTURES,
+        context=f'{CONFIG_YAML}.nnet')
 
 
 @PIPELINES.register_module(
@@ -61,22 +155,14 @@ class LinearAECPipeline(Pipeline):
     """
 
     def __init__(self, model, **kwargs):
-        """
-        use `model` and `preprocessor` to create a kws pipeline for prediction
-        Args:
-            model: model id on modelscope hub.
-        """
+        require_trust_remote_code(
+            bool(kwargs.get('trust_remote_code', False)), 'LinearAECPipeline')
         super().__init__(model=model, **kwargs)
-        self.check_trust_remote_code(
-            'This pipeline requires `trust_remote_code=True` to load the module defined'
-            ' in the `dey_mini.yaml`, setting this to True means you trust the code and files'
-            ' listed in this model repo.',
-            model_dir=model)
 
         self.use_cuda = torch.cuda.is_available()
         with open(
                 os.path.join(self.model, CONFIG_YAML), encoding='utf-8') as f:
-            self.config = yaml.full_load(f.read())
+            self.config = _validate_aec_config(yaml.safe_load(f))
             self.config['io']['mvn'] = os.path.join(self.model, FEATURE_MVN)
         self._init_model()
         self.preprocessor = LinearAECAndFbank(self.config['io'])

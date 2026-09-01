@@ -1,5 +1,6 @@
 import inspect
 import os
+from functools import lru_cache
 from types import MethodType
 from typing import Any, List, Optional
 
@@ -126,16 +127,57 @@ def try_to_load_hf_model(model_dir: str, task_name: str,
     return model
 
 
+TRUSTED_MODEL_OWNERS = frozenset({'damo', 'iic'})
+
+
+def _is_valid_hub_model_id(model_id: str) -> bool:
+    if not isinstance(model_id, str) or os.path.isabs(model_id) \
+            or '\\' in model_id or model_id.count('/') != 1:
+        return False
+    owner, name = model_id.split('/')
+    return bool(owner and name and owner not in {'.', '..'}
+                and name not in {'.', '..'})
+
+
+@lru_cache(maxsize=256)
+def _is_model_from_trusted_source(model_id: str, revision: Optional[str],
+                                  trusted_owners: frozenset[str]) -> bool:
+    """通过 Hub 返回的仓库元数据验证可信发布者。
+
+    本地目录名和缓存布局均可由本地攻击者伪造，不能作为执行远程代码的
+    授权依据。离线或本地路径无法取得可验证的 Hub 元数据时保持不可信。
+    """
+    if not _is_valid_hub_model_id(model_id):
+        return False
+    try:
+        from modelscope.hub.api import HubApi
+        metadata = HubApi().get_model(model_id, revision=revision)
+    except Exception:
+        return False
+
+    owner = metadata.get('Owner')
+    name = metadata.get('Name')
+    requested_name = model_id.split('/', 1)[1]
+    return (isinstance(owner, str) and owner.casefold() in trusted_owners
+            and name == requested_name)
+
+
+def is_model_from_trusted_source(
+        model_id: str,
+        revision: Optional[str] = None,
+        trusted_owners: Optional[List[str]] = None) -> bool:
+    """判断模型是否由 Hub 元数据确认的可信发布者发布。"""
+    owners = frozenset(owner.casefold()
+                       for owner in (trusted_owners or TRUSTED_MODEL_OWNERS))
+    return _is_model_from_trusted_source(model_id, revision, owners)
+
+
 def check_model_from_owner_group(model_dir: str,
                                  owner_group: List[str] = None) -> bool:
-    """This checking is for the torch.load, this function may eval malicious code into memory
+    """仅为 import 兼容保留的本地路径启发式函数。
 
-    Args:
-        model_dir: The local model_dir or model_id
-        owner_group: The owner group to trust
-
-    Returns:
-        bool: Whether the group can be trusted
+    不得用该函数授权远程代码执行；新调用链必须使用
+    :func:`is_model_from_trusted_source` 校验 Hub 元数据。
     """
     if not model_dir or not isinstance(model_dir, str):
         return False

@@ -31,28 +31,21 @@ RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 def check_trust_remote_code_for_config(filename,
                                        trust_remote_code: bool = False,
                                        model_dir=None):
-    """Refuse to exec a `.py` config file that comes from an untrusted source.
+    """拒绝执行未经显式授权的远程 Python 配置。
 
-    Loading a Python config (via `Config.from_file`, `mmcv.Config.fromfile`,
-    `mmseg.apis.init_segmentor`, etc.) imports the file as a module, which
-    runs any top-level code it contains. Anything that ultimately reads a
-    `.py` config from a remote model repo MUST gate that load with this
-    helper. JSON / YAML configs are passive data and pass through.
+    加载 Python 配置会执行其顶层代码。目录名与缓存布局都可由本地攻击者
+    伪造，因此不再将 ``model_dir`` 的路径形态视为可信来源；调用方必须
+    传入经 Hub 元数据验证后得到的 ``trust_remote_code=True``，或显式授权。
+    JSON/YAML 配置仍以被动数据方式解析。
 
     Args:
         filename: Path to the candidate config file.
         trust_remote_code: Caller opt-in flag; pass through
             ``self.trust_remote_code`` from ``Model`` / ``Pipeline`` /
             ``Preprocessor`` callers.
-        model_dir: Repo root used by the owner-group check. Defaults to the
-            parent directory of ``filename``.
+        model_dir: 保留该参数以兼容既有调用；不再根据本地路径授信。
     """
     if not str(filename).endswith('.py'):
-        return
-    from modelscope.utils.automodel_utils import check_model_from_owner_group
-    if model_dir is None:
-        model_dir = osp.dirname(osp.abspath(osp.expanduser(str(filename))))
-    if check_model_from_owner_group(model_dir=model_dir):
         return
     if trust_remote_code:
         return

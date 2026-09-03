@@ -32,7 +32,7 @@ Ascend Dockerfile 会安装和配置：
 | FLA                       | 从 `fla-org/flash-linear-attention` 源码 checkout，默认 `main` 分支；可通过 `--fla_version` 指定分支或 release tag |
 | Megatron-LM               | 源码 checkout，默认分支 `v0.15.3`；可通过 `--megatron_branch` 配置 |
 | MindSpeed                 | 源码 checkout，默认分支 `core_r0.15.3`；可通过 `--mindspeed_branch` 配置 |
-| mcore-bridge              | PyPI 上的最新发布版；Ascend 构建入口没有独立的版本配置参数 |
+| mcore-bridge              | 从 `modelscope/mcore-bridge` 源码 checkout 并以 editable 模式安装，默认 `main` 分支；可通过 `--mcore_bridge_branch` 指定分支或 release tag |
 | ms-swift                  | 来自 `modelscope/ms-swift` 的源码 checkout，默认分支 `main`；可通过 `--swift_branch` 配置 |
 | DeepSpeed                 | 安装满足 `deepspeed>=0.19` 的最新发布包；`TORCH_DEVICE_BACKEND_AUTOLOAD=0` 仅作用于构建时的安装命令 |
 | ModelScope                | 通过 `pip install -U modelscope` 安装 PyPI 最新发布包；Ascend 镜像不再 clone ModelScope 或 modelscope-hub 源码仓库 |
@@ -110,7 +110,8 @@ python docker/build_image.py \
   --modelscope_branch master \
   --swift_branch v4.5.2 \
   --megatron_branch core_v0.16.0 \
-  --mindspeed_branch core_r0.16.0
+  --mindspeed_branch core_r0.16.0 \
+  --mcore_bridge_branch v1.6.2
 ```
 
 ## 自定义构建参数
@@ -137,6 +138,7 @@ python docker/build_image.py \
 - `--swift_branch`（默认：`main`）：选择 ms-swift 源码分支或 tag，并写入输出镜像 tag。
 - `--megatron_branch`（默认：`v0.15.3`）：选择 Megatron-LM 源码分支或 tag。
 - `--mindspeed_branch`（默认：`core_r0.15.3`）：选择 MindSpeed 源码分支或 tag。
+- `--mcore_bridge_branch`（默认：`main`）：选择 mcore-bridge 源码分支或 release tag，并以 editable 模式安装。
 
 Ascend 镜像的 Python 版本必须通过 `--base_image` 选择，`--python_version`
 不会覆盖它。`--modelscope_branch` 虽然会被共用参数解析器接受，但 Ascend

@@ -32,7 +32,7 @@ The Ascend Dockerfile installs and configures:
 | FLA                      | source checkout from `fla-org/flash-linear-attention`, default branch `main`; configurable with `--fla_version` using a branch or release tag |
 | Megatron-LM              | source checkout, default branch `v0.15.3`; configurable with `--megatron_branch` |
 | MindSpeed                | source checkout, default branch `core_r0.15.3`; configurable with `--mindspeed_branch` |
-| mcore-bridge             | latest release from PyPI; no dedicated version option in the Ascend build entrypoint |
+| mcore-bridge             | editable source checkout from `modelscope/mcore-bridge`, default branch `main`; configurable with `--mcore_bridge_branch` using a branch or release tag |
 | ms-swift                 | source checkout from `modelscope/ms-swift`, default branch `main`; configurable with `--swift_branch` |
 | DeepSpeed                | newest package satisfying `deepspeed>=0.19`; `TORCH_DEVICE_BACKEND_AUTOLOAD=0` is scoped to its build-time install command |
 | ModelScope               | latest published package resolved by `pip install -U modelscope`; the Ascend image does not clone ModelScope or modelscope-hub source repositories |
@@ -111,7 +111,8 @@ python docker/build_image.py \
   --modelscope_branch master \
   --swift_branch v4.5.2 \
   --megatron_branch core_v0.16.0 \
-  --mindspeed_branch core_r0.16.0
+  --mindspeed_branch core_r0.16.0 \
+  --mcore_bridge_branch v1.6.2
 ```
 
 ## Custom Build Parameters
@@ -139,6 +140,7 @@ are consumed by the current Ascend build path:
 - `--swift_branch` (default: `main`): selects the ms-swift source branch or tag and is included in the output image tag.
 - `--megatron_branch` (default: `v0.15.3`): selects the Megatron-LM source branch or tag.
 - `--mindspeed_branch` (default: `core_r0.15.3`): selects the MindSpeed source branch or tag.
+- `--mcore_bridge_branch` (default: `main`): selects the mcore-bridge source branch or release tag for the editable install.
 
 `--python_version` does not override the Python version for Ascend images;
 select it through `--base_image`. `--modelscope_branch` is accepted by the

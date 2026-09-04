@@ -1,0 +1,188 @@
+FROM {base_image}
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=300 \
+    PIP_RETRIES=10 \
+    SOC_VERSION={soc_version} \
+    CANN_VERSION={cann_version}
+# Build-time only (ARG does not persist into the image).
+ARG PIP_EXTRA_INDEX_URL={pip_extra_index_url}
+ARG PYPI_OFFICIAL_INDEX_URL={pypi_official_index_url}
+
+SHELL ["/bin/bash", "-c"]
+
+# ---------- System dependencies ----------
+RUN set -eux; \
+    . /etc/os-release; \
+    case "${ID,,}" in \
+        ubuntu) \
+            rm -f /etc/apt/apt.conf.d/docker-clean; \
+            find /etc/apt/apt.conf.d -maxdepth 1 -type f | xargs -r grep -l "APT::Update::Post-Invoke\|docker-clean" | xargs -r rm -f; \
+            apt-get update -y; \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                gcc g++ cmake ninja-build libnuma-dev libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 patch \
+                wget git curl jq vim build-essential ca-certificates; \
+            apt-get clean; \
+            rm -rf /var/lib/apt/lists/* \
+            ;; \
+        openeuler) \
+            yum install -y \
+                gcc gcc-c++ cmake ninja-build numactl-devel mesa-libGL glib2 libSM libXext libXrender patch \
+                wget git curl jq vim make ca-certificates; \
+            yum clean all; \
+            rm -rf /var/cache/yum \
+            ;; \
+        *) \
+            echo "Unsupported base image OS: ${ID}" >&2; \
+            exit 1 \
+            ;; \
+    esac
+
+RUN pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
+    pip config set install.trusted-host repo.huaweicloud.com
+
+# ---------- Install PyTorch and TorchNPU ----------
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        TORCH_INDEX=https://download.pytorch.org/whl/cpu; \
+    else \
+        TORCH_INDEX=https://repo.huaweicloud.com/repository/pypi/simple; \
+    fi && \
+    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir --index-url "$TORCH_INDEX" \
+        torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version} && \
+    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir \
+        --index-url "${PIP_EXTRA_INDEX_URL}" \
+        --extra-index-url "${PYPI_OFFICIAL_INDEX_URL}" \
+        torch_npu=={torch_npu_version}
+
+# ---------- Install triton-ascend before vLLM ----------
+RUN set -eux; \
+    ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}"; \
+    pip uninstall -y triton || true; \
+    pip uninstall -y triton-ascend || true; \
+    PIP_INDEX_URL="${ASCEND_PYPI_INDEX_URL}" \
+    PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL}" \
+        pip install --no-cache-dir --force-reinstall \
+        triton-ascend=={triton_ascend_version}
+
+# ---------- Install vLLM from the official source tag ----------
+# Keep both checkouts: editable installs resolve their Python packages from these paths at runtime.
+RUN git clone --depth 1 --branch {vllm_git_ref} \
+        https://github.com/vllm-project/vllm /vllm && \
+    cd /vllm && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    VLLM_TARGET_DEVICE=empty pip install --no-cache-dir -v -e .
+
+# ---------- Install vLLM Ascend from the official source tag ----------
+RUN git clone --depth 1 --branch {vllm_ascend_git_ref} \
+        https://github.com/vllm-project/vllm-ascend /vllm-ascend && \
+    cd /vllm-ascend && \
+    git submodule update --init --recursive && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    PIP_INDEX_URL="${ASCEND_PYPI_INDEX_URL}" \
+    PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL} https://download.pytorch.org/whl/cpu/" \
+        pip install --no-cache-dir -v -e .
+
+# ---------- Clone training-side repositories ----------
+RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
+    git clone --depth 1 --branch {mindspeed_branch} https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
+    GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift
+
+# ---------- Install core training components ----------
+# Install the published ModelScope package; do not bind the image to source-repository snapshots.
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    cd /MindSpeed && pip install --no-cache-dir -e . && \
+    pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
+    pip install --no-cache-dir -U modelscope && \
+    cd /ms-swift && pip install --no-cache-dir -e .
+
+# ---------- Pin torch to the correct version + torch_npu ----------
+# x86: must force-install the CPU build from pytorch.org/whl/cpu
+# aarch64: PyPI only provides the CPU build, so install it directly from the Huawei Cloud mirror
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        pip install --no-cache-dir --force-reinstall --no-deps \
+            --index-url https://download.pytorch.org/whl/cpu \
+            torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version}; \
+    else \
+        pip install --no-cache-dir --force-reinstall --no-deps \
+            torch=={torch_version} torchvision=={torchvision_version} torchaudio=={torchaudio_version}; \
+    fi && \
+    PIP_EXTRA_INDEX_URL= pip install --no-cache-dir --force-reinstall --no-deps \
+        --index-url "${PIP_EXTRA_INDEX_URL}" \
+        --extra-index-url "${PYPI_OFFICIAL_INDEX_URL}" \
+        torch_npu=={torch_npu_version} && \
+    rm -rf /root/.cache/pip
+
+# ---------- Remove CUDA-only dependencies pulled in by vllm (they cause missing libtorch_cuda.so errors on NPU) ----------
+RUN pip uninstall -y flashinfer tvm-ffi torch-c-dlpack-ext 2>/dev/null || true
+
+ENV MEGATRON_LM_PATH=/Megatron-LM
+ENV PYTHONPATH=/Megatron-LM:${PYTHONPATH}
+
+ARG CUR_TIME={cur_time}
+RUN echo $CUR_TIME
+
+# ---------- Install Swift extras and auxiliary tools ----------
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy funasr scikit-learn && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils 'librosa<1.0' 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -r /ms-swift/requirements/eval.txt && \
+    pip install --no-cache-dir -U evalscope --no-dependencies && \
+    pip install --no-cache-dir 'numpy>=2.0' --force-reinstall --no-deps && \
+    pip install --no-cache-dir -U ms-agent --no-dependencies && \
+    pip install --no-cache-dir --no-build-isolation OpenCC && \
+    pip install --no-cache-dir diffusers omegaconf==2.3.0 && \
+    pip cache purge
+
+# ---------- Install training and evaluation dependencies ----------
+RUN source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
+    if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
+    TORCH_DEVICE_BACKEND_AUTOLOAD=0 pip install --no-cache-dir -U "deepspeed>=0.19" ray liger_kernel pre-commit && \
+    pip cache purge
+
+# ---------- Install flash-linear-attention (FLA) ----------
+# Keep the checkout because the editable install points to this source tree.
+RUN git clone --depth 1 --branch {fla_version} https://github.com/fla-org/flash-linear-attention.git /flash-linear-attention && \
+    cd /flash-linear-attention && \
+    pip install --no-cache-dir -e .
+
+# ---------- Re-pin triton-ascend after all editable installs ----------
+# vllm-ascend may otherwise replace the CANN-specific version selected above.
+RUN set -eux; \
+    ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}"; \
+    pip uninstall -y triton || true; \
+    pip uninstall -y triton-ascend || true; \
+    PIP_INDEX_URL="${ASCEND_PYPI_INDEX_URL}" \
+    PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL}" \
+        pip install --no-cache-dir --force-reinstall \
+        triton-ascend=={triton_ascend_version}
+
+RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
+    echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \
+    echo 'set +H' >> /root/.bashrc
+
+ENV VLLM_USE_MODELSCOPE=True
+ENV LMDEPLOY_USE_MODELSCOPE=True
+ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
+
+# Show install results and verify that editable packages resolve from retained source trees.
+RUN pip list && \
+    TORCH_DEVICE_BACKEND_AUTOLOAD=0 python -c "import importlib.metadata as m; import importlib.util as u; import os; expected = {'vllm': '/vllm', 'vllm_ascend': '/vllm-ascend', 'swift': '/ms-swift', 'megatron': '/Megatron-LM', 'mindspeed': '/MindSpeed', 'fla': '/flash-linear-attention'}; specs = {name: u.find_spec(name) for name in expected}; origins = {name: (spec.origin or next(iter(spec.submodule_search_locations or []), None) if spec else None) for name, spec in specs.items()}; assert all(path and os.path.commonpath([os.path.realpath(path), root]) == root for name, root in expected.items() for path in [origins[name]]), origins; assert u.find_spec('modelscope') and m.version('modelscope'); assert m.version('triton-ascend') == '{triton_ascend_version}', m.version('triton-ascend'); print(origins)"
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

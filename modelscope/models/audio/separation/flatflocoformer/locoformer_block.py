@@ -49,15 +49,14 @@ class SwiGLUConvDeconv1d(nn.Module):
         x = x.contiguous().view(b * s1, s2, h)
         x = x.transpose(-1, -2)
 
-        onnx_dynamic_slice = (torch.onnx.is_in_onnx_export()
-                              and self.conv1d_shift == 1)
+        onnx_dynamic_slice = (
+            torch.onnx.is_in_onnx_export() and self.conv1d_shift == 1)
         if onnx_dynamic_slice:
             x = F.pad(x, (self.diff_ks, self.diff_ks))
         else:
             seq_len = (
-                math.ceil(
-                    (s2 + 2 * self.diff_ks - self.conv1d_kernel)
-                    / self.conv1d_shift) * self.conv1d_shift
+                math.ceil((s2 + 2 * self.diff_ks - self.conv1d_kernel)
+                          / self.conv1d_shift) * self.conv1d_shift
                 + self.conv1d_kernel)
             x = F.pad(x, (self.diff_ks, seq_len - s2 - self.diff_ks))
 

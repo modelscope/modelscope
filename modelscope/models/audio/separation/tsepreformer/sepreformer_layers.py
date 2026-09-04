@@ -491,6 +491,10 @@ class Separator(nn.Module):
         elif input.dim() != 3:
             raise RuntimeError('Input can only be 2 or 3 dimensional.')
         L = 2**self.num_stages
+        if torch.onnx.is_in_onnx_export():
+            nframe = torch._shape_as_tensor(input)[2]
+            rest = torch.remainder(-nframe, L)
+            return F.pad(input, (0, rest)), rest
         nframe = input.size(2)
         rest = 0 if nframe % L == 0 else (nframe // L + 1) * L - nframe
         if rest > 0:

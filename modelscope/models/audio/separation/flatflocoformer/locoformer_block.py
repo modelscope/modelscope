@@ -49,11 +49,17 @@ class SwiGLUConvDeconv1d(nn.Module):
         x = x.contiguous().view(b * s1, s2, h)
         x = x.transpose(-1, -2)
 
-        seq_len = (
-            math.ceil(
-                (s2 + 2 * self.diff_ks - self.conv1d_kernel)
-                / self.conv1d_shift) * self.conv1d_shift + self.conv1d_kernel)
-        x = F.pad(x, (self.diff_ks, seq_len - s2 - self.diff_ks))
+        onnx_dynamic_slice = (torch.onnx.is_in_onnx_export()
+                              and self.conv1d_shift == 1)
+        if onnx_dynamic_slice:
+            x = F.pad(x, (self.diff_ks, self.diff_ks))
+        else:
+            seq_len = (
+                math.ceil(
+                    (s2 + 2 * self.diff_ks - self.conv1d_kernel)
+                    / self.conv1d_shift) * self.conv1d_shift
+                + self.conv1d_kernel)
+            x = F.pad(x, (self.diff_ks, seq_len - s2 - self.diff_ks))
 
         x = self.conv1d(x)
         gate = self.swish(x[..., self.dim_inner:, :])
@@ -61,7 +67,11 @@ class SwiGLUConvDeconv1d(nn.Module):
         x = self.dropout(x)
         x = self.deconv1d(x).transpose(-1, -2)
 
-        x = x[..., self.diff_ks:self.diff_ks + s2, :]
+        if onnx_dynamic_slice:
+            stop = -self.diff_ks if self.diff_ks else None
+            x = x[..., self.diff_ks:stop, :]
+        else:
+            x = x[..., self.diff_ks:self.diff_ks + s2, :]
         return self.dropout(x).view(b, s1, s2, h)
 
 

@@ -78,21 +78,23 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     if [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install --no-cache-dir math_verify "datasets<4.8.5" "gradio<5.33" "deepspeed<0.19" ray -U && \
     pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
-    pip install --no-cache-dir pybind11 liger_kernel wandb swanlab nvitop pre-commit "transformers<5.15" "trl<1.0" "peft<0.21" huggingface-hub -U && \
-    pip install git+https://github.com/NVIDIA/TransformerEngine.git@v2.14.1 --no-build-isolation; \
-    pip install git+https://github.com/deepseek-ai/DeepGEMM.git@v2.1.1.post3 --no-build-isolation; \
-    pip install -U flash-linear-attention --no-build-isolation; \
-    pip install -U git+https://github.com/Dao-AILab/causal-conv1d --no-build-isolation; \
-    pip install git+https://github.com/Dao-AILab/fast-hadamard-transform --no-build-isolation; \
-    pip install git+https://github.com/NVIDIA-NeMo/Emerging-Optimizers.git@v0.3.0; \
-    mv /usr/local/lib/python3.12/site-packages/tilelang/lib/libcudart_stub.so /usr/local/lib/python3.12/site-packages/tilelang/lib/libcudart_stub.so.bak; \
-    ln -s /usr/local/cuda-13.0/targets/x86_64-linux/lib/libcudart.so /usr/local/lib/python3.12/site-packages/tilelang/lib/libcudart_stub.so; \
+    pip install --no-cache-dir pybind11 liger_kernel wandb swanlab nvitop pre-commit "transformers<5.17" "trl<1.0" "peft<0.21" huggingface-hub -U && \
+    pip install --no-cache-dir -U "pip>=26" "setuptools>=80" wheel && \
+    CPATH=$(python -c "import nvidia.cudnn as c, os; print(os.path.join(list(c.__path__)[0], 'include'))") \
+    NVTE_WITH_NCCL_EP=0 NVTE_FRAMEWORK=pytorch MAX_JOBS=16 \
+        pip install --no-cache-dir --no-build-isolation "transformer_engine[pytorch]==2.18.0" && \
+    pip install git+https://github.com/deepseek-ai/DeepGEMM.git@v2.1.1.post3 --no-build-isolation && \
+    pip install -U flash-linear-attention --no-build-isolation && \
+    pip install -U git+https://github.com/Dao-AILab/causal-conv1d --no-build-isolation && \
+    pip install git+https://github.com/Dao-AILab/fast-hadamard-transform --no-build-isolation && \
+    pip install git+https://github.com/NVIDIA-NeMo/Emerging-Optimizers.git@v0.3.0 && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
-    cd / && rm -fr /tmp/apex && pip cache purge; \
-    pip install --no-cache-dir "megatron-core==0.18.*" -U; \
+    cd / && rm -fr /tmp/apex && pip cache purge && \
+    pip install --no-cache-dir "megatron-core==0.18.*" -U && \
+    python -c "import flash_attn, os, shutil; shutil.rmtree(os.path.join(os.path.dirname(flash_attn.__file__), 'cute'), ignore_errors=True)"; \
 elif [ "$IMAGE_TYPE" = "cpu" ]; then \
-    pip install --no-cache-dir huggingface-hub "transformers<5.9" peft diffusers -U; \
+    pip install --no-cache-dir huggingface-hub "transformers<5.17" peft diffusers -U; \
 else \
     pip install "transformers<5.0" "tokenizers<0.22" "trl<0.23" "diffusers<0.35" --no-dependencies; \
 fi

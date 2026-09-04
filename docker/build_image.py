@@ -429,14 +429,15 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
 
     def init_args(self, args: Any) -> Any:
         if not args.torch_version:
-            args.torch_version = '2.11.0'
+            args.torch_version = '2.13.0'
             args.torchaudio_version = '2.11.0'
-            args.torchvision_version = '0.26.0'
+            args.torchvision_version = '0.28.0'
         if not args.vllm_version:
-            args.vllm_version = '0.25.1'
+            args.vllm_version = '0.28.0'
         if not args.base_image:
-            # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:13.0.3-cudnn-devel-ubuntu22.04'
+            # torch 2.13 ships cuDNN 9.20 through its own nvidia-cudnn-cu13
+            # dependency, so the -cudnn base variant is redundant here.
+            args.base_image = 'nvidia/cuda:13.0.3-devel-ubuntu22.04'
         if not args.cuda_version:
             args.cuda_version = '13.0.3'
         return super().init_args(args)
@@ -449,7 +450,14 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
                                                   self.args.python_version)
         extra_content += """
 RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy onnx onnxscript
+"""
+        # vLLM >= 0.27 requires flashinfer >= 0.6.14, whose wheels are no longer
+        # published to PyPI. Pre-install it from flashinfer's own index so the later
+        # `pip install vllm` resolves without touching install.sh.
+        extra_content += """
+RUN pip install --no-cache-dir flashinfer-python \
+    --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '

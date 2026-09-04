@@ -200,6 +200,10 @@ class Models(object):
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
     speech_mossformer2_separation_temporal_8k = 'speech_mossformer2_separation_temporal_8k'
+    speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360 = \
+        'speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360'
+    speech_flatsepreformer_separation_temporal_8k_base_libri2mix100 = \
+        'speech_flatsepreformer_separation_temporal_8k_base_libri2mix100'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'

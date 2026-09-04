@@ -44,6 +44,34 @@ class SpeechSeparationTest(unittest.TestCase):
             sf.write(save_file, numpy.frombuffer(signal, dtype=numpy.int16),
                      8000)
 
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_flatflocoformer(self):
+        import soundfile as sf
+        model_id = ('damo/speech_flatflocoformer_separation_timefrequency_8k'
+                    '_middle_libri2mix360')
+        separation = pipeline(Tasks.speech_separation, model=model_id)
+        result = separation(os.path.join(os.getcwd(), MIX_SPEECH_FILE))
+        self.assertTrue(OutputKeys.OUTPUT_PCM_LIST in result)
+        self.assertEqual(len(result[OutputKeys.OUTPUT_PCM_LIST]), 2)
+        for i, signal in enumerate(result[OutputKeys.OUTPUT_PCM_LIST]):
+            save_file = f'output_spk{i}.wav'
+            sf.write(save_file, numpy.frombuffer(signal, dtype=numpy.int16),
+                     8000)
+
+    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
+    def test_flatsepreformer(self):
+        import soundfile as sf
+        model_id = ('damo/speech_flatsepreformer_separation_temporal_8k'
+                    '_base_libri2mix100')
+        separation = pipeline(Tasks.speech_separation, model=model_id)
+        result = separation(os.path.join(os.getcwd(), MIX_SPEECH_FILE))
+        self.assertTrue(OutputKeys.OUTPUT_PCM_LIST in result)
+        self.assertEqual(len(result[OutputKeys.OUTPUT_PCM_LIST]), 2)
+        for i, signal in enumerate(result[OutputKeys.OUTPUT_PCM_LIST]):
+            save_file = f'output_spk{i}.wav'
+            sf.write(save_file, numpy.frombuffer(signal, dtype=numpy.int16),
+                     8000)
+
 
 if __name__ == '__main__':
     unittest.main()

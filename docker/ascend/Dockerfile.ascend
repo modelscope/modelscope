@@ -92,6 +92,7 @@ RUN git clone --depth 1 --branch {vllm_ascend_git_ref} \
 # ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
     git clone --depth 1 --branch {mindspeed_branch} https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
+    git clone --depth 1 --single-branch --branch {mcore_bridge_branch} https://github.com/modelscope/mcore-bridge.git /mcore-bridge && \
     GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift
 
 # ---------- Install core training components ----------
@@ -100,7 +101,7 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     cd /MindSpeed && pip install --no-cache-dir -e . && \
-    pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
+    cd /mcore-bridge && pip install --no-cache-dir -e . && \
     pip install --no-cache-dir -U modelscope && \
     cd /ms-swift && pip install --no-cache-dir -e .
 

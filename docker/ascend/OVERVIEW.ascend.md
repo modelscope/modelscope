@@ -1,6 +1,6 @@
 # ms-swift Ascend
 
-> English | [中文](./OVERVIEW.ascend.zh.md)
+> English | [中文](https://github.com/modelscope/modelscope/blob/master/docker/ascend/OVERVIEW.ascend.zh.md)
 
 ms-swift Ascend images provide a ready-to-use ms-swift environment for Huawei Ascend Atlas NPUs. The images are built on top of the Ascend CANN container images and include the Python, CANN, TorchNPU, vLLM Ascend, FLA, Megatron, MindSpeed, mcore-bridge, ms-swift, and ModelScope runtime components needed for Ascend inference and training workflows.
 
@@ -43,7 +43,7 @@ The Ascend Dockerfile installs and configures:
 
 Images built by `docker/build_image.py --image_type ascend` use this tag format:
 
-The published-tag index is maintained in [`docker/ascend/supported_tags.md`](./supported_tags.md).
+The published-tag index is maintained in [`docker/ascend/supported_tags.md`](https://github.com/modelscope/modelscope/blob/master/docker/ascend/supported_tags.md).
 
 ```text
 ${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<TorchNPU-version>-<hardware-tag>-<os-tag>-<python-tag>-<arch>
@@ -73,10 +73,10 @@ The latest A2 and A3 images are hosted at [quay.io/ascend/ms-swift](https://quay
 
 **Device / CANN Base Image / OS / Image Tag / Dockerfile**
 
-- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
 
 ## Build Locally
 

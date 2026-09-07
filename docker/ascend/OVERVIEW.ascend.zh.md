@@ -1,6 +1,6 @@
 # ms-swift Ascend
 
-> [English](./OVERVIEW.ascend.md) | 中文
+> [English](https://github.com/modelscope/modelscope/blob/master/docker/ascend/OVERVIEW.ascend.md) | 中文
 
 ms-swift Ascend 镜像面向华为昇腾 Atlas NPU，提供可直接使用的 ms-swift 运行环境。镜像基于 Ascend CANN 容器镜像构建，包含 Ascend 推理和训练工作流所需的 Python、CANN、TorchNPU、vLLM Ascend、FLA、Megatron、MindSpeed、mcore-bridge、ms-swift 以及 ModelScope 运行组件。
 
@@ -43,7 +43,7 @@ Ascend Dockerfile 会安装和配置：
 
 通过 `docker/build_image.py --image_type ascend` 构建的镜像使用以下 tag 格式：
 
-已发布 tag 索引见 [`docker/ascend/supported_tags.md`](./supported_tags.md)。
+已发布 tag 索引见 [`docker/ascend/supported_tags.md`](https://github.com/modelscope/modelscope/blob/master/docker/ascend/supported_tags.md)。
 
 ```text
 ${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<TorchNPU-version>-<hardware-tag>-<os-tag>-<python-tag>-<arch>
@@ -73,10 +73,10 @@ ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-a
 
 **设备 / CANN 基础镜像 / OS / 镜像 Tag / Dockerfile**
 
-- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
 
 ## 本地构建
 

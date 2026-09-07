@@ -112,7 +112,7 @@ class MPlugConfig(PretrainedConfig):
     def from_yaml_file(cls, yaml_file: Union[str,
                                              os.PathLike]) -> Dict[str, Any]:
         with open(yaml_file, 'r', encoding='utf-8') as reader:
-            config_dict = yaml.load(reader, Loader=yaml.Loader)
+            config_dict = yaml.load(reader, Loader=yaml.SafeLoader)
         return cls(**config_dict)
 
 
@@ -176,5 +176,5 @@ class HiTeAConfig(PretrainedConfig):
     def from_yaml_file(cls, yaml_file: Union[str,
                                              os.PathLike]) -> Dict[str, Any]:
         with open(yaml_file, 'r', encoding='utf-8') as reader:
-            config_dict = yaml.load(reader, Loader=yaml.Loader)
+            config_dict = yaml.load(reader, Loader=yaml.SafeLoader)
         return cls(**config_dict)

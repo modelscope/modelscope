@@ -81,6 +81,7 @@ class ControlNet(TorchModel):
         device = kwargs.get('device', 'cuda')
         if device == 'gpu':
             device = 'cuda'
+        self.check_trust_remote_code(model_dir=model_dir)
         model = create_model(yaml_path).cpu()
         state_dict = load_state_dict(ckpt_path, location=device)
         compatible_position_ids(

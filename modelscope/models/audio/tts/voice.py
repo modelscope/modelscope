@@ -167,9 +167,9 @@ class Voice:
             raise TtsModelNotExistsException(
                 'modelscope error: voc model file not found')
         with open(self.am_config_path, 'r') as f:
-            self.am_config = yaml.load(f, Loader=yaml.Loader)
+            self.am_config = yaml.load(f, Loader=yaml.SafeLoader)
         with open(self.voc_config_path, 'r') as f:
-            self.voc_config = yaml.load(f, Loader=yaml.Loader)
+            self.voc_config = yaml.load(f, Loader=yaml.SafeLoader)
         if 'linguistic_unit' not in self.am_config:
             raise TtsModelConfigurationException(
                 'no linguistic_unit in am config')
@@ -366,9 +366,9 @@ class Voice:
         train_steps = hparams.get('train_steps', 0)
 
         with open(self.audio_config, 'r') as f:
-            config = yaml.load(f, Loader=yaml.Loader)
+            config = yaml.load(f, Loader=yaml.SafeLoader)
         with open(config_path, 'r') as f:
-            config.update(yaml.load(f, Loader=yaml.Loader))
+            config.update(yaml.load(f, Loader=yaml.SafeLoader))
             config.update(hparams)
 
         resume_from = None
@@ -529,10 +529,10 @@ class Voice:
         train_steps = hparams.get('train_steps', 0)
 
         with open(self.audio_config, 'r') as f:
-            config = yaml.load(f, Loader=yaml.Loader)
+            config = yaml.load(f, Loader=yaml.SafeLoader)
 
         with open(config_path, 'r') as f:
-            config.update(yaml.load(f, Loader=yaml.Loader))
+            config.update(yaml.load(f, Loader=yaml.SafeLoader))
             config.update(hparams)
 
         resume_from = None

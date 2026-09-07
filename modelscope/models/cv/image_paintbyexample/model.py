@@ -41,6 +41,7 @@ class StablediffusionPaintbyexample(TorchModel):
         super().__init__(model_dir, **kwargs)
 
         config = OmegaConf.load(os.path.join(model_dir, 'v1.yaml'))
+        self.check_trust_remote_code(model_dir=model_dir)
         model = load_model_from_config(
             config, os.path.join(model_dir, 'pytorch_model.pt'))
         self.model = model

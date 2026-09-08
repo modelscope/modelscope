@@ -11,6 +11,10 @@ from modelscope.utils.constant import Tasks
 from modelscope.utils.test_utils import test_level
 
 MIX_SPEECH_FILE = 'data/test/audios/mix_speech.wav'
+MIX_SPEECH_URL = (
+    'https://modelscope.cn/api/v1/models/iic/'
+    'speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360/'
+    'repo?Revision=master&FilePath=examples/mix_speech.wav')
 
 
 class SpeechSeparationTest(unittest.TestCase):
@@ -47,10 +51,10 @@ class SpeechSeparationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_flatflocoformer(self):
         import soundfile as sf
-        model_id = ('damo/speech_flatflocoformer_separation_timefrequency_8k'
+        model_id = ('iic/speech_flatflocoformer_separation_timefrequency_8k'
                     '_middle_libri2mix360')
         separation = pipeline(Tasks.speech_separation, model=model_id)
-        result = separation(os.path.join(os.getcwd(), MIX_SPEECH_FILE))
+        result = separation(MIX_SPEECH_URL)
         self.assertTrue(OutputKeys.OUTPUT_PCM_LIST in result)
         self.assertEqual(len(result[OutputKeys.OUTPUT_PCM_LIST]), 2)
         for i, signal in enumerate(result[OutputKeys.OUTPUT_PCM_LIST]):
@@ -61,10 +65,10 @@ class SpeechSeparationTest(unittest.TestCase):
     @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_flatsepreformer(self):
         import soundfile as sf
-        model_id = ('damo/speech_flatsepreformer_separation_temporal_8k'
+        model_id = ('iic/speech_flatsepreformer_separation_temporal_8k'
                     '_base_libri2mix100')
         separation = pipeline(Tasks.speech_separation, model=model_id)
-        result = separation(os.path.join(os.getcwd(), MIX_SPEECH_FILE))
+        result = separation(MIX_SPEECH_URL)
         self.assertTrue(OutputKeys.OUTPUT_PCM_LIST in result)
         self.assertEqual(len(result[OutputKeys.OUTPUT_PCM_LIST]), 2)
         for i, signal in enumerate(result[OutputKeys.OUTPUT_PCM_LIST]):

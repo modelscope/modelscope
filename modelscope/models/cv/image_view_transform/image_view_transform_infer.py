@@ -13,6 +13,7 @@ import fire
 import numpy as np
 import rich
 import torch
+import yaml
 from einops import rearrange
 from omegaconf import OmegaConf
 from PIL import Image
@@ -24,6 +25,8 @@ from modelscope.fileio import load
 from modelscope.metainfo import Models
 from modelscope.models.base import TorchModel
 from modelscope.models.builder import MODELS
+from modelscope.utils.architecture import (require_trust_remote_code,
+                                           validate_mapping_schema)
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
 from .ldm.ddim import DDIMSampler
@@ -32,13 +35,25 @@ from .util import instantiate_from_config, load_and_preprocess
 logger = get_logger()
 
 
+def _load_model_config(config_path):
+    with open(config_path, encoding='utf-8') as config_file:
+        raw_config = yaml.safe_load(config_file)
+    validate_mapping_schema(
+        raw_config,
+        required={'model'},
+        optional={'data', 'lightning'},
+        context='image view transform configuration')
+    return OmegaConf.create(raw_config)
+
+
 def load_model_from_config(model, config, ckpt, device, verbose=False):
-    print(f'Loading model from {ckpt}')
-    pl_sd = torch.load(ckpt, map_location='cpu')
-    if 'global_step' in pl_sd:
-        print(f'Global Step: {pl_sd["global_step"]}')
-    sd = pl_sd['state_dict']
     model = instantiate_from_config(config.model)
+    print(f'Loading model from {ckpt}')
+    pl_sd = torch.load(ckpt, map_location='cpu', weights_only=True)
+    if 'global_step' in pl_sd:
+        global_step = pl_sd['global_step']
+        print(f'Global Step: {global_step}')
+    sd = pl_sd['state_dict']
     m, u = model.load_state_dict(sd, strict=False)
     model.to(device)
     model.eval()
@@ -55,20 +70,20 @@ class ImageViewTransform(TorchModel):
     """
 
     def __init__(self, model_dir, device='cpu', *args, **kwargs):
-
+        require_trust_remote_code(
+            bool(kwargs.get('trust_remote_code', False)), 'ImageViewTransform')
         super().__init__(model_dir=model_dir, device=device, *args, **kwargs)
 
         self.device = torch.device(
             device if torch.cuda.is_available() else 'cpu')
 
-        config = os.path.join(model_dir,
-                              'sd-objaverse-finetune-c_concat-256.yaml')
+        config_path = os.path.join(model_dir,
+                                   'sd-objaverse-finetune-c_concat-256.yaml')
         ckpt = os.path.join(model_dir, 'zero123-xl.ckpt')
-        config = OmegaConf.load(config)
+        config = _load_model_config(config_path)
         self.model = None
         self.model = load_model_from_config(
             self.model, config, ckpt, device=self.device)
-        self.check_trust_remote_code(model_dir=model_dir)
 
     def forward(self, model_path, x, y):
         pred_results = _infer(self.model, model_path, x, y, self.device)

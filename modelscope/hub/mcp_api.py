@@ -7,17 +7,24 @@ ModelScope MCP plaza (https://www.modelscope.cn/mcp).
 """
 from typing import Any, Dict, Optional
 
-import requests
-
 from modelscope.hub.api import HubApi
-from modelscope.hub.errors import RequestError, raise_for_http_status
 from modelscope.utils.logger import get_logger
 
 # Configure logging
 logger = get_logger()
 
-# MCP API path
+# MCP API path. Retained for backward compatibility with callers that imported
+# it; the requests themselves are issued by modelscope_hub, which owns the URL.
 MCP_API_PATH = '/openapi/v1/mcp/servers'
+
+
+def _operational_url_entry(operational_url: Dict[str, Any]) -> Dict[str, str]:
+    """Render one hosted endpoint as the {type, url} pair callers expect.
+
+    The transport is the final path segment (``sse`` / ``streamable_http``).
+    """
+    url = operational_url.get('url') or ''
+    return {'type': url.split('/')[-1], 'url': url}
 
 
 class MCPApiError(Exception):
@@ -59,6 +66,17 @@ class MCPApi(HubApi):
         super().__init__(endpoint=endpoint, token=token)
 
         self.mcp_base_url = self.endpoint + MCP_API_PATH
+
+    def _delegate(self, token: Optional[str] = None):
+        """Return the modelscope_hub client that should serve this call.
+
+        The ambient client is reused unless a one-time ``token`` was supplied, in
+        which case a dedicated client is built so the override actually applies.
+        """
+        if token:
+            from modelscope_hub.api import HubApi as _HubApi
+            return _HubApi(token=token, endpoint=self.endpoint)
+        return self._api
 
     @staticmethod
     def _get_server_name_from_id(server_id: str) -> str:
@@ -114,11 +132,7 @@ class MCPApi(HubApi):
             raise ValueError('total_count must be between 1 and 100')
 
         try:
-            api = self._api
-            if token:
-                from modelscope_hub.api import HubApi as _HubApi
-                api = _HubApi(token=token, endpoint=self.endpoint)
-            result = api.list_mcp_servers(
+            result = self._delegate(token).list_mcp_servers(
                 search=search,
                 page_number=1,
                 page_size=total_count,
@@ -177,46 +191,25 @@ class MCPApi(HubApi):
                 ]
             }
         """
-        url = f'{self.mcp_base_url}/operational'
-
         try:
-            headers = self._build_bearer_headers(
-                token=token, token_required=True)
-            r = self.session.get(url, headers=headers)
-            raise_for_http_status(r)
-        except requests.exceptions.RequestException as e:
+            result = self._delegate(token).list_operational_mcp_servers()
+        except Exception as e:
             logger.error(f'Failed to get operational MCP servers: {e}')
             raise MCPApiRequestError(
                 f'Failed to get operational MCP servers: {e}') from e
 
-        logger.debug(f'Response status code: {r.status_code}')
-
-        try:
-            data = self._parse_openapi_response(r)
-        except RequestError as e:
-            raise MCPApiResponseError(
-                f'Invalid response from operational MCP servers: {e}') from e
-
-        mcp_server_list = data.get('mcp_server_list', [])
-
         mcp_config_list = []
-        for item in mcp_server_list:
+        for item in result.items:
             mcp_config = {}
             mcp_config['name'] = item.get('name', '')
             mcp_config['id'] = item.get('id', '')
             mcp_config['description'] = item.get('description', '')
-            mcp_config['mcp_servers'] = []
-            for operational_url in item.get('operational_urls', []):
-                mcp_config['mcp_servers'].append({
-                    'type': (operational_url.get('url') or '').split('/')[-1],
-                    'url':
-                    operational_url.get('url', '')
-                })
+            mcp_config['mcp_servers'] = [
+                _operational_url_entry(operational_url)
+                for operational_url in item.get('operational_urls') or []
+            ]
             mcp_config_list.append(mcp_config)
-        return {
-            'total_count': data.get('total_count', 0),
-            'servers': mcp_config_list
-        }
+        return {'total_count': result.total_count, 'servers': mcp_config_list}
 
     def get_mcp_server(self,
                        server_id: str,
@@ -234,7 +227,7 @@ class MCPApi(HubApi):
                 - name: Server name
                 - description: Server description
                 - id: Server ID
-                - service_config: Connection configuration with type and url
+                - servers: Connection configurations, each with type and url
 
         Raises:
             ValueError: If server_id is empty or None
@@ -262,24 +255,17 @@ class MCPApi(HubApi):
         if not server_id:
             raise ValueError('server_id cannot be empty')
 
-        url = f'{self.mcp_base_url}/{server_id}'
-
         try:
-            headers = self._build_bearer_headers(
-                token=token, token_required=False)
-            r = self.session.get(
-                url, headers=headers, params={'get_operational_url': True})
-            raise_for_http_status(r)
-        except requests.exceptions.RequestException as e:
+            data = self._delegate(token).get_mcp_server(
+                server_id, get_operational_url=True)
+        except Exception as e:
             logger.error(f'Failed to get MCP server {server_id}: {e}')
             raise MCPApiRequestError(
                 f'Failed to get MCP server {server_id}: {e}') from e
 
-        try:
-            data = self._parse_openapi_response(r)
-        except RequestError as e:
+        if not isinstance(data, dict):
             raise MCPApiResponseError(
-                f'Invalid response from MCP server {server_id}: {e}') from e
+                f'Invalid response from MCP server {server_id}: {data!r}')
 
         result = {
             'name': data.get('name', ''),
@@ -287,18 +273,97 @@ class MCPApi(HubApi):
             'id': data.get('id', '')
         }
 
-        server_id = data.get('id', '')
-        server_name = MCPApi._get_server_name_from_id(server_id)
-
-        operational_urls = data.get('operational_urls', [])
+        server_name = MCPApi._get_server_name_from_id(data.get('id', ''))
+        operational_urls = data.get('operational_urls') or []
         mcp_config_list = []
         if server_name and operational_urls:
-            for operational_url in operational_urls:
-                mcp_config = {
-                    'type': (operational_url.get('url') or '').split('/')[-1],
-                    'url': operational_url.get('url', '')
-                }
-                mcp_config_list.append(mcp_config)
+            mcp_config_list = [
+                _operational_url_entry(operational_url)
+                for operational_url in operational_urls
+            ]
 
         result['servers'] = mcp_config_list
         return result
+
+    def deploy_mcp_server(self,
+                          server_id: str,
+                          transport_type: Optional[str] = None,
+                          expiration_minutes: Optional[int] = None,
+                          auth_check: Optional[bool] = None,
+                          env_info: Optional[Dict[str, str]] = None,
+                          token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Host an MCP server under your own account.
+
+        Args:
+            server_id: MCP server ID (e.g., "@amap/amap-maps")
+            transport_type: 'sse' (default) or 'streamable_http'
+            expiration_minutes: Lifetime in minutes; -1 for no expiration
+            auth_check: Require a ModelScope token when connecting to the URL
+            env_info: Environment variables, as listed in the server's env_schema
+            token: Optional access token for authentication
+
+        Returns:
+            Dict describing the deployment::
+
+                {
+                    'id': '...',
+                    'url': 'https://mcp.api-inference.modelscope.net/{uuid}/sse',
+                    'transport_type': 'sse',
+                    'auth_required': False,
+                    'expiration': '2025-10-01 21:00:00',
+                    'accessible': True
+                }
+
+        Raises:
+            ValueError: If server_id is empty or None
+            MCPApiRequestError: If the deployment request fails
+
+        Authentication:
+            Required. A token with 'write' permission or higher.
+        """
+        if not server_id:
+            raise ValueError('server_id cannot be empty')
+
+        payload = {
+            'transport_type': transport_type,
+            'expiration_minutes': expiration_minutes,
+            'auth_check': auth_check,
+            'env_info': env_info,
+        }
+        payload = {k: v for k, v in payload.items() if v is not None}
+
+        try:
+            return self._delegate(token).deploy_mcp_server(
+                server_id, payload=payload or None)
+        except Exception as e:
+            logger.error(f'Failed to deploy MCP server {server_id}: {e}')
+            raise MCPApiRequestError(
+                f'Failed to deploy MCP server {server_id}: {e}') from e
+
+    def undeploy_mcp_server(self,
+                            server_id: str,
+                            token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Tear down an MCP server you are hosting.
+
+        Args:
+            server_id: MCP server ID (e.g., "@amap/amap-maps")
+            token: Optional access token for authentication
+
+        Raises:
+            ValueError: If server_id is empty or None
+            MCPApiRequestError: If the request fails
+
+        Authentication:
+            Required. A token with 'write' permission or higher.
+        """
+        if not server_id:
+            raise ValueError('server_id cannot be empty')
+
+        try:
+            return self._delegate(token).undeploy_mcp_server(server_id)
+        except Exception as e:
+            logger.error(f'Failed to undeploy MCP server {server_id}: {e}')
+            raise MCPApiRequestError(
+                f'Failed to undeploy MCP server {server_id}: {e}') from e

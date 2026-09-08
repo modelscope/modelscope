@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE, Pipelines
+from modelscope.metainfo import DEFAULT_MODEL_FOR_PIPELINE
 from modelscope.models.base import Model
 from modelscope.utils.automodel_utils import check_model_from_owner_group
 from modelscope.utils.config import ConfigDict, check_config
@@ -120,7 +120,6 @@ def pipeline(task: str = None,
 
     model_id = model[0] if isinstance(model,
                                       list) and len(model) > 0 else model
-    explicit_trust_remote_code = trust_remote_code is True
     _model_trusted = check_model_from_owner_group(model_id)
     trust_remote_code = trust_remote_code or _model_trusted
     pipeline_props = None
@@ -243,11 +242,6 @@ def pipeline(task: str = None,
     pipeline_props['model'] = model
     pipeline_props['device'] = device
     cfg = ConfigDict(pipeline_props)
-    if pipeline_props['type'] == Pipelines.speech_jaec_aec_16k:
-        cfg.model_revision = model_revision
-    if (explicit_trust_remote_code
-            and pipeline_props['type'] == Pipelines.speech_jaec_aec_16k):
-        cfg.trust_remote_code = True
 
     clear_llm_info(kwargs, pipeline_name)
     if kwargs:

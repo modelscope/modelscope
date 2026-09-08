@@ -18,7 +18,9 @@ from modelscope.metainfo import Pipelines
 from modelscope.models.audio.aec.jaec import JAECModel
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
-from modelscope.utils.constant import Tasks
+from modelscope.pipelines.audio.jaec_pipeline import JAECPipeline
+from modelscope.utils.config import Config
+from modelscope.utils.constant import Invoke, Tasks
 from modelscope.utils.test_utils import test_level
 
 
@@ -124,7 +126,7 @@ class JAECPipelineTest(unittest.TestCase):
                     Tasks.acoustic_echo_cancellation,
                     model=str(root),
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 inputs = {
                     'nearend_mic': str(mic_path),
                     'farend_speech': ref_path.read_bytes(),
@@ -159,7 +161,7 @@ class JAECPipelineTest(unittest.TestCase):
                     Tasks.acoustic_echo_cancellation,
                     model=str(root),
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 with self.assertRaisesRegex(ValueError, 'same length'):
                     aec({
                         'nearend_mic': str(mic_path),
@@ -177,7 +179,7 @@ class JAECPipelineTest(unittest.TestCase):
                         'modelscope.models.audio.aec.jaec.platform.machine',
                         return_value='aarch64'):
                 with self.assertRaisesRegex(RuntimeError, 'supports macOS'):
-                    JAECModel(str(root), trust_remote_code=True)
+                    JAECModel(str(root), trust_native_code=True)
 
     def test_local_model_requires_explicit_trust(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -186,23 +188,23 @@ class JAECPipelineTest(unittest.TestCase):
             fake_native = _FakeJAECLibrary()
             with self._mock_native(fake_native):
                 with self.assertRaisesRegex(RuntimeError,
-                                            'trust_remote_code=True'):
+                                            'trust_native_code=True'):
                     pipeline(
                         Tasks.acoustic_echo_cancellation,
                         model=str(root),
                         device='cpu')
                 with self.assertRaisesRegex(RuntimeError,
-                                            'trust_remote_code=True'):
+                                            'trust_native_code=True'):
                     pipeline(
                         Tasks.acoustic_echo_cancellation,
                         model=str(root),
                         device='cpu',
-                        trust_remote_code='false')
+                        trust_native_code='false')
                 aec = pipeline(
                     Tasks.acoustic_echo_cancellation,
                     model=str(root),
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 aec.model.close()
 
     def test_iic_like_local_path_cannot_bypass_native_trust(self):
@@ -213,7 +215,7 @@ class JAECPipelineTest(unittest.TestCase):
             fake_native = _FakeJAECLibrary()
             with self._mock_native(fake_native):
                 with self.assertRaisesRegex(RuntimeError,
-                                            'trust_remote_code=True'):
+                                            'trust_native_code=True'):
                     pipeline(
                         Tasks.acoustic_echo_cancellation,
                         model=str(root),
@@ -222,27 +224,89 @@ class JAECPipelineTest(unittest.TestCase):
                     Tasks.acoustic_echo_cancellation,
                     model=str(root),
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 aec.model.close()
 
-    def test_explicit_pipeline_downloads_requested_revision(self):
+    def test_factory_downloads_requested_revision(self):
         fake_native = _FakeJAECLibrary()
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             self._create_model_dir(root)
+            config = Config.from_file(str(root / 'configuration.json'))
             with self._mock_native(fake_native), patch(
-                    'modelscope.pipelines.audio.jaec_pipeline.snapshot_download',
-                    return_value=str(root)) as download:
+                    'modelscope.pipelines.builder.is_official_hub_path',
+                    return_value=True), patch(
+                        'modelscope.pipelines.builder.read_config',
+                        return_value=config) as read_config, patch(
+                            'modelscope.pipelines.builder.snapshot_download',
+                            return_value=str(root)) as download:
                 aec = pipeline(
                     Tasks.acoustic_echo_cancellation,
                     model='iic/speech_jaec_aec_16k',
-                    pipeline_name=Pipelines.speech_jaec_aec_16k,
                     model_revision='v1.0.0',
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 aec.model.close()
             download.assert_called_once_with(
+                'iic/speech_jaec_aec_16k',
+                revision='v1.0.0',
+                user_agent={Invoke.KEY: Invoke.PIPELINE},
+                ignore_file_pattern=None)
+            read_config.assert_called_once_with(
                 'iic/speech_jaec_aec_16k', revision='v1.0.0')
+
+    def test_explicit_pipeline_uses_prefetched_snapshot(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self._create_model_dir(root)
+            with self._mock_native(_FakeJAECLibrary()), patch(
+                    'modelscope.pipelines.builder.snapshot_download'
+            ) as download:
+                aec = pipeline(
+                    Tasks.acoustic_echo_cancellation,
+                    model=str(root),
+                    pipeline_name=Pipelines.speech_jaec_aec_16k,
+                    device='cpu',
+                    trust_native_code=True)
+                aec.model.close()
+                download.assert_not_called()
+
+    def test_unresolved_model_id_is_not_silently_downloaded(self):
+        with self.assertRaisesRegex(ValueError, 'snapshot_download'):
+            pipeline(
+                Tasks.acoustic_echo_cancellation,
+                model='iic/speech_jaec_aec_16k',
+                pipeline_name=Pipelines.speech_jaec_aec_16k,
+                model_revision='v1.0.0',
+                device='cpu',
+                trust_native_code=True)
+
+    def test_remote_trust_does_not_replace_native_consent(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self._create_model_dir(root)
+            with self._mock_native(_FakeJAECLibrary()):
+                with self.assertRaisesRegex(RuntimeError,
+                                            'trust_native_code=True'):
+                    pipeline(
+                        Tasks.acoustic_echo_cancellation,
+                        model=str(root),
+                        device='cpu',
+                        trust_remote_code=True)
+                with self.assertRaisesRegex(RuntimeError,
+                                            'trust_native_code=True'):
+                    JAECModel(str(root), trust_remote_code=True)
+
+    def test_direct_pipeline_requires_native_consent(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            self._create_model_dir(root)
+            with self._mock_native(_FakeJAECLibrary()):
+                with self.assertRaisesRegex(RuntimeError,
+                                            'trust_native_code=True'):
+                    JAECPipeline(str(root))
+                aec = JAECPipeline(str(root), trust_native_code=True)
+                aec.model.close()
 
     def test_pipeline_rejects_invalid_audio_format(self):
         fake_native = _FakeJAECLibrary()
@@ -260,7 +324,7 @@ class JAECPipelineTest(unittest.TestCase):
                     Tasks.acoustic_echo_cancellation,
                     model=str(root),
                     device='cpu',
-                    trust_remote_code=True)
+                    trust_native_code=True)
                 with self.assertRaisesRegex(ValueError, 'must be mono'):
                     aec({
                         'nearend_mic': str(mic_path),
@@ -280,7 +344,7 @@ class JAECPipelineTest(unittest.TestCase):
             self._create_model_dir(root)
             frame = np.zeros(160, dtype=np.int16)
             with self._mock_native(fake_native):
-                model = JAECModel(str(root), trust_remote_code=True)
+                model = JAECModel(str(root), trust_native_code=True)
                 model({'mic': frame, 'ref': frame})
                 model({'mic': frame, 'ref': frame})
                 self.assertEqual(fake_native.reset_count, 0)
@@ -304,13 +368,13 @@ class JAECPipelineTest(unittest.TestCase):
                 create_handle=0, error=b'invalid weights')
             with self._mock_native(init_failure):
                 with self.assertRaisesRegex(RuntimeError, 'invalid weights'):
-                    JAECModel(str(root), trust_remote_code=True)
+                    JAECModel(str(root), trust_native_code=True)
 
             process_failure = _FakeJAECLibrary(
                 process_status=1, error=b'native process failed')
             frame = np.zeros(160, dtype=np.int16)
             with self._mock_native(process_failure):
-                model = JAECModel(str(root), trust_remote_code=True)
+                model = JAECModel(str(root), trust_native_code=True)
                 with self.assertRaisesRegex(RuntimeError,
                                             'native process failed'):
                     model.process(frame, frame)
@@ -332,7 +396,7 @@ class JAECPipelineTest(unittest.TestCase):
                         return_value='x86_64'):
                 with self.assertRaisesRegex(RuntimeError,
                                             'native library not found'):
-                    JAECModel(str(root), trust_remote_code=True)
+                    JAECModel(str(root), trust_native_code=True)
 
 
 @unittest.skipUnless(test_level() >= 1, 'skip network integration tests')
@@ -355,7 +419,7 @@ class JAECHubIntegrationTest(unittest.TestCase):
             Tasks.acoustic_echo_cancellation,
             model='iic/speech_jaec_aec_16k',
             device='cpu',
-            trust_remote_code=True)
+            trust_native_code=True)
         cls.addClassCleanup(cls.aec.model.close)
 
         sample_root = (

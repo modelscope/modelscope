@@ -13,8 +13,7 @@ from modelscope.models.audio.aec.jaec import JAECModel
 from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Pipeline
 from modelscope.pipelines.builder import PIPELINES
-from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Tasks
-from modelscope.utils.hub import snapshot_download
+from modelscope.utils.constant import Tasks
 
 
 @PIPELINES.register_module(
@@ -24,22 +23,28 @@ class JAECPipeline(Pipeline):
     """Offline JAEC for aligned 16 kHz PCM16 mic/ref audio.
 
     The output retains JAEC's fixed 352-sample (22 ms) algorithmic delay.
+
+    Pass trust_native_code=True to authorize loading the native library.
+    The pipeline factory resolves the model ID and model_revision to a local
+    snapshot. When specifying pipeline_name explicitly, or constructing this
+    class directly, pass a local directory obtained with snapshot_download.
     """
 
-    def __init__(self, model, **kwargs):
-        trust_remote_code = kwargs.get('trust_remote_code', False)
+    def __init__(self, model, trust_native_code=False, **kwargs):
         kwargs.pop('device', None)
         kwargs.pop('auto_collate', None)
-        model_revision = kwargs.pop('model_revision', DEFAULT_MODEL_REVISION)
         if isinstance(model, str):
-            if trust_remote_code is not True:
+            if trust_native_code is not True:
                 raise RuntimeError(
                     'JAEC loads a native library from the model repository. '
-                    'Pass trust_remote_code=True only when you trust that '
+                    'Pass trust_native_code=True only when you trust that '
                     'repository.')
             if not os.path.isdir(model):
-                model = snapshot_download(model, revision=model_revision)
-            model = JAECModel(model, trust_remote_code=True)
+                raise ValueError(
+                    'JAEC requires a local model snapshot. Use pipeline() '
+                    'without pipeline_name, or download the requested '
+                    'revision with snapshot_download() first.')
+            model = JAECModel(model, trust_native_code=True)
         elif not isinstance(model, JAECModel):
             raise TypeError('model must be a JAEC model directory')
         super().__init__(

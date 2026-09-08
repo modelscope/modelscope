@@ -18,16 +18,15 @@ class JAECModel(Model):
     def __init__(self,
                  model_dir: str,
                  *args,
-                 trust_remote_code: bool = False,
+                 trust_native_code: bool = False,
                  **kwargs):
-        if trust_remote_code is not True:
+        if trust_native_code is not True:
             raise RuntimeError(
                 'JAEC loads a native library from the model repository. '
-                'Pass trust_remote_code=True only when you trust that '
+                'Pass trust_native_code=True only when you trust that '
                 'repository.')
         kwargs.pop('device', None)
-        super().__init__(
-            model_dir, *args, device='cpu', trust_remote_code=True, **kwargs)
+        super().__init__(model_dir, *args, device='cpu', **kwargs)
 
         system = platform.system()
         machine = platform.machine().lower()

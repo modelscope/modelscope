@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 from modelscope.hub.snapshot_download import snapshot_download
-from modelscope.metainfo import Tasks
+from modelscope.metainfo import Models, Tasks
 from modelscope.models.builder import build_backbone, build_model
 from modelscope.utils.automodel_utils import (can_load_by_ms,
-                                              check_model_from_owner_group,
+                                              is_model_from_trusted_source,
                                               try_to_load_hf_model)
 from modelscope.utils.config import Config, ConfigDict
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION, Invoke, ModelFile
@@ -22,6 +22,11 @@ logger = get_logger()
 
 Tensor = Union['torch.Tensor', 'tf.Tensor']
 
+_CONFIG_ONLY_MODELS = frozenset({
+    Models.image_view_transform,
+    Models.anydoor,
+})
+
 
 class Model(ABC):
     """Base model interface.
@@ -32,9 +37,7 @@ class Model(ABC):
         device_name = kwargs.get('device', 'gpu')
         verify_device(device_name)
         self._device_name = device_name
-        self.trust_remote_code = kwargs.get(
-            'trust_remote_code',
-            False) or check_model_from_owner_group(model_dir)
+        self.trust_remote_code = bool(kwargs.get('trust_remote_code', False))
 
     def __call__(self, *args, **kwargs) -> Dict[str, Any]:
         return self.postprocess(self.forward(*args, **kwargs))
@@ -52,10 +55,9 @@ class Model(ABC):
             'This model requires `trust_remote_code` to be `True` because it needs to '
             'import extra libs or execute the code in the model repo, setting this to true '
             'means you trust the files in it.')
-        if not check_model_from_owner_group(model_dir=model_dir):
-            # `raise` (not `assert`) so the gate also holds under `python -O`.
-            if not self.trust_remote_code:
-                raise RuntimeError(info_str)
+        if not self.trust_remote_code:
+            # Raise instead of assert so the gate remains active under python -O.
+            raise RuntimeError(info_str)
 
     @abstractmethod
     def forward(self, *args, **kwargs) -> Dict[str, Any]:
@@ -141,8 +143,11 @@ class Model(ABC):
             kwargs.pop(Invoke.KEY)
         else:
             invoked_by = Invoke.PRETRAINED
-        _model_trusted = check_model_from_owner_group(model_name_or_path)
-        trust_remote_code = trust_remote_code or _model_trusted
+        is_remote_model = not osp.exists(model_name_or_path)
+        _model_trusted = (
+            is_model_from_trusted_source(model_name_or_path, revision)
+            if is_remote_model and not trust_remote_code else False)
+        trust_remote_code = bool(trust_remote_code or _model_trusted)
         ignore_file_pattern = kwargs.pop('ignore_file_pattern', None)
         if osp.exists(model_name_or_path):
             local_model_dir = model_name_or_path
@@ -195,8 +200,12 @@ class Model(ABC):
         model_cfg.model_dir = local_model_dir
 
         # Security check: Only allow execution of remote code or plugins if trust_remote_code is True
-        plugins = cfg.safe_get('plugins')
-        if filter_plugin_in_whitelist(plugins) and not trust_remote_code:
+        builtin_config_model = model_type in _CONFIG_ONLY_MODELS
+        plugins = None if builtin_config_model else cfg.safe_get('plugins')
+        allow_remote = (
+            cfg.get('allow_remote', False) and not builtin_config_model)
+        if (filter_plugin_in_whitelist(plugins)
+                or allow_remote) and not trust_remote_code:
             raise RuntimeError(
                 'Detected plugins field in the model configuration file, but '
                 'trust_remote_code=True was not explicitly set.\n'
@@ -207,13 +216,16 @@ class Model(ABC):
             logger.warning(
                 'Use trust_remote_code=True. Will invoke codes or install plugins from remote model repo. '
                 'Please make sure that you can trust the external codes.')
-        register_modelhub_repo(local_model_dir, allow_remote=trust_remote_code)
+        register_modelhub_repo(
+            local_model_dir, allow_remote=trust_remote_code and allow_remote)
         default_args = {}
-        if trust_remote_code and not _model_trusted:
-            default_args = {'trust_remote_code': trust_remote_code}
+        if trust_remote_code:
+            default_args = {'trust_remote_code': True}
         register_plugins_repo(plugins)
         for k, v in kwargs.items():
             model_cfg[k] = v
+        # Repository configuration cannot enable remote code execution.
+        model_cfg.pop('trust_remote_code', None)
         if device is not None:
             model_cfg.device = device
         if task_name is Tasks.backbone:

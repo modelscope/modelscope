@@ -7,6 +7,7 @@ from modelscope_hub import HubConfig as _HubConfig
 from modelscope_hub import get_default_config as _get_default_config
 from modelscope_hub import set_default_config as _set_default_config
 
+from .agent_idp_api import AgentIdpApi
 from .callback import ProgressCallback, TqdmCallback
 from .commit_scheduler import CommitScheduler
 from .snapshot_download import snapshot_download
@@ -42,6 +43,7 @@ def _sync_config() -> None:
 _sync_config()
 
 __all__ = [
+    'AgentIdpApi',
     'CommitScheduler',
     'ProgressCallback',
     'TqdmCallback',

@@ -554,6 +554,7 @@ class Pipelines(object):
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
+    speech_jaec_aec_16k = 'speech-jaec-aec-16k'
     speech_dfsmn_ans_psm_48k_causal = 'speech_dfsmn_ans_psm_48k_causal'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'

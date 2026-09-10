@@ -37,20 +37,19 @@ class Builder:
 
     def init_args(self, args: Any) -> Any:
         if not args.base_image:
-            # A mirrored image of nvidia/cuda:12.4.0-devel-ubuntu22.04
-            args.base_image = 'nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04'
+            args.base_image = 'nvidia/cuda:13.0.3-devel-ubuntu22.04'
         if not args.torch_version:
-            args.torch_version = '2.10.0'
-            args.torchaudio_version = '2.10.0'
-            args.torchvision_version = '0.25.0'
+            args.torch_version = '2.13.0'
+            args.torchaudio_version = '2.11.0'
+            args.torchvision_version = '0.28.0'
         if not args.optimum_version:
             args.optimum_version = '2.0.0'
         if not args.tf_version:
             args.tf_version = '2.16.1'
         if not args.cuda_version:
-            args.cuda_version = '12.8.1'
+            args.cuda_version = '13.0.3'
         if not args.vllm_version:
-            args.vllm_version = '0.19.1'
+            args.vllm_version = '0.27.1'
         if not args.lmdeploy_version:
             args.lmdeploy_version = '0.11.0'
         if not args.autogptq_version:
@@ -78,6 +77,14 @@ class Builder:
         )
 
     def _save_dockerfile(self, content: str) -> None:
+        hub_install = (
+            'pip install --no-cache-dir '
+            '"modelscope_hub @ git+https://github.com/modelscope/modelscope_hub.git@release/0.3" &&')
+        install_modelscope = 'cd modelscope && pip install .'
+        content = content.replace('{modelscope_hub_install}', hub_install)
+        if hub_install not in content and install_modelscope in content:
+            content = content.replace(install_modelscope,
+                                     f'{hub_install} \\\n    {install_modelscope}')
         if os.path.exists('./Dockerfile'):
             os.remove('./Dockerfile')
         with open('./Dockerfile', 'w') as f:
@@ -356,15 +363,6 @@ class StableCPUImageBuilder(Builder):
 class StableGPUImageBuilder(Builder):
     """Dependencies will be stable versions"""
 
-    def init_args(self, args: Any) -> Any:
-        if not args.torch_version:
-            args.torch_version = '2.10.0'
-            args.torchaudio_version = '2.10.0'
-            args.torchvision_version = '0.25.0'
-        if not args.vllm_version:
-            args.vllm_version = '0.19.1'
-        return super().init_args(args)
-
     def generate_dockerfile(self) -> str:
         meta_file = './docker/install.sh'
         with open('docker/Dockerfile.extra_install', 'r') as f:
@@ -373,7 +371,14 @@ class StableGPUImageBuilder(Builder):
                                                   self.args.python_version)
             extra_content += """
 RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
-    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy onnx onnxscript
+"""
+            # vLLM >= 0.27 requires flashinfer >= 0.6.14, whose wheels are no longer
+            # published to PyPI. Pre-install it from flashinfer's own index so the later
+            # `pip install vllm` resolves without touching install.sh.
+            extra_content += """
+RUN pip install --no-cache-dir flashinfer-python \
+    --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -1143,5 +1148,4 @@ else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
 for builder in builder_cls:
-    args = copy(args)
-    builder(args, args.dry_run)()
+    builder(copy(args), args.dry_run)()

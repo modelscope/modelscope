@@ -76,6 +76,45 @@ class SpeechSeparationTest(unittest.TestCase):
             sf.write(save_file, numpy.frombuffer(signal, dtype=numpy.int16),
                      8000)
 
+    def test_separators_registered_offline(self):
+        # Regression guard for the reported failure:
+        #   "<model> is not in the pipelines registry group speech-separation".
+        # The lazy-import mechanism can only resolve a model/pipeline when its
+        # register_module decorator is discoverable by the AST scanner that
+        # builds the index; a missing decorator is exactly what raises that
+        # KeyError at pipeline() time. Verify the FLA-TF-Locoformer and
+        # FLA-T-SepReformer model and pipeline registrations are indexable.
+        # The scan is hermetic: no network, model download, or GPU is needed.
+        from modelscope.metainfo import Models
+        from modelscope.utils.ast_utils import AstScanning
+        modelscope_dir = os.path.join(
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            'modelscope')
+        scanner = AstScanning()
+        registered = set()
+        for rel_path in (
+            ('pipelines', 'audio', 'separation_pipeline.py'),
+            ('models', 'audio', 'separation', 'flatflocoformer',
+             'flatflocoformer.py'),
+            ('models', 'audio', 'separation', 'tsepreformer',
+             'tsepreformer.py'),
+        ):
+            registered.update(
+                scanner.generate_ast(os.path.join(modelscope_dir,
+                                                  *rel_path))['decorators'])
+        flatflocoformer = (
+            Models.
+            speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360
+        )
+        flatsepreformer = (
+            Models.
+            speech_flatsepreformer_separation_temporal_8k_base_libri2mix100)
+        for registry in ('MODELS', 'PIPELINES'):
+            for module_name in (flatflocoformer, flatsepreformer):
+                self.assertIn((registry, Tasks.speech_separation, module_name),
+                              registered)
+
 
 if __name__ == '__main__':
     unittest.main()

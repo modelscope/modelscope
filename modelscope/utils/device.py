@@ -9,22 +9,22 @@ logger = get_logger()
 
 
 def verify_device(device_name):
-    """ Verify device is valid, device should be either cpu, cuda, gpu, cuda:X or gpu:X.
+    """ Verify device is valid, device should be either cpu, cuda, gpu, xpu, cuda:X, gpu:X or xpu:X.
 
     Args:
-        device (str):  device str, should be either cpu, cuda, gpu, gpu:X or cuda:X
-            where X is the ordinal for gpu device.
+        device (str):  device str, should be either cpu, cuda, gpu, xpu, gpu:X, cuda:X or xpu:X
+            where X is the ordinal for the device.
 
     Return:
         device info (tuple):  device_type and device_id, if device_id is not set, will use 0 as default.
     """
-    err_msg = 'device should be either cpu, cuda, gpu, gpu:X or cuda:X where X is the ordinal for gpu device.'
+    err_msg = 'device should be either cpu, cuda, gpu, xpu, gpu:X, cuda:X or xpu:X where X is the ordinal for the device.'
     assert device_name is not None and device_name != '', err_msg
     device_name = device_name.lower()
     eles = device_name.split(':')
     assert len(eles) <= 2, err_msg
     assert device_name is not None
-    assert eles[0] in ['cpu', 'cuda', 'gpu'], err_msg
+    assert eles[0] in ['cpu', 'cuda', 'gpu', 'xpu'], err_msg
     device_type = eles[0]
     device_id = None
     if len(eles) > 1:
@@ -32,6 +32,8 @@ def verify_device(device_name):
     if device_type == 'cuda':
         device_type = Devices.gpu
     if device_type == Devices.gpu and device_id is None:
+        device_id = 0
+    if device_type == Devices.xpu and device_id is None:
         device_id = 0
     return device_type, device_id
 
@@ -77,6 +79,12 @@ def device_placement(framework, device_name='gpu:0'):
             else:
                 logger.debug(
                     'pytorch: cuda is not available, using cpu instead.')
+        elif device_type == Devices.xpu:
+            if hasattr(torch, 'xpu') and torch.xpu.is_available():
+                torch.xpu.set_device(f'xpu:{device_id}')
+            else:
+                logger.debug(
+                    'pytorch: xpu is not available, using cpu instead.')
         yield
     else:
         yield
@@ -86,23 +94,19 @@ def create_device(device_name):
     """ create torch device
 
     Args:
-        device_name (str):  cpu, gpu, gpu:0, cuda:0 etc.
+        device_name (str):  cpu, gpu, gpu:0, cuda:0, xpu, xpu:0 etc.
     """
     import torch
     device_type, device_id = verify_device(device_name)
-    use_cuda = False
     if device_type == Devices.gpu:
-        use_cuda = True
-        if not torch.cuda.is_available():
-            logger.info('cuda is not available, using cpu instead.')
-            use_cuda = False
-
-    if use_cuda:
-        device = torch.device(f'cuda:{device_id}')
-    else:
-        device = torch.device('cpu')
-
-    return device
+        if torch.cuda.is_available():
+            return torch.device(f'cuda:{device_id}')
+        logger.info('cuda is not available, using cpu instead.')
+    elif device_type == Devices.xpu:
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            return torch.device(f'xpu:{device_id}')
+        logger.info('xpu is not available, using cpu instead.')
+    return torch.device('cpu')
 
 
 def get_device():
@@ -114,6 +118,12 @@ def get_device():
             device_id = f"cuda:{os.environ['LOCAL_RANK']}"
         else:
             device_id = 'cuda:0'
+    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+        if dist.is_available() and dist.is_initialized(
+        ) and 'LOCAL_RANK' in os.environ:
+            device_id = f"xpu:{os.environ['LOCAL_RANK']}"
+        else:
+            device_id = 'xpu:0'
     else:
         device_id = 'cpu'
     return torch.device(device_id)

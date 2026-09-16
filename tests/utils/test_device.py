@@ -10,7 +10,7 @@ import torch
 
 from modelscope.utils.constant import Frameworks
 from modelscope.utils.device import (create_device, device_placement,
-                                     verify_device)
+                                     get_device, verify_device)
 
 
 class DeviceTest(unittest.TestCase):
@@ -42,6 +42,14 @@ class DeviceTest(unittest.TestCase):
 
         device_name, device_id = verify_device('gpu:1')
         self.assertEqual(device_name, 'gpu')
+        self.assertTrue(device_id == 1)
+
+        device_name, device_id = verify_device('xpu')
+        self.assertEqual(device_name, 'xpu')
+        self.assertTrue(device_id == 0)
+
+        device_name, device_id = verify_device('xpu:1')
+        self.assertEqual(device_name, 'xpu')
         self.assertTrue(device_id == 1)
 
         with self.assertRaises(AssertionError):
@@ -80,6 +88,41 @@ class DeviceTest(unittest.TestCase):
         self.assertTrue(device.type == target_device_type)
         self.assertTrue(device.index == target_device_index)
 
+    def test_get_device_cpu(self):
+        if torch.cuda.is_available() or (hasattr(torch, 'xpu')
+                                         and torch.xpu.is_available()):
+            self.skipTest('accelerator present, cpu fallback not exercised')
+        device = get_device()
+        self.assertIsInstance(device, torch.device)
+        self.assertEqual(device.type, 'cpu')
+
+    @unittest.skipUnless(
+        hasattr(torch, 'xpu') and torch.xpu.is_available(), 'no xpu')
+    def test_get_device_xpu(self):
+        device = get_device()
+        self.assertIsInstance(device, torch.device)
+        self.assertEqual(device.type, 'xpu')
+
+    def test_create_device_xpu_fallback(self):
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            self.skipTest('xpu present, fallback not exercised')
+        device = create_device('xpu')
+        self.assertIsInstance(device, torch.device)
+        self.assertEqual(device.type, 'cpu')
+
+    @unittest.skipUnless(
+        hasattr(torch, 'xpu') and torch.xpu.is_available(), 'no xpu')
+    def test_create_device_xpu(self):
+        device = create_device('xpu')
+        self.assertIsInstance(device, torch.device)
+        self.assertEqual(device.type, 'xpu')
+        self.assertEqual(device.index, 0)
+
+        device = create_device('xpu:0')
+        self.assertIsInstance(device, torch.device)
+        self.assertEqual(device.type, 'xpu')
+        self.assertEqual(device.index, 0)
+
     def test_device_placement_cpu(self):
         with device_placement(Frameworks.torch, 'cpu'):
             pass
@@ -101,6 +144,12 @@ class DeviceTest(unittest.TestCase):
         with device_placement(Frameworks.torch, 'gpu:0'):
             if torch.cuda.is_available():
                 self.assertEqual(torch.cuda.current_device(), 0)
+
+    @unittest.skipUnless(
+        hasattr(torch, 'xpu') and torch.xpu.is_available(), 'no xpu')
+    def test_device_placement_torch_xpu(self):
+        with device_placement(Frameworks.torch, 'xpu:0'):
+            self.assertEqual(torch.xpu.current_device(), 0)
 
 
 if __name__ == '__main__':

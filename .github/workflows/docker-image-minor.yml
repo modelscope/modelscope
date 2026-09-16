@@ -14,7 +14,7 @@ on:
         required: true
         default: 'minor-build'
       base_image:
-        description: 'Tag(s) of the already built major version image(s), e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0. Separate a batch with a comma or a semicolon; a full repository:tag is also accepted'
+        description: 'Tag(s) of the already built major version image(s), e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0. Separate a batch with a comma, a semicolon or a newline(the browser field is single line, so newlines need an API/gh CLI dispatch); a full repository:tag is also accepted'
         required: true
       modelscope_version:
         description: 'ModelScope version to install and to tag(x.xx.x), e.g. 1.40.1'

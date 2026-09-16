@@ -509,7 +509,8 @@ class MinorImageBuilder(Builder):
     _FIND_LINKS = ('https://modelscope.oss-cn-beijing.aliyuncs.com/releases/'
                    'repo.html')
     _TEST_SEGMENT = 'test'
-    # A batch of base images may be separated by comma, semicolon or spaces.
+    # A batch of base images may be separated by comma, semicolon, newline or
+    # spaces, so that a pasted list works whatever shape it comes in.
     _BATCH_SEPARATOR_PATTERN = re.compile(r'[,;\s]+')
     # A plain dotted version such as 1.40.0; every other tag segment is either
     # prefixed(cuda13.0.3, torch2.13.0) or non numeric(test, latest).
@@ -520,10 +521,12 @@ class MinorImageBuilder(Builder):
 
     @classmethod
     def split_base_images(cls, base_image: Optional[str]) -> List[str]:
-        """Split a comma/semicolon/space separated batch of base images.
+        """Split a comma/semicolon/newline separated batch of base images.
 
-        Repeated entries are dropped so that a batch never rebuilds the same
-        target twice, and the given order is kept.
+        Blank lines, indentation and a trailing separator are ignored, so a
+        list pasted as one image per line works as is. Repeated entries are
+        dropped so that a batch never rebuilds the same target twice, and the
+        given order is kept.
         """
         entries = [
             entry.strip()
@@ -535,7 +538,8 @@ class MinorImageBuilder(Builder):
                 'A minor build must inherit an already built image. Pass '
                 '--base_image with the tag of the major version image, e.g. '
                 '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0 '
-                '(a comma or semicolon separated batch is also accepted)')
+                '(a comma, semicolon or newline separated batch is also '
+                'accepted)')
         return list(dict.fromkeys(entries))
 
     def init_args(self, args: Any) -> Any:
@@ -827,7 +831,10 @@ class AmdImageBuilder(Builder):
         parts = version.strip().split('.')
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f'py{parts[0]}{parts[1]}'
-        return f'py{re.sub(r"[^0-9]", "", version)}'
+        # The substitution stays out of the f-string on purpose: quotes nested
+        # inside an f-string only parse on Python 3.12+.
+        digits = re.sub(r'[^0-9]', '', version)
+        return f'py{digits}'
 
     @classmethod
     def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
@@ -982,7 +989,10 @@ class AmdImageBuilder(Builder):
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
-            print(f'  {key}: {value or "unknown"}')
+            # Kept out of the f-string: quotes nested inside an f-string only
+            # parse on Python 3.12+.
+            probed_value = value or 'unknown'
+            print(f'  {key}: {probed_value}')
         return versions
 
     def generate_dockerfile(self) -> str:
@@ -1333,7 +1343,8 @@ parser.add_argument(
     type=str,
     default=None,
     help='Image to build on top of. A minor build requires it and accepts a '
-    'comma or semicolon separated batch of tags, each one rebuilt in turn.')
+    'comma, semicolon or newline separated batch of tags, each one rebuilt in '
+    'turn.')
 parser.add_argument('--image_type', type=str)
 parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')

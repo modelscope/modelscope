@@ -489,6 +489,189 @@ RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
         return self.run_cmd('docker', 'push', image_tag2)
 
 
+class MinorImageBuilder(Builder):
+    """Rebuild an already built image, refreshing only the ModelScope SDK.
+
+    A minor build inherits every dependency layer from ``--base_image``, which
+    must be an image produced by a previous major version build, and only
+    reinstalls modelscope and modelscope-hub on top of it. The output tag keeps
+    every segment of the base tag and just swaps the modelscope version, e.g.
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0`` produces
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.1-<timestamp>-test``.
+    """
+
+    _MODELSCOPE_REPO = 'https://github.com/modelscope/modelscope.git'
+    _FIND_LINKS = ('https://modelscope.oss-cn-beijing.aliyuncs.com/releases/'
+                   'repo.html')
+    _TEST_SEGMENT = 'test'
+    # A plain dotted version such as 1.40.0; every other tag segment is either
+    # prefixed(cuda13.0.3, torch2.13.0) or non numeric(test, latest).
+    _TAG_VERSION_PATTERN = re.compile(r'^\d+(?:\.\d+)+$')
+    _TAG_TIMESTAMP_PATTERN = re.compile(r'^\d{14}$')
+    _TAG_SAFE_VERSION_PATTERN = re.compile(r'^\d[0-9A-Za-z.]*$')
+    _REQUIREMENT_OPERATOR_PATTERN = re.compile(r'^[<>=!~]')
+
+    def init_args(self, args: Any) -> Any:
+        base_image = (args.base_image or '').strip()
+        if not base_image:
+            raise ValueError(
+                'A minor build must inherit an already built image. Pass '
+                '--base_image with the tag of the major version image, e.g. '
+                '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0')
+        args.base_image = self._resolve_base_image(base_image)
+        if not self._TAG_SAFE_VERSION_PATTERN.fullmatch(
+                args.modelscope_version):
+            raise ValueError(
+                '--modelscope_version becomes the version segment of the '
+                'output tag, so it must be a plain version such as 1.40.1, '
+                f'got: {args.modelscope_version}')
+        # Toolkit versions are inherited from the base image; the placeholder
+        # only keeps the shared Builder bootstrap working.
+        if not args.cuda_version:
+            args.cuda_version = '0.0.0'
+        self._parse_base_tag(args)
+        self._output_tag = self._derive_tag(args.modelscope_version)
+        if f'{docker_registry}:{self._output_tag}' == args.base_image:
+            raise ValueError(
+                'The minor build would overwrite its own base image '
+                f'{args.base_image}. Pass a --modelscope_version different '
+                'from the version of the base image.')
+        return args
+
+    @staticmethod
+    def _resolve_base_image(base_image: str) -> str:
+        """Accept either a full ``repository:tag`` ref or a bare tag."""
+        if ':' in base_image:
+            return base_image
+        if '/' in base_image:
+            raise ValueError(
+                '--base_image looks like a repository without a tag: '
+                f'{base_image}')
+        return f'{docker_registry}:{base_image}'
+
+    @classmethod
+    def _base_tag_of(cls, base_image: str) -> str:
+        _, separator, tag = base_image.rpartition(':')
+        if not separator or not tag or '/' in tag:
+            raise ValueError(
+                '--base_image must carry the tag of the image to rebuild, '
+                'e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0, got: '
+                f'{base_image}')
+        return tag
+
+    def _parse_base_tag(self, args: Any) -> None:
+        """Normalize the base tag and locate its modelscope version segment.
+
+        The build timestamp and the trailing ``test`` marker of the base image
+        are dropped here because :meth:`_derive_tag` appends the ones of this
+        build. That also makes a released tag(without ``-test``) and the tag it
+        was promoted from produce the same output.
+        """
+        tag = self._base_tag_of(args.base_image)
+        segments = [
+            segment for segment in tag.split('-')
+            if not self._TAG_TIMESTAMP_PATTERN.fullmatch(segment)
+        ]
+        if segments and segments[-1] == self._TEST_SEGMENT:
+            segments.pop()
+        base_version = (args.base_modelscope_version or '').strip()
+        if base_version:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if segment == base_version
+            ]
+            located_by = f'--base_modelscope_version {base_version}'
+        else:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if self._TAG_VERSION_PATTERN.fullmatch(segment)
+            ]
+            located_by = 'version segment auto detection'
+        if len(matched) != 1:
+            raise ValueError(
+                f'{located_by} matched {len(matched)} segments of base image '
+                f'tag "{tag}", expected exactly 1. Pass '
+                '--base_modelscope_version to point at the modelscope version '
+                'of the base image.')
+        self._base_tag_segments = segments
+        self._version_index = matched[0]
+
+    def _derive_tag(self, version: str, timestamped: bool = False) -> str:
+        segments = list(self._base_tag_segments)
+        segments[self._version_index] = version
+        if timestamped:
+            segments.append(formatted_time)
+        segments.append(self._TEST_SEGMENT)
+        return '-'.join(segments)
+
+    def _modelscope_install_cmd(self) -> str:
+        if self.args.modelscope_install_source == 'git':
+            return ('cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b '
+                    f'{self.args.modelscope_branch} --single-branch '
+                    f'{self._MODELSCOPE_REPO} && cd modelscope && '
+                    f'pip install --no-cache-dir . -f {self._FIND_LINKS} && '
+                    'cd / && rm -fr /tmp/modelscope')
+        return ('pip install --no-cache-dir '
+                f'modelscope=={self.args.modelscope_version} '
+                f'-f {self._FIND_LINKS}')
+
+    def _modelscope_hub_install_cmd(self) -> Optional[str]:
+        requirement = (self.args.modelscope_hub_version or '').strip()
+        if not requirement:
+            return None
+        if not self._REQUIREMENT_OPERATOR_PATTERN.match(requirement):
+            requirement = f'=={requirement}'
+        return f"pip install --no-cache-dir 'modelscope-hub{requirement}'"
+
+    def generate_dockerfile(self) -> str:
+        # modelscope is installed first so that an explicit modelscope-hub
+        # requirement wins over the floor resolved by modelscope itself.
+        steps = ['pip uninstall -y modelscope', self._modelscope_install_cmd()]
+        hub_step = self._modelscope_hub_install_cmd()
+        if hub_step:
+            steps.append(hub_step)
+        steps.append('pip cache purge')
+        install_content = (
+            'RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \\\n'
+            + ' && \\\n'.join(f'    {step}' for step in steps))
+        with open('docker/Dockerfile.minor', 'r') as f:
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{install_content}', install_content)
+        content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    def image(self) -> str:
+        return f'{docker_registry}:{self._output_tag}'
+
+    def build(self) -> int:
+        timestamped = self._derive_tag(
+            self.args.modelscope_version, timestamped=True)
+        print('=' * 60)
+        print(f'Minor build base image : {self.args.base_image}')
+        print(f'Minor build output     : {self.image()}')
+        print(f'Minor build timestamped: {docker_registry}:{timestamped}')
+        print('=' * 60)
+        ret = self.run_cmd('docker', 'pull', self.args.base_image)
+        if ret != 0:
+            return ret
+        return self.run_cmd('docker', 'build', '-t', self.image(), '-f',
+                            'Dockerfile', '.')
+
+    def push(self) -> int:
+        ret = self.run_cmd('docker', 'push', self.image())
+        if ret != 0:
+            return ret
+        image_tag2 = (
+            f'{docker_registry}:'
+            f'{self._derive_tag(self.args.modelscope_version, True)}')
+        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
+        if ret != 0:
+            return ret
+        print(f'Minor image timestamp tag: {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
+
+
 class AmdImageBuilder(Builder):
     """Build ModelScope image on top of vllm/vllm-openai-rocm."""
 
@@ -1100,6 +1283,26 @@ parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
+parser.add_argument(
+    '--base_modelscope_version',
+    type=str,
+    default=None,
+    help='Minor build only: the modelscope version segment inside the '
+    '--base_image tag. Auto detected when omitted.')
+parser.add_argument(
+    '--modelscope_hub_version',
+    type=str,
+    default=None,
+    help='Minor build only: modelscope-hub requirement to install, e.g. 0.4.3 '
+    'or >=0.4.3. When omitted, modelscope-hub is left to the dependency '
+    'resolution of modelscope itself.')
+parser.add_argument(
+    '--modelscope_install_source',
+    type=str,
+    choices=['pypi', 'git'],
+    default='pypi',
+    help='Minor build only: install modelscope from the released PyPI version '
+    '(--modelscope_version, default) or from --modelscope_branch source.')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
 parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
@@ -1127,6 +1330,8 @@ elif args.image_type.lower() == 'amd':
     builder_cls = [AmdImageBuilder]
 elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
+elif args.image_type.lower() == 'minor':
+    builder_cls = [MinorImageBuilder]
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 

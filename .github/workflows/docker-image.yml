@@ -8,17 +8,23 @@ on:
         required: true
         default: 'build'
       modelscope_branch:
-        description: 'ModelScope branch to build from(release/x.xx)'
+        description: 'ModelScope branch to build from(release/x.xx), a patch build only uses it as the git source when --modelscope_install_source git is set'
         required: true
       image_type:
-        description: 'The image type to build(base/old/stable/latest/amd/ascend)'
+        description: 'The image type to build(base/old/stable/latest/amd/ascend/patch), use patch to refresh only modelscope/modelscope-hub on base_image'
         required: true
       modelscope_version:
-        description: 'ModelScope version to use(x.xx.x)'
+        description: 'ModelScope version to use(x.xx.x), for a patch build this is the new version to install and to tag'
         required: true
       swift_branch:
-        description: 'SWIFT branch to use(release/x.xx)'
-        required: true
+        description: 'SWIFT branch to use(release/x.xx), required except for a patch build'
+        required: false
+      base_image:
+        description: 'Patch build only: the already built image to patch(<repository>:<tag>)'
+        required: false
+      modelscope_hub_version:
+        description: 'Patch build only: modelscope-hub version to install(x.x.x)'
+        required: false
       ci_image:
         description: 'Set as the CI image'
         default: '0'
@@ -51,10 +57,45 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
-        ref: ${{ github.event.inputs.modelscope_branch }}
+        # A patch build carries no repository content into the image, so it runs
+        # the build tooling of the selected workflow branch instead of the
+        # release branch.
+        ref: ${{ inputs.image_type == 'patch' && github.ref || inputs.modelscope_branch }}
 
     - name: Build Docker Image
+      env:
+        IMAGE_TYPE: ${{ inputs.image_type }}
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        MODELSCOPE_BRANCH: ${{ inputs.modelscope_branch }}
+        MODELSCOPE_VERSION: ${{ inputs.modelscope_version }}
+        SWIFT_BRANCH: ${{ inputs.swift_branch }}
+        BASE_IMAGE: ${{ inputs.base_image }}
+        MODELSCOPE_HUB_VERSION: ${{ inputs.modelscope_hub_version }}
+        CI_IMAGE: ${{ inputs.ci_image }}
+        OTHER_PARAMS: ${{ inputs.other_params }}
       run: |
         set -e
         source ~/.bashrc
-        python docker/build_image.py --image_type ${{ github.event.inputs.image_type }} --python_version ${{ github.event.inputs.python_version }} --modelscope_branch ${{ github.event.inputs.modelscope_branch }} --modelscope_version ${{ github.event.inputs.modelscope_version }} --swift_branch ${{ github.event.inputs.swift_branch }} --ci_image ${{ github.event.inputs.ci_image }} ${{ github.event.inputs.other_params }}
+        if [ "$IMAGE_TYPE" != "patch" ] && [ -z "$SWIFT_BRANCH" ]; then
+          echo "swift_branch is required for the '$IMAGE_TYPE' image type"
+          exit 1
+        fi
+        build_args=(
+          --image_type "$IMAGE_TYPE"
+          --python_version "$PYTHON_VERSION"
+          --modelscope_branch "$MODELSCOPE_BRANCH"
+          --modelscope_version "$MODELSCOPE_VERSION"
+          --ci_image "$CI_IMAGE"
+        )
+        if [ -n "$SWIFT_BRANCH" ]; then
+          build_args+=(--swift_branch "$SWIFT_BRANCH")
+        fi
+        if [ -n "$BASE_IMAGE" ]; then
+          build_args+=(--base_image "$BASE_IMAGE")
+        fi
+        if [ -n "$MODELSCOPE_HUB_VERSION" ]; then
+          build_args+=(--modelscope_hub_version "$MODELSCOPE_HUB_VERSION")
+        fi
+        # other_params stays unquoted on purpose: it carries '--xxx xxx' pairs,
+        # e.g. --base_modelscope_version 1.40.0 --modelscope_install_source git
+        python docker/build_image.py "${build_args[@]}" $OTHER_PARAMS

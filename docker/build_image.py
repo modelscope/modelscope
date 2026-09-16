@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 from copy import copy
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 import json
 
@@ -29,6 +29,7 @@ _NIGHTLY_HASH_PATTERN = re.compile(r'^(?:base-)?nightly-[0-9a-f]{7,40}$')
 class Builder:
 
     def __init__(self, args: Any, dry_run: bool):
+        self.pushed_images: List[str] = []
         self.args = self.init_args(args)
         self.dry_run = dry_run
         self.args.cudatoolkit_version = self._generate_cudatoolkit_version(
@@ -86,6 +87,9 @@ class Builder:
     def run_cmd(self, *args: str) -> int:
         """Run a shell command safely via subprocess (no shell=True).
 
+        Every successful ``docker push`` is recorded so that the build summary
+        can report the images this run really published.
+
         Args:
             *args: Command and its arguments as separate strings, e.g.
                    ``self.run_cmd('docker', 'build', '-t', tag, '.')``.
@@ -94,6 +98,9 @@ class Builder:
             The process return code (0 on success).
         """
         result = subprocess.run(list(args), check=False)
+        if (result.returncode == 0 and len(args) > 2
+                and list(args[:2]) == ['docker', 'push']):
+            self.pushed_images.append(args[2])
         return result.returncode
 
     def build(self) -> int:
@@ -104,6 +111,11 @@ class Builder:
 
     def image(self) -> str:
         pass
+
+    def output_images(self) -> List[str]:
+        """Images published by this build, or the planned tag if none was."""
+        return list(
+            self.pushed_images) if self.pushed_images else [self.image()]
 
     def __call__(self):
         content = self.generate_dockerfile()
@@ -497,6 +509,9 @@ class MinorImageBuilder(Builder):
     _FIND_LINKS = ('https://modelscope.oss-cn-beijing.aliyuncs.com/releases/'
                    'repo.html')
     _TEST_SEGMENT = 'test'
+    # A batch of base images may be separated by comma, semicolon, newline or
+    # spaces, so that a pasted list works whatever shape it comes in.
+    _BATCH_SEPARATOR_PATTERN = re.compile(r'[,;\s]+')
     # A plain dotted version such as 1.40.0; every other tag segment is either
     # prefixed(cuda13.0.3, torch2.13.0) or non numeric(test, latest).
     _TAG_VERSION_PATTERN = re.compile(r'^\d+(?:\.\d+)+$')
@@ -504,14 +519,37 @@ class MinorImageBuilder(Builder):
     _TAG_SAFE_VERSION_PATTERN = re.compile(r'^\d[0-9A-Za-z.]*$')
     _REQUIREMENT_OPERATOR_PATTERN = re.compile(r'^[<>=!~]')
 
-    def init_args(self, args: Any) -> Any:
-        base_image = (args.base_image or '').strip()
-        if not base_image:
+    @classmethod
+    def split_base_images(cls, base_image: Optional[str]) -> List[str]:
+        """Split a comma/semicolon/newline separated batch of base images.
+
+        Blank lines, indentation and a trailing separator are ignored, so a
+        list pasted as one image per line works as is. Repeated entries are
+        dropped so that a batch never rebuilds the same target twice, and the
+        given order is kept.
+        """
+        entries = [
+            entry.strip()
+            for entry in cls._BATCH_SEPARATOR_PATTERN.split(base_image or '')
+            if entry.strip()
+        ]
+        if not entries:
             raise ValueError(
                 'A minor build must inherit an already built image. Pass '
                 '--base_image with the tag of the major version image, e.g. '
-                '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0')
-        args.base_image = self._resolve_base_image(base_image)
+                '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0 '
+                '(a comma, semicolon or newline separated batch is also '
+                'accepted)')
+        return list(dict.fromkeys(entries))
+
+    def init_args(self, args: Any) -> Any:
+        base_images = self.split_base_images(args.base_image)
+        if len(base_images) > 1:
+            raise ValueError(
+                'A single minor build takes one base image, but a batch of '
+                f'{len(base_images)} was given. The module entry point expands '
+                'a batch into one build per base image.')
+        args.base_image = self._resolve_base_image(base_images[0])
         if not self._TAG_SAFE_VERSION_PATTERN.fullmatch(
                 args.modelscope_version):
             raise ValueError(
@@ -637,32 +675,39 @@ class MinorImageBuilder(Builder):
     def image(self) -> str:
         return f'{docker_registry}:{self._output_tag}'
 
-    def build(self) -> int:
+    def _planned_images(self) -> List[str]:
+        """The canonical tag and the timestamped tag of this build."""
         timestamped = self._derive_tag(
             self.args.modelscope_version, timestamped=True)
+        return [self.image(), f'{docker_registry}:{timestamped}']
+
+    def output_images(self) -> List[str]:
+        return (list(self.pushed_images)
+                if self.pushed_images else self._planned_images())
+
+    def build(self) -> int:
+        canonical, timestamped = self._planned_images()
         print('=' * 60)
         print(f'Minor build base image : {self.args.base_image}')
-        print(f'Minor build output     : {self.image()}')
-        print(f'Minor build timestamped: {docker_registry}:{timestamped}')
+        print(f'Minor build output     : {canonical}')
+        print(f'Minor build timestamped: {timestamped}')
         print('=' * 60)
         ret = self.run_cmd('docker', 'pull', self.args.base_image)
         if ret != 0:
             return ret
-        return self.run_cmd('docker', 'build', '-t', self.image(), '-f',
+        return self.run_cmd('docker', 'build', '-t', canonical, '-f',
                             'Dockerfile', '.')
 
     def push(self) -> int:
-        ret = self.run_cmd('docker', 'push', self.image())
+        canonical, timestamped = self._planned_images()
+        ret = self.run_cmd('docker', 'push', canonical)
         if ret != 0:
             return ret
-        image_tag2 = (
-            f'{docker_registry}:'
-            f'{self._derive_tag(self.args.modelscope_version, True)}')
-        ret = self.run_cmd('docker', 'tag', self.image(), image_tag2)
+        ret = self.run_cmd('docker', 'tag', canonical, timestamped)
         if ret != 0:
             return ret
-        print(f'Minor image timestamp tag: {image_tag2}')
-        return self.run_cmd('docker', 'push', image_tag2)
+        print(f'Minor image timestamp tag: {timestamped}')
+        return self.run_cmd('docker', 'push', timestamped)
 
 
 class AmdImageBuilder(Builder):
@@ -786,7 +831,10 @@ class AmdImageBuilder(Builder):
         parts = version.strip().split('.')
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f'py{parts[0]}{parts[1]}'
-        return f'py{re.sub(r"[^0-9]", "", version)}'
+        # The substitution stays out of the f-string on purpose: quotes nested
+        # inside an f-string only parse on Python 3.12+.
+        digits = re.sub(r'[^0-9]', '', version)
+        return f'py{digits}'
 
     @classmethod
     def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
@@ -941,7 +989,10 @@ class AmdImageBuilder(Builder):
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
-            print(f'  {key}: {value or "unknown"}')
+            # Kept out of the f-string: quotes nested inside an f-string only
+            # parse on Python 3.12+.
+            probed_value = value or 'unknown'
+            print(f'  {key}: {probed_value}')
         return versions
 
     def generate_dockerfile(self) -> str:
@@ -1242,8 +1293,58 @@ class AscendImageBuilder(StableGPUImageBuilder):
         return 0
 
 
+def safe_output_images(builder: Builder) -> List[str]:
+    """Never let an unresolved image tag break the summary of a failed build."""
+    try:
+        return builder.output_images()
+    except Exception as error:
+        return [f'<image tag unavailable: {error}>']
+
+
+def print_build_summary(results: List[Tuple[Builder, Optional[BaseException]]],
+                        dry_run: bool) -> None:
+    """Report every target of this run and list all output images at the end.
+
+    The flat list between the ``OUTPUT IMAGES`` markers is meant to be consumed
+    by tooling, so it holds nothing but one image reference per line, and only
+    images this run really produced: a target that failed before pushing
+    anything contributes none, one that failed halfway contributes what it did
+    push.
+    """
+    produced: List[str] = []
+    print()
+    print('=' * 78)
+    print(f'BUILD SUMMARY: {len(results)} target(s), '
+          f'build timestamp {formatted_time}')
+    print('=' * 78)
+    for builder, error in results:
+        status = 'DRY-RUN' if dry_run else ('FAILED' if error else 'SUCCESS')
+        base_image = getattr(builder.args, 'base_image', None) or '-'
+        print(f'[{status}] {type(builder).__name__}, base image: {base_image}')
+        images = safe_output_images(builder)
+        for image in images:
+            print(f'         {image}')
+        if not error or builder.pushed_images:
+            produced.extend(images)
+        if error:
+            print(f'         error: {type(error).__name__}: {error}')
+    print('=' * 78)
+    if dry_run:
+        print('# dry run: the images below were neither built nor pushed')
+    print('===== OUTPUT IMAGES BEGIN =====')
+    for image in produced:
+        print(image)
+    print('===== OUTPUT IMAGES END =====')
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--base_image', type=str, default=None)
+parser.add_argument(
+    '--base_image',
+    type=str,
+    default=None,
+    help='Image to build on top of. A minor build requires it and accepts a '
+    'comma, semicolon or newline separated batch of tags, each one rebuilt in '
+    'turn.')
 parser.add_argument('--image_type', type=str)
 parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
@@ -1328,6 +1429,56 @@ elif args.image_type.lower() == 'minor':
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
-for builder in builder_cls:
-    args = copy(args)
-    builder(args, args.dry_run)()
+# Only a minor build fans out over a batch of base images; every other image
+# type keeps building exactly the targets of its own builder list.
+base_images: List[Optional[str]] = [None]
+if args.image_type.lower() == 'minor':
+    base_images = [
+        base_image
+        for base_image in MinorImageBuilder.split_base_images(args.base_image)
+    ]
+
+# Instantiate every target first: argument validation then fails before any
+# expensive docker work, whichever target of the batch is misconfigured.
+builders: List[Builder] = []
+for builder_class in builder_cls:
+    for base_image in base_images:
+        # Keep the historical chaining where each builder receives the args as
+        # mutated by the previous one.
+        args = copy(args)
+        if base_image is not None:
+            args.base_image = base_image
+        builders.append(builder_class(args, args.dry_run))
+
+if len(base_images) > 1:
+    # Distinct base images may still normalize to the same output tag, which
+    # would make the targets of a batch silently overwrite each other.
+    planned_images: List[str] = []
+    for builder in builders:
+        if builder.image() in planned_images:
+            raise ValueError(
+                'Two base images of the batch would publish the same tag: '
+                f'{builder.image()}. Keep only one of them.')
+        planned_images.append(builder.image())
+
+build_results: List[Tuple[Builder, Optional[BaseException]]] = []
+first_error: Optional[BaseException] = None
+# Only a batch keeps going after a failure, so that one unusable base image
+# cannot cancel the rebuild of the others. Every other image type keeps the
+# historical fail fast behaviour.
+tolerate_failures = len(base_images) > 1
+for builder in builders:
+    try:
+        builder()
+    except Exception as build_error:
+        print(f'ERROR: {type(builder).__name__} failed: {build_error}')
+        build_results.append((builder, build_error))
+        first_error = first_error or build_error
+        if not tolerate_failures:
+            break
+    else:
+        build_results.append((builder, None))
+
+print_build_summary(build_results, bool(args.dry_run))
+if first_error is not None:
+    raise first_error

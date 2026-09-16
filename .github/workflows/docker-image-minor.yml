@@ -3,6 +3,8 @@ name: Build Minor Docker Image
 # Minor version build: reuse an already built major version image and refresh
 # only the modelscope and modelscope-hub dependencies. Every other layer(cuda,
 # python, torch, vllm, ms-swift, ...) is inherited from the base image as is.
+# One run rebuilds a whole batch of base images and prints every produced image
+# in the build summary at the end of the log.
 # Use the "Build Docker Image" workflow for a full major version build.
 on:
   workflow_dispatch:
@@ -12,7 +14,7 @@ on:
         required: true
         default: 'minor-build'
       base_image:
-        description: 'Tag of the already built major version image, e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0 (a full repository:tag is also accepted)'
+        description: 'Tag(s) of the already built major version image(s), e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0. Separate a batch with a comma, a semicolon or a newline(the browser field is single line, so newlines need an API/gh CLI dispatch); a full repository:tag is also accepted'
         required: true
       modelscope_version:
         description: 'ModelScope version to install and to tag(x.xx.x), e.g. 1.40.1'

@@ -1,0 +1,5 @@
+setuptools>=77.0.3,<80
+datasets>=3.0,<4.0
+transformers<5.4.0
+numpy==1.26.4
+scipy==1.16.2

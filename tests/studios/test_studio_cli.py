@@ -152,7 +152,9 @@ class TestStudioCLIErrors(TestResultMixin, unittest.TestCase):
             private=None,
         )
         cmd = StudioCMD(args)
-        with self.assertRaises(SystemExit):
+        # The hub leaf reports "no setting specified" as ValueError, which the
+        # hub CLI entry point turns into exit code 2.
+        with self.assertRaises(ValueError):
             cmd.execute()
 
     def test_secret_no_action_raises(self):
@@ -163,7 +165,8 @@ class TestStudioCLIErrors(TestResultMixin, unittest.TestCase):
             endpoint=None,
         )
         cmd = StudioCMD(args)
-        with self.assertRaises(SystemExit):
+        # Likewise: the hub leaf raises ValueError for an unknown/absent action.
+        with self.assertRaises(ValueError):
             cmd.execute()
 
 
@@ -187,9 +190,9 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         """Studio deletion is not supported via OpenAPI. Log created studios for manual cleanup."""
         if cls._created_studios:
             import logging
+            studios = ', '.join(cls._created_studios)
             logging.getLogger('modelscope').info(
-                f'Test studios created (manual cleanup needed): '
-                f'{", ".join(cls._created_studios)}')
+                f'Test studios created (manual cleanup needed): {studios}')
 
     def _create_and_track(self, **kwargs):
         """Create a studio with unique name, track for cleanup."""

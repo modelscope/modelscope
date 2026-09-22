@@ -18,14 +18,21 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
 
 [project.urls]
 Homepage = "https://github.com/modelscope/modelscope"
 
-[project.scripts]
-modelscope = "modelscope.cli.cli:run_cmd"
-ms = "modelscope.cli.cli:run_cmd"
+# No [project.scripts] here on purpose: the `modelscope`, `ms`, `modelscope-hub`
+# and `ms-hub` console scripts are all owned by the `modelscope-hub`
+# distribution that this package depends on. When two distributions declare the
+# same script name, upgrading or removing either one can overwrite or delete the
+# other's file and leave the user with no CLI at all; OS packagers such as
+# FreeBSD pkg reject two ports owning one path outright. This package
+# contributes its own commands through the plugin group below instead.
+#
+# `python -m modelscope.cli.cli` remains available as a direct entry point.
 
 [project.entry-points."modelscope_hub.cli_plugins"]
 pipeline = "modelscope.cli.pipeline:PipelineCMD"
@@ -34,7 +41,6 @@ plugins = "modelscope.cli.plugins:PluginsCMD"
 skills = "modelscope.cli.skills:SkillsCMD"
 llamafile = "modelscope.cli.llamafile:LlamafileCMD"
 modelcard = "modelscope.cli.modelcard:ModelCardCMD"
-studio = "modelscope.cli.studio:StudioCMD"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

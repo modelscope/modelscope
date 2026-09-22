@@ -3,19 +3,33 @@ import os
 import platform
 import re
 import subprocess
+import urllib.error
+import urllib.request
 from copy import copy
 from datetime import datetime
-from typing import Any
+from typing import Any, List, Optional, Tuple
+
+import json
 
 docker_registry = os.environ['DOCKER_REGISTRY']
 assert docker_registry, 'You must pass a valid DOCKER_REGISTRY'
 timestamp = datetime.now()
 formatted_time = timestamp.strftime('%Y%m%d%H%M%S')
+VLLM_ROCM_REPO = 'vllm/vllm-openai-rocm'
+_FLOATING_ROCM_TAGS = frozenset({
+    'latest',
+    'latest-base',
+    'nightly',
+    'base-nightly',
+})
+_VERSION_TAG_PATTERN = re.compile(r'^v\d+(?:\.\d+)*$')
+_NIGHTLY_HASH_PATTERN = re.compile(r'^(?:base-)?nightly-[0-9a-f]{7,40}$')
 
 
 class Builder:
 
     def __init__(self, args: Any, dry_run: bool):
+        self.pushed_images: List[str] = []
         self.args = self.init_args(args)
         self.dry_run = dry_run
         self.args.cudatoolkit_version = self._generate_cudatoolkit_version(
@@ -73,6 +87,9 @@ class Builder:
     def run_cmd(self, *args: str) -> int:
         """Run a shell command safely via subprocess (no shell=True).
 
+        Every successful ``docker push`` is recorded so that the build summary
+        can report the images this run really published.
+
         Args:
             *args: Command and its arguments as separate strings, e.g.
                    ``self.run_cmd('docker', 'build', '-t', tag, '.')``.
@@ -81,6 +98,9 @@ class Builder:
             The process return code (0 on success).
         """
         result = subprocess.run(list(args), check=False)
+        if (result.returncode == 0 and len(args) > 2
+                and list(args[:2]) == ['docker', 'push']):
+            self.pushed_images.append(args[2])
         return result.returncode
 
     def build(self) -> int:
@@ -91,6 +111,11 @@ class Builder:
 
     def image(self) -> str:
         pass
+
+    def output_images(self) -> List[str]:
+        """Images published by this build, or the planned tag if none was."""
+        return list(
+            self.pushed_images) if self.pushed_images else [self.image()]
 
     def __call__(self):
         content = self.generate_dockerfile()
@@ -359,7 +384,8 @@ class StableGPUImageBuilder(Builder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
             extra_content += """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -420,7 +446,8 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             extra_content = extra_content.replace('{python_version}',
                                                   self.args.python_version)
         extra_content += """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
+RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
+    pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
@@ -467,6 +494,592 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         return self.run_cmd('docker', 'push', image_tag2)
 
 
+class MinorImageBuilder(Builder):
+    """Rebuild an already built image, refreshing only the ModelScope SDK.
+
+    A minor build inherits every dependency layer from ``--base_image``, which
+    must be an image produced by a previous major version build, and only
+    reinstalls modelscope and modelscope-hub on top of it. The output tag keeps
+    every segment of the base tag and just swaps the modelscope version, e.g.
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0`` produces
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.1-<timestamp>-test``.
+    """
+
+    _MODELSCOPE_REPO = 'https://github.com/modelscope/modelscope.git'
+    _FIND_LINKS = ('https://modelscope.oss-cn-beijing.aliyuncs.com/releases/'
+                   'repo.html')
+    _TEST_SEGMENT = 'test'
+    # A batch of base images may be separated by comma, semicolon, newline or
+    # spaces, so that a pasted list works whatever shape it comes in.
+    _BATCH_SEPARATOR_PATTERN = re.compile(r'[,;\s]+')
+    # A plain dotted version such as 1.40.0; every other tag segment is either
+    # prefixed(cuda13.0.3, torch2.13.0) or non numeric(test, latest).
+    _TAG_VERSION_PATTERN = re.compile(r'^\d+(?:\.\d+)+$')
+    _TAG_TIMESTAMP_PATTERN = re.compile(r'^\d{14}$')
+    _TAG_SAFE_VERSION_PATTERN = re.compile(r'^\d[0-9A-Za-z.]*$')
+    _REQUIREMENT_OPERATOR_PATTERN = re.compile(r'^[<>=!~]')
+
+    @classmethod
+    def split_base_images(cls, base_image: Optional[str]) -> List[str]:
+        """Split a comma/semicolon/newline separated batch of base images.
+
+        Blank lines, indentation and a trailing separator are ignored, so a
+        list pasted as one image per line works as is. Repeated entries are
+        dropped so that a batch never rebuilds the same target twice, and the
+        given order is kept.
+        """
+        entries = [
+            entry.strip()
+            for entry in cls._BATCH_SEPARATOR_PATTERN.split(base_image or '')
+            if entry.strip()
+        ]
+        if not entries:
+            raise ValueError(
+                'A minor build must inherit an already built image. Pass '
+                '--base_image with the tag of the major version image, e.g. '
+                '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0 '
+                '(a comma, semicolon or newline separated batch is also '
+                'accepted)')
+        return list(dict.fromkeys(entries))
+
+    def init_args(self, args: Any) -> Any:
+        base_images = self.split_base_images(args.base_image)
+        if len(base_images) > 1:
+            raise ValueError(
+                'A single minor build takes one base image, but a batch of '
+                f'{len(base_images)} was given. The module entry point expands '
+                'a batch into one build per base image.')
+        args.base_image = self._resolve_base_image(base_images[0])
+        if not self._TAG_SAFE_VERSION_PATTERN.fullmatch(
+                args.modelscope_version):
+            raise ValueError(
+                '--modelscope_version becomes the version segment of the '
+                'output tag, so it must be a plain version such as 1.40.1, '
+                f'got: {args.modelscope_version}')
+        # Toolkit versions are inherited from the base image; the placeholder
+        # only keeps the shared Builder bootstrap working.
+        if not args.cuda_version:
+            args.cuda_version = '0.0.0'
+        self._parse_base_tag(args)
+        self._output_tag = self._derive_tag(args.modelscope_version)
+        if f'{docker_registry}:{self._output_tag}' == args.base_image:
+            raise ValueError(
+                'The minor build would overwrite its own base image '
+                f'{args.base_image}. Pass a --modelscope_version different '
+                'from the version of the base image.')
+        return args
+
+    @staticmethod
+    def _resolve_base_image(base_image: str) -> str:
+        """Accept either a full ``repository:tag`` ref or a bare tag."""
+        if ':' in base_image:
+            return base_image
+        if '/' in base_image:
+            raise ValueError(
+                '--base_image looks like a repository without a tag: '
+                f'{base_image}')
+        return f'{docker_registry}:{base_image}'
+
+    @classmethod
+    def _base_tag_of(cls, base_image: str) -> str:
+        _, separator, tag = base_image.rpartition(':')
+        if not separator or not tag or '/' in tag:
+            raise ValueError(
+                '--base_image must carry the tag of the image to rebuild, '
+                'e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0, got: '
+                f'{base_image}')
+        return tag
+
+    def _parse_base_tag(self, args: Any) -> None:
+        """Normalize the base tag and locate its modelscope version segment.
+
+        The build timestamp and the trailing ``test`` marker of the base image
+        are dropped here because :meth:`_derive_tag` appends the ones of this
+        build. That also makes a released tag(without ``-test``) and the tag it
+        was promoted from produce the same output.
+        """
+        tag = self._base_tag_of(args.base_image)
+        segments = [
+            segment for segment in tag.split('-')
+            if not self._TAG_TIMESTAMP_PATTERN.fullmatch(segment)
+        ]
+        if segments and segments[-1] == self._TEST_SEGMENT:
+            segments.pop()
+        base_version = (args.base_modelscope_version or '').strip()
+        if base_version:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if segment == base_version
+            ]
+            located_by = f'--base_modelscope_version {base_version}'
+        else:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if self._TAG_VERSION_PATTERN.fullmatch(segment)
+            ]
+            located_by = 'version segment auto detection'
+        if len(matched) != 1:
+            raise ValueError(
+                f'{located_by} matched {len(matched)} segments of base image '
+                f'tag "{tag}", expected exactly 1. Pass '
+                '--base_modelscope_version to point at the modelscope version '
+                'of the base image.')
+        self._base_tag_segments = segments
+        self._version_index = matched[0]
+
+    def _derive_tag(self, version: str, timestamped: bool = False) -> str:
+        segments = list(self._base_tag_segments)
+        segments[self._version_index] = version
+        if timestamped:
+            segments.append(formatted_time)
+        segments.append(self._TEST_SEGMENT)
+        return '-'.join(segments)
+
+    def _modelscope_install_cmd(self) -> str:
+        if self.args.modelscope_install_source == 'git':
+            return ('cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b '
+                    f'{self.args.modelscope_branch} --single-branch '
+                    f'{self._MODELSCOPE_REPO} && cd modelscope && '
+                    f'pip install --no-cache-dir . -f {self._FIND_LINKS} && '
+                    'cd / && rm -fr /tmp/modelscope')
+        return ('pip install --no-cache-dir '
+                f'modelscope=={self.args.modelscope_version} '
+                f'-f {self._FIND_LINKS}')
+
+    def _modelscope_hub_install_cmd(self) -> Optional[str]:
+        requirement = (self.args.modelscope_hub_version or '').strip()
+        if not requirement:
+            return None
+        if not self._REQUIREMENT_OPERATOR_PATTERN.match(requirement):
+            requirement = f'=={requirement}'
+        return f"pip install --no-cache-dir 'modelscope-hub{requirement}'"
+
+    def generate_dockerfile(self) -> str:
+        # modelscope is installed first so that an explicit modelscope-hub
+        # requirement wins over the floor resolved by modelscope itself.
+        steps = ['pip uninstall -y modelscope', self._modelscope_install_cmd()]
+        hub_step = self._modelscope_hub_install_cmd()
+        if hub_step:
+            steps.append(hub_step)
+        steps.append('pip cache purge')
+        install_content = (
+            'RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \\\n'
+            + ' && \\\n'.join(f'    {step}' for step in steps))
+        with open('docker/Dockerfile.minor', 'r') as f:
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{install_content}', install_content)
+        content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    def image(self) -> str:
+        return f'{docker_registry}:{self._output_tag}'
+
+    def _planned_images(self) -> List[str]:
+        """The canonical tag and the timestamped tag of this build."""
+        timestamped = self._derive_tag(
+            self.args.modelscope_version, timestamped=True)
+        return [self.image(), f'{docker_registry}:{timestamped}']
+
+    def output_images(self) -> List[str]:
+        return (list(self.pushed_images)
+                if self.pushed_images else self._planned_images())
+
+    def build(self) -> int:
+        canonical, timestamped = self._planned_images()
+        print('=' * 60)
+        print(f'Minor build base image : {self.args.base_image}')
+        print(f'Minor build output     : {canonical}')
+        print(f'Minor build timestamped: {timestamped}')
+        print('=' * 60)
+        ret = self.run_cmd('docker', 'pull', self.args.base_image)
+        if ret != 0:
+            return ret
+        return self.run_cmd('docker', 'build', '-t', canonical, '-f',
+                            'Dockerfile', '.')
+
+    def push(self) -> int:
+        canonical, timestamped = self._planned_images()
+        ret = self.run_cmd('docker', 'push', canonical)
+        if ret != 0:
+            return ret
+        ret = self.run_cmd('docker', 'tag', canonical, timestamped)
+        if ret != 0:
+            return ret
+        print(f'Minor image timestamp tag: {timestamped}')
+        return self.run_cmd('docker', 'push', timestamped)
+
+
+class AmdImageBuilder(Builder):
+    """Build ModelScope image on top of vllm/vllm-openai-rocm."""
+
+    @staticmethod
+    def _is_specific_release_tag(tag: str) -> bool:
+        tag = tag.strip()
+        if not tag or tag.lower() in _FLOATING_ROCM_TAGS:
+            return False
+        if tag.endswith('-base'):
+            return False
+        if _NIGHTLY_HASH_PATTERN.fullmatch(tag):
+            return False
+        return bool(_VERSION_TAG_PATTERN.fullmatch(tag))
+
+    @staticmethod
+    def _image_digest(tag_info: dict) -> Optional[str]:
+        digest = tag_info.get('digest')
+        if digest:
+            return digest
+        for image in tag_info.get('images') or []:
+            digest = image.get('digest')
+            if digest:
+                return digest
+        return None
+
+    @classmethod
+    def _fetch_rocm_tags(cls, page_size: int = 100) -> List[dict]:
+        tags: List[dict] = []
+        url = (f'https://hub.docker.com/v2/repositories/{VLLM_ROCM_REPO}/tags'
+               f'?page_size={page_size}&ordering=-last_updated')
+        while url:
+            req = urllib.request.Request(
+                url, headers={'User-Agent': 'modelscope-docker-builder'})
+            try:
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    payload = json.load(resp)
+            except (urllib.error.URLError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f'Failed to query Docker Hub tags for {VLLM_ROCM_REPO}: '
+                    f'{exc}') from exc
+            tags.extend(payload.get('results') or [])
+            url = payload.get('next')
+            # Only scan the first few pages; release tags are near the top.
+            if len(tags) >= 300:
+                break
+        if not tags:
+            raise RuntimeError(
+                f'No tags returned from Docker Hub for {VLLM_ROCM_REPO}')
+        return tags
+
+    @classmethod
+    def resolve_latest_rocm_tag(cls) -> str:
+        """Resolve the newest concrete release tag for vllm-openai-rocm.
+
+        Preference order:
+        1. Semver tag (vX.Y.Z) that shares digest with floating ``latest``
+        2. Newest semver tag by Docker Hub ``last_updated``
+        """
+        tags = cls._fetch_rocm_tags()
+        by_name = {item['name']: item for item in tags if item.get('name')}
+        release_tags = [
+            item for item in tags
+            if cls._is_specific_release_tag(item.get('name', ''))
+        ]
+        latest_info = by_name.get('latest')
+        latest_digest = cls._image_digest(latest_info) if latest_info else None
+        if latest_digest:
+            matched = [
+                item for item in release_tags
+                if cls._image_digest(item) == latest_digest
+            ]
+            if matched:
+                # Prefer the first match in last_updated order from API.
+                chosen = matched[0]['name']
+                print(
+                    f'Resolved {VLLM_ROCM_REPO} latest digest to release tag: '
+                    f'{chosen}')
+                return chosen
+
+        if not release_tags:
+            raise RuntimeError(
+                f'No concrete release tags found for {VLLM_ROCM_REPO}')
+        chosen = release_tags[0]['name']
+        print(f'Resolved newest {VLLM_ROCM_REPO} release tag: {chosen}')
+        return chosen
+
+    def init_args(self, args: Any) -> Any:
+        # Auto-discover from Docker Hub unless an explicit override is given.
+        override = getattr(args, 'base_image_tag', None)
+        if override and str(override).strip() and str(
+                override).strip().lower() not in {'auto', 'latest'}:
+            args.base_image_tag = str(override).strip()
+            if not self._is_specific_release_tag(args.base_image_tag):
+                raise ValueError(
+                    'base_image_tag override must be a concrete release tag '
+                    f'(e.g. v0.25.1), got: {args.base_image_tag}')
+            print(f'Using override AMD ROCm base image tag: '
+                  f'{args.base_image_tag}')
+        else:
+            args.base_image_tag = self.resolve_latest_rocm_tag()
+        if not args.base_image:
+            args.base_image = f'{VLLM_ROCM_REPO}:{args.base_image_tag}'
+        if not args.cuda_version:
+            args.cuda_version = '0.0.0'
+        return args
+
+    @staticmethod
+    def _sanitize_tag(tag: str) -> str:
+        return re.sub(r'[^A-Za-z0-9._-]+', '-', tag)
+
+    @staticmethod
+    def _normalize_version(version: str) -> str:
+        version = version.strip().lstrip('vV')
+        version = version.split('+')[0].split(' ')[0]
+        return re.sub(r'[^0-9A-Za-z._-]+', '', version)
+
+    @staticmethod
+    def _python_tag_from_version(version: str) -> str:
+        parts = version.strip().split('.')
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            return f'py{parts[0]}{parts[1]}'
+        # The substitution stays out of the f-string on purpose: quotes nested
+        # inside an f-string only parse on Python 3.12+.
+        digits = re.sub(r'[^0-9]', '', version)
+        return f'py{digits}'
+
+    @classmethod
+    def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            list(cmd), capture_output=True, text=True, check=False)
+
+    @classmethod
+    def _probe_via_entrypoint(cls, base_image: str) -> dict:
+        """Read versions with docker run --entrypoint (no GPU required)."""
+        # Keep this script compact: it runs inside the base image via python -c.
+        script = (
+            'import json,os,pathlib,subprocess,sys\n'
+            'info={"python":"%d.%d.%d"%sys.version_info[:3]}\n'
+            'try:\n'
+            ' import torch\n'
+            ' info["torch"]=torch.__version__\n'
+            ' hip=getattr(torch.version,"hip",None)\n'
+            ' if hip: info["torch_hip"]=hip\n'
+            'except Exception as e:\n'
+            ' info["torch_error"]=str(e)\n'
+            'for p in ("/opt/rocm/.info/version","/opt/rocm/.info/version-dev"):\n'
+            ' f=pathlib.Path(p)\n'
+            ' if f.is_file():\n'
+            '  info["rocm_file"]=f.read_text().strip().splitlines()[0]\n'
+            '  break\n'
+            'for k in ("ROCM_VERSION","HIP_VERSION","TORCH_VERSION"):\n'
+            ' if os.environ.get(k): info[k.lower()]=os.environ[k]\n'
+            'def _dpkg_ver(*names):\n'
+            ' for n in names:\n'
+            '  try:\n'
+            '   r=subprocess.run(["dpkg-query","-W","-f=${Version}",n],'
+            'capture_output=True,text=True)\n'
+            '   if r.returncode==0 and r.stdout.strip():\n'
+            '    return r.stdout.strip()\n'
+            '  except Exception:\n'
+            '   pass\n'
+            ' return None\n'
+            'def _dpkg_scan(prefixes):\n'
+            ' try:\n'
+            '  r=subprocess.run(["dpkg-query","-W","-f=${Package}\\t${Version}\\n"],'
+            'capture_output=True,text=True)\n'
+            ' except Exception:\n'
+            '  return {}\n'
+            ' found={}\n'
+            ' for line in (r.stdout or "").splitlines():\n'
+            '  if "\\t" not in line: continue\n'
+            '  pkg,ver=line.split("\\t",1)\n'
+            '  for pref in prefixes:\n'
+            '   if pkg==pref or pkg.startswith(pref+"-"):\n'
+            '    found.setdefault(pref,ver)\n'
+            ' return found\n'
+            'pkgs=_dpkg_scan(("rccl","miopen"))\n'
+            'info["system.library.rccl"]=_dpkg_ver("rccl") or pkgs.get("rccl")\n'
+            'info["system.library.miopen"]=('
+            '_dpkg_ver("miopen-hip","miopen") or pkgs.get("miopen"))\n'
+            'print(json.dumps(info))\n')
+        for py in ('python3', 'python'):
+            result = cls._run_capture('docker', 'run', '--rm', '--network',
+                                      'none', '--entrypoint', py, base_image,
+                                      '-c', script)
+            if result.returncode == 0 and result.stdout.strip():
+                try:
+                    return json.loads(result.stdout.strip().splitlines()[-1])
+                except json.JSONDecodeError:
+                    continue
+        return {}
+
+    @classmethod
+    def _probe_via_history(cls, base_image: str) -> dict:
+        """Parse build ARGs from docker history (no container start)."""
+        result = cls._run_capture('docker', 'history', '--no-trunc',
+                                  '--format', '{{.CreatedBy}}', base_image)
+        if result.returncode != 0:
+            return {}
+        text = result.stdout
+        info = {}
+        for key, pattern in (
+            ('rocm', r'ROCM_VERSION=([0-9]+(?:\.[0-9]+)*)'),
+            ('python', r'PYTHON_VERSION=([0-9]+(?:\.[0-9]+)*)'),
+            ('ubuntu',
+             r'org\.opencontainers\.image\.version=([0-9]+(?:\.[0-9]+)*)'),
+        ):
+            matches = re.findall(pattern, text)
+            if matches:
+                # docker history lists newest layers first.
+                info[key] = matches[0]
+        return info
+
+    @classmethod
+    def _probe_via_create_cp(cls, base_image: str) -> dict:
+        """Copy version files out of a created (not started) container."""
+        import tempfile
+        create = cls._run_capture('docker', 'create', base_image)
+        if create.returncode != 0:
+            return {}
+        cid = create.stdout.strip()
+        info = {}
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                dest = os.path.join(tmp, 'version')
+                for src in ('/opt/rocm/.info/version',
+                            '/opt/rocm/.info/version-dev'):
+                    result = cls._run_capture('docker', 'cp', f'{cid}:{src}',
+                                              dest)
+                    if result.returncode == 0 and os.path.isfile(dest):
+                        with open(dest, 'r', encoding='utf-8') as f:
+                            line = f.read().strip().splitlines()
+                        if line:
+                            info['rocm_file'] = line[0].strip()
+                            break
+        finally:
+            cls._run_capture('docker', 'rm', '-f', cid)
+        return info
+
+    @classmethod
+    def probe_base_image_versions(cls, base_image: str) -> dict:
+        """Discover rocm/python/torch without needing AMD GPU.
+
+        Methods (in order):
+        1. docker run --entrypoint python -c ...  (CPU-only, no --device)
+        2. docker history --no-trunc parse ROCM_VERSION/PYTHON_VERSION
+        3. docker create + docker cp /opt/rocm/.info/version
+        """
+        probed = {}
+        entry = cls._probe_via_entrypoint(base_image)
+        history = cls._probe_via_history(base_image)
+        copied = cls._probe_via_create_cp(base_image)
+        probed.update(history)
+        probed.update(copied)
+        probed.update(entry)
+
+        rocm = (
+            probed.get('rocm_file') or probed.get('rocm_version')
+            or probed.get('rocm') or probed.get('torch_hip')
+            or probed.get('hip_version'))
+        python_ver = probed.get('python')
+        torch_ver = probed.get('torch') or probed.get('torch_version')
+        ubuntu_ver = probed.get('ubuntu')
+        # Keep dpkg package versions as-is (may contain '~', e.g. 2.27.7.70201-81~22.04).
+        rccl_ver = probed.get('system.library.rccl')
+        miopen_ver = probed.get('system.library.miopen')
+
+        versions = {
+            'rocm': cls._normalize_version(rocm) if rocm else None,
+            'python':
+            cls._normalize_version(python_ver) if python_ver else None,
+            'torch': cls._normalize_version(torch_ver) if torch_ver else None,
+            'ubuntu':
+            cls._normalize_version(ubuntu_ver) if ubuntu_ver else None,
+            'system.library.rccl': rccl_ver or None,
+            'system.library.miopen': miopen_ver or None,
+        }
+        print('Probed AMD base image versions:')
+        for key, value in versions.items():
+            # Kept out of the f-string: quotes nested inside an f-string only
+            # parse on Python 3.12+.
+            probed_value = value or 'unknown'
+            print(f'  {key}: {probed_value}')
+        return versions
+
+    def generate_dockerfile(self) -> str:
+        with open('docker/Dockerfile.amd', 'r') as f:
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{base_image_tag}', self.args.base_image_tag)
+        content = content.replace('{modelscope_branch}',
+                                  self.args.modelscope_branch)
+        content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    def image(self) -> str:
+        ubuntu = getattr(self.args, 'amd_ubuntu_version',
+                         None) or self.args.ubuntu_version
+        rocm = getattr(self.args, 'amd_rocm_version', None)
+        py_tag = getattr(self.args, 'amd_python_tag', None) or getattr(
+            self.args, 'python_tag', None)
+        torch = getattr(self.args, 'amd_torch_version', None)
+        if not (rocm and py_tag and torch):
+            raise RuntimeError(
+                'AMD image tag requires probed rocm/python/torch versions. '
+                f'Got rocm={rocm}, python={py_tag}, torch={torch}')
+        return (f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
+                f'torch{torch}-{self.args.modelscope_version}-test')
+
+    def _log_base_image_info(self) -> int:
+        base_image = self.args.base_image
+        print('=' * 60)
+        print(f'AMD ROCm base image: {base_image}')
+        print(f'AMD ROCm base image tag: {self.args.base_image_tag}')
+        print('=' * 60)
+        ret = self.run_cmd('docker', 'pull', base_image)
+        if ret != 0:
+            return ret
+        result = self._run_capture(
+            'docker', 'image', 'inspect', base_image,
+            '--format={{.Id}} {{if index .RepoDigests 0}}'
+            '{{index .RepoDigests 0}}{{else}}local-only{{end}}')
+        if result.returncode == 0:
+            print(f'AMD base image resolved: {result.stdout.strip()}')
+        else:
+            print(f'AMD base image inspect warning: {result.stderr.strip()}')
+
+        versions = self.probe_base_image_versions(base_image)
+        if not versions.get('rocm') or not versions.get(
+                'python') or not versions.get('torch'):
+            print('ERROR: failed to probe rocm/python/torch from base image')
+            return 1
+        self.args.amd_rocm_version = versions['rocm']
+        self.args.amd_torch_version = versions['torch']
+        self.args.amd_python_tag = self._python_tag_from_version(
+            versions['python'])
+        if versions.get('ubuntu'):
+            self.args.amd_ubuntu_version = versions['ubuntu']
+        else:
+            self.args.amd_ubuntu_version = self.args.ubuntu_version
+        print(f'AMD output image tag will be: {self.image()}')
+        print('=' * 60)
+        return 0
+
+    def build(self) -> int:
+        ret = self._log_base_image_info()
+        if ret != 0:
+            return ret
+        return self.run_cmd('docker', 'build', '-t', self.image(), '-f',
+                            'Dockerfile', '.')
+
+    def push(self):
+        image_name = self.image()
+        ret = self.run_cmd('docker', 'push', image_name)
+        if ret != 0:
+            return ret
+        ubuntu = self.args.amd_ubuntu_version
+        rocm = self.args.amd_rocm_version
+        py_tag = self.args.amd_python_tag
+        torch = self.args.amd_torch_version
+        image_tag2 = (f'{docker_registry}:ubuntu{ubuntu}-rocm{rocm}-{py_tag}-'
+                      f'torch{torch}-{self.args.modelscope_version}-'
+                      f'{formatted_time}-test')
+        ret = self.run_cmd('docker', 'tag', image_name, image_tag2)
+        if ret != 0:
+            return ret
+        print(f'AMD image timestamp tag: {image_tag2}')
+        return self.run_cmd('docker', 'push', image_tag2)
+
+
 class AscendImageBuilder(StableGPUImageBuilder):
 
     _DEFAULT_TORCH_VERSION = '2.9.0'
@@ -475,11 +1088,16 @@ class AscendImageBuilder(StableGPUImageBuilder):
     _DEFAULT_TORCH_NPU_VERSION = '2.9.0.post2'
     _DEFAULT_VLLM_VERSION = '0.18.0'
     _DEFAULT_VLLM_ASCEND_VERSION = '0.18.0'
+    _DEFAULT_FLA_VERSION = 'main'
+    _DEFAULT_PIP_EXTRA_INDEX_URL = (
+        'https://mirrors.huaweicloud.com/ascend/repos/pypi')
+    _DEFAULT_PYPI_OFFICIAL_INDEX_URL = 'https://pypi.org/simple'
     _DEFAULT_TRITON_ASCEND_VERSIONS = {
         '8.5': '3.2.0',
         '9.0': '3.2.1',
     }
     _CANN_VERSION_PATTERN = re.compile(r'^\d+(?:\.[0-9A-Za-z]+)+$')
+    _HARDWARE_TAG_PATTERN = re.compile(r'^[0-9A-Za-z]+$')
     _OS_TAG_PATTERN = re.compile(r'^[A-Za-z]+[0-9][0-9A-Za-z.]*$')
     _PYTHON_TAG_PATTERN = re.compile(r'^py\d+\.\d+$', re.IGNORECASE)
     _TORCH_NPU_VERSION_PATTERN = re.compile(
@@ -502,25 +1120,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
                              'Please pass --arch x86 or --arch arm.')
         return arch_mapping[arch]
 
-    @staticmethod
-    def _get_atlas_hardware(soc_version: str) -> str:
-        soc_version = soc_version.lower()
-        atlas_mapping = {
-            'ascend910b1': 'A2',
-            'ascend910_9391': 'A3',
-            'ascend310p1': '300I',
-        }
-        if soc_version.startswith('ascend950'):
-            return 'A5'
-        if soc_version not in atlas_mapping:
-            raise ValueError(
-                f'Unsupported soc_version: {soc_version}. '
-                'Supported values are ascend910b1, ascend910_9391, '
-                'ascend310p1, and values starting with ascend950.')
-        return atlas_mapping[soc_version]
-
     @classmethod
-    def _get_cann_os_tags(cls, base_image: str) -> tuple:
+    def _get_cann_image_tags(cls, base_image: str) -> tuple:
         if ':' not in base_image.rsplit('/', 1)[-1]:
             raise ValueError(
                 f'Ascend base image must include a tag: {base_image}')
@@ -534,11 +1135,15 @@ class AscendImageBuilder(StableGPUImageBuilder):
                 f'{base_tag}')
 
         cann_version = parts[0]
+        hardware_tag = parts[1]
         os_tag = parts[2]
         python_tag = parts[3]
         if not cls._CANN_VERSION_PATTERN.fullmatch(cann_version):
             raise ValueError(f'Invalid CANN version in Ascend base image tag: '
                              f'{cann_version}')
+        if not cls._HARDWARE_TAG_PATTERN.fullmatch(hardware_tag):
+            raise ValueError(f'Invalid hardware tag in Ascend base image tag: '
+                             f'{hardware_tag}')
         if not cls._OS_TAG_PATTERN.fullmatch(os_tag):
             raise ValueError(
                 f'Invalid OS tag in Ascend base image tag: {os_tag}')
@@ -546,7 +1151,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
             raise ValueError(
                 f'Invalid Python tag in Ascend base image tag: {python_tag}')
 
-        return cann_version, f'CANN{cann_version}', os_tag, python_tag
+        return (cann_version, f'CANN{cann_version}', hardware_tag, os_tag,
+                python_tag)
 
     @staticmethod
     def _get_os_family(os_tag: str) -> str:
@@ -604,6 +1210,7 @@ class AscendImageBuilder(StableGPUImageBuilder):
         args.vllm_git_ref = cls._get_vllm_git_ref(args.vllm_version)
         args.vllm_ascend_git_ref = cls._get_vllm_git_ref(
             args.vllm_ascend_version)
+        args.fla_version = args.fla_version or cls._DEFAULT_FLA_VERSION
 
         if not args.triton_ascend_version:
             cann_series = '.'.join(args.cann_version.split('.')[:2])
@@ -623,12 +1230,16 @@ class AscendImageBuilder(StableGPUImageBuilder):
         if not args.base_image:
             # Reuse the prebuilt vllm-ascend image to avoid rebuilding its stack.
             args.base_image = 'quay.io/ascend/cann:8.5.1-a3-ubuntu22.04-py3.11'
+        args.pip_extra_index_url = (
+            args.pip_extra_index_url or self._DEFAULT_PIP_EXTRA_INDEX_URL)
+        args.pypi_official_index_url = (
+            args.pypi_official_index_url
+            or self._DEFAULT_PYPI_OFFICIAL_INDEX_URL)
         self._init_torch_versions(args)
         args.arch = self._normalize_arch(args.arch)
-        args.atlas_hardware = self._get_atlas_hardware(args.soc_version)
-        (args.cann_version, args.cann_version_tag, args.os_tag,
-         args.ascend_python_tag) = (
-             self._get_cann_os_tags(args.base_image))
+        (args.cann_version, args.cann_version_tag, args.hardware_tag,
+         args.os_tag, args.ascend_python_tag) = (
+             self._get_cann_image_tags(args.base_image))
         self._get_os_family(args.os_tag)
         self._init_component_versions(args)
         return super().init_args(args)
@@ -637,12 +1248,13 @@ class AscendImageBuilder(StableGPUImageBuilder):
         return self.args.ascend_python_tag
 
     def generate_dockerfile(self) -> str:
-        extra_content = """
-RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
-"""
-        with open('docker/Dockerfile.ascend', 'r') as f:
+        with open('docker/ascend/Dockerfile.ascend', 'r') as f:
             content = f.read()
             content = content.replace('{base_image}', self.args.base_image)
+            content = content.replace('{pip_extra_index_url}',
+                                      self.args.pip_extra_index_url)
+            content = content.replace('{pypi_official_index_url}',
+                                      self.args.pypi_official_index_url)
             content = content.replace('{soc_version}', self.args.soc_version)
             content = content.replace('{cann_version}', self.args.cann_version)
             content = content.replace('{torch_version}',
@@ -658,22 +1270,21 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
                                       self.args.vllm_ascend_git_ref)
             content = content.replace('{triton_ascend_version}',
                                       self.args.triton_ascend_version)
-            content = content.replace('{extra_content}', extra_content)
+            content = content.replace('{fla_version}', self.args.fla_version)
             content = content.replace('{cur_time}', formatted_time)
-            content = content.replace('{install_ms_deps}', 'False')
-            content = content.replace('{modelscope_branch}',
-                                      self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
             content = content.replace('{megatron_branch}',
                                       self.args.megatron_branch)
             content = content.replace('{mindspeed_branch}',
                                       self.args.mindspeed_branch)
+            content = content.replace('{mcore_bridge_branch}',
+                                      self.args.mcore_bridge_branch)
         return content
 
     def image(self) -> str:
         tag = (f'{self.args.swift_branch}-{self.args.cann_version_tag}-'
                f'torch_npu{self.args.torch_npu_version}-'
-               f'{self.args.atlas_hardware}-{self.args.os_tag}-'
+               f'{self.args.hardware_tag}-{self.args.os_tag}-'
                f'{self.args.python_tag}-'
                f'{self.args.arch}')
         return f'{docker_registry}:{tag.lower()}'
@@ -682,8 +1293,58 @@ RUN pip install --no-cache-dir -U icecream soundfile pybind11 py-spy
         return 0
 
 
+def safe_output_images(builder: Builder) -> List[str]:
+    """Never let an unresolved image tag break the summary of a failed build."""
+    try:
+        return builder.output_images()
+    except Exception as error:
+        return [f'<image tag unavailable: {error}>']
+
+
+def print_build_summary(results: List[Tuple[Builder, Optional[BaseException]]],
+                        dry_run: bool) -> None:
+    """Report every target of this run and list all output images at the end.
+
+    The flat list between the ``OUTPUT IMAGES`` markers is meant to be consumed
+    by tooling, so it holds nothing but one image reference per line, and only
+    images this run really produced: a target that failed before pushing
+    anything contributes none, one that failed halfway contributes what it did
+    push.
+    """
+    produced: List[str] = []
+    print()
+    print('=' * 78)
+    print(f'BUILD SUMMARY: {len(results)} target(s), '
+          f'build timestamp {formatted_time}')
+    print('=' * 78)
+    for builder, error in results:
+        status = 'DRY-RUN' if dry_run else ('FAILED' if error else 'SUCCESS')
+        base_image = getattr(builder.args, 'base_image', None) or '-'
+        print(f'[{status}] {type(builder).__name__}, base image: {base_image}')
+        images = safe_output_images(builder)
+        for image in images:
+            print(f'         {image}')
+        if not error or builder.pushed_images:
+            produced.extend(images)
+        if error:
+            print(f'         error: {type(error).__name__}: {error}')
+    print('=' * 78)
+    if dry_run:
+        print('# dry run: the images below were neither built nor pushed')
+    print('===== OUTPUT IMAGES BEGIN =====')
+    for image in produced:
+        print(image)
+    print('===== OUTPUT IMAGES END =====')
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--base_image', type=str, default=None)
+parser.add_argument(
+    '--base_image',
+    type=str,
+    default=None,
+    help='Image to build on top of. A minor build requires it and accepts a '
+    'comma, semicolon or newline separated batch of tags, each one rebuilt in '
+    'turn.')
 parser.add_argument('--image_type', type=str)
 parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
@@ -696,18 +1357,58 @@ parser.add_argument('--torchaudio_version', type=str, default=None)
 parser.add_argument('--tf_version', type=str, default=None)
 parser.add_argument('--vllm_version', type=str, default=None)
 parser.add_argument('--vllm_ascend_version', type=str, default=None)
+parser.add_argument('--fla_version', type=str, default=None)
 parser.add_argument('--triton_ascend_version', type=str, default=None)
+parser.add_argument(
+    '--pip_extra_index_url',
+    type=str,
+    default=None,
+    help='Primary Python package index for Ascend-specific installs. Defaults '
+    'to the Huawei Cloud Ascend PyPI repository for Ascend images.')
+parser.add_argument(
+    '--pypi_official_index_url',
+    type=str,
+    default=None,
+    help='Fallback Python package index for Ascend-specific installs. Defaults '
+    'to the official PyPI repository.')
 parser.add_argument('--lmdeploy_version', type=str, default=None)
 parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--optimum_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
+parser.add_argument(
+    '--base_modelscope_version',
+    type=str,
+    default=None,
+    help='Minor build only: the modelscope version segment inside the '
+    '--base_image tag. Auto detected when omitted.')
+parser.add_argument(
+    '--modelscope_hub_version',
+    type=str,
+    default=None,
+    help='Minor build only: modelscope-hub requirement to install, e.g. 0.4.3 '
+    'or >=0.4.3. When omitted, modelscope-hub is left to the dependency '
+    'resolution of modelscope itself.')
+parser.add_argument(
+    '--modelscope_install_source',
+    type=str,
+    choices=['pypi', 'git'],
+    default='pypi',
+    help='Minor build only: install modelscope from the released PyPI version '
+    '(--modelscope_version, default) or from --modelscope_branch source.')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
 parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
+parser.add_argument('--mcore_bridge_branch', type=str, default='main')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
+parser.add_argument(
+    '--base_image_tag',
+    type=str,
+    default=None,
+    help='Optional AMD ROCm override tag. Default: auto-resolve newest '
+    'concrete vllm/vllm-openai-rocm release tag from Docker Hub.')
 parser.add_argument('--dry_run', type=int, default=0)
 args = parser.parse_args()
 
@@ -719,11 +1420,65 @@ elif args.image_type.lower() == 'stable':
     builder_cls = [StableCPUImageBuilder, StableGPUImageBuilder]
 elif args.image_type.lower() == 'ascend':
     builder_cls = [AscendImageBuilder]
+elif args.image_type.lower() == 'amd':
+    builder_cls = [AmdImageBuilder]
 elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
+elif args.image_type.lower() == 'minor':
+    builder_cls = [MinorImageBuilder]
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
-for builder in builder_cls:
-    args = copy(args)
-    builder(args, args.dry_run)()
+# Only a minor build fans out over a batch of base images; every other image
+# type keeps building exactly the targets of its own builder list.
+base_images: List[Optional[str]] = [None]
+if args.image_type.lower() == 'minor':
+    base_images = [
+        base_image
+        for base_image in MinorImageBuilder.split_base_images(args.base_image)
+    ]
+
+# Instantiate every target first: argument validation then fails before any
+# expensive docker work, whichever target of the batch is misconfigured.
+builders: List[Builder] = []
+for builder_class in builder_cls:
+    for base_image in base_images:
+        # Keep the historical chaining where each builder receives the args as
+        # mutated by the previous one.
+        args = copy(args)
+        if base_image is not None:
+            args.base_image = base_image
+        builders.append(builder_class(args, args.dry_run))
+
+if len(base_images) > 1:
+    # Distinct base images may still normalize to the same output tag, which
+    # would make the targets of a batch silently overwrite each other.
+    planned_images: List[str] = []
+    for builder in builders:
+        if builder.image() in planned_images:
+            raise ValueError(
+                'Two base images of the batch would publish the same tag: '
+                f'{builder.image()}. Keep only one of them.')
+        planned_images.append(builder.image())
+
+build_results: List[Tuple[Builder, Optional[BaseException]]] = []
+first_error: Optional[BaseException] = None
+# Only a batch keeps going after a failure, so that one unusable base image
+# cannot cancel the rebuild of the others. Every other image type keeps the
+# historical fail fast behaviour.
+tolerate_failures = len(base_images) > 1
+for builder in builders:
+    try:
+        builder()
+    except Exception as build_error:
+        print(f'ERROR: {type(builder).__name__} failed: {build_error}')
+        build_results.append((builder, build_error))
+        first_error = first_error or build_error
+        if not tolerate_failures:
+            break
+    else:
+        build_results.append((builder, None))
+
+print_build_summary(build_results, bool(args.dry_run))
+if first_error is not None:
+    raise first_error

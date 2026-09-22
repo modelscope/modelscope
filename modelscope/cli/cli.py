@@ -1,11 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 """ModelScope CLI — delegates to the modelscope_hub CLI engine.
 
-The legacy ``modelscope`` / ``ms`` console-script entry points historically
-lived here as a hand-rolled argparse tree. The hub CLI in ``modelscope_hub``
-now owns command registration, plugin discovery, and error translation;
-this module exists solely to preserve the import path used by the
-``[project.scripts]`` entries in ``pyproject.toml``.
+The ``modelscope`` / ``ms`` console scripts historically lived here as a
+hand-rolled argparse tree. ``modelscope_hub`` now owns command registration,
+plugin discovery, error translation *and* the console-script declarations for
+all four aliases (``modelscope``, ``ms``, ``modelscope-hub``, ``ms-hub``), so
+that a single distribution writes those files and neither package can strand
+the other's CLI on upgrade.
+
+This module stays as the ``python -m modelscope.cli.cli`` entry point and as a
+stable import path for callers that reference it directly. The commands this
+package adds on top of the hub CLI are contributed through the
+``modelscope_hub.cli_plugins`` entry-point group declared in ``pyproject.toml``.
 """
 
 import sys

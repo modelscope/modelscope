@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 import json
+from modelscope_hub.compat.constants import get_upload_ignore_file_pattern
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.constants import ModelVisibility
@@ -128,7 +129,7 @@ def push_to_hub(repo_name,
     if token is None:
         token = os.environ.get('MODELSCOPE_API_TOKEN')
     if ignore_file_pattern is None:
-        ignore_file_pattern = os.environ.get('UPLOAD_IGNORE_FILE_PATTERN')
+        ignore_file_pattern = get_upload_ignore_file_pattern()
     assert repo_name is not None
     assert token is not None, 'Either pass in a token or to set `MODELSCOPE_API_TOKEN` in the environment variables.'
     assert os.path.isdir(output_dir)
@@ -171,7 +172,7 @@ def push_to_hub_async(repo_name,
     if token is None:
         token = os.environ.get('MODELSCOPE_API_TOKEN')
     if ignore_file_pattern is None:
-        ignore_file_pattern = os.environ.get('UPLOAD_IGNORE_FILE_PATTERN')
+        ignore_file_pattern = get_upload_ignore_file_pattern()
     assert repo_name is not None
     assert token is not None, 'Either pass in a token or to set `MODELSCOPE_API_TOKEN` in the environment variables.'
     assert os.path.isdir(output_dir)

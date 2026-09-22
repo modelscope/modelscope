@@ -200,6 +200,10 @@ class Models(object):
     speech_kws_fsmn_char_ctc_nearfield = 'speech_kws_fsmn_char_ctc_nearfield'
     speech_mossformer_separation_temporal_8k = 'speech_mossformer_separation_temporal_8k'
     speech_mossformer2_separation_temporal_8k = 'speech_mossformer2_separation_temporal_8k'
+    speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360 = \
+        'speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360'
+    speech_flatsepreformer_separation_temporal_8k_base_libri2mix100 = \
+        'speech_flatsepreformer_separation_temporal_8k_base_libri2mix100'
     kws_kwsbp = 'kws-kwsbp'
     generic_asr = 'generic-asr'
     wenet_asr = 'wenet-asr'
@@ -554,6 +558,7 @@ class Pipelines(object):
     speech_dfsmn_aec_psm_16k = 'speech-dfsmn-aec-psm-16k'
     speech_frcrn_ans_cirm_16k = 'speech_frcrn_ans_cirm_16k'
     speech_zipenhancer_ans_multiloss_16k_base = 'speech_zipenhancer_ans_multiloss_16k_base'
+    speech_jaec_aec_16k = 'speech-jaec-aec-16k'
     speech_dfsmn_ans_psm_48k_causal = 'speech_dfsmn_ans_psm_48k_causal'
     speech_dfsmn_kws_char_farfield = 'speech_dfsmn_kws_char_farfield'
     speech_separation = 'speech-separation'

@@ -3,6 +3,8 @@ FROM {base_image}
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 ENV arch=x86_64
+# Build-time only (ARG does not persist into the image). Aliyun mirror can lag PyPI (~1h).
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
 
 COPY docker/scripts/modelscope_env_init.sh /usr/local/bin/ms_env_init.sh
 RUN apt-get update && \
@@ -21,7 +23,9 @@ ARG IMAGE_TYPE={image_type}
 # install dependencies
 COPY requirements /var/modelscope
 
-RUN pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.* -U && \
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    pip uninstall ms-swift modelscope -y && pip --no-cache-dir install pip==23.* -U && \
 if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip --no-cache-dir install omegaconf==2.0.6 && \
     pip install 'editdistance==0.8.1' && \
@@ -34,7 +38,7 @@ if [ "$INSTALL_MS_DEPS" = "True" ]; then \
     pip install --no-cache-dir 'scipy' && \
     pip install --no-cache-dir funtextprocessing typeguard==2.13.3 scikit-learn -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
     pip install --no-cache-dir 'decord>=0.6.0' mpi4py paint_ldm ipykernel fasttext -f https://modelscope.oss-cn-beijing.aliyuncs.com/releases/repo.html && \
-    pip install --no-cache-dir ipywidgets && \
+    pip install --no-cache-dir ipywidgets jupyter_core nbconvert nbclient && \
     pip install --no-cache-dir 'blobfile>=1.0.5' && \
     pip uninstall MinDAEC -y && \
     pip install https://modelscope.oss-cn-beijing.aliyuncs.com/releases/dependencies/MinDAEC-0.0.2-py3-none-any.whl && \
@@ -47,7 +51,9 @@ fi
 ARG CUR_TIME={cur_time}
 RUN echo $CUR_TIME
 
-RUN bash /tmp/install.sh {version_args} && \
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir -U funasr scikit-learn && \
     pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils librosa timm transformers accelerate peft trl safetensors && \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b {swift_branch}  --single-branch https://github.com/modelscope/ms-swift.git && \
@@ -63,16 +69,17 @@ RUN bash /tmp/install.sh {version_args} && \
     pip install --no-cache-dir transformers diffusers 'timm>=0.9.0' && pip cache purge; \
     pip install --no-cache-dir omegaconf==2.3.0 && pip cache purge; \
     pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip config set global.extra-index-url https://pypi.org/simple && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     cp /tmp/resources/ubuntu2204.aliyun /etc/apt/sources.list
 
 
-RUN if [ "$IMAGE_TYPE" = "gpu" ]; then \
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
+    if [ "$IMAGE_TYPE" = "gpu" ]; then \
     pip install --no-cache-dir math_verify "gradio<5.33" "deepspeed<0.19" ray -U && \
     pip install --no-cache-dir mcore-bridge -i https://pypi.org/simple/ -U && \
     pip install --no-cache-dir liger_kernel wandb swanlab nvitop pre-commit "transformers<5.9" "trl<1.0" "peft<0.20" huggingface-hub -U && \
-    pip install --no-cache-dir --no-build-isolation transformer_engine[pytorch]; \
+    pip install --no-cache-dir --no-build-isolation "transformer_engine[pytorch]==2.16.0"; \
     cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/NVIDIA/apex && \
     cd apex && pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./ && \
     cd / && rm -fr /tmp/apex && pip cache purge; \

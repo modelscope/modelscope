@@ -10,6 +10,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
+import yaml
 from omegaconf import OmegaConf
 from PIL import Image
 from torchvision.utils import save_image
@@ -26,6 +27,8 @@ from modelscope.outputs import OutputKeys
 from modelscope.pipelines.base import Input, Pipeline
 from modelscope.pipelines.builder import PIPELINES
 from modelscope.preprocessors import LoadImage
+from modelscope.utils.architecture import (require_trust_remote_code,
+                                           validate_mapping_schema)
 from modelscope.utils.config import Config
 from modelscope.utils.constant import ModelFile, Tasks
 from modelscope.utils.logger import get_logger
@@ -38,8 +41,18 @@ logger = get_logger()
 
 
 # Load Syncdreamer Model
-def load_model(cfg, ckpt, strict=True):
-    config = OmegaConf.load(cfg)
+def _load_model_config(config_path):
+    with open(config_path, encoding='utf-8') as config_file:
+        raw_config = yaml.safe_load(config_file)
+    validate_mapping_schema(
+        raw_config,
+        required={'model'},
+        optional={'data', 'lightning'},
+        context='image_to_3d configuration')
+    return OmegaConf.create(raw_config)
+
+
+def load_model(config, ckpt, strict=True):
     model = instantiate_from_config(config.model)
     print(f'loading model from {ckpt} ...')
     ckpt = torch.load(ckpt, map_location='cpu', weights_only=True)
@@ -87,12 +100,9 @@ def prepare_inputs(image_input, elevation_input, crop_size=-1, image_size=256):
 class Image23DPipeline(Pipeline):
 
     def __init__(self, model: str, **kwargs):
-        """
-        use `model` to create a image-to-3d generation pipeline
-        Args:
-            model: model id on modelscope hub.
-        """
-        super().__init__(model=model)
+        require_trust_remote_code(
+            bool(kwargs.get('trust_remote_code', False)), 'Image23DPipeline')
+        super().__init__(model=model, **kwargs)
         config_path = osp.join(self.model, ModelFile.CONFIGURATION)
         logger.info(f'loading config from {config_path}')
         self.cfg = Config.from_file(config_path)
@@ -103,9 +113,9 @@ class Image23DPipeline(Pipeline):
             self._device = torch.device('cpu')
         ckpt = config_path.replace('configuration.json',
                                    'syncdreamer-pretrain.ckpt')
-        self.model = load_model(
-            config_path.replace('configuration.json', 'syncdreamer.yaml'),
-            ckpt).to(self._device)
+        config = _load_model_config(
+            config_path.replace('configuration.json', 'syncdreamer.yaml'))
+        self.model = load_model(config, ckpt).to(self._device)
         # os.system("pip install -r {}".format(config_path.replace("configuration.json", "requirements.txt")))
         # assert isinstance(self.model, SyncMultiviewDiffusion)
 

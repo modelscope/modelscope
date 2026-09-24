@@ -18,7 +18,9 @@ def verify_device(device_name):
     Return:
         device info (tuple):  device_type and device_id, if device_id is not set, will use 0 as default.
     """
-    err_msg = 'device should be either cpu, cuda, gpu, xpu, gpu:X, cuda:X or xpu:X where X is the ordinal for the device.'
+    err_msg = (
+        'device should be either cpu, cuda, gpu, xpu, gpu:X, cuda:X or xpu:X '
+        'where X is the ordinal for the device.')
     assert device_name is not None and device_name != '', err_msg
     device_name = device_name.lower()
     eles = device_name.split(':')

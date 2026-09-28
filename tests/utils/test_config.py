@@ -81,6 +81,22 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(args.optimizer, 'Adam')
         self.assertEqual(args.save_checkpoint_epochs, 20)
 
+    def test_to_args_with_list_and_bool(self):
+
+        def parse_fn(args):
+            parser = argparse.ArgumentParser(prog='PROG')
+            parser.add_argument('--gpu-ids', type=int, nargs='+')
+            parser.add_argument('--fp16', action='store_true')
+            parser.add_argument('--debug', action='store_true')
+            return parser.parse_args(args)
+
+        cfg = Config(dict(gpu_ids=[0, 1], fp16=True, debug=False))
+        args = cfg.to_args(parse_fn)
+
+        self.assertEqual(args.gpu_ids, [0, 1])
+        self.assertTrue(args.fp16)
+        self.assertFalse(args.debug)
+
     def test_check_config(self):
         check_config('configs/cv/configuration.json')
         check_config('configs/nlp/sbert_sentence_similarity.json')

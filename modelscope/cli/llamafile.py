@@ -68,7 +68,7 @@ class LlamafileCMD(CLICommand):
             'Directory where the selected llamafile would will be downloaded to.'
         )
 
-        group.add_argument(
+        parser.add_argument(
             '--launch',
             type=str,
             required=False,

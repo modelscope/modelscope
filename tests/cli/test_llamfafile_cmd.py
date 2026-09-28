@@ -1,5 +1,8 @@
+import argparse
 import subprocess
 import unittest
+
+from modelscope.cli.llamafile import LlamafileCMD
 
 
 class LlamafileCMDTest(unittest.TestCase):
@@ -91,3 +94,22 @@ class LlamafileCMDTest(unittest.TestCase):
             in output)
         self.assertTrue(
             'No Launching. Llamafile model downloaded to' in output)
+
+    def test_launch_with_accuracy_or_file(self):
+        parser = argparse.ArgumentParser()
+        LlamafileCMD.register(parser.add_subparsers())
+
+        file = 'My-Model-14B-FP16.llamafile'
+        args = parser.parse_args([
+            self.cmd, '--model', self.model_id, '--file', file, '--launch',
+            'False'
+        ])
+        self.assertEqual(args.file, file)
+        self.assertEqual(args.launch, 'False')
+
+        args = parser.parse_args([
+            self.cmd, '--model', self.model_id, '--accuracy', 'q8_0',
+            '--launch', 'False'
+        ])
+        self.assertEqual(args.accuracy, 'q8_0')
+        self.assertEqual(args.launch, 'False')

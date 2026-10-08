@@ -139,6 +139,7 @@ class Repository:
         self.git_wrapper.add_user_info(self.model_base_dir,
                                        self.model_repo_name)
         url = self.git_wrapper.get_repo_remote_url(self.model_dir)
+        url = self.git_wrapper.remove_token_from_url(url)
 
         self.git_wrapper.add(self.model_dir, all_files=True)
         self.git_wrapper.commit(self.model_dir, commit_message)

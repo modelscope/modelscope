@@ -200,6 +200,14 @@ pip show ms-swift modelscope mcore-bridge torch-npu triton-ascend
 - The image is intended for Ascend NPU ms-swift workflows. CUDA-only packages pulled in by dependencies are removed when they conflict with NPU runtime libraries.
 - Use a fixed image tag for production jobs instead of relying on a moving branch name.
 
+## Security Risks
+
+When running containers with these images, consider the following security risks:
+
+- Running as the `root` user: Images run as `root` by default. In production environments, create a non-privileged user to run the application and configure the required access to NPU devices and mounted directories.
+- Lack of CPU and memory resource limits: The run example above does not set resource limits, so a container may consume excessive system resources and affect other workloads on the host. Use `--cpus` and `--memory` to set limits appropriate for the workload.
+- Device use with `rwm` permissions: `--device` grants read, write, and `mknod` permissions by default. Evaluate the permission scope for the NPU workload, expose only the required devices, and restrict device permissions where compatible.
+
 ## License
 
 ms-swift and ModelScope components follow their upstream repository licenses. CANN, MindSpeed, TorchNPU, vLLM Ascend, and other pre-installed third-party components are subject to their own upstream licenses.

@@ -197,6 +197,14 @@ pip show ms-swift modelscope mcore-bridge torch-npu triton-ascend
 - 该镜像面向 Ascend NPU 上的 ms-swift 工作流。依赖安装过程中引入且与 NPU runtime 冲突的 CUDA-only 包会被移除。
 - 生产任务建议使用固定镜像 tag，不要依赖浮动分支名。
 
+## 安全风险
+
+运行这些镜像的容器时，需要注意以下安全风险：
+
+- 使用 `root` 用户运行：镜像默认以 `root` 用户身份运行。建议在生产环境中创建非特权用户来运行应用程序，并为其配置所需的 NPU 设备和挂载目录访问权限。
+- 缺少 CPU 和内存资源限制：上述运行示例未设置资源限制，容器可能消耗过多系统资源，影响宿主机上的其他任务。建议根据工作负载使用 `--cpus` 和 `--memory` 参数限制资源使用。
+- 设备使用 `rwm` 权限：`--device` 默认授予设备读、写和 `mknod` 权限。应根据实际 NPU 工作负载评估权限范围，仅暴露所需设备，并在兼容的情况下限制设备权限。
+
 ## License
 
 ms-swift 和 ModelScope 组件遵循各自上游仓库的 license。CANN、MindSpeed、TorchNPU、vLLM Ascend 以及其他预装第三方组件遵循各自上游 license。

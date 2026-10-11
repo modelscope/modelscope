@@ -2,7 +2,7 @@
 from modelscope.metainfo import Trainers
 from modelscope.pipelines.builder import normalize_model_input
 from modelscope.pipelines.util import is_official_hub_path
-from modelscope.utils.automodel_utils import check_model_from_owner_group
+from modelscope.utils.automodel_utils import is_model_from_trusted_source
 from modelscope.utils.constant import DEFAULT_MODEL_REVISION
 from modelscope.utils.hub import read_config
 from modelscope.utils.plugins import (filter_plugin_in_whitelist,
@@ -30,8 +30,13 @@ def build_trainer(name: str = Trainers.default, default_args: dict = None):
     model_revision = default_args.get('model_revision', DEFAULT_MODEL_REVISION)
     model_id = model[0] if isinstance(model,
                                       list) and len(model) > 0 else model
-    trust_remote_code = default_args.get(
-        'trust_remote_code', False) or check_model_from_owner_group(model_id)
+    explicit_trust_remote_code = bool(
+        default_args.get('trust_remote_code', False))
+    trust_remote_code = bool(
+        explicit_trust_remote_code
+        or (is_model_from_trusted_source(model_id, model_revision)
+            if not explicit_trust_remote_code else False))
+    default_args['trust_remote_code'] = trust_remote_code
 
     if isinstance(model, str) \
             or (isinstance(model, list) and isinstance(model[0], str)):

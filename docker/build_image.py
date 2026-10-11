@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 from copy import copy
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 import json
 
@@ -29,6 +29,7 @@ _NIGHTLY_HASH_PATTERN = re.compile(r'^(?:base-)?nightly-[0-9a-f]{7,40}$')
 class Builder:
 
     def __init__(self, args: Any, dry_run: bool):
+        self.pushed_images: List[str] = []
         self.args = self.init_args(args)
         self.dry_run = dry_run
         self.args.cudatoolkit_version = self._generate_cudatoolkit_version(
@@ -77,14 +78,6 @@ class Builder:
         )
 
     def _save_dockerfile(self, content: str) -> None:
-        hub_install = (
-            'pip install --no-cache-dir '
-            '"modelscope_hub @ git+https://github.com/modelscope/modelscope_hub.git@release/0.3" &&')
-        install_modelscope = 'cd modelscope && pip install .'
-        content = content.replace('{modelscope_hub_install}', hub_install)
-        if hub_install not in content and install_modelscope in content:
-            content = content.replace(install_modelscope,
-                                     f'{hub_install} \\\n    {install_modelscope}')
         if os.path.exists('./Dockerfile'):
             os.remove('./Dockerfile')
         with open('./Dockerfile', 'w') as f:
@@ -92,6 +85,9 @@ class Builder:
 
     def run_cmd(self, *args: str) -> int:
         """Run a shell command safely via subprocess (no shell=True).
+
+        Every successful ``docker push`` is recorded so that the build summary
+        can report the images this run really published.
 
         Args:
             *args: Command and its arguments as separate strings, e.g.
@@ -101,6 +97,9 @@ class Builder:
             The process return code (0 on success).
         """
         result = subprocess.run(list(args), check=False)
+        if (result.returncode == 0 and len(args) > 2
+                and list(args[:2]) == ['docker', 'push']):
+            self.pushed_images.append(args[2])
         return result.returncode
 
     def build(self) -> int:
@@ -111,6 +110,11 @@ class Builder:
 
     def image(self) -> str:
         pass
+
+    def output_images(self) -> List[str]:
+        """Images published by this build, or the planned tag if none was."""
+        return list(
+            self.pushed_images) if self.pushed_images else [self.image()]
 
     def __call__(self):
         content = self.generate_dockerfile()
@@ -438,7 +442,7 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             args.torchaudio_version = '2.11.0'
             args.torchvision_version = '0.28.0'
         if not args.vllm_version:
-            args.vllm_version = '0.28.0'
+            args.vllm_version = '0.31.0'
         if not args.base_image:
             # torch 2.13 ships cuDNN 9.20 through its own nvidia-cudnn-cu13
             # dependency, so the -cudnn base variant is redundant here.
@@ -457,11 +461,11 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
 RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
     pip install --no-cache-dir -U icecream soundfile pybind11 py-spy onnx onnxscript
 """
-        # vLLM >= 0.27 requires flashinfer >= 0.6.14, whose wheels are no longer
-        # published to PyPI. Pre-install it from flashinfer's own index so the later
-        # `pip install vllm` resolves without touching install.sh.
+        # vLLM 0.31 pins flashinfer-python==0.7.0.post1, so pre-install that exact
+        # version (flashinfer's own index serves as a fallback source) to let the
+        # later `pip install vllm` resolve without touching install.sh.
         extra_content += """
-RUN pip install --no-cache-dir flashinfer-python \
+RUN pip install --no-cache-dir "flashinfer-python==0.7.0.post1" \
     --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
         version_args = (
@@ -487,6 +491,9 @@ RUN pip install --no-cache-dir flashinfer-python \
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
+            content = content.replace(
+                'pre-commit "transformers<5.17" "trl<1.0"',
+                'pre-commit "transformers<5.18.0" "trl<1.0"')
         return content
 
     def image(self) -> str:
@@ -507,6 +514,222 @@ RUN pip install --no-cache-dir flashinfer-python \
         if ret != 0:
             return ret
         return self.run_cmd('docker', 'push', image_tag2)
+
+
+class MinorImageBuilder(Builder):
+    """Rebuild an already built image, refreshing only the ModelScope SDK.
+
+    A minor build inherits every dependency layer from ``--base_image``, which
+    must be an image produced by a previous major version build, and only
+    reinstalls modelscope and modelscope-hub on top of it. The output tag keeps
+    every segment of the base tag and just swaps the modelscope version, e.g.
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0`` produces
+    ``ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.1-<timestamp>-test``.
+    """
+
+    _MODELSCOPE_REPO = 'https://github.com/modelscope/modelscope.git'
+    _FIND_LINKS = ('https://modelscope.oss-cn-beijing.aliyuncs.com/releases/'
+                   'repo.html')
+    _TEST_SEGMENT = 'test'
+    # A batch of base images may be separated by comma, semicolon, newline or
+    # spaces, so that a pasted list works whatever shape it comes in.
+    _BATCH_SEPARATOR_PATTERN = re.compile(r'[,;\s]+')
+    # A plain dotted version such as 1.40.0; every other tag segment is either
+    # prefixed(cuda13.0.3, torch2.13.0) or non numeric(test, latest).
+    _TAG_VERSION_PATTERN = re.compile(r'^\d+(?:\.\d+)+$')
+    _TAG_TIMESTAMP_PATTERN = re.compile(r'^\d{14}$')
+    _TAG_SAFE_VERSION_PATTERN = re.compile(r'^\d[0-9A-Za-z.]*$')
+    _REQUIREMENT_OPERATOR_PATTERN = re.compile(r'^[<>=!~]')
+
+    @classmethod
+    def split_base_images(cls, base_image: Optional[str]) -> List[str]:
+        """Split a comma/semicolon/newline separated batch of base images.
+
+        Blank lines, indentation and a trailing separator are ignored, so a
+        list pasted as one image per line works as is. Repeated entries are
+        dropped so that a batch never rebuilds the same target twice, and the
+        given order is kept.
+        """
+        entries = [
+            entry.strip()
+            for entry in cls._BATCH_SEPARATOR_PATTERN.split(base_image or '')
+            if entry.strip()
+        ]
+        if not entries:
+            raise ValueError(
+                'A minor build must inherit an already built image. Pass '
+                '--base_image with the tag of the major version image, e.g. '
+                '--base_image ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0 '
+                '(a comma, semicolon or newline separated batch is also '
+                'accepted)')
+        return list(dict.fromkeys(entries))
+
+    def init_args(self, args: Any) -> Any:
+        base_images = self.split_base_images(args.base_image)
+        if len(base_images) > 1:
+            raise ValueError(
+                'A single minor build takes one base image, but a batch of '
+                f'{len(base_images)} was given. The module entry point expands '
+                'a batch into one build per base image.')
+        args.base_image = self._resolve_base_image(base_images[0])
+        if not self._TAG_SAFE_VERSION_PATTERN.fullmatch(
+                args.modelscope_version):
+            raise ValueError(
+                '--modelscope_version becomes the version segment of the '
+                'output tag, so it must be a plain version such as 1.40.1, '
+                f'got: {args.modelscope_version}')
+        # Toolkit versions are inherited from the base image; the placeholder
+        # only keeps the shared Builder bootstrap working.
+        if not args.cuda_version:
+            args.cuda_version = '0.0.0'
+        self._parse_base_tag(args)
+        self._output_tag = self._derive_tag(args.modelscope_version)
+        if f'{docker_registry}:{self._output_tag}' == args.base_image:
+            raise ValueError(
+                'The minor build would overwrite its own base image '
+                f'{args.base_image}. Pass a --modelscope_version different '
+                'from the version of the base image.')
+        return args
+
+    @staticmethod
+    def _resolve_base_image(base_image: str) -> str:
+        """Accept either a full ``repository:tag`` ref or a bare tag."""
+        if ':' in base_image:
+            return base_image
+        if '/' in base_image:
+            raise ValueError(
+                '--base_image looks like a repository without a tag: '
+                f'{base_image}')
+        return f'{docker_registry}:{base_image}'
+
+    @classmethod
+    def _base_tag_of(cls, base_image: str) -> str:
+        _, separator, tag = base_image.rpartition(':')
+        if not separator or not tag or '/' in tag:
+            raise ValueError(
+                '--base_image must carry the tag of the image to rebuild, '
+                'e.g. ubuntu22.04-cuda13.0.3-py312-torch2.13.0-1.40.0, got: '
+                f'{base_image}')
+        return tag
+
+    def _parse_base_tag(self, args: Any) -> None:
+        """Normalize the base tag and locate its modelscope version segment.
+
+        The build timestamp and the trailing ``test`` marker of the base image
+        are dropped here because :meth:`_derive_tag` appends the ones of this
+        build. That also makes a released tag(without ``-test``) and the tag it
+        was promoted from produce the same output.
+        """
+        tag = self._base_tag_of(args.base_image)
+        segments = [
+            segment for segment in tag.split('-')
+            if not self._TAG_TIMESTAMP_PATTERN.fullmatch(segment)
+        ]
+        if segments and segments[-1] == self._TEST_SEGMENT:
+            segments.pop()
+        base_version = (args.base_modelscope_version or '').strip()
+        if base_version:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if segment == base_version
+            ]
+            located_by = f'--base_modelscope_version {base_version}'
+        else:
+            matched = [
+                index for index, segment in enumerate(segments)
+                if self._TAG_VERSION_PATTERN.fullmatch(segment)
+            ]
+            located_by = 'version segment auto detection'
+        if len(matched) != 1:
+            raise ValueError(
+                f'{located_by} matched {len(matched)} segments of base image '
+                f'tag "{tag}", expected exactly 1. Pass '
+                '--base_modelscope_version to point at the modelscope version '
+                'of the base image.')
+        self._base_tag_segments = segments
+        self._version_index = matched[0]
+
+    def _derive_tag(self, version: str, timestamped: bool = False) -> str:
+        segments = list(self._base_tag_segments)
+        segments[self._version_index] = version
+        if timestamped:
+            segments.append(formatted_time)
+        segments.append(self._TEST_SEGMENT)
+        return '-'.join(segments)
+
+    def _modelscope_install_cmd(self) -> str:
+        if self.args.modelscope_install_source == 'git':
+            return ('cd /tmp && GIT_LFS_SKIP_SMUDGE=1 git clone -b '
+                    f'{self.args.modelscope_branch} --single-branch '
+                    f'{self._MODELSCOPE_REPO} && cd modelscope && '
+                    f'pip install --no-cache-dir . -f {self._FIND_LINKS} && '
+                    'cd / && rm -fr /tmp/modelscope')
+        return ('pip install --no-cache-dir '
+                f'modelscope=={self.args.modelscope_version} '
+                f'-f {self._FIND_LINKS}')
+
+    def _modelscope_hub_install_cmd(self) -> Optional[str]:
+        requirement = (self.args.modelscope_hub_version or '').strip()
+        if not requirement:
+            return None
+        if not self._REQUIREMENT_OPERATOR_PATTERN.match(requirement):
+            requirement = f'=={requirement}'
+        return f"pip install --no-cache-dir 'modelscope-hub{requirement}'"
+
+    def generate_dockerfile(self) -> str:
+        # modelscope is installed first so that an explicit modelscope-hub
+        # requirement wins over the floor resolved by modelscope itself.
+        steps = ['pip uninstall -y modelscope', self._modelscope_install_cmd()]
+        hub_step = self._modelscope_hub_install_cmd()
+        if hub_step:
+            steps.append(hub_step)
+        steps.append('pip cache purge')
+        install_content = (
+            'RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \\\n'
+            + ' && \\\n'.join(f'    {step}' for step in steps))
+        with open('docker/Dockerfile.minor', 'r') as f:
+            content = f.read()
+        content = content.replace('{base_image}', self.args.base_image)
+        content = content.replace('{install_content}', install_content)
+        content = content.replace('{cur_time}', formatted_time)
+        return content
+
+    def image(self) -> str:
+        return f'{docker_registry}:{self._output_tag}'
+
+    def _planned_images(self) -> List[str]:
+        """The canonical tag and the timestamped tag of this build."""
+        timestamped = self._derive_tag(
+            self.args.modelscope_version, timestamped=True)
+        return [self.image(), f'{docker_registry}:{timestamped}']
+
+    def output_images(self) -> List[str]:
+        return (list(self.pushed_images)
+                if self.pushed_images else self._planned_images())
+
+    def build(self) -> int:
+        canonical, timestamped = self._planned_images()
+        print('=' * 60)
+        print(f'Minor build base image : {self.args.base_image}')
+        print(f'Minor build output     : {canonical}')
+        print(f'Minor build timestamped: {timestamped}')
+        print('=' * 60)
+        ret = self.run_cmd('docker', 'pull', self.args.base_image)
+        if ret != 0:
+            return ret
+        return self.run_cmd('docker', 'build', '-t', canonical, '-f',
+                            'Dockerfile', '.')
+
+    def push(self) -> int:
+        canonical, timestamped = self._planned_images()
+        ret = self.run_cmd('docker', 'push', canonical)
+        if ret != 0:
+            return ret
+        ret = self.run_cmd('docker', 'tag', canonical, timestamped)
+        if ret != 0:
+            return ret
+        print(f'Minor image timestamp tag: {timestamped}')
+        return self.run_cmd('docker', 'push', timestamped)
 
 
 class AmdImageBuilder(Builder):
@@ -630,7 +853,10 @@ class AmdImageBuilder(Builder):
         parts = version.strip().split('.')
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f'py{parts[0]}{parts[1]}'
-        return f'py{re.sub(r"[^0-9]", "", version)}'
+        # The substitution stays out of the f-string on purpose: quotes nested
+        # inside an f-string only parse on Python 3.12+.
+        digits = re.sub(r'[^0-9]', '', version)
+        return f'py{digits}'
 
     @classmethod
     def _run_capture(cls, *cmd: str) -> subprocess.CompletedProcess:
@@ -785,7 +1011,10 @@ class AmdImageBuilder(Builder):
         }
         print('Probed AMD base image versions:')
         for key, value in versions.items():
-            print(f'  {key}: {value or "unknown"}')
+            # Kept out of the f-string: quotes nested inside an f-string only
+            # parse on Python 3.12+.
+            probed_value = value or 'unknown'
+            print(f'  {key}: {probed_value}')
         return versions
 
     def generate_dockerfile(self) -> str:
@@ -1070,6 +1299,8 @@ class AscendImageBuilder(StableGPUImageBuilder):
                                       self.args.megatron_branch)
             content = content.replace('{mindspeed_branch}',
                                       self.args.mindspeed_branch)
+            content = content.replace('{mcore_bridge_branch}',
+                                      self.args.mcore_bridge_branch)
         return content
 
     def image(self) -> str:
@@ -1084,8 +1315,58 @@ class AscendImageBuilder(StableGPUImageBuilder):
         return 0
 
 
+def safe_output_images(builder: Builder) -> List[str]:
+    """Never let an unresolved image tag break the summary of a failed build."""
+    try:
+        return builder.output_images()
+    except Exception as error:
+        return [f'<image tag unavailable: {error}>']
+
+
+def print_build_summary(results: List[Tuple[Builder, Optional[BaseException]]],
+                        dry_run: bool) -> None:
+    """Report every target of this run and list all output images at the end.
+
+    The flat list between the ``OUTPUT IMAGES`` markers is meant to be consumed
+    by tooling, so it holds nothing but one image reference per line, and only
+    images this run really produced: a target that failed before pushing
+    anything contributes none, one that failed halfway contributes what it did
+    push.
+    """
+    produced: List[str] = []
+    print()
+    print('=' * 78)
+    print(f'BUILD SUMMARY: {len(results)} target(s), '
+          f'build timestamp {formatted_time}')
+    print('=' * 78)
+    for builder, error in results:
+        status = 'DRY-RUN' if dry_run else ('FAILED' if error else 'SUCCESS')
+        base_image = getattr(builder.args, 'base_image', None) or '-'
+        print(f'[{status}] {type(builder).__name__}, base image: {base_image}')
+        images = safe_output_images(builder)
+        for image in images:
+            print(f'         {image}')
+        if not error or builder.pushed_images:
+            produced.extend(images)
+        if error:
+            print(f'         error: {type(error).__name__}: {error}')
+    print('=' * 78)
+    if dry_run:
+        print('# dry run: the images below were neither built nor pushed')
+    print('===== OUTPUT IMAGES BEGIN =====')
+    for image in produced:
+        print(image)
+    print('===== OUTPUT IMAGES END =====')
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--base_image', type=str, default=None)
+parser.add_argument(
+    '--base_image',
+    type=str,
+    default=None,
+    help='Image to build on top of. A minor build requires it and accepts a '
+    'comma, semicolon or newline separated batch of tags, each one rebuilt in '
+    'turn.')
 parser.add_argument('--image_type', type=str)
 parser.add_argument('--python_version', type=str, default='3.12.13')
 parser.add_argument('--ubuntu_version', type=str, default='22.04')
@@ -1118,9 +1399,30 @@ parser.add_argument('--flashattn_version', type=str, default=None)
 parser.add_argument('--autogptq_version', type=str, default=None)
 parser.add_argument('--modelscope_branch', type=str, default='master')
 parser.add_argument('--modelscope_version', type=str, default='9.99.0')
+parser.add_argument(
+    '--base_modelscope_version',
+    type=str,
+    default=None,
+    help='Minor build only: the modelscope version segment inside the '
+    '--base_image tag. Auto detected when omitted.')
+parser.add_argument(
+    '--modelscope_hub_version',
+    type=str,
+    default=None,
+    help='Minor build only: modelscope-hub requirement to install, e.g. 0.4.3 '
+    'or >=0.4.3. When omitted, modelscope-hub is left to the dependency '
+    'resolution of modelscope itself.')
+parser.add_argument(
+    '--modelscope_install_source',
+    type=str,
+    choices=['pypi', 'git'],
+    default='pypi',
+    help='Minor build only: install modelscope from the released PyPI version '
+    '(--modelscope_version, default) or from --modelscope_branch source.')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
 parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
+parser.add_argument('--mcore_bridge_branch', type=str, default='main')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)
 parser.add_argument(
@@ -1144,8 +1446,63 @@ elif args.image_type.lower() == 'amd':
     builder_cls = [AmdImageBuilder]
 elif args.image_type.lower() == 'latest':
     builder_cls = [LatestGPUImageBuilder]
+elif args.image_type.lower() == 'minor':
+    builder_cls = [MinorImageBuilder]
 else:
     raise ValueError(f'Unsupported image_type: {args.image_type}')
 
+# Only a minor build fans out over a batch of base images; every other image
+# type keeps building exactly the targets of its own builder list.
+base_images: List[Optional[str]] = [None]
+if args.image_type.lower() == 'minor':
+    base_images = [
+        base_image
+        for base_image in MinorImageBuilder.split_base_images(args.base_image)
+    ]
+
+# Instantiate every target first: argument validation then fails before any
+# expensive docker work, whichever target of the batch is misconfigured.
+builders: List[Builder] = []
+for builder_class in builder_cls:
+    for base_image in base_images:
+        # Keep the historical chaining where each builder receives the args as
+        # mutated by the previous one.
+        args = copy(args)
+        if base_image is not None:
+            args.base_image = base_image
+        builders.append(builder_class(args, args.dry_run))
+
+if len(base_images) > 1:
+    # Distinct base images may still normalize to the same output tag, which
+    # would make the targets of a batch silently overwrite each other.
+    planned_images: List[str] = []
+    for builder in builders:
+        if builder.image() in planned_images:
+            raise ValueError(
+                'Two base images of the batch would publish the same tag: '
+                f'{builder.image()}. Keep only one of them.')
+        planned_images.append(builder.image())
+
+build_results: List[Tuple[Builder, Optional[BaseException]]] = []
+first_error: Optional[BaseException] = None
+# Only a batch keeps going after a failure, so that one unusable base image
+# cannot cancel the rebuild of the others. Every other image type keeps the
+# historical fail fast behaviour.
+tolerate_failures = len(base_images) > 1
+for builder in builders:
+    try:
+        builder()
+    except Exception as build_error:
+        print(f'ERROR: {type(builder).__name__} failed: {build_error}')
+        build_results.append((builder, build_error))
+        first_error = first_error or build_error
+        if not tolerate_failures:
+            break
+    else:
+        build_results.append((builder, None))
+
+print_build_summary(build_results, bool(args.dry_run))
+if first_error is not None:
+    raise first_error
 for builder in builder_cls:
     builder(copy(args), args.dry_run)()

@@ -1,0 +1,27 @@
+FROM {base_image}
+
+# The base image pins pip to the Aliyun mirror, which can lag PyPI (~1h). Keep
+# the official index as a fallback so a freshly released version stays
+# resolvable.
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
+
+ARG CUR_TIME={cur_time}
+RUN echo $CUR_TIME
+
+# Snapshot the inherited dependencies so the build log can show that only
+# modelscope and modelscope-hub changed.
+RUN pip freeze > /tmp/pip_freeze_before.txt
+
+{install_content}
+
+RUN pip freeze > /tmp/pip_freeze_after.txt && \
+    echo '===== dependency diff(before -> after) =====' && \
+    { diff /tmp/pip_freeze_before.txt /tmp/pip_freeze_after.txt || true; } && \
+    echo '===== pip check(warning only) =====' && \
+    { pip check || true; }
+
+RUN python -c "import modelscope, modelscope_hub; \
+    print('modelscope:', modelscope.__version__); \
+    print('modelscope-hub:', modelscope_hub.__version__)"
+
+SHELL ["/bin/bash", "-c"]

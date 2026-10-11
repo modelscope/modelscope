@@ -565,6 +565,7 @@ class Devices:
     """device used for training and inference"""
     cpu = 'cpu'
     gpu = 'gpu'
+    xpu = 'xpu'
 
 
 # Supported extensions for text datasets.

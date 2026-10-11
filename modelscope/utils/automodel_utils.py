@@ -1,5 +1,6 @@
 import inspect
 import os
+from functools import lru_cache
 from types import MethodType
 from typing import Any, List, Optional
 
@@ -126,16 +127,58 @@ def try_to_load_hf_model(model_dir: str, task_name: str,
     return model
 
 
+TRUSTED_MODEL_OWNERS = frozenset({'damo', 'iic'})
+
+
+def _is_valid_hub_model_id(model_id: str) -> bool:
+    if not isinstance(model_id, str) or os.path.isabs(model_id) \
+            or '\\' in model_id or model_id.count('/') != 1:
+        return False
+    owner, name = model_id.split('/')
+    return bool(owner and name and owner not in {'.', '..'}
+                and name not in {'.', '..'})
+
+
+@lru_cache(maxsize=256)
+def _is_model_from_trusted_source(model_id: str, revision: Optional[str],
+                                  trusted_owners: frozenset[str]) -> bool:
+    """Verify a trusted publisher using Hub repository metadata.
+
+    Local directory names and cache layouts are attacker-controlled and must
+    not authorize remote code execution. Local paths and offline lookups remain
+    untrusted because their Hub metadata cannot be verified.
+    """
+    if not _is_valid_hub_model_id(model_id):
+        return False
+    try:
+        from modelscope.hub.api import HubApi
+        metadata = HubApi().get_model(model_id, revision=revision)
+    except Exception:
+        return False
+
+    owner = metadata.get('Owner')
+    name = metadata.get('Name')
+    requested_name = model_id.split('/', 1)[1]
+    return (isinstance(owner, str) and owner.casefold() in trusted_owners
+            and name == requested_name)
+
+
+def is_model_from_trusted_source(
+        model_id: str,
+        revision: Optional[str] = None,
+        trusted_owners: Optional[List[str]] = None) -> bool:
+    """Return whether Hub metadata verifies a trusted model publisher."""
+    owners = frozenset(owner.casefold()
+                       for owner in (trusted_owners or TRUSTED_MODEL_OWNERS))
+    return _is_model_from_trusted_source(model_id, revision, owners)
+
+
 def check_model_from_owner_group(model_dir: str,
                                  owner_group: List[str] = None) -> bool:
-    """This checking is for the torch.load, this function may eval malicious code into memory
+    """Retained local-path heuristic for import compatibility only.
 
-    Args:
-        model_dir: The local model_dir or model_id
-        owner_group: The owner group to trust
-
-    Returns:
-        bool: Whether the group can be trusted
+    Do not use this helper to authorize remote code execution. New call paths
+    must use :func:`is_model_from_trusted_source` to validate Hub metadata.
     """
     if not model_dir or not isinstance(model_dir, str):
         return False

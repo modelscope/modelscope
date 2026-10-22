@@ -666,16 +666,19 @@ class Config:
             arg_name = f'--{k}'
             if use_hyphen:
                 arg_name = arg_name.replace('_', '-')
-            if isinstance(v, bool) and v:
-                args.append(arg_name)
+            if isinstance(v, bool):
+                # bool values are treated as store_true flags
+                if v:
+                    args.append(arg_name)
             elif isinstance(v, (int, str, float)):
                 args.append(arg_name)
                 args.append(str(v))
             elif isinstance(v, list):
+                for item in v:
+                    assert isinstance(item, (int, str, float, bool)), 'Element type in list ' \
+                        f'is expected to be either int,str,float, but got type {type(item)}'
                 args.append(arg_name)
-                assert isinstance(v, (int, str, float, bool)), 'Element type in list ' \
-                    f'is expected to be either int,str,float, but got type {v[0]}'
-                args.append(str(v))
+                args.extend(str(item) for item in v)
             else:
                 raise ValueError(
                     'type in config file which supported to be '

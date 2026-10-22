@@ -70,10 +70,6 @@ class NedMetric(Metric):
             raise TypeError('Argument (pred or ref) is NoneType.')
         if pred == ref:
             return 0.0
-        if len(pred) == 0:
-            return len(ref)
-        if len(ref) == 0:
-            return len(pred)
         m_len = max(len(pred), len(ref))
         if m_len == 0:
             return 0.0

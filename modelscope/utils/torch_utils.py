@@ -49,7 +49,77 @@ def compile_model(model, **compile_options):
     return model
 
 
-def init_dist(launcher: str, backend: str = 'nccl', **kwargs) -> None:
+def get_accelerator_device_type() -> str:
+    """Return the device type of the active accelerator, e.g. ``cuda``, ``npu``, ``xpu``.
+
+    ``torch.accelerator`` (PyTorch >= 2.5) knows about every backend registered
+    with PyTorch, so it is asked first; older builds fall back to probing the
+    accelerator modules that torch ships. ``cpu`` is returned when none is available.
+    """
+    accelerator = getattr(torch, 'accelerator', None)
+    if accelerator is not None:
+        try:
+            device = accelerator.current_accelerator()
+        except Exception:  # pragma: no cover - depends on the torch build
+            device = None
+        if device is not None:
+            return device.type
+    for device_type in ('cuda', 'npu', 'xpu', 'mps'):
+        is_available = getattr(getattr(torch, device_type, None), 'is_available', None)
+        if is_available is None:
+            continue
+        try:
+            if is_available():
+                return device_type
+        except Exception:  # pragma: no cover - depends on the torch build
+            continue
+    return 'cpu'
+
+
+def get_accelerator_device() -> torch.device:
+    """The device of the active accelerator, ``cpu`` when there is none."""
+    return torch.device(get_accelerator_device_type())
+
+
+def _get_accelerator_module():
+    """The torch module backing the active accelerator (``torch.cuda``, ``torch.npu``, ...)."""
+    return getattr(torch, get_accelerator_device_type(), None)
+
+
+def _set_accelerator_device(local_rank: int) -> None:
+    """Bind the current process to ``local_rank`` on the active accelerator."""
+    set_device = getattr(_get_accelerator_module(), 'set_device', None)
+    if set_device is not None:
+        set_device(local_rank)
+
+
+def _accelerator_device_count() -> int:
+    device_count = getattr(_get_accelerator_module(), 'device_count', None)
+    return device_count() if device_count is not None else 1
+
+
+def _default_dist_backend() -> str:
+    """The collective backend matching the active accelerator."""
+    device_type = get_accelerator_device_type()
+    get_default_backend = getattr(dist, 'get_default_backend_for_device', None)
+    if get_default_backend is not None:
+        try:
+            return get_default_backend(torch.device(device_type))
+        except Exception:  # pragma: no cover - backend not registered
+            pass
+    return {'cuda': 'nccl', 'npu': 'hccl', 'xpu': 'xccl'}.get(device_type, 'gloo')
+
+
+def _collective_device() -> torch.device:
+    """Collectives on gloo need cpu tensors, every other backend runs on the accelerator."""
+    if dist.is_available() and dist.is_initialized() and dist.get_backend() == 'gloo':
+        return torch.device('cpu')
+    return get_accelerator_device()
+
+
+def init_dist(launcher: str, backend: Optional[str] = None, **kwargs) -> None:
+    if backend is None:
+        backend = _default_dist_backend()
     if mp.get_start_method(allow_none=True) is None:
         mp.set_start_method('spawn')
     if launcher == 'pytorch':
@@ -65,13 +135,13 @@ def init_dist(launcher: str, backend: str = 'nccl', **kwargs) -> None:
 def _init_dist_pytorch(backend: str, **kwargs) -> None:
     # rank = int(os.environ['RANK'])
     local_rank = int(os.environ['LOCAL_RANK'])
-    torch.cuda.set_device(local_rank)
+    _set_accelerator_device(local_rank)
     dist.init_process_group(backend=backend, **kwargs)
 
 
 def _init_dist_mpi(backend: str, **kwargs) -> None:
     local_rank = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
-    torch.cuda.set_device(local_rank)
+    _set_accelerator_device(local_rank)
     if 'MASTER_PORT' not in os.environ:
         # 29500 is torch.distributed default port
         os.environ['MASTER_PORT'] = '29500'
@@ -96,8 +166,8 @@ def _init_dist_slurm(backend: str, port: Optional[int] = None) -> None:
     proc_id = int(os.environ['SLURM_PROCID'])
     ntasks = int(os.environ['SLURM_NTASKS'])
     node_list = os.environ['SLURM_NODELIST']
-    num_gpus = torch.cuda.device_count()
-    torch.cuda.set_device(proc_id % num_gpus)
+    num_gpus = _accelerator_device_count()
+    _set_accelerator_device(proc_id % num_gpus)
     addr = subprocess.getoutput(
         f'scontrol show hostname {node_list} | head -n1')
     # specify master port
@@ -227,12 +297,13 @@ def broadcast(inputs, src):
         Each rank returns the same value as src.
     """
     rank = dist.get_rank()
-    shape_tensor = torch.tensor([0], device='cuda')
+    device = _collective_device()
+    shape_tensor = torch.tensor([0], device=device)
 
     if rank == src:
         inputs_tensor = torch.tensor(
-            bytearray(pickle.dumps(inputs)), dtype=torch.uint8, device='cuda')
-        shape_tensor = torch.tensor(inputs_tensor.shape, device='cuda')
+            bytearray(pickle.dumps(inputs)), dtype=torch.uint8, device=device)
+        shape_tensor = torch.tensor(inputs_tensor.shape, device=device)
 
     dist.barrier()
     dist.broadcast(shape_tensor, src)
@@ -241,7 +312,7 @@ def broadcast(inputs, src):
         inputs_tensor = torch.full((shape_tensor.item(), ),
                                    0,
                                    dtype=torch.uint8,
-                                   device='cuda')
+                                   device=device)
 
     dist.barrier()
     dist.broadcast(inputs_tensor, src)
@@ -254,7 +325,9 @@ def set_random_seed(seed):
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
+        manual_seed_all = getattr(_get_accelerator_module(), 'manual_seed_all',
+                                  torch.cuda.manual_seed_all)
+        manual_seed_all(seed)
     else:
         raise ValueError(
             f'Random seed should be positive, current seed is {seed}')
@@ -274,8 +347,8 @@ def _get_global_gloo_group():
 
 def _serialize_to_tensor(data, group):
     backend = dist.get_backend(group)
-    assert backend in ['gloo', 'nccl']
-    device = torch.device('cpu' if backend == 'gloo' else 'cuda')
+    assert backend in ['gloo', 'nccl', 'hccl']
+    device = torch.device('cpu') if backend == 'gloo' else get_accelerator_device()
 
     buffer = pickle.dumps(data)
     if len(buffer) > 1024**3:

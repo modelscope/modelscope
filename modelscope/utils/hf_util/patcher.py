@@ -629,34 +629,75 @@ def _unpatch_pretrained_class(all_imported_modules):
     _unpatch_dynamic_module()
 
 
+def _import_kernels_api_module():
+    """Return the module holding ``_get_hf_api`` in the installed `kernels`.
+
+    kernels >= 0.17 renamed ``kernels.utils`` to ``kernels.hf_hub`` (with
+    ``_get_hf_api`` moved along); support both layouts. Returns ``None``
+    when `kernels` is not installed.
+    """
+    try:
+        import kernels.hf_hub as kernels_api
+    except ImportError:
+        try:
+            import kernels.utils as kernels_api
+        except ImportError:
+            return None
+    return kernels_api
+
+
 def _patch_kernels():
     """Monkey-patch the `kernels` library to route HF API calls to ModelScope.
 
-    Only `kernels.utils._get_hf_api` is replaced; every download, file check
+    Only `_get_hf_api` is replaced; every download, file check
     and ref listing performed by `kernels` goes through `_MsKernelApi`, so
     the kernel loading/variant/lock logic stays untouched.
     """
-    try:
-        from kernels import utils as kernels_utils
-        from kernels.utils import _get_hf_api
-    except ImportError:
+    kernels_api = _import_kernels_api_module()
+    if kernels_api is None or hasattr(kernels_api, '_get_hf_api_origin'):
         return
-    if hasattr(kernels_utils, '_get_hf_api_origin'):
-        return
-    kernels_utils._get_hf_api_origin = kernels_utils._get_hf_api
-    kernels_utils._get_hf_api = lambda user_agent=None: _MsKernelApi()
+
+    def _ms_api(user_agent=None):
+        return _MsKernelApi()
+
+    kernels_api._get_hf_api_origin = kernels_api._get_hf_api
+    kernels_api._get_hf_api = _ms_api
+    # kernels >= 0.17 binds `_get_hf_api` at import time in submodules
+    # (e.g. `from kernels.hf_hub import _get_hf_api` in `kernels.load`);
+    # patch those already-bound references as well.
+    for name, module in list(sys.modules.items()):
+        if name != 'kernels' and not name.startswith('kernels.'):
+            continue
+        if module is kernels_api or hasattr(module, '_get_hf_api_origin'):
+            continue
+        if getattr(module, '_get_hf_api', None) is not None:
+            module._get_hf_api_origin = module._get_hf_api
+            module._get_hf_api = _ms_api
 
 
 def _unpatch_kernels():
-    try:
-        from kernels import utils as kernels_utils
-        from kernels.utils import _get_hf_api
-    except ImportError:
+    kernels_api = _import_kernels_api_module()
+    if kernels_api is None:
         return
-    origin = getattr(kernels_utils, '_get_hf_api_origin', None)
-    if origin is not None:
-        kernels_utils._get_hf_api = origin
-        del kernels_utils._get_hf_api_origin
+    origin = getattr(kernels_api, '_get_hf_api_origin', None)
+    if origin is None:
+        return
+    patched = kernels_api._get_hf_api
+    for name, module in list(sys.modules.items()):
+        if name != 'kernels' and not name.startswith('kernels.'):
+            continue
+        if module is kernels_api:
+            continue
+        module_origin = getattr(module, '_get_hf_api_origin', None)
+        if module_origin is not None:
+            module._get_hf_api = module_origin
+            del module._get_hf_api_origin
+        elif (module is not kernels_api
+              and getattr(module, '_get_hf_api', None) is patched):
+            # Imported while the patch was active (kernels >= 0.17).
+            module._get_hf_api = origin
+    kernels_api._get_hf_api = origin
+    del kernels_api._get_hf_api_origin
 
 
 class _MsKernelApi:
@@ -693,17 +734,23 @@ class _MsKernelApi:
                        **kwargs):
         from huggingface_hub.hf_api import RepoFolder
         from modelscope.hub.api import HubApi
+        root = path_in_repo or ''
+        # ModelScope cannot list the direct children of a subfolder
+        # non-recursively, so fetch the full tree and derive the direct
+        # subfolders (the only thing `kernels.get_variants` consumes).
         entries = HubApi().get_model_files(
             repo_id,
             revision=_ms_revision(revision),
-            root=path_in_repo,
-            recursive=False)
+            root=root or None,
+            recursive=True)
+        paths = [entry.get('Path') or entry.get('Name') for entry in entries]
+        depth = len([p for p in root.split('/') if p])
         folders = []
-        for entry in entries:
-            if entry.get('Type') != 'tree':
+        for path in paths:
+            if path is None or path == root or path.count('/') != depth:
                 continue
-            path = entry.get('Path') or entry.get('Name')
-            folders.append(RepoFolder(path=path, oid='', last_commit=None))
+            if any(p != path and p.startswith(path + '/') for p in paths):
+                folders.append(RepoFolder(path=path, oid='', last_commit=None))
         return folders
 
     def file_exists(self, repo_id, filename, *, revision=None, **kwargs):
@@ -742,8 +789,8 @@ def _kernels_patch_scope():
     """Apply `_patch_kernels` for the duration of the `with` block, unless an
     outer patch (e.g. `patch_hub()`) is already in effect.
     """
-    from kernels import utils as kernels_utils
-    if hasattr(kernels_utils, '_get_hf_api_origin'):
+    kernels_api = _import_kernels_api_module()
+    if kernels_api is None or hasattr(kernels_api, '_get_hf_api_origin'):
         yield
         return
     _patch_kernels()
@@ -755,7 +802,7 @@ def _kernels_patch_scope():
 
 def _wrap_kernels_callable(attr_name):
     """Return a wrapper around `kernels.<attr_name>` that scopes the ModelScope
-    patch on `kernels.utils._get_hf_api` to the call itself, so
+    patch on `kernels._get_hf_api` to the call itself, so
     `from kernels import <attr_name>` stays on HuggingFace unless the user
     explicitly calls `patch_hub()` / `patch_context()`.
     """

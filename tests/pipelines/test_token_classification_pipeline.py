@@ -29,13 +29,14 @@ class TokenClassificationPipelineTest(unittest.TestCase):
         def fake_base_init(pipeline, **kwargs):
             received.append(kwargs.get('trust_remote_code', False))
             pipeline.model = _ModelStub()
-            pipeline.preprocessor = type('PreprocessorStub', (), {
-                'id2label': {}
-            })()
+            pipeline.preprocessor = type('PreprocessorStub', (),
+                                         {'id2label': {}})()
 
         with patch.object(Pipeline, '__init__', fake_base_init):
-            for kwargs in ({'trust_remote_code': True},
-                           {'trust_remote_code': False}, {}):
+            for trust_remote_code in (True, False, None):
+                kwargs = ({} if trust_remote_code is None else {
+                    'trust_remote_code': trust_remote_code
+                })
                 with self.subTest(kwargs=kwargs):
                     TokenClassificationPipeline(
                         model='model-id', preprocessor=object(), **kwargs)

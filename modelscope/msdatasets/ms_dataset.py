@@ -209,11 +209,6 @@ class MsDataset:
                 MsDataset (MsDataset): MsDataset object for a certain dataset.
             """
 
-        if token:
-            from modelscope.hub.api import HubApi
-            api = HubApi()
-            api.login(token)
-
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
         hub = Hubs(hub or Hubs.modelscope)
@@ -270,6 +265,9 @@ class MsDataset:
             use_streaming=use_streaming,
             stream_batch_size=stream_batch_size,
             trust_remote_code=trust_remote_code,
+            token=token,
+            features=features,
+            dataset_info_only=dataset_info_only,
             **config_kwargs)
 
         # Load from local disk
@@ -278,6 +276,8 @@ class MsDataset:
             dataset_inst = LocalDataLoaderManager(
                 dataset_context_config).load_dataset(
                     LocalDataLoaderType.HF_DATA_LOADER)
+            if dataset_info_only:
+                return dataset_inst
             dataset_inst = MsDataset.to_ms_dataset(dataset_inst, target=target)
             if isinstance(dataset_inst, MsDataset):
                 dataset_inst._dataset_context_config = dataset_context_config
@@ -307,18 +307,33 @@ class MsDataset:
         elif hub == Hubs.modelscope:
             # Get dataset type from ModelScope Hub;  dataset_type->4: General Dataset
             from modelscope.hub.api import HubApi
-            _api = HubApi()
+            from modelscope_hub.config import get_default_config
+
+            effective_token = token if token is not None else get_default_config(
+            ).token
+            _api = HubApi(token=effective_token)
             endpoint = _api.get_endpoint_for_read(
                 repo_id=namespace + '/' + dataset_name,
-                repo_type=REPO_TYPE_DATASET)
+                repo_type=REPO_TYPE_DATASET,
+                token=effective_token)
+            dataset_context_config.endpoint = endpoint
+            dataset_context_config.token = effective_token
+            _api = HubApi(endpoint=endpoint, token=effective_token)
             dataset_id_on_hub, dataset_type = _api.get_dataset_id_and_type(
                 dataset_name=dataset_name,
                 namespace=namespace,
-                endpoint=endpoint)
+                endpoint=endpoint,
+                token=effective_token)
 
             # Load from the ModelScope Hub for type=4 (general)
             if str(dataset_type) == str(DatasetFormations.general.value):
-
+                storage_options = dict(
+                    config_kwargs.pop('storage_options', None) or {})
+                storage_options['modelscope'] = {
+                    **storage_options.get('modelscope', {}),
+                    'endpoint': endpoint,
+                    'token': effective_token,
+                }
                 with load_dataset_with_ctx(
                         path=namespace + '/' + dataset_name,
                         name=subset_name,
@@ -330,7 +345,8 @@ class MsDataset:
                         download_config=None,
                         download_mode=download_mode.value,
                         revision=version,
-                        token=token,
+                        token=effective_token,
+                        storage_options=storage_options,
                         streaming=use_streaming,
                         dataset_info_only=dataset_info_only,
                         trust_remote_code=trust_remote_code,
@@ -344,6 +360,8 @@ class MsDataset:
                     dataset_context_config)
                 dataset_inst = remote_dataloader_manager.load_dataset(
                     RemoteDataLoaderType.MS_DATA_LOADER)
+                if dataset_info_only:
+                    return dataset_inst
                 dataset_inst = MsDataset.to_ms_dataset(
                     dataset_inst, target=target)
                 if isinstance(dataset_inst, MsDataset):
@@ -646,7 +664,10 @@ class MsDataset:
             label_cols=label_cols,
             prefetch=prefetch)
 
-    def to_hf_dataset(self) -> Dataset:
+    def to_hf_dataset(self) -> Union[Dataset, IterableDataset]:
+        if isinstance(self._hf_ds, IterableDataset):
+            return self._hf_ds.with_format(
+                None) if self._hf_ds._formatting else self._hf_ds
         self._hf_ds.reset_format()
         return self._hf_ds
 

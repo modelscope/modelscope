@@ -1,63 +1,55 @@
 # noqa: isort:skip_file, yapf: disable
 # Copyright (c) Alibaba, Inc. and its affiliates.
 # Copyright 2020 The HuggingFace Datasets Authors and the TensorFlow Datasets Authors.
-"""ModelScope dataset loading orchestration.
+"""ModelScope dataset loading with instance-isolated filesystems.
 
-This module provides :class:`DatasetsWrapperHF` and the
-:func:`load_dataset_with_ctx` context manager that monkey-patch the
-HuggingFace ``datasets`` library to work with the ModelScope Hub.
-
-Sub-modules:
-    _compat           – backward-compat shims for datasets>=4.0 script loading
-    _module_factories – dataset module factory functions & data-file resolution
+DatasetsWrapperHF reuses datasets builders and ModelScope Hub capabilities.
+load_dataset_with_ctx preserves the context API without modifying global
+Hugging Face state.
 """
 import contextlib
+import copy
 import inspect
 import os
+import shutil
 import warnings
-from dataclasses import fields
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional, Sequence, Tuple, Union
+from contextvars import ContextVar
+from functools import partial
+from pathlib import Path, PurePosixPath
+from threading import RLock
+from types import MethodType
+from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional, Sequence, Union
 
-from urllib.parse import urlencode
-
+import fsspec
+import httpx
 import requests
 from datasets import (Dataset, DatasetBuilder, DatasetDict,
-                      DownloadConfig, DownloadManager, DownloadMode, Features,
+                      DownloadConfig, DownloadMode, Features,
                       IterableDataset, IterableDatasetDict, Split,
-                      VerificationMode, Version, config, data_files, LargeList,
-                      Sequence as SequenceHf, SplitDict)
-
-try:
-    from datasets import List as DatasetList
-except ImportError:
-    DatasetList = None
+                      VerificationMode, Version, config, SplitDict)
 
 from datasets.features import features
-from datasets.features.features import _FEATURE_TYPES
-from datasets.data_files import DataFilesDict, EmptyDatasetError
-from datasets.exceptions import DataFilesNotFoundError, DatasetNotFoundError
+from datasets.data_files import DataFilesDict
 from datasets.load import (
     CachedDatasetModuleFactory, DatasetModule,
     HubDatasetModuleFactoryWithParquetExport,
     PackagedDatasetModuleFactory,
     get_dataset_builder_class)
 from datasets.packaged_modules import (_EXTENSION_TO_MODULE, _PACKAGED_DATASETS_MODULES)
-from datasets.utils import file_utils
 from datasets.utils.file_utils import (_raise_if_offline_mode_is_enabled,
-                                       cached_path, relative_to_absolute_path)
+                                       relative_to_absolute_path)
 from datasets.utils.info_utils import is_small_dataset
-from datasets.utils.track import tracked_str
 
-from huggingface_hub import hf_hub_url
 from huggingface_hub.errors import OfflineModeIsEnabled
 from huggingface_hub.hf_api import DatasetInfo as HfDatasetInfo
 from huggingface_hub.hf_api import HfApi, RepoFile, RepoFolder
 from huggingface_hub.hf_file_system import HfFileSystem
 
+from modelscope_hub.config import get_default_config
+
 from modelscope import HubApi
-from modelscope.hub.utils.utils import get_endpoint
-from modelscope.msdatasets.utils.hf_file_utils import get_from_cache_ms
+from modelscope.hub.errors import NetworkError
+from modelscope.msdatasets.utils.hf_file_utils import http_head_ms
 from modelscope.utils.config_ds import MS_DATASETS_CACHE
 from modelscope.utils.constant import DEFAULT_DATASET_REVISION, REPO_TYPE_DATASET
 from modelscope.utils.import_utils import has_attr_in_class
@@ -73,10 +65,8 @@ from modelscope.msdatasets.utils._compat import (
 
 # -- Module factories --------------------------------------------------------
 from modelscope.msdatasets.utils._module_factories import (
-    _resolve_pattern,
     _download_repo_file,
     get_module_without_script,
-    get_module_with_script,
     _compat_local_script_module,
     _compat_hub_script_module,
     _get_hub_api,
@@ -123,85 +113,9 @@ ExpandDatasetProperty_T = Literal[
 # Feature patching (generate_from_dict_ms)
 # ===================================================================
 
-_NativeList = DatasetList if DatasetList is not None else SequenceHf
-
-
 def generate_from_dict_ms(obj: Any):
-    """Regenerate the nested feature object from a deserialized dict.
-
-    This is a ModelScope-patched version of ``features.generate_from_dict``
-    that handles backward compatibility for legacy ``Sequence`` types in
-    datasets 4.0+ where ``Sequence`` is no longer a registered feature type.
-    """
-    if isinstance(obj, list):
-        return [generate_from_dict_ms(value) for value in obj]
-    if '_type' not in obj or isinstance(obj['_type'], dict):
-        return {key: generate_from_dict_ms(value) for key, value in obj.items()}
-    obj = dict(obj)
-    _type = obj.pop('_type')
-
-    if _type == 'Sequence':
-        feature = obj.pop('feature')
-        length = obj.get('length', -1)
-        return SequenceHf(feature=generate_from_dict_ms(feature), length=length)
-
-    class_type = _FEATURE_TYPES.get(_type, None) or globals().get(_type, None)
-
-    if class_type is None:
-        raise ValueError(f"Feature type '{_type}' not found. Available feature types: {list(_FEATURE_TYPES.keys())}")
-
-    if class_type == LargeList:
-        feature = obj.pop('feature')
-        return LargeList(generate_from_dict_ms(feature), **obj)
-    if _NativeList is not None and (class_type is _NativeList or issubclass(class_type, _NativeList)):
-        feature = obj.pop('feature')
-        return _NativeList(generate_from_dict_ms(feature), **obj)
-
-    field_names = {f.name for f in fields(class_type)}
-    return class_type(**{k: v for k, v in obj.items() if k in field_names})
-
-
-# ===================================================================
-# Download monkey-patch (_download_ms)
-# ===================================================================
-
-def _download_ms(self, url_or_filename: str, download_config: DownloadConfig) -> str:
-    """ModelScope replacement for ``DownloadManager._download``.
-
-    Rewrites relative paths and ``hf://`` URLs to ModelScope API endpoints.
-    """
-    url_or_filename = str(url_or_filename)
-    if url_or_filename.startswith('hf://'):
-        hf_path = url_or_filename[len('hf://'):]
-        for _prefix in ('datasets/', 'models/'):
-            if hf_path.startswith(_prefix):
-                hf_path = hf_path[len(_prefix):]
-                break
-        if '@' in hf_path:
-            at_idx = hf_path.index('@')
-            after_at = hf_path[at_idx + 1:]
-            slash_idx = after_at.find('/')
-            if slash_idx == -1:
-                revision = after_at
-                file_path = ''
-            else:
-                revision = after_at[:slash_idx]
-                file_path = after_at[slash_idx + 1:]
-        else:
-            parts = hf_path.split('/', 2)
-            revision = DEFAULT_DATASET_REVISION
-            file_path = parts[2] if len(parts) > 2 else ''
-        params_str = urlencode({'Source': 'SDK', 'Revision': revision, 'FilePath': file_path})
-        url_or_filename = self._base_path + params_str
-    elif is_relative_path(url_or_filename):
-        revision = DEFAULT_DATASET_REVISION
-        params_str = urlencode({'Source': 'SDK', 'Revision': revision, 'FilePath': url_or_filename})
-        url_or_filename = self._base_path + params_str
-
-    out = cached_path(url_or_filename, download_config=download_config)
-    out = tracked_str(out)
-    out.set_origin(url_or_filename)
-    return out
+    """Preserve the legacy export using native Sequence and feature handling."""
+    return features.generate_from_dict(obj)
 
 
 # ===================================================================
@@ -219,44 +133,20 @@ def _dataset_info(
     expand: Optional[List[ExpandDatasetProperty_T]] = None,
 ) -> HfDatasetInfo:
     """ModelScope replacement for ``HfApi.dataset_info``."""
-    repo_info_iter = self.list_repo_tree(
-        repo_id=repo_id,
-        path_in_repo='/',
-        revision=revision,
-        recursive=False,
-        expand=expand,
-        token=token,
-        repo_type=REPO_TYPE_DATASET,
+    metadata = self._modelscope_api.get_repo(repo_id, REPO_TYPE_DATASET, revision=revision)
+    return HfDatasetInfo(
+        id=repo_id,
+        private=bool(metadata.private or metadata.visibility == 'private'),
+        author=metadata.owner or repo_id.split('/')[0],
+        sha=revision or DEFAULT_DATASET_REVISION,
+        gated=bool(metadata.gated),
+        downloads=metadata.downloads,
+        likes=metadata.likes,
+        tags=metadata.tags,
+        siblings=[dict(rfilename=item.path, blobId=item.blob_id, size=item.size)
+                  for item in self.list_repo_tree(repo_id, revision=revision, recursive=False)
+                  if isinstance(item, RepoFile)],
     )
-
-    data_info = {
-        'id': repo_id,
-        'private': False,
-        'author': repo_id.split('/')[0] if repo_id else None,
-        'sha': revision,
-        'lastModified': None,
-        'gated': False,
-        'disabled': False,
-        'downloads': 0,
-        'likes': 0,
-        'tags': [],
-        'cardData': [],
-        'createdAt': None,
-    }
-
-    data_siblings = []
-    for info_item in repo_info_iter:
-        if isinstance(info_item, RepoFile):
-            data_siblings.append(
-                dict(
-                    rfilename=info_item.rfilename,
-                    blobId=info_item.blob_id,
-                    size=info_item.size,
-                )
-            )
-    data_info['siblings'] = data_siblings
-
-    return HfDatasetInfo(**data_info)
 
 
 # -- Repo tree cache ---------------------------------------------------------
@@ -269,10 +159,11 @@ def _derive_from_recursive_cache(
     revision: str,
     path_in_repo: str,
     recursive: bool,
+    cache: Optional[Dict] = None,
 ) -> Optional[List[Union[RepoFile, RepoFolder]]]:
     """Try to derive results from a cached recursive root listing."""
     root_key = (repo_id, revision, '/', True)
-    root_cached = _repo_tree_cache.get(root_key)
+    root_cached = (cache if cache is not None else _repo_tree_cache).get(root_key)
     if root_cached is None:
         return None
 
@@ -281,7 +172,7 @@ def _derive_from_recursive_cache(
     for item in root_cached:
         item_path = item.path
         if prefix:
-            if not item_path.startswith(prefix + '/') and item_path != prefix:
+            if not item_path.startswith(prefix + '/'):
                 continue
             rel_path = item_path[len(prefix) + 1:] if item_path.startswith(prefix + '/') else ''
         else:
@@ -304,68 +195,39 @@ def _list_repo_tree(
     token: Optional[Union[bool, str]] = None,
 ) -> Iterable[Union[RepoFile, RepoFolder]]:
     """ModelScope replacement for ``HfApi.list_repo_tree``."""
+    if repo_type not in (None, REPO_TYPE_DATASET):
+        raise ValueError('ModelScope dataset filesystem only supports datasets')
     revision = revision or DEFAULT_DATASET_REVISION
     normalized_path = path_in_repo or '/'
+    cache = self._modelscope_tree_cache
     cache_key = (repo_id, revision, normalized_path, recursive)
-
-    cached = _repo_tree_cache.get(cache_key)
-    if cached is not None:
-        yield from cached
-        return
-
-    derived = _derive_from_recursive_cache(repo_id, revision, normalized_path, recursive)
-    if derived is not None:
-        _repo_tree_cache[cache_key] = derived
-        yield from derived
-        return
-
-    api = _get_hub_api()
-    endpoint = api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-
-    _owner, _dataset_name = repo_id.split('/')
-    dataset_hub_id, _ = api.get_dataset_id_and_type(
-        dataset_name=_dataset_name, namespace=_owner, endpoint=endpoint)
-
-    results: List[Union[RepoFile, RepoFolder]] = []
-    page_number = 1
-    page_size = 500
-    max_pages = 10000
-    while page_number <= max_pages:
-        try:
-            dataset_files = api.get_dataset_files(
-                repo_id=repo_id,
-                revision=revision,
-                root_path=normalized_path,
-                recursive=recursive,
-                page_number=page_number,
-                page_size=page_size,
-                endpoint=endpoint,
-                dataset_hub_id=dataset_hub_id,
-            )
-        except Exception as e:
-            logger.error(f'Get dataset: {repo_id} file list failed, message: {e}')
-            break
-
-        if not dataset_files:
-            break
-
-        for file_info_d in dataset_files:
-            path_info = {
-                'type': 'directory' if file_info_d['Type'] == 'tree' else 'file',
-                'path': file_info_d['Path'],
-                'size': file_info_d['Size'],
-                'oid': file_info_d['Sha256'],
-            }
-            item = RepoFile(**path_info) if path_info['type'] == 'file' else RepoFolder(**path_info)
-            results.append(item)
-            yield item
-
-        if len(dataset_files) < page_size:
-            break
-        page_number += 1
-
-    _repo_tree_cache[cache_key] = results
+    with self._modelscope_tree_lock:
+        results = cache.get(cache_key)
+        if results is None:
+            results = _derive_from_recursive_cache(
+                repo_id, revision, normalized_path, recursive, cache=cache)
+        if results is None:
+            api = self._modelscope_api
+            page_size = inspect.signature(api.get_dataset_files).parameters['page_size'].default
+            page_number = 1
+            entries = {}
+            while True:
+                page = api.get_dataset_files(
+                    repo_id, revision=revision, root_path=normalized_path, recursive=recursive,
+                    page_number=page_number, page_size=page_size, dataset_hub_id=repo_id)
+                before = len(entries)
+                for item in page:
+                    entries[item['Path']] = item
+                if not page or len(page) < page_size:
+                    break
+                if len(entries) == before:
+                    raise RuntimeError('Dataset file listing pagination did not advance')
+                page_number += 1
+            results = [(RepoFolder if item['Type'] == 'tree' else RepoFile)(
+                path=item['Path'], size=item.get('Size') or 0,
+                oid=item.get('Sha256') or item.get('BlobId') or '') for item in entries.values()]
+            cache[cache_key] = results
+    yield from results
 
 
 def _get_paths_info(
@@ -379,98 +241,179 @@ def _get_paths_info(
     token: Optional[Union[bool, str]] = None,
 ) -> List[Union[RepoFile, RepoFolder]]:
     """ModelScope replacement for ``HfApi.get_paths_info``."""
-    revision = revision or DEFAULT_DATASET_REVISION
-    if isinstance(paths, str):
-        paths = [paths]
-    paths_set = set(paths)
-
-    # Check all available caches for matching paths
-    for cache_key, cached_items in _repo_tree_cache.items():
-        if cache_key[0] != repo_id or cache_key[1] != revision:
-            continue
-        matched = [item for item in cached_items if item.path in paths_set]
-        if matched:
-            return matched
-        # Recursive root cache is authoritative – if paths not found, they don't exist
-        if cache_key == (repo_id, revision, '/', True):
-            return []
-
-    repo_info_iter = self.list_repo_tree(
-        repo_id=repo_id,
-        recursive=False,
-        expand=expand,
-        revision=revision,
-        repo_type=repo_type,
-        token=token,
-    )
-
-    return [item for item in repo_info_iter if item.path in paths_set]
+    paths_set = {paths} if isinstance(paths, str) else set(paths)
+    parents = {str(PurePosixPath(path).parent) for path in paths_set}
+    return [item for parent in sorted(parents) for item in self.list_repo_tree(
+        repo_id, path_in_repo=parent if parent != '.' else '/', recursive=False,
+        expand=expand, revision=revision, repo_type=repo_type, token=token)
+        if item.path in paths_set]
 
 
 # ===================================================================
 # HfFileSystem patches (_hf_fs_open, _hf_fs_init)
 # ===================================================================
 
-_hf_fs_open_original = None
-_hf_fs_init_original = None
+class _ModelScopeHfApi(HfApi):
+    """Adapt filesystem instances without modifying the native HfApi class."""
+
+    def __init__(self, endpoint=None, token=None):
+        super().__init__(endpoint=endpoint, token=False)
+        self._modelscope_api: HubApi = HubApi(endpoint=endpoint, token=token)
+        self._modelscope_token = token
+        self._modelscope_tree_cache: Dict[tuple, List] = {}
+        self._modelscope_tree_lock = RLock()
+
+    dataset_info = _dataset_info
+    list_repo_tree = _list_repo_tree
+    get_paths_info = _get_paths_info
+
+    def _build_hf_headers(self, token=None, **kwargs):
+        headers = super()._build_hf_headers(token=False, **kwargs)
+        cookies = self._modelscope_api.get_cookies(access_token=self._modelscope_token)
+        if cookies and self._modelscope_token != '':
+            headers['Cookie'] = '; '.join(f'{cookie.name}={cookie.value}' for cookie in cookies)
+        return headers
 
 
-def _hf_fs_init_with_cookie(self, *args, endpoint=None, token=None, **kwargs):
-    """HfFileSystem.__init__ wrapper that injects ModelScope cookie auth.
-
-    ModelScope's /resolve/ endpoint authenticates via `m_session_id` cookie
-    rather than the `Authorization: Bearer` header used by HuggingFace Hub.
-    This wrapper ensures the cookie is included in all subsequent HTTP
-    requests made by the HfFileSystem instance.
-    """
-    _hf_fs_init_original(self, *args, endpoint=endpoint, token=token, **kwargs)
-    if token and isinstance(token, str):
-        if not hasattr(self._api, 'headers') or self._api.headers is None:
-            self._api.headers = {}
-        self._api.headers['Cookie'] = f'm_session_id={token}'
+def _modelscope_file_url(handle):
+    resolved = handle.resolved_path
+    namespace, name = resolved.repo_id.split('/', 1)
+    return handle.fs._api._modelscope_api.get_dataset_file_url(
+        resolved.path_in_repo, name, namespace, revision=resolved.revision,
+        extension_filter=False, endpoint=handle.fs.endpoint)
 
 
-def _hf_fs_open(self, path, mode='rb', **kwargs):
-    """Wrapper for HfFileSystem._open that fixes size=0 from ModelScope API.
+_decoder_storage_options: ContextVar[Optional[Dict]] = ContextVar(
+    'modelscope_dataset_decoder_options', default=None)
 
-    The ModelScope tree API may report Size=0 for files. When HfFileSystem
-    caches this, AbstractBufferedFile treats the file as empty (0 bytes).
-    This wrapper detects size=0 for files opened in read mode and resolves
-    the actual size via a HEAD request before creating the file object.
-    """
-    if mode == 'rb' and 'size' not in kwargs:
+
+def _filesystem_options(options):
+    config = get_default_config()
+    defaults = {'endpoint': config.endpoint, 'token': config.token,
+                'cache_dir': None, 'force_download': False,
+                'local_files_only': False, 'repo_id': None}
+    defaults.update(_decoder_storage_options.get() or {})
+    defaults.update({key: value for key, value in options.items() if value is not None})
+    return defaults
+
+
+class _ModelScopeFileSystem(HfFileSystem):
+    """Reuse native reads with instance-isolated endpoints, tokens and caches."""
+
+    protocol = 'modelscope'
+
+    @classmethod
+    def _tokenize(cls, threading_ident, *args, **kwargs):
+        return super()._tokenize(threading_ident, *args, **_filesystem_options(kwargs))
+
+    def __init__(self, *args, endpoint=None, token=None, cache_dir=None,
+                 force_download=None, local_files_only=None, repo_id=None, **kwargs):
+        options = _filesystem_options({
+            'endpoint': endpoint, 'token': token, 'cache_dir': cache_dir,
+            'force_download': force_download, 'local_files_only': local_files_only,
+            'repo_id': repo_id,
+        })
+        super().__init__(*args, endpoint=options['endpoint'], token=False, **kwargs)
+        self._api = _ModelScopeHfApi(endpoint=options['endpoint'], token=options['token'])
+        self.cache_dir = options['cache_dir']
+        self.force_download = options['force_download']
+        self.local_files_only = options['local_files_only']
+        self._modelscope_repo_id: Optional[str] = options['repo_id']
+
+    def _repo_and_revision_exist(self, repo_type, repo_id, revision):
+        if (repo_type != REPO_TYPE_DATASET
+                or (self._modelscope_repo_id is not None
+                    and repo_id != self._modelscope_repo_id)):
+            raise ValueError('Data files must belong to the requested ModelScope dataset')
+        if self.local_files_only:
+            return True, None
+        return super()._repo_and_revision_exist(repo_type, repo_id, revision)
+
+    def _open(self, path, mode='rb', **kwargs):
+        if mode != 'rb':
+            raise NotImplementedError('ModelScope dataset filesystem is read-only')
+        _raise_if_offline_mode_is_enabled()
+        resolved = self.resolve_path(path)
+        if kwargs.get('block_size', self.block_size) != 0 and self.info(path).get('size') == 0:
+            namespace, name = resolved.repo_id.split('/', 1)
+            url = self._api._modelscope_api.get_dataset_file_url(
+                resolved.path_in_repo, name, namespace, revision=resolved.revision,
+                extension_filter=False, endpoint=self.endpoint)
+            response = http_head_ms(url, headers=self._api._build_hf_headers())
+            response.raise_for_status()
+            kwargs['size'] = int(response.headers.get('Content-Length', 0))
+        handle = super()._open(path, mode=mode, **kwargs)
+        handle.url = MethodType(_modelscope_file_url, handle)
+        return handle
+
+    def get_file(self, rpath, lpath=None, callback=None, outfile=None, **kwargs):
+        resolved = self.resolve_path(rpath, revision=kwargs.get('revision'))
+        cached = self._api._modelscope_api.download_file(
+            resolved.repo_id, REPO_TYPE_DATASET, resolved.path_in_repo,
+            revision=resolved.revision, cache_dir=self.cache_dir,
+            force=self.force_download, local_files_only=self.local_files_only)
+        if outfile is None and hasattr(lpath, 'write'):
+            outfile = lpath
+        if outfile is not None:
+            with open(cached, 'rb') as source:
+                shutil.copyfileobj(source, outfile)
+        elif lpath is not None:
+            os.makedirs(os.path.dirname(os.fspath(lpath)) or '.', exist_ok=True)
+            if os.path.abspath(cached) != os.path.abspath(lpath):
+                shutil.copyfile(cached, lpath)
+        else:
+            raise ValueError('Either lpath or outfile must be provided')
+        if callback is not None:
+            callback.absolute_update(os.path.getsize(cached))
+
+    def rm(self, *args, **kwargs):
+        raise NotImplementedError('ModelScope dataset filesystem is read-only')
+
+    def put_file(self, *args, **kwargs):
+        raise NotImplementedError('ModelScope dataset filesystem is read-only')
+
+    def cp_file(self, *args, **kwargs):
+        raise NotImplementedError('ModelScope dataset filesystem is read-only')
+
+
+fsspec.register_implementation('modelscope', _ModelScopeFileSystem)
+
+
+def _decode_modelscope_feature(self, value, token_per_repo_id=None):
+    """Keep decoder credentials on instances, outside serialized feature fields."""
+    path = value.get('path') if isinstance(value, dict) else None
+    if path and any(hop.startswith('modelscope://') for hop in path.split('::')):
+        context_token = _decoder_storage_options.set(self._modelscope_storage_options)
         try:
-            resolved = self.resolve_path(path)
-            resolved_name = resolved.unresolve()
-            parent = self._parent(resolved_name)
-            cached_size = None
-            if parent in self.dircache:
-                for entry in self.dircache[parent]:
-                    if entry['name'] == resolved_name and entry.get('type') == 'file':
-                        cached_size = entry.get('size', -1)
-                        break
-            if cached_size == 0:
-                url = hf_hub_url(
-                    repo_id=resolved.repo_id,
-                    revision=resolved.revision,
-                    filename=resolved.path_in_repo,
-                    repo_type=resolved.repo_type,
-                    endpoint=self.endpoint,
-                )
-                headers = self._api._build_hf_headers()
-                resp = requests.head(url, headers=headers, allow_redirects=True, timeout=30)
-                if resp.status_code == 200:
-                    cl = resp.headers.get('Content-Length')
-                    if cl:
-                        actual_size = int(cl)
-                        kwargs['size'] = actual_size
-                        for entry in self.dircache.get(parent, []):
-                            if entry['name'] == resolved_name:
-                                entry['size'] = actual_size
-                                break
-        except Exception:
-            pass
-    return _hf_fs_open_original(self, path, mode=mode, **kwargs)
+            # Preserve lazy reads instead of preloading large media files.
+            return type(self).decode_example(self, value, token_per_repo_id=token_per_repo_id)
+        finally:
+            _decoder_storage_options.reset(context_token)
+    return type(self).decode_example(self, value, token_per_repo_id=token_per_repo_id)
+
+
+def _bind_modelscope_decoders(dataset, storage_options):
+    if 'modelscope' not in storage_options:
+        return dataset
+    options = copy.deepcopy(storage_options['modelscope'])
+
+    def bind(feature):
+        if isinstance(feature, dict):
+            for child in feature.values():
+                bind(child)
+        elif isinstance(feature, (tuple, list)):
+            for child in feature:
+                bind(child)
+        elif hasattr(feature, 'feature'):
+            bind(feature.feature)
+        if getattr(feature, 'decode', False) and hasattr(type(feature), 'decode_example'):
+            feature._modelscope_storage_options = options
+            feature.decode_example = partial(_decode_modelscope_feature, feature)
+
+    for split in dataset.values() if isinstance(dataset, (DatasetDict, IterableDatasetDict)) else (dataset,):
+        if split._info.features:
+            bind(split._info.features)
+    return dataset
 
 
 class _DryRunDownloadManager:
@@ -718,9 +661,15 @@ class DatasetsWrapperHF:
 
             # Case 1: Local .py script file
             if isinstance(path, str) and path.endswith('.py') and os.path.exists(path):
-                from datasets import get_dataset_config_names
-                subset_list = get_dataset_config_names(path)
-                ret_dict = {_subset: [] for _subset in subset_list}
+                configs = builder_instance.builder_configs or {builder_instance.config.name: builder_instance.config}
+                for config_name in configs:
+                    candidate = DatasetsWrapperHF.load_dataset_builder(
+                        path, name=config_name, data_dir=data_dir, data_files=data_files,
+                        cache_dir=cache_dir, features=features, download_config=download_config,
+                        download_mode=download_mode, revision=revision, token=token,
+                        storage_options=storage_options, trust_remote_code=trust_remote_code,
+                        **config_kwargs)
+                    ret_dict[config_name] = sorted(_discover_splits_from_builder(candidate))
                 return ret_dict
 
             if builder_instance is None:
@@ -765,10 +714,15 @@ class DatasetsWrapperHF:
         _validate_split_exists(builder_instance, split)
 
         if streaming:
-            return builder_instance.as_streaming_dataset(split=split)
+            return _bind_modelscope_decoders(
+                builder_instance.as_streaming_dataset(split=split), builder_instance.storage_options)
 
         _align_builder_splits_with_data_files(builder_instance, split)
 
+        download_config = download_config.copy() if download_config else DownloadConfig()
+        download_config.token = builder_instance.token
+        download_config.storage_options = copy.deepcopy(builder_instance.storage_options or {})
+        download_config.cache_dir = download_config.cache_dir or cache_dir or MS_DATASETS_CACHE
         builder_instance.download_and_prepare(
             download_config=download_config,
             download_mode=download_mode,
@@ -780,10 +734,10 @@ class DatasetsWrapperHF:
         keep_in_memory = (
             keep_in_memory if keep_in_memory is not None else is_small_dataset(
                 builder_instance.info.dataset_size))
-        ds = builder_instance.as_dataset(
-            split=split,
-            verification_mode=verification_mode,
-            in_memory=keep_in_memory)
+        as_dataset_kwargs = {'split': split, 'in_memory': keep_in_memory}
+        if 'verification_mode' in inspect.signature(builder_instance.as_dataset).parameters:
+            as_dataset_kwargs['verification_mode'] = verification_mode
+        ds = builder_instance.as_dataset(**as_dataset_kwargs)
         if task is not None:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', FutureWarning)
@@ -801,7 +755,7 @@ class DatasetsWrapperHF:
         except Exception as e:
             logger.warning(f'Could not record download statistics: {e}')
 
-        return ds
+        return _bind_modelscope_decoders(ds, builder_instance.storage_options)
 
     @staticmethod
     def load_dataset_builder(
@@ -834,20 +788,12 @@ class DatasetsWrapperHF:
             token = use_auth_token
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
+        download_config = download_config.copy() if download_config else DownloadConfig()
+        download_config.storage_options = copy.deepcopy(download_config.storage_options or {})
         if token is not None:
-            download_config = download_config.copy(
-            ) if download_config else DownloadConfig()
             download_config.token = token
         if storage_options is not None:
-            download_config = download_config.copy(
-            ) if download_config else DownloadConfig()
-            download_config.storage_options.update(storage_options)
-        if split is not None:
-            download_config = download_config.copy(
-            ) if download_config else DownloadConfig()
-            if download_config.storage_options is None:
-                download_config.storage_options = {}
-            download_config.storage_options['split'] = split
+            download_config.storage_options.update(copy.deepcopy(storage_options))
 
         dataset_module = DatasetsWrapperHF.dataset_module_factory(
             path,
@@ -861,6 +807,7 @@ class DatasetsWrapperHF:
             _require_default_config_name=_require_default_config_name,
             _require_custom_configs=bool(config_kwargs),
             name=name,
+            split=split,
         )
         builder_kwargs = dataset_module.builder_kwargs
         data_dir = builder_kwargs.pop('data_dir', data_dir)
@@ -886,24 +833,11 @@ class DatasetsWrapperHF:
 
         builder_cls = get_dataset_builder_class(
             dataset_module, dataset_name=dataset_name)
-
-        _config_cls = builder_cls.BUILDER_CONFIG_CLASS
-        if hasattr(_config_cls, '__dataclass_fields__'):
-            _valid_fields = set(_config_cls.__dataclass_fields__.keys())
-            # Also preserve parameters accepted by the builder's
-            # __init__ (e.g. writer_batch_size, base_path, repo_id)
-            # so they are not inadvertently stripped.
-            try:
-                _init_params = set(
-                    inspect.signature(builder_cls.__init__).parameters.keys()
-                )
-            except (ValueError, TypeError):
-                _init_params = set()
-            _valid_fields = _valid_fields | _init_params
-            config_kwargs = {
-                k: v for k, v in config_kwargs.items()
-                if k in _valid_fields
-            }
+        builder_kwargs = {**builder_kwargs, **config_kwargs}
+        ms_repo_id = None
+        if str(builder_kwargs.get('base_path', '')).startswith('modelscope://'):
+            # datasets 5.0.1 validates only hf:// paths; our filesystem enforces repo scope.
+            ms_repo_id = builder_kwargs.pop('repo_id', None)
 
         builder_instance: DatasetBuilder = builder_cls(
             cache_dir=cache_dir,
@@ -914,11 +848,12 @@ class DatasetsWrapperHF:
             hash=dataset_module.hash,
             info=info,
             features=features,
-            token=token,
-            storage_options=storage_options,
+            token=download_config.token,
+            storage_options=download_config.storage_options,
             **builder_kwargs,
-            **config_kwargs,
         )
+        if ms_repo_id is not None:
+            builder_instance.repo_id = ms_repo_id
         builder_instance._use_legacy_cache_dir_if_possible(dataset_module)
 
         return builder_instance
@@ -936,6 +871,7 @@ class DatasetsWrapperHF:
         trust_remote_code: Optional[bool] = None,
         _require_default_config_name=True,
         _require_custom_configs=False,
+        split: Optional[Union[str, Split]] = None,
         **download_kwargs,
     ) -> DatasetModule:
 
@@ -943,11 +879,8 @@ class DatasetsWrapperHF:
         revision = revision or DEFAULT_DATASET_REVISION
         if download_config is None:
             download_config = DownloadConfig(**download_kwargs)
-        download_config.storage_options.update({'name': subset_name})
-        download_config.storage_options.update({'revision': revision})
-
-        if download_config and download_config.cache_dir is None:
-            download_config.cache_dir = MS_DATASETS_CACHE
+        if download_config.cache_dir is None:
+            download_config.cache_dir = cache_dir or MS_DATASETS_CACHE
 
         download_mode = DownloadMode(download_mode
                                      or DownloadMode.REUSE_DATASET_IF_EXISTS)
@@ -986,6 +919,7 @@ class DatasetsWrapperHF:
                     download_mode=download_mode,
                     dynamic_modules_path=dynamic_modules_path,
                     trust_remote_code=trust_remote_code,
+                    download_config=download_config,
                 )
             else:
                 raise FileNotFoundError(
@@ -1004,6 +938,7 @@ class DatasetsWrapperHF:
                 download_mode=download_mode,
                 dynamic_modules_path=dynamic_modules_path,
                 trust_remote_code=trust_remote_code,
+                download_config=download_config,
             )
         elif os.path.isdir(path):
             return LocalDatasetModuleFactoryWithoutScript(
@@ -1016,40 +951,21 @@ class DatasetsWrapperHF:
             try:
                 _raise_if_offline_mode_is_enabled()
 
-                try:
-                    dataset_info = HfApi().dataset_info(
-                        repo_id=path,
-                        revision=revision,
-                        token=download_config.token,
-                        timeout=100.0,
-                    )
-                except Exception as e:  # noqa: broad exception from hf_hub
-                    if isinstance(
-                            e,
-                        (  # noqa: E131
-                            OfflineModeIsEnabled,
-                            requests.exceptions.ConnectTimeout,
-                            requests.exceptions.ConnectionError,
-                        ),
-                    ):
-                        raise ConnectionError(
-                            f"Couldn't reach '{path}' on the Hub ({type(e).__name__})"
-                        )
-                    elif '404' in str(e):
-                        msg = f"Dataset '{path}' doesn't exist on the Hub"
-                        raise DatasetNotFoundError(
-                            msg
-                            + f" at revision '{revision}'" if revision else msg
-                        )
-                    elif '401' in str(e):
-                        msg = f"Dataset '{path}' doesn't exist on the Hub"
-                        msg = msg + f" at revision '{revision}'" if revision else msg
-                        raise DatasetNotFoundError(
-                            msg + '. If the repo is private or gated, '
-                            'make sure to log in with `huggingface-cli login`.'
-                        )
-                    else:
-                        raise e
+                options = dict(download_config.storage_options.get('modelscope', {}))
+                ms_token = options.get('token',
+                                       download_config.token if isinstance(download_config.token, str) else None)
+                ms_token = get_default_config().token if ms_token is None else ms_token
+                api = HubApi(endpoint=options.get('endpoint'), token=ms_token)
+                endpoint = api.get_endpoint_for_read(path, repo_type=REPO_TYPE_DATASET, token=ms_token)
+                download_config.storage_options['modelscope'] = {
+                    **options, 'endpoint': endpoint, 'token': ms_token, 'repo_id': path,
+                    'cache_dir': download_config.cache_dir,
+                    'force_download': download_config.force_download,
+                    'local_files_only': getattr(download_config, 'local_files_only', False),
+                }
+                download_config.token = False
+                dataset_info = _ModelScopeHfApi(endpoint=endpoint, token=ms_token).dataset_info(
+                    path, revision=revision)
 
                 dataset_readme_path = _download_repo_file(
                     repo_id=path,
@@ -1107,49 +1023,25 @@ class DatasetsWrapperHF:
                         trust_remote_code=trust_remote_code,
                     )
                 else:
-                    if has_attr_in_class(HubDatasetModuleFactoryWithoutScript, 'revision'):
-                        return HubDatasetModuleFactoryWithoutScript(
-                            path,
-                            revision=revision,
-                            data_dir=data_dir,
-                            data_files=data_files,
-                            download_config=download_config,
-                            download_mode=download_mode,
-                        ).get_module()
-
-                    return HubDatasetModuleFactoryWithoutScript(
-                        path,
-                        commit_hash=commit_hash,
-                        data_dir=data_dir,
-                        data_files=data_files,
-                        download_config=download_config,
-                        download_mode=download_mode,
-                    ).get_module()
-            except Exception as e1:
-                logger.error(f'>> Error loading {path}: {e1}')
-
+                    factory_kwargs = {'revision': revision} if has_attr_in_class(
+                        HubDatasetModuleFactoryWithoutScript, 'revision') else {'commit_hash': commit_hash}
+                    return get_module_without_script(HubDatasetModuleFactoryWithoutScript(
+                        path, data_dir=data_dir, data_files=data_files,
+                        download_config=download_config, download_mode=download_mode,
+                        **factory_kwargs), name=subset_name, revision=revision, split=split)
+            except (OfflineModeIsEnabled, NetworkError, requests.exceptions.RequestException,
+                    httpx.TransportError) as error:
                 try:
-                    _cached_factory_kwargs = {'cache_dir': cache_dir}
-                    if _HAS_SCRIPT_LOADING:
-                        _cached_factory_kwargs['dynamic_modules_path'] = dynamic_modules_path
-                    return CachedDatasetModuleFactory(
-                        path, **_cached_factory_kwargs).get_module()
-                except Exception:
-                    if isinstance(e1, OfflineModeIsEnabled):
-                        raise ConnectionError(
-                            f"Couldn't reach the Hugging Face Hub for dataset '{path}': {e1}"
-                        ) from None
-                    if isinstance(e1,
-                                  (DataFilesNotFoundError,
-                                   DatasetNotFoundError, EmptyDatasetError)):
-                        raise e1 from None
-                    if isinstance(e1, FileNotFoundError):
-                        raise FileNotFoundError(
-                            f"Couldn't find a dataset script at {relative_to_absolute_path(combined_path)} or "
-                            f'any data file in the same directory. '
-                            f"Couldn't find '{path}' on the Hugging Face Hub either: {type(e1).__name__}: {e1}"
-                        ) from None
-                    raise e1 from None
+                    cached = CachedDatasetModuleFactory(path, cache_dir=cache_dir).get_module()
+                except (FileNotFoundError, ValueError):
+                    if isinstance(error, (OfflineModeIsEnabled, httpx.TransportError,
+                                          requests.exceptions.RequestException)):
+                        raise ConnectionError(f"Couldn't reach ModelScope dataset '{path}'") from error
+                    raise error
+                if not cached.module_path.startswith('datasets.packaged_modules.'):
+                    from modelscope.msdatasets.utils._compat import resolve_trust_remote_code
+                    resolve_trust_remote_code(trust_remote_code, path)
+                return cached
         else:
             raise FileNotFoundError(
                 f"Couldn't find a dataset script at {relative_to_absolute_path(combined_path)} or "
@@ -1162,88 +1054,5 @@ class DatasetsWrapperHF:
 
 @contextlib.contextmanager
 def load_dataset_with_ctx(*args, **kwargs):
-    """Context manager that monkey-patches ``datasets`` to use ModelScope.
-
-    All monkey-patches are applied on entry and restored on exit (for
-    non-streaming mode) or kept alive (for streaming mode, where lazy
-    iteration needs the patches to remain active).
-    """
-    global _hf_fs_open_original, _hf_fs_init_original
-
-    # Save originals
-    hf_endpoint_origin = config.HF_ENDPOINT
-    get_from_cache_origin = file_utils.get_from_cache
-    _download_origin = DownloadManager._download if hasattr(DownloadManager, '_download') \
-        else DownloadManager._download_single
-    dataset_info_origin = HfApi.dataset_info
-    list_repo_tree_origin = HfApi.list_repo_tree
-    get_paths_info_origin = HfApi.get_paths_info
-    resolve_pattern_origin = data_files.resolve_pattern
-    get_module_without_script_origin = HubDatasetModuleFactoryWithoutScript.get_module
-    get_module_with_script_origin = (
-        HubDatasetModuleFactoryWithScript.get_module if _HAS_SCRIPT_LOADING else None)
-    generate_from_dict_origin = features.generate_from_dict
-    hf_fs_open_origin = HfFileSystem._open
-    hf_fs_init_origin = HfFileSystem.__init__
-    hf_fs_open_was_patched = hf_fs_open_origin is _hf_fs_open
-    hf_fs_init_was_patched = hf_fs_init_origin is _hf_fs_init_with_cookie
-
-    # Apply patches
-    config.HF_ENDPOINT = get_endpoint()
-    file_utils.get_from_cache = get_from_cache_ms
-    if hasattr(DownloadManager, '_download'):
-        DownloadManager._download = _download_ms
-    else:
-        DownloadManager._download_single = _download_ms
-    HfApi.dataset_info = _dataset_info
-    HfApi.list_repo_tree = _list_repo_tree
-    HfApi.get_paths_info = _get_paths_info
-    data_files.resolve_pattern = _resolve_pattern
-    HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script
-    if _HAS_SCRIPT_LOADING:
-        HubDatasetModuleFactoryWithScript.get_module = get_module_with_script
-    features.generate_from_dict = generate_from_dict_ms
-    if not hf_fs_open_was_patched:
-        _hf_fs_open_original = hf_fs_open_origin
-        HfFileSystem._open = _hf_fs_open
-    if not hf_fs_init_was_patched:
-        _hf_fs_init_original = hf_fs_init_origin
-        HfFileSystem.__init__ = _hf_fs_init_with_cookie
-
-    streaming = kwargs.get('streaming', False)
-
-    _streaming_dataset_returned = False
-
-    try:
-        dataset_res = DatasetsWrapperHF.load_dataset(*args, **kwargs)
-        _streaming_dataset_returned = streaming
-        yield dataset_res
-    finally:
-        _repo_tree_cache.clear()
-        HubApi._dataset_id_type_cache.clear()
-
-        should_restore = not _streaming_dataset_returned
-        if should_restore:
-            if not hf_fs_open_was_patched:
-                HfFileSystem._open = hf_fs_open_origin
-                _hf_fs_open_original = None
-            if not hf_fs_init_was_patched:
-                HfFileSystem.__init__ = hf_fs_init_origin
-                _hf_fs_init_original = None
-
-            config.HF_ENDPOINT = hf_endpoint_origin
-            file_utils.get_from_cache = get_from_cache_origin
-            features.generate_from_dict = generate_from_dict_origin
-
-            if hasattr(DownloadManager, '_download'):
-                DownloadManager._download = _download_origin
-            else:
-                DownloadManager._download_single = _download_origin
-
-            HfApi.dataset_info = dataset_info_origin
-            HfApi.list_repo_tree = list_repo_tree_origin
-            HfApi.get_paths_info = get_paths_info_origin
-            data_files.resolve_pattern = resolve_pattern_origin
-            HubDatasetModuleFactoryWithoutScript.get_module = get_module_without_script_origin
-            if _HAS_SCRIPT_LOADING:
-                HubDatasetModuleFactoryWithScript.get_module = get_module_with_script_origin
+    """Preserve the context API with filesystem-local state and no global patches."""
+    yield DatasetsWrapperHF.load_dataset(*args, **kwargs)

@@ -1,12 +1,10 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
-import os
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 from datasets import (Dataset, DatasetBuilder, DatasetDict, IterableDataset,
                       IterableDatasetDict)
-from datasets import load_dataset as hf_load_dataset
 
 from modelscope.hub.api import HubApi, ModelScopeConfig
 from modelscope.msdatasets.auth.auth_config import OssAuthConfig
@@ -84,8 +82,10 @@ class OssDownloader(BaseDownloader):
     def _authorize(self) -> None:
         """ Authorization of target dataset.
         Get credentials from cache and send to the modelscope-hub in the future. """
-        cookies = HubApi().get_cookies(
-            access_token=self.dataset_context_config.token)
+        cookies = HubApi(
+            endpoint=self.dataset_context_config.endpoint,
+            token=self.dataset_context_config.token).get_cookies(
+                access_token=self.dataset_context_config.token)
         git_token = ModelScopeConfig.get_git_token()
         user_info = ModelScopeConfig.get_user_info()
 
@@ -107,6 +107,9 @@ class OssDownloader(BaseDownloader):
         meta_manager.fetch_meta_files()
         meta_manager.parse_dataset_structure()
         self.dataset_context_config = meta_manager.dataset_context_config
+        if (self.dataset_context_config.data_meta_config.dataset_py_script
+                or self.dataset_context_config.dataset_info_only):
+            return
 
         # Build data-files manager
         self.data_files_manager = DataFilesManager(
@@ -128,6 +131,14 @@ class OssDownloader(BaseDownloader):
         input_kwargs = self.dataset_context_config.config_kwargs
         trust_remote_code = self.dataset_context_config.trust_remote_code
 
+        if self.dataset_context_config.dataset_info_only and not dataset_py_script:
+            structure = self.dataset_context_config.data_meta_config.target_dataset_structure
+            self.dataset = {
+                name: sorted(splits)
+                for name, splits in structure.items()
+            }
+            return
+
         if self.builder is None and not dataset_py_script:
             raise f'meta-file: {dataset_name}.py not found on the modelscope hub.'
 
@@ -137,7 +148,26 @@ class OssDownloader(BaseDownloader):
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
                     'sure that you can trust the external codes.')
 
-            self.dataset = hf_load_dataset(
+            from urllib.parse import quote
+
+            from modelscope.msdatasets.utils.hf_datasets_util import DatasetsWrapperHF
+
+            token = self.dataset_context_config.token
+            api = HubApi(
+                endpoint=self.dataset_context_config.endpoint, token=token)
+            endpoint = api.get_endpoint_for_read(
+                f'{self.dataset_context_config.namespace}/{dataset_name}',
+                repo_type='dataset',
+                token=token)
+            kwargs = dict(input_kwargs)
+            storage_options = dict(kwargs.pop('storage_options', None) or {})
+            storage_options['modelscope'] = {
+                **storage_options.get('modelscope', {}),
+                'endpoint': endpoint,
+                'token': token,
+                'cache_dir': cache_dir,
+            }
+            self.dataset = DatasetsWrapperHF.load_dataset(
                 dataset_py_script,
                 name=subset_name,
                 revision=version,
@@ -146,7 +176,16 @@ class OssDownloader(BaseDownloader):
                 data_files=data_files,
                 cache_dir=cache_dir,
                 download_mode=download_mode.value,
-                **input_kwargs)
+                streaming=self.dataset_context_config.use_streaming,
+                features=self.dataset_context_config.features,
+                trust_remote_code=trust_remote_code,
+                dataset_info_only=self.dataset_context_config.
+                dataset_info_only,
+                token=False,
+                storage_options=storage_options,
+                base_path=f'modelscope://datasets/'
+                f'{self.dataset_context_config.namespace}/{dataset_name}@{quote(version, safe="")}',
+                **kwargs)
         else:
             self.dataset = self.data_files_manager.fetch_data_files(
                 self.builder)

@@ -2,236 +2,75 @@
 # yapf: disable
 
 import datetime
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
+
+from modelscope_hub.config import HubConfig
+from modelscope_hub.types import RepoInfo
+from tests.hub.test_hub_revision import _RepoTransport
 
 from modelscope.hub.api import HubApi
 from modelscope.hub.info import BlobLfsInfo, DatasetInfo, ModelInfo
-from modelscope.utils.constant import (DEFAULT_DATASET_REVISION,
-                                       REPO_TYPE_DATASET, REPO_TYPE_MODEL)
+from modelscope.utils.constant import REPO_TYPE_DATASET, REPO_TYPE_MODEL
 from modelscope.utils.repo_utils import DetailedCommitInfo
-from modelscope.utils.test_utils import test_level
 
 
 class HubRepoInfoTest(unittest.TestCase):
 
     def setUp(self):
-        self.api = HubApi()
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.transport = _RepoTransport()
+        config = HubConfig(
+            endpoint=self.transport.endpoint,
+            token='',
+            config_dir=Path(self.temp.name) / 'home',
+            cache_dir=Path(self.temp.name) / 'hub')
+        for patcher in [
+                patch('modelscope_hub.config._default_config', config),
+                patch('requests.sessions.Session.send', side_effect=self.transport.send)
+        ]:
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.api = HubApi(endpoint=self.transport.endpoint, token='')
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @patch.object(HubApi, 'get_model_files')
-    @patch.object(HubApi, 'get_model')
-    @patch.object(HubApi, 'list_repo_commits')
-    def test_model_info(self, mock_list_repo_commits, mock_get_model, mock_get_model_files):
-        # Setup mock responses
-        mock_get_model.return_value = {
-            'Id': 123,
-            'Name': 'demo-model',
-            'ChineseName': '测试模型',
-            'Description': 'A test model',
-            'Tasks': [{
-                'Name': 'text-classification',
-                'Description': 'A test task'
-            }],
-            'Tags': ['nlp', 'text']
-        }
-        mock_get_model_files.return_value = [
-            {
-                'Path': 'file1.txt',
-                'Size': 100,
-                'Sha256': '1234567890',
-                'Type': 'blob'
-            }
-        ]
+    def test_model_info(self):
+        detail = self.api.model_info(self.transport.repo_id)
+        self.assertEqual(detail, self.transport.model)
+        self.assertEqual(detail['versions'], [{'version_id': 7}])
+        legacy = self.api.get_model(self.transport.repo_id)
+        self.assertEqual(legacy['Id'], 123)
+        self.assertEqual(legacy['Name'], 'revision-model')
+        self.assertTrue(all('/openapi/v1/models/' in request.url
+                            for request in self.transport.requests))
 
-        # Mock commit history response
-        commit = DetailedCommitInfo(
-            id='abc123',
-            short_id='abc12',
-            title='Initial commit',
-            message='Initial commit',
-            author_name='Test User',
-            authored_date=None,
-            author_email='test@example.com',
-            committed_date=None,
-            committer_name='Test User',
-            committer_email='test@example.com',
-            created_at=None)
-        commits_response = Mock()
-        commits_response.commits = [commit]
-        mock_list_repo_commits.return_value = commits_response
+    def test_dataset_info(self):
+        detail = self.api.dataset_info(self.transport.repo_id)
+        self.assertEqual(detail, self.transport.dataset)
+        self.assertEqual(detail['primary_subject_area'], 'biology')
+        legacy = self.api.get_dataset(self.transport.repo_id)
+        self.assertIsInstance(legacy, RepoInfo)
+        self.assertEqual(legacy.id, 456)
+        self.assertTrue(all('/openapi/v1/datasets/' in request.url
+                            for request in self.transport.requests))
 
-        # Call the method
-        info = self.api.model_info(
-            repo_id='demo/model', revision='master', endpoint=None)
-
-        # Verify results
+    def test_get_repo_model(self):
+        info = self.api.get_repo(self.transport.repo_id, REPO_TYPE_MODEL, revision='master')
+        self.assertIsInstance(info, RepoInfo)
         self.assertEqual(info.id, 123)
-        self.assertEqual(info.name, 'demo-model')
-        self.assertEqual(info.author, 'demo')
-        self.assertEqual(info.chinese_name, '测试模型')
-        self.assertEqual(info.description, 'A test model')
-        self.assertEqual(info.tasks, [{
-            'Name': 'text-classification',
-            'Description': 'A test task'
-        }])
-        self.assertEqual(info.tags, ['nlp', 'text'])
-        self.assertEqual(info.sha, 'abc123')
-        self.assertEqual(info.last_commit, commit.to_dict())
-        self.assertEqual(info.siblings[0].rfilename, 'file1.txt')
-        self.assertEqual(info.siblings[0].size, 100)
-        self.assertEqual(info.siblings[0].blob_id, '1234567890')
-        self.assertEqual(info.siblings[0].type, 'blob')
+        self.assertEqual(info.owner, 'test')
+        self.assertEqual(info.name, 'revision-model')
+        self.assertEqual(info.model_category, 'aigc')
 
-        # Verify correct method calls
-        mock_get_model.assert_called_once_with(
-            model_id='demo/model', revision='master', endpoint=None)
-        mock_list_repo_commits.assert_called_once_with(
-            repo_id='demo/model',
-            repo_type=REPO_TYPE_MODEL,
-            revision='master',
-            endpoint=None)
-        mock_get_model_files.assert_called_once_with(
-            model_id='demo/model', revision='master', endpoint=None, recursive=True)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @patch.object(HubApi, 'get_dataset_files')
-    @patch.object(HubApi, 'get_dataset')
-    @patch.object(HubApi, 'list_repo_commits')
-    def test_dataset_info(self, mock_list_repo_commits, mock_get_dataset, mock_get_dataset_files):
-        # Setup mock responses
-        mock_get_dataset.return_value = {
-            'Id': 456,
-            'Name': 'demo-dataset',
-            'ChineseName': '演示数据集',
-            'Description': 'A test dataset',
-            'Tags': [
-                {
-                    'Name': 'nlp',
-                    'Color': 'blue'
-                },
-                {
-                    'Name': 'text',
-                    'Color': 'green'
-                }
-            ]
-        }
-        mock_get_dataset_files.return_value = [
-            {
-                'Path': 'data1.json',
-                'Size': 100,
-                'Sha256': '1234567890',
-                'Type': 'blob'
-            }
-        ]
-
-        # Mock commit history response
-        commits = [
-            DetailedCommitInfo(
-                id='c1',
-                short_id='c1',
-                title='Update data',
-                message='Update data',
-                author_name='Test User',
-                authored_date=None,
-                author_email='test@example.com',
-                committed_date=None,
-                committer_name='Test User',
-                committer_email='test@example.com',
-                created_at=None),
-            DetailedCommitInfo(
-                id='c2',
-                short_id='c2',
-                title='Initial commit',
-                message='Initial commit',
-                author_name='Test User',
-                authored_date=None,
-                author_email='test@example.com',
-                committed_date=1756284063,
-                committer_name='Test User',
-                committer_email='test@example.com',
-                created_at=None)
-        ]
-        commits_response = Mock()
-        commits_response.commits = commits
-        mock_list_repo_commits.return_value = commits_response
-
-        # Call the method
-        info = self.api.dataset_info('demo/dataset')
-
-        # Verify results
+    def test_get_repo_dataset(self):
+        info = self.api.get_repo(self.transport.repo_id, REPO_TYPE_DATASET, revision='master')
+        self.assertIsInstance(info, RepoInfo)
         self.assertEqual(info.id, 456)
-        self.assertEqual(info.name, 'demo-dataset')
-        self.assertEqual(info.author, 'demo')
-        self.assertEqual(info.chinese_name, '演示数据集')
-        self.assertEqual(info.description, 'A test dataset')
-        self.assertEqual(info.tags, [{
-            'Name': 'nlp',
-            'Color': 'blue'
-        }, {
-            'Name': 'text',
-            'Color': 'green'
-        }])
-        self.assertEqual(info.sha, 'c1')
-        self.assertEqual(info.last_commit, commits[0].to_dict())
-        self.assertEqual(info.siblings[0].rfilename, 'data1.json')
-        self.assertEqual(info.siblings[0].size, 100)
-        self.assertEqual(info.siblings[0].blob_id, '1234567890')
-        self.assertEqual(info.siblings[0].type, 'blob')
+        self.assertEqual(info.owner, 'test')
+        self.assertEqual(info.dataset_category, 'science')
 
-        # Verify correct method calls
-        mock_get_dataset.assert_called_once_with(
-            dataset_id='demo/dataset', revision=None, endpoint=None)
-        mock_list_repo_commits.assert_called_once_with(
-            repo_id='demo/dataset',
-            repo_type=REPO_TYPE_DATASET,
-            revision=None,
-            endpoint=None)
-        mock_get_dataset_files.assert_called_once_with(
-            repo_id='demo/dataset', revision=DEFAULT_DATASET_REVISION, endpoint=None, recursive=True)
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @patch.object(HubApi, 'model_info')
-    @patch.object(HubApi, 'dataset_info')
-    def test_repo_info_model(self, mock_dataset_info, mock_model_info):
-        # Setup mock response
-        model_info = ModelInfo(
-            id=123, name='demo-model', description='A test model')
-        mock_model_info.return_value = model_info
-
-        # Call the method with model type
-        info = self.api.repo_info(
-            repo_id='demo/model', revision='master', endpoint=None)
-
-        # Verify results
-        self.assertEqual(info, model_info)
-        mock_model_info.assert_called_once_with(
-            repo_id='demo/model', revision='master', endpoint=None)
-        mock_dataset_info.assert_not_called()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
-    @patch.object(HubApi, 'model_info')
-    @patch.object(HubApi, 'dataset_info')
-    def test_repo_info_dataset(self, mock_dataset_info, mock_model_info):
-        # Setup mock response
-        dataset_info = DatasetInfo(
-            id=456, name='demo-dataset', description='A test dataset')
-        mock_dataset_info.return_value = dataset_info
-
-        # Call the method with dataset type
-        info = self.api.repo_info(
-            repo_id='demo/dataset',
-            repo_type=REPO_TYPE_DATASET,
-            revision='master',
-            endpoint=None)
-
-        # Verify results
-        self.assertEqual(info, dataset_info)
-        mock_dataset_info.assert_called_once_with(
-            repo_id='demo/dataset', revision='master', endpoint=None)
-        mock_model_info.assert_not_called()
-
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_model_info_class_comprehensive(self):
         """Test ModelInfo class initialization and properties."""
         import zoneinfo
@@ -340,7 +179,6 @@ class HubRepoInfoTest(unittest.TestCase):
             )
         })
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dataset_info_class(self):
         # Test DatasetInfo class initialization and properties
         import zoneinfo
@@ -440,7 +278,6 @@ class HubRepoInfoTest(unittest.TestCase):
             )
         })
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_model_info_empty_commits(self):
         """Test ModelInfo with empty commits."""
         model_data = {'Id': 123, 'Name': 'demo-model', 'author': 'demo'}
@@ -453,7 +290,6 @@ class HubRepoInfoTest(unittest.TestCase):
         self.assertIsNone(model_info.last_commit)
         self.assertIsNone(model_info.last_modified)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_dataset_info_empty_commits(self):
         """Test DatasetInfo with empty commits."""
         dataset_data = {'Id': 456, 'Name': 'demo-dataset', 'Owner': 'demo'}
@@ -466,7 +302,6 @@ class HubRepoInfoTest(unittest.TestCase):
         self.assertIsNone(dataset_info.last_commit)
         self.assertIsNone(dataset_info.last_modified)
 
-    @unittest.skipUnless(test_level() >= 0, 'skip test in current test level')
     def test_detailed_commit_info_to_dict(self):
         """Test DetailedCommitInfo to_dict method."""
         commit = DetailedCommitInfo(
@@ -499,70 +334,6 @@ class HubRepoInfoTest(unittest.TestCase):
         }
 
         self.assertEqual(result, expected)
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_real_model_repo_info(self):
-        """Test getting real model repository information without mocks."""
-        # Use a real model repository
-        model_repo_id = 'black-forest-labs/FLUX.1-Krea-dev'
-
-        # Get repository information
-        info = self.api.repo_info(
-            repo_id=model_repo_id, repo_type=REPO_TYPE_MODEL)
-
-        # Basic validation
-        self.assertIsNotNone(info)
-        self.assertEqual(info.author, 'black-forest-labs')
-        self.assertEqual(info.name, 'FLUX.1-Krea-dev')
-
-        # Check commit information
-        self.assertIsNotNone(info.sha)
-        if hasattr(info, 'last_commit') and info.last_commit:
-            self.assertIn('id', info.last_commit)
-            self.assertIn('title', info.last_commit)
-
-        # Print some information for debugging
-        print(f'\nModel Info for {model_repo_id}:')
-        print(f'ID: {info.id}')
-        print(f'Name: {info.name}')
-        print(f'Author: {info.author}')
-        print(f'SHA: {info.sha}')
-        if hasattr(info, 'last_modified'):
-            print(f'Last Modified: {info.last_modified}')
-        if hasattr(info, 'siblings'):
-            print(f'Siblings[0]: {info.siblings[0]}')
-
-    @unittest.skipUnless(test_level() >= 1, 'skip test in current test level')
-    def test_real_dataset_repo_info(self):
-        """Test getting real dataset repository information without mocks."""
-        # Use a real dataset repository
-        dataset_repo_id = 'swift/Chinese-Qwen3-235B-2507-Distill-data-110k-SFT'
-
-        # Get repository information
-        info = self.api.repo_info(
-            repo_id=dataset_repo_id, repo_type=REPO_TYPE_DATASET)
-
-        # Basic validation
-        self.assertIsNotNone(info)
-        self.assertEqual(info.author, 'swift')
-        self.assertTrue('Chinese-Qwen3' in info.name)
-
-        # Check commit information
-        self.assertIsNotNone(info.sha)
-        if hasattr(info, 'last_commit') and info.last_commit:
-            self.assertIn('id', info.last_commit)
-            self.assertIn('title', info.last_commit)
-
-        # Print some information for debugging
-        print(f'\nDataset Info for {dataset_repo_id}:')
-        print(f'ID: {info.id}')
-        print(f'Name: {info.name}')
-        print(f'Author: {info.author}')
-        print(f'SHA: {info.sha}')
-        if hasattr(info, 'last_modified'):
-            print(f'Last Modified: {info.last_modified}')
-        if hasattr(info, 'siblings'):
-            print(f'Siblings[0]: {info.siblings[0]}')
 
 
 if __name__ == '__main__':

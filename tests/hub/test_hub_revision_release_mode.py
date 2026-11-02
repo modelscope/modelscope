@@ -110,43 +110,8 @@ class HubRevisionTest(unittest.TestCase):
                     cache_dir=temp_cache_dir)
                 assert os.path.exists(file_path)
 
-    @unittest.skip(
-        'snapshot_download cannot exercise release-mode auto-selection while'
-        ' DEFAULT_MODEL_REVISION forces a concrete branch (master).')
-    def test_snapshot_download_revision(self):
-        with mock.patch.dict(os.environ, self.modified_environ, clear=True):
-            self.prepare_repo_data_and_tag()
-            t1 = datetime.now().isoformat(sep=' ', timespec='seconds')
-            logger.info('First time: %s' % t1)
-            time.sleep(10)
-            self.add_new_file_and_tag_to_repo()
-            t2 = datetime.now().isoformat(sep=' ', timespec='seconds')
-            logger.info('Second time: %s' % t2)
-            # set
-            release_datetime_backup = version.__release_datetime__
-            logger.info('Origin __release_datetime__: %s'
-                        % version.__release_datetime__)
-            try:
-                logger.info('Setting __release_datetime__ to: %s' % t1)
-                version.__release_datetime__ = t1
-                with tempfile.TemporaryDirectory() as temp_cache_dir:
-                    snapshot_path = snapshot_download(
-                        self.model_id, cache_dir=temp_cache_dir)
-                    assert os.path.exists(
-                        os.path.join(snapshot_path, download_model_file_name))
-                    assert not os.path.exists(
-                        os.path.join(snapshot_path, download_model_file_name2))
-                version.__release_datetime__ = t2
-                logger.info('Setting __release_datetime__ to: %s' % t2)
-                with tempfile.TemporaryDirectory() as temp_cache_dir:
-                    snapshot_path = snapshot_download(
-                        self.model_id, cache_dir=temp_cache_dir)
-                    assert os.path.exists(
-                        os.path.join(snapshot_path, download_model_file_name))
-                    assert os.path.exists(
-                        os.path.join(snapshot_path, download_model_file_name2))
-            finally:
-                version.__release_datetime__ = release_datetime_backup
+    # Default snapshots resolve to master, not release-time tags. Explicit
+    # revisions remain covered below and by the offline revision contract tests.
 
     def test_snapshot_download_revision_user_set_revision(self):
         with mock.patch.dict(os.environ, self.modified_environ, clear=True):

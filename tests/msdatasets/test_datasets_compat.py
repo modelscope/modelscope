@@ -368,8 +368,11 @@ class DatasetsCompatTest(unittest.TestCase):
 
     def test_dry_run_download_config_and_nested_paths_are_isolated(self):
         options = {'fixture': {'values': ['original']}}
+        original_options = copy.deepcopy(options)
         config = datasets.DownloadConfig(
-            token=False, storage_options=options, extract_on_the_fly=False)
+            token=False,
+            storage_options=copy.deepcopy(options),
+            extract_on_the_fly=False)
         original = copy.deepcopy(config)
         manager = hf_datasets_util._DryRunDownloadManager(config)
         other = hf_datasets_util._DryRunDownloadManager(config)
@@ -394,12 +397,17 @@ class DatasetsCompatTest(unittest.TestCase):
             features=self.features,
             token=False,
             storage_options=options)
+        # Native builders may add defaults; preserve the full initialized state.
+        builder_options = copy.deepcopy(builder.storage_options)
         self.assertEqual(
             hf_datasets_util._discover_splits_from_builder(
                 builder, download_config=config, strict=True),
             {'train', 'test'})
         self.assertEqual(config, original)
-        self.assertEqual(builder.storage_options, options)
+        self.assertEqual(builder.storage_options, builder_options)
+        self.assertEqual(builder.storage_options['fixture'],
+                         original_options['fixture'])
+        self.assertEqual(options, original_options)
 
     def test_info_only_missing_data_files_still_fails(self):
         empty = self.root / 'empty'

@@ -54,7 +54,8 @@ class TokenClassificationPipeline(Pipeline):
             device=device,
             auto_collate=auto_collate,
             compile=kwargs.pop('compile', False),
-            compile_options=kwargs.pop('compile_options', {}))
+            compile_options=kwargs.pop('compile_options', {}),
+            trust_remote_code=kwargs.pop('trust_remote_code', False))
 
         assert isinstance(self.model, Model), \
             f'please check whether model config exists in {ModelFile.CONFIGURATION}'

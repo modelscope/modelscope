@@ -5,14 +5,10 @@ import inspect
 import os
 import re
 import sys
-from asyncio import Future
 from functools import partial
 from pathlib import Path
-from types import MethodType, SimpleNamespace
-from typing import BinaryIO, Dict, Iterable, List, Optional, Union
-
-from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
-from modelscope.utils.repo_utils import CommitInfo, CommitOperation
+from types import MethodType
+from typing import List, Optional, Union
 
 ignore_file_pattern = [
     r'*.bin',
@@ -57,29 +53,43 @@ def get_all_imported_modules():
     if importlib.util.find_spec('transformers') is not None:
         import transformers
         lazy_module = sys.modules['transformers']
-        _import_structure = lazy_module._import_structure
-        for key in _import_structure:
-            if 'dummy' in key.lower():
-                continue
-            values = _import_structure[key]
-            for value in values:
-                # pretrained
-                if any([
-                        re.fullmatch(name, value)
-                        for name in transformers_include_names
-                ]):
-                    try:
-                        module = importlib.import_module(
-                            f'.{key}', transformers.__name__)
-                        value = getattr(module, value)
-                        all_imported_modules.append(value)
-                    except:  # noqa
-                        pass
+        # Recent transformers expose the lazy-loading structure as
+        # ``_import_structure``; fall back to ``dir()`` when it is absent or
+        # its layout changes across versions (mirrors the diffusers branch).
+        if hasattr(lazy_module, '_import_structure'):
+            _import_structure = lazy_module._import_structure
+            for key in _import_structure:
+                if 'dummy' in key.lower():
+                    continue
+                values = _import_structure[key]
+                for value in values:
+                    # pretrained
+                    if any([
+                            re.fullmatch(name, value)
+                            for name in transformers_include_names
+                    ]):
+                        try:
+                            module = importlib.import_module(
+                                f'.{key}', transformers.__name__)
+                            value = getattr(module, value)
+                            all_imported_modules.append(value)
+                        except Exception:  # noqa
+                            pass
+        else:
+            all_imported_modules.extend([
+                getattr(lazy_module, _import)
+                for _import in dir(lazy_module)
+                if not _import.startswith('__') and any([
+                    re.fullmatch(name, _import)
+                    for name in transformers_include_names
+                ]) and hasattr(
+                    getattr(lazy_module, _import, None), 'from_pretrained')
+            ])
 
     if importlib.util.find_spec('peft') is not None:
         try:
             import peft
-        except:  # noqa
+        except Exception:  # noqa
             pass
         else:
             attributes = dir(peft)
@@ -95,7 +105,7 @@ def get_all_imported_modules():
     if importlib.util.find_spec('diffusers') is not None:
         try:
             import diffusers
-        except:  # noqa
+        except Exception:  # noqa
             pass
         else:
             lazy_module = sys.modules['diffusers']
@@ -115,7 +125,7 @@ def get_all_imported_modules():
                                     f'.{key}', diffusers.__name__)
                                 value = getattr(module, value)
                                 all_imported_modules.append(value)
-                            except:  # noqa
+                            except Exception:  # noqa
                                 pass
             else:
                 attributes = dir(lazy_module)
@@ -404,13 +414,11 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
         def from_pretrained(model, model_id, *model_args, **kwargs):
 
-            with file_pattern_context(kwargs):
+            # file_pattern_context requires (kwargs, module_class, cls);
+            # module_class doubles as cls for the peft wrap path.
+            with file_pattern_context(kwargs, module_class, module_class):
                 # model is an instance
-                model_dir = get_model_dir(
-                    model_id,
-                    module_class=module_class,
-                    cls=module_class,
-                    **kwargs)
+                model_dir = get_model_dir(model_id, **kwargs)
 
             with _dynamic_module_patch_scope():
                 module_obj = module_class.from_pretrained(
@@ -503,7 +511,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         if not hasattr(module_class, 'from_pretrained'):
             del ClassWrapper.from_pretrained
         else:
-            parameters = inspect.signature(var.from_pretrained).parameters
+            parameters = inspect.signature(
+                module_class.from_pretrained).parameters
             if 'model' in parameters and 'model_id' in parameters:
                 # peft
                 ClassWrapper.from_pretrained = from_pretrained
@@ -540,7 +549,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
             has_save_pretrained = hasattr(var, 'save_pretrained')
-        except:  # noqa
+        except Exception:  # noqa
             continue
 
         # save_pretrained is not a classmethod and cannot be overridden by replacing
@@ -553,7 +562,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 else:
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
-            except:  # noqa
+            except Exception:  # noqa
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,
@@ -617,7 +626,7 @@ def _unpatch_pretrained_class(all_imported_modules):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
-        except:  # noqa
+        except Exception:  # noqa
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             _restore(var, 'from_pretrained', '_from_pretrained_origin')
@@ -629,175 +638,38 @@ def _unpatch_pretrained_class(all_imported_modules):
     _unpatch_dynamic_module()
 
 
-def _import_kernels_api_module():
-    """Return the module holding ``_get_hf_api`` in the installed `kernels`.
-
-    kernels >= 0.17 renamed ``kernels.utils`` to ``kernels.hf_hub`` (with
-    ``_get_hf_api`` moved along); support both layouts. Returns ``None``
-    when `kernels` is not installed.
-    """
-    try:
-        import kernels.hf_hub as kernels_api
-    except ImportError:
-        try:
-            import kernels.utils as kernels_api
-        except ImportError:
-            return None
-    return kernels_api
-
-
 def _patch_kernels():
     """Monkey-patch the `kernels` library to route HF API calls to ModelScope.
 
-    Only `_get_hf_api` is replaced; every download, file check
-    and ref listing performed by `kernels` goes through `_MsKernelApi`, so
-    the kernel loading/variant/lock logic stays untouched.
+    The implementation lives in `modelscope_hub.kernels`, so this package and
+    a direct ``from modelscope_hub.kernels import get_kernel`` share one shim
+    backed by the current hub SDK: one ``MsKernelApi``, one patch state.
+    Requires ``modelscope-hub>=0.7.0``.
     """
-    kernels_api = _import_kernels_api_module()
-    if kernels_api is None or hasattr(kernels_api, '_get_hf_api_origin'):
-        return
+    from modelscope_hub.kernels import patch_kernels_hub
 
-    def _ms_api(user_agent=None):
-        return _MsKernelApi()
-
-    kernels_api._get_hf_api_origin = kernels_api._get_hf_api
-    kernels_api._get_hf_api = _ms_api
-    # kernels >= 0.17 binds `_get_hf_api` at import time in submodules
-    # (e.g. `from kernels.hf_hub import _get_hf_api` in `kernels.load`);
-    # patch those already-bound references as well.
-    for name, module in list(sys.modules.items()):
-        if name != 'kernels' and not name.startswith('kernels.'):
-            continue
-        if module is kernels_api or hasattr(module, '_get_hf_api_origin'):
-            continue
-        if getattr(module, '_get_hf_api', None) is not None:
-            module._get_hf_api_origin = module._get_hf_api
-            module._get_hf_api = _ms_api
+    patch_kernels_hub()
 
 
 def _unpatch_kernels():
-    kernels_api = _import_kernels_api_module()
-    if kernels_api is None:
-        return
-    origin = getattr(kernels_api, '_get_hf_api_origin', None)
-    if origin is None:
-        return
-    patched = kernels_api._get_hf_api
-    for name, module in list(sys.modules.items()):
-        if name != 'kernels' and not name.startswith('kernels.'):
-            continue
-        if module is kernels_api:
-            continue
-        module_origin = getattr(module, '_get_hf_api_origin', None)
-        if module_origin is not None:
-            module._get_hf_api = module_origin
-            del module._get_hf_api_origin
-        elif (module is not kernels_api
-              and getattr(module, '_get_hf_api', None) is patched):
-            # Imported while the patch was active (kernels >= 0.17).
-            module._get_hf_api = origin
-    kernels_api._get_hf_api = origin
-    del kernels_api._get_hf_api_origin
+    """Undo `_patch_kernels` via `modelscope_hub.kernels`."""
+    from modelscope_hub.kernels import unpatch_kernels_hub
 
-
-class _MsKernelApi:
-    """Minimal `HfApi` look-alike that forwards to ModelScope. Only the
-    handful of methods that `kernels` actually calls are implemented.
-    """
-
-    def snapshot_download(self,
-                          repo_id,
-                          *,
-                          allow_patterns=None,
-                          ignore_patterns=None,
-                          cache_dir=None,
-                          revision=None,
-                          local_files_only=False,
-                          **kwargs):
-        from modelscope import snapshot_download as ms_snapshot_download
-        if kwargs.get('repo_type') == 'kernel':
-            kwargs['repo_type'] = 'model'
-        return ms_snapshot_download(
-            repo_id,
-            revision=_ms_revision(revision),
-            cache_dir=cache_dir,
-            local_files_only=local_files_only,
-            allow_patterns=allow_patterns,
-            ignore_patterns=ignore_patterns,
-            **kwargs)
-
-    def list_repo_tree(self,
-                       repo_id,
-                       *,
-                       path_in_repo=None,
-                       revision=None,
-                       **kwargs):
-        from huggingface_hub.hf_api import RepoFolder
-        from modelscope.hub.api import HubApi
-        root = path_in_repo or ''
-        # ModelScope cannot list the direct children of a subfolder
-        # non-recursively, so fetch the full tree and derive the direct
-        # subfolders (the only thing `kernels.get_variants` consumes).
-        entries = HubApi().get_model_files(
-            repo_id,
-            revision=_ms_revision(revision),
-            root=root or None,
-            recursive=True)
-        paths = [entry.get('Path') or entry.get('Name') for entry in entries]
-        depth = len([p for p in root.split('/') if p])
-        folders = []
-        for path in paths:
-            if path is None or path == root or path.count('/') != depth:
-                continue
-            if any(p != path and p.startswith(path + '/') for p in paths):
-                folders.append(RepoFolder(path=path, oid='', last_commit=None))
-        return folders
-
-    def file_exists(self, repo_id, filename, *, revision=None, **kwargs):
-        from modelscope.hub.api import HubApi
-        return HubApi().file_exists(
-            repo_id, filename, revision=_ms_revision(revision))
-
-    def list_repo_refs(self, repo_id, **kwargs):
-        from huggingface_hub.hf_api import GitRefInfo
-        from modelscope.hub.api import HubApi
-        branches, tags = HubApi().get_model_branches_and_tags(repo_id)
-        # `target_commit` doubles as the revision in later calls, so reuse
-        # the branch/tag name (ModelScope accepts it as a revision).
-        return SimpleNamespace(
-            branches=[
-                GitRefInfo(name=n, ref=f'refs/heads/{n}', target_commit=n)
-                for n in (branches or [])
-            ],
-            tags=[
-                GitRefInfo(name=n, ref=f'refs/tags/{n}', target_commit=n)
-                for n in (tags or [])
-            ],
-            converts=[])
-
-    def hf_hub_download(self, *args, **kwargs):
-        # Only called for the optional `kernel-status.toml`. Raising
-        # `EntryNotFoundError` makes kernels treat the repo as having no
-        # redirect status.
-        from huggingface_hub.errors import EntryNotFoundError
-        raise EntryNotFoundError(
-            'kernel-status.toml lookup is skipped on ModelScope')
+    unpatch_kernels_hub()
 
 
 @contextlib.contextmanager
 def _kernels_patch_scope():
-    """Apply `_patch_kernels` for the duration of the `with` block, unless an
-    outer patch (e.g. `patch_hub()`) is already in effect.
+    """Apply the kernels ModelScope patch for the duration of the `with`
+    block, unless an outer patch (e.g. `patch_hub()`) is already in effect.
+
+    Backed by `modelscope_hub.kernels.patch_scope`, so the global patch
+    (`patch_hub`) and per-call scoped patches share one state.
     """
-    kernels_api = _import_kernels_api_module()
-    if kernels_api is None or hasattr(kernels_api, '_get_hf_api_origin'):
+    from modelscope_hub.kernels import patch_scope
+
+    with patch_scope():
         yield
-        return
-    _patch_kernels()
-    try:
-        yield
-    finally:
-        _unpatch_kernels()
 
 
 def _wrap_kernels_callable(attr_name):
@@ -817,350 +689,86 @@ def _wrap_kernels_callable(attr_name):
 
 
 def _patch_hub():
-    import huggingface_hub
-    from huggingface_hub import hf_api
-    from huggingface_hub.hf_api import api
-    from huggingface_hub.hf_api import future_compatible
-    from modelscope import get_logger
-    logger = get_logger()
+    """Route huggingface_hub module functions to ModelScope via modelscope_hub.
 
-    def _file_exists(
-        self,
-        repo_id: str,
-        filename: str,
-        *,
-        repo_type: Optional[str] = None,
-        revision: Optional[str] = None,
-        token: Union[str, bool, None] = None,
-    ):
-        """Patch huggingface_hub.file_exists"""
-        if repo_type is not None:
-            logger.warning(
-                'The passed in repo_type will not be used in modelscope. Now only model repo can be queried.'
-            )
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        api.login(token)
-        if revision is None or revision == 'main':
-            revision = 'master'
-        return api.file_exists(repo_id, filename, revision=revision)
+    The implementation lives in ``modelscope_hub.compat.hf_hub_patcher``;
+    this shim additionally bridges ``transformers.utils.hub`` (the
+    transformers-side entrypoints of ``push_to_hub``) onto the patched
+    huggingface_hub functions.
+    """
+    from modelscope_hub.compat.hf_hub_patcher import patch_hf_hub
 
-    def _file_download(repo_id: str,
-                       filename: str,
-                       *,
-                       subfolder: Optional[str] = None,
-                       repo_type: Optional[str] = None,
-                       revision: Optional[str] = None,
-                       cache_dir: Union[str, Path, None] = None,
-                       local_dir: Union[str, Path, None] = None,
-                       token: Union[bool, str, None] = None,
-                       local_files_only: bool = False,
-                       **kwargs):
-        """Patch huggingface_hub.hf_hub_download"""
-        if len(kwargs) > 0:
-            logger.warning(
-                'The passed in library_name,library_version,user_agent,force_download,proxies'
-                'etag_timeout,headers,endpoint '
-                'will not be used in modelscope.')
-        assert repo_type in (
-            None, 'model',
-            'dataset'), f'repo_type={repo_type} is not supported in ModelScope'
-        if repo_type in (None, 'model'):
-            from modelscope.hub.file_download import model_file_download as file_download
-        else:
-            from modelscope.hub.file_download import dataset_file_download as file_download
-        from modelscope import HubApi
-        api = HubApi()
-        api.login(token)
-        if revision is None or revision == 'main':
-            revision = 'master'
-        return file_download(
-            repo_id,
-            file_path=os.path.join(subfolder, filename)
-            if subfolder else filename,
-            cache_dir=cache_dir,
-            local_dir=local_dir,
-            local_files_only=local_files_only,
-            revision=revision)
-
-    def _whoami(self, token: Union[bool, str, None] = None) -> Dict:
-        from modelscope.hub.api import ModelScopeConfig
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        api.login(token)
-        return {'name': ModelScopeConfig.get_user_info()[0] or 'unknown'}
-
-    def create_repo(self,
-                    repo_id: str,
-                    *,
-                    token: Union[str, bool, None] = None,
-                    private: bool = False,
-                    **kwargs) -> 'RepoUrl':
-        """
-        Create a new repository on the hub.
-
-        Args:
-            repo_id: The ID of the repository to create.
-            token: The authentication token to use.
-            private: Whether the repository should be private.
-            **kwargs: Additional arguments.
-
-        Returns:
-            RepoUrl: The URL of the created repository.
-        """
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        visibility = 'private' if private else 'public'
-        repo_url = api.create_repo(
-            repo_id, token=token, visibility=visibility, **kwargs)
-        from modelscope.utils.repo_utils import RepoUrl
-        return RepoUrl(url=repo_url, repo_type='model', repo_id=repo_id)
-
-    @future_compatible
-    def upload_folder(
-        self,
-        *,
-        repo_id: str,
-        folder_path: Union[str, Path],
-        path_in_repo: Optional[str] = None,
-        commit_message: Optional[str] = None,
-        commit_description: Optional[str] = None,
-        token: Union[str, bool, None] = None,
-        revision: Optional[str] = 'master',
-        ignore_patterns: Optional[Union[List[str], str]] = None,
-        **kwargs,
-    ):
-        from modelscope.hub.push_to_hub import _push_files_to_hub
-        if revision is None or revision == 'main':
-            revision = 'master'
-        _push_files_to_hub(
-            path_or_fileobj=folder_path,
-            path_in_repo=path_in_repo,
-            repo_id=repo_id,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            revision=revision,
-            token=token)
-        from modelscope.utils.repo_utils import CommitInfo
-        return CommitInfo(
-            commit_url=
-            f'{DEFAULT_MODELSCOPE_DATA_ENDPOINT}/models/{repo_id}/files',
-            commit_message=commit_message,
-            commit_description=commit_description,
-            oid=None,
-        )
-
-    from modelscope.utils.constant import DEFAULT_REPOSITORY_REVISION
-
-    @future_compatible
-    def upload_file(
-        self,
-        *,
-        path_or_fileobj: Union[str, Path, bytes, BinaryIO],
-        path_in_repo: str,
-        repo_id: str,
-        token: Union[str, bool, None] = None,
-        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-        commit_message: Optional[str] = None,
-        commit_description: Optional[str] = None,
-        **kwargs,
-    ):
-        if revision is None or revision == 'main':
-            revision = 'master'
-        from modelscope.hub.push_to_hub import _push_files_to_hub
-        _push_files_to_hub(path_or_fileobj, path_in_repo, repo_id, token,
-                           revision, commit_message, commit_description)
-
-    @future_compatible
-    def create_commit(
-        self,
-        repo_id: str,
-        operations: Iterable[CommitOperation],
-        *,
-        commit_message: str,
-        commit_description: Optional[str] = None,
-        token: Union[str, bool, None] = None,
-        repo_type: Optional[str] = None,
-        revision: Optional[str] = DEFAULT_REPOSITORY_REVISION,
-        **kwargs,
-    ) -> Union[CommitInfo, Future[CommitInfo]]:
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        if any(['Add' not in op.__class__.__name__ for op in operations]):
-            raise ValueError(
-                'ModelScope create_commit only support Add operation for now.')
-        if revision is None or revision == 'main':
-            revision = 'master'
-        all_files = [op.path_or_fileobj for op in operations]
-        api.upload_folder(
-            repo_id=repo_id,
-            folder_path=all_files,
-            commit_message=commit_message,
-            commit_description=commit_description,
-            token=token,
-            revision=revision,
-            repo_type=repo_type or 'model')
-
-    def load(
-        cls,
-        repo_id_or_path: Union[str, Path],
-        repo_type: Optional[str] = None,
-        token: Optional[str] = None,
-        ignore_metadata_errors: bool = False,
-    ):
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        api.login(token)
-        if os.path.exists(repo_id_or_path):
-            file_path = repo_id_or_path
-        elif repo_type == 'model' or repo_type is None:
-            from modelscope import model_file_download
-            file_path = model_file_download(repo_id_or_path, 'README.md')
-        elif repo_type == 'dataset':
-            from modelscope import dataset_file_download
-            file_path = dataset_file_download(repo_id_or_path, 'README.md')
-        else:
-            raise ValueError(
-                f'repo_type should be `model` or `dataset`, but now is {repo_type}'
-            )
-
-        with open(file_path, 'r') as f:
-            repo_card = cls(
-                f.read(), ignore_metadata_errors=ignore_metadata_errors)
-            if not hasattr(repo_card.data, 'tags'):
-                repo_card.data.tags = []
-            return repo_card
-
-    # Patch repocard.validate
-    from huggingface_hub import repocard
-    if not hasattr(repocard.RepoCard, '_validate_origin'):
-        repocard.RepoCard._validate_origin = repocard.RepoCard.validate
-        repocard.RepoCard.validate = lambda *args, **kwargs: None
-        repocard.RepoCard._load_origin = repocard.RepoCard.load
-        repocard.RepoCard.load = MethodType(load, repocard.RepoCard)
-
-    if not hasattr(hf_api, '_hf_hub_download_origin'):
-        # Patch hf_hub_download
-        hf_api._hf_hub_download_origin = huggingface_hub.file_download.hf_hub_download
-        huggingface_hub.hf_hub_download = _file_download
-        huggingface_hub.file_download.hf_hub_download = _file_download
-
-    if not hasattr(hf_api, '_file_exists_origin'):
-        # Patch file_exists
-        hf_api._file_exists_origin = hf_api.file_exists
-        hf_api.file_exists = MethodType(_file_exists, api)
-        huggingface_hub.file_exists = hf_api.file_exists
-        huggingface_hub.hf_api.file_exists = hf_api.file_exists
-
-    if not hasattr(hf_api, '_whoami_origin'):
-        # Patch whoami
-        hf_api._whoami_origin = hf_api.whoami
-        hf_api.whoami = MethodType(_whoami, api)
-        huggingface_hub.whoami = hf_api.whoami
-        huggingface_hub.hf_api.whoami = hf_api.whoami
-
-    if not hasattr(hf_api, '_create_repo_origin'):
-        # Patch create_repo
-        from transformers.utils import hub
-        hf_api._create_repo_origin = hf_api.create_repo
-        hf_api.create_repo = MethodType(create_repo, api)
-        huggingface_hub.create_repo = hf_api.create_repo
-        huggingface_hub.hf_api.create_repo = hf_api.create_repo
-        hub.create_repo = hf_api.create_repo
-
-    if not hasattr(hf_api, '_upload_folder_origin'):
-        # Patch upload_folder
-        hf_api._upload_folder_origin = hf_api.upload_folder
-        hf_api.upload_folder = MethodType(upload_folder, api)
-        huggingface_hub.upload_folder = hf_api.upload_folder
-        huggingface_hub.hf_api.upload_folder = hf_api.upload_folder
-
-    if not hasattr(hf_api, '_upload_file_origin'):
-        # Patch upload_file
-        hf_api._upload_file_origin = hf_api.upload_file
-        hf_api.upload_file = MethodType(upload_file, api)
-        huggingface_hub.upload_file = hf_api.upload_file
-        huggingface_hub.hf_api.upload_file = hf_api.upload_file
-        repocard.upload_file = hf_api.upload_file
-
-    if not hasattr(hf_api, '_create_commit_origin'):
-        # Patch upload_file
-        hf_api._create_commit_origin = hf_api.create_commit
-        hf_api.create_commit = MethodType(create_commit, api)
-        huggingface_hub.create_commit = hf_api.create_commit
-        huggingface_hub.hf_api.create_commit = hf_api.create_commit
-        from transformers.utils import hub
-        hub.create_commit = hf_api.create_commit
+    patch_hf_hub()
+    _patch_transformers_hub()
 
 
 def _unpatch_hub():
+    """Undo `_patch_hub` (transformers bridge first, then the hub patches)."""
+    _unpatch_transformers_hub()
+    from modelscope_hub.compat.hf_hub_patcher import unpatch_hf_hub
+
+    unpatch_hf_hub()
+
+
+def _patch_transformers_hub():
+    """Point ``transformers.utils.hub`` at the patched huggingface_hub functions.
+
+    Older transformers resolve ``create_repo`` / ``create_commit`` through
+    ``transformers.utils.hub`` for ``push_to_hub``; redirect them to the
+    already-patched ``huggingface_hub`` objects. Attributes absent in newer
+    transformers are skipped instead of injected, and the whole bridge is
+    skipped when transformers is not installed, so ``patch_hub()`` stays
+    usable across versions and in a transformers-less env.
+    """
+    try:
+        from transformers.utils import hub
+    except ImportError:
+        return
     import huggingface_hub
-    from huggingface_hub import hf_api
 
-    from huggingface_hub import repocard
-    if hasattr(repocard.RepoCard, '_validate_origin'):
-        repocard.RepoCard.validate = repocard.RepoCard._validate_origin
-        delattr(repocard.RepoCard, '_validate_origin')
-    if hasattr(repocard.RepoCard, '_load_origin'):
-        repocard.RepoCard.load = repocard.RepoCard._load_origin
-        delattr(repocard.RepoCard, '_load_origin')
+    if (hasattr(hub, 'create_repo')
+            and not hasattr(hub, '_ms_origin_create_repo')):
+        hub._ms_origin_create_repo = hub.create_repo
+        hub.create_repo = huggingface_hub.create_repo
+    if (hasattr(hub, 'create_commit')
+            and not hasattr(hub, '_ms_origin_create_commit')):
+        hub._ms_origin_create_commit = hub.create_commit
+        hub.create_commit = huggingface_hub.create_commit
 
-    if hasattr(hf_api, '_hf_hub_download_origin'):
-        huggingface_hub.file_download.hf_hub_download = hf_api._hf_hub_download_origin
-        huggingface_hub.hf_hub_download = hf_api._hf_hub_download_origin
-        huggingface_hub.file_download.hf_hub_download = hf_api._hf_hub_download_origin
-        delattr(hf_api, '_hf_hub_download_origin')
 
-    if hasattr(hf_api, '_file_exists_origin'):
-        hf_api.file_exists = hf_api._file_exists_origin
-        huggingface_hub.file_exists = hf_api.file_exists
-        huggingface_hub.hf_api.file_exists = hf_api.file_exists
-        delattr(hf_api, '_file_exists_origin')
-
-    if hasattr(hf_api, '_whoami_origin'):
-        hf_api.whoami = hf_api._whoami_origin
-        huggingface_hub.whoami = hf_api.whoami
-        huggingface_hub.hf_api.whoami = hf_api.whoami
-        delattr(hf_api, '_whoami_origin')
-
-    if hasattr(hf_api, '_create_repo_origin'):
+def _unpatch_transformers_hub():
+    """Undo `_patch_transformers_hub` and restore ``transformers.utils.hub``."""
+    try:
         from transformers.utils import hub
-        hf_api.create_repo = hf_api._create_repo_origin
-        huggingface_hub.create_repo = hf_api.create_repo
-        huggingface_hub.hf_api.create_repo = hf_api.create_repo
-        hub.create_repo = hf_api.create_repo
-        delattr(hf_api, '_create_repo_origin')
+    except ImportError:
+        return
+    if hasattr(hub, '_ms_origin_create_repo'):
+        hub.create_repo = hub._ms_origin_create_repo
+        delattr(hub, '_ms_origin_create_repo')
+    if hasattr(hub, '_ms_origin_create_commit'):
+        hub.create_commit = hub._ms_origin_create_commit
+        delattr(hub, '_ms_origin_create_commit')
 
-    if hasattr(hf_api, '_upload_folder_origin'):
-        hf_api.upload_folder = hf_api._upload_folder_origin
-        huggingface_hub.upload_folder = hf_api.upload_folder
-        huggingface_hub.hf_api.upload_folder = hf_api.upload_folder
-        delattr(hf_api, '_upload_folder_origin')
 
-    if hasattr(hf_api, '_upload_file_origin'):
-        hf_api.upload_file = hf_api._upload_file_origin
-        huggingface_hub.upload_file = hf_api.upload_file
-        huggingface_hub.hf_api.upload_file = hf_api.upload_file
-        repocard.upload_file = hf_api.upload_file
-        delattr(hf_api, '_upload_file_origin')
-
-    if hasattr(hf_api, '_create_commit_origin'):
-        hf_api.create_commit = hf_api._create_commit_origin
-        huggingface_hub.create_commit = hf_api.create_commit
-        huggingface_hub.hf_api.create_commit = hf_api.create_commit
-        from transformers.utils import hub
-        hub.create_commit = hf_api.create_commit
-        delattr(hf_api, '_create_commit_origin')
+# Modules captured by the last ``patch_hub()`` call. ``unpatch_hub()`` restores
+# exactly these instead of re-enumerating: classes imported between patch and
+# unpatch would otherwise be missed (or wrongly restored) by a fresh scan.
+_patched_modules = None
 
 
 def patch_hub():
+    global _patched_modules
     _patch_hub()
     _patch_kernels()
-    _patch_pretrained_class(get_all_imported_modules())
+    _patched_modules = get_all_imported_modules()
+    _patch_pretrained_class(_patched_modules)
 
 
 def unpatch_hub():
-    _unpatch_pretrained_class(get_all_imported_modules())
+    global _patched_modules
+    if _patched_modules is not None:
+        _unpatch_pretrained_class(_patched_modules)
+        _patched_modules = None
     _unpatch_kernels()
     _unpatch_hub()
 

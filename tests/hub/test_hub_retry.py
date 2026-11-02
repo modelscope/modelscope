@@ -1,179 +1,143 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import os
+import io
+import tempfile
 import unittest
-from http.client import HTTPMessage, HTTPResponse
-from io import StringIO
-from unittest.mock import Mock, patch
+from pathlib import Path
+from unittest.mock import patch
 
+import json
 import requests
+from modelscope_hub.constants import REPO_TREE_PAGE_MAX_ATTEMPTS
 from urllib3.exceptions import MaxRetryError
 
 from modelscope.hub.api import HubApi
+from modelscope.hub.constants import API_FILE_DOWNLOAD_RETRY_TIMES
 from modelscope.hub.errors import ServerError
 from modelscope.hub.file_download import http_get_model_file
+
+
+def _response(request, status=200, body=b''):
+    """Build a real response with byte-stream semantics for transport fixtures."""
+    if isinstance(body, bytes):
+        content = body
+    else:
+        content = json.dumps(body).encode('utf-8')
+    response = requests.Response()
+    response.status_code = status
+    response.url = request.url
+    response.request = request
+    response.headers['Content-Length'] = str(len(content))
+    response._content = content
+    response._content_consumed = True
+    response.raw = io.BytesIO(content)
+    return response
 
 
 class HubRetryTest(unittest.TestCase):
 
     def setUp(self):
-        self.api = HubApi()
-        self.model_id = 'damo/ofa_text-to-image-synthesis_coco_large_en'
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.api = HubApi(endpoint='https://modelscope.test', token='')
+        self.model_id = 'test/retry-model'
 
-    @patch('urllib3.connectionpool.HTTPConnectionPool._get_conn')
-    def test_retry_exception(self, getconn_mock):
-        getconn_mock.return_value.getresponse.side_effect = [
-            Mock(status=500, msg=HTTPMessage(), headers={}),
-            Mock(status=502, msg=HTTPMessage(), headers={}),
-            Mock(status=500, msg=HTTPMessage(), headers={}),
-            Mock(status=502, msg=HTTPMessage(), headers={}),
-            Mock(status=500, msg=HTTPMessage(), headers={}),
-            Mock(status=502, msg=HTTPMessage(), headers={}),
-        ]
-        with self.assertRaises(
-            (requests.exceptions.RetryError,
-             requests.exceptions.ConnectionError, ServerError)):
-            self.api.get_model_files(
-                model_id=self.model_id,
-                recursive=True,
-            )
+    def test_retry_exception(self):
 
-    @patch('urllib3.connectionpool.HTTPConnectionPool._get_conn')
-    def test_retry_and_success(self, getconn_mock):
-        response_body = '{"Code": 200, "Data": { "Files": [ {"CommitMessage": \
-            "update","CommittedDate": 1667548386,"CommitterName": "行嗔","InCheck": false, \
-            "IsLFS": false, "Mode": "33188", "Name": "README.md", "Path": "README.md", \
-            "Revision": "e45fcc158894f18a7a8cfa3caf8b3dd1a2b26dc9",\
-            "Sha256": "8bf99f410ae0a572e5a4a85a3949ad268d49023e5c6ef200c9bd4307f9ed0660", \
-            "Size": 6399,  "Type": "blob" } ] }, "Message": "success",\
-            "RequestId": "8c2a8249-ce50-49f4-85ea-36debf918714","Success": true}'
+        def send(request, **kwargs):
+            return _response(request, 502, {
+                'Code': 502,
+                'Message': 'fixture failure'
+            })
 
-        first = 0
+        with patch('requests.sessions.Session.send', side_effect=send) as transport, \
+                patch('modelscope_hub._legacy_api.time.sleep'), \
+                self.assertRaises(ServerError) as caught:
+            self.api.get_model_files(model_id=self.model_id, recursive=True)
+        self.assertEqual(transport.call_count, REPO_TREE_PAGE_MAX_ATTEMPTS)
+        self.assertEqual(caught.exception.response.status_code, 502)
 
-        def get_content(p):
-            nonlocal first
-            if first > 0:
-                return None
-            else:
-                first += 1
-            return response_body.encode('utf-8')
+    def test_retry_and_success(self):
+        statuses = iter([500, 502, 200])
+        body = {
+            'Code': 200,
+            'Success': True,
+            'Data': {
+                'Files': [{
+                    'Path': 'README.md',
+                    'Size': 16,
+                    'Type': 'blob'
+                }]
+            }
+        }
 
-        rsp = HTTPResponse(getconn_mock)
-        rsp.status = 200
-        rsp.msg = HTTPMessage()
-        rsp.read = get_content
-        rsp.chunked = False
-        rsp.length_remaining = 0
-        rsp.version_string = 0
-        rsp.headers = {}
-        # retry 2 times and success.
-        getconn_mock.return_value.getresponse.side_effect = [
-            Mock(status=500, msg=HTTPMessage(), headers={}),
-            Mock(
-                status=502,
-                msg=HTTPMessage(),
-                headers={},
-                body=response_body,
-                read=StringIO(response_body)),
-            rsp,
-        ]
-        model_files = self.api.get_model_files(
-            model_id=self.model_id,
-            recursive=True,
-        )
-        assert len(model_files) > 0
+        def send(request, **kwargs):
+            status = next(statuses)
+            payload = body if status == 200 else {
+                'Code': status,
+                'Message': 'fixture failure'
+            }
+            return _response(request, status, payload)
 
-    @patch('urllib3.connectionpool.HTTPConnectionPool._get_conn')
-    def test_retry_broken_continue(self, getconn_mock):
-        test_file_name = 'video_inpainting_test.mp4'
-        fp = 0
+        with patch('requests.sessions.Session.send', side_effect=send) as transport, \
+                patch('modelscope_hub._legacy_api.time.sleep'):
+            files = self.api.get_model_files(
+                model_id=self.model_id, recursive=True)
+        self.assertEqual(files, [{'Path': 'README.md', 'Size': 16}])
+        self.assertEqual(transport.call_count, 3)
+        self.assertTrue(
+            all('/repo/files?' in call.args[0].url
+                for call in transport.call_args_list))
 
-        def get_content(content_length):
-            nonlocal fp
-            with open('data/test/videos/%s' % test_file_name, 'rb') as f:
-                f.seek(fp)
-                content = f.read(content_length)
-                fp += len(content)
-                return content
+    def test_retry_broken_continue(self):
+        content = b'0123456789abcdef'
+        ranges = []
 
-        success_rsp = HTTPResponse(getconn_mock)
-        success_rsp.status = 200
-        success_rsp.msg = HTTPMessage()
-        success_rsp.read = get_content
-        success_rsp.chunked = True
-        success_rsp.length_remaining = 0
-        success_rsp.headers = {'Content-Length': '2957783'}
+        def send(request, **kwargs):
+            ranges.append(request.headers['Range'])
+            if len(ranges) == 1:
+                response = _response(request, body=content)
 
-        failed_rsp = HTTPResponse(getconn_mock)
-        failed_rsp.status = 502
-        failed_rsp.msg = HTTPMessage()
-        failed_rsp.read = get_content
-        failed_rsp.chunked = True
-        failed_rsp.version_string = 0
-        success_rsp.length_remaining = 2957783
-        success_rsp.headers = {'Content-Length': '2957783'}
-        success_rsp.version_string = 0
+                def chunks(chunk_size=1, **kwargs):
+                    yield content[:4]
+                    raise requests.ConnectionError(
+                        'fixture interrupted stream')
 
-        # retry 5 times and success.
-        getconn_mock.return_value.getresponse.side_effect = [
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            success_rsp,
-        ]
-        url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
-        http_get_model_file(
-            url=url,
-            local_dir='./',
-            file_name=test_file_name,
-            file_size=2957783,
-            headers={},
-            cookies=None)
+                response.iter_content = chunks
+                return response
+            return _response(request, 206, content[4:])
 
-        assert os.path.exists('./%s' % test_file_name)
-        os.remove('./%s' % test_file_name)
+        with patch('requests.sessions.Session.send', side_effect=send), \
+                patch('urllib3.util.retry.Retry.sleep'):
+            checksum = http_get_model_file(
+                url='https://modelscope.test/download',
+                local_dir=self.temp.name,
+                file_name='payload.bin',
+                file_size=len(content),
+                cookies=None,
+                disable_tqdm=True)
+        self.assertEqual((Path(self.temp.name) / 'payload.bin').read_bytes(),
+                         content)
+        self.assertEqual(ranges, ['bytes=0-15', 'bytes=4-15'])
+        self.assertIsNone(checksum)
 
-    @patch('urllib3.connectionpool.HTTPConnectionPool._get_conn')
-    def test_retry_broken_continue_retry_failed(self, getconn_mock):
-        test_file_name = 'video_inpainting_test.mp4'
-        fp = 0
+    def test_retry_broken_continue_retry_failed(self):
 
-        def get_content(content_length):
-            nonlocal fp
-            with open('data/test/videos/%s' % test_file_name, 'rb') as f:
-                f.seek(fp)
-                content = f.read(content_length)
-                fp += len(content)
-                return content
+        def send(request, **kwargs):
+            return _response(request, 502, b'fixture failure')
 
-        failed_rsp = HTTPResponse(getconn_mock)
-        failed_rsp.status = 502
-        failed_rsp.msg = HTTPMessage()
-        failed_rsp.msg.add_header('Content-Length', '2957783')
-        failed_rsp.read = get_content
-        failed_rsp.chunked = True
-
-        # retry 6 times and success.
-        getconn_mock.return_value.getresponse.side_effect = [
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-            failed_rsp,
-        ]
-        url = 'http://www.modelscope.cn/api/v1/models/%s' % test_file_name
-        with self.assertRaises(MaxRetryError):
+        with patch('requests.sessions.Session.send', side_effect=send) as transport, \
+                patch('urllib3.util.retry.Retry.sleep'), self.assertRaises(MaxRetryError):
             http_get_model_file(
-                url=url,
-                local_dir='./',
-                file_name=test_file_name,
-                file_size=2957783,
-                headers={},
-                cookies=None)
-
-        assert os.stat('./%s' % test_file_name).st_size == 0
+                url='https://modelscope.test/download',
+                local_dir=self.temp.name,
+                file_name='payload.bin',
+                file_size=16,
+                cookies=None,
+                disable_tqdm=True)
+        self.assertEqual(transport.call_count,
+                         API_FILE_DOWNLOAD_RETRY_TIMES + 1)
+        self.assertEqual((Path(self.temp.name) / 'payload.bin').stat().st_size,
+                         0)
 
 
 if __name__ == '__main__':

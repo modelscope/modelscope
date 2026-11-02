@@ -2,6 +2,8 @@
 
 from typing import Mapping, Optional, Sequence, Union
 
+from datasets import Features
+
 from modelscope.msdatasets.auth.auth_config import BaseAuthConfig
 from modelscope.msdatasets.download.download_config import DataDownloadConfig
 from modelscope.msdatasets.meta.data_meta_config import DataMetaConfig
@@ -28,6 +30,8 @@ class DatasetContextConfig:
                  stream_batch_size: int,
                  trust_remote_code: bool,
                  token: Optional[str] = None,
+                 features: Optional[Features] = None,
+                 dataset_info_only: bool = False,
                  **kwargs):
 
         self._download_config = None
@@ -43,6 +47,9 @@ class DatasetContextConfig:
         # General arguments for dataset
         self.hub = hub
         self.token = token
+        self.endpoint: Optional[str] = None
+        self.features: Optional[Features] = features
+        self.dataset_info_only: bool = dataset_info_only
         self.download_mode = download_mode
         self.dataset_name = dataset_name
         self.namespace = namespace

@@ -71,7 +71,7 @@ def model_file_download(
     if revision is None:
         try:
             from modelscope.hub.api import HubApi
-            api = HubApi()
+            api = HubApi(endpoint=endpoint, token=token)
             release_ts = _get_release_timestamp()
             detail = api.get_valid_revision_detail(
                 model_id, revision=None, release_timestamp=release_ts)

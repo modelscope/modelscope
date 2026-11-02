@@ -88,7 +88,7 @@ def _extract_split_names(split):
     return names if names else None
 
 
-def _filter_data_files_by_split(data_files, download_config):
+def _filter_data_files_by_split(data_files, download_config, split=None):
     """Filter data_files entries to only include the requested split(s).
 
     Args:
@@ -101,10 +101,10 @@ def _filter_data_files_by_split(data_files, download_config):
         the original *data_files* unchanged.
     """
     # 1. Safely retrieve the split value
-    split_str = None
+    split_str = split
     if download_config is not None:
         storage_opts = getattr(download_config, 'storage_options', None)
-        if isinstance(storage_opts, dict):
+        if split_str is None and isinstance(storage_opts, dict):
             split_str = storage_opts.get('split')
 
     if split_str is None:
@@ -131,14 +131,11 @@ def _filter_data_files_by_split(data_files, download_config):
 # ---------------------------------------------------------------------------
 # Shared HubApi instance (avoids creating a new requests.Session per call)
 # ---------------------------------------------------------------------------
-_hub_api: Optional[HubApi] = None
-
-
-def _get_hub_api() -> HubApi:
-    global _hub_api
-    if _hub_api is None:
-        _hub_api = HubApi(timeout=3 * 60, max_retries=3)
-    return _hub_api
+def _get_hub_api(download_config: Optional[DownloadConfig] = None) -> HubApi:
+    """Create request-local clients to isolate credentials and endpoints."""
+    options = (download_config.storage_options or {}).get('modelscope', {}) if download_config else {}
+    return HubApi(endpoint=options.get('endpoint'), token=options.get('token'),
+                  timeout=3 * 60, max_retries=3)
 
 
 # ===================================================================
@@ -273,27 +270,19 @@ def _download_repo_file(
     revision: str,
 ) -> str:
     """Download a single file from a ModelScope dataset repository."""
-    api = _get_hub_api()
-    _namespace, _dataset_name = repo_id.split('/')
-    endpoint = api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-    if download_config and download_config.download_desc is None:
-        download_config.download_desc = f'Downloading [{path_in_repo}]'
+    from modelscope.hub.errors import CacheNotFound, NotExistError
+
+    api = _get_hub_api(download_config)
     try:
-        url_or_filename = api.get_dataset_file_url(
-            file_name=path_in_repo,
-            dataset_name=_dataset_name,
-            namespace=_namespace,
+        return str(api.download_file(
+            repo_id, REPO_TYPE_DATASET, path_in_repo,
             revision=revision,
-            extension_filter=False,
-            endpoint=endpoint,
-        )
-        repo_file_path = cached_path(
-            url_or_filename=url_or_filename, download_config=download_config)
-    except FileNotFoundError as e:
-        repo_file_path = ''
-        logger.error(e)
-    return repo_file_path
+            cache_dir=download_config.cache_dir,
+            force=download_config.force_download,
+            local_files_only=getattr(download_config, 'local_files_only', False),
+        ))
+    except (FileNotFoundError, CacheNotFound, NotExistError):
+        return ''
 
 
 # ===================================================================
@@ -329,7 +318,6 @@ def _download_additional_modules(
             'If you trust the authors of this dataset, you can enable it with '
             '`trust_remote_code=True`.')
 
-    api = _get_hub_api()
     download_config = download_config.copy()
     if download_config.download_desc is None:
         download_config.download_desc = 'Downloading extra modules'
@@ -345,20 +333,15 @@ def _download_additional_modules(
                 f"Please change relative import {import_name} to another name and add a '# From: URL_OR_PATH' "
                 f'comment pointing to the original relative import file path.')
         if import_type == 'internal':
-            file_name = import_path + '.py'
-            url_or_filename = api.get_dataset_file_url(
-                file_name=file_name,
-                dataset_name=dataset_name,
-                namespace=namespace,
-                revision=revision,
-            )
+            local_import_path = _download_repo_file(
+                f'{namespace}/{dataset_name}', import_path + '.py',
+                download_config, revision)
+            if not local_import_path:
+                raise FileNotFoundError(f'Cannot find relative module {import_path}.py in {name}')
         elif import_type == 'external':
-            url_or_filename = import_path
+            local_import_path = cached_path(import_path, download_config=download_config)
         else:
             raise ValueError('Wrong import_type')
-
-        local_import_path = cached_path(
-            url_or_filename, download_config=download_config)
         if sub_directory is not None:
             local_import_path = os.path.join(local_import_path, sub_directory)
         local_imports.append((import_name, local_import_path))
@@ -405,6 +388,7 @@ def _load_script_module(
     Used by both ``get_module_with_script`` (monkey-patch for datasets<4.0) and
     ``_compat_hub_script_module`` (compat shim for datasets>=4.0).
     """
+    resolve_trust_remote_code(trust_remote_code, repo_id)
     _namespace, _dataset_name = repo_id.split('/')
     script_file_name = f'{_dataset_name}.py'
 
@@ -442,7 +426,8 @@ def _load_script_module(
         additional_files.append(
             (config.REPOCARD_FILENAME, dataset_readme_path))
 
-    dynamic_modules_path = dynamic_modules_path or init_dynamic_modules()
+    dynamic_modules_path = dynamic_modules_path or init_dynamic_modules(
+        hf_modules_cache=os.path.join(download_config.cache_dir or config.HF_MODULES_CACHE, 'modules'))
     hash_val = files_to_hash([local_script_path]
                              + [loc[1] for loc in local_imports])
     importable_file_path = _get_importable_file_path(
@@ -482,9 +467,10 @@ def _load_script_module(
     )
     importlib.invalidate_caches()
 
-    api = _get_hub_api()
+    from urllib.parse import quote
+
     builder_kwargs = {
-        'base_path': api.get_file_base_path(repo_id=repo_id),
+        'base_path': f'modelscope://datasets/{repo_id}@{quote(revision, safe="")}',
         'repo_id': repo_id,
     }
     return DatasetModule(module_path, hash_val, builder_kwargs)
@@ -535,8 +521,10 @@ def _compat_local_script_module(
     download_mode=None,
     dynamic_modules_path=None,
     trust_remote_code=None,
+    download_config=None,
 ) -> DatasetModule:
     """Load a dataset module from a local .py script (compat for datasets>=4.0)."""
+    resolve_trust_remote_code(trust_remote_code, str(path))
     local_path = path
     name = Path(path).stem
 
@@ -565,7 +553,9 @@ def _compat_local_script_module(
                                                  sub_directory)
             local_imports.append((import_name, local_import_path))
 
-    dynamic_modules_path = dynamic_modules_path or init_dynamic_modules()
+    modules_cache = (os.path.join(download_config.cache_dir, 'modules')
+                     if download_config and download_config.cache_dir else None)
+    dynamic_modules_path = dynamic_modules_path or init_dynamic_modules(hf_modules_cache=modules_cache)
     hash_val = files_to_hash([local_path] + [loc[1] for loc in local_imports])
     importable_file_path = _get_importable_file_path(
         dynamic_modules_path=dynamic_modules_path,
@@ -608,12 +598,12 @@ def _compat_local_script_module(
 # ===================================================================
 
 
-def get_module_without_script(self) -> DatasetModule:
+def get_module_without_script(self, name=None, revision=None, split=None) -> DatasetModule:
     """Monkey-patch target for ``HubDatasetModuleFactoryWithoutScript.get_module``."""
-    revision = self.download_config.storage_options.get(
-        'revision', None) or DEFAULT_DATASET_REVISION
-    base_path = f"hf://datasets/{self.name}@{revision}/{self.data_dir or ''}".rstrip(
-        '/')
+    from urllib.parse import quote
+
+    revision = revision or DEFAULT_DATASET_REVISION
+    base_path = f"modelscope://datasets/{self.name}@{quote(revision, safe='')}/{self.data_dir or ''}".rstrip('/')
 
     repo_id: str = self.name
     download_config = self.download_config.copy()
@@ -628,7 +618,7 @@ def get_module_without_script(self) -> DatasetModule:
     dataset_card_data = DatasetCard.load(
         Path(dataset_readme_path
              )).data if dataset_readme_path else DatasetCardData()
-    subset_name: str = download_config.storage_options.get('name', None)
+    subset_name: str = name
 
     metadata_configs = MetadataConfigs.from_dataset_card_data(
         dataset_card_data)
@@ -644,7 +634,7 @@ def get_module_without_script(self) -> DatasetModule:
             subset_data_files = next(iter(
                 metadata_configs.values()))['data_files']
         subset_data_files = _filter_data_files_by_split(
-            subset_data_files, self.download_config)
+            subset_data_files, self.download_config, split=split)
         patterns = sanitize_patterns(subset_data_files)
     else:
         patterns = _get_data_patterns(
@@ -672,7 +662,7 @@ def get_module_without_script(self) -> DatasetModule:
     module_path, _ = _PACKAGED_DATASETS_MODULES[module_name]
 
     if metadata_configs:
-        supports_metadata = module_name in {'imagefolder', 'audiofolder'}
+        supports_metadata = hasattr(import_main_class(module_path), 'METADATA_FILENAMES')
         create_builder_signature = inspect.signature(
             create_builder_configs_from_metadata_configs)
         in_args = {
@@ -695,13 +685,8 @@ def get_module_without_script(self) -> DatasetModule:
         ]
         default_config_name = None
 
-    api = _get_hub_api()
-    endpoint = api.get_endpoint_for_read(
-        repo_id=repo_id, repo_type=REPO_TYPE_DATASET)
-
     builder_kwargs = {
-        'base_path':
-        api.get_file_base_path(repo_id=repo_id, endpoint=endpoint),
+        'base_path': base_path,
         'repo_id': self.name,
         'dataset_name': camelcase_to_snakecase(Path(self.name).name),
         'data_files': data_files_dict,

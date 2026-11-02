@@ -13,6 +13,7 @@ import textwrap
 import unittest
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
@@ -250,6 +251,184 @@ class DatasetsCompatTest(unittest.TestCase):
             'small': ['test', 'train'],
             'other': ['test', 'train']
         })
+
+    def _info_only_without_downloads(self, path='json', **kwargs):
+        with ExitStack() as stack:
+            for target in (
+                    'requests.sessions.Session.send',
+                    'httpx.Client._send_single_request',
+                    'datasets.download.download_manager.DownloadManager.download',
+                    'datasets.download.download_manager.DownloadManager.extract'
+            ):
+                stack.enter_context(
+                    mock.patch(
+                        target,
+                        side_effect=AssertionError(
+                            'unexpected data download')))
+            result = self._load(path, dataset_info_only=True, **kwargs)
+        self.assertFalse(list(self.cache.rglob('*.arrow')))
+        return result
+
+    def test_packaged_info_only_uses_effective_data_files(self):
+        csv_path = self.data_dir / 'records.csv'
+        csv_path.write_text('id,text\n1,one\n', encoding='utf-8')
+        for builder, path in [('json', self.data_dir / 'train-0.jsonl'),
+                              ('csv', csv_path)]:
+            for files, splits in [(str(path), ['train']),
+                                  ([str(path)], ['train']),
+                                  ({
+                                      'validation': str(path),
+                                      'test': [str(path)]
+                                  }, ['validation', 'test'])]:
+                for name in (None, 'selected'):
+                    with self.subTest(builder=builder, files=files, name=name):
+                        self.assertEqual(
+                            self._info_only_without_downloads(
+                                builder, data_files=files, subset_name=name),
+                            {name or 'default': splits})
+
+    def test_local_info_only_infers_file_and_directory_splits(self):
+        self.assertEqual(
+            self._info_only_without_downloads(
+                str(self.data_dir / 'train-0.jsonl')), {'default': ['train']})
+        for path, kwargs in [(str(self.data_dir), {}),
+                             ('json', {
+                                 'data_dir': str(self.data_dir)
+                             })]:
+            with self.subTest(path=path):
+                self.assertEqual(
+                    self._info_only_without_downloads(path, **kwargs),
+                    {'default': ['train', 'test']})
+
+    def test_info_only_preserves_other_metadata_configs(self):
+        readme = _README.replace('data/', '')
+        (self.data_dir / 'README.md').write_text(readme, encoding='utf-8')
+        expected = {'small': ['train', 'test'], 'other': ['train']}
+        overridden = {'small': ['validation'], 'other': ['train']}
+        self.assertEqual(
+            self._info_only_without_downloads(str(self.data_dir)), expected)
+        self.assertEqual(
+            self._info_only_without_downloads(
+                str(self.data_dir),
+                subset_name='small',
+                data_files={'validation': str(self.data_dir / 'test.jsonl')}),
+            overridden)
+        self.assertEqual(
+            self._info_only_without_downloads(
+                str(self.data_dir), subset_name='other'), expected)
+
+    def test_script_info_only_preserves_generated_split_names(self):
+        script = _SCRIPT.replace('name=name, gen_kwargs=',
+                                 "name='validation', gen_kwargs=")
+        (self.root / 'tiny.py').write_text(script, encoding='utf-8')
+        expected = {'small': ['validation'], 'other': ['validation']}
+        for path in (str(self.root / 'tiny.py'), str(self.root)):
+            with self.subTest(path=path):
+                self.assertEqual(
+                    self._info_only_without_downloads(
+                        path,
+                        data_files={
+                            'source': str(self.data_dir / 'test.jsonl')
+                        },
+                        trust_remote_code=True), expected)
+
+    def test_info_only_uses_metadata_without_split_discovery(self):
+        script = _SCRIPT.replace(
+            'return datasets.DatasetInfo(features=',
+            'return datasets.DatasetInfo(splits=datasets.SplitDict({'
+            '"train": datasets.SplitInfo(name="train", num_examples=12, '
+            'num_bytes=0)}), features=')
+        script = script.replace(
+            '        paths = dl_manager.download_and_extract(',
+            "        raise AssertionError('unexpected split discovery')\n"
+            '        paths = dl_manager.download_and_extract(')
+        (self.root / 'tiny.py').write_text(script, encoding='utf-8')
+        expected = {'small': ['train'], 'other': ['train']}
+        self.assertEqual(
+            self._info_only_without_downloads(
+                str(self.root), trust_remote_code=True), expected)
+
+    def test_info_only_discovery_errors_are_not_empty_success(self):
+        script = _SCRIPT.replace(
+            '        paths = dl_manager.download_and_extract(',
+            "        raise RuntimeError('split discovery failed') "
+            "from ValueError('fixture cause')\n"
+            '        paths = dl_manager.download_and_extract(')
+        (self.root / 'tiny.py').write_text(script, encoding='utf-8')
+        with self.assertRaisesRegex(RuntimeError,
+                                    'split discovery failed') as caught:
+            self._info_only_without_downloads(
+                str(self.root), trust_remote_code=True)
+        self.assertIsInstance(caught.exception.__cause__, ValueError)
+        self.assertEqual(str(caught.exception.__cause__), 'fixture cause')
+        builder = hf_datasets_util.DatasetsWrapperHF.load_dataset_builder(
+            str(self.root), trust_remote_code=True, cache_dir=str(self.cache))
+        self.assertEqual(
+            hf_datasets_util._discover_splits_from_builder(builder), set())
+
+    def test_dry_run_download_config_and_nested_paths_are_isolated(self):
+        options = {'fixture': {'values': ['original']}}
+        config = datasets.DownloadConfig(
+            token=False, storage_options=options, extract_on_the_fly=False)
+        original = copy.deepcopy(config)
+        manager = hf_datasets_util._DryRunDownloadManager(config)
+        other = hf_datasets_util._DryRunDownloadManager(config)
+        manager.download_config.storage_options['fixture']['values'].append(
+            'changed')
+        manager.download_config.extract_on_the_fly = True
+        self.assertEqual(config, original)
+        self.assertEqual(other.download_config, original)
+        files = {'train': ['first', 'second'], 'test': ('third', )}
+        self.assertEqual(
+            manager.download_and_extract(files), {
+                'train': [os.devnull, os.devnull],
+                'test': (os.devnull, )
+            })
+        builder = hf_datasets_util.DatasetsWrapperHF.load_dataset_builder(
+            'json',
+            data_files={
+                'train': str(self.data_dir / 'train-*.jsonl'),
+                'test': str(self.data_dir / 'test.jsonl')
+            },
+            cache_dir=str(self.cache),
+            features=self.features,
+            token=False,
+            storage_options=options)
+        self.assertEqual(
+            hf_datasets_util._discover_splits_from_builder(
+                builder, download_config=config, strict=True),
+            {'train', 'test'})
+        self.assertEqual(config, original)
+        self.assertEqual(builder.storage_options, options)
+
+    def test_info_only_missing_data_files_still_fails(self):
+        empty = self.root / 'empty'
+        empty.mkdir()
+        with self.assertRaises(FileNotFoundError):
+            self._info_only_without_downloads(data_dir=str(empty))
+        with self.assertRaises(FileNotFoundError):
+            self._info_only_without_downloads(
+                data_files=str(self.data_dir / 'missing.jsonl'))
+
+    def test_streaming_split_limits_and_skip_take(self):
+        files = {
+            'train': str(self.data_dir / 'train-*.jsonl'),
+            'test': str(self.data_dir / 'test.jsonl')
+        }
+        for split in ('train[:2]', 'train[2:5]', 'train[:25%]',
+                      'train[:2]+test[:2]'):
+            with self.subTest(split=split), self.assertRaisesRegex(
+                    ValueError, 'Bad split'):
+                self._load(data_files=files, split=split, use_streaming=True)
+        plain = self._load(
+            data_files=files, split='train',
+            use_streaming=True).to_hf_dataset()
+        self.assertEqual(list(plain.skip(2).take(3)), self.rows[2:5])
+        self.assertEqual(
+            list(
+                self._load(
+                    data_files=files, split='train+test', use_streaming=True)),
+            self.rows + self.rows[:2])
 
     def test_local_streaming_after_load_and_repeat(self):
         ds = self._load(
@@ -1105,20 +1284,28 @@ configs:
             self.assertEqual(list(ds), self.rows[:4])
 
     def test_request_redirect_drops_modelscope_cookie(self):
-        request = requests.Request(
-            'GET',
-            self.endpoint + '/data',
-            headers={
-                'Cookie': 'm_session_id=ms-fixture'
-            }).prepare()
-        response = requests.Response()
-        response.status_code = 302
-        response.headers['Location'] = 'https://external.test/data'
-        response._content = b''
-        response._content_consumed = True
-        redirected = next(requests.Session().resolve_redirects(
-            response, request, yield_requests=True))
-        self.assertNotIn('Cookie', redirected.headers)
+        for authorization in (None, 'Bearer auth-fixture'):
+            with self.subTest(authorization=authorization):
+                headers = {'Cookie': 'm_session_id=ms-fixture'}
+                if authorization is not None:
+                    headers['Authorization'] = authorization
+                request = requests.Request(
+                    'GET', self.endpoint + '/data', headers=headers).prepare()
+                response = requests.Response()
+                response.status_code = 302
+                response.url = request.url
+                response.request = request
+                response.headers['Location'] = 'https://external.test/data'
+                response._content = b''
+                response._content_consumed = True
+                with requests.Session() as session:
+                    session.trust_env = False
+                    redirected = next(
+                        session.resolve_redirects(
+                            response, request, yield_requests=True))
+                self.assertEqual(redirected.url, 'https://external.test/data')
+                self.assertNotIn('Cookie', redirected.headers)
+                self.assertNotIn('Authorization', redirected.headers)
 
     def test_metadata_errors_are_structured(self):
         from modelscope.hub.errors import AuthenticationError, PermissionDeniedError

@@ -426,6 +426,10 @@ class _DryRunDownloadManager:
 
     _PLACEHOLDER = os.devnull
 
+    def __init__(self, download_config: Optional[DownloadConfig] = None):
+        self.download_config: DownloadConfig = (
+            copy.deepcopy(download_config) if download_config is not None else DownloadConfig())
+
     def download(self, url_or_urls):
         return self._map(url_or_urls)
 
@@ -453,29 +457,36 @@ class _DryRunDownloadManager:
         return False
 
     def _map(self, input_):
-        if isinstance(input_, dict):
-            return {k: self._PLACEHOLDER for k in input_}
-        if isinstance(input_, (list, tuple, set)):
-            return type(input_)(self._PLACEHOLDER for _ in input_)
+        if isinstance(input_, Mapping):
+            return {k: self._map(value) for k, value in input_.items()}
+        if isinstance(input_, list):
+            return [self._map(value) for value in input_]
+        if isinstance(input_, tuple):
+            return tuple(self._map(value) for value in input_)
+        if isinstance(input_, set):
+            return {self._map(value) for value in input_}
         return self._PLACEHOLDER
 
 
-def _discover_splits_from_builder(builder_instance):
-    """Discover available split names by dry-running _split_generators().
+def _discover_splits_from_builder(
+        builder_instance, download_config: Optional[DownloadConfig] = None, *, strict: bool = False):
+    """Discover split names without downloading source data.
 
-    For script-based datasets that lack README split metadata, this calls
-    the builder's _split_generators() with a stub download manager to
-    extract split names without performing any actual downloads.
-
-    Returns:
-        A set of split name strings, or an empty set if discovery fails.
+    Strict metadata queries propagate discovery errors unchanged. Ordinary
+    loading keeps best-effort validation and lets the real builder report errors.
     """
     if not hasattr(builder_instance, '_split_generators'):
         return set()
     try:
-        generators = builder_instance._split_generators(_DryRunDownloadManager())
+        manager = _DryRunDownloadManager(download_config)
+        manager.download_config.token = getattr(builder_instance, 'token', manager.download_config.token)
+        manager.download_config.storage_options = copy.deepcopy(
+            getattr(builder_instance, 'storage_options', None) or manager.download_config.storage_options)
+        generators = builder_instance._split_generators(manager)
         return {str(sg.name) for sg in generators}
     except Exception as e:
+        if strict:
+            raise
         logger.debug(f'Failed to discover splits from builder: {e}')
         return set()
 
@@ -657,58 +668,37 @@ class DatasetsWrapperHF:
         )
 
         if dataset_info_only:
-            ret_dict = {}
+            if builder_instance is None:
+                logger.error(f'No builder instance created for {path} dataset.')
+                return {}
 
-            # Case 1: Local .py script file
-            if isinstance(path, str) and path.endswith('.py') and os.path.exists(path):
-                configs = builder_instance.builder_configs or {builder_instance.config.name: builder_instance.config}
-                for config_name in configs:
-                    candidate = DatasetsWrapperHF.load_dataset_builder(
+            active_config = builder_instance.config
+            configs = getattr(builder_instance, 'builder_configs', None) or {}
+            configs = dict(configs) if isinstance(configs, Mapping) else {c.name: c for c in configs}
+            is_packaged = type(builder_instance).__module__.startswith('datasets.packaged_modules.')
+            if is_packaged:
+                # Ignore empty native defaults, but retain other metadata-defined configs.
+                configs = {key: value for key, value in configs.items() if getattr(value, 'data_files', None)}
+            configs[active_config.name] = active_config
+            ret_dict = {}
+            for config_name, builder_config in configs.items():
+                config_name = str(config_name)
+                config_files = getattr(builder_config, 'data_files', None)
+                if is_packaged and isinstance(config_files, Mapping) and config_files:
+                    ret_dict[config_name] = [str(key) for key in config_files]
+                    continue
+
+                # Custom scripts can generate split names unrelated to input file keys.
+                candidate = builder_instance if config_name == active_config.name else (
+                    DatasetsWrapperHF.load_dataset_builder(
                         path, name=config_name, data_dir=data_dir, data_files=data_files,
                         cache_dir=cache_dir, features=features, download_config=download_config,
                         download_mode=download_mode, revision=revision, token=token,
                         storage_options=storage_options, trust_remote_code=trust_remote_code,
-                        **config_kwargs)
-                    ret_dict[config_name] = sorted(_discover_splits_from_builder(candidate))
-                return ret_dict
-
-            if builder_instance is None:
-                logger.error(f'No builder instance created for {path} dataset.')
-                return ret_dict
-
-            # Case 2: Try builder_configs with data_files (packaged datasets)
-            _tmp_builder_configs = getattr(builder_instance, 'builder_configs', None)
-            if _tmp_builder_configs:
-                if hasattr(_tmp_builder_configs, 'items'):
-                    configs_iter = _tmp_builder_configs.items()
-                else:
-                    configs_iter = [(getattr(c, 'name', 'default'), c) for c in _tmp_builder_configs]
-                for tmp_config_name, tmp_builder_config in configs_iter:
-                    tmp_config_name = str(tmp_config_name)
-                    if hasattr(tmp_builder_config, 'data_files') and tmp_builder_config.data_files is not None:
-                        ret_dict[tmp_config_name] = [str(item) for item in list(tmp_builder_config.data_files.keys())]
-
-            # Case 3: Fallback for script datasets — use info.splits or dry-run discovery
-            if not ret_dict or all(not v for v in ret_dict.values()):
-                config_name = getattr(builder_instance, 'config_name', 'default') or 'default'
-                splits = []
-
-                # Try info.splits (from README metadata)
-                info = getattr(builder_instance, 'info', None)
-                if info is not None and info.splits:
-                    splits = sorted(info.splits.keys())
-
-                # Fallback: dry-run _split_generators()
-                if not splits:
-                    discovered = _discover_splits_from_builder(builder_instance)
-                    if discovered:
-                        splits = sorted(discovered)
-
-                if splits:
-                    ret_dict = {config_name: splits}
-                elif not ret_dict:
-                    ret_dict = {config_name: []}
-
+                        **config_kwargs))
+                info = getattr(candidate, 'info', None)
+                ret_dict[config_name] = sorted(info.splits.keys()) if info is not None and info.splits else sorted(
+                    _discover_splits_from_builder(candidate, download_config=download_config, strict=True))
             return ret_dict
 
         _validate_split_exists(builder_instance, split)

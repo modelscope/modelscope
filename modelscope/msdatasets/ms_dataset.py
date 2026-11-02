@@ -190,6 +190,12 @@ class MsDataset:
                 data_dir (str, optional): Defining the data_dir of the dataset configuration. I
                 data_files (str or Sequence or Mapping, optional): Path(s) to source data file(s).
                 split (str, optional): Which split of the data to load.
+                    Hugging Face-style streaming builders accept split names and combinations such as
+                    'train+test', but reject slice syntax such as 'train[:10]' or 'train[:25%]'.
+                    For an absolute range, load a plain split and use
+                    to_hf_dataset().skip(start).take(count) on the local MsDataset wrapper, or
+                    skip(start).take(count) directly on a returned IterableDataset.
+                    Percentage slices require a known length and are not equivalent to skip/take.
                 hub (Hubs or str, optional): When loading from a remote hub, where it is from. default Hubs.modelscope
                 download_mode (DownloadMode or str, optional): How to treat existing datasets. default
                                                                DownloadMode.REUSE_DATASET_IF_EXISTS
@@ -202,6 +208,7 @@ class MsDataset:
                                            see https://modelscope.cn/docs/Configuration%E8%AF%A6%E8%A7%A3
                 token (str, Optional): SDK token of ModelScope.
                 dataset_info_only (bool, Optional): If set to True, only return the dataset config and info (dict).
+                    Split discovery errors are propagated instead of being reported as empty split lists.
                 trust_remote_code (bool, Optional): If set to True, trust the remote code. Default to `False`.
                 **config_kwargs (additional keyword arguments): Keyword arguments to be passed
 

@@ -17,8 +17,7 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
 
 logger = get_logger()
 
-# The huggingface_hub function patches live in modelscope-hub>=0.7.0; on
-# older hubs they degrade to no-ops and the patch-assertion tests skip.
+
 class HFUtilTest(unittest.TestCase):
 
     def setUp(self):

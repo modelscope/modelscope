@@ -247,12 +247,25 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
 
     REPO = 'kernels-community/tinygrad-rms'
 
+    def _skip_if_no_variant_for_platform(self, exc):
+        """Skip when the mirror carries no build variant matching this
+        machine — a mirror-data limitation, not a patch failure: reaching
+        variant matching already proves the ModelScope routing works.
+        """
+        if 'Cannot find a build variant' in str(exc):
+            self.skipTest(
+                'mirror carries no build variant for this platform')
+
     def test_from_modelscope_get_kernel(self):
         import modelscope
         # Routes through `try_import_from_hf` and scopes the ModelScope
         # monkey-patch to this single call.
-        module = modelscope.get_kernel(
-            self.REPO, trust_remote_code=True, revision='master')
+        try:
+            module = modelscope.get_kernel(
+                self.REPO, trust_remote_code=True, revision='master')
+        except FileNotFoundError as e:
+            self._skip_if_no_variant_for_platform(e)
+            raise
         self.assertIsNotNone(module)
         # Wrapper must leave `_get_hf_api` restored afterwards.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
@@ -260,8 +273,12 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
     def test_patch_hub_then_kernels_get_kernel(self):
         with _isolate_hub_patches(), patch_context():
             from kernels import get_kernel
-            module = get_kernel(
-                self.REPO, trust_remote_code=True, revision='master')
+            try:
+                module = get_kernel(
+                    self.REPO, trust_remote_code=True, revision='master')
+            except FileNotFoundError as e:
+                self._skip_if_no_variant_for_platform(e)
+                raise
             self.assertIsNotNone(module)
         # `patch_context` rolled the kernels patch back on exit.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)

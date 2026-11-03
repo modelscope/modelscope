@@ -7,8 +7,6 @@ on:
       - "release/**"
     paths-ignore:
       - "setup.*"
-      - "requirements.txt"
-      - "requirements/**"
       - "docs/**"
       - "tools/**"
       - ".dev_scripts/**"
@@ -21,8 +19,6 @@ on:
   pull_request:
     paths-ignore:
       - "setup.*"
-      - "requirements.txt"
-      - "requirements/**"
       - "docs/**"
       - "tools/**"
       - ".dev_scripts/**"
@@ -37,6 +33,92 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  datasets_compat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: '3.10'
+            datasets: '5.0.0'
+            pyarrow: '21.0.0'
+            fsspec: '2024.2.0'
+          - python: '3.12'
+            datasets: '5.0.1'
+            pyarrow: '26.0.0'
+            fsspec: '2024.2.0'
+          - python: '3.11'
+            datasets: '5.1.0'
+            pyarrow: '24.0.0'
+            fsspec: '2024.2.0'
+          - python: '3.12'
+            datasets: '5.1.0'
+            pyarrow: '26.0.0'
+            fsspec: '2026.7.0'
+    defaults:
+      run:
+        shell: bash -l {0}
+    env:
+      CI_TEST: 'True'
+      TEST_LEVEL: '0'
+      MODELSCOPE_LOG_LEVEL: '40'
+      HF_DATASETS_DISABLE_PROGRESS_BARS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create and activate ms environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: ms
+          python-version: ${{ matrix.python }}
+          miniforge-version: latest
+          auto-activate-base: false
+          conda-remove-defaults: true
+      - name: Install target dependency versions
+        run: |
+          test "$CONDA_DEFAULT_ENV" = ms
+          python -m pip install 'setuptools>=77' wheel build
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install '.[datasets,framework]' \
+            'datasets==${{ matrix.datasets }}' 'pyarrow==${{ matrix.pyarrow }}' \
+            'fsspec[http]==${{ matrix.fsspec }}' 'huggingface-hub>=1.31.0,<2.0' \
+            'transformers==5.1.0'
+          python -m pip check
+          python -c 'import sys, importlib.metadata as m; print(sys.executable); print({n: m.version(n) for n in ("datasets", "pyarrow", "fsspec", "huggingface-hub", "transformers")})'
+      - name: Test dataset loading and streaming isolation
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          python -B -m unittest tests.msdatasets.test_datasets_compat tests.msdatasets.test_stream_load -q
+      - name: Build wheel and sdist
+        run: python -m build --no-isolation
+      - name: Validate distribution dependencies and extras
+        run: |
+          python - <<'PY'
+          import email
+          import zipfile
+          from pathlib import Path
+          from packaging.requirements import Requirement
+          from packaging.utils import canonicalize_name
+          try:
+              import tomllib
+          except ImportError:
+              import tomli as tomllib
+          with zipfile.ZipFile(next(Path('dist').glob('*.whl'))) as wheel:
+              metadata = email.message_from_bytes(wheel.read(next(
+                  name for name in wheel.namelist() if name.endswith('/METADATA'))))
+          requirements = [Requirement(value) for value in metadata.get_all('Requires-Dist')]
+          datasets = [value for value in requirements if value.name == 'datasets']
+          assert datasets
+          assert all(str(value.specifier) == '<6.0.0,>=5.0.0' and value.marker for value in datasets)
+          config = tomllib.loads(Path('pyproject.toml').read_text())
+          extras = config['tool']['setuptools']['dynamic']['optional-dependencies']
+          for extra, definition in extras.items():
+              if any(path in ('requirements/datasets.txt', 'requirements/framework.txt')
+                     for path in definition['file']):
+                  assert any(value.marker.evaluate({'extra': canonicalize_name(extra)}) for value in datasets)
+          print(*datasets, sep='\n')
+          PY
+
   unittest:
     # The type of runner that the job will run on
     runs-on: [modelscope-self-hosted-us]

@@ -22,20 +22,20 @@ from datasets import DownloadMode, config
 # Try importing script-loading APIs from datasets<4.0
 # ---------------------------------------------------------------------------
 try:
-    from datasets.load import (
-        HubDatasetModuleFactoryWithScript,
-        LocalDatasetModuleFactoryWithScript,
-        resolve_trust_remote_code,
-        _get_importable_file_path,
-        _create_importable_file,
-        _load_importable_file,
-        init_dynamic_modules,
-        files_to_hash,
-    )
-    from datasets.utils.py_utils import get_imports
+    import datasets.load as _legacy_load
+    from datasets.utils import py_utils as _legacy_py_utils
 
+    HubDatasetModuleFactoryWithScript = _legacy_load.HubDatasetModuleFactoryWithScript
+    LocalDatasetModuleFactoryWithScript = _legacy_load.LocalDatasetModuleFactoryWithScript
+    resolve_trust_remote_code = _legacy_load.resolve_trust_remote_code
+    _get_importable_file_path = _legacy_load._get_importable_file_path
+    _create_importable_file = _legacy_load._create_importable_file
+    _load_importable_file = _legacy_load._load_importable_file
+    init_dynamic_modules = _legacy_load.init_dynamic_modules
+    files_to_hash = _legacy_load.files_to_hash
+    get_imports = _legacy_py_utils.get_imports
     _HAS_SCRIPT_LOADING = True
-except ImportError:
+except (ImportError, AttributeError):
     _HAS_SCRIPT_LOADING = False
     HubDatasetModuleFactoryWithScript = None  # type: ignore[assignment,misc]
     LocalDatasetModuleFactoryWithScript = None  # type: ignore[assignment,misc]
@@ -52,8 +52,6 @@ if not _HAS_SCRIPT_LOADING:
     from urllib.parse import urlparse
 
     from datasets.packaged_modules import _hash_python_lines
-    from datasets.utils.file_utils import url_or_path_join
-    from datasets.utils.hub import hf_dataset_url  # noqa: F401
     from filelock import FileLock
 
     def _compat_get_imports(
@@ -138,7 +136,10 @@ if not _HAS_SCRIPT_LOADING:
             with open(init_path, 'w'):
                 pass
             importlib.invalidate_caches()
-        dynamic_modules_path = os.path.join(hf_modules_cache, name)
+        cache_namespace = hashlib.sha256(
+            os.path.abspath(hf_modules_cache).encode('utf-8')).hexdigest()
+        dynamic_modules_path = os.path.join(hf_modules_cache,
+                                            f'{name}_{cache_namespace}')
         os.makedirs(dynamic_modules_path, exist_ok=True)
         init_path2 = os.path.join(dynamic_modules_path, '__init__.py')
         if not os.path.exists(init_path2):
@@ -270,7 +271,7 @@ if not _HAS_SCRIPT_LOADING:
     # -- trust handling ---------------------------------------------------
 
     def _compat_resolve_trust_remote_code(trust_remote_code, repo_id: str):
-        if trust_remote_code is None:
+        if trust_remote_code is not True:
             raise ValueError(
                 f'The repository for {repo_id} contains custom code which must be '
                 f'executed to correctly load the dataset. You can inspect the repository '

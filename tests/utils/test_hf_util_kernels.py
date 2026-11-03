@@ -253,8 +253,7 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
         variant matching already proves the ModelScope routing works.
         """
         if 'Cannot find a build variant' in str(exc):
-            self.skipTest(
-                'mirror carries no build variant for this platform')
+            self.skipTest('mirror carries no build variant for this platform')
 
     def test_from_modelscope_get_kernel(self):
         import modelscope

@@ -21,11 +21,11 @@ from unittest.mock import patch
 
 import pytest
 
-pytest.importorskip("modelscope_hub.kernels")
-
 from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
                                               patch_context, patch_hub,
                                               unpatch_hub)
+
+pytest.importorskip('modelscope_hub.kernels')
 
 
 def _import_kernels_api_module():

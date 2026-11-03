@@ -734,7 +734,8 @@ def _require_hub_module(module_name):
         warnings.warn(
             'The installed modelscope-hub is older than 0.7.0; '
             'huggingface_hub/kernels redirection is disabled until it is '
-            'upgraded (requires modelscope-hub>=0.7.0).', stacklevel=3)
+            'upgraded (requires modelscope-hub>=0.7.0).',
+            stacklevel=3)
     return False
 
 

@@ -17,6 +17,19 @@ from modelscope.utils.test_utils import (TEST_ACCESS_TOKEN1, TEST_MODEL_ORG,
 
 logger = get_logger()
 
+# The huggingface_hub function patches live in modelscope-hub>=0.7.0; on
+# older hubs they degrade to no-ops and the patch-assertion tests skip.
+_HF_HUB_PATCHES = False
+try:
+    from importlib.util import find_spec
+    _HF_HUB_PATCHES = find_spec(
+        'modelscope_hub.compat.hf_hub_patcher') is not None
+except Exception:  # noqa
+    _HF_HUB_PATCHES = False
+
+_skip_unless_hub_patches = unittest.skipUnless(
+    _HF_HUB_PATCHES, 'requires modelscope-hub>=0.7.0')
+
 
 class HFUtilTest(unittest.TestCase):
 
@@ -181,6 +194,7 @@ class HFUtilTest(unittest.TestCase):
             self.assertTrue(model is not None)
         self.assertFalse(hasattr(PeftModel, '_from_pretrained_origin'))
 
+    @_skip_unless_hub_patches
     def test_patch_file_exists(self):
         with patch_context():
             from huggingface_hub import file_exists
@@ -197,6 +211,7 @@ class HFUtilTest(unittest.TestCase):
         else:
             self.assertFalse(exists)
 
+    @_skip_unless_hub_patches
     def test_patch_file_download(self):
         with patch_context():
             from huggingface_hub import hf_hub_download
@@ -206,6 +221,7 @@ class HFUtilTest(unittest.TestCase):
             logger.info('patch file_download dir: ' + local_dir)
             self.assertTrue(local_dir is not None)
 
+    @_skip_unless_hub_patches
     def test_patch_create_repo(self):
         with patch_context():
             from huggingface_hub import create_repo
@@ -231,6 +247,7 @@ class HFUtilTest(unittest.TestCase):
             self.assertTrue(
                 file_exists(self.create_model_name, 'test_folder2/2.json'))
 
+    @_skip_unless_hub_patches
     def test_who_am_i(self):
         with patch_context():
             from huggingface_hub import whoami

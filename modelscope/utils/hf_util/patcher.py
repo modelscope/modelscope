@@ -77,8 +77,7 @@ def get_all_imported_modules():
                             pass
         else:
             all_imported_modules.extend([
-                getattr(lazy_module, _import)
-                for _import in dir(lazy_module)
+                getattr(lazy_module, _import) for _import in dir(lazy_module)
                 if not _import.startswith('__') and any([
                     re.fullmatch(name, _import)
                     for name in transformers_include_names
@@ -267,8 +266,15 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
 
 
 def _patch_dynamic_module():
-    """Globally patch ``get_class_from_dynamic_module`` to redirect to ModelScope."""
-    from transformers import dynamic_module_utils
+    """Globally patch ``get_class_from_dynamic_module`` to redirect to ModelScope.
+
+    No-op when transformers is not installed, so ``patch_hub()`` stays usable
+    in a transformers-less environment.
+    """
+    try:
+        from transformers import dynamic_module_utils
+    except ImportError:
+        return
     if not hasattr(dynamic_module_utils,
                    'origin_get_class_from_dynamic_module'):
         dynamic_module_utils.origin_get_class_from_dynamic_module = dynamic_module_utils.get_class_from_dynamic_module
@@ -278,7 +284,10 @@ def _patch_dynamic_module():
 
 
 def _unpatch_dynamic_module():
-    from transformers import dynamic_module_utils
+    try:
+        from transformers import dynamic_module_utils
+    except ImportError:
+        return
     if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
         dynamic_module_utils.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
         from transformers.models.auto import configuration_auto
@@ -644,8 +653,10 @@ def _patch_kernels():
     The implementation lives in `modelscope_hub.kernels`, so this package and
     a direct ``from modelscope_hub.kernels import get_kernel`` share one shim
     backed by the current hub SDK: one ``MsKernelApi``, one patch state.
-    Requires ``modelscope-hub>=0.7.0``.
+    Requires ``modelscope-hub>=0.7.0``; no-op on older versions.
     """
+    if not _require_hub_module(_KERNELS_COMPAT):
+        return
     from modelscope_hub.kernels import patch_kernels_hub
 
     patch_kernels_hub()
@@ -653,9 +664,10 @@ def _patch_kernels():
 
 def _unpatch_kernels():
     """Undo `_patch_kernels` via `modelscope_hub.kernels`."""
-    from modelscope_hub.kernels import unpatch_kernels_hub
+    if _hub_module_available(_KERNELS_COMPAT):
+        from modelscope_hub.kernels import unpatch_kernels_hub
 
-    unpatch_kernels_hub()
+        unpatch_kernels_hub()
 
 
 @contextlib.contextmanager
@@ -664,8 +676,13 @@ def _kernels_patch_scope():
     block, unless an outer patch (e.g. `patch_hub()`) is already in effect.
 
     Backed by `modelscope_hub.kernels.patch_scope`, so the global patch
-    (`patch_hub`) and per-call scoped patches share one state.
+    (`patch_hub`) and per-call scoped patches share one state. On
+    ``modelscope-hub<0.7.0`` the scope is a no-op and `kernels` keeps using
+    the Hugging Face Hub.
     """
+    if not _hub_module_available(_KERNELS_COMPAT):
+        yield
+        return
     from modelscope_hub.kernels import patch_scope
 
     with patch_scope():
@@ -688,14 +705,49 @@ def _wrap_kernels_callable(attr_name):
     return _wrapped
 
 
+_HF_HUB_PATCHER = 'modelscope_hub.compat.hf_hub_patcher'
+_KERNELS_COMPAT = 'modelscope_hub.kernels'
+_warned_hub_070 = False
+
+
+def _hub_module_available(module_name):
+    """Whether the installed modelscope-hub provides ``module_name``.
+
+    Hub-side huggingface_hub/kernels patching ships in
+    ``modelscope-hub>=0.7.0``; on older versions the shims degrade to no-ops.
+    """
+    try:
+        from importlib.util import find_spec
+        return find_spec(module_name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _require_hub_module(module_name):
+    """Like `_hub_module_available`, but warns once when the module is absent."""
+    global _warned_hub_070
+    if _hub_module_available(module_name):
+        return True
+    if not _warned_hub_070:
+        _warned_hub_070 = True
+        import warnings
+        warnings.warn(
+            'The installed modelscope-hub is older than 0.7.0; '
+            'huggingface_hub/kernels redirection is disabled until it is '
+            'upgraded (requires modelscope-hub>=0.7.0).', stacklevel=3)
+    return False
+
+
 def _patch_hub():
     """Route huggingface_hub module functions to ModelScope via modelscope_hub.
 
     The implementation lives in ``modelscope_hub.compat.hf_hub_patcher``;
     this shim additionally bridges ``transformers.utils.hub`` (the
     transformers-side entrypoints of ``push_to_hub``) onto the patched
-    huggingface_hub functions.
+    huggingface_hub functions. No-op on ``modelscope-hub<0.7.0``.
     """
+    if not _require_hub_module(_HF_HUB_PATCHER):
+        return
     from modelscope_hub.compat.hf_hub_patcher import patch_hf_hub
 
     patch_hf_hub()
@@ -705,9 +757,10 @@ def _patch_hub():
 def _unpatch_hub():
     """Undo `_patch_hub` (transformers bridge first, then the hub patches)."""
     _unpatch_transformers_hub()
-    from modelscope_hub.compat.hf_hub_patcher import unpatch_hf_hub
+    if _hub_module_available(_HF_HUB_PATCHER):
+        from modelscope_hub.compat.hf_hub_patcher import unpatch_hf_hub
 
-    unpatch_hf_hub()
+        unpatch_hf_hub()
 
 
 def _patch_transformers_hub():

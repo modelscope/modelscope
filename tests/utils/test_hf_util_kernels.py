@@ -8,6 +8,9 @@ Requirements verified:
    `_get_hf_api` patch to anyone else.
 2. `patch_hub()` / `patch_context()` makes `from kernels import get_kernel`
    also route downloads through ModelScope; `unpatch_hub()` restores it.
+
+The whole module requires `modelscope_hub.kernels` (`modelscope-hub>=0.7.0`);
+it is skipped on older hubs where the kernels shims degrade to no-ops.
 """
 import contextlib
 import os
@@ -15,6 +18,10 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
+
+import pytest
+
+pytest.importorskip("modelscope_hub.kernels")
 
 from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
                                               patch_context, patch_hub,
@@ -138,9 +145,8 @@ class KernelsProxyApiTest(_KernelsTestBase):
                 max_workers=4)
         kwargs = hub_api_cls.return_value.download_repo.call_args.kwargs
         # `main` is normalized to `master`; kernel repos map onto model repos.
-        self.assertEqual(
-            hub_api_cls.return_value.download_repo.call_args.args,
-            ('foo/bar', 'model'))
+        self.assertEqual(hub_api_cls.return_value.download_repo.call_args.args,
+                         ('foo/bar', 'model'))
         self.assertEqual(kwargs['revision'], 'master')
         self.assertEqual(kwargs['allow_patterns'], ['build/*'])
         self.assertEqual(kwargs['ignore_patterns'], ['*.md'])

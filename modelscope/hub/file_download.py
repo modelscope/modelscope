@@ -265,6 +265,20 @@ def http_get_model_file(
     return None if has_retry else hash_sha256.hexdigest()
 
 
+def _complete_length_from_content_range(
+        content_range: Optional[str]) -> Optional[int]:
+    """Size of the whole file as advertised by a ``Content-Range`` header.
+
+    The header looks like ``bytes 100-999/1000``; the value after the slash
+    is the complete length, or ``*`` when the server does not know it.
+    Returns None when the complete length cannot be determined.
+    """
+    if not content_range:
+        return None
+    complete_length = content_range.rsplit('/', 1)[-1].strip()
+    return int(complete_length) if complete_length.isdigit() else None
+
+
 def http_get_file(
     url: str,
     local_dir: str,
@@ -291,6 +305,7 @@ def http_get_file(
 
     """
     total = -1
+    expected_size = None
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
     get_headers = {} if headers is None else copy.deepcopy(headers)
@@ -314,8 +329,25 @@ def http_get_file(
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
                 r.raise_for_status()
                 content_length = r.headers.get('Content-Length')
+                content_encoding = r.headers.get('Content-Encoding')
                 total = int(
                     content_length) if content_length is not None else None
+                # `Content-Length` describes *this* response, which is not
+                # always the size of the file we end up writing to disk: it is
+                # absent for chunked responses, it counts the encoded bytes
+                # when the server applies a `Content-Encoding` such as gzip
+                # (requests hands us the decoded stream), and it excludes the
+                # bytes already on disk when a resumed request is answered
+                # with `206 Partial Content`. Only keep an expected on-disk
+                # size when one can actually be established.
+                if total is None or (content_encoding
+                                     or 'identity').lower() != 'identity':
+                    expected_size = None
+                elif r.status_code == 206:  # Partial Content
+                    expected_size = _complete_length_from_content_range(
+                        r.headers.get('Content-Range'))
+                else:
+                    expected_size = total
                 progress = tqdm(
                     unit='B',
                     unit_scale=True,
@@ -337,11 +369,14 @@ def http_get_file(
 
     logger.debug('storing %s in cache at %s', url, local_dir)
     downloaded_length = os.path.getsize(temp_file.name)
-    if total != downloaded_length:
+    # A response that really is truncated already raises while being read,
+    # because urllib3 enforces the declared `Content-Length`, so skipping the
+    # check when no expected size is available does not lose coverage.
+    if expected_size is not None and expected_size != downloaded_length:
         os.remove(temp_file.name)
         msg = 'File %s download incomplete, content_length: %s but the \
                     file downloaded length: %s, please download again' % (
-            file_name, total, downloaded_length)
+            file_name, expected_size, downloaded_length)
         logger.error(msg)
         raise FileDownloadError(msg)
     os.replace(temp_file.name, os.path.join(local_dir, file_name))

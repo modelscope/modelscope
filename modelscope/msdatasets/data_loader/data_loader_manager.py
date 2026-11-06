@@ -58,7 +58,24 @@ class LocalDataLoaderManager(DataLoaderManager):
         download_mode = self.dataset_context_config.download_mode
         use_streaming = self.dataset_context_config.use_streaming
         trust_remote_code = self.dataset_context_config.trust_remote_code
-        input_config_kwargs = self.dataset_context_config.config_kwargs
+        input_config_kwargs = dict(self.dataset_context_config.config_kwargs)
+        features = self.dataset_context_config.features
+        info_only = self.dataset_context_config.dataset_info_only
+        script_path = dataset_name if dataset_name.endswith(
+            '.py') else os.path.join(
+                dataset_name,
+                os.path.basename(os.path.normpath(dataset_name)) + '.py')
+        is_script = os.path.isfile(script_path)
+        if is_script:
+            dataset_name = script_path
+        token = self.dataset_context_config.token
+        if token:
+            storage_options = dict(
+                input_config_kwargs.get('storage_options') or {})
+            storage_options['modelscope'] = {
+                **storage_options.get('modelscope', {}), 'token': token
+            }
+            input_config_kwargs['storage_options'] = storage_options
 
         # load local single file
         if os.path.isfile(dataset_name):
@@ -76,8 +93,15 @@ class LocalDataLoaderManager(DataLoaderManager):
                     f'Use trust_remote_code=True. Will invoke codes from {dataset_name}. Please make '
                     'sure that you can trust the external codes.')
 
+            loader = hf_data_loader
+            if is_script or info_only:
+                from modelscope.msdatasets.utils.hf_datasets_util import DatasetsWrapperHF
+                loader = DatasetsWrapperHF.load_dataset
+                input_config_kwargs['trust_remote_code'] = trust_remote_code
+                input_config_kwargs['dataset_info_only'] = info_only
+
             # Build huggingface data loader and return dataset.
-            return hf_data_loader(
+            return loader(
                 dataset_name,
                 name=subset_name,
                 revision=version,
@@ -87,6 +111,8 @@ class LocalDataLoaderManager(DataLoaderManager):
                 cache_dir=cache_root_dir,
                 download_mode=download_mode.value,
                 streaming=use_streaming,
+                features=features,
+                token=False,
                 **input_config_kwargs)
         raise f'Expected local data loader type: {LocalDataLoaderType.HF_DATA_LOADER.value}.'
 
@@ -97,7 +123,9 @@ class RemoteDataLoaderManager(DataLoaderManager):
     def __init__(self, dataset_context_config: DatasetContextConfig):
         super().__init__(dataset_context_config=dataset_context_config)
 
-        self.api = HubApi(token=dataset_context_config.token)
+        self.api = HubApi(
+            endpoint=dataset_context_config.endpoint,
+            token=dataset_context_config.token)
 
     def load_dataset(self, data_loader_type: enum.Enum):
         # Get args from context

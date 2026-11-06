@@ -23,12 +23,15 @@ class DataDownloadManager(DownloadManager):
                   download_config: DataDownloadConfig) -> str:
         url_or_filename = str(url_or_filename)
 
-        oss_utilities = OssUtilities(
-            dataset_name=download_config.dataset_name,
-            namespace=download_config.namespace,
-            revision=download_config.version)
-
         if is_relative_path(url_or_filename):
+            options = (download_config.storage_options
+                       or {}).get('modelscope', {})
+            oss_utilities = OssUtilities(
+                dataset_name=download_config.dataset_name,
+                namespace=download_config.namespace,
+                revision=download_config.version,
+                endpoint=options.get('endpoint'),
+                token=options.get('token'))
             # fetch oss files
             return oss_utilities.download(
                 url_or_filename, download_config=download_config)
@@ -54,12 +57,15 @@ class DataStreamingDownloadManager(StreamingDownloadManager):
 
     def _download(self, url_or_filename: str) -> str:
         url_or_filename = str(url_or_filename)
-        oss_utilities = OssUtilities(
-            dataset_name=self.download_config.dataset_name,
-            namespace=self.download_config.namespace,
-            revision=self.download_config.version)
-
         if is_relative_path(url_or_filename):
+            options = (self.download_config.storage_options
+                       or {}).get('modelscope', {})
+            oss_utilities = OssUtilities(
+                dataset_name=self.download_config.dataset_name,
+                namespace=self.download_config.namespace,
+                revision=self.download_config.version,
+                endpoint=options.get('endpoint'),
+                token=options.get('token'))
             # fetch oss files
             return oss_utilities.download(
                 url_or_filename, download_config=self.download_config)

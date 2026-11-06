@@ -112,17 +112,25 @@ class GeneralMsDatasetTest(unittest.TestCase):
     def test_local_py_script(self):
         # Download the dataset files to temp directory
         from tempfile import TemporaryDirectory
-        py_script_url = 'https://modelscope.cn/datasets/wangxingjun778/glue_test/resolve/master/glue_test.py'
+        from modelscope.hub.api import HubApi
+
         with TemporaryDirectory() as tmp_dir:
-            os.makedirs(tmp_dir, exist_ok=True)
-            os.system(f'wget -P {tmp_dir} {py_script_url}')
-            py_script_file = os.path.join(tmp_dir, 'glue_test.py')
-            assert os.path.exists(py_script_file), f'File not found: {py_script_file}, ' \
-                                                   f'please check the url: {py_script_url}'
+            py_script_file = str(HubApi().download_file(
+                'wangxingjun778/glue_test',
+                'dataset',
+                'glue_test.py',
+                revision='master',
+                local_dir=tmp_dir))
+            assert os.path.exists(
+                py_script_file), f'File not found: {py_script_file}'
 
             # Load the dataset
             ds = MsDataset.load(
-                py_script_file, subset_name='cola', split='train')
+                py_script_file,
+                subset_name='cola',
+                split='train',
+                trust_remote_code=True,
+                cache_dir=tmp_dir)
             sample = next(iter(ds))
             logger.info(f'>>output of test_local_py_script:\n {sample}')
             assert sample
@@ -132,14 +140,19 @@ class GeneralMsDatasetTest(unittest.TestCase):
     def test_local_img_folder(self):
         # Download the dataset files to temp directory
         from tempfile import TemporaryDirectory
-        img_url = 'https://modelscope.cn/datasets/wangxingjun778/test_img_dataset/resolve/master/data/train/' \
-                  '000000573258.jpg'
+        from modelscope.hub.api import HubApi
+
         with TemporaryDirectory() as tmp_dir:
-            os.makedirs(tmp_dir, exist_ok=True)
-            os.system(f'wget -P {tmp_dir} {img_url}')
+            HubApi().download_file(
+                'wangxingjun778/test_img_dataset',
+                'dataset',
+                'data/train/000000573258.jpg',
+                revision='master',
+                local_dir=tmp_dir)
 
             # Load the local image folder
-            ds = MsDataset.load('imagefolder', data_dir=tmp_dir)
+            ds = MsDataset.load(
+                'imagefolder', data_dir=tmp_dir, cache_dir=tmp_dir)
             sample = next(iter(ds))
             logger.info(f'>>output of test_local_img_folder:\n {sample}')
             assert sample

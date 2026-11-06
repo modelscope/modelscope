@@ -5,7 +5,7 @@ Requirements verified:
 
 1. `from modelscope import get_kernel` works without `patch_hub()` first and
    routes downloads through ModelScope, without leaking the
-   `kernels.utils._get_hf_api` patch to anyone else.
+   `_get_hf_api` patch to anyone else.
 2. `patch_hub()` / `patch_context()` makes `from kernels import get_kernel`
    also route downloads through ModelScope; `unpatch_hub()` restores it.
 """
@@ -16,7 +16,8 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
+from modelscope.utils.hf_util.patcher import (_import_kernels_api_module,
+                                              _patch_kernels, _unpatch_kernels,
                                               patch_context, patch_hub,
                                               unpatch_hub)
 
@@ -24,7 +25,7 @@ from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
 def _ensure_kernels_installed():
     try:
         from kernels import get_kernel  # noqa: F401
-        from kernels.utils import _get_hf_api  # noqa: F401
+        _import_kernels_api_module()
     except ImportError:
         subprocess.check_call(
             [sys.executable, '-m', 'pip', 'install', '-q', 'kernels'])
@@ -66,10 +67,10 @@ class _KernelsTestBase(unittest.TestCase):
     def setUp(self):
         _unpatch_kernels()
         # Instance attribute, so the descriptor protocol is not triggered.
-        from kernels.utils import _get_hf_api
-        from kernels import utils as kernels_utils
-        self.original_get_hf_api = _get_hf_api
-        self.kernels_utils = kernels_utils
+        # kernels >= 0.17 renamed `kernels.utils` to `kernels.hf_hub`.
+        kernels_api = _import_kernels_api_module()
+        self.original_get_hf_api = kernels_api._get_hf_api
+        self.kernels_utils = kernels_api
 
     def tearDown(self):
         _unpatch_kernels()
@@ -84,7 +85,7 @@ class _KernelsTestBase(unittest.TestCase):
 
 class KernelsProxyApiTest(_KernelsTestBase):
     """Low-level proxy API behaviour exercised against the real
-    `kernels.utils` module.
+    `kernels.utils` / `kernels.hf_hub` module.
     """
 
     def _patched_api(self):

@@ -67,7 +67,12 @@ class OssUtilities:
     A utility class for handling Alibaba Cloud OSS operations such as upload and download.
     """
 
-    def __init__(self, dataset_name, namespace, revision):
+    def __init__(self,
+                 dataset_name,
+                 namespace,
+                 revision,
+                 endpoint=None,
+                 token=None):
         """
         Initializes the OssUtilities with the given OSS configuration and dataset information.
         """
@@ -75,7 +80,7 @@ class OssUtilities:
         self.namespace = namespace
         self.revision = revision
 
-        self.api = HubApi()
+        self.api = HubApi(endpoint=endpoint, token=token)
         oss_config = self.api.get_dataset_access_config_session(
             dataset_name=self.dataset_name,
             namespace=self.namespace,

@@ -22,7 +22,9 @@ class DataMetaManager(object):
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         self.dataset_context_config = dataset_context_config
-        self.api = HubApi()
+        self.api = HubApi(
+            endpoint=dataset_context_config.endpoint,
+            token=dataset_context_config.token)
 
     def fetch_meta_files(self) -> None:
 
@@ -95,7 +97,10 @@ class DataMetaManager(object):
         if '.py' in dataset_scripts:
             tmp_py_scripts = dataset_scripts['.py']
             if len(tmp_py_scripts) > 0:
-                data_meta_config.dataset_py_script = tmp_py_scripts[0]
+                data_meta_config.dataset_py_script = next(
+                    (path for path in tmp_py_scripts
+                     if os.path.basename(path) == f'{dataset_name}.py'),
+                    tmp_py_scripts[0])
 
         # Set dataset_context_config
         self.dataset_context_config.data_meta_config = data_meta_config
@@ -120,7 +125,11 @@ class DataMetaManager(object):
                 'Cannot find dataset meta-files, please fetch meta from modelscope hub.'
             )
         if '.py' in dataset_scripts:
-            dataset_py_script = dataset_scripts['.py'][0]
+            scripts = dataset_scripts['.py']
+            dataset_py_script = next(
+                (path for path in scripts
+                 if os.path.basename(path) == f'{dataset_name}.py'),
+                scripts[0])
         for json_path in dataset_scripts['.json']:
             if json_path.endswith(f'{dataset_name}.json'):
                 with open(json_path, encoding='utf-8') as dataset_json_file:
@@ -130,6 +139,11 @@ class DataMetaManager(object):
             raise FileNotFoundError(
                 f'File {dataset_name}.json and {dataset_name}.py not found,'
                 'please specify at least one meta-file.')
+
+        if self.dataset_context_config.dataset_info_only and dataset_json and not dataset_py_script:
+            data_meta_config.target_dataset_structure = dataset_json
+            self.dataset_context_config.data_meta_config = data_meta_config
+            return
 
         # Parse meta and get dataset structure
         if dataset_py_script:
@@ -169,10 +183,13 @@ class DataMetaManager(object):
     def _fetch_meta_from_hub(self, dataset_name: str, namespace: str,
                              revision: str, meta_cache_dir: str):
 
-        _api = HubApi()
-        endpoint = _api.get_endpoint_for_read(
+        token = self.dataset_context_config.token
+        endpoint = self.api.get_endpoint_for_read(
             repo_id=namespace + '/' + dataset_name,
-            repo_type=REPO_TYPE_DATASET)
+            repo_type=REPO_TYPE_DATASET,
+            token=token)
+        self.api = HubApi(endpoint=endpoint, token=token)
+        self.dataset_context_config.endpoint = endpoint
         # Fetch id and type of dataset
         dataset_id, dataset_type = self.api.get_dataset_id_and_type(
             dataset_name, namespace, endpoint)

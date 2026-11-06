@@ -25,8 +25,8 @@ from modelscope.msdatasets.dataset_cls import (ExternalDataset,
                                                NativeIterableDataset)
 from modelscope.msdatasets.download.download_manager import \
     DataStreamingDownloadManager
-from modelscope.msdatasets.utils.dataset_utils import \
-    get_subdir_hash_from_split
+from modelscope.msdatasets.utils.dataset_utils import (
+    download_meta_file, get_subdir_hash_from_split)
 from modelscope.utils.constant import (DEFAULT_DATASET_NAMESPACE,
                                        DatasetPathName, DownloadMode)
 from modelscope.utils.logger import get_logger
@@ -41,6 +41,7 @@ class CsvDatasetBuilder(csv.Csv):
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         # Init config args
+        self._dataset_context_config: DatasetContextConfig = dataset_context_config
         self.dataset_name = dataset_context_config.dataset_name
         self.cache_root_dir = dataset_context_config.cache_root_dir
         self.namespace = dataset_context_config.namespace
@@ -49,7 +50,7 @@ class CsvDatasetBuilder(csv.Csv):
         self.split = dataset_context_config.split
         self.meta_data_files = dataset_context_config.data_meta_config.meta_data_files
         self.zip_data_files = dataset_context_config.data_meta_config.zip_data_files
-        self.input_config_kwargs = dataset_context_config.config_kwargs
+        self.input_config_kwargs = dict(dataset_context_config.config_kwargs)
         self.split_path_dict = dict({})
 
         self.cache_build_dir = os.path.join(self.cache_root_dir,
@@ -81,6 +82,8 @@ class CsvDatasetBuilder(csv.Csv):
             config_name=self.namespace,
             hash=sub_dir_hash,
             data_files=data_files,
+            features=dataset_context_config.features,
+            token=False,
             **self.input_config_kwargs)
 
         self.info.builder_name = self.dataset_name
@@ -225,7 +228,8 @@ class CsvDatasetBuilder(csv.Csv):
             os.makedirs(target_cache_dir, exist_ok=True)
 
         self.local_meta_csv_paths = {
-            k: HubApi.fetch_meta_files_from_url(v, target_cache_dir)
+            k: download_meta_file(v, self._dataset_context_config,
+                                  target_cache_dir)
             for k, v in self.meta_data_files.items()
         }
 
@@ -262,8 +266,8 @@ class CsvDatasetBuilder(csv.Csv):
             else:
                 logger.warning(f'Nothing to do for field {field_name}')
 
-        pa_data = pa.Table.from_pandas(df)
-        return Dataset(arrow_table=pa_data)
+        return Dataset.from_pandas(
+            df, features=self.info.features, preserve_index=False)
 
     def as_dataset(self) -> DatasetDict:
 
@@ -325,6 +329,7 @@ class IterableDatasetBuilder(csv.Csv):
 
     def __init__(self, dataset_context_config: DatasetContextConfig):
         # Init config args
+        self._dataset_context_config: DatasetContextConfig = dataset_context_config
         self.dataset_name = dataset_context_config.dataset_name
         self.cache_root_dir = dataset_context_config.cache_root_dir
         self.namespace = dataset_context_config.namespace
@@ -333,7 +338,7 @@ class IterableDatasetBuilder(csv.Csv):
         self.split = dataset_context_config.split
         self.meta_data_files = dataset_context_config.data_meta_config.meta_data_files
         self.zip_data_files = dataset_context_config.data_meta_config.zip_data_files
-        self.input_config_kwargs = dataset_context_config.config_kwargs
+        self.input_config_kwargs = dict(dataset_context_config.config_kwargs)
         self.stream_batch_size = dataset_context_config.stream_batch_size
 
         self.cache_build_dir = os.path.join(self.cache_root_dir,
@@ -355,12 +360,15 @@ class IterableDatasetBuilder(csv.Csv):
             config_name=self.namespace,
             hash=sub_dir_hash,
             data_files=None,  # TODO: self.meta_data_files,
+            features=dataset_context_config.features,
+            token=False,
             **self.input_config_kwargs)
 
         self.info.builder_name = self.dataset_name
         self.name = camelcase_to_snakecase(self.dataset_name)
 
         self.meta_csv_df = None
+        self._meta_csv_cache: Dict[str, pd.DataFrame] = {}
         self.meta_cache_dir = dataset_context_config.data_meta_config.meta_cache_dir
 
     @staticmethod
@@ -383,7 +391,6 @@ class IterableDatasetBuilder(csv.Csv):
                 f'Loading a streaming dataset cached in a {type(self._fs).__name__} is not supported yet.'
             )
 
-        self._check_manual_download(dl_manager)
         splits_generators = {
             sg.name: sg
             for sg in self._split_generators(dl_manager)
@@ -425,7 +432,7 @@ class IterableDatasetBuilder(csv.Csv):
                         name=split_name,
                         gen_kwargs={
                             'meta': meta_file_url,
-                            'files': [],
+                            'files': None,
                             'dl_manager': dl_manager,
                         }))
 
@@ -479,7 +486,9 @@ class IterableDatasetBuilder(csv.Csv):
         files = gen_kwargs.get('files')
         dl_manager = gen_kwargs.get('dl_manager')
 
-        hub_api = HubApi()
+        hub_api = HubApi(
+            endpoint=self._dataset_context_config.endpoint,
+            token=self._dataset_context_config.token)
         is_zip = False
         zip_file_name = ''
 
@@ -490,13 +499,17 @@ class IterableDatasetBuilder(csv.Csv):
                 zip_file_name = os.path.splitext(zip_file)[0]
 
         if meta_file_url and not files:
-            self._get_meta_csv_df(meta_file_url)
-            pa_table = pa.Table.from_pandas(self.meta_csv_df)
+            frame = self._get_meta_csv_df(meta_file_url)
+            pa_table = pa.Table.from_pandas(
+                frame,
+                schema=self.info.features.arrow_schema
+                if self.info.features else None,
+                preserve_index=False)
             yield 0, pa_table
 
         elif meta_file_url and files:
             # Get meta file
-            self._get_meta_csv_df(meta_file_url)
+            frame = self._get_meta_csv_df(meta_file_url)
 
             if is_zip:
                 oss_config_for_unzipped = hub_api.get_dataset_access_config_for_unzipped(
@@ -504,7 +517,11 @@ class IterableDatasetBuilder(csv.Csv):
                     zip_file_name)
                 dl_manager.download_config.oss_config = oss_config_for_unzipped
 
-            pa_table = pa.Table.from_pandas(self.meta_csv_df)
+            pa_table = pa.Table.from_pandas(
+                frame,
+                schema=self.info.features.arrow_schema
+                if self.info.features else None,
+                preserve_index=False)
             yield 0, pa_table
 
         elif not meta_file_url and files:
@@ -514,14 +531,15 @@ class IterableDatasetBuilder(csv.Csv):
         else:
             raise f'Neither column meta nor data file found in {self.dataset_name}.json .'
 
-    def _get_meta_csv_df(self, meta_file_url: str) -> None:
-        if self.meta_csv_df is None or self.meta_csv_df.empty:
-            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
-                meta_file_url, self.meta_cache_dir)
-            self.meta_csv_df = pd.read_csv(
-                meta_csv_file_path,
-                iterator=False,
-                delimiter=self.csv_delimiter)
+    def _get_meta_csv_df(self, meta_file_url: str) -> pd.DataFrame:
+        if meta_file_url not in self._meta_csv_cache:
+            path = download_meta_file(meta_file_url,
+                                      self._dataset_context_config,
+                                      self.meta_cache_dir)
+            self._meta_csv_cache[meta_file_url] = pd.read_csv(
+                path, iterator=False, delimiter=self.csv_delimiter)
+        self.meta_csv_df = self._meta_csv_cache[meta_file_url]
+        return self.meta_csv_df
 
     @staticmethod
     def trans_data_to_mapping(headers: str, texts: list, delimiter: str):

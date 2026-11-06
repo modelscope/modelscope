@@ -6,10 +6,17 @@ Two layers of coverage:
 1. ``--help`` smoke tests via ``subprocess`` — they verify argument plumbing
    without touching the network.
 2. Direct calls into :class:`~modelscope.cli.studio.StudioCMD` with
-   :class:`~argparse.Namespace` instances and mocked :class:`HubApi` methods,
-   which exercise the dispatch logic that ``subprocess`` cannot mock.
+   :class:`argparse.Namespace` instances — these exercise the dispatch
+   logic against the real API (``print`` is mocked for output capture).
+
+Secret/variable ``description`` coverage is gated on
+:func:`_hub_supports_description` and the Studio OAuth app configuration on
+:func:`_hub_supports_studio_oauth`, because the modelscope_hub floor pinned
+in requirements/hub.txt predates both features; the gates disappear from the
+reports once an adapted hub is installed.
 """
 import argparse
+import inspect
 import os
 import shutil
 import subprocess
@@ -24,6 +31,42 @@ from tests.studios.conftest_env import (TestResultMixin, create_temp_studio,
 
 from modelscope.cli.studio import StudioCMD
 from modelscope.hub.api import HubApi
+
+
+def _hub_supports_description():
+    """True when the installed modelscope_hub forwards secret/variable
+    ``description`` fields.
+
+    The description support landed in modelscope_hub after the 0.4.6 release
+    currently pinned as the floor in requirements/hub.txt. Guard the
+    new-surface tests so this suite still passes against the released floor
+    while exercising the full surface once an adapted hub is installed.
+    """
+    try:
+        from modelscope_hub.api import HubApi as _HubApi
+    except ImportError:  # pragma: no cover
+        return False
+    try:
+        return 'description' in inspect.signature(
+            _HubApi.add_secret).parameters
+    except (AttributeError, TypeError):  # pragma: no cover
+        return False
+
+
+def _hub_supports_studio_oauth():
+    """True when the installed modelscope_hub exposes the Studio OAuth app
+    configuration flags (``--oauth-enabled`` and friends on
+    ``studio settings`` / ``create``).
+
+    The Studio OAuth surface comes from the modelscope_service
+    ``feat/openAPI_studios_ouath`` branch and is adapted in modelscope_hub
+    after the 0.4.6 release floor; guard the new tests accordingly.
+    """
+    try:
+        from modelscope_hub.cli import studio as _hub_studio_cli
+    except ImportError:  # pragma: no cover
+        return False
+    return 'oauth_enabled' in getattr(_hub_studio_cli, '_SETTINGS_FIELDS', ())
 
 
 def _cli_invocation():
@@ -97,6 +140,55 @@ class TestStudioCLIHelp(TestResultMixin, unittest.TestCase):
         self.assertEqual(stat, 0, output)
         for sub in ('list', 'add', 'update', 'delete'):
             self.assertIn(sub, output)
+
+    def test_studio_group_lists_secret_and_variable(self):
+        """The re-exported ``studio`` group surfaces both leaf families.
+
+        Variables are deliberately separate from secrets: their values are
+        public, so the leaf surface must not silently disappear behind the
+        re-export.
+        """
+        stat, output = self._run_help('studio')
+        self.assertEqual(stat, 0, output)
+        for sub in ('secret', 'variable'):
+            self.assertIn(sub, output)
+
+    @unittest.skipUnless(
+        _hub_supports_description(),
+        'modelscope_hub with secret/variable description support required')
+    def test_description_flag_in_help(self):
+        """``--description`` is exposed on secret/variable add and update."""
+        for cli_args in (('studio', 'secret', 'add'),
+                         ('studio', 'secret', 'update'),
+                         ('studio', 'variable', 'add'),
+                         ('studio', 'variable', 'update')):
+            stat, output = self._run_help(*cli_args)
+            self.assertEqual(stat, 0, output)
+            self.assertIn('--description', output)
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_oauth_flags_in_create_help(self):
+        """``create`` exposes the Studio OAuth app configuration flags."""
+        stat, output = self._run_help('create')
+        self.assertEqual(stat, 0, output)
+        for flag in ('--oauth-enabled', '--oauth-scope',
+                     '--oauth-token-expire-time', '--oauth-callback-url',
+                     '--oauth-homepage-url'):
+            self.assertIn(flag, output)
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_oauth_flags_in_settings_help(self):
+        """``studio settings`` exposes the Studio OAuth app flags."""
+        stat, output = self._run_help('studio', 'settings')
+        self.assertEqual(stat, 0, output)
+        for flag in ('--oauth-enabled', '--no-oauth-enabled', '--oauth-scope',
+                     '--oauth-token-expire-time', '--oauth-callback-url',
+                     '--oauth-homepage-url'):
+            self.assertIn(flag, output)
 
     def test_download_repo_type_includes_model(self):
         stat, output = self._run_help('download')
@@ -213,7 +305,7 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         }
         create_kwargs.update(kwargs)
         print(f'Creating studio {repo_id} with config: {self.config}')
-        url = api.create_repo(
+        result = api.create_repo(
             repo_id,
             repo_type='studio',
             visibility=self.config.get('visibility', 'private'),
@@ -224,13 +316,14 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
             **create_kwargs,
         )
         self._created_studios.append(repo_id)
-        print(f'Created studio {repo_id} at {url}')
-        return repo_id, url
+        print(f'Created studio {repo_id}: {result}')
+        return repo_id, result
 
     def test_create_studio_basic(self):
         """Create a basic studio and verify it exists."""
-        repo_id, url = self._create_and_track(sdk_type='gradio')
-        self.assertIn(repo_id, url)
+        repo_id, result = self._create_and_track(sdk_type='gradio')
+        # modelscope_hub's create_repo returns a RepoInfo, not a URL string.
+        self.assertEqual(result.id, repo_id)
         # Verify it actually exists
         api = HubApi()
         exists = api.repo_exists(repo_id, repo_type='studio', token=self.token)
@@ -241,8 +334,9 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
         """Creating an existing studio with exist_ok=True should not raise."""
         repo_id, _ = self._create_and_track(sdk_type='gradio')
         api = HubApi()
-        # Create again with exist_ok=True
-        url = api.create_repo(
+        # Create again with exist_ok=True; it must not raise, and the studio
+        # must still exist afterwards.
+        api.create_repo(
             repo_id,
             repo_type='studio',
             visibility=self.config.get('visibility', 'private'),
@@ -251,7 +345,8 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
             exist_ok=True,
             create_default_config=False,
         )
-        self.assertIn(repo_id, url)
+        self.assertTrue(
+            api.repo_exists(repo_id, repo_type='studio', token=self.token))
 
     def test_create_studio_exist_raises(self):
         """Creating an existing studio without exist_ok should raise ValueError."""
@@ -267,6 +362,79 @@ class TestStudioCreate(TestResultMixin, unittest.TestCase):
                 exist_ok=False,
                 create_default_config=False,
             )
+
+
+class TestStudioOAuthSettingsDispatch(TestResultMixin, unittest.TestCase):
+    """Dispatch-level coverage for the Studio OAuth app configuration.
+
+    Mocked at the ``make_api`` boundary: the OAuth endpoints come from a
+    modelscope_service branch that may not be deployed on the configured
+    endpoint yet, so the assertions here cover CLI-to-payload plumbing only
+    (flag names, tri-state gating, grouping) rather than server round-trips.
+    """
+
+    def _settings_namespace(self, **oauth_fields):
+        base = {
+            'studio_action': 'settings',
+            'studio_id': 'owner/demo',
+            'settings': [],
+            'token': None,
+            'endpoint': None,
+        }
+        base.update(oauth_fields)
+        return argparse.Namespace(**base)
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_oauth_flags_reach_update_repo_settings(self):
+        from unittest.mock import MagicMock
+        args = self._settings_namespace(
+            oauth_enabled=True,
+            oauth_scope='openid profile',
+            oauth_token_expire_time=4,
+            oauth_callback_urls=['https://a.example/cb'],
+            oauth_homepage_url='https://example.org',
+        )
+        mock_api = MagicMock()
+        with patch('modelscope_hub.cli.studio.make_api',
+                   return_value=mock_api):
+            StudioCMD(args).execute()
+        mock_api.update_repo_settings.assert_called_once_with(
+            'owner/demo',
+            'studio',
+            oauth_enabled=True,
+            oauth_scope='openid profile',
+            oauth_token_expire_time=4,
+            oauth_callback_urls=['https://a.example/cb'],
+            oauth_homepage_url='https://example.org',
+        )
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_disable_oauth_sends_false(self):
+        from unittest.mock import MagicMock
+        args = self._settings_namespace(oauth_enabled=False)
+        mock_api = MagicMock()
+        with patch('modelscope_hub.cli.studio.make_api',
+                   return_value=mock_api):
+            StudioCMD(args).execute()
+        mock_api.update_repo_settings.assert_called_once_with(
+            'owner/demo', 'studio', oauth_enabled=False)
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_lone_oauth_scope_without_enabled_is_rejected(self):
+        # The server applies the oauth_* group only when oauth_enabled is
+        # explicitly present; the CLI must reject a lone scope flag instead of
+        # letting the server silently drop it.
+        args = self._settings_namespace(oauth_scope='openid')
+        with patch('modelscope_hub.cli.studio.make_api') as mock_make:
+            with self.assertRaises(ValueError):
+                StudioCMD(args).execute()
+        mock_make.assert_not_called()
 
 
 class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
@@ -299,11 +467,12 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
                 f'{cls.studio_id}')
 
     def setUp(self):
-        # Track secret keys created during a test for cleanup.
+        # Track secret/variable keys created during a test for cleanup.
         self._secrets_to_cleanup = []
+        self._variables_to_cleanup = []
 
     def tearDown(self):
-        # Best-effort cleanup of any secrets created during the test.
+        # Best-effort cleanup of any secrets/variables created during the test.
         if not self._cleanup:
             return
         api = HubApi()
@@ -313,12 +482,42 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
                     self.studio_id, key, token=self.token, endpoint=None)
             except Exception:
                 pass
+        for key in self._variables_to_cleanup:
+            try:
+                api.delete_studio_variable(
+                    self.studio_id, key, token=self.token, endpoint=None)
+            except Exception:
+                pass
 
     def _unique_secret_key(self):
         """Generate a unique secret key with test prefix."""
         key = f'_TEST_CLI_SECRET_{uuid4().hex[:8].upper()}'
         self._secrets_to_cleanup.append(key)
         return key
+
+    def _unique_variable_key(self):
+        """Generate a unique variable key with test prefix."""
+        key = f'_TEST_CLI_VARIABLE_{uuid4().hex[:8].upper()}'
+        self._variables_to_cleanup.append(key)
+        return key
+
+    def _find_secret_description(self, key):
+        """Return the stored description for *key* (None when unset/cleared)."""
+        api = HubApi()
+        for item in api.list_studio_secrets(
+                self.studio_id, token=self.token, endpoint=None):
+            if isinstance(item, dict) and item.get('key') == key:
+                return item.get('description')
+        self.fail(f'Secret {key!r} not found in list result')
+
+    def _find_variable(self, key):
+        """Return the stored variable dict for *key*."""
+        api = HubApi()
+        for item in api.list_studio_variables(
+                self.studio_id, token=self.token, endpoint=None):
+            if isinstance(item, dict) and item.get('key') == key:
+                return item
+        self.fail(f'Variable {key!r} not found in list result')
 
     def test_deploy_direct(self):
         args = argparse.Namespace(
@@ -414,6 +613,7 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             studio_id=self.studio_id,
             key=key,
             value='test_value',
+            description=None,
             token=self.token,
             endpoint=None,
         )
@@ -440,6 +640,7 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             studio_id=self.studio_id,
             key=key,
             value='updated_value',
+            description=None,
             token=self.token,
             endpoint=None,
         )
@@ -467,6 +668,220 @@ class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
             secret_action='delete',
             studio_id=self.studio_id,
             key=key,
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('deleted', printed.lower())
+
+    @unittest.skipUnless(
+        _hub_supports_description(),
+        'modelscope_hub with secret/variable description support required')
+    def test_secret_add_with_description_direct(self):
+        key = self._unique_secret_key()
+        args = argparse.Namespace(
+            studio_action='secret',
+            secret_action='add',
+            studio_id=self.studio_id,
+            key=key,
+            value='described_value',
+            description='used by the CLI test suite',
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('added', printed.lower())
+        self.assertEqual(
+            self._find_secret_description(key), 'used by the CLI test suite')
+
+    @unittest.skipUnless(
+        _hub_supports_description(),
+        'modelscope_hub with secret/variable description support required')
+    def test_secret_update_description_direct(self):
+        key = self._unique_secret_key()
+        api = HubApi()
+        api.add_studio_secret(
+            self.studio_id,
+            key,
+            'initial_value',
+            token=self.token,
+            endpoint=None)
+
+        args = argparse.Namespace(
+            studio_action='secret',
+            secret_action='update',
+            studio_id=self.studio_id,
+            key=key,
+            value='updated_value',
+            description='replacement description',
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('updated', printed.lower())
+        self.assertEqual(
+            self._find_secret_description(key), 'replacement description')
+
+        # Omitting description on a further update keeps the stored one
+        # (server treats the absent field as a pointer that must not rewrite
+        # the column; only an explicit empty string clears it).
+        args = argparse.Namespace(
+            studio_action='secret',
+            secret_action='update',
+            studio_id=self.studio_id,
+            key=key,
+            value='updated_again',
+            description=None,
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print'):
+            StudioCMD(args).execute()
+        self.assertEqual(
+            self._find_secret_description(key), 'replacement description')
+
+    @unittest.skipUnless(
+        _hub_supports_description(),
+        'modelscope_hub with secret/variable description support required')
+    def test_secret_update_description_clear_direct(self):
+        """Passing an empty description clears the stored one; it must not be
+        conflated with omitting the field (which keeps the stored value)."""
+        key = self._unique_secret_key()
+        args = argparse.Namespace(
+            studio_action='secret',
+            secret_action='add',
+            studio_id=self.studio_id,
+            key=key,
+            value='described_value',
+            description='will be cleared',
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print'):
+            StudioCMD(args).execute()
+        self.assertEqual(self._find_secret_description(key), 'will be cleared')
+
+        args = argparse.Namespace(
+            studio_action='secret',
+            secret_action='update',
+            studio_id=self.studio_id,
+            key=key,
+            value='updated_value',
+            description='',
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print'):
+            StudioCMD(args).execute()
+        self.assertFalse(self._find_secret_description(key))
+
+    def test_variable_add_direct(self):
+        key = self._unique_variable_key()
+        args = argparse.Namespace(
+            studio_action='variable',
+            variable_action='add',
+            studio_id=self.studio_id,
+            key=key,
+            value='var_value',
+            description=None,
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('added', printed.lower())
+
+    def test_variable_update_direct(self):
+        key = self._unique_variable_key()
+        api = HubApi()
+        api.add_studio_variable(
+            self.studio_id,
+            key,
+            'initial_value',
+            token=self.token,
+            endpoint=None)
+
+        args = argparse.Namespace(
+            studio_action='variable',
+            variable_action='update',
+            studio_id=self.studio_id,
+            key=key,
+            value='updated_value',
+            description=None,
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('updated', printed.lower())
+
+    def test_variable_list_direct(self):
+        args = argparse.Namespace(
+            studio_action='variable',
+            variable_action='list',
+            studio_id=self.studio_id,
+            token=self.token,
+            endpoint=None,
+        )
+        # Should not raise regardless of whether variables exist.
+        with patch('builtins.print'):
+            StudioCMD(args).execute()
+
+    @unittest.skipUnless(
+        _hub_supports_description(),
+        'modelscope_hub with secret/variable description support required')
+    def test_variable_add_with_description_direct(self):
+        key = self._unique_variable_key()
+        args = argparse.Namespace(
+            studio_action='variable',
+            variable_action='add',
+            studio_id=self.studio_id,
+            key=key,
+            value='public_value',
+            description='plaintext doc',
+            token=self.token,
+            endpoint=None,
+        )
+        with patch('builtins.print') as mock_print:
+            StudioCMD(args).execute()
+        printed = ' '.join(
+            str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        self.assertIn('added', printed.lower())
+        item = self._find_variable(key)
+        self.assertEqual(item.get('value'), 'public_value')
+        self.assertEqual(item.get('description'), 'plaintext doc')
+
+    def test_variable_delete_direct(self):
+        key = self._unique_variable_key()
+        api = HubApi()
+        api.add_studio_variable(
+            self.studio_id,
+            key,
+            'to_be_deleted',
+            token=self.token,
+            endpoint=None)
+        # Remove from cleanup list since we expect CLI to delete it.
+        self._variables_to_cleanup.remove(key)
+
+        args = argparse.Namespace(
+            studio_action='variable',
+            variable_action='delete',
+            studio_id=self.studio_id,
+            key=key,
+            yes=True,
             token=self.token,
             endpoint=None,
         )

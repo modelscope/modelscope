@@ -1,7 +1,9 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
+import ast
 import os
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -70,6 +72,28 @@ class AstScaningTest(unittest.TestCase):
         self.assertEqual(decorators,
                          [('PIPELINES', 'fill-mask', 'fill-mask'),
                           ('PIPELINES', 'fill-mask', 'fill-mask-ponet')])
+
+    @unittest.skipIf(sys.version_info < (3, 12),
+                     'type_params field requires Python 3.12+')
+    def test_scan_node_with_missing_optional_field(self):
+        # Nodes constructed with explicit kwargs (the common style on
+        # Python <= 3.11) lack `type_params` on Python 3.12+, even though
+        # PEP 695 lists it in ClassDef._fields. AstScanning must tolerate
+        # such nodes instead of crashing with AttributeError.
+        # See https://github.com/modelscope/modelscope/issues/894
+        node = ast.ClassDef(
+            name='MyModel',
+            bases=[ast.Name(id='Model', ctx=ast.Load())],
+            keywords=[],
+            body=[ast.Pass()],
+            decorator_list=[ast.Name(id='some_decorator', ctx=ast.Load())],
+        )
+        ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
+        self.assertFalse(hasattr(node, 'type_params'))
+        astScaner = AstScanning()
+        astScaner._refresh()
+        output = astScaner.scan_import(node, show_offsets=False)
+        self.assertIsInstance(output, dict)
 
     def test_files_scaning_method(self):
         fileScaner = FilesAstScanning()

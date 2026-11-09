@@ -1401,8 +1401,10 @@ parser.add_argument(
     '(--modelscope_version, default) or from --modelscope_branch source.')
 parser.add_argument('--swift_branch', type=str, default='main')
 parser.add_argument('--megatron_branch', type=str, default='core_r0.18.0')
-parser.add_argument('--megatron_adaptor_branch', type=str, default='core_r0.18.0')
-parser.add_argument('--transformer_engine_npu_branch', type=str, default='main')
+parser.add_argument(
+    '--megatron_adaptor_branch', type=str, default='core_r0.18.0')
+parser.add_argument(
+    '--transformer_engine_npu_branch', type=str, default='main')
 parser.add_argument('--mcore_bridge_branch', type=str, default='main')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)

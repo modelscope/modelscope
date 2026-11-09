@@ -63,7 +63,9 @@ def get_model_cache_root() -> str:
 
     Use the path returned by ``snapshot_download()`` or by
     ``modelscope.hub.cache_manager.resolve_cached_snapshot()`` instead of
-    appending a repository ID to this root.
+    appending a repository ID to this root. ``snapshot_download()`` keeps
+    ``<root>/<model_id>`` linked to the directory it returns, solely for
+    older callers.
     """
     return os.path.join(get_modelscope_cache_dir(), 'models')
 

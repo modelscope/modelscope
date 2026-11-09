@@ -774,7 +774,11 @@ def _patch_hub():
     from huggingface_hub import hf_api
     from huggingface_hub.hf_api import api
     from huggingface_hub.hf_api import future_compatible
+    from huggingface_hub.utils import (EntryNotFoundError,
+                                       LocalEntryNotFoundError)
+    from requests.exceptions import HTTPError
     from modelscope import get_logger
+    from modelscope.hub.errors import CacheNotFound, NotExistError
     logger = get_logger()
 
     def _file_exists(
@@ -827,14 +831,22 @@ def _patch_hub():
         api.login(token)
         if revision is None or revision == 'main':
             revision = 'master'
-        return file_download(
-            repo_id,
-            file_path=os.path.join(subfolder, filename)
-            if subfolder else filename,
-            cache_dir=cache_dir,
-            local_dir=local_dir,
-            local_files_only=local_files_only,
-            revision=revision)
+        try:
+            return file_download(
+                repo_id,
+                file_path=os.path.join(subfolder, filename)
+                if subfolder else filename,
+                cache_dir=cache_dir,
+                local_dir=local_dir,
+                local_files_only=local_files_only,
+                revision=revision)
+        except HTTPError as e:
+            # Hugging Face callers probe optional files and expect this type.
+            if isinstance(e.__cause__, NotExistError):
+                raise EntryNotFoundError(str(e)) from e
+            raise
+        except CacheNotFound as e:
+            raise LocalEntryNotFoundError(str(e)) from e
 
     def _whoami(self, token: Union[bool, str, None] = None) -> Dict:
         from modelscope.hub.api import ModelScopeConfig

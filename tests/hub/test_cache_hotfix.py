@@ -1,11 +1,16 @@
 """Test legacy cache helpers and SDK cleanup entry points."""
 
+import io
+import os
 from argparse import Namespace
 from pathlib import Path
 from unittest.mock import patch
 
+import json
 import pytest
+import requests
 from modelscope_hub import config
+from modelscope_hub._download import DownloadManager
 from modelscope_hub.errors import CacheError
 
 from modelscope import snapshot_download
@@ -132,7 +137,6 @@ def test_offline_model_file_skips_revision_lookup(cache, revision):
 
 def test_audio_update_reuses_standard_snapshot(cache):
     from modelscope.utils.audio.audio_utils import update_local_model
-    from modelscope_hub._download import DownloadManager
     root, path = cache
     with patch.object(
             DownloadManager,
@@ -145,7 +149,6 @@ def test_audio_update_reuses_standard_snapshot(cache):
 
 def test_audio_update_does_not_confuse_sibling_prefix(cache, tmp_path):
     from modelscope.utils.audio.audio_utils import update_local_model
-    from modelscope_hub._download import DownloadManager
     root, path = cache
     external = root / 'models-external/model'
     external.mkdir(parents=True)
@@ -154,3 +157,56 @@ def test_audio_update_does_not_confuse_sibling_prefix(cache, tmp_path):
             return_value=external) as download:
         update_local_model({'model': 'org/model'}, str(external), {})
     download.assert_called_once()
+
+
+def test_legacy_root_path_resolves_after_download(cache):
+    root, path = cache
+
+    def download_repo(self, repo_id, repo_type, **kwargs):
+        return path
+
+    with patch.object(DownloadManager, 'download_repo', download_repo):
+        result = snapshot_download(
+            'org/model', endpoint='https://modelscope.cn')
+    # Releases that predate the snapshot layout append the ID to this root.
+    legacy = os.path.join(get_model_cache_root(), 'org/model')
+    assert Path(legacy).resolve() == Path(result).resolve()
+
+
+def _not_found(self, request, **kwargs):
+    response = requests.Response()
+    response.status_code = 404
+    response.url = request.url
+    response.request = request
+    response.headers['Content-Type'] = 'application/json'
+    response.raw = io.BytesIO(
+        json.dumps({
+            'Code': 10990101007,
+            'Message': 'file not found',
+            'Success': False
+        }).encode())
+    return response
+
+
+def test_patched_hf_download_reports_missing_entries(cache):
+    import huggingface_hub
+    from huggingface_hub.utils import (EntryNotFoundError,
+                                       LocalEntryNotFoundError)
+    from modelscope.utils.hf_util.patcher import _patch_hub, _unpatch_hub
+    root, path = cache
+    _patch_hub()
+    try:
+        with patch('requests.Session.send', _not_found):
+            with pytest.raises(EntryNotFoundError):
+                huggingface_hub.HfApi().hf_hub_download(
+                    'org/model', 'processor_config.json')
+        with patch(
+                'requests.Session.send', side_effect=AssertionError('不得联网')):
+            with pytest.raises(LocalEntryNotFoundError):
+                huggingface_hub.hf_hub_download(
+                    'org/model', 'missing.json', local_files_only=True)
+            assert huggingface_hub.hf_hub_download(
+                'org/model', 'config.json',
+                local_files_only=True) == str(path / 'config.json')
+    finally:
+        _unpatch_hub()

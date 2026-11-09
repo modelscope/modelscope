@@ -19,7 +19,8 @@ def _sync_config() -> None:
     # if a non-standard alias is set.
     legacy_cache = _os.environ.get('MS_CACHE_HOME')
     if legacy_cache and not _os.environ.get('MODELSCOPE_CACHE'):
-        _set_default_config(_HubConfig(cache_dir=legacy_cache))
+        _set_default_config(
+            _HubConfig(cache_dir=_Path(legacy_cache).expanduser().resolve()))
 
     # Bridge MODELSCOPE_CREDENTIALS_PATH → HubConfig.config_dir so credential
     # lookup honours the legacy override.

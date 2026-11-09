@@ -13,6 +13,7 @@ from modelscope_hub.compat.snapshot_download import \
 from modelscope_hub.compat.snapshot_download import \
     snapshot_download as _compat_snapshot_download
 
+from modelscope.hub.errors import InvalidParameter
 from modelscope.hub.utils.utils import find_reusable_legacy_repo_dir
 from modelscope.utils.logger import get_logger
 
@@ -21,7 +22,9 @@ if TYPE_CHECKING:
 
 logger = get_logger()
 
-__all__ = ['snapshot_download', 'dataset_snapshot_download']
+__all__ = [
+    'snapshot_download', 'dataset_snapshot_download', 'InvalidParameter'
+]
 
 # Capability probe: pre-1.38 cache auto-detection lives in modelscope-hub
 # (DownloadManager._find_legacy_repo_dir, added in modelscope-hub>=0.1.7).

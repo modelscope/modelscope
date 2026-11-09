@@ -76,10 +76,8 @@ class AstScaningTest(unittest.TestCase):
     @unittest.skipIf(sys.version_info < (3, 12),
                      'type_params field requires Python 3.12+')
     def test_scan_node_with_missing_optional_field(self):
-        # Nodes constructed with explicit kwargs (the common style on
-        # Python <= 3.11) lack `type_params` on Python 3.12+, even though
-        # PEP 695 lists it in ClassDef._fields. AstScanning must tolerate
-        # such nodes instead of crashing with AttributeError.
+        # Simulate a node with a missing optional field. Python 3.13+ fills
+        # omitted list fields automatically, so remove it explicitly below.
         # See https://github.com/modelscope/modelscope/issues/894
         node = ast.ClassDef(
             name='MyModel',
@@ -89,6 +87,8 @@ class AstScaningTest(unittest.TestCase):
             decorator_list=[ast.Name(id='some_decorator', ctx=ast.Load())],
         )
         ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
+        if hasattr(node, 'type_params'):
+            del node.type_params
         self.assertFalse(hasattr(node, 'type_params'))
         astScaner = AstScanning()
         astScaner._refresh()

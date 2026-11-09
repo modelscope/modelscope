@@ -10,6 +10,7 @@ already-tokened URL alone, so an embedded token silently wins over the
 These tests replace the git wrapper with a mock, so they need neither a
 checkout nor network access.
 """
+import unittest
 import warnings
 from unittest import mock
 
@@ -49,39 +50,43 @@ def _push(repo, **kwargs):
             repo.push(commit_message='msg')
 
 
-def test_repository_push_sends_a_url_without_the_stale_token():
-    wrapper = _wrapper()
-    _push(_repository(Repository, wrapper))
+class RepositoryPushTokenTest(unittest.TestCase):
 
-    assert wrapper.push.call_count == 1
-    sent = wrapper.push.call_args.kwargs['url']
-    assert 'STALE_TOKEN' not in sent
-    assert sent == CLEAN_URL
-    # The caller's token is the only credential left.
-    assert wrapper.push.call_args.kwargs['git_token'] == FRESH_TOKEN
-
-
-def test_dataset_repository_push_sends_a_url_without_the_stale_token():
-    wrapper = _wrapper()
-    _push(_repository(DatasetRepository, wrapper))
-
-    sent = wrapper.push.call_args.kwargs['url']
-    assert 'STALE_TOKEN' not in sent
-    assert sent == CLEAN_URL
-
-
-def test_both_implementations_clean_the_url_the_same_way():
-    urls = []
-    for cls in (Repository, DatasetRepository):
+    def test_repository_push_sends_a_url_without_the_stale_token(self):
         wrapper = _wrapper()
-        _push(_repository(cls, wrapper))
-        urls.append(wrapper.push.call_args.kwargs['url'])
-    assert urls[0] == urls[1]
+        _push(_repository(Repository, wrapper))
+
+        self.assertEqual(wrapper.push.call_count, 1)
+        sent = wrapper.push.call_args.kwargs['url']
+        self.assertNotIn('STALE_TOKEN', sent)
+        self.assertEqual(sent, CLEAN_URL)
+        # The caller's token is the only credential left.
+        self.assertEqual(wrapper.push.call_args.kwargs['git_token'],
+                         FRESH_TOKEN)
+
+    def test_dataset_repository_push_sends_a_url_without_the_stale_token(self):
+        wrapper = _wrapper()
+        _push(_repository(DatasetRepository, wrapper))
+
+        sent = wrapper.push.call_args.kwargs['url']
+        self.assertNotIn('STALE_TOKEN', sent)
+        self.assertEqual(sent, CLEAN_URL)
+
+    def test_both_implementations_clean_the_url_the_same_way(self):
+        urls = []
+        for cls in (Repository, DatasetRepository):
+            wrapper = _wrapper()
+            _push(_repository(cls, wrapper))
+            urls.append(wrapper.push.call_args.kwargs['url'])
+        self.assertEqual(urls[0], urls[1])
+
+    def test_repository_push_asks_the_wrapper_to_strip_the_token(self):
+        wrapper = _wrapper()
+        _push(_repository(Repository, wrapper))
+        # The strip has to happen through the wrapper (which knows the token
+        # formats), not by string surgery at the call site.
+        wrapper.remove_token_from_url.assert_called_once_with(STALE_URL)
 
 
-def test_repository_push_asks_the_wrapper_to_strip_the_token():
-    wrapper = _wrapper()
-    _push(_repository(Repository, wrapper))
-    # The strip has to happen through the wrapper (which knows the token
-    # formats), not by string surgery at the call site.
-    wrapper.remove_token_from_url.assert_called_once_with(STALE_URL)
+if __name__ == '__main__':
+    unittest.main()

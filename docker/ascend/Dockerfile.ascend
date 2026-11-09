@@ -143,7 +143,7 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir -U icecream soundfile pybind11 py-spy funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils 'librosa<1.0' 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils 'librosa<1.0' 'timm>=0.9.0' transformers accelerate 'peft>=0.11,<0.21' 'trl>=0.15,<1.0' safetensors && \
     pip install --no-cache-dir -r /ms-swift/requirements/eval.txt && \
     pip install --no-cache-dir -U evalscope --no-dependencies && \
     pip install --no-cache-dir 'numpy>=2.0' --force-reinstall --no-deps && \

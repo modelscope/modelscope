@@ -58,8 +58,9 @@ def _hub_supports_studio_oauth():
     configuration flags (``--oauth-enabled`` and friends on
     ``studio settings`` / ``create``).
 
-    The Studio OAuth surface requires a server-side version that
-    supports Studio OAuth and is adapted in modelscope_hub after the
+    The Studio OAuth surface is part of the modelscope_service master
+    branch (cross-checked 2026-11-09; older server versions ignore the
+    OAuth flags) and is adapted in modelscope_hub after the
     0.4.6 release floor; guard the new tests accordingly.
     """
     try:

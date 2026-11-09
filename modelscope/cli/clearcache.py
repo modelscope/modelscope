@@ -7,14 +7,14 @@ class so that existing tests and callers that import it directly continue
 to work.
 """
 import os
-import shutil
 from argparse import ArgumentParser
+from pathlib import Path
+
+from modelscope_hub import get_cache_root
+from modelscope_hub._cache_manager import (_cache_clear_targets, _safe_rmtree,
+                                           clear_cache)
 
 from modelscope.cli.base import CLICommand
-from modelscope.hub.constants import TEMPORARY_FOLDER_NAME
-from modelscope.utils.file_utils import (get_dataset_cache_root,
-                                         get_model_cache_root,
-                                         get_modelscope_cache_dir)
 
 
 def subparser_func(args):
@@ -28,7 +28,7 @@ class ClearCacheCMD(CLICommand):
 
     def __init__(self, args):
         self.args = args
-        self.cache_dir = get_modelscope_cache_dir()
+        self.cache_dir = str(get_cache_root())
 
     @staticmethod
     def register(subparsers) -> None:
@@ -60,64 +60,34 @@ class ClearCacheCMD(CLICommand):
         self._execute_with_confirmation()
 
     def _execute_with_confirmation(self):
-        all = False
-        single_model = False
-        prompt = '\nYou are about to delete '
-
-        if self.args.model or self.args.dataset:
-            if self.args.model:
-                id = self.args.model
-                single_model = True
-                prompt = prompt + f'local cache for model {id}. '
-            else:
-                id = self.args.dataset
-                prompt = prompt + f'local cache for dataset {id}. '
-        else:
-            prompt = prompt + (f'entire ModelScope cache at {self.cache_dir}, '
-                               f'including ALL models and dataset.\n')
-            all = True
+        model = getattr(self.args, 'model', None)
+        dataset = getattr(self.args, 'dataset', None)
+        repo_type = 'model' if model is not None else (
+            'dataset' if dataset is not None else None)
+        repo_id = model if model is not None else dataset
+        root, targets = _cache_clear_targets(self.cache_dir, repo_type,
+                                             repo_id)
+        print(f'Cache root: {root}')
+        for target in targets:
+            print(f'  {target}')
+        if not targets:
+            print('Cache not found. Nothing to do.')
+            return
         user_input = input(
-            prompt
-            + '\nPlease press Y or y to proceed, any other key to abort.\n'
+            '\nPlease press Y or y to clear the listed repositories, any other key to abort.\n'
         ).strip().upper()
-
-        if user_input == 'Y':
-            if all:
-                self._remove_directory(self.cache_dir)
-                print('Cache cleared.')
-            else:
-                entity_root = get_model_cache_root(
-                ) if single_model else get_dataset_cache_root()
-                entity_directory = os.path.join(entity_root, id)
-                temp_directory = os.path.join(entity_root,
-                                              TEMPORARY_FOLDER_NAME, id)
-                entity_removed = self._remove_directory(entity_directory)
-                temp_removed = self._remove_directory(temp_directory)
-                if (not entity_removed) and (not temp_removed):
-                    if single_model:
-                        print(
-                            f'Cache for Model {id} not found. Nothing to do.')
-                    else:
-                        print(
-                            f'Cache for Dataset {id} not found. Nothing to do.'
-                        )
-                else:
-                    print('Cache cleared.')
-        else:
+        if user_input != 'Y':
             print('Operation aborted.')
             return
+        clear_cache(cache_dir=root, repo_type=repo_type, repo_id=repo_id)
+        print('Cache cleared.')
 
     def _remove_directory(self, path):
-        if os.path.exists(path):
-            try:
-                if os.path.islink(path):
-                    shutil.rmtree(os.readlink(path))
-                    os.remove(path)
-                    print(f'Cache and link for {path} removed.')
-                else:
-                    shutil.rmtree(path)
-                    print(f'Cache folder {path} removed.')
-                return True
-            except Exception as e:
-                print(f'An error occurred while clearing cache at {path}: {e}')
-            return False
+        """Remove a directory within the cache root without following symlinks."""
+        if os.path.lexists(path):
+            _safe_rmtree(
+                Path(path),
+                Path(self.cache_dir).expanduser().resolve())
+            print(f'Cache folder {path} removed.')
+            return True
+        return False

@@ -58,9 +58,9 @@ def _hub_supports_studio_oauth():
     configuration flags (``--oauth-enabled`` and friends on
     ``studio settings`` / ``create``).
 
-    The Studio OAuth surface comes from the modelscope_service
-    ``feat/openAPI_studios_ouath`` branch and is adapted in modelscope_hub
-    after the 0.4.6 release floor; guard the new tests accordingly.
+    The Studio OAuth surface requires a server-side version that
+    supports Studio OAuth and is adapted in modelscope_hub after the
+    0.4.6 release floor; guard the new tests accordingly.
     """
     try:
         from modelscope_hub.cli import studio as _hub_studio_cli

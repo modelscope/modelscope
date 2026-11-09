@@ -4,13 +4,15 @@ import re
 import struct
 import sys
 import tempfile
+from pathlib import Path
 from typing import Union
 from urllib.parse import urlparse
 
 import numpy as np
 
 from modelscope.fileio.file import HTTPStorage
-from modelscope.utils.file_utils import get_model_cache_root
+from modelscope.utils.file_utils import (get_hub_cache_root,
+                                         get_model_cache_root)
 from modelscope.utils.hub import snapshot_download
 from modelscope.utils.logger import get_logger
 
@@ -334,8 +336,14 @@ def update_local_model(model_config, model_path, extra_args):
     if model_config.__contains__('model'):
         model_name = model_config['model']
         dst_dir_root = get_model_cache_root()
-        if isinstance(model_path, str) and os.path.exists(
-                model_path) and not model_path.startswith(dst_dir_root):
+        if isinstance(model_path, str):
+            location = Path(model_path).resolve()
+            cache_roots = (Path(dst_dir_root).resolve(),
+                           (Path(get_hub_cache_root()) / 'models').resolve())
+            if any(root == location or root in location.parents
+                   for root in cache_roots):
+                return
+        if isinstance(model_path, str) and os.path.exists(model_path):
             try:
                 dst = os.path.join(dst_dir_root, '.cache/' + model_name)
                 dst_dir = os.path.dirname(dst)

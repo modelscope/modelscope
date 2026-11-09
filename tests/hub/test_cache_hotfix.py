@@ -103,3 +103,54 @@ def test_model_cache_clear_supports_relative_root(cache, tmp_path,
 def test_model_cache_rejects_owner_path_traversal(tmp_path):
     with pytest.raises(CacheError):
         ModelFileSystemCache(str(tmp_path / 'legacy'), '..', 'model')
+
+
+def test_vllm_lora_exception_import_is_compatible():
+    from modelscope.hub.snapshot_download import InvalidParameter
+    from modelscope_hub.errors import InvalidParameter as Expected
+    assert InvalidParameter is Expected
+
+
+@pytest.mark.parametrize('revision', [None, '', 'master'])
+def test_offline_model_file_skips_revision_lookup(cache, revision):
+    from modelscope.hub.file_download import model_file_download
+    from modelscope_hub.config import HubConfig
+    root, path = cache
+    with (
+            patch.object(
+                HubConfig,
+                '__post_init__',
+                side_effect=AssertionError('不得初始化认证')),
+            patch('requests.Session.send', side_effect=AssertionError('不得联网')),
+    ):
+        assert model_file_download(
+            'org/model',
+            'config.json',
+            revision=revision,
+            local_files_only=True) == str(path / 'config.json')
+
+
+def test_audio_update_reuses_standard_snapshot(cache):
+    from modelscope.utils.audio.audio_utils import update_local_model
+    from modelscope_hub._download import DownloadManager
+    root, path = cache
+    with patch.object(
+            DownloadManager,
+            'download_repo',
+            side_effect=AssertionError('不得重复整仓下载')) as download:
+        update_local_model({'model': 'org/model'}, str(path), {})
+    download.assert_not_called()
+    assert not (root / 'hub/models/.cache').exists()
+
+
+def test_audio_update_does_not_confuse_sibling_prefix(cache, tmp_path):
+    from modelscope.utils.audio.audio_utils import update_local_model
+    from modelscope_hub._download import DownloadManager
+    root, path = cache
+    external = root / 'models-external/model'
+    external.mkdir(parents=True)
+    with patch.object(
+            DownloadManager, 'download_repo',
+            return_value=external) as download:
+        update_local_model({'model': 'org/model'}, str(external), {})
+    download.assert_called_once()

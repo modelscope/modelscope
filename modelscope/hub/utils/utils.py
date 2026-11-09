@@ -180,8 +180,9 @@ def get_readable_folder_size(folder_path: str) -> str:
 
 
 def get_cache_dir(model_id: Optional[str] = None):
-    """cache dir precedence:
-        function parameter > environment > ~/.cache/modelscope/hub
+    """Return the legacy SDK path, not a modelscope-hub snapshot directory.
+
+    Use get_hub_cache_root() or resolve_cached_snapshot() for active snapshots.
     Args:
         model_id (str, optional): The model id.
     Returns:

@@ -56,7 +56,10 @@ class TestClearCacheCommand(unittest.TestCase):
         args = Namespace(
             model=entity_id if kind == 'model' else None,
             dataset=entity_id if kind == 'dataset' else None)
-        with mock.patch('builtins.input', return_value='Y'):
+        # clear-cache resolves the root through modelscope_hub, whose default
+        # config is cached process-wide; reset it so the patched env applies.
+        with mock.patch('builtins.input', return_value='Y'), \
+                mock.patch('modelscope_hub.config._default_config', None):
             ClearCacheCMD(args).execute()
         self.assertFalse(os.path.exists(entity_dir))
         self.assertFalse(os.path.exists(temp_dir))

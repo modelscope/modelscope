@@ -158,12 +158,16 @@ class GaussianDiffusion(object):
                     condition_fn=None,
                     guide_scale=None,
                     ddim_timesteps=20,
-                    eta=0.0):
+                    eta=0.0,
+                    prev_t=None):
         r"""Sample from p(x_{t-1} | x_t) using DDIM.
             - condition_fn: for classifier-based guidance (guided-diffusion).
             - guide_scale: for classifier-free guidance (glide/dalle-2).
+            - prev_t: next selected timestep tensor; defaults to a fixed stride.
         """
-        stride = self.num_timesteps // ddim_timesteps
+        if prev_t is None:
+            stride = self.num_timesteps // ddim_timesteps
+            prev_t = (t - stride).clamp(0)
 
         # predict distribution of p(x_{t-1} | x_t)
         _, _, _, x0 = self.p_mean_variance(xt, t, model, model_kwargs, clamp,
@@ -184,7 +188,7 @@ class GaussianDiffusion(object):
         eps = (_i(self.sqrt_recip_alphas_cumprod, t, xt) * xt - x0) / _i(
             self.sqrt_recipm1_alphas_cumprod, t, xt)
         alphas = _i(self.alphas_cumprod, t, xt)
-        alphas_prev = _i(self.alphas_cumprod, (t - stride).clamp(0), xt)
+        alphas_prev = _i(self.alphas_cumprod, prev_t, xt)
         a = (1 - alphas_prev) / (1 - alphas)
         b = (1 - alphas / alphas_prev)
         sigmas = eta * torch.sqrt(a * b)
@@ -211,15 +215,26 @@ class GaussianDiffusion(object):
         b = noise.size(0)
         xt = noise
 
-        # diffusion process (TODO: clamp is inaccurate! Consider replacing the stride by explicit prev/next steps)
+        # Pair actual selected timesteps: clipping can change their spacing.
         steps = (1 + torch.arange(0, self.num_timesteps,
                                   self.num_timesteps // ddim_timesteps)).clamp(
                                       0, self.num_timesteps - 1).flip(0)
-        for step in steps:
+        prev_steps = torch.cat([steps[1:], steps.new_zeros(1)])
+        for step, prev_step in zip(steps, prev_steps):
             t = torch.full((b, ), step, dtype=torch.long, device=xt.device)
-            xt, _ = self.ddim_sample(xt, t, model, model_kwargs, clamp,
-                                     percentile, condition_fn, guide_scale,
-                                     ddim_timesteps, eta)
+            prev_t = torch.full_like(t, prev_step)
+            xt, _ = self.ddim_sample(
+                xt,
+                t,
+                model,
+                model_kwargs,
+                clamp,
+                percentile,
+                condition_fn,
+                guide_scale,
+                ddim_timesteps,
+                eta,
+                prev_t=prev_t)
         return xt
 
     def _scale_timesteps(self, t):

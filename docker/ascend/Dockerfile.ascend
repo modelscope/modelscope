@@ -166,7 +166,6 @@ RUN git clone --depth 1 --branch {fla_version} https://github.com/fla-org/flash-
 # ---------- Re-pin triton-ascend after all editable installs ----------
 # vllm-ascend may otherwise replace the CANN-specific version selected above.
 # Restore NumPy 2 for PyArrow after Triton-Ascend pins NumPy 1.26.4.
-# NumPy 2.2.6 is compatible with SciPy 1.13.1 and validated on NPU.
 RUN set -eux; \
     ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}"; \
     pip uninstall -y triton || true; \
@@ -175,7 +174,7 @@ RUN set -eux; \
     PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL}" \
         pip install --no-cache-dir --force-reinstall \
         triton-ascend=={triton_ascend_version} && \
-    pip install --no-cache-dir --upgrade --no-deps numpy==2.2.6
+    pip install --no-cache-dir --upgrade --no-deps 'numpy>=2.0'
 
 RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
     echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \

@@ -19,6 +19,7 @@ import numpy as np
 import requests
 
 from modelscope.hub.constants import DEFAULT_CREDENTIALS_PATH
+from modelscope.utils.file_utils import extract_tar_safely
 from modelscope.utils.import_utils import is_tf_available, is_torch_available
 
 TEST_LEVEL = 2
@@ -104,8 +105,8 @@ def download_and_untar(fpath, furl, dst) -> str:
     target_dir_path = os.path.join(root_dir, target_dir_name)
 
     # untar the file
-    t = tarfile.open(fpath)
-    t.extractall(path=dst)
+    with tarfile.open(fpath) as t:
+        extract_tar_safely(t, dst)
 
     return target_dir_path
 

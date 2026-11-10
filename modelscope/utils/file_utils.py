@@ -3,6 +3,7 @@ import hashlib
 import inspect
 import io
 import os
+import tarfile
 from pathlib import Path
 from shutil import Error, copy2, copystat
 from typing import BinaryIO, Optional, Union
@@ -113,6 +114,58 @@ def read_file(path):
     with open(path, 'r') as f:
         text = f.read()
     return text
+
+
+def extract_tar_safely(tar: tarfile.TarFile, path: str) -> None:
+    """Extract an archive, refusing members that escape ``path``.
+
+    Archives are commonly fetched from remote servers, so member names and
+    links are untrusted: a ``../`` component or a link resolving outside
+    ``path`` would write arbitrary files (CWE-22). Interpreters shipping
+    PEP 706 filters rely on the ``data`` filter; older ones are checked member
+    by member right before extraction, so a symlink created by an earlier
+    member cannot redirect a later one.
+
+    Args:
+        tar (tarfile.TarFile): an opened archive.
+        path (str): the destination directory.
+
+    Raises:
+        tarfile.TarError: if a member is unsafe.
+    """
+    if hasattr(tarfile, 'data_filter'):
+        tar.extractall(path, filter='data')
+        return
+
+    root = os.path.realpath(path)
+    for member in tar.getmembers():
+        if not _is_safe_tar_member(member, root):
+            raise tarfile.ExtractError(
+                f'refusing to extract unsafe archive member: {member.name!r}')
+        tar.extract(member, path)
+
+
+def _is_safe_tar_member(member: tarfile.TarInfo, root: str) -> bool:
+    if member.isdev() or os.path.isabs(member.name):
+        return False
+    member_path = os.path.join(root, member.name)
+    if not _resolves_within(member_path, root):
+        return False
+    if not (member.issym() or member.islnk()):
+        return True
+    if os.path.isabs(member.linkname):
+        return False
+    link_base = os.path.dirname(member_path) if member.issym() else root
+    return _resolves_within(os.path.join(link_base, member.linkname), root)
+
+
+def _resolves_within(target_path: str, root: str) -> bool:
+    try:
+        return os.path.commonpath([os.path.realpath(target_path),
+                                   root]) == root
+    except ValueError:
+        # Paths on different drives on Windows never share a common path.
+        return False
 
 
 def copytree_py37(src,

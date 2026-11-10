@@ -3,6 +3,7 @@
 import os
 from collections import defaultdict
 from typing import Optional, Union
+from urllib.parse import parse_qs, unquote, urlparse
 
 import pandas as pd
 
@@ -170,6 +171,47 @@ def get_split_objects_map(file_map, objects):
     return res
 
 
+def download_meta_file(url: str, context_config: DatasetContextConfig,
+                       cache_dir: str) -> str:
+    """Use Hub downloads for repo metadata; omit credentials for external URLs."""
+    from datasets import DownloadConfig
+    from datasets.utils.file_utils import cached_path
+
+    api = HubApi(endpoint=context_config.endpoint, token=context_config.token)
+    source = urlparse(url)
+    endpoint = urlparse(api.endpoint)
+    repo_id = f'{context_config.namespace}/{context_config.dataset_name}'
+    repo_path = f'{endpoint.path.rstrip("/")}/api/v1/datasets/{repo_id}/repo'
+    resolve_path = f'{endpoint.path.rstrip("/")}/datasets/{repo_id}/resolve/'
+    file_path = None
+    revision = context_config.version
+    if (source.scheme, source.netloc) == (endpoint.scheme, endpoint.netloc):
+        if source.path == repo_path:
+            params = parse_qs(source.query)
+            file_path = params.get('FilePath', [None])[0]
+            revision = params.get('Revision', [revision])[0]
+        elif source.path.startswith(resolve_path):
+            revision, file_path = source.path[len(resolve_path):].split('/', 1)
+            revision, file_path = unquote(revision), unquote(file_path)
+    if file_path:
+        force_download = context_config.download_mode.value == 'force_redownload'
+        return str(
+            api.download_file(
+                repo_id,
+                'dataset',
+                file_path,
+                revision=revision,
+                cache_dir=cache_dir,
+                force=force_download))
+    return cached_path(
+        url,
+        download_config=DownloadConfig(
+            cache_dir=cache_dir,
+            token=False,
+            storage_options=context_config.config_kwargs.get('storage_options')
+            or {}))
+
+
 def get_dataset_files(subset_split_into: dict,
                       dataset_name: str,
                       namespace: str,
@@ -190,7 +232,8 @@ def get_dataset_files(subset_split_into: dict,
     file_map = defaultdict(dict)
     args_map = defaultdict(dict)
     custom_type_map = defaultdict(dict)
-    modelscope_api = HubApi()
+    modelscope_api = HubApi(
+        endpoint=context_config.endpoint, token=context_config.token)
     meta_cache_dir = context_config.data_meta_config.meta_cache_dir
 
     for split, info in subset_split_into.items():
@@ -207,8 +250,9 @@ def get_dataset_files(subset_split_into: dict,
         if args_dict and args_dict.get(MetaDataFields.ARGS_BIG_DATA):
             meta_csv_file_url = meta_map[split]
 
-            meta_csv_file_path = HubApi.fetch_meta_files_from_url(
-                meta_csv_file_url, meta_cache_dir)
+            meta_csv_file_path = download_meta_file(meta_csv_file_url,
+                                                    context_config,
+                                                    meta_cache_dir)
 
             csv_delimiter = context_config.config_kwargs.get('delimiter', ',')
             csv_df = pd.read_csv(
@@ -228,7 +272,7 @@ def get_dataset_files(subset_split_into: dict,
 
             file_map[split] = objects
     # More general but low-efficiency.
-    if not objects:
+    if not objects and file_map:
         objects = list_dataset_objects(
             hub_api=modelscope_api,
             max_limit=-1,

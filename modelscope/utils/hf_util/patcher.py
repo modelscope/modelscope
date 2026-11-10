@@ -8,7 +8,7 @@ import sys
 from asyncio import Future
 from functools import partial
 from pathlib import Path
-from types import MethodType, SimpleNamespace
+from types import MethodType
 from typing import BinaryIO, Dict, Iterable, List, Optional, Union
 
 from modelscope.hub.constants import DEFAULT_MODELSCOPE_DATA_ENDPOINT
@@ -57,29 +57,42 @@ def get_all_imported_modules():
     if importlib.util.find_spec('transformers') is not None:
         import transformers
         lazy_module = sys.modules['transformers']
-        _import_structure = lazy_module._import_structure
-        for key in _import_structure:
-            if 'dummy' in key.lower():
-                continue
-            values = _import_structure[key]
-            for value in values:
-                # pretrained
-                if any([
-                        re.fullmatch(name, value)
-                        for name in transformers_include_names
-                ]):
-                    try:
-                        module = importlib.import_module(
-                            f'.{key}', transformers.__name__)
-                        value = getattr(module, value)
-                        all_imported_modules.append(value)
-                    except:  # noqa
-                        pass
+        # Recent transformers expose the lazy-loading structure as
+        # ``_import_structure``; fall back to ``dir()`` when it is absent or
+        # its layout changes across versions (mirrors the diffusers branch).
+        if hasattr(lazy_module, '_import_structure'):
+            _import_structure = lazy_module._import_structure
+            for key in _import_structure:
+                if 'dummy' in key.lower():
+                    continue
+                values = _import_structure[key]
+                for value in values:
+                    # pretrained
+                    if any([
+                            re.fullmatch(name, value)
+                            for name in transformers_include_names
+                    ]):
+                        try:
+                            module = importlib.import_module(
+                                f'.{key}', transformers.__name__)
+                            value = getattr(module, value)
+                            all_imported_modules.append(value)
+                        except Exception:  # noqa
+                            pass
+        else:
+            all_imported_modules.extend([
+                getattr(lazy_module, _import) for _import in dir(lazy_module)
+                if not _import.startswith('__') and any([
+                    re.fullmatch(name, _import)
+                    for name in transformers_include_names
+                ]) and hasattr(
+                    getattr(lazy_module, _import, None), 'from_pretrained')
+            ])
 
     if importlib.util.find_spec('peft') is not None:
         try:
             import peft
-        except:  # noqa
+        except Exception:  # noqa
             pass
         else:
             attributes = dir(peft)
@@ -95,7 +108,7 @@ def get_all_imported_modules():
     if importlib.util.find_spec('diffusers') is not None:
         try:
             import diffusers
-        except:  # noqa
+        except Exception:  # noqa
             pass
         else:
             lazy_module = sys.modules['diffusers']
@@ -115,7 +128,7 @@ def get_all_imported_modules():
                                     f'.{key}', diffusers.__name__)
                                 value = getattr(module, value)
                                 all_imported_modules.append(value)
-                            except:  # noqa
+                            except Exception:  # noqa
                                 pass
             else:
                 attributes = dir(lazy_module)
@@ -257,8 +270,15 @@ def _get_class_from_dynamic_module(class_reference, *args, **kwargs):
 
 
 def _patch_dynamic_module():
-    """Globally patch ``get_class_from_dynamic_module`` to redirect to ModelScope."""
-    from transformers import dynamic_module_utils
+    """Globally patch ``get_class_from_dynamic_module`` to redirect to ModelScope.
+
+    No-op when transformers is not installed, so ``patch_hub()`` stays usable
+    in a transformers-less environment.
+    """
+    try:
+        from transformers import dynamic_module_utils
+    except ImportError:
+        return
     if not hasattr(dynamic_module_utils,
                    'origin_get_class_from_dynamic_module'):
         dynamic_module_utils.origin_get_class_from_dynamic_module = dynamic_module_utils.get_class_from_dynamic_module
@@ -268,7 +288,10 @@ def _patch_dynamic_module():
 
 
 def _unpatch_dynamic_module():
-    from transformers import dynamic_module_utils
+    try:
+        from transformers import dynamic_module_utils
+    except ImportError:
+        return
     if hasattr(dynamic_module_utils, 'origin_get_class_from_dynamic_module'):
         dynamic_module_utils.get_class_from_dynamic_module = dynamic_module_utils.origin_get_class_from_dynamic_module
         from transformers.models.auto import configuration_auto
@@ -404,13 +427,11 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
 
         def from_pretrained(model, model_id, *model_args, **kwargs):
 
-            with file_pattern_context(kwargs):
+            # file_pattern_context requires (kwargs, module_class, cls);
+            # module_class doubles as cls for the peft wrap path.
+            with file_pattern_context(kwargs, module_class, module_class):
                 # model is an instance
-                model_dir = get_model_dir(
-                    model_id,
-                    module_class=module_class,
-                    cls=module_class,
-                    **kwargs)
+                model_dir = get_model_dir(model_id, **kwargs)
 
             with _dynamic_module_patch_scope():
                 module_obj = module_class.from_pretrained(
@@ -503,7 +524,8 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
         if not hasattr(module_class, 'from_pretrained'):
             del ClassWrapper.from_pretrained
         else:
-            parameters = inspect.signature(var.from_pretrained).parameters
+            parameters = inspect.signature(
+                module_class.from_pretrained).parameters
             if 'model' in parameters and 'model_id' in parameters:
                 # peft
                 ClassWrapper.from_pretrained = from_pretrained
@@ -540,7 +562,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
             has_save_pretrained = hasattr(var, 'save_pretrained')
-        except:  # noqa
+        except Exception:  # noqa
             continue
 
         # save_pretrained is not a classmethod and cannot be overridden by replacing
@@ -553,7 +575,7 @@ def _patch_pretrained_class(all_imported_modules, wrap=False):
                 else:
                     all_available_modules.append(
                         get_wrapped_class(var, **ignore_file_pattern_kwargs))
-            except:  # noqa
+            except Exception:  # noqa
                 all_available_modules.append(var)
         else:
             if has_from_pretrained and not hasattr(var,
@@ -617,7 +639,7 @@ def _unpatch_pretrained_class(all_imported_modules):
             has_from_pretrained = hasattr(var, 'from_pretrained')
             has_get_peft_type = hasattr(var, '_get_peft_type')
             has_get_config_dict = hasattr(var, 'get_config_dict')
-        except:  # noqa
+        except Exception:  # noqa
             continue
         if has_from_pretrained and hasattr(var, '_from_pretrained_origin'):
             _restore(var, 'from_pretrained', '_from_pretrained_origin')
@@ -632,130 +654,48 @@ def _unpatch_pretrained_class(all_imported_modules):
 def _patch_kernels():
     """Monkey-patch the `kernels` library to route HF API calls to ModelScope.
 
-    Only `kernels.utils._get_hf_api` is replaced; every download, file check
-    and ref listing performed by `kernels` goes through `_MsKernelApi`, so
-    the kernel loading/variant/lock logic stays untouched.
+    The implementation lives in `modelscope_hub.kernels`, so this package and
+    a direct ``from modelscope_hub.kernels import get_kernel`` share one shim
+    backed by the current hub SDK: one ``MsKernelApi``, one patch state.
+    Requires ``modelscope-hub>=0.7.0``; no-op on older versions.
     """
-    try:
-        from kernels import utils as kernels_utils
-        from kernels.utils import _get_hf_api
-    except ImportError:
+    if not _require_hub_module(_KERNELS_COMPAT):
         return
-    if hasattr(kernels_utils, '_get_hf_api_origin'):
-        return
-    kernels_utils._get_hf_api_origin = kernels_utils._get_hf_api
-    kernels_utils._get_hf_api = lambda user_agent=None: _MsKernelApi()
+    from modelscope_hub.kernels import patch_kernels_hub
+
+    patch_kernels_hub()
 
 
 def _unpatch_kernels():
-    try:
-        from kernels import utils as kernels_utils
-        from kernels.utils import _get_hf_api
-    except ImportError:
-        return
-    origin = getattr(kernels_utils, '_get_hf_api_origin', None)
-    if origin is not None:
-        kernels_utils._get_hf_api = origin
-        del kernels_utils._get_hf_api_origin
+    """Undo `_patch_kernels` via `modelscope_hub.kernels`."""
+    if _hub_module_available(_KERNELS_COMPAT):
+        from modelscope_hub.kernels import unpatch_kernels_hub
 
-
-class _MsKernelApi:
-    """Minimal `HfApi` look-alike that forwards to ModelScope. Only the
-    handful of methods that `kernels` actually calls are implemented.
-    """
-
-    def snapshot_download(self,
-                          repo_id,
-                          *,
-                          allow_patterns=None,
-                          ignore_patterns=None,
-                          cache_dir=None,
-                          revision=None,
-                          local_files_only=False,
-                          **kwargs):
-        from modelscope import snapshot_download as ms_snapshot_download
-        if kwargs.get('repo_type') == 'kernel':
-            kwargs['repo_type'] = 'model'
-        return ms_snapshot_download(
-            repo_id,
-            revision=_ms_revision(revision),
-            cache_dir=cache_dir,
-            local_files_only=local_files_only,
-            allow_patterns=allow_patterns,
-            ignore_patterns=ignore_patterns,
-            **kwargs)
-
-    def list_repo_tree(self,
-                       repo_id,
-                       *,
-                       path_in_repo=None,
-                       revision=None,
-                       **kwargs):
-        from huggingface_hub.hf_api import RepoFolder
-        from modelscope.hub.api import HubApi
-        entries = HubApi().get_model_files(
-            repo_id,
-            revision=_ms_revision(revision),
-            root=path_in_repo,
-            recursive=False)
-        folders = []
-        for entry in entries:
-            if entry.get('Type') != 'tree':
-                continue
-            path = entry.get('Path') or entry.get('Name')
-            folders.append(RepoFolder(path=path, oid='', last_commit=None))
-        return folders
-
-    def file_exists(self, repo_id, filename, *, revision=None, **kwargs):
-        from modelscope.hub.api import HubApi
-        return HubApi().file_exists(
-            repo_id, filename, revision=_ms_revision(revision))
-
-    def list_repo_refs(self, repo_id, **kwargs):
-        from huggingface_hub.hf_api import GitRefInfo
-        from modelscope.hub.api import HubApi
-        branches, tags = HubApi().get_model_branches_and_tags(repo_id)
-        # `target_commit` doubles as the revision in later calls, so reuse
-        # the branch/tag name (ModelScope accepts it as a revision).
-        return SimpleNamespace(
-            branches=[
-                GitRefInfo(name=n, ref=f'refs/heads/{n}', target_commit=n)
-                for n in (branches or [])
-            ],
-            tags=[
-                GitRefInfo(name=n, ref=f'refs/tags/{n}', target_commit=n)
-                for n in (tags or [])
-            ],
-            converts=[])
-
-    def hf_hub_download(self, *args, **kwargs):
-        # Only called for the optional `kernel-status.toml`. Raising
-        # `EntryNotFoundError` makes kernels treat the repo as having no
-        # redirect status.
-        from huggingface_hub.errors import EntryNotFoundError
-        raise EntryNotFoundError(
-            'kernel-status.toml lookup is skipped on ModelScope')
+        unpatch_kernels_hub()
 
 
 @contextlib.contextmanager
 def _kernels_patch_scope():
-    """Apply `_patch_kernels` for the duration of the `with` block, unless an
-    outer patch (e.g. `patch_hub()`) is already in effect.
+    """Apply the kernels ModelScope patch for the duration of the `with`
+    block, unless an outer patch (e.g. `patch_hub()`) is already in effect.
+
+    Backed by `modelscope_hub.kernels.patch_scope`, so the global patch
+    (`patch_hub`) and per-call scoped patches share one state. On
+    ``modelscope-hub<0.7.0`` the scope is a no-op and `kernels` keeps using
+    the Hugging Face Hub.
     """
-    from kernels import utils as kernels_utils
-    if hasattr(kernels_utils, '_get_hf_api_origin'):
+    if not _hub_module_available(_KERNELS_COMPAT):
         yield
         return
-    _patch_kernels()
-    try:
+    from modelscope_hub.kernels import patch_scope
+
+    with patch_scope():
         yield
-    finally:
-        _unpatch_kernels()
 
 
 def _wrap_kernels_callable(attr_name):
     """Return a wrapper around `kernels.<attr_name>` that scopes the ModelScope
-    patch on `kernels.utils._get_hf_api` to the call itself, so
+    patch on `kernels._get_hf_api` to the call itself, so
     `from kernels import <attr_name>` stays on HuggingFace unless the user
     explicitly calls `patch_hub()` / `patch_context()`.
     """
@@ -767,6 +707,39 @@ def _wrap_kernels_callable(attr_name):
 
     _wrapped.__name__ = _wrapped.__qualname__ = attr_name
     return _wrapped
+
+
+_KERNELS_COMPAT = 'modelscope_hub.kernels'
+_warned_hub_070 = False
+
+
+def _hub_module_available(module_name):
+    """Whether the installed modelscope-hub provides ``module_name``.
+
+    The hub-side ``kernels`` shim ships in ``modelscope-hub>=0.7.0``; on
+    older versions the kernels redirection degrades to a no-op.
+    """
+    try:
+        from importlib.util import find_spec
+        return find_spec(module_name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _require_hub_module(module_name):
+    """Like `_hub_module_available`, but warns once when the module is absent."""
+    global _warned_hub_070
+    if _hub_module_available(module_name):
+        return True
+    if not _warned_hub_070:
+        _warned_hub_070 = True
+        import warnings
+        warnings.warn(
+            'The installed modelscope-hub is older than 0.7.0; kernels '
+            'redirection is disabled until it is upgraded (requires '
+            'modelscope-hub>=0.7.0).',
+            stacklevel=3)
+    return False
 
 
 def _patch_hub():
@@ -1014,12 +987,10 @@ def _patch_hub():
 
     if not hasattr(hf_api, '_create_repo_origin'):
         # Patch create_repo
-        from transformers.utils import hub
         hf_api._create_repo_origin = hf_api.create_repo
         hf_api.create_repo = MethodType(create_repo, api)
         huggingface_hub.create_repo = hf_api.create_repo
         huggingface_hub.hf_api.create_repo = hf_api.create_repo
-        hub.create_repo = hf_api.create_repo
 
     if not hasattr(hf_api, '_upload_folder_origin'):
         # Patch upload_folder
@@ -1042,11 +1013,15 @@ def _patch_hub():
         hf_api.create_commit = MethodType(create_commit, api)
         huggingface_hub.create_commit = hf_api.create_commit
         huggingface_hub.hf_api.create_commit = hf_api.create_commit
-        from transformers.utils import hub
-        hub.create_commit = hf_api.create_commit
+
+    # Bridge transformers.utils.hub onto the patched functions; the whole
+    # bridge degrades to a no-op without transformers and skips attributes
+    # removed in transformers 5.x.
+    _patch_transformers_hub()
 
 
 def _unpatch_hub():
+    _unpatch_transformers_hub()
     import huggingface_hub
     from huggingface_hub import hf_api
 
@@ -1077,11 +1052,9 @@ def _unpatch_hub():
         delattr(hf_api, '_whoami_origin')
 
     if hasattr(hf_api, '_create_repo_origin'):
-        from transformers.utils import hub
         hf_api.create_repo = hf_api._create_repo_origin
         huggingface_hub.create_repo = hf_api.create_repo
         huggingface_hub.hf_api.create_repo = hf_api.create_repo
-        hub.create_repo = hf_api.create_repo
         delattr(hf_api, '_create_repo_origin')
 
     if hasattr(hf_api, '_upload_folder_origin'):
@@ -1101,19 +1074,68 @@ def _unpatch_hub():
         hf_api.create_commit = hf_api._create_commit_origin
         huggingface_hub.create_commit = hf_api.create_commit
         huggingface_hub.hf_api.create_commit = hf_api.create_commit
-        from transformers.utils import hub
-        hub.create_commit = hf_api.create_commit
         delattr(hf_api, '_create_commit_origin')
 
 
+def _patch_transformers_hub():
+    """Point ``transformers.utils.hub`` at the patched huggingface_hub functions.
+
+    Older transformers resolve ``create_repo`` / ``create_commit`` through
+    ``transformers.utils.hub`` for ``push_to_hub``; redirect them to the
+    already-patched ``huggingface_hub`` objects. Attributes absent in newer
+    transformers are skipped instead of injected, and the whole bridge is
+    skipped when transformers is not installed, so ``patch_hub()`` stays
+    usable across versions and in a transformers-less env.
+    """
+    try:
+        from transformers.utils import hub
+    except ImportError:
+        return
+    import huggingface_hub
+
+    if (hasattr(hub, 'create_repo')
+            and not hasattr(hub, '_ms_origin_create_repo')):
+        hub._ms_origin_create_repo = hub.create_repo
+        hub.create_repo = huggingface_hub.create_repo
+    if (hasattr(hub, 'create_commit')
+            and not hasattr(hub, '_ms_origin_create_commit')):
+        hub._ms_origin_create_commit = hub.create_commit
+        hub.create_commit = huggingface_hub.create_commit
+
+
+def _unpatch_transformers_hub():
+    """Undo `_patch_transformers_hub` and restore ``transformers.utils.hub``."""
+    try:
+        from transformers.utils import hub
+    except ImportError:
+        return
+    if hasattr(hub, '_ms_origin_create_repo'):
+        hub.create_repo = hub._ms_origin_create_repo
+        delattr(hub, '_ms_origin_create_repo')
+    if hasattr(hub, '_ms_origin_create_commit'):
+        hub.create_commit = hub._ms_origin_create_commit
+        delattr(hub, '_ms_origin_create_commit')
+
+
+# Modules captured by the last ``patch_hub()`` call. ``unpatch_hub()`` restores
+# exactly these instead of re-enumerating: classes imported between patch and
+# unpatch would otherwise be missed (or wrongly restored) by a fresh scan.
+_patched_modules = None
+
+
 def patch_hub():
+    global _patched_modules
     _patch_hub()
     _patch_kernels()
-    _patch_pretrained_class(get_all_imported_modules())
+    _patched_modules = get_all_imported_modules()
+    _patch_pretrained_class(_patched_modules)
 
 
 def unpatch_hub():
-    _unpatch_pretrained_class(get_all_imported_modules())
+    global _patched_modules
+    if _patched_modules is not None:
+        _unpatch_pretrained_class(_patched_modules)
+        _patched_modules = None
     _unpatch_kernels()
     _unpatch_hub()
 

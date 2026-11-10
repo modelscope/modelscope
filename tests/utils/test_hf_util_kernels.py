@@ -5,26 +5,46 @@ Requirements verified:
 
 1. `from modelscope import get_kernel` works without `patch_hub()` first and
    routes downloads through ModelScope, without leaking the
-   `kernels.utils._get_hf_api` patch to anyone else.
+   `_get_hf_api` patch to anyone else.
 2. `patch_hub()` / `patch_context()` makes `from kernels import get_kernel`
    also route downloads through ModelScope; `unpatch_hub()` restores it.
+
+The whole module requires `modelscope_hub.kernels` (`modelscope-hub>=0.7.0`);
+it is skipped on older hubs where the kernels shims degrade to no-ops.
 """
 import contextlib
 import os
 import subprocess
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
+import pytest
 
 from modelscope.utils.hf_util.patcher import (_patch_kernels, _unpatch_kernels,
                                               patch_context, patch_hub,
                                               unpatch_hub)
 
+pytest.importorskip('modelscope_hub.kernels')
+
+
+def _import_kernels_api_module():
+    """Return the module holding `_get_hf_api` in the installed `kernels`.
+
+    kernels >= 0.17 renamed `kernels.utils` to `kernels.hf_hub`; support both
+    layouts for the original-factory assertions below.
+    """
+    try:
+        import kernels.hf_hub as kernels_api
+    except ImportError:
+        import kernels.utils as kernels_api
+    return kernels_api
+
 
 def _ensure_kernels_installed():
     try:
         from kernels import get_kernel  # noqa: F401
-        from kernels.utils import _get_hf_api  # noqa: F401
+        _import_kernels_api_module()
     except ImportError:
         subprocess.check_call(
             [sys.executable, '-m', 'pip', 'install', '-q', 'kernels'])
@@ -66,10 +86,10 @@ class _KernelsTestBase(unittest.TestCase):
     def setUp(self):
         _unpatch_kernels()
         # Instance attribute, so the descriptor protocol is not triggered.
-        from kernels.utils import _get_hf_api
-        from kernels import utils as kernels_utils
-        self.original_get_hf_api = _get_hf_api
-        self.kernels_utils = kernels_utils
+        # kernels >= 0.17 renamed `kernels.utils` to `kernels.hf_hub`.
+        kernels_api = _import_kernels_api_module()
+        self.original_get_hf_api = kernels_api._get_hf_api
+        self.kernels_utils = kernels_api
 
     def tearDown(self):
         _unpatch_kernels()
@@ -84,7 +104,7 @@ class _KernelsTestBase(unittest.TestCase):
 
 class KernelsProxyApiTest(_KernelsTestBase):
     """Low-level proxy API behaviour exercised against the real
-    `kernels.utils` module.
+    `kernels.utils` / `kernels.hf_hub` module.
     """
 
     def _patched_api(self):
@@ -94,6 +114,10 @@ class KernelsProxyApiTest(_KernelsTestBase):
     def test_patch_replaces_get_hf_api(self):
         api = self._patched_api()
         self.assertTrue(hasattr(self.kernels_utils, '_get_hf_api_origin'))
+        # The patched API is the `modelscope_hub.kernels` shim, shared with
+        # `from modelscope_hub.kernels import get_kernel`.
+        from modelscope_hub.kernels._hub import MsKernelApi
+        self.assertIsInstance(api, MsKernelApi)
         for name in ('snapshot_download', 'list_repo_tree', 'file_exists',
                      'list_repo_refs', 'hf_hub_download'):
             self.assertTrue(callable(getattr(api, name, None)), name)
@@ -110,53 +134,24 @@ class KernelsProxyApiTest(_KernelsTestBase):
         self.assertFalse(hasattr(self.kernels_utils, '_get_hf_api_origin'))
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
 
-    def test_snapshot_download_routes_to_modelscope(self):
+    def test_snapshot_download_routes_to_modelscope_hub(self):
         api = self._patched_api()
-        with patch(
-                'modelscope.hub.snapshot_download.snapshot_download',
-                return_value='/tmp/fake_path') as mocked:
-            result = api.snapshot_download(
+        with patch('modelscope_hub.HubApi') as hub_api_cls:
+            api.snapshot_download(
                 'foo/bar',
                 allow_patterns=['build/*'],
                 ignore_patterns=['*.md'],
                 revision='main',
                 max_workers=4)
-        self.assertEqual(result, '/tmp/fake_path')
-        kwargs = mocked.call_args.kwargs
-        # `main` is normalized to `master` for ModelScope.
+        kwargs = hub_api_cls.return_value.download_repo.call_args.kwargs
+        # `main` is normalized to `master`; kernel repos map onto model repos.
+        self.assertEqual(hub_api_cls.return_value.download_repo.call_args.args,
+                         ('foo/bar', 'model'))
         self.assertEqual(kwargs['revision'], 'master')
-        # `allow_patterns` / `ignore_patterns` are forwarded as-is and extra
-        # kwargs (e.g. `max_workers`) are passed through.
         self.assertEqual(kwargs['allow_patterns'], ['build/*'])
         self.assertEqual(kwargs['ignore_patterns'], ['*.md'])
-        self.assertEqual(kwargs['max_workers'], 4)
-
-    def test_hf_hub_download_raises_entry_not_found(self):
-        from huggingface_hub.errors import EntryNotFoundError
-        api = self._patched_api()
-        with self.assertRaises(EntryNotFoundError):
-            api.hf_hub_download(repo_id='foo/bar', filename='x.toml')
-
-    def test_file_exists_routes_to_hubapi(self):
-        api = self._patched_api()
-        fake = MagicMock()
-        fake.file_exists.return_value = True
-        with patch('modelscope.hub.api.HubApi', return_value=fake):
-            self.assertTrue(api.file_exists('foo/bar', 'README.md'))
-        fake.file_exists.assert_called_once_with(
-            'foo/bar', 'README.md', revision='master')
-
-    def test_list_repo_refs_routes_to_hubapi(self):
-        api = self._patched_api()
-        fake = MagicMock()
-        fake.get_model_branches_and_tags.return_value = (['master',
-                                                          'v1'], ['r1.0'])
-        with patch('modelscope.hub.api.HubApi', return_value=fake):
-            refs = api.list_repo_refs('foo/bar')
-        self.assertEqual([b.name for b in refs.branches], ['master', 'v1'])
-        self.assertEqual([t.name for t in refs.tags], ['r1.0'])
-        # `target_commit` doubles as the ModelScope revision for later calls.
-        self.assertEqual(refs.branches[1].target_commit, 'v1')
+        # Forwarding details (error mapping, ref synthesis, tree derivation)
+        # are covered by the `modelscope_hub` test suite.
 
 
 class PatchHubFlowTest(_KernelsTestBase):
@@ -252,12 +247,24 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
 
     REPO = 'kernels-community/tinygrad-rms'
 
+    def _skip_if_no_variant_for_platform(self, exc):
+        """Skip when the mirror carries no build variant matching this
+        machine — a mirror-data limitation, not a patch failure: reaching
+        variant matching already proves the ModelScope routing works.
+        """
+        if 'Cannot find a build variant' in str(exc):
+            self.skipTest('mirror carries no build variant for this platform')
+
     def test_from_modelscope_get_kernel(self):
         import modelscope
         # Routes through `try_import_from_hf` and scopes the ModelScope
         # monkey-patch to this single call.
-        module = modelscope.get_kernel(
-            self.REPO, trust_remote_code=True, revision='master')
+        try:
+            module = modelscope.get_kernel(
+                self.REPO, trust_remote_code=True, revision='master')
+        except FileNotFoundError as e:
+            self._skip_if_no_variant_for_platform(e)
+            raise
         self.assertIsNotNone(module)
         # Wrapper must leave `_get_hf_api` restored afterwards.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)
@@ -265,8 +272,12 @@ class TinyGradRMSIntegrationTest(_KernelsTestBase):
     def test_patch_hub_then_kernels_get_kernel(self):
         with _isolate_hub_patches(), patch_context():
             from kernels import get_kernel
-            module = get_kernel(
-                self.REPO, trust_remote_code=True, revision='master')
+            try:
+                module = get_kernel(
+                    self.REPO, trust_remote_code=True, revision='master')
+            except FileNotFoundError as e:
+                self._skip_if_no_variant_for_platform(e)
+                raise
             self.assertIsNotNone(module)
         # `patch_context` rolled the kernels patch back on exit.
         self.assertIs(self.kernels_utils._get_hf_api, self.original_get_hf_api)

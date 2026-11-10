@@ -41,6 +41,14 @@ class DataFilesManager(object):
         download_config.dataset_name = dataset_context_config.dataset_name
         download_config.namespace = dataset_context_config.namespace
         download_config.version = dataset_context_config.version
+        download_config.token = False
+        download_config.storage_options = {
+            **(download_config.storage_options or {}),
+            'modelscope': {
+                'endpoint': dataset_context_config.endpoint,
+                'token': dataset_context_config.token
+            },
+        }
         download_config.split = dataset_context_config.split
         download_config.cache_dir = os.path.join(
             dataset_context_config.cache_root_dir, self.namespace,
@@ -52,9 +60,12 @@ class DataFilesManager(object):
         download_config.use_etag = False
 
         # Get oss config
-        api = HubApi()
+        api = HubApi(
+            endpoint=dataset_context_config.endpoint,
+            token=dataset_context_config.token)
         self.oss_config = api.get_dataset_access_config(
-            self.dataset_name, self.namespace, self.version)
+            self.dataset_name, self.namespace,
+            self.version) if self.zip_data_files else {}
 
         # Set context. Note: no need to update context_config.
         download_config.oss_config = self.oss_config

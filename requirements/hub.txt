@@ -1,5 +1,5 @@
 filelock
-modelscope-hub>=0.4.6
+modelscope-hub>=0.7.0.dev0
 packaging
 requests>=2.25
 setuptools

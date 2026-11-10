@@ -40,8 +40,9 @@ def func_receive_dict_inputs(func):
 
 
 def get_default_modelscope_cache_dir():
-    """
-    default base dir: '~/.cache/modelscope'
+    """Return the legacy SDK root at ``~/.cache/modelscope/hub``.
+
+    This path does not describe modelscope-hub snapshot locations.
     """
     default_cache_dir = os.path.expanduser(Path.home().joinpath(
         '.cache', 'modelscope', 'hub'))
@@ -49,39 +50,40 @@ def get_default_modelscope_cache_dir():
 
 
 def get_modelscope_cache_dir() -> str:
-    """Get modelscope cache dir, default location or
-       setting with MODELSCOPE_CACHE
+    """Return the legacy SDK cache root, honoring ``MODELSCOPE_CACHE``.
 
-    Returns:
-        str: the modelscope cache root.
+    Use ``get_hub_cache_root()`` for the active modelscope-hub root. Locate a
+    repository with ``snapshot_download()`` or ``resolve_cached_snapshot()``.
     """
     return os.path.expanduser(
         os.getenv('MODELSCOPE_CACHE', get_default_modelscope_cache_dir()))
 
 
 def get_model_cache_root() -> str:
-    """Get model cache root path.
+    """Return the legacy SDK model cache root, not a snapshot directory.
 
-    Returns:
-        str: the modelscope model cache root.
+    Use the path returned by ``snapshot_download()`` or by
+    ``modelscope.hub.cache_manager.resolve_cached_snapshot()`` instead of
+    appending a repository ID to this root. ``snapshot_download()`` keeps
+    ``<root>/<model_id>`` linked to the directory it returns, solely for
+    older callers.
     """
     return os.path.join(get_modelscope_cache_dir(), 'models')
 
 
 def get_dataset_cache_root() -> str:
-    """Get dataset raw file cache root path.
-    if `MODELSCOPE_CACHE` is set, return `MODELSCOPE_CACHE/datasets`,
-    else return `~/.cache/modelscope/hub/datasets`
+    """Return the legacy SDK dataset cache root.
 
-    Returns:
-        str: the modelscope dataset raw file cache root.
+    Locate modelscope-hub datasets with ``dataset_snapshot_download()`` or
+    ``resolve_cached_snapshot(repo_type='dataset')``.
     """
     return os.path.join(get_modelscope_cache_dir(), 'datasets')
 
 
 def get_dataset_cache_dir(dataset_id: str) -> str:
-    """Get the dataset_id's path.
-       dataset_cache_root/dataset_id.
+    """Return the legacy SDK path under dataset_cache_root/dataset_id.
+
+    This function does not resolve snapshots; use dataset_snapshot_download.
 
     Args:
         dataset_id (str): The dataset id.
@@ -95,8 +97,9 @@ def get_dataset_cache_dir(dataset_id: str) -> str:
 
 
 def get_model_cache_dir(model_id: str) -> str:
-    """cache dir precedence:
-        function parameter > environment > ~/.cache/modelscope/hub/model_id
+    """Return the legacy SDK path under model_cache_root/model_id.
+
+    This function does not resolve snapshots; use snapshot_download.
 
     Args:
         model_id (str, optional): The model id.
@@ -107,6 +110,15 @@ def get_model_cache_dir(model_id: str) -> str:
     root_path = get_model_cache_root()
     return root_path if model_id is None else os.path.join(
         root_path, model_id + '/')
+
+
+def get_hub_cache_root() -> str:
+    """Return the active modelscope-hub cache root without creating directories.
+
+    Use resolve_cached_snapshot to locate a repository and revision.
+    """
+    from modelscope_hub import get_cache_root
+    return str(get_cache_root())
 
 
 def read_file(path):

@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Literal, Optional, Set, Union
 
+from modelscope_hub import get_cache_root  # noqa: F401
+from modelscope_hub import resolve_cached_snapshot  # noqa: F401
 from modelscope_hub._cache_manager import clear_cache, scan_cache  # noqa: F401
 
 from modelscope.hub.errors import CacheNotFound, CorruptedCacheException
@@ -30,6 +32,8 @@ __all__ = [
     'scan_cache_dir',
     'scan_cache',
     'clear_cache',
+    'get_cache_root',
+    'resolve_cached_snapshot',
 ]
 
 # List of OS-created helper files that need to be ignored

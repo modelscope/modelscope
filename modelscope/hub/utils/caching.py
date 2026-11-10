@@ -5,8 +5,12 @@ import os
 import pickle
 import tempfile
 import threading
-from shutil import move, rmtree
+from pathlib import Path
+from shutil import move
 from typing import Dict
+
+from modelscope_hub import get_cache_root
+from modelscope_hub._cache_manager import _safe_rmtree, _validate_cache_scope
 
 from modelscope.hub.constants import (  # noqa
     FILE_HASH, MODELSCOPE_ENABLE_DEFAULT_HASH_VALIDATION)
@@ -151,7 +155,8 @@ class FileSystemCache(object):
         In the case of multiple cache locations, this clears only the last one,
         which is assumed to be the read/write one.
         """
-        rmtree(self.cache_root_location)
+        root = getattr(self, '_cache_scope_root', get_cache_root())
+        _safe_rmtree(Path(self.cache_root_location), root)
         self.load_cache()
 
     def hash_name(self, key):
@@ -182,6 +187,8 @@ class ModelFileSystemCache(FileSystemCache):
             super().__init__(os.path.join(cache_root))
             self.load_model_meta()
         else:
+            _validate_cache_scope('model', f'{owner}/{name}')
+            self._cache_scope_root = Path(cache_root).expanduser().resolve()
             super().__init__(os.path.join(cache_root, owner, name))
             self.model_meta = {
                 FileSystemCache.MODEL_META_MODEL_ID: '%s/%s' % (owner, name)

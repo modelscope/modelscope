@@ -29,6 +29,7 @@ from torch import nn
 
 from modelscope.models.nlp.space_T_cn.configuration import SpaceTCnConfig
 from modelscope.utils.constant import ModelFile
+from modelscope.utils.file_utils import extract_tar_safely
 from modelscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -672,7 +673,7 @@ class PreTrainedBertModel(nn.Module):
             logger.info('extracting archive file {} to temp dir {}'.format(
                 resolved_archive_file, tempdir))
             with tarfile.open(resolved_archive_file, 'r:gz') as archive:
-                archive.extractall(tempdir)
+                extract_tar_safely(archive, tempdir)
             serialization_dir = tempdir
         # Load config
         config_file = os.path.join(serialization_dir, CONFIG_NAME)

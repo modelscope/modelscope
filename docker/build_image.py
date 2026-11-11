@@ -442,7 +442,7 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
             args.torchaudio_version = '2.11.0'
             args.torchvision_version = '0.28.0'
         if not args.vllm_version:
-            args.vllm_version = '0.28.0'
+            args.vllm_version = '0.31.0'
         if not args.base_image:
             # torch 2.13 ships cuDNN 9.20 through its own nvidia-cudnn-cu13
             # dependency, so the -cudnn base variant is redundant here.
@@ -461,11 +461,11 @@ class LatestGPUImageBuilder(StableGPUImageBuilder):
 RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
     pip install --no-cache-dir -U icecream soundfile pybind11 py-spy onnx onnxscript
 """
-        # vLLM >= 0.27 requires flashinfer >= 0.6.14, whose wheels are no longer
-        # published to PyPI. Pre-install it from flashinfer's own index so the later
-        # `pip install vllm` resolves without touching install.sh.
+        # vLLM 0.31 pins flashinfer-python==0.7.0.post1, so pre-install that exact
+        # version (flashinfer's own index serves as a fallback source) to let the
+        # later `pip install vllm` resolve without touching install.sh.
         extra_content += """
-RUN pip install --no-cache-dir flashinfer-python \
+RUN pip install --no-cache-dir "flashinfer-python==0.7.0.post1" \
     --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
         version_args = (
@@ -491,6 +491,9 @@ RUN pip install --no-cache-dir flashinfer-python \
             content = content.replace('{modelscope_branch}',
                                       self.args.modelscope_branch)
             content = content.replace('{swift_branch}', self.args.swift_branch)
+            content = content.replace(
+                'pre-commit "transformers<5.17" "trl<1.0"',
+                'pre-commit "transformers<5.18.0" "trl<1.0"')
         return content
 
     def image(self) -> str:

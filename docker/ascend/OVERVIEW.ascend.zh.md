@@ -1,6 +1,6 @@
 # ms-swift Ascend
 
-> [English](./OVERVIEW.ascend.md) | 中文
+> [English](https://github.com/modelscope/modelscope/blob/master/docker/ascend/OVERVIEW.ascend.md) | 中文
 
 ms-swift Ascend 镜像面向华为昇腾 Atlas NPU，提供可直接使用的 ms-swift 运行环境。镜像基于 Ascend CANN 容器镜像构建，包含 Ascend 推理和训练工作流所需的 Python、CANN、TorchNPU、vLLM Ascend、FLA、Megatron、MindSpeed、mcore-bridge、ms-swift 以及 ModelScope 运行组件。
 
@@ -32,7 +32,7 @@ Ascend Dockerfile 会安装和配置：
 | FLA                       | 从 `fla-org/flash-linear-attention` 源码 checkout，默认 `main` 分支；可通过 `--fla_version` 指定分支或 release tag |
 | Megatron-LM               | 源码 checkout，默认分支 `v0.15.3`；可通过 `--megatron_branch` 配置 |
 | MindSpeed                 | 源码 checkout，默认分支 `core_r0.15.3`；可通过 `--mindspeed_branch` 配置 |
-| mcore-bridge              | PyPI 上的最新发布版；Ascend 构建入口没有独立的版本配置参数 |
+| mcore-bridge              | 从 `modelscope/mcore-bridge` 源码 checkout 并以 editable 模式安装，默认 `main` 分支；可通过 `--mcore_bridge_branch` 指定分支或 release tag |
 | ms-swift                  | 来自 `modelscope/ms-swift` 的源码 checkout，默认分支 `main`；可通过 `--swift_branch` 配置 |
 | DeepSpeed                 | 安装满足 `deepspeed>=0.19` 的最新发布包；`TORCH_DEVICE_BACKEND_AUTOLOAD=0` 仅作用于构建时的安装命令 |
 | ModelScope                | 通过 `pip install -U modelscope` 安装 PyPI 最新发布包；Ascend 镜像不再 clone ModelScope 或 modelscope-hub 源码仓库 |
@@ -43,7 +43,7 @@ Ascend Dockerfile 会安装和配置：
 
 通过 `docker/build_image.py --image_type ascend` 构建的镜像使用以下 tag 格式：
 
-已发布 tag 索引见 [`docker/ascend/supported_tags.md`](./supported_tags.md)。
+已发布 tag 索引见 [`docker/ascend/supported_tags.md`](https://github.com/modelscope/modelscope/blob/master/docker/ascend/supported_tags.md)。
 
 ```text
 ${DOCKER_REGISTRY}:<swift-branch>-<cann-version-tag>-torch_npu<TorchNPU-version>-<hardware-tag>-<os-tag>-<python-tag>-<arch>
@@ -73,10 +73,10 @@ ${DOCKER_REGISTRY}:main-cann9.0.0-torch_npu2.9.0.post2-910b-ubuntu22.04-py3.11-a
 
 **设备 / CANN 基础镜像 / OS / 镜像 Tag / Dockerfile**
 
-- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
-- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](./Dockerfile.ascend)
+- A3 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A3 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-a3-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — openEuler 24.03 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-openeuler24.03-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
+- A2 — 9.1.0 — Ubuntu 22.04 — `v4.5.2-cann9.1.0-torch_npu2.10.0.post2-910b-ubuntu22.04-py3.12` — [Dockerfile.ascend](https://github.com/modelscope/modelscope/blob/master/docker/ascend/Dockerfile.ascend)
 
 ## 本地构建
 
@@ -110,7 +110,8 @@ python docker/build_image.py \
   --modelscope_branch master \
   --swift_branch v4.5.2 \
   --megatron_branch core_v0.16.0 \
-  --mindspeed_branch core_r0.16.0
+  --mindspeed_branch core_r0.16.0 \
+  --mcore_bridge_branch v1.6.2
 ```
 
 ## 自定义构建参数
@@ -137,6 +138,7 @@ python docker/build_image.py \
 - `--swift_branch`（默认：`main`）：选择 ms-swift 源码分支或 tag，并写入输出镜像 tag。
 - `--megatron_branch`（默认：`v0.15.3`）：选择 Megatron-LM 源码分支或 tag。
 - `--mindspeed_branch`（默认：`core_r0.15.3`）：选择 MindSpeed 源码分支或 tag。
+- `--mcore_bridge_branch`（默认：`main`）：选择 mcore-bridge 源码分支或 release tag，并以 editable 模式安装。
 
 Ascend 镜像的 Python 版本必须通过 `--base_image` 选择，`--python_version`
 不会覆盖它。`--modelscope_branch` 虽然会被共用参数解析器接受，但 Ascend

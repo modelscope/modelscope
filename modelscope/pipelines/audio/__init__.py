@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .asr_inference_pipeline import AutomaticSpeechRecognitionPipeline
     from .kws_farfield_pipeline import KWSFarfieldPipeline
     from .kws_kwsbp_pipeline import KeyWordSpottingKwsbpPipeline
+    from .jaec_pipeline import JAECPipeline
     from .linear_aec_pipeline import LinearAECPipeline
     from .text_to_speech_pipeline import TextToSpeechSambertHifiganPipeline
     from .inverse_text_processing_pipeline import InverseTextProcessingPipeline
@@ -22,6 +23,7 @@ else:
         'asr_inference_pipeline': ['AutomaticSpeechRecognitionPipeline'],
         'kws_farfield_pipeline': ['KWSFarfieldPipeline'],
         'kws_kwsbp_pipeline': ['KeyWordSpottingKwsbpPipeline'],
+        'jaec_pipeline': ['JAECPipeline'],
         'linear_aec_pipeline': ['LinearAECPipeline'],
         'text_to_speech_pipeline': ['TextToSpeechSambertHifiganPipeline'],
         'itn_inference_pipeline': ['InverseTextProcessingPipeline'],

@@ -4,7 +4,6 @@ import unittest
 import numpy as np
 from PIL import Image
 
-from modelscope.outputs import OutputKeys
 from modelscope.pipelines import pipeline
 from modelscope.pipelines.base import Pipeline
 from modelscope.utils.constant import Tasks
@@ -36,7 +35,10 @@ class ImageTo3DTest(unittest.TestCase):
         'skip for no test data: data/test/images/basketball.png')
     def test_run_modelhub(self):
         image_to_3d = pipeline(
-            Tasks.image_to_3d, model=self.model_id, revision='v1.0.1')
+            Tasks.image_to_3d,
+            model=self.model_id,
+            revision='v1.0.1',
+            trust_remote_code=True)
         self.pipeline_inference(image_to_3d, self.input)
 
 

@@ -7,6 +7,7 @@ from modelscope_hub import HubConfig as _HubConfig
 from modelscope_hub import get_default_config as _get_default_config
 from modelscope_hub import set_default_config as _set_default_config
 
+from .agent_idp_api import AgentIdpApi
 from .callback import ProgressCallback, TqdmCallback
 from .commit_scheduler import CommitScheduler
 from .snapshot_download import snapshot_download
@@ -18,7 +19,8 @@ def _sync_config() -> None:
     # if a non-standard alias is set.
     legacy_cache = _os.environ.get('MS_CACHE_HOME')
     if legacy_cache and not _os.environ.get('MODELSCOPE_CACHE'):
-        _set_default_config(_HubConfig(cache_dir=legacy_cache))
+        _set_default_config(
+            _HubConfig(cache_dir=_Path(legacy_cache).expanduser().resolve()))
 
     # Bridge MODELSCOPE_CREDENTIALS_PATH → HubConfig.config_dir so credential
     # lookup honours the legacy override.
@@ -42,6 +44,7 @@ def _sync_config() -> None:
 _sync_config()
 
 __all__ = [
+    'AgentIdpApi',
     'CommitScheduler',
     'ProgressCallback',
     'TqdmCallback',

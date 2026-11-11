@@ -25,6 +25,14 @@ logger = get_logger()
 @PIPELINES.register_module(
     Tasks.speech_separation,
     module_name=Models.speech_mossformer2_separation_temporal_8k)
+@PIPELINES.register_module(
+    Tasks.speech_separation,
+    module_name=Models.
+    speech_flatflocoformer_separation_timefrequency_8k_middle_libri2mix360)
+@PIPELINES.register_module(
+    Tasks.speech_separation,
+    module_name=Models.
+    speech_flatsepreformer_separation_temporal_8k_base_libri2mix100)
 class SeparationPipeline(Pipeline):
 
     def __init__(self, model, **kwargs):

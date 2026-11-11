@@ -31,28 +31,22 @@ RESERVED_KEYS = ['filename', 'text', 'pretty_text']
 def check_trust_remote_code_for_config(filename,
                                        trust_remote_code: bool = False,
                                        model_dir=None):
-    """Refuse to exec a `.py` config file that comes from an untrusted source.
+    """Refuse Python configuration execution without explicit authorization.
 
-    Loading a Python config (via `Config.from_file`, `mmcv.Config.fromfile`,
-    `mmseg.apis.init_segmentor`, etc.) imports the file as a module, which
-    runs any top-level code it contains. Anything that ultimately reads a
-    `.py` config from a remote model repo MUST gate that load with this
-    helper. JSON / YAML configs are passive data and pass through.
+    Loading a Python configuration runs its top-level code. Local directory
+    names and cache layouts are attacker-controlled, so ``model_dir`` no longer
+    establishes trust. Callers must pass ``trust_remote_code=True`` after Hub
+    metadata verification or through an explicit opt-in. JSON and YAML remain
+    passive data formats.
 
     Args:
         filename: Path to the candidate config file.
         trust_remote_code: Caller opt-in flag; pass through
             ``self.trust_remote_code`` from ``Model`` / ``Pipeline`` /
             ``Preprocessor`` callers.
-        model_dir: Repo root used by the owner-group check. Defaults to the
-            parent directory of ``filename``.
+        model_dir: Retained for compatibility; it does not establish trust.
     """
     if not str(filename).endswith('.py'):
-        return
-    from modelscope.utils.automodel_utils import check_model_from_owner_group
-    if model_dir is None:
-        model_dir = osp.dirname(osp.abspath(osp.expanduser(str(filename))))
-    if check_model_from_owner_group(model_dir=model_dir):
         return
     if trust_remote_code:
         return

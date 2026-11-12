@@ -470,6 +470,14 @@ RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
 RUN pip install --no-cache-dir "flashinfer-python==0.7.2.post1" \
     --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
+        # torch 2.14 headers refuse to build below C++20, while DeepGEMM, apex,
+        # flash-attn and causal-conv1d still hardcode -std=c++17. Appending the
+        # flag inside a compiler wrapper makes C++20 win over their last flag.
+        extra_content += """
+RUN { echo '#!/bin/sh'; echo 'exec /usr/bin/g++ "$@" -std=c++20'; } > /usr/local/bin/g++ && \
+    chmod +x /usr/local/bin/g++ && g++ -dumpversion
+ENV CXX=/usr/local/bin/g++
+"""
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '
             f'{self.args.vllm_version} {self.args.lmdeploy_version} {self.args.autogptq_version}  '

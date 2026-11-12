@@ -37,7 +37,7 @@ def _hub_supports_description():
     """True when the installed modelscope_hub forwards secret/variable
     ``description`` fields.
 
-    The description support landed in modelscope_hub after the 0.4.6 release
+    The description support landed in modelscope_hub after the 0.7.0 release
     currently pinned as the floor in requirements/hub.txt. Guard the
     new-surface tests so this suite still passes against the released floor
     while exercising the full surface once an adapted hub is installed.
@@ -61,7 +61,7 @@ def _hub_supports_studio_oauth():
     The Studio OAuth surface is part of the modelscope_service master
     branch (cross-checked 2026-11-09; older server versions ignore the
     OAuth flags) and is adapted in modelscope_hub after the
-    0.4.6 release floor; guard the new tests accordingly.
+    0.7.0 release floor; guard the new tests accordingly.
     """
     try:
         from modelscope_hub.cli import studio as _hub_studio_cli

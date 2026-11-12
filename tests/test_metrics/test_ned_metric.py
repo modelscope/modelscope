@@ -17,7 +17,8 @@ class TestNedMetric(unittest.TestCase):
         # An empty string against "ab" used to return distance 2, so the
         # score was -1. The normalized distance is 1, so the score is 0.
         # cat/cut is still 2/3 and an exact match is still 1.
-        self.assertAlmostEqual(score, (0.0 + 0.0 + (1.0 - 1.0 / 3.0) + 1.0) / 4.0)
+        expected_score = (0.0 + 0.0 + (1.0 - 1.0 / 3.0) + 1.0) / 4.0
+        self.assertAlmostEqual(score, expected_score)
 
 
 if __name__ == '__main__':

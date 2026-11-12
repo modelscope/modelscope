@@ -91,7 +91,8 @@ RUN git clone --depth 1 --branch {vllm_ascend_git_ref} \
 
 # ---------- Clone training-side repositories ----------
 RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Megatron-LM.git /Megatron-LM && \
-    git clone --depth 1 --branch {mindspeed_branch} https://gitcode.com/Ascend/MindSpeed.git /MindSpeed && \
+    git clone --depth 1 --branch {megatron_adaptor_branch} https://gitcode.com/Ascend/MegatronAdaptor.git /MegatronAdaptor && \
+    git clone --depth 1 --branch {transformer_engine_npu_branch} https://gitcode.com/Ascend/TransformerEngineNPU.git /TransformerEngineNPU && \
     git clone --depth 1 --single-branch --branch {mcore_bridge_branch} https://github.com/modelscope/mcore-bridge.git /mcore-bridge && \
     GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 -b {swift_branch} --single-branch https://github.com/modelscope/ms-swift.git /ms-swift
 
@@ -100,8 +101,9 @@ RUN git clone --depth 1 --branch {megatron_branch} https://github.com/NVIDIA/Meg
 RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     source /usr/local/Ascend/ascend-toolkit/set_env.sh && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
-    cd /MindSpeed && pip install --no-cache-dir -e . && \
     cd /mcore-bridge && pip install --no-cache-dir -e . && \
+    cd /MegatronAdaptor && pip install --no-cache-dir -e . && \
+    cd /TransformerEngineNPU && pip install --no-cache-dir -e . --no-build-isolation && \
     pip install --no-cache-dir -U modelscope && \
     cd /ms-swift && pip install --no-cache-dir -e .
 
@@ -141,10 +143,9 @@ RUN export PIP_EXTRA_INDEX_URL="${PIP_EXTRA_INDEX_URL}" && \
     if [ -f /usr/local/Ascend/nnal/atb/set_env.sh ]; then source /usr/local/Ascend/nnal/atb/set_env.sh; fi && \
     pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir -U icecream soundfile pybind11 py-spy funasr scikit-learn && \
-    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils 'librosa<1.0' 'timm>=0.9.0' transformers accelerate peft trl safetensors && \
+    pip install --no-cache-dir -U qwen_vl_utils qwen_omni_utils 'librosa<1.0' 'timm>=0.9.0' transformers accelerate 'peft>=0.11,<0.21' 'trl>=0.15,<1.0' safetensors && \
     pip install --no-cache-dir -r /ms-swift/requirements/eval.txt && \
     pip install --no-cache-dir -U evalscope --no-dependencies && \
-    pip install --no-cache-dir 'numpy>=2.0' --force-reinstall --no-deps && \
     pip install --no-cache-dir -U ms-agent --no-dependencies && \
     pip install --no-cache-dir --no-build-isolation OpenCC && \
     pip install --no-cache-dir diffusers omegaconf==2.3.0 && \
@@ -164,6 +165,7 @@ RUN git clone --depth 1 --branch {fla_version} https://github.com/fla-org/flash-
 
 # ---------- Re-pin triton-ascend after all editable installs ----------
 # vllm-ascend may otherwise replace the CANN-specific version selected above.
+# Restore NumPy 2 for PyArrow after Triton-Ascend pins NumPy 1.26.4.
 RUN set -eux; \
     ASCEND_PYPI_INDEX_URL="${PIP_EXTRA_INDEX_URL}"; \
     pip uninstall -y triton || true; \
@@ -171,7 +173,8 @@ RUN set -eux; \
     PIP_INDEX_URL="${ASCEND_PYPI_INDEX_URL}" \
     PIP_EXTRA_INDEX_URL="${PYPI_OFFICIAL_INDEX_URL}" \
         pip install --no-cache-dir --force-reinstall \
-        triton-ascend=={triton_ascend_version}
+        triton-ascend=={triton_ascend_version} && \
+    pip install --no-cache-dir --upgrade --no-deps 'numpy>=2.0'
 
 RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc && \
     echo '[ -f /usr/local/Ascend/nnal/atb/set_env.sh ] && source /usr/local/Ascend/nnal/atb/set_env.sh' >> /root/.bashrc && \
@@ -183,7 +186,7 @@ ENV MODELSCOPE_CACHE=/mnt/workspace/.cache/modelscope/hub
 
 # Show install results and verify that editable packages resolve from retained source trees.
 RUN pip list && \
-    TORCH_DEVICE_BACKEND_AUTOLOAD=0 python -c "import importlib.metadata as m; import importlib.util as u; import os; expected = {'vllm': '/vllm', 'vllm_ascend': '/vllm-ascend', 'swift': '/ms-swift', 'megatron': '/Megatron-LM', 'mindspeed': '/MindSpeed', 'fla': '/flash-linear-attention'}; specs = {name: u.find_spec(name) for name in expected}; origins = {name: (spec.origin or next(iter(spec.submodule_search_locations or []), None) if spec else None) for name, spec in specs.items()}; assert all(path and os.path.commonpath([os.path.realpath(path), root]) == root for name, root in expected.items() for path in [origins[name]]), origins; assert u.find_spec('modelscope') and m.version('modelscope'); assert m.version('triton-ascend') == '{triton_ascend_version}', m.version('triton-ascend'); print(origins)"
+    TORCH_DEVICE_BACKEND_AUTOLOAD=0 python -c "import importlib.metadata as m; import importlib.util as u; import os; expected = {'vllm': '/vllm', 'vllm_ascend': '/vllm-ascend', 'swift': '/ms-swift', 'megatron': '/Megatron-LM', 'megatron_adaptor': '/MegatronAdaptor', 'transformer_engine': '/TransformerEngineNPU', 'mcore_bridge': '/mcore-bridge', 'fla': '/flash-linear-attention'}; specs = {name: u.find_spec(name) for name in expected}; origins = {name: (spec.origin or next(iter(spec.submodule_search_locations or []), None) if spec else None) for name, spec in specs.items()}; assert all(path and os.path.commonpath([os.path.realpath(path), root]) == root for name, root in expected.items() for path in [origins[name]]), origins; assert u.find_spec('mindspeed') is None; assert u.find_spec('modelscope') and m.version('modelscope'); assert m.version('triton-ascend') == '{triton_ascend_version}', m.version('triton-ascend'); print(origins)"
 WORKDIR /workspace
 
 CMD ["/bin/bash"]

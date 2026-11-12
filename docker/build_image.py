@@ -1272,8 +1272,10 @@ class AscendImageBuilder(StableGPUImageBuilder):
             content = content.replace('{swift_branch}', self.args.swift_branch)
             content = content.replace('{megatron_branch}',
                                       self.args.megatron_branch)
-            content = content.replace('{mindspeed_branch}',
-                                      self.args.mindspeed_branch)
+            content = content.replace('{megatron_adaptor_branch}',
+                                      self.args.megatron_adaptor_branch)
+            content = content.replace('{transformer_engine_npu_branch}',
+                                      self.args.transformer_engine_npu_branch)
             content = content.replace('{mcore_bridge_branch}',
                                       self.args.mcore_bridge_branch)
         return content
@@ -1395,8 +1397,11 @@ parser.add_argument(
     help='Minor build only: install modelscope from the released PyPI version '
     '(--modelscope_version, default) or from --modelscope_branch source.')
 parser.add_argument('--swift_branch', type=str, default='main')
-parser.add_argument('--megatron_branch', type=str, default='v0.15.3')
-parser.add_argument('--mindspeed_branch', type=str, default='core_r0.15.3')
+parser.add_argument('--megatron_branch', type=str, default='core_r0.18.0')
+parser.add_argument(
+    '--megatron_adaptor_branch', type=str, default='core_r0.18.0')
+parser.add_argument(
+    '--transformer_engine_npu_branch', type=str, default='main')
 parser.add_argument('--mcore_bridge_branch', type=str, default='main')
 parser.add_argument('--soc_version', type=str, default='ascend910_9391')
 parser.add_argument('--arch', type=str, choices=['x86', 'arm'], default=None)

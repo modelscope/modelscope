@@ -2,7 +2,7 @@
 
 > [English](https://github.com/modelscope/modelscope/blob/master/docker/ascend/OVERVIEW.ascend.md) | 中文
 
-ms-swift Ascend 镜像面向华为昇腾 Atlas NPU，提供可直接使用的 ms-swift 运行环境。镜像基于 Ascend CANN 容器镜像构建，包含 Ascend 推理和训练工作流所需的 Python、CANN、TorchNPU、vLLM Ascend、FLA、Megatron、MindSpeed、mcore-bridge、ms-swift 以及 ModelScope 运行组件。
+ms-swift Ascend 镜像面向华为昇腾 Atlas NPU，提供可直接使用的 ms-swift 运行环境。镜像基于 Ascend CANN 容器镜像构建，包含 Ascend 推理和训练工作流所需的 Python、CANN、TorchNPU、vLLM Ascend、FLA、Megatron、MegatronAdaptor、TransformerEngineNPU、mcore-bridge、ms-swift 以及 ModelScope 运行组件。
 
 ## 快速参考
 
@@ -30,8 +30,9 @@ Ascend Dockerfile 会安装和配置：
 | vLLM                      | 默认从官方 `vllm-project/vllm` 源码 tag `v0.18.0` 构建；可通过 `--vllm_version` 配置；使用 empty target device |
 | vLLM Ascend               | 默认从官方 `vllm-project/vllm-ascend` 源码 tag `v0.18.0` 构建；可通过 `--vllm_ascend_version` 配置；会初始化 submodule；构建与运行依赖以华为云 Ascend PyPI 为主索引、官方 PyPI 为备用索引 |
 | FLA                       | 从 `fla-org/flash-linear-attention` 源码 checkout，默认 `main` 分支；可通过 `--fla_version` 指定分支或 release tag |
-| Megatron-LM               | 源码 checkout，默认分支 `v0.15.3`；可通过 `--megatron_branch` 配置 |
-| MindSpeed                 | 源码 checkout，默认分支 `core_r0.15.3`；可通过 `--mindspeed_branch` 配置 |
+| Megatron-LM               | 源码 checkout，默认分支 `core_r0.18.0`；可通过 `--megatron_branch` 配置 |
+| MegatronAdaptor           | 从 `Ascend/MegatronAdaptor` 源码 checkout 并以 editable 模式安装，默认分支 `core_r0.18.0`；可通过 `--megatron_adaptor_branch` 配置 |
+| TransformerEngineNPU      | 从 `Ascend/TransformerEngineNPU` 源码 checkout 并以 editable 模式安装，默认分支 `main`；安装时使用 `--no-build-isolation`；可通过 `--transformer_engine_npu_branch` 配置 |
 | mcore-bridge              | 从 `modelscope/mcore-bridge` 源码 checkout 并以 editable 模式安装，默认 `main` 分支；可通过 `--mcore_bridge_branch` 指定分支或 release tag |
 | ms-swift                  | 来自 `modelscope/ms-swift` 的源码 checkout，默认分支 `main`；可通过 `--swift_branch` 配置 |
 | DeepSpeed                 | 安装满足 `deepspeed>=0.19` 的最新发布包；`TORCH_DEVICE_BACKEND_AUTOLOAD=0` 仅作用于构建时的安装命令 |
@@ -89,7 +90,7 @@ python docker/build_image.py \
   --image_type ascend
 ```
 
-完整固定版本参考（CANN 9.1.0、Atlas A2、Ubuntu 22.04、Python 3.12、ARM64）：
+完整构建参考（CANN 9.1.0、Atlas A2、Ubuntu 22.04、Python 3.12、ARM64）。Megatron 组件遵循 [ms-swift NPU 安装文档](https://swift.readthedocs.io/zh-cn/latest/BestPractices/NPU-support.html#megatronadaptor-transformerenginenpu)：使用 MCore 0.18、MegatronAdaptor 和 TransformerEngineNPU，不安装 MindSpeed。ms-swift 和 mcore-bridge 应选择已包含配套适配的兼容分支；示例使用 `main`。
 
 ```bash
 export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
@@ -108,10 +109,11 @@ python docker/build_image.py \
   --fla_version main \
   --triton_ascend_version 3.2.2 \
   --modelscope_branch master \
-  --swift_branch v4.5.2 \
-  --megatron_branch core_v0.16.0 \
-  --mindspeed_branch core_r0.16.0 \
-  --mcore_bridge_branch v1.6.2
+  --swift_branch main \
+  --megatron_branch core_r0.18.0 \
+  --megatron_adaptor_branch core_r0.18.0 \
+  --transformer_engine_npu_branch main \
+  --mcore_bridge_branch main
 ```
 
 ## 自定义构建参数
@@ -136,8 +138,9 @@ python docker/build_image.py \
 - `--pip_extra_index_url`（默认：华为云 Ascend PyPI）：设置 Ascend 特定依赖的主索引。
 - `--pypi_official_index_url`（默认：`https://pypi.org/simple`）：设置备用包索引。
 - `--swift_branch`（默认：`main`）：选择 ms-swift 源码分支或 tag，并写入输出镜像 tag。
-- `--megatron_branch`（默认：`v0.15.3`）：选择 Megatron-LM 源码分支或 tag。
-- `--mindspeed_branch`（默认：`core_r0.15.3`）：选择 MindSpeed 源码分支或 tag。
+- `--megatron_branch`（默认：`core_r0.18.0`）：选择 Megatron-LM 源码分支或 tag。
+- `--megatron_adaptor_branch`（默认：`core_r0.18.0`）：选择 MegatronAdaptor 源码分支或 tag。
+- `--transformer_engine_npu_branch`（默认：`main`）：选择 TransformerEngineNPU 源码分支或 tag。
 - `--mcore_bridge_branch`（默认：`main`）：选择 mcore-bridge 源码分支或 release tag，并以 editable 模式安装。
 
 Ascend 镜像的 Python 版本必须通过 `--base_image` 选择，`--python_version`
@@ -207,4 +210,4 @@ pip show ms-swift modelscope mcore-bridge torch-npu triton-ascend
 
 ## License
 
-ms-swift 和 ModelScope 组件遵循各自上游仓库的 license。CANN、MindSpeed、TorchNPU、vLLM Ascend 以及其他预装第三方组件遵循各自上游 license。
+ms-swift 和 ModelScope 组件遵循各自上游仓库的 license。CANN、MegatronAdaptor、TransformerEngineNPU、TorchNPU、vLLM Ascend 以及其他预装第三方组件遵循各自上游 license。

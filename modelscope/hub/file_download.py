@@ -68,7 +68,7 @@ def model_file_download(
     user_agent=None,
 ) -> str:
     """Download a single model file with release-mode revision resolution."""
-    if revision is None:
+    if revision is None and not local_files_only:
         try:
             from modelscope.hub.api import HubApi
             api = HubApi(endpoint=endpoint, token=token)

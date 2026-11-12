@@ -30,6 +30,7 @@ from modelscope.models.science.unifold.msa.utils import divide_multi_chains
 from modelscope.preprocessors.base import Preprocessor
 from modelscope.preprocessors.builder import PREPROCESSORS
 from modelscope.utils.constant import Fields
+from modelscope.utils.file_utils import extract_tar_safely
 
 __all__ = [
     'UniFoldPreprocessor',
@@ -166,7 +167,7 @@ def run_mmseqs2(
     # extract a3m files
     if any(not os.path.isfile(a3m_file) for a3m_file in a3m_files):
         with tarfile.open(tar_gz_file) as tar_gz:
-            tar_gz.extractall(path)
+            extract_tar_safely(tar_gz, path)
 
     # templates
     if use_templates:

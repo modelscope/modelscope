@@ -2,7 +2,7 @@
 
 > English | [中文](https://github.com/modelscope/modelscope/blob/master/docker/ascend/OVERVIEW.ascend.zh.md)
 
-ms-swift Ascend images provide a ready-to-use ms-swift environment for Huawei Ascend Atlas NPUs. The images are built on top of the Ascend CANN container images and include the Python, CANN, TorchNPU, vLLM Ascend, FLA, Megatron, MindSpeed, mcore-bridge, ms-swift, and ModelScope runtime components needed for Ascend inference and training workflows.
+ms-swift Ascend images provide a ready-to-use ms-swift environment for Huawei Ascend Atlas NPUs. The images are built on top of the Ascend CANN container images and include the Python, CANN, TorchNPU, vLLM Ascend, FLA, Megatron, MegatronAdaptor, TransformerEngineNPU, mcore-bridge, ms-swift, and ModelScope runtime components needed for Ascend inference and training workflows.
 
 ## Quick Reference
 
@@ -30,8 +30,9 @@ The Ascend Dockerfile installs and configures:
 | vLLM                     | Official `vllm-project/vllm` source tag `v0.18.0` by default; configurable with `--vllm_version`; built with the empty target device |
 | vLLM Ascend              | Official `vllm-project/vllm-ascend` source tag `v0.18.0` by default; configurable with `--vllm_ascend_version`; initializes submodules; resolves build and runtime dependencies from Huawei Cloud Ascend PyPI with official PyPI as fallback |
 | FLA                      | source checkout from `fla-org/flash-linear-attention`, default branch `main`; configurable with `--fla_version` using a branch or release tag |
-| Megatron-LM              | source checkout, default branch `v0.15.3`; configurable with `--megatron_branch` |
-| MindSpeed                | source checkout, default branch `core_r0.15.3`; configurable with `--mindspeed_branch` |
+| Megatron-LM              | source checkout, default branch `core_r0.18.0`; configurable with `--megatron_branch` |
+| MegatronAdaptor          | editable source checkout from `Ascend/MegatronAdaptor`, default branch `core_r0.18.0`; configurable with `--megatron_adaptor_branch` |
+| TransformerEngineNPU     | editable source checkout from `Ascend/TransformerEngineNPU`, default branch `main`; installed with `--no-build-isolation`; configurable with `--transformer_engine_npu_branch` |
 | mcore-bridge             | editable source checkout from `modelscope/mcore-bridge`, default branch `main`; configurable with `--mcore_bridge_branch` using a branch or release tag |
 | ms-swift                 | source checkout from `modelscope/ms-swift`, default branch `main`; configurable with `--swift_branch` |
 | DeepSpeed                | newest package satisfying `deepspeed>=0.19`; `TORCH_DEVICE_BACKEND_AUTOLOAD=0` is scoped to its build-time install command |
@@ -89,8 +90,8 @@ python docker/build_image.py \
   --image_type ascend
 ```
 
-Complete version-pinned reference (CANN 9.1.0, Atlas A2, Ubuntu 22.04,
-Python 3.12, ARM64):
+Complete build reference (CANN 9.1.0, Atlas A2, Ubuntu 22.04,
+Python 3.12, ARM64). The Megatron components follow the [ms-swift NPU installation guide](https://swift.readthedocs.io/zh-cn/latest/BestPractices/NPU-support.html#megatronadaptor-transformerenginenpu): MCore 0.18, MegatronAdaptor and TransformerEngineNPU, without MindSpeed. Use compatible ms-swift and mcore-bridge branches containing this integration; the example uses `main`.
 
 ```bash
 export DOCKER_REGISTRY=registry.example.com/ms-swift/ms-swift
@@ -109,10 +110,11 @@ python docker/build_image.py \
   --fla_version main \
   --triton_ascend_version 3.2.2 \
   --modelscope_branch master \
-  --swift_branch v4.5.2 \
-  --megatron_branch core_v0.16.0 \
-  --mindspeed_branch core_r0.16.0 \
-  --mcore_bridge_branch v1.6.2
+  --swift_branch main \
+  --megatron_branch core_r0.18.0 \
+  --megatron_adaptor_branch core_r0.18.0 \
+  --transformer_engine_npu_branch main \
+  --mcore_bridge_branch main
 ```
 
 ## Custom Build Parameters
@@ -138,8 +140,9 @@ are consumed by the current Ascend build path:
 - `--pip_extra_index_url` (default: Huawei Cloud Ascend PyPI): sets the primary package index for Ascend-specific dependencies.
 - `--pypi_official_index_url` (default: `https://pypi.org/simple`): sets the fallback package index.
 - `--swift_branch` (default: `main`): selects the ms-swift source branch or tag and is included in the output image tag.
-- `--megatron_branch` (default: `v0.15.3`): selects the Megatron-LM source branch or tag.
-- `--mindspeed_branch` (default: `core_r0.15.3`): selects the MindSpeed source branch or tag.
+- `--megatron_branch` (default: `core_r0.18.0`): selects the Megatron-LM source branch or tag.
+- `--megatron_adaptor_branch` (default: `core_r0.18.0`): selects the MegatronAdaptor source branch or tag.
+- `--transformer_engine_npu_branch` (default: `main`): selects the TransformerEngineNPU source branch or tag.
 - `--mcore_bridge_branch` (default: `main`): selects the mcore-bridge source branch or release tag for the editable install.
 
 `--python_version` does not override the Python version for Ascend images;
@@ -210,4 +213,4 @@ When running containers with these images, consider the following security risks
 
 ## License
 
-ms-swift and ModelScope components follow their upstream repository licenses. CANN, MindSpeed, TorchNPU, vLLM Ascend, and other pre-installed third-party components are subject to their own upstream licenses.
+ms-swift and ModelScope components follow their upstream repository licenses. CANN, MegatronAdaptor, TransformerEngineNPU, TorchNPU, vLLM Ascend, and other pre-installed third-party components are subject to their own upstream licenses.

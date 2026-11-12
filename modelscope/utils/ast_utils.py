@@ -79,7 +79,7 @@ class AstScanning(object):
 
     def _is_leaf(self, node: ast.AST) -> bool:
         for field in node._fields:
-            attr = getattr(node, field)
+            attr = getattr(node, field, None)
             if self._is_sub_node(attr):
                 return False
             elif isinstance(attr, (list, tuple)):
@@ -107,7 +107,7 @@ class AstScanning(object):
             local_dict = dict()
             for field in self._fields(node, show_offsets=show_offsets):
                 field_output = self._leaf(
-                    getattr(node, field), show_offsets=show_offsets)
+                    getattr(node, field, None), show_offsets=show_offsets)
                 local_dict[field] = field_output
             output[type(node).__name__] = local_dict
             return output
@@ -156,7 +156,7 @@ class AstScanning(object):
                     else:
                         setattr(node, 'module', path_level + module_name)
             for field in self._fields(node, show_offsets=show_offsets):
-                attr = getattr(node, field)
+                attr = getattr(node, field, None)
                 if attr == []:
                     outputs[field] = []
                 elif self._skip_function(parent_node_name):

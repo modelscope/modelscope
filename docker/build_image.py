@@ -435,6 +435,11 @@ RUN pip install --no-cache-dir flashinfer-python \
 
 class LatestGPUImageBuilder(StableGPUImageBuilder):
     """Dependencies will be latest versions"""
+    _FLASH_ATTN_WHEEL = (
+        'https://github.com/mjun0812/flash-attention-prebuild-wheels/'
+        'releases/download/v0.10.0/'
+        'flash_attn-2.8.3%2Bcu130torch2.14-cp312-cp312-'
+        'manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl')
 
     def init_args(self, args: Any) -> Any:
         if not args.torch_version:
@@ -470,13 +475,20 @@ RUN export PIP_EXTRA_INDEX_URL=https://pypi.org/simple && \
 RUN pip install --no-cache-dir "flashinfer-python==0.7.2.post1" \
     --extra-index-url https://flashinfer.ai/whl/ && pip cache purge
 """
+        # --no-deps keeps pip from pulling a PyPI torch: install.sh installs the
+        # cu130 build later, and `flash_attn==<version>` then resolves as already
+        # satisfied instead of being compiled from source.
+        extra_content += (f'\nRUN pip install --no-cache-dir --no-deps '
+                          f'"{self._FLASH_ATTN_WHEEL}" && pip cache purge\n')
         # torch 2.14 headers refuse to build below C++20, while DeepGEMM, apex,
-        # flash-attn and causal-conv1d still hardcode -std=c++17. Appending the
-        # flag inside a compiler wrapper makes C++20 win over their last flag.
+        # flash-attn and causal-conv1d still hardcode -std=c++17. The g++ wrapper
+        # appends C++20 after theirs, and NVCC_APPEND_FLAGS does the same for the
+        # .cu compilations that nvcc drives itself.
         extra_content += """
 RUN { echo '#!/bin/sh'; echo 'exec /usr/bin/g++ "$@" -std=c++20'; } > /usr/local/bin/g++ && \
-    chmod +x /usr/local/bin/g++ && g++ -dumpversion
+    chmod +x /usr/local/bin/g++ && g++ -dumpversion && nvcc --version > /dev/null
 ENV CXX=/usr/local/bin/g++
+ENV NVCC_APPEND_FLAGS=-std=c++20
 """
         version_args = (
             f'{self.args.torch_version} {self.args.torchvision_version} {self.args.torchaudio_version} '

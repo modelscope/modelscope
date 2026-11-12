@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 torch_version=${1:-2.4.0}
 torchvision_version=${2:-0.19.0}

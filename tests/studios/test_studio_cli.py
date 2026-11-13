@@ -438,6 +438,117 @@ class TestStudioOAuthSettingsDispatch(TestResultMixin, unittest.TestCase):
         mock_make.assert_not_called()
 
 
+class TestStudioOAuthArgvToHttpRequest(unittest.TestCase):
+    """argv → HTTP boundary regression for the OAuth surface.
+
+    The dispatch tests above mock at ``make_api``, which cannot see two
+    failure modes: a documented command failing at CLI parse time, and a
+    create request whose OAuth gate was dropped before the POST left the
+    process. These tests drive the real CLI entry (``run_cmd``) with argv
+    taken from the documented commands and assert at the OpenAPI transport
+    boundary (``OpenAPIClient._request``) instead.
+    """
+
+    def _run_cli(self, argv, request_mock):
+        from modelscope_hub._openapi import OpenAPIClient
+        from modelscope_hub.cli.main import run_cmd
+        with patch.object(OpenAPIClient, '_request', request_mock):
+            with patch('builtins.print'):
+                return run_cmd(list(argv))
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_documented_settings_command_reaches_http_boundary(self):
+        from unittest.mock import MagicMock
+        mock_request = MagicMock(return_value={'oauth_enabled': True})
+        code = self._run_cli(
+            [
+                '--token', 'test-token',
+                'studio', 'settings', 'owner/demo',
+                '--oauth-enabled', '--oauth-scope', 'openid profile',
+                '--oauth-token-expire-time', '4',
+                '--oauth-callback-url', 'https://example.org/cb',
+            ],
+            mock_request,
+        )
+        self.assertEqual(code, 0)
+        mock_request.assert_called_once()
+        pos = mock_request.call_args.args
+        body = mock_request.call_args.kwargs['json_body']
+        self.assertEqual(pos[0], 'PATCH')
+        self.assertEqual(pos[1], '/studios/owner/demo/settings')
+        self.assertIs(body['oauth_enabled'], True)
+        self.assertEqual(body['oauth_scope'], 'openid profile')
+        self.assertEqual(body['oauth_token_expire_time'], 4)
+        self.assertEqual(body['oauth_callback_urls'], ['https://example.org/cb'])
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_documented_create_command_reaches_http_boundary(self):
+        from unittest.mock import MagicMock
+        mock_request = MagicMock(
+            return_value={'id': 'owner/oauth-demo', 'owner': 'owner', 'repo_name': 'oauth-demo'})
+        code = self._run_cli(
+            [
+                '--token', 'test-token',
+                'create', 'owner/oauth-demo', '--repo-type', 'studio',
+                '--oauth-enabled', '--oauth-scope', 'openid profile',
+                '--oauth-token-expire-time', '4',
+            ],
+            mock_request,
+        )
+        self.assertEqual(code, 0)
+        mock_request.assert_called_once()
+        pos = mock_request.call_args.args
+        body = mock_request.call_args.kwargs['json_body']
+        self.assertEqual(pos[0], 'POST')
+        self.assertEqual(pos[1], '/studios')
+        self.assertIs(body['oauth_enabled'], True)
+        self.assertEqual(body['oauth_scope'], 'openid profile')
+        self.assertEqual(body['oauth_token_expire_time'], 4)
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_create_with_lone_oauth_scope_sends_no_request(self):
+        # The create contract decodes oauth_enabled as a plain bool, so detail
+        # fields without an explicit flag are silently dropped server-side;
+        # the CLI must refuse before any HTTP traffic leaves the process.
+        from unittest.mock import MagicMock
+        mock_request = MagicMock()
+        code = self._run_cli(
+            [
+                '--token', 'test-token',
+                'create', 'owner/demo', '--repo-type', 'studio',
+                '--oauth-scope', 'openid',
+            ],
+            mock_request,
+        )
+        self.assertEqual(code, 2)
+        mock_request.assert_not_called()
+
+    @unittest.skipUnless(
+        _hub_supports_studio_oauth(),
+        'modelscope_hub with Studio OAuth flags required')
+    def test_create_no_oauth_enabled_sends_explicit_false(self):
+        from unittest.mock import MagicMock
+        mock_request = MagicMock(
+            return_value={'id': 'owner/demo', 'owner': 'owner', 'repo_name': 'demo'})
+        code = self._run_cli(
+            [
+                '--token', 'test-token',
+                'create', 'owner/demo', '--repo-type', 'studio',
+                '--no-oauth-enabled',
+            ],
+            mock_request,
+        )
+        self.assertEqual(code, 0)
+        body = mock_request.call_args.kwargs['json_body']
+        self.assertIs(body['oauth_enabled'], False)
+
+
 class TestStudioCLIDirectCall(TestResultMixin, unittest.TestCase):
     """Drive ``StudioCMD.execute`` with real API calls (no HubApi mocks)."""
 

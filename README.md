@@ -290,7 +290,7 @@ pip install modelscope[science] -f https://modelscope.oss-cn-beijing.aliyuncs.co
 We  provide additional documentations including:
 * More detailed Installation Guide
 * Introduction to tasks
-* [Use pipeline for model inference](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86Pipeline)
+* Use pipeline for model inference
 * [Finetuning example](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AE%AD%E7%BB%83Train)
 * [Preprocessing of data](https://modelscope.cn/docs/%E6%95%B0%E6%8D%AE%E7%9A%84%E9%A2%84%E5%A4%84%E7%90%86)
 * [Evaluation](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AF%84%E4%BC%B0)

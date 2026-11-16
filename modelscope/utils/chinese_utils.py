@@ -5,6 +5,9 @@ import string
 
 CHINESE_PUNCTUATION = '＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､\u3000、〃〈〉《》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏﹑﹔·！？｡。'
 ENGLISH_PUNCTUATION = string.punctuation
+_PUNCTUATION_TO_SPACE = str.maketrans(
+    {p: ' '
+     for p in CHINESE_PUNCTUATION + ENGLISH_PUNCTUATION})
 
 
 def remove_space_between_chinese_chars(decoded_str: str):
@@ -62,7 +65,7 @@ def normalize_chinese_number(text):
     new_text = ''
     for x in text:
         if x in '0123456789':
-            x = chinese_number[0]
+            x = chinese_number[int(x)]
         new_text += x
     new_text = convert(new_text, 'zh-hans')
     return new_text
@@ -70,8 +73,7 @@ def normalize_chinese_number(text):
 
 def pre_chinese(text, max_words):
 
-    text = text.lower().replace(CHINESE_PUNCTUATION,
-                                ' ').replace(ENGLISH_PUNCTUATION, ' ')
+    text = text.lower().translate(_PUNCTUATION_TO_SPACE)
     text = re.sub(
         r'\s{2,}',
         ' ',

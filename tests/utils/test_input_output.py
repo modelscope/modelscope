@@ -1,9 +1,11 @@
+import ast
 import base64
+import textwrap
 import unittest
 
 from modelscope.utils.constant import Tasks
 from modelscope.utils.input_output import (
-    PipelineInfomation, service_base64_input_to_pipeline_input)
+    PipelineInfomation, process_args, service_base64_input_to_pipeline_input)
 from modelscope.utils.test_utils import test_level
 
 
@@ -136,6 +138,31 @@ class PipelineInputOutputTest(unittest.TestCase):
         assert pipeline_inputs['text'] == text
         assert parameters['max_length'] == 10000
         assert parameters['top_p'] == 0.8
+
+
+class ProcessArgsTest(unittest.TestCase):
+
+    @staticmethod
+    def _args_of(source):
+        return ast.parse(textwrap.dedent(source)).body[0].args
+
+    def test_positional_args(self):
+        arguments = process_args(
+            self._args_of("def f(self, a: int, b: str = 'x'): pass"))
+        self.assertEqual(arguments, [('a', 'int', False, None),
+                                     ('b', 'str', True, 'x')])
+
+    def test_keyword_only_arg_with_default(self):
+        arguments = process_args(
+            self._args_of("def f(self, a: int, *, mode: str = 'fast'): pass"))
+        self.assertEqual(arguments, [('a', 'int', False, None),
+                                     ('mode', 'str', True, 'fast')])
+
+    def test_keyword_only_arg_without_default(self):
+        arguments = process_args(
+            self._args_of('def f(self, a: int, *, mode: str): pass'))
+        self.assertEqual(arguments, [('a', 'int', False, None),
+                                     ('mode', 'str', False, None)])
 
 
 if __name__ == '__main__':

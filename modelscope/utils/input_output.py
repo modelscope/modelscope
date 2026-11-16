@@ -308,13 +308,16 @@ def process_args(args):
     n_kwargs = len(args.kwonlyargs)
     n_kwargs_default = len(args.kw_defaults)
     for kwarg in args.kwonlyargs[0:n_kwargs - n_kwargs_default]:
-        arg_name, arg_type = process_arg_type_annotation(kwarg)
+        arg_name, arg_type = process_arg_type_annotation(kwarg, None)
         arguments.append((arg_name, arg_type, False, None))
 
     for kwarg, dft in zip(args.kwonlyargs[n_kwargs - n_kwargs_default:],
                           args.kw_defaults):
-        arg_name, arg_type = process_arg_type_annotation(kwarg)
-        arguments.append((arg_name, arg_type, True, dft.value))
+        # ast keeps a None placeholder in kw_defaults for keyword-only args
+        # that have no default.
+        value = None if dft is None else convert_to_value(dft)
+        arg_name, arg_type = process_arg_type_annotation(kwarg, value)
+        arguments.append((arg_name, arg_type, dft is not None, value))
     return arguments
 
 

@@ -134,7 +134,7 @@ CV:
 
 * [uni-fold-multimer](https://modelscope.cn/models/DPTech/uni-fold-multimer/summary)
 
-**注:** ModelScope のほとんどのモデルは公開されており、アカウント登録なしで modelscope のウェブサイト([www.modelscope.cn](www.modelscope.cn))からダウンロードすることができます。modelscope のライブラリや git が提供する api を使用してモデルをダウンロードするには、[モデルのダウンロード](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8B%E8%BD%BD)の説明を参照してください。
+**注:** ModelScope のほとんどのモデルは公開されており、アカウント登録なしで modelscope のウェブサイト([www.modelscope.cn](www.modelscope.cn))からダウンロードすることができます。modelscope のライブラリや git が提供する api を使用してモデルをダウンロードするには、[モデルのダウンロード](https://modelscope.cn/docs/models/download)の説明を参照してください。
 
 # クイックツアー
 
@@ -295,13 +295,13 @@ pip install modelscope[science] -f https://modelscope.oss-cn-beijing.aliyuncs.co
 # 詳細
 
 私たちは、以下のような追加書類を提供します:
-* [より詳細なインストールガイド](https://modelscope.cn/docs/%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85)
-* [タスクの紹介](https://modelscope.cn/docs/%E4%BB%BB%E5%8A%A1%E7%9A%84%E4%BB%8B%E7%BB%8D)
-* [モデル推論にパイプラインを使う](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86Pipeline)
-* [ファインチューニング例](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AE%AD%E7%BB%83Train)
-* [データの前処理](https://modelscope.cn/docs/%E6%95%B0%E6%8D%AE%E7%9A%84%E9%A2%84%E5%A4%84%E7%90%86)
-* [評価](https://modelscope.cn/docs/%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%AF%84%E4%BC%B0)
-* [ModelScope に自分のモデルを投稿する](https://modelscope.cn/docs/ModelScope%E6%A8%A1%E5%9E%8B%E6%8E%A5%E5%85%A5%E6%B5%81%E7%A8%8B%E6%A6%82%E8%A7%88)
+* [より詳細なインストールガイド](https://modelscope.cn/docs/intro/environment-setup)
+* [タスクの紹介](https://modelscope.cn/docs/sdk/tasks/intro)
+* [モデル推論にパイプラインを使う](https://modelscope.cn/docs/sdk/pipelines)
+* [ファインチューニング例](https://modelscope.cn/docs/sdk/model-training)
+* [データの前処理](https://modelscope.cn/docs/sdk/tutorials/data-preprocessor)
+* [評価](https://modelscope.cn/docs/sdk/tutorials/model-evaluation)
+* [ModelScope に自分のモデルを投稿する](https://modelscope.cn/docs/contribute/model-integration)
 
 # ライセンス
 

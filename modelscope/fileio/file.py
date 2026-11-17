@@ -262,10 +262,10 @@ class File(object):
 
     @staticmethod
     def read(uri: str) -> bytes:
-        """Read data from a given ``filepath`` with 'rb' mode.
+        """Read data from a given ``uri`` with 'rb' mode.
 
         Args:
-            filepath (str or Path): Path to read data.
+            uri (str or Path): Path to read data.
 
         Returns:
             bytes: Expected bytes object.
@@ -275,46 +275,46 @@ class File(object):
 
     @staticmethod
     def read_text(uri: Union[str, Path], encoding: str = 'utf-8') -> str:
-        """Read data from a given ``filepath`` with 'r' mode.
+        """Read data from a given ``uri`` with 'r' mode.
 
         Args:
-            filepath (str or Path): Path to read data.
-            encoding (str): The encoding format used to open the ``filepath``.
+            uri (str or Path): Path to read data.
+            encoding (str): The encoding format used to open the ``uri``.
                 Default: 'utf-8'.
 
         Returns:
-            str: Expected text reading from ``filepath``.
+            str: Expected text reading from ``uri``.
         """
         storage = File._get_storage(uri)
         return storage.read_text(uri)
 
     @staticmethod
     def write(obj: bytes, uri: Union[str, Path]) -> None:
-        """Write data to a given ``filepath`` with 'wb' mode.
+        """Write data to a given ``uri`` with 'wb' mode.
 
         Note:
-            ``write`` will create a directory if the directory of ``filepath``
+            ``write`` will create a directory if the directory of ``uri``
             does not exist.
 
         Args:
             obj (bytes): Data to be written.
-            filepath (str or Path): Path to write data.
+            uri (str or Path): Path to write data.
         """
         storage = File._get_storage(uri)
         return storage.write(obj, uri)
 
     @staticmethod
     def write_text(obj: str, uri: str, encoding: str = 'utf-8') -> None:
-        """Write data to a given ``filepath`` with 'w' mode.
+        """Write data to a given ``uri`` with 'w' mode.
 
         Note:
             ``write_text`` will create a directory if the directory of
-            ``filepath`` does not exist.
+            ``uri`` does not exist.
 
         Args:
             obj (str): Data to be written.
-            filepath (str or Path): Path to write data.
-            encoding (str): The encoding format used to open the ``filepath``.
+            uri (str or Path): Path to write data.
+            encoding (str): The encoding format used to open the ``uri``.
                 Default: 'utf-8'.
         """
         storage = File._get_storage(uri)

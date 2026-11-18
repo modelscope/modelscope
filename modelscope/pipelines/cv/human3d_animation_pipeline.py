@@ -47,7 +47,7 @@ class Human3DAnimationPipeline(Pipeline):
         """
         super().__init__(model=model, **kwargs)
         self.model_dir = model
-        logger.info('model_dir:', self.model_dir)
+        logger.info('model_dir: %s', self.model_dir)
 
     def preprocess(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return inputs
@@ -130,7 +130,7 @@ class Human3DAnimationPipeline(Pipeline):
                 subset_name=case_id).config_kwargs['split_config']['test']
             case_dir = os.path.join(data_dir, case_id)
             mesh_path = os.path.join(case_dir, 'body.obj')
-        logger.info('load mesh:', mesh_path)
+        logger.info('load mesh: %s', mesh_path)
 
         dataset_name = action_data_id.split('/')[-1]
         user_name = action_data_id.split('/')[0]

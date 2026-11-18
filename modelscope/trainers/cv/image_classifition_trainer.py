@@ -94,7 +94,7 @@ def train_model(model,
         }
         logger.warning(
             'config is now expected to have a `runner` section, '
-            'please set `runner` in your config.', UserWarning)
+            'please set `runner` in your config.')
 
     runner = build_runner(
         cfg.train.runner,

@@ -635,7 +635,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(video_save_key, filename_pred)
             break
         except Exception as e:
-            logger.error('error! ', video_save_key, e)
+            logger.error('error! %s %s', video_save_key, e)
             continue
 
     # remove temporary file
@@ -650,7 +650,7 @@ def save_video_multiple_conditions_with_data(bucket,
             bucket.put_object_from_file(gt_video_save_key, filename_gt)
             break
         except Exception as e:
-            logger.error('error! ', gt_video_save_key, e)
+            logger.error('error! %s %s', gt_video_save_key, e)
             continue
 
     # remove temporary file

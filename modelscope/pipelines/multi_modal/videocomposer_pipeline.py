@@ -239,7 +239,7 @@ class VideoComposerPipeline(Pipeline):
                 '/')[-1] + '.gif'
             if not os.path.exists(self.log_dir + '/visual_mv/'):
                 os.makedirs(self.log_dir + '/visual_mv/', exist_ok=True)
-            logger.info('save motion vectors visualization to :', path)
+            logger.info('save motion vectors visualization to: %s', path)
             imageio.mimwrite(path, images, fps=8)
 
         have_frames = len(frames) > 0
@@ -320,7 +320,7 @@ class VideoComposerPipeline(Pipeline):
         # continuously read and display video frames and motion vectors
         while True:
             if verbose:
-                logger.info('Frame: ', step, end=' ')
+                logger.info('Frame: %s', step)
 
             tstart = time.perf_counter()
 
@@ -373,7 +373,7 @@ class VideoComposerPipeline(Pipeline):
             frames.append(frame)
             mvs.append(mv)
         if verbose:
-            logger.info('average dt: ', np.mean(times))
+            logger.info('average dt: %s', np.mean(times))
         cap.release()
 
         if os.path.exists(tmp_video):

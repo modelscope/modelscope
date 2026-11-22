@@ -1,10 +1,14 @@
+import argparse
+import ntpath
 import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 import uuid
+from unittest import mock
 
+from modelscope.cli.modelcard import ModelCardCMD
 from modelscope.hub.api import HubApi
 from modelscope.utils.logger import get_logger
 from modelscope.utils.test_utils import TEST_ACCESS_TOKEN1, TEST_MODEL_ORG
@@ -57,6 +61,31 @@ class ModelUploadCMDTest(unittest.TestCase):
         stat, output = subprocess.getstatusoutput(cmd)
         if stat != 0:
             print(output)
+
+
+class ModelCardCMDModelIdTest(unittest.TestCase):
+
+    def _build_cmd(self, model_id, group_id='damo'):
+        args = argparse.Namespace(
+            access_token=None, group_id=group_id, model_id=model_id)
+        # Use Windows path rules to check that the model id and the url
+        # are built with '/' on every platform.
+        hub_api = mock.patch('modelscope.cli.modelcard.HubApi')
+        endpoint = mock.patch(
+            'modelscope.cli.modelcard.get_endpoint',
+            return_value='https://www.modelscope.cn')
+        with hub_api, endpoint, mock.patch('os.path', ntpath):
+            return ModelCardCMD(args)
+
+    def test_model_id_joined_with_group_id(self):
+        cmd = self._build_cmd('my-model', group_id='my-org')
+        self.assertEqual(cmd.model_id, 'my-org/my-model')
+        self.assertEqual(cmd.url, 'https://www.modelscope.cn/my-org/my-model')
+
+    def test_full_model_id_kept(self):
+        cmd = self._build_cmd('my-org/my-model')
+        self.assertEqual(cmd.model_id, 'my-org/my-model')
+        self.assertEqual(cmd.url, 'https://www.modelscope.cn/my-org/my-model')
 
 
 if __name__ == '__main__':

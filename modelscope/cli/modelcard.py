@@ -29,10 +29,13 @@ class ModelCardCMD(CLICommand):
         self.api = HubApi()
         if args.access_token:
             self.api.login(args.access_token)
-        self.model_id = os.path.join(
-            self.args.group_id, self.args.model_id
-        ) if '/' not in self.args.model_id else self.args.model_id
-        self.url = os.path.join(get_endpoint(), self.model_id)
+        # Model ids and URLs always use '/', so they must not be built
+        # with os.path.join, which uses '\' on Windows.
+        if '/' in self.args.model_id:
+            self.model_id = self.args.model_id
+        else:
+            self.model_id = f'{self.args.group_id}/{self.args.model_id}'
+        self.url = f'{get_endpoint()}/{self.model_id}'
 
     @staticmethod
     def register(subparsers: ArgumentParser) -> None:

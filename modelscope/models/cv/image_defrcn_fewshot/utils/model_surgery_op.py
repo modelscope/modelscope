@@ -67,7 +67,7 @@ def model_surgery(src_path,
     elif data_type == 'pascal_voc':
         TAR_SIZE = 20
     else:
-        NotImplementedError('{} dataset does not supported'.format(data_type))
+        raise NotImplementedError('{} dataset does not supported'.format(data_type))
 
     save_name = 'model_reset_' + ('remove' if method == 'remove' else
                                   'surgery') + '.pth'

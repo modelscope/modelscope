@@ -8,6 +8,7 @@ import copy
 import hashlib
 import io
 import os
+import re
 import tempfile
 import time
 import urllib
@@ -265,6 +266,20 @@ def http_get_model_file(
     return None if has_retry else hash_sha256.hexdigest()
 
 
+def _complete_length_from_content_range(content_range: Optional[str],
+                                        expected_start: int) -> int:
+    """Require a complete suffix with a known representation size."""
+    match = re.fullmatch(r'bytes (\d+)-(\d+)/(\d+)',
+                         (content_range or '').strip(), re.IGNORECASE)
+    if match is not None:
+        start, end, complete_length = map(int, match.groups())
+        if start == expected_start and start <= end == complete_length - 1:
+            return complete_length
+    raise FileDownloadError(
+        'Cannot verify complete suffix for requested offset %d: %r' %
+        (expected_start, content_range))
+
+
 def http_get_file(
     url: str,
     local_dir: str,
@@ -291,10 +306,15 @@ def http_get_file(
 
     """
     total = -1
+    expected_size = None
     temp_file_manager = partial(
         tempfile.NamedTemporaryFile, mode='wb', dir=local_dir, delete=False)
     get_headers = {} if headers is None else copy.deepcopy(headers)
     get_headers['X-Request-ID'] = str(uuid.uuid4().hex)
+    # Resume offsets count decoded bytes on disk. Prefer an unencoded
+    # representation, while preserving an explicit caller encoding choice.
+    if not any(name.lower() == 'accept-encoding' for name in get_headers):
+        get_headers['Accept-Encoding'] = 'identity'
     with temp_file_manager() as temp_file:
         logger.debug('downloading %s to %s', url, temp_file.name)
         # retry sleep 0.5s, 1s, 2s, 4s
@@ -303,6 +323,8 @@ def http_get_file(
             backoff_factor=1,
             allowed_methods=['GET'])
         while True:
+            r = None
+            progress = None
             try:
                 downloaded_size = temp_file.tell()
                 get_headers['Range'] = 'bytes=%d-' % downloaded_size
@@ -313,9 +335,37 @@ def http_get_file(
                     cookies=cookies,
                     timeout=API_FILE_DOWNLOAD_TIMEOUT)
                 r.raise_for_status()
+                if r.status_code == 200 and downloaded_size:
+                    # Range may be ignored: this response starts at byte zero.
+                    temp_file.seek(0)
+                    temp_file.truncate()
+                    downloaded_size = 0
                 content_length = r.headers.get('Content-Length')
+                content_encoding = r.headers.get('Content-Encoding')
                 total = int(
                     content_length) if content_length is not None else None
+                # `Content-Length` describes *this* response, which is not
+                # always the size of the file we end up writing to disk: it is
+                # absent for chunked responses, it counts the encoded bytes
+                # when the server applies a `Content-Encoding` such as gzip
+                # (requests hands us the decoded stream), and it excludes the
+                # bytes already on disk when a resumed request is answered
+                # with `206 Partial Content`. Only keep an expected on-disk
+                # size when one can actually be established.
+                if r.status_code == 206:  # Partial Content
+                    # A range is independent of Content-Length (e.g. chunked).
+                    # It must cover the complete requested suffix, starting at
+                    # exactly the offset already written to the temporary file.
+                    expected_size = _complete_length_from_content_range(
+                        r.headers.get('Content-Range'), downloaded_size)
+                    if (content_encoding or 'identity').lower() != 'identity':
+                        raise FileDownloadError(
+                            'Cannot verify an encoded partial response')
+                elif total is None or (content_encoding
+                                       or 'identity').lower() != 'identity':
+                    expected_size = None
+                else:
+                    expected_size = total
                 progress = tqdm(
                     unit='B',
                     unit_scale=True,
@@ -329,19 +379,26 @@ def http_get_file(
                     if chunk:  # filter out keep-alive new chunks
                         progress.update(len(chunk))
                         temp_file.write(chunk)
-                progress.close()
                 break
             except (Exception) as e:  # no matter what happen, we will retry.
                 retry = retry.increment('GET', url, error=e)
                 retry.sleep()
+            finally:
+                if progress is not None:
+                    progress.close()
+                if r is not None:
+                    r.close()
 
     logger.debug('storing %s in cache at %s', url, local_dir)
     downloaded_length = os.path.getsize(temp_file.name)
-    if total != downloaded_length:
+    # A response that really is truncated already raises while being read,
+    # because urllib3 enforces the declared `Content-Length`, so skipping the
+    # check when no expected size is available does not lose coverage.
+    if expected_size is not None and expected_size != downloaded_length:
         os.remove(temp_file.name)
         msg = 'File %s download incomplete, content_length: %s but the \
                     file downloaded length: %s, please download again' % (
-            file_name, total, downloaded_length)
+            file_name, expected_size, downloaded_length)
         logger.error(msg)
         raise FileDownloadError(msg)
     os.replace(temp_file.name, os.path.join(local_dir, file_name))

@@ -1,5 +1,5 @@
 # 1. build swift image from a ubi9 docker image
-    Full build from a minimal base image, use venv virtual enviroment
+    Full build from a minimal base image, use venv virtual environment
 ## 1.1. build
     ``` bash
     bash build.sh
@@ -20,10 +20,10 @@
     ```
 ## 1.4. run swift examples
     cd /workspace/ms-swift
-    bash example/train/full/train.sh
+    bash examples/train/full/train.sh
 
 # 2. build swift image from metax release image
-    Fast build based on the pre-built Metax release image, use conda virtual enviroment
+    Fast build based on the pre-built Metax release image, use conda virtual environment
 ## 2.1. build
     ``` bash
     bash build_from_metax_image.sh
@@ -39,5 +39,5 @@
     ```
 ## 2.3. run swift examples
     cd /workspace/ms-swift
-    bash example/train/full/train.sh
+    bash examples/train/full/train.sh
     ```

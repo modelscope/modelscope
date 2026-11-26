@@ -338,7 +338,7 @@ class Resize(object):
         elif img.ndim == 2:
             return skimage.transform.rescale(img, self.size, order=0)
         else:
-            RuntimeError(
+            raise RuntimeError(
                 'img should be ndarray with 2 or 3 dimensions. Got {}'.format(
                     img.ndim))
 

@@ -70,10 +70,17 @@ class OCRRecognitionMetric(Metric):
         }
 
     def merge(self, other: 'OCRRecognitionMetric'):
-        pass
+        self.preds.extend(other.preds)
+        self.targets.extend(other.targets)
+        self.loss_sum += other.loss_sum
+        self.nsample += other.nsample
+        self.iter_sum += other.iter_sum
 
     def __getstate__(self):
-        pass
+        return (self.preds, self.targets, self.loss_sum, self.nsample,
+                self.iter_sum)
 
     def __setstate__(self, state):
-        pass
+        self.__init__()
+        (self.preds, self.targets, self.loss_sum, self.nsample,
+         self.iter_sum) = state

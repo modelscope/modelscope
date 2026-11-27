@@ -130,7 +130,7 @@ def get_reference_facial_points(output_size=None,
         output_size = ref_crop_size * (1 + inner_padding_factor * 2).astype(
             np.int32)
         output_size += np.array(outer_padding)
-        logger.info('deduced from paddings, output_size = ', output_size)
+        logger.info('deduced from paddings, output_size = %s', output_size)
 
     if not (outer_padding[0] < output_size[0]
             and outer_padding[1] < output_size[1]):
